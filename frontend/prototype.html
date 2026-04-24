@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peek - Static Prototype</title>
+  <!-- FOUC Prevention -->
+  <script>
+    (function() {
+      const saved = localStorage.getItem('peek-theme')
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      const theme = saved || (prefersDark ? 'dark' : 'light')
+      document.documentElement.setAttribute('data-theme', theme)
+    })()
+  </script>
+  <style>
+    /* ===== Design Tokens ===== */
+    :root {
+      /* Spacing */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-7: 32px;
+
+      /* Font sizes */
+      --font-xs: 12px;
+      --font-sm: 14px;
+      --font-md: 16px;
+      --font-lg: 20px;
+      --font-xl: 24px;
+
+      /* Border radius */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+
+      /* Transitions */
+      --transition-fast: 150ms ease;
+
+      /* Layout */
+      --header-height: 56px;
+      --toolbar-height: 48px;
+      --bottom-bar-height: 56px;
+      --sidebar-width: 240px;
+      --toc-width: 200px;
+    }
+
+    /* ===== Light Theme (default) ===== */
+    [data-theme="light"] {
+      --accent-color: #0969DA;
+      --accent-hover: #0550AE;
+      --accent-light: rgba(9, 105, 218, 0.1);
+      --success-color: #1A7F37;
+      --warning-color: #9A6700;
+      --error-color: #CF222E;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F6F8FA;
+      --bg-tertiary: #F3F4F6;
+      --bg-overlay: rgba(0, 0, 0, 0.5);
+      --border-color: #D0D7DE;
+      --border-hover: #8C959F;
+      --text-primary: #1F2328;
+      --text-secondary: #656D76;
+      --text-tertiary: #8C959F;
+      --text-on-accent: #FFFFFF;
+      --tag-bg: rgba(101, 109, 118, 0.15);
+      --tag-text: #656D76;
+      --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.04);
+      --shadow-md: 0 3px 6px rgba(31, 35, 40, 0.08);
+    }
+
+    /* ===== Dark Theme ===== */
+    [data-theme="dark"] {
+      --accent-color: #3B82F6;
+      --accent-hover: #2563EB;
+      --accent-light: rgba(59, 130, 246, 0.1);
+      --success-color: #10B981;
+      --warning-color: #F59E0B;
+      --error-color: #EF4444;
+      --bg-primary: #0D1117;
+      --bg-secondary: #161B22;
+      --bg-tertiary: #21262D;
+      --bg-overlay: rgba(0, 0, 0, 0.7);
+      --border-color: #30363D;
+      --border-hover: #8B949E;
+      --text-primary: #E6EDF3;
+      --text-secondary: #8B949E;
+      --text-tertiary: #6E7681;
+      --text-on-accent: #FFFFFF;
+      --tag-bg: rgba(139, 148, 158, 0.2);
+      --tag-text: #8B949E;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    code, pre {
+      font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: var(--radius-md);
+      border: 2px solid var(--bg-secondary);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-hover);
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      height: 32px;
+      padding: 0 var(--space-3);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--font-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: var(--text-on-accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      height: var(--header-height);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-4);
+      gap: var(--space-3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-back {
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .header-title {
+      flex: 1;
+      font-size: var(--font-md);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      height: var(--toolbar-height);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-4);
+      gap: var(--space-3);
+    }
+
+    .breadcrumb {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb-item {
+      cursor: pointer;
+    }
+    .breadcrumb-item:hover {
+      color: var(--accent-color);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* ===== Main Layout ===== */
+    .main-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr var(--toc-width);
+      height: calc(100vh - var(--header-height) - var(--toolbar-height));
+      overflow: hidden;
+    }
+
+    /* ===== File Tree Sidebar ===== */
+    .sidebar-filetree {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      overflow: auto;
+      padding: var(--space-3);
+    }
+
+    .filetree-title {
+      font-size: var(--font-xs);
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: var(--space-3);
+      padding: 0 var(--space-2);
+    }
+
+    .filetree-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      transition: background var(--transition-fast);
+    }
+
+    .filetree-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .filetree-item.active {
+      background: var(--accent-light);
+      color: var(--accent-color);
+    }
+
+    .filetree-folder {
+      font-weight: 500;
+    }
+
+    .filetree-file {
+      padding-left: var(--space-5);
+    }
+
+    /* ===== Content Area ===== */
+    .content-area {
+      overflow: auto;
+      padding: var(--space-6);
+      background: var(--bg-primary);
+    }
+
+    .markdown-viewer {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Text wrapping: paragraphs wrap, code/tables don't */
+    .markdown-viewer p {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+      margin-bottom: var(--space-4);
+      color: var(--text-primary);
+    }
+
+    .markdown-viewer h1,
+    .markdown-viewer h2,
+    .markdown-viewer h3 {
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-4);
+      color: var(--text-primary);
+    }
+
+    .markdown-viewer h1 {
+      font-size: var(--font-xl);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: var(--space-3);
+    }
+
+    .markdown-viewer h2 {
+      font-size: var(--font-lg);
+    }
+
+    .markdown-viewer h3 {
+      font-size: var(--font-md);
+    }
+
+    /* Code blocks - no wrap, scroll horizontally */
+    .markdown-viewer pre {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      overflow-x: auto;
+      margin: var(--space-4) 0;
+    }
+
+    .markdown-viewer pre code {
+      display: block;
+      white-space: pre;
+      font-size: var(--font-sm);
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    /* Inline code */
+    .markdown-viewer code {
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
+      white-space: nowrap;
+    }
+
+    /* Tables - no wrap, scroll horizontally */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: var(--space-4) 0;
+    }
+
+    .markdown-viewer table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-sm);
+      white-space: nowrap;
+    }
+
+    .markdown-viewer th,
+    .markdown-viewer td {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .markdown-viewer th {
+      background: var(--bg-secondary);
+      font-weight: 600;
+    }
+
+    /* Code block with copy button */
+    .code-block {
+      position: relative;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+    }
+
+    .code-block pre {
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      margin: 0;
+    }
+
+    .code-block + .code-block {
+      margin-top: var(--space-4);
+    }
+
+    /* Line numbers - not selectable */
+    .line-numbers {
+      display: flex;
+    }
+
+    .line-numbers .line-number {
+      user-select: none;
+      -webkit-user-select: none;
+      color: var(--text-tertiary);
+      text-align: right;
+      padding-right: var(--space-4);
+      min-width: 40px;
+    }
+
+    .line-numbers .code-content {
+      flex: 1;
+    }
+
+    /* ===== TOC Sidebar ===== */
+    .sidebar-toc {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      overflow: auto;
+      padding: var(--space-3);
+    }
+
+    .toc-title {
+      font-size: var(--font-xs);
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: var(--space-3);
+      padding: 0 var(--space-2);
+    }
+
+    .toc-item {
+      display: block;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+    }
+
+    .toc-item:hover {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .toc-item.level-2 {
+      padding-left: var(--space-4);
+    }
+
+    .toc-item.level-3 {
+      padding-left: var(--space-6);
+    }
+
+    /* ===== Tags ===== */
+    .tags {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-6);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: 500;
+    }
+
+    /* ===== Mobile Styles ===== */
+    @media (max-width: 1023px) {
+      .main-layout {
+        grid-template-columns: var(--sidebar-width) 1fr;
+      }
+      .sidebar-toc {
+        display: none;
+      }
+    }
+
+    @media (max-width: 767px) {
+      /* Hide desktop elements */
+      .toolbar {
+        display: none;
+      }
+      .main-layout {
+        grid-template-columns: 1fr;
+        height: calc(100vh - var(--header-height) - var(--bottom-bar-height));
+      }
+      .sidebar-filetree {
+        display: none;
+      }
+      .sidebar-toc {
+        display: none;
+      }
+
+      /* Mobile Header */
+      .header {
+        padding: 0 var(--space-3);
+      }
+      .header-title {
+        text-align: center;
+      }
+
+      /* Mobile Bottom Bar */
+      .mobile-bottom-bar {
+        display: flex;
+        height: var(--bottom-bar-height);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+      }
+
+      .mobile-bottom-bar .file-selector {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 0 var(--space-4);
+        gap: var(--space-2);
+        cursor: pointer;
+        font-size: var(--font-sm);
+        color: var(--text-secondary);
+      }
+
+      .mobile-bottom-bar .actions {
+        display: flex;
+        padding: var(--space-2);
+        gap: var(--space-1);
+      }
+
+      /* Mobile Drawers */
+      .drawer-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: var(--bg-overlay);
+        z-index: 200;
+      }
+
+      .drawer-overlay.active {
+        display: block;
+      }
+
+      .drawer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        max-height: 70vh;
+        transform: translateY(100%);
+        transition: transform var(--transition-fast);
+        z-index: 201;
+      }
+
+      .drawer.active {
+        transform: translateY(0);
+      }
+
+      .drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .drawer-title {
+        font-size: var(--font-md);
+        font-weight: 600;
+      }
+
+      .drawer-close {
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-secondary);
+      }
+
+      .drawer-content {
+        overflow: auto;
+        max-height: calc(70vh - 60px);
+        padding: var(--space-3);
+      }
+
+      /* TOC Drawer specific */
+      .toc-drawer .toc-item {
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 0;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .mobile-bottom-bar {
+        display: none;
+      }
+    }
+
+    /* ===== Theme Toggle Demo ===== */
+    .theme-toggle {
+      width: 40px;
+      height: 24px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      position: relative;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--text-primary);
+      border-radius: 50%;
+      transition: transform var(--transition-fast);
+    }
+
+    [data-theme="dark"] .theme-toggle::after {
+      transform: translateX(16px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <span class="header-back">←</span>
+    <h1 class="header-title">Project Documentation</h1>
+    <div class="header-actions">
+      <button class="btn btn-icon" title="Search">🔍</button>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme"></div>
+    </div>
+  </header>
+
+  <!-- Toolbar (Desktop) -->
+  <div class="toolbar">
+    <div class="breadcrumb">
+      <span>📁</span>
+      <span class="breadcrumb-item">src</span>
+      <span>/</span>
+      <span class="breadcrumb-item">utils</span>
+      <span>/</span>
+      <span class="breadcrumb-item" style="color: var(--text-primary);">helper.py</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-secondary">
+        <span>📋</span> Copy
+      </button>
+      <button class="btn btn-secondary">
+        <span>⬇️</span> Download
+      </button>
+      <button class="btn btn-secondary">
+        <span>🔗</span> Share
+      </button>
+      <button class="btn btn-secondary">
+        <span>↩️</span> Wrap
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- File Tree Sidebar -->
+    <aside class="sidebar-filetree">
+      <div class="filetree-title">Files</div>
+      <div class="filetree-item filetree-folder">
+        <span>📁</span> src
+      </div>
+      <div class="filetree-item filetree-file">
+        <span>📄</span> main.py
+      </div>
+      <div class="filetree-item filetree-file active">
+        <span>📄</span> helper.py
+      </div>
+      <div class="filetree-item filetree-file">
+        <span>📄</span> utils.py
+      </div>
+      <div class="filetree-item filetree-folder">
+        <span>📁</span> tests
+      </div>
+      <div class="filetree-item filetree-file">
+        <span>📄</span> test_main.py
+      </div>
+      <div class="filetree-item filetree-file">
+        <span>📄</span> README.md
+      </div>
+      <div class="filetree-item filetree-file">
+        <span>📄</span> config.json
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <article class="markdown-viewer">
+        <h1>README.md</h1>
+
+        <p>This is a demonstration of the Peek UI design system. This paragraph demonstrates text wrapping behavior - long text should wrap automatically while code blocks and tables remain horizontally scrollable.</p>
+
+        <h2>Installation</h2>
+        <p>Install the package using pip:</p>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="btn btn-ghost btn-sm" style="height: 24px; padding: 0 8px; font-size: 12px;">Copy</button>
+          </div>
+          <pre><code>pip install peek</code></pre>
+        </div>
+
+        <h2>Usage</h2>
+        <p>Basic usage example with a very long line that should wrap properly in the paragraph but not in the code block below:</p>
+
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>python</span>
+            <button class="btn btn-ghost btn-sm" style="height: 24px; padding: 0 8px; font-size: 12px;">Copy</button>
+          </div>
+          <pre><code>from peek import create_entry
+
+# This is a long comment that demonstrates how the code block handles overflow - it should scroll horizontally rather than wrap
+def process_data(data, options=None, callback=None, debug=False):
+    """Process data with various options and a very long docstring."""
+    result = transform(data, options=options)
+    if callback:
+        callback(result)
+    return result</code></pre>
+        </div>
+
+        <h3>Configuration</h3>
+        <p>Supported configuration options:</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Type</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>host</code></td>
+                <td>string</td>
+                <td>"127.0.0.1"</td>
+                <td>Server bind address</td>
+              </tr>
+              <tr>
+                <td><code>port</code></td>
+                <td>number</td>
+                <td>8080</td>
+                <td>Server port number that the application will listen on</td>
+              </tr>
+              <tr>
+                <td><code>data_dir</code></td>
+                <td>string</td>
+                <td>"~/.peek"</td>
+                <td>Directory for storing application data and files</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>API Reference</h2>
+        <p>The API provides endpoints for <code>entries</code>, <code>files</code>, and <code>search</code>.</p>
+
+        <h2>Features</h2>
+        <p>This design demonstrates several key features:</p>
+        <ul style="margin: 16px 0; padding-left: 24px; color: var(--text-primary);">
+          <li>Dark/Light theme switching with FOUC prevention</li>
+          <li>3-column desktop layout (file tree | content | TOC)</li>
+          <li>Responsive breakpoints for tablet and mobile</li>
+          <li>Text wrapping: paragraphs wrap, code/tables scroll</li>
+          <li>Mobile drawer navigation</li>
+          <li>Line numbers with <code>user-select: none</code></li>
+        </ul>
+
+        <!-- Tags -->
+        <div class="tags">
+          <span class="tag">#python</span>
+          <span class="tag">#cli</span>
+          <span class="tag">#documentation</span>
+        </div>
+      </article>
+    </main>
+
+    <!-- TOC Sidebar -->
+    <aside class="sidebar-toc">
+      <div class="toc-title">Outline</div>
+      <a href="#" class="toc-item">Installation</a>
+      <a href="#" class="toc-item">Usage</a>
+      <a href="#" class="toc-item level-2">Configuration</a>
+      <a href="#" class="toc-item">API Reference</a>
+      <a href="#" class="toc-item">Features</a>
+    </aside>
+  </div>
+
+  <!-- Mobile Bottom Bar -->
+  <div class="mobile-bottom-bar">
+    <div class="file-selector" onclick="openFileDrawer()">
+      <span>📁</span>
+      <span class="truncate">src/utils/helper.py</span>
+      <span>▼</span>
+    </div>
+    <div class="actions">
+      <button class="btn btn-icon">📋</button>
+      <button class="btn btn-icon">⬇️</button>
+      <button class="btn btn-icon" onclick="openTocDrawer()">☰</button>
+    </div>
+  </div>
+
+  <!-- File Drawer (Mobile) -->
+  <div class="drawer-overlay" id="fileDrawerOverlay" onclick="closeFileDrawer()">
+    <div class="drawer" id="fileDrawer" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <span class="drawer-title">Files</span>
+        <span class="drawer-close" onclick="closeFileDrawer()">✕</span>
+      </div>
+      <div class="drawer-content">
+        <div class="filetree-item filetree-folder">
+          <span>📁</span> src
+        </div>
+        <div class="filetree-item filetree-file">
+          <span>📄</span> main.py
+        </div>
+        <div class="filetree-item filetree-file active">
+          <span>📄</span> helper.py
+        </div>
+        <div class="filetree-item filetree-file">
+          <span>📄</span> utils.py
+        </div>
+        <div class="filetree-item filetree-folder">
+          <span>📁</span> tests
+        </div>
+        <div class="filetree-item filetree-file">
+          <span>📄</span> test_main.py
+        </div>
+        <div class="filetree-item filetree-file">
+          <span>📄</span> README.md
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOC Drawer (Mobile) -->
+  <div class="drawer-overlay" id="tocDrawerOverlay" onclick="closeTocDrawer()">
+    <div class="drawer toc-drawer" id="tocDrawer" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <span class="drawer-title">Outline</span>
+        <span class="drawer-close" onclick="closeTocDrawer()">✕</span>
+      </div>
+      <div class="drawer-content">
+        <a href="#" class="toc-item">Installation</a>
+        <a href="#" class="toc-item">Usage</a>
+        <a href="#" class="toc-item level-2">Configuration</a>
+        <a href="#" class="toc-item">API Reference</a>
+        <a href="#" class="toc-item">Features</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('peek-theme', next);
+    }
+
+    // File drawer
+    function openFileDrawer() {
+      document.getElementById('fileDrawerOverlay').classList.add('active');
+      document.getElementById('fileDrawer').classList.add('active');
+    }
+
+    function closeFileDrawer() {
+      document.getElementById('fileDrawerOverlay').classList.remove('active');
+      document.getElementById('fileDrawer').classList.remove('active');
+    }
+
+    // TOC drawer
+    function openTocDrawer() {
+      document.getElementById('tocDrawerOverlay').classList.add('active');
+      document.getElementById('tocDrawer').classList.add('active');
+    }
+
+    function closeTocDrawer() {
+      document.getElementById('tocDrawerOverlay').classList.remove('active');
+      document.getElementById('tocDrawer').classList.remove('active');
+    }
+  </script>
+</body>
+</html>
