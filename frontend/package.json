@@ -1,6 +1,6 @@
 {
-  "name": "peek-frontend",
-  "version": "0.1.0",
+  "name": "peekview-frontend",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "scripts": {

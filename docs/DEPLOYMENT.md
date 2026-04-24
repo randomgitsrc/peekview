@@ -26,18 +26,50 @@
 
 ## 安装部署
 
-### 方式一：从 PyPI 安装（推荐，发布后可用）
+### 方式一：pipx 安装（推荐）
+
+[pipx](https://pypa.github.io/pipx/) 是安装 Python CLI 应用的最佳方式，它会自动创建隔离的虚拟环境，避免依赖冲突。
 
 ```bash
+# 安装 pipx（如果尚未安装）
+# macOS: brew install pipx && pipx ensurepath
+# Ubuntu/Debian: sudo apt install pipx && pipx ensurepath
+
+# 安装 peekview
+pipx install peekview
+
+# 验证安装
+peekview --version
+```
+
+**pipx 优势：**
+- 自动隔离依赖，不会与系统 Python 包冲突
+- 自动添加到 PATH
+- 支持一键升级：`pipx upgrade peekview`
+- 支持卸载：`pipx uninstall peekview`
+
+### 方式二：pip 安装
+
+如果无法使用 pipx，也可以用 pip 安装（建议使用虚拟环境）：
+
+```bash
+# 创建虚拟环境（避免与系统 Python 冲突）
+python3 -m venv ~/.venvs/peekview
+source ~/.venvs/peekview/bin/activate
+
+# 安装
 pip install peekview
+
+# 创建符号链接到 PATH（可选）
+ln -s ~/.venvs/peekview/bin/peekview ~/.local/bin/peekview
 ```
 
 ### 方式二：从源码安装（当前可用）
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/randomgitsrc/peek.git
-cd peek/backend
+git clone https://github.com/randomgitsrc/peekview.git
+cd peekview/backend
 
 # 2. 创建虚拟环境（推荐）
 python3 -m venv venv
@@ -456,4 +488,4 @@ cp -r /backup/peek-backup-xxx ~/.peekview
 
 - **CLI 帮助**: `peek --help` 或 `peek <command> --help`
 - **API 文档**: 启动服务后访问 `http://localhost:8080/docs`
-- **项目主页**: https://github.com/randomgitsrc/peek
+- **项目主页**: https://github.com/randomgitsrc/peekview

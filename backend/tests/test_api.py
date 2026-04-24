@@ -29,8 +29,8 @@ async def client():
 
 @pytest.fixture(scope="function")
 async def auth_client(monkeypatch):
-    """Client with PEEK_API_KEY configured."""
-    monkeypatch.setenv("PEEK_SERVER__API_KEY", "test-secret-key")
+    """Client with PEEKVIEW_API_KEY configured."""
+    monkeypatch.setenv("PEEKVIEW_SERVER__API_KEY", "test-secret-key")
     tmp_dir = Path(tempfile.mkdtemp())
     try:
         data_dir = tmp_dir / "data"
@@ -180,13 +180,13 @@ class TestFileDownload:
 class TestApiKeyAuth:
     @pytest.mark.asyncio
     async def test_no_api_key_allows_access(self, client):
-        """Without PEEK_API_KEY, all requests are allowed."""
+        """Without PEEKVIEW_API_KEY, all requests are allowed."""
         resp = await client.get("/api/v1/entries")
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
     async def test_api_key_required_when_configured(self, auth_client):
-        """With PEEK_API_KEY set, requests without auth are rejected."""
+        """With PEEKVIEW_API_KEY set, requests without auth are rejected."""
         resp = await auth_client.get("/api/v1/entries")
         assert resp.status_code == 401
 

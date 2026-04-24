@@ -1,11 +1,11 @@
-"""CLI commands for Peek.
+"""CLI commands for PeekView.
 
 Provides command-line interface for:
-- Starting the server (`peek serve`)
-- Creating entries (`peek create`)
-- Getting entries (`peek get`)
-- Listing entries (`peek list`)
-- Deleting entries (`peek delete`)
+- Starting the server (`peekview serve`)
+- Creating entries (`peekview create`)
+- Getting entries (`peekview get`)
+- Listing entries (`peekview list`)
+- Deleting entries (`peekview delete`)
 """
 
 import json
@@ -27,7 +27,7 @@ from peekview.storage import StorageManager
 
 
 @click.group()
-@click.version_option(version="0.1.2", prog_name="peekview")
+@click.version_option(version="0.1.3", prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
     pass

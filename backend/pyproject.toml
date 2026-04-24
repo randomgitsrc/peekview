@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "peekview"
-version = "0.1.2"
+version = "0.1.3"
 description = "A lightweight code & document formatting display service"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -49,8 +49,8 @@ dev = [
 peekview = "peekview.cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/randomgitsrc/peek"
-Repository = "https://github.com/randomgitsrc/peek"
+Homepage = "https://github.com/randomgitsrc/peekview"
+Repository = "https://github.com/randomgitsrc/peekview"
 
 [tool.hatch.build.targets.wheel]
 packages = ["peekview"]

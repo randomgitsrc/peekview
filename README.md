@@ -14,15 +14,27 @@ Agent（AI）产出 → PeekView 格式化 → 人类友好查看
 
 ### 安装
 
+**推荐：使用 pipx 安装（隔离环境，无依赖冲突）**
+
+```bash
+# 安装 pipx（如果尚未安装）
+# macOS: brew install pipx && pipx ensurepath
+# Ubuntu/Debian: sudo apt install pipx && pipx ensurepath
+
+pipx install peekview
+```
+
+**或使用 pip 安装（建议配合虚拟环境）**
+
 ```bash
 pip install peekview
 ```
 
-或从源码安装：
+**从源码安装**
 
 ```bash
-git clone https://github.com/randomgitsrc/peek.git
-cd peek/backend
+git clone https://github.com/randomgitsrc/peekview.git
+cd peekview/backend
 pip install -e .
 ```
 
