@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from peek.exceptions import ForbiddenPathError
-from peek.services.file_service import (
+from peekview.exceptions import ForbiddenPathError
+from peekview.services.file_service import (
     FileInfo,
     decode_base64_content,
     parse_expires_in,

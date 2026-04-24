@@ -1,4 +1,4 @@
-# Peek — 项目索引
+# PeekView — 项目索引
 
 > 最后更新：2026-04-24  
 > 工作计划：[docs/plans/work-plan.md](docs/plans/work-plan.md)

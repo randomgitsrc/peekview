@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 
-from peek.exceptions import ForbiddenPathError
-from peek.language import detect_language, is_binary_content
+from peekview.exceptions import ForbiddenPathError
+from peekview.language import detect_language, is_binary_content
 
 logger = logging.getLogger(__name__)
 

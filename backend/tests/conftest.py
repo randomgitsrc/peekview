@@ -63,7 +63,7 @@ def session(engine) -> Generator[Session, None, None]:
 @pytest.fixture
 def test_config(temp_data_dir: Path, temp_db_path: Path):
     """Provide test configuration."""
-    from peek.config import PeekConfig
+    from peekview.config import PeekConfig
 
     return PeekConfig(
         data_dir=temp_data_dir,
@@ -77,7 +77,7 @@ def test_config(temp_data_dir: Path, temp_db_path: Path):
 @pytest.fixture
 def app(test_config):
     """Create a test FastAPI application."""
-    from peek.main import create_app
+    from peekview.main import create_app
 
     return create_app(
         data_dir=test_config.data_dir,

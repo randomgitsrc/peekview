@@ -1,4 +1,4 @@
-"""Configuration management for Peek.
+"""Configuration management for PeekView.
 
 Uses Pydantic Settings for environment variable and config file support.
 """
@@ -61,11 +61,11 @@ class PeekStorage(BaseSettings):
     """Storage configuration."""
 
     data_dir: Path = Field(
-        default_factory=lambda: Path.home() / ".peek" / "data",
+        default_factory=lambda: Path.home() / ".peekview" / "data",
         description="Directory for file storage",
     )
     db_path: Path = Field(
-        default_factory=lambda: Path.home() / ".peek" / "peek.db",
+        default_factory=lambda: Path.home() / ".peekview" / "peekview.db",
         description="Path to SQLite database",
     )
     allowed_paths: list[Path] = Field(
@@ -160,13 +160,13 @@ class PeekConfig(BaseSettings):
     """Main configuration class.
 
     Combines all configuration sections. Values can be set via:
-    1. Environment variables (PEEK_HOST, PEEK_DATA_DIR, etc.)
+    1. Environment variables (PEEKVIEW_HOST, PEEKVIEW_DATA_DIR, etc.)
     2. Constructor arguments
     3. Default values
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="PEEK_",
+        env_prefix="PEEKVIEW_",
         env_nested_delimiter="__",
         extra="ignore",
     )

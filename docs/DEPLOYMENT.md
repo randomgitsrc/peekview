@@ -1,4 +1,4 @@
-# Peek 部署与使用指南
+# PeekView 部署与使用指南
 
 > 完整的环境部署、使用教程和卸载说明
 
@@ -52,7 +52,7 @@ source venv/bin/activate
 pip install -e .
 
 # 5. 验证安装
-peek --version
+peekview --version
 ```
 
 ### 方式三：Docker 部署（可选）
@@ -73,23 +73,23 @@ docker run -d -p 8080:8080 -v peek-data:/data peek
 
 ```bash
 # 默认启动（localhost:8080）
-peek serve
+peekview serve
 
 # 指定端口
-peek serve --port 3000
+peekview serve --port 3000
 
 # 允许外部访问（局域网/服务器）
-peek serve --host 0.0.0.0 --port 8080
+peekview serve --host 0.0.0.0 --port 8080
 
 # 后台运行（Linux）
-nohup peek serve --host 0.0.0.0 --port 8080 > peek.log 2>&1 &
+nohup peekview serve --host 0.0.0.0 --port 8080 > peekview.log 2>&1 &
 ```
 
 ### 生产环境部署
 
 #### Linux 服务器 + systemd
 
-创建服务文件 `/etc/systemd/system/peek.service`：
+创建服务文件 `/etc/systemd/system/peekview.service`：
 
 ```ini
 [Unit]
@@ -100,11 +100,11 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/opt/peek
-Environment=PEEK_DATA_DIR=/var/peek/data
-Environment=PEEK_DB_PATH=/var/peek/peek.db
-Environment=PEEK_HOST=0.0.0.0
-Environment=PEEK_PORT=8080
-ExecStart=/opt/peek/venv/bin/peek serve
+Environment=PEEKVIEW_DATA_DIR=/var/peek/data
+Environment=PEEKVIEW_DB_PATH=/var/peek/peek.db
+Environment=PEEKVIEW_HOST=0.0.0.0
+Environment=PEEKVIEW_PORT=8080
+ExecStart=/opt/peek/venv/bin/peekview serve
 Restart=always
 RestartSec=5
 
@@ -159,13 +159,13 @@ server {
 
 | 变量 | 默认值 | 说明 | 示例 |
 |------|--------|------|------|
-| `PEEK_DATA_DIR` | `~/.peek/data` | 文件存储目录 | `/var/peek/data` |
-| `PEEK_DB_PATH` | `~/.peek/peek.db` | SQLite 数据库路径 | `/var/peek/peek.db` |
-| `PEEK_HOST` | `127.0.0.1` | 服务绑定地址 | `0.0.0.0` |
-| `PEEK_PORT` | `8080` | 服务端口 | `80` |
-| `PEEK_API_KEY` | - | API 认证密钥 | `your-secret-key` |
-| `PEEK_CORS_ORIGINS` | `http://localhost:5173` | CORS 允许来源 | `https://yourdomain.com` |
-| `PEEK_ALLOWED_PATHS` | `[]` | 允许读取的本地路径 | `/home/user/docs,/data` |
+| `PEEKVIEW_DATA_DIR` | `~/.peekview/data` | 文件存储目录 | `/var/peek/data` |
+| `PEEKVIEW_DB_PATH` | `~/.peekview/peek.db` | SQLite 数据库路径 | `/var/peek/peek.db` |
+| `PEEKVIEW_HOST` | `127.0.0.1` | 服务绑定地址 | `0.0.0.0` |
+| `PEEKVIEW_PORT` | `8080` | 服务端口 | `80` |
+| `PEEKVIEW_API_KEY` | - | API 认证密钥 | `your-secret-key` |
+| `PEEKVIEW_CORS_ORIGINS` | `http://localhost:5173` | CORS 允许来源 | `https://yourdomain.com` |
+| `PEEKVIEW_ALLOWED_PATHS` | `[]` | 允许读取的本地路径 | `/home/user/docs,/data` |
 
 ### 配置文件（.env）
 
@@ -173,18 +173,18 @@ server {
 
 ```bash
 # 数据和数据库
-PEEK_DATA_DIR=/var/peek/data
-PEEK_DB_PATH=/var/peek/peek.db
+PEEKVIEW_DATA_DIR=/var/peek/data
+PEEKVIEW_DB_PATH=/var/peek/peek.db
 
 # 网络配置
-PEEK_HOST=0.0.0.0
-PEEK_PORT=8080
+PEEKVIEW_HOST=0.0.0.0
+PEEKVIEW_PORT=8080
 
 # 安全（建议生产环境启用）
-PEEK_API_KEY=your-random-secret-key-here
+PEEKVIEW_API_KEY=your-random-secret-key-here
 
 # CORS（多域名用逗号分隔）
-PEEK_CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
+PEEKVIEW_CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
 ```
 
 加载配置：
@@ -192,7 +192,7 @@ PEEK_CORS_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
 ```bash
 # 方式1：导出环境变量
 export $(cat .env | xargs)
-peek serve
+peekview serve
 
 # 方式2：使用 direnv（自动加载）
 # 安装 direnv，创建 .envrc 文件包含上述内容
@@ -208,58 +208,58 @@ peek serve
 
 ```bash
 # 从单个文件创建
-peek create script.py -s "Python脚本" -t python
+peekview create script.py -s "Python脚本" -t python
 
 # 从多个文件创建
-peek create src/*.py README.md -s "Python项目" -t python -t project
+peekview create src/*.py README.md -s "Python项目" -t python -t project
 
 # 从目录创建（递归）
-peek create ./docs -s "文档集合" -t docs
+peekview create ./docs -s "文档集合" -t docs
 
 # 从标准输入创建
-echo "console.log('hello')" | peek create -s "JS代码" --from-stdin
+echo "console.log('hello')" | peekview create -s "JS代码" --from-stdin
 
 # 指定自定义 slug
-peek create report.md -s "月度报告" --slug monthly-report-2024
+peekview create report.md -s "月度报告" --slug monthly-report-2024
 ```
 
 #### 2. 查看条目
 
 ```bash
 # 查看详情
-peek get monthly-report-2024
+peekview get monthly-report-2024
 
 # 以 JSON 格式输出
-peek get monthly-report-2024 --format json
+peekview get monthly-report-2024 --format json
 ```
 
 #### 3. 列出入库
 
 ```bash
 # 基本列表
-peek list
+peekview list
 
 # 分页
-peek list --page 2 --per-page 50
+peekview list --page 2 --per-page 50
 
 # 搜索
-peek list -q "python function"
+peekview list -q "python function"
 
 # 按标签过滤
-peek list -t python -t cli
+peekview list -t python -t cli
 
 # 组合查询
-peek list -q "api" -t python --page 1 --per-page 10
+peekview list -q "api" -t python --page 1 --per-page 10
 ```
 
 #### 4. 删除条目
 
 ```bash
 # 删除（会要求确认）
-peek delete monthly-report-2024
+peekview delete monthly-report-2024
 
 # 强制删除（无需确认）
-peek delete monthly-report-2024 --force
+peekview delete monthly-report-2024 --force
 ```
 
 ### 二、Web 界面使用
@@ -317,20 +317,20 @@ curl -X DELETE http://localhost:8080/api/v1/entries/{slug}
 
 ```bash
 # 1. 停止服务
-pkill -f "peek serve"
+pkill -f "peekview serve"
 
 # 2. 卸载包
 pip uninstall peekview -y
 
 # 3. 清理数据（可选）
-rm -rf ~/.peek
+rm -rf ~/.peekview
 ```
 
 ### 方式二：源码卸载
 
 ```bash
 # 1. 停止服务
-pkill -f "peek serve"
+pkill -f "peekview serve"
 
 # 2. 退出虚拟环境
 deactivate
@@ -340,7 +340,7 @@ cd ..
 rm -rf peek
 
 # 4. 清理数据（可选）
-rm -rf ~/.peek
+rm -rf ~/.peekview
 # 或如果自定义了数据目录
 rm -rf /var/peek
 ```
@@ -353,7 +353,7 @@ sudo systemctl stop peek
 sudo systemctl disable peek
 
 # 2. 删除服务文件
-sudo rm /etc/systemd/system/peek.service
+sudo rm /etc/systemd/system/peekview.service
 sudo systemctl daemon-reload
 
 # 3. 卸载程序和数据
@@ -365,8 +365,8 @@ sudo rm -rf /var/peek
 
 | 路径 | 内容 | 是否必须清理 |
 |------|------|-------------|
-| `~/.peek/data/` | 上传的文件 | 可选 |
-| `~/.peek/peek.db` | SQLite 数据库 | 可选 |
+| `~/.peekview/data/` | 上传的文件 | 可选 |
+| `~/.peekview/peek.db` | SQLite 数据库 | 可选 |
 | 安装目录 | 程序文件 | 是 |
 | 虚拟环境 | Python 依赖 | 是 |
 
@@ -402,7 +402,7 @@ pip install --user -e .
 ```bash
 # 错误：Address already in use
 # 解决方案：更换端口
-peek serve --port 8081
+peekview serve --port 8081
 
 # 或查找并停止占用进程
 lsof -i :8080
@@ -434,20 +434,20 @@ cp -r dist ../backend/peek/static
 
 ```bash
 # 查看日志
-peek serve  # 前台运行查看报错
+peekview serve  # 前台运行查看报错
 
 # 检查数据库权限
-ls -la ~/.peek/peek.db
+ls -la ~/.peekview/peek.db
 ```
 
 ### 数据备份
 
 ```bash
 # 备份数据和数据库
-cp -r ~/.peek /backup/peek-backup-$(date +%Y%m%d)
+cp -r ~/.peekview /backup/peek-backup-$(date +%Y%m%d)
 
 # 恢复
-cp -r /backup/peek-backup-xxx ~/.peek
+cp -r /backup/peek-backup-xxx ~/.peekview
 ```
 
 ---

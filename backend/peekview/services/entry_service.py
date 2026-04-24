@@ -13,16 +13,16 @@ from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from peek.config import PeekConfig
-from peek.database import get_engine
-from peek.exceptions import (
+from peekview.config import PeekConfig
+from peekview.database import get_engine
+from peekview.exceptions import (
     InvalidSlugError,
     NotFoundError,
     PayloadTooLargeError,
     ValidationError,
 )
-from peek.language import detect_language, is_binary_content
-from peek.models import (
+from peekview.language import detect_language, is_binary_content
+from peekview.models import (
     CreateEntryResponse,
     Entry,
     EntryListItem,
@@ -31,13 +31,13 @@ from peek.models import (
     File,
     FileResponse,
 )
-from peek.services.file_service import (
+from peekview.services.file_service import (
     decode_base64_content,
     parse_expires_in,
     scan_directory,
     validate_local_path,
 )
-from peek.storage import StorageManager
+from peekview.storage import StorageManager
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def get_entry_service(app: Any) -> "EntryService":
         EntryService instance.
     """
     if not hasattr(app.state, "entry_service"):
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         # Use app.state.config if available, otherwise create new config
         config = getattr(app.state, "config", None) or PeekConfig()

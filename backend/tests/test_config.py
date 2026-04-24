@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from peek.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
+from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
 
 
 class TestPeekLimits:

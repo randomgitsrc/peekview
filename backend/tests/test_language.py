@@ -2,7 +2,7 @@
 
 import pytest
 
-from peek.language import (
+from peekview.language import (
     PLAIN_TEXT_LANGS,
     detect_language,
     get_language_list,
@@ -224,7 +224,7 @@ class TestExtensionMapCompleteness:
 
     def test_common_extensions_present(self):
         """Common extensions are present."""
-        from peek.language import EXTENSION_MAP
+        from peekview.language import EXTENSION_MAP
 
         common = [".py", ".js", ".ts", ".html", ".css", ".json", ".md", ".sh"]
         for ext in common:
@@ -232,7 +232,7 @@ class TestExtensionMapCompleteness:
 
     def test_no_empty_values(self):
         """No extension maps to empty string."""
-        from peek.language import EXTENSION_MAP
+        from peekview.language import EXTENSION_MAP
 
         for ext, lang in EXTENSION_MAP.items():
             assert lang, f"Empty language for extension: {ext}"

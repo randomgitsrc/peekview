@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from peek.cli import cli
+from peekview.cli import cli
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-# Peek
+# PeekView
 
 A lightweight code & document formatting display service.
 
@@ -16,10 +16,10 @@ pip install peekview
 
 ```bash
 # 本地开发
-peek serve
+peekview serve
 
 # 生产部署（指定端口和主机）
-peek serve --host 0.0.0.0 --port 8080
+peekview serve --host 0.0.0.0 --port 8080
 ```
 
 服务启动后，访问 http://localhost:8080 即可使用 Web 界面。
@@ -30,43 +30,43 @@ peek serve --host 0.0.0.0 --port 8080
 
 ```bash
 # 从文件创建
-peek create file.txt -s "My document"
+peekview create file.txt -s "My document"
 
 # 从多文件创建
-peek create src/*.py -s "Python project" -t python -t cli
+peekview create src/*.py -s "Python project" -t python -t cli
 
 # 从标准输入创建
-echo "print('hello')" | peek create -s "From stdin" --from-stdin
+echo "print('hello')" | peekview create -s "From stdin" --from-stdin
 
 # 指定自定义 slug
-peek create README.md -s "Documentation" --slug docs
+peekview create README.md -s "Documentation" --slug docs
 ```
 
 ### 查看条目
 
 ```bash
 # 查看条目详情
-peek get my-entry
+peekview get my-entry
 
 # 列出入库（支持分页）
-peek list
-peek list --page 2 --per-page 50
+peekview list
+peekview list --page 2 --per-page 50
 
 # 搜索条目（FTS5 全文搜索）
-peek list -q "python function"
+peekview list -q "python function"
 
 # 按标签过滤
-peek list -t python -t cli
+peekview list -t python -t cli
 ```
 
 ### 删除条目
 
 ```bash
 # 删除条目（会要求确认）
-peek delete my-entry
+peekview delete my-entry
 
 # 强制删除（无需确认）
-peek delete my-entry --force
+peekview delete my-entry --force
 ```
 
 ## 配置
@@ -75,24 +75,24 @@ peek delete my-entry --force
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `PEEK_DATA_DIR` | `~/.peek/data` | 文件存储目录 |
-| `PEEK_DB_PATH` | `~/.peek/peek.db` | SQLite 数据库路径 |
-| `PEEK_ALLOWED_PATHS` | `[]` | 允许读取的本地路径列表 |
-| `PEEK_HOST` | `127.0.0.1` | 服务绑定地址 |
-| `PEEK_PORT` | `8080` | 服务端口 |
-| `PEEK_API_KEY` | `` | API 认证密钥（可选） |
-| `PEEK_CORS_ORIGINS` | `http://localhost:5173` | CORS 允许来源 |
+| `PEEKVIEW_DATA_DIR` | `~/.peekview/data` | 文件存储目录 |
+| `PEEKVIEW_DB_PATH` | `~/.peekview/peek.db` | SQLite 数据库路径 |
+| `PEEKVIEW_ALLOWED_PATHS` | `[]` | 允许读取的本地路径列表 |
+| `PEEKVIEW_HOST` | `127.0.0.1` | 服务绑定地址 |
+| `PEEKVIEW_PORT` | `8080` | 服务端口 |
+| `PEEKVIEW_API_KEY` | `` | API 认证密钥（可选） |
+| `PEEKVIEW_CORS_ORIGINS` | `http://localhost:5173` | CORS 允许来源 |
 
 ### 配置文件
 
 也可以将配置写入 `.env` 文件：
 
 ```bash
-PEEK_DATA_DIR=/var/peek/data
-PEEK_DB_PATH=/var/peek/peek.db
-PEEK_HOST=0.0.0.0
-PEEK_PORT=8080
-PEEK_API_KEY=your-secret-key
+PEEKVIEW_DATA_DIR=/var/peekview/data
+PEEKVIEW_DB_PATH=/var/peekview/peekview.db
+PEEKVIEW_HOST=0.0.0.0
+PEEKVIEW_PORT=8080
+PEEKVIEW_API_KEY=your-secret-key
 ```
 
 ## 特性

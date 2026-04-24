@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from peek.config import PeekConfig, PeekStorage
-from peek.exceptions import ForbiddenPathError, StorageError
-from peek.storage import (
+from peekview.config import PeekConfig, PeekStorage
+from peekview.exceptions import ForbiddenPathError, StorageError
+from peekview.storage import (
     compute_sha256,
     delete_entry_files,
     entry_file_exists,

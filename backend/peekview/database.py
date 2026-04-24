@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Engine, event, text
 from sqlmodel import Session, SQLModel, create_engine
 
-from peek.models import Entry, File
+from peekview.models import Entry, File
 
 if TYPE_CHECKING:
-    from peek.config import PeekConfig
+    from peekview.config import PeekConfig
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,7 @@ def get_engine(config_or_path: "PeekConfig" | Path | str | None = None) -> Engin
         Configured SQLAlchemy Engine
     """
     # Delayed import to avoid circular import
-    from peek.config import PeekConfig
+    from peekview.config import PeekConfig
 
     if isinstance(config_or_path, PeekConfig):
         return init_db(config_or_path.db_path)
@@ -259,7 +259,7 @@ def get_db_stats(engine: Engine) -> dict:
     with Session(engine) as session:
         from sqlalchemy import func
 
-        from peek.models import Entry, File
+        from peekview.models import Entry, File
 
         entry_count = session.exec(
             text("SELECT COUNT(*) FROM entries")

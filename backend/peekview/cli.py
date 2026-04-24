@@ -17,13 +17,13 @@ import click
 from sqlalchemy import select
 from sqlmodel import Session
 
-from peek.config import PeekConfig
-from peek.database import init_db
-from peek.main import create_app
-from peek.models import CreateEntryRequest, EntryCreate
-from peek.services.entry_service import EntryService
-from peek.services.file_service import scan_directory
-from peek.storage import StorageManager
+from peekview.config import PeekConfig
+from peekview.database import init_db
+from peekview.main import create_app
+from peekview.models import CreateEntryRequest, EntryCreate
+from peekview.services.entry_service import EntryService
+from peekview.services.file_service import scan_directory
+from peekview.storage import StorageManager
 
 
 @click.group()

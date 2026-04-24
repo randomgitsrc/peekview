@@ -5,8 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 
-from peek.models import CreateEntryRequest, EntryUpdate
-from peek.services.entry_service import EntryService, get_entry_service
+from peekview.models import CreateEntryRequest, EntryUpdate
+from peekview.services.entry_service import EntryService, get_entry_service
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 

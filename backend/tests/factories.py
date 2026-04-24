@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlmodel import Session
 
-from peek.models import Entry, File
+from peekview.models import Entry, File
 
 
 class EntryFactory:

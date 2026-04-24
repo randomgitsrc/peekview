@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from peek.main import create_app
+from peekview.main import create_app
 
 
 @pytest.fixture(scope="function")

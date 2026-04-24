@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from peek.models import (
+from peekview.models import (
     CreateEntryRequest,
     DirCreate,
     Entry,

@@ -3,12 +3,12 @@
 import pytest
 from sqlmodel import Session, select
 
-from peek.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
-from peek.database import init_db
-from peek.exceptions import InvalidSlugError, NotFoundError, ValidationError
-from peek.models import Entry
-from peek.services.entry_service import EntryService
-from peek.storage import StorageManager
+from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
+from peekview.database import init_db
+from peekview.exceptions import InvalidSlugError, NotFoundError, ValidationError
+from peekview.models import Entry
+from peekview.services.entry_service import EntryService
+from peekview.storage import StorageManager
 
 
 @pytest.fixture
@@ -190,7 +190,7 @@ class TestGetEntryService:
         """get_entry_service() should use app.state services, not create new instances."""
         from fastapi import FastAPI
 
-        from peek.main import create_app
+        from peekview.main import create_app
 
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -198,7 +198,7 @@ class TestGetEntryService:
 
         app = create_app(data_dir=data_dir, db_path=db_path)
 
-        from peek.services.entry_service import get_entry_service
+        from peekview.services.entry_service import get_entry_service
 
         service = get_entry_service(app)
         assert service is not None

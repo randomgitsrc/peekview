@@ -9,9 +9,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from peek.config import PeekConfig
-from peek.database import init_db
-from peek.exceptions import PeekError
+from peekview.config import PeekConfig
+from peekview.database import init_db
+from peekview.exceptions import PeekError
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +121,8 @@ def create_app(
         return response
 
     # Register API routes
-    from peek.api.entries import router as entries_router
-    from peek.api.files import router as files_router
+    from peekview.api.entries import router as entries_router
+    from peekview.api.files import router as files_router
     app.include_router(entries_router)
     app.include_router(files_router)
 

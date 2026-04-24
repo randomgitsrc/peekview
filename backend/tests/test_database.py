@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import Engine, text
 from sqlmodel import Session, SQLModel, select
 
-from peek.database import (
+from peekview.database import (
     close_engine,
     get_db_stats,
     get_engine,
@@ -16,7 +16,7 @@ from peek.database import (
     search_entries,
     setup_fts5,
 )
-from peek.models import Entry, File
+from peekview.models import Entry, File
 
 
 class TestInitDb:

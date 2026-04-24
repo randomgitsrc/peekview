@@ -13,9 +13,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from peek.config import PeekConfig
-from peek.exceptions import ForbiddenPathError, StorageError
-from peek.models import Entry
+from peekview.config import PeekConfig
+from peekview.exceptions import ForbiddenPathError, StorageError
+from peekview.models import Entry
 
 logger = logging.getLogger(__name__)
 

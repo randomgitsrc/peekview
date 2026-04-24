@@ -2,7 +2,7 @@
 
 import pytest
 
-from peek.exceptions import (
+from peekview.exceptions import (
     ConflictError,
     DatabaseError,
     FileNotFoundError,

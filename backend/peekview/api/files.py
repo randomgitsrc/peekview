@@ -8,10 +8,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 from sqlmodel import Session, select
 
-from peek.database import get_engine
-from peek.exceptions import NotFoundError
-from peek.models import Entry, File
-from peek.storage import StorageManager
+from peekview.database import get_engine
+from peekview.exceptions import NotFoundError
+from peekview.models import Entry, File
+from peekview.storage import StorageManager
 
 router = APIRouter(prefix="/api/v1/entries", tags=["files"])
 

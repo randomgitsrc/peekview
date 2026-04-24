@@ -12,8 +12,8 @@ from unittest.mock import patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from peek.main import create_app
-from peek.storage import get_disk_path, validate_local_path
+from peekview.main import create_app
+from peekview.storage import get_disk_path, validate_local_path
 
 
 @pytest.fixture(scope="function")
@@ -56,7 +56,7 @@ class TestPathTraversal:
 
     def test_dotdot_traversal_blocked(self, tmp_path):
         """.. sequences should not escape entry directory."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         config = PeekConfig()
         config.storage.data_dir = tmp_path
@@ -67,7 +67,7 @@ class TestPathTraversal:
 
     def test_null_byte_injection_blocked(self, tmp_path):
         """Null bytes in paths should be rejected or sanitized."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         config = PeekConfig()
         config.storage.data_dir = tmp_path
@@ -85,7 +85,7 @@ class TestPathTraversal:
 
     def test_absolute_path_blocked(self, tmp_path):
         """Absolute paths should not escape entry directory."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         config = PeekConfig()
         config.storage.data_dir = tmp_path
@@ -100,8 +100,8 @@ class TestSymlinkAttacks:
 
     def test_symlink_to_disallowed_path_blocked(self, tmp_path):
         """Symlinks pointing outside allowlist should be rejected."""
-        from peek.config import PeekConfig
-        from peek.exceptions import ForbiddenPathError
+        from peekview.config import PeekConfig
+        from peekview.exceptions import ForbiddenPathError
 
         config = PeekConfig()
         config.storage.allowed_paths = [tmp_path]
@@ -126,8 +126,8 @@ class TestSymlinkAttacks:
 
     def test_symlink_in_chain_blocked(self, tmp_path):
         """Direct symlinks in path should be blocked (parent dir symlinks may vary by platform)."""
-        from peek.config import PeekConfig
-        from peek.exceptions import ForbiddenPathError
+        from peekview.config import PeekConfig
+        from peekview.exceptions import ForbiddenPathError
 
         config = PeekConfig()
         config.storage.allowed_paths = [tmp_path]
@@ -287,7 +287,7 @@ class TestFileUploadAbuse:
     @pytest.mark.asyncio
     async def test_oversized_file_rejected(self, client):
         """Files exceeding max size should be rejected."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         # Get the configured limit
         config = PeekConfig()
@@ -307,7 +307,7 @@ class TestFileUploadAbuse:
     @pytest.mark.asyncio
     async def test_too_many_files_rejected(self, client):
         """More files than max_entry_files should be rejected."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         config = PeekConfig()
         max_files = config.limits.max_entry_files
@@ -326,7 +326,7 @@ class TestFileUploadAbuse:
     @pytest.mark.asyncio
     async def test_total_entry_size_rejected(self, client):
         """Total entry size exceeding max should be rejected."""
-        from peek.config import PeekConfig
+        from peekview.config import PeekConfig
 
         config = PeekConfig()
         max_entry_size = config.limits.max_entry_size
