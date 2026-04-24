@@ -6,6 +6,20 @@
       </router-link>
       <h2>{{ entry?.summary }}</h2>
       <div class="header-actions">
+        <button
+          v-if="activeFile && !activeFile.is_binary"
+          class="header-btn"
+          @click="copyContent"
+        >
+          {{ copied ? 'Copied!' : 'Copy' }}
+        </button>
+        <button
+          v-if="activeFile"
+          class="header-btn"
+          @click="downloadFile"
+        >
+          Download
+        </button>
         <ThemeToggle />
       </div>
     </header>
@@ -192,6 +206,7 @@ const fileDrawerOpen = ref(false)
 const tocDrawerOpen = ref(false)
 const activeHeading = ref<string | null>(null)
 const markdownHeadings = ref<TocHeading[]>([])
+const copied = ref(false)
 
 const isMarkdown = computed(() => activeFile.value?.language === 'markdown')
 
@@ -300,6 +315,17 @@ function downloadFile() {
   a.click()
 }
 
+async function copyContent() {
+  if (!fileContent.value) return
+  try {
+    await navigator.clipboard.writeText(fileContent.value)
+    copied.value = true
+    setTimeout(() => copied.value = false, 2000)
+  } catch {
+    // Clipboard API not available
+  }
+}
+
 function scrollToHeading(headingId: string) {
   const element = document.getElementById(headingId)
   if (element) {
@@ -364,6 +390,21 @@ onMounted(doFetchEntry)
 .header-actions {
   display: flex;
   gap: var(--space-2);
+  align-items: center;
+}
+
+.header-btn {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+
+.header-btn:hover {
+  background: var(--bg-tertiary);
 }
 
 /* Entry content layout */

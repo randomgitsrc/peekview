@@ -16,11 +16,31 @@
 
 ---
 
-## 当前活跃任务
+### Task 18: 修复前端桌面端显示问题
 
-> 最后更新：2026-04-24
+**状态**: ✅ 已完成  
+**完成日期**: 2026-04-24  
+**版本**: v0.1.4 (待发布)
 
-### Task 17: 修复生成的URL链接错误
+**问题描述**:
+1. Markdown 标题显示 `#` 符号（anchor permalink）
+2. 页面无法滚动（App.vue 设置 `height: 100vh`）
+3. 代码高亮样式可能不正确
+4. 桌面端详情页缺少 Copy/Download 按钮
+
+**修复内容**:
+- [x] MarkdownViewer: 禁用 anchor permalink (`permalink: false`)
+- [x] App.vue: 改为 `min-height: 100vh` 允许滚动
+- [x] CodeViewer: 添加 Shiki CSS 变量支持
+- [x] EntryDetailView: 在 header 添加 Copy/Download 按钮
+- [x] 添加测试：VED9 Copy/Download 按钮显示测试
+
+**测试状态**:
+- [x] 前端测试：100 passed
+- [x] 后端测试：292 passed, 2 skipped
+- [x] 构建成功
+
+---
 
 **状态**: ✅ 已完成  
 **完成日期**: 2026-04-24  

@@ -211,10 +211,23 @@ async function copyCode() {
   overflow-x: auto;
   font-size: var(--font-sm);
   line-height: var(--line-height-code);
+  background: var(--shiki-color-background, var(--bg-secondary));
 }
 
 .code-content :deep(pre) {
   margin: 0;
+  background: transparent !important;
+}
+
+.code-content :deep(code) {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  font-size: var(--font-sm);
+  line-height: var(--line-height-code);
+}
+
+/* Ensure Shiki tokens use CSS variables */
+.code-content :deep(.shiki) {
+  background: transparent !important;
 }
 
 /* Shiki line numbers - make them non-selectable */

@@ -279,4 +279,52 @@ describe('EntryDetailView', () => {
       expect(mockReplace).toHaveBeenCalled()
     }
   })
+
+  it('VED9: shows Copy and Download buttons for text files', async () => {
+    mockEntry.value = {
+      id: 1,
+      slug: 'test-entry',
+      summary: 'Test Entry',
+      tags: [],
+      status: 'active',
+      files: [
+        { id: 1, path: null, filename: 'main.py', language: 'python', is_binary: false, size: 100, line_count: 20, content: 'print("hello")' },
+      ],
+      created_at: '2026-04-23T00:00:00Z',
+      updated_at: '2026-04-23T00:00:00Z',
+    }
+
+    const wrapper = mount(EntryDetailView, mountOptions)
+    await flushPromises()
+
+    const buttons = wrapper.findAll('.header-btn')
+    const buttonTexts = buttons.map(b => b.text())
+
+    expect(buttonTexts).toContain('Copy')
+    expect(buttonTexts).toContain('Download')
+  })
+
+  it('VED9: hides Copy button for binary files', async () => {
+    mockEntry.value = {
+      id: 1,
+      slug: 'test-entry',
+      summary: 'Test Entry',
+      tags: [],
+      status: 'active',
+      files: [
+        { id: 1, path: null, filename: 'data.bin', language: null, is_binary: true, size: 1024, line_count: null },
+      ],
+      created_at: '2026-04-23T00:00:00Z',
+      updated_at: '2026-04-23T00:00:00Z',
+    }
+
+    const wrapper = mount(EntryDetailView, mountOptions)
+    await flushPromises()
+
+    const buttons = wrapper.findAll('.header-btn')
+    const buttonTexts = buttons.map(b => b.text())
+
+    expect(buttonTexts).not.toContain('Copy')
+    expect(buttonTexts).toContain('Download')
+  })
 })

@@ -32,10 +32,7 @@ const md = new MarkdownIt({
 
 // Add anchor plugin for heading IDs (required for TOC linking)
 md.use(anchor, {
-  permalink: anchor.permalink.linkInsideHeader({
-    symbol: '#',
-    placement: 'before',
-  }),
+  permalink: false,  // Disable visible permalink symbols
   slugify: (s: string) =>
     s
       .toLowerCase()
