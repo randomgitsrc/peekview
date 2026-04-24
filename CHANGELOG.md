@@ -14,6 +14,13 @@
   - 修复：移除 `build_view_url` 中的 `/view/` 前缀，与前端路由保持一致
   - 影响文件：`backend/peekview/config.py`, `backend/tests/test_config.py`, `backend/tests/test_entry_service.py`, `backend/tests/test_api.py`
 
+- 修复前端桌面端显示问题 (Task 18)
+  - Markdown 标题显示 `#` 符号：禁用 anchor permalink
+  - 页面无法滚动：`height: 100vh` → `min-height: 100vh`
+  - 代码高亮样式：添加 Shiki CSS 变量支持
+  - 桌面端缺少按钮：在详情页 header 添加 Copy/Download 按钮
+  - 新增测试：EntryDetailView Copy/Download 按钮显示测试
+
 ## [0.1.3] - 2026-04-24
 
 ### 新增

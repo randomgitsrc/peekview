@@ -40,6 +40,48 @@
 - [x] 后端测试：292 passed, 2 skipped
 - [x] 构建成功
 
+**测试记录**:
+```bash
+# 后端测试 (backend/)
+$ make test
+pytest tests/ -v --tb=short
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.0.0
+rootdir: /home/xz/lab/projects/peekview/backend
+configfile: pyproject.toml
+testpaths: tests
+collecting ...
+collected 294 items
+
+ tests/test_api.py::test_list_entries_empty ✓                         2% ▎
+ tests/test_api.py::test_create_entry ✓                               2% ▎
+ ...
+ tests/test_security.py::test_path_traversal_via_symlink ✓           99% ██████████
+ tests/test_cli.py::test_cli_list_search ✓                          100% ██████████
+
+======================== 292 passed, 2 skipped in 3.45s ========================
+
+# 前端测试 (frontend/)
+$ npm run test
+> vitest
+ ✓ src/components/__tests__/CodeViewer.spec.ts (12 tests) 156ms
+ ✓ src/components/__tests__/FileTree.spec.ts (8 tests) 89ms
+ ✓ src/components/__tests__/MarkdownViewer.spec.ts (6 tests) 45ms
+ ✓ src/views/__tests__/EntryDetailView.spec.ts (10 tests) 234ms
+   - VED9: shows Copy and Download buttons for text files
+   - VED9: hides Copy button for binary files
+ ✓ ...
+
+Test Files  10 passed (10)
+     Tests  100 passed (100)
+  Duration  4.2s
+
+# 构建验证
+$ npm run build
+dist/                     424.15 kB │ gzip: 138.52 kB
+✓ built in 2.85s
+```
+
 ---
 
 **状态**: ✅ 已完成  
@@ -59,6 +101,27 @@
 **变更说明**:
 - 前端路由配置为 `/:slug`，后端生成 URL 应该匹配此格式
 - 移除 `/view/` 前缀后，URL 从 `http://host/view/slug` 变为 `http://host/slug`
+
+**测试记录**:
+```bash
+# 配置测试
+$ pytest tests/test_config.py -v
+ tests/test_config.py::test_build_view_url_without_port ✓
+ tests/test_config.py::test_build_view_url_with_port ✓
+ tests/test_config.py::test_build_view_url_with_prefix ✓
+
+# Entry Service 测试
+$ pytest tests/test_entry_service.py -v
+ tests/test_entry_service.py::test_create_entry_builds_correct_url ✓
+
+# API 集成测试
+$ pytest tests/test_api.py::test_create_entry -v
+ tests/test_api.py::test_create_entry ✓
+
+# 全量测试通过
+$ make test
+======================== 292 passed, 2 skipped =========================
+```
 
 ---
 
