@@ -36,7 +36,7 @@ async def client():
 @pytest.fixture(scope="function")
 async def auth_client(monkeypatch):
     """Client with API key authentication enabled."""
-    monkeypatch.setenv("PEEK_SERVER__API_KEY", "test-secret-key")
+    monkeypatch.setenv("PEEKVIEW_SERVER__API_KEY", "test-secret-key")
     tmp_dir = Path(tempfile.mkdtemp())
     try:
         data_dir = tmp_dir / "data"

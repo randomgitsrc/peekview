@@ -1,6 +1,6 @@
-"""CLI tests for Peek.
+"""CLI tests for PeekView.
 
-Tests for the peek CLI commands including:
+Tests for the peekview CLI commands including:
 - serve (mocked)
 - create
 - get
@@ -39,8 +39,8 @@ class TestCliBasics:
         """CLI should report version."""
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "peek" in result.output.lower()
-        assert "0.1.0" in result.output
+        assert "peekview" in result.output.lower()
+        assert "0.1." in result.output
 
     def test_cli_help(self, runner):
         """CLI help should list all commands."""
@@ -54,7 +54,7 @@ class TestCliBasics:
 
 
 class TestServeCommand:
-    """Tests for `peek serve` command."""
+    """Tests for `peekview serve` command."""
 
     @patch("uvicorn.run")
     def test_serve_basic(self, mock_uvicorn, runner):
@@ -81,7 +81,7 @@ class TestServeCommand:
 
 
 class TestCreateCommand:
-    """Tests for `peek create` command."""
+    """Tests for `peekview create` command."""
 
     def test_create_requires_summary(self, runner):
         """Create without summary should fail."""
@@ -213,7 +213,7 @@ class TestCreateCommand:
 
 
 class TestGetCommand:
-    """Tests for `peek get` command."""
+    """Tests for `peekview get` command."""
 
     def test_get_nonexistent_entry(self, runner, isolated_fs):
         """Get non-existent entry should fail."""
@@ -255,7 +255,7 @@ class TestGetCommand:
 
 
 class TestListCommand:
-    """Tests for `peek list` command."""
+    """Tests for `peekview list` command."""
 
     def test_list_empty(self, runner, isolated_fs):
         """List with no entries."""
@@ -315,7 +315,7 @@ class TestListCommand:
 
 
 class TestDeleteCommand:
-    """Tests for `peek delete` command."""
+    """Tests for `peekview delete` command."""
 
     def test_delete_nonexistent_entry(self, runner, isolated_fs):
         """Delete non-existent entry should fail."""

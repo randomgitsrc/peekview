@@ -1,11 +1,11 @@
-"""CLI commands for Peek.
+"""CLI commands for PeekView.
 
 Provides command-line interface for:
-- Starting the server (`peek serve`)
-- Creating entries (`peek create`)
-- Getting entries (`peek get`)
-- Listing entries (`peek list`)
-- Deleting entries (`peek delete`)
+- Starting the server (`peekview serve`)
+- Creating entries (`peekview create`)
+- Getting entries (`peekview get`)
+- Listing entries (`peekview list`)
+- Deleting entries (`peekview delete`)
 """
 
 import json

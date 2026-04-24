@@ -49,14 +49,14 @@ class TestPeekStorage:
     def test_default_paths(self):
         """Default paths use home directory."""
         storage = PeekStorage()
-        assert storage.data_dir == Path.home() / ".peek" / "data"
-        assert storage.db_path == Path.home() / ".peek" / "peek.db"
+        assert storage.data_dir == Path.home() / ".peekview" / "data"
+        assert storage.db_path == Path.home() / ".peekview" / "peekview.db"
 
     def test_path_expansion(self):
         """Tilde expansion works in paths."""
-        storage = PeekStorage(data_dir="~/custom/data", db_path="~/custom/peek.db")
+        storage = PeekStorage(data_dir="~/custom/data", db_path="~/custom/peekview.db")
         assert storage.data_dir == Path.home() / "custom" / "data"
-        assert storage.db_path == Path.home() / "custom" / "peek.db"
+        assert storage.db_path == Path.home() / "custom" / "peekview.db"
 
     def test_ignored_dirs(self):
         """Default ignored directories."""
@@ -117,8 +117,8 @@ class TestPeekConfig:
 
     def test_build_view_url_custom(self):
         """Build view URL with custom base."""
-        config = PeekConfig(server=PeekServer(base_url="https://peek.example.com"))
-        assert config.build_view_url("test-slug") == "https://peek.example.com/view/test-slug"
+        config = PeekConfig(server=PeekServer(base_url="https://peekview.example.com"))
+        assert config.build_view_url("test-slug") == "https://peekview.example.com/view/test-slug"
 
     def test_ensure_directories(self, tmp_path):
         """Ensure directories creates paths."""
@@ -131,26 +131,26 @@ class TestEnvironmentVariables:
     """Test configuration via environment variables."""
 
     def test_server_host_env(self, monkeypatch):
-        """PEEK_SERVER__HOST sets host."""
-        monkeypatch.setenv("PEEK_SERVER__HOST", "0.0.0.0")
+        """PEEKVIEW_SERVER__HOST sets host."""
+        monkeypatch.setenv("PEEKVIEW_SERVER__HOST", "0.0.0.0")
         config = PeekConfig()
         assert config.server.host == "0.0.0.0"
 
     def test_server_port_env(self, monkeypatch):
-        """PEEK_SERVER__PORT sets port."""
-        monkeypatch.setenv("PEEK_SERVER__PORT", "3000")
+        """PEEKVIEW_SERVER__PORT sets port."""
+        monkeypatch.setenv("PEEKVIEW_SERVER__PORT", "3000")
         config = PeekConfig()
         assert config.server.port == 3000
 
     def test_limits_max_file_size_env(self, monkeypatch):
-        """PEEK_LIMITS__MAX_FILE_SIZE sets limit."""
-        monkeypatch.setenv("PEEK_LIMITS__MAX_FILE_SIZE", "20971520")
+        """PEEKVIEW_LIMITS__MAX_FILE_SIZE sets limit."""
+        monkeypatch.setenv("PEEKVIEW_LIMITS__MAX_FILE_SIZE", "20971520")
         config = PeekConfig()
         assert config.limits.max_file_size == 20971520
 
     def test_api_key_env(self, monkeypatch):
-        """PEEK_SERVER__API_KEY sets auth key."""
-        monkeypatch.setenv("PEEK_SERVER__API_KEY", "secret123")
+        """PEEKVIEW_SERVER__API_KEY sets auth key."""
+        monkeypatch.setenv("PEEKVIEW_SERVER__API_KEY", "secret123")
         config = PeekConfig()
         assert config.server.api_key == "secret123"
 
