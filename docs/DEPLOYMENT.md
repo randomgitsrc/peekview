@@ -36,8 +36,8 @@ pip install peekview
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/randomgitsrc/peek.git
-cd peek/backend
+git clone https://github.com/randomgitsrc/peekview.git
+cd peekview/backend
 
 # 2. 创建虚拟环境（推荐）
 python3 -m venv venv
@@ -456,4 +456,4 @@ cp -r /backup/peek-backup-xxx ~/.peekview
 
 - **CLI 帮助**: `peek --help` 或 `peek <command> --help`
 - **API 文档**: 启动服务后访问 `http://localhost:8080/docs`
-- **项目主页**: https://github.com/randomgitsrc/peek
+- **项目主页**: https://github.com/randomgitsrc/peekview

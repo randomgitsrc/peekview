@@ -49,8 +49,8 @@ dev = [
 peekview = "peekview.cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/randomgitsrc/peek"
-Repository = "https://github.com/randomgitsrc/peek"
+Homepage = "https://github.com/randomgitsrc/peekview"
+Repository = "https://github.com/randomgitsrc/peekview"
 
 [tool.hatch.build.targets.wheel]
 packages = ["peekview"]

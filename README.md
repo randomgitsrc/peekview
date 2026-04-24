@@ -21,8 +21,8 @@ pip install peekview
 或从源码安装：
 
 ```bash
-git clone https://github.com/randomgitsrc/peek.git
-cd peek/backend
+git clone https://github.com/randomgitsrc/peekview.git
+cd peekview/backend
 pip install -e .
 ```
 

@@ -116,8 +116,8 @@ PEEKVIEW_API_KEY=your-secret-key
 
 ```bash
 # 克隆仓库
-git clone https://github.com/randomgitsrc/peek.git
-cd peek/backend
+git clone https://github.com/randomgitsrc/peekview.git
+cd peekview/backend
 
 # 安装开发依赖
 pip install -e ".[test,dev]"
