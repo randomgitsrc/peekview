@@ -1,0 +1,102 @@
+/* GitHub-style Code Viewer */
+.code-viewer {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-code);
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-sm);
+}
+
+.code-header .filename {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.code-header .lang {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-size: var(--font-xs);
+}
+
+.code-header .actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.code-body {
+  overflow-x: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.code-body :deep(pre) {
+  margin: 0;
+  padding: var(--space-4);
+  background: transparent !important;
+  overflow-x: auto;
+}
+
+.code-body :deep(code) {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.code-body :deep(.line) {
+  display: block;
+  padding: 0 var(--space-3);
+}
+
+.code-body :deep(.line:target) {
+  background: var(--accent-light);
+}
+
+.code-body.wrap-enabled :deep(pre) {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.code-body pre {
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--bg-code);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.code-loading {
+  padding: var(--space-4);
+}
+
+.code-skeleton {
+  display: flex;
+  gap: var(--space-3);
+  padding: 2px 0;
+}
+
+.skeleton-line-number {
+  width: 30px;
+  height: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.skeleton-line-content {
+  flex: 1;
+  height: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  max-width: 60%;
+}
