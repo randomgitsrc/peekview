@@ -11,9 +11,18 @@ const isReady = ref(false)
 
 export function useTheme() {
   onMounted(() => {
-    // Read from DOM (set by inline script in index.html)
-    const current = document.documentElement.getAttribute('data-theme') as Theme
-    theme.value = current || 'dark'
+    // Read from localStorage first (THEME-04: Theme persists)
+    const saved = localStorage.getItem(STORAGE_KEY) as Theme | null
+    if (saved) {
+      theme.value = saved
+      document.documentElement.setAttribute('data-theme', saved)
+    } else {
+      // Fall back to DOM attribute
+      const current = document.documentElement.getAttribute('data-theme') as Theme
+      theme.value = current || 'dark'
+      // Save default to localStorage
+      localStorage.setItem(STORAGE_KEY, theme.value)
+    }
     isReady.value = true
   })
 

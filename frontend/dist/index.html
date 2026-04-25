@@ -8,8 +8,8 @@
     <script>
       (function() {
         const saved = localStorage.getItem('peek-theme')
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        const theme = saved || (prefersDark ? 'dark' : 'light')
+        // STYLE-C-03: Default to dark theme
+        const theme = saved || 'dark'
         document.documentElement.setAttribute('data-theme', theme)
       })()
     </script>
@@ -17,8 +17,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-DLla2eBm.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-uvvywSoK.css">
+    <script type="module" crossorigin src="/assets/index-BDwJCDOj.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CD3TH74G.css">
   </head>
   <body>
     <div id="app"></div>

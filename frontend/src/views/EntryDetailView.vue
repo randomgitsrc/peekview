@@ -11,6 +11,7 @@
           class="header-btn"
           @click="copyContent"
         >
+          <Icon :icon="copied ? 'codicon:check' : 'codicon:copy'" class="btn-icon" />
           {{ copied ? 'Copied!' : 'Copy' }}
         </button>
         <button
@@ -18,7 +19,18 @@
           class="header-btn"
           @click="downloadFile"
         >
+          <Icon icon="codicon:download" class="btn-icon" />
           Download
+        </button>
+        <button
+          v-if="activeFile && !activeFile.is_binary && !isMarkdown"
+          class="header-btn"
+          :class="{ active: wrapCode }"
+          @click="wrapCode = !wrapCode"
+          title="Toggle word wrap"
+        >
+          <Icon :icon="wrapCode ? 'codicon:word-wrap' : 'codicon:debug-continue'" class="btn-icon" />
+          Wrap
         </button>
         <ThemeToggle />
       </div>
@@ -88,6 +100,7 @@
           :filename="activeFile.filename"
           :language="activeFile.language"
           :line-count="activeFile.line_count"
+          :wrap="wrapCode"
         />
 
         <!-- Markdown viewer (without internal TOC) -->
@@ -185,6 +198,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { api } from '../api/client'
 import { useEntry } from '../composables/useEntry'
+import { useToast } from '../composables/useToast'
 import FileTree from '../components/FileTree.vue'
 import CodeViewer from '../components/CodeViewer.vue'
 import MarkdownViewer from '../components/MarkdownViewer.vue'
@@ -197,6 +211,7 @@ import type { FileResponse, TocHeading } from '../types'
 const route = useRoute()
 const router = useRouter()
 const { entry, loading, error, errorCode, fetchEntry, clearCache } = useEntry()
+const { success: showSuccess } = useToast() // INTER-T-04: Toast for copy success
 
 const activeFile = ref<FileResponse | null>(null)
 const fileContent = ref('')
@@ -207,6 +222,7 @@ const tocDrawerOpen = ref(false)
 const activeHeading = ref<string | null>(null)
 const markdownHeadings = ref<TocHeading[]>([])
 const copied = ref(false)
+const wrapCode = ref(false) // WRAP-01: Wrap button state
 
 const isMarkdown = computed(() => activeFile.value?.language === 'markdown')
 
@@ -320,6 +336,7 @@ async function copyContent() {
   try {
     await navigator.clipboard.writeText(fileContent.value)
     copied.value = true
+    showSuccess('Copied to clipboard!') // INTER-T-04: Toast feedback
     setTimeout(() => copied.value = false, 2000)
   } catch {
     // Clipboard API not available
@@ -366,6 +383,11 @@ onMounted(doFetchEntry)
   align-items: center;
   gap: var(--space-4);
   margin-bottom: var(--space-5);
+  height: 56px; /* STYLE-S-04: Header height 56px */
+  position: sticky; /* RESP-D-01: Header fixed */
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
 }
 
 .back-link {
@@ -394,6 +416,9 @@ onMounted(doFetchEntry)
 }
 
 .header-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -401,16 +426,29 @@ onMounted(doFetchEntry)
   color: var(--text-primary);
   font-size: var(--font-sm);
   cursor: pointer;
+  transition: all 0.15s ease; /* INTER-C-03: Click transition */
 }
 
 .header-btn:hover {
   background: var(--bg-tertiary);
+  transform: translateY(-1px); /* INTER-H-02: Button hover translateY */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* STYLE-SH-01: Button shadow */
+}
+
+.header-btn.active {
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-icon {
+  font-size: 16px;
 }
 
 /* Entry content layout */
 .entry-content {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 240px 1fr 200px; /* RESP-D-02: Adjust ratio (240:1fr:200 vs ~440 content) */
   gap: 0;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -439,6 +477,8 @@ onMounted(doFetchEntry)
   min-width: 0;
   overflow: auto;
   background: var(--bg-primary);
+  flex: 1 1 auto; /* RESP-D-04: Content adaptive */
+  min-height: 0; /* Allow flex shrinking */
 }
 
 /* Right sidebar - TOC */
@@ -719,11 +759,17 @@ onMounted(doFetchEntry)
 @media (max-width: 768px) {
   .entry-detail-view {
     padding: var(--space-3);
-    padding-bottom: 72px; /* Space for bottom bar */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)); /* RESP-M-04/05: iOS safe area + bottom padding */
+    max-width: 100%; /* RESP-M-01: Full width on mobile */
+    width: 100%;
+    margin: 0;
   }
 
   .detail-header {
     flex-wrap: wrap;
+    height: auto; /* Allow auto height on mobile */
+    min-height: 56px;
+    position: relative; /* Disable sticky on mobile */
   }
 
   .detail-header h2 {
@@ -733,11 +779,17 @@ onMounted(doFetchEntry)
     font-size: var(--font-md);
   }
 
+  .header-btn {
+    min-width: 44px; /* RESP-M-11: Touch target size */
+    min-height: 44px;
+  }
+
   .entry-content {
     display: flex;
     flex-direction: column;
     border: none;
     background: transparent;
+    max-height: none; /* Allow natural height on mobile */
   }
 
   /* Hide desktop sidebars on mobile (replaced by drawers) */
@@ -750,6 +802,7 @@ onMounted(doFetchEntry)
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     min-height: 300px;
+    max-height: calc(100vh - 200px); /* Allow scrolling on mobile */
   }
 }
 </style>

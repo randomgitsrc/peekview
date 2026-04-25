@@ -65,6 +65,7 @@ function onSelect(file: FileResponse) {
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-drawer); /* STYLE-SH-03: Drawer shadow */
 }
 
 .drawer-header {
@@ -105,7 +106,7 @@ function onSelect(file: FileResponse) {
 
 .drawer-enter-active,
 .drawer-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease; /* INTER-A-03: Drawer animation 200ms */
 }
 
 .drawer-enter-from,
@@ -115,7 +116,7 @@ function onSelect(file: FileResponse) {
 
 .drawer-enter-active .mobile-drawer,
 .drawer-leave-active .mobile-drawer {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease; /* INTER-A-03: Drawer animation 200ms */
 }
 
 .drawer-enter-from .mobile-drawer,
