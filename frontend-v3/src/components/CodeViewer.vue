@@ -50,7 +50,7 @@ const props = defineProps<{
   loading?: boolean
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   'toggle-wrap': []
 }>()
 
@@ -74,7 +74,7 @@ async function doHighlight() {
     highlightedCode.value = await highlight(
       props.content,
       language.value,
-      theme.value
+      theme.value === 'dark' ? 'github-dark' : 'github-light'
     )
   } catch (err) {
     console.error('Highlight error:', err)

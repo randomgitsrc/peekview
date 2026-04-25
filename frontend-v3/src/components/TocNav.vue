@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import type { TocHeading } from '@/types'
 
-const props = defineProps<{
+defineProps<{
   headings: TocHeading[]
   activeId: string | null
 }>()
