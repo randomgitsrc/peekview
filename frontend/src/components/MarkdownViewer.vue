@@ -154,6 +154,8 @@ onMounted(() => {
   padding: var(--space-4);
   line-height: var(--line-height-prose);
   color: var(--text-primary);
+  overflow: auto; /* Enable vertical scrolling */
+  max-height: calc(100vh - 200px);
   overflow-wrap: break-word;
   word-wrap: break-word;
   hyphens: auto;

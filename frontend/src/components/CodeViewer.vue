@@ -133,6 +133,9 @@ async function copyCode() {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
 }
 
 .code-header {
@@ -208,10 +211,11 @@ async function copyCode() {
 /* Code content */
 .code-content {
   padding: var(--space-3);
-  overflow-x: auto;
+  overflow: auto; /* Enable both horizontal and vertical scroll */
   font-size: var(--font-sm);
   line-height: var(--line-height-code);
   background: var(--shiki-color-background, var(--bg-secondary));
+  flex: 1;
 }
 
 .code-content :deep(pre) {
@@ -264,6 +268,9 @@ async function copyCode() {
   user-select: none; /* Line numbers are not selectable */
   -webkit-user-select: none;
   flex-shrink: 0;
+  position: sticky; /* Keep line numbers visible during scroll */
+  left: 0;
+  background: inherit;
 }
 
 .line-content {

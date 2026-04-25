@@ -416,6 +416,7 @@ onMounted(doFetchEntry)
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 400px;
+  max-height: calc(100vh - 150px);
 }
 
 /* Left sidebar - File Tree */

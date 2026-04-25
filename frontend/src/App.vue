@@ -15,5 +15,6 @@
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-y: auto; /* Enable page scrolling */
 }
 </style>
