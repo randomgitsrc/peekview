@@ -7,6 +7,7 @@ import './styles/variables.css'
 import './styles/dark.css'
 import './styles/light.css'
 import './styles/components.css'
+import './styles/markdown.css'
 
 const router = createRouter({
   history: createWebHistory(),

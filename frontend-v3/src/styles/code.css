@@ -1,0 +1,150 @@
+/* GitHub-style Code Viewer */
+.code-viewer {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-code);
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-sm);
+}
+
+.code-header .filename {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.code-header .lang {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-size: var(--font-xs);
+}
+
+.code-header .actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.code-body {
+  overflow-x: auto;
+  max-height: calc(100vh - 200px);
+}
+
+/* Code container with line numbers - using table for perfect alignment */
+.code-body :deep(.code-container) {
+  display: flex;
+  background: var(--bg-code);
+}
+
+/* Line numbers column */
+.code-body :deep(.line-numbers) {
+  flex-shrink: 0;
+  padding: var(--space-4) 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  text-align: right;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.code-body :deep(.line-number) {
+  display: block;
+  padding: 0 var(--space-3);
+  color: var(--text-tertiary);
+  min-width: 3ch;
+  height: 1.6em;
+}
+
+/* Code content */
+.code-body :deep(pre) {
+  flex: 1;
+  margin: 0;
+  padding: var(--space-4);
+  background: transparent !important;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.code-body :deep(code) {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+}
+
+.code-body :deep(.line) {
+  display: block;
+  height: 1.6em;
+}
+
+.code-body :deep(.line:target) {
+  background: var(--accent-light);
+}
+
+/* Wrap mode */
+.code-body.wrap-enabled :deep(pre) {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.code-body.wrap-enabled :deep(.line) {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  height: auto;
+  min-height: 1.6em;
+}
+
+.code-body.wrap-enabled :deep(.line-number) {
+  height: auto;
+  min-height: 1.6em;
+}
+
+/* Fallback styles */
+.code-body pre {
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--bg-code);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.code-loading {
+  padding: var(--space-4);
+}
+
+.code-skeleton {
+  display: flex;
+  gap: var(--space-3);
+  padding: 2px 0;
+}
+
+.skeleton-line-number {
+  width: 30px;
+  height: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.skeleton-line-content {
+  flex: 1;
+  height: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  max-width: 60%;
+}

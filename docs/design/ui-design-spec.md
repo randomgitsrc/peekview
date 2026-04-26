@@ -510,11 +510,23 @@ xl: 1280px  /* 标准桌面 */
 ## 9. 文件结构
 
 ```
-frontend/src/
+frontend-v3/src/          # Vue 3 + Vite + Shiki SPA (v3 - CURRENT)
 ├── styles/
 │   ├── variables.css      # CSS 变量 (颜色、间距)
 │   ├── dark.css           # 暗色主题
 │   ├── light.css          # 亮色主题
+│   └── code.css           # 代码查看器样式
+├── components/
+│   ├── ui/                # UI 组件
+│   ├── CodeViewer.vue     # 代码查看器
+│   ├── MarkdownViewer.vue # Markdown 渲染
+│   └── FileTree.vue       # 文件树
+├── composables/           # 组合式函数
+├── views/                 # 页面视图
+└── stores/                # Pinia 状态管理
+
+frontend/src/             # [DEPRECATED] 旧前端 - 请勿使用
+```
 │   └── components.css     # 组件基础样式
 ├── components/
 │   ├── ui/                # 基础 UI 组件

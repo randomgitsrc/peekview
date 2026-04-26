@@ -30,7 +30,9 @@ peekview/
 │   │   ├── api/         # FastAPI routes (entries, files)
 │   │   └── services/    # Business logic (entry_service, file_service)
 │   └── tests/           # pytest suite with shared conftest.py fixtures
-└── frontend/            # Vue 3 + Vite + TypeScript + Shiki SPA (Tasks 14-16 complete)
+├── frontend/            # [DEPRECATED] Old frontend - DO NOT USE
+│   └── ...              # Kept for reference only
+└── frontend-v3/         # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
     ├── src/             # TypeScript/Vue source files
     ├── dist/            # Build output (copied to backend/peekview/static/)
     └── e2e/             # Playwright E2E tests
@@ -68,7 +70,7 @@ make clean                 # Remove __pycache__, .pytest_cache, etc.
 
 ## Frontend Commands
 
-From `frontend/` directory:
+From `frontend-v3/` directory:
 
 ```bash
 # Install dependencies
@@ -96,11 +98,11 @@ npm run type-check         # TypeScript check
 # Terminal 1: Backend (from backend/)
 make dev                   # Runs on http://localhost:8080
 
-# Terminal 2: Frontend dev server (from frontend/)
+# Terminal 2: Frontend dev server (from frontend-v3/)
 npm run dev                # Runs on http://localhost:5173
 
 # Build frontend for production (copies to backend/peekview/static/)
-cd frontend && npm run build
+cd frontend-v3 && npm run build
 ```
 
 ## CLI Usage
@@ -141,14 +143,15 @@ peekview delete my-entry          # Delete (with confirmation)
 2. **Local path:** `files[].local_path` - reads from server filesystem (allowlist check)
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
-### Frontend Architecture
-- **Build**: Vite bundles to `frontend/dist/`, which gets copied to `backend/peekview/static/`
-- **Routing**: Vue Router with hash mode (history mode requires server config)
-- **State**: Composables pattern (`useTheme.ts`, `useShiki.ts`, `useEntry.ts`, `useToast.ts`)
+### Frontend Architecture (v3)
+- **Build**: Vite bundles to `frontend-v3/dist/`, which gets copied to `backend/peekview/static/`
+- **Routing**: Vue Router with history mode (clean URLs, no #)
+- **State**: Pinia stores + Composables pattern (`useTheme.ts`, `useShiki.ts`, `useEntry.ts`, `useToast.ts`)
 - **Styling**: CSS variables for theming (variables.css, dark.css, light.css), FOUC prevention
 - **Code highlighting**: Shiki singleton with CSS variables theme
 - **Components**: Recursive FileTree, CodeViewer (line numbers, URL hash), MarkdownViewer (TOC)
 - **Mobile**: Bottom bar with Wrap/Copy/Download/TOC buttons, drawer menus
+- **Old version**: `frontend/` directory is deprecated, kept for reference only
 
 ### DI Pattern
 Services are accessed via `app.state` (not module-level globals or per-request factories):
@@ -233,12 +236,13 @@ When working on backend code:
 5. Update `INDEX.md` status when completing tasks
 
 When working on frontend code:
-1. Check `frontend/prototype/ITERATIONS.md` for design evolution
+1. Check `frontend-v3/prototype/ITERATIONS.md` for design evolution
 2. Follow Vue 3 Composition API patterns with `<script setup>`
 3. Use CSS variables from `variables.css` for theming
-4. Place reusable UI components in `components/ui/`
+4. Place reusable UI components in `components/`
 5. Place composables in `composables/`
 6. Run `npm run build` to update static files in backend
+7. **Note:** Do NOT use `frontend/` directory (deprecated)
 
 When reviewing security:
 - Check `docs/reviews/eng-review.md` for original security findings

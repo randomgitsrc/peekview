@@ -143,9 +143,11 @@ PEEKVIEW_API_KEY=your-secret-key
 | 层级 | 技术 |
 |------|------|
 | 后端 | FastAPI + SQLModel + SQLite (FTS5) |
-| 前端 | Vue 3 + Vite + TypeScript + Shiki |
+| 前端 | Vue 3 + Vite + TypeScript + Shiki (**frontend-v3/**) |
 | CLI | Click + Rich |
 | 测试 | pytest + Vitest + Playwright |
+
+**注意：** `frontend/` 目录为旧版本，已弃用。当前使用 `frontend-v3/`。
 
 ---
 

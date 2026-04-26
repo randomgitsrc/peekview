@@ -1,11 +1,12 @@
 <template>
   <div class="app">
     <router-view />
+    <Toast />
   </div>
 </template>
 
 <script setup lang="ts">
-// App root
+import Toast from './components/ui/Toast.vue'
 </script>
 
 <style scoped>
@@ -15,5 +16,6 @@
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-y: auto; /* Enable page scrolling */
 }
 </style>

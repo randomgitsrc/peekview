@@ -35,6 +35,12 @@ body {
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  box-shadow: var(--shadow-sm); /* STYLE-SH-01: Button shadow */
+}
+
+.btn:hover {
+  transform: translateY(-1px); /* INTER-H-02: Button hover translateY */
+  box-shadow: var(--shadow-md);
 }
 
 .btn:focus-visible {
@@ -43,7 +49,7 @@ body {
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: scale(0.96); /* INTER-C-07: Click ripple effect alternative */
 }
 
 /* Button Variants */
@@ -128,6 +134,26 @@ body {
 ::selection {
   background: var(--accent-light);
   color: var(--text-primary);
+}
+
+/* Link Hover Effect - INTER-H-04 */
+a {
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-color);
+}
+
+/* Code Line Hover - INTER-H-06 */
+.code-line:hover,
+.line:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Smooth Scrolling - SCROLL-MOBILE-03 */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Reduced Motion */

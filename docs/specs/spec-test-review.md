@@ -469,7 +469,7 @@ backend/tests/
 ├── test_mcp.py             # MCP 基础测试 [新增]
 └── factories.py            # 测试数据工厂 [新增]
 
-frontend/src/
+frontend-v3/src/
 ├── __tests__/
 │   ├── composables/
 │   │   ├── useTheme.spec.ts    # [新增]

@@ -132,6 +132,7 @@ class FileBase(SQLModel):
     is_binary: bool = Field(default=False)
     size: int = Field(..., ge=0)
     sha256: str | None = Field(default=None, max_length=64)
+    line_count: int | None = Field(default=None, ge=0)
 
 
 class File(FileBase, table=True):
@@ -257,6 +258,10 @@ class FileResponse(SQLModel):
     language: str | None
     is_binary: bool
     size: int
+    line_count: int | None = Field(
+        default=None,
+        description="Number of lines (for text files)",
+    )
 
 
 class EntryResponse(SQLModel):

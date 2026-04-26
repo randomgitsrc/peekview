@@ -147,11 +147,11 @@ cat > docs/process/checkpoints/P1-T{task-id}/manual-checklist.md << 'EOF'
 EOF
 
 # 4. 实现单元测试（先提交，此时应失败）
-# 编辑 frontend/src/__tests__/Xxx.spec.ts 或 backend/tests/test_xxx.py
+# 编辑 frontend-v3/src/__tests__/Xxx.spec.ts 或 backend/tests/test_xxx.py
 
 # 5. 提交测试代码（失败状态是正常的！）
 git add docs/process/checkpoints/P1-T{task-id}/
-git add frontend/src/__tests__/Xxx.spec.ts  # 或后端测试
+git add frontend-v3/src/__tests__/Xxx.spec.ts  # 或后端测试
 git commit -m "[Task X][P1] 测试用例设计
 
 - test-cases.md: 5项测试用例
@@ -170,7 +170,7 @@ git push origin main
 
 # 2. 每个问题独立提交
 # 问题1修复:
-git add frontend/src/components/Xxx.vue
+git add frontend-v3/src/components/Xxx.vue
 git commit -m "[Task X][P2] 修复问题1: xxx
 
 - 修改文件: Xxx.vue:123
@@ -179,7 +179,7 @@ git commit -m "[Task X][P2] 修复问题1: xxx
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 # 问题2修复:
-git add frontend/src/components/Yyy.vue
+git add frontend-v3/src/components/Yyy.vue
 git commit -m "[Task X][P2] 修复问题2: yyy
 
 - 修改文件: Yyy.vue:456
@@ -248,12 +248,12 @@ EOF
 # 编辑 CHANGELOG.md，添加 [Unreleased] 或新版本
 
 # 4. 检查版本号
-# 编辑 backend/pyproject.toml, backend/peekview/cli.py, frontend/package.json
+# 编辑 backend/pyproject.toml, backend/peekview/cli.py, frontend-v3/package.json
 
 # 5. 提交
 git add docs/process/checkpoints/P4-T{task-id}/
 git add CHANGELOG.md
-# 如更新版本号: git add backend/pyproject.toml backend/peekview/cli.py frontend/package.json
+# 如更新版本号: git add backend/pyproject.toml backend/peekview/cli.py frontend-v3/package.json
 git commit -m "[Task X][P4] 一致性检查与文档更新
 
 - consistency-check.md: 三方核对通过

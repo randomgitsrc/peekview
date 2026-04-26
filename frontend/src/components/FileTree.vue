@@ -90,7 +90,9 @@ const tree = computed(() => buildTree(props.files))
   border-right: 1px solid var(--border-color);
   padding: var(--space-2) 0;
   overflow-y: auto;
+  overflow-x: auto; /* Enable horizontal scroll for long filenames */
   font-size: var(--font-sm);
+  max-height: 100%; /* Allow scrolling within parent container */
 }
 
 /* Responsive: on mobile, file tree becomes a horizontal strip */

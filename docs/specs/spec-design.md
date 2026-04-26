@@ -72,7 +72,7 @@ peek/
 │       ├── test_security.py    # 安全测试
 │       └── test_services.py    # 服务层测试
 │
-├── frontend/
+├── frontend-v3/                # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tsconfig.json
@@ -81,22 +81,48 @@ peek/
 │       ├── main.ts
 │       ├── App.vue
 │       ├── router/
-│       │   └── index.ts        # Vue Router
+│       │   └── index.ts        # Vue Router (history mode)
 │       ├── api/
-│       │   └── client.ts       # API 请求封装
+│       │   └── client.ts       # API client with list transform
 │       ├── views/
-│       │   ├── EntryDetailView.vue   # 条目详情页
-│       │   └── EntryListView.vue   # 索引页
+│       │   ├── EntryDetailView.vue   # Entry detail with FileTree
+│       │   └── EntryListView.vue     # Entry list
 │       ├── components/
-│       │   ├── FileTree.vue        # 目录树
-│       │   ├── CodeViewer.vue      # 代码高亮查看器
-│       │   ├── MarkdownViewer.vue  # Markdown 渲染器
-│       │   ├── BinaryViewer.vue    # 二进制文件（下载链接）
-│       │   ├── ImageViewer.vue     # 图片内联显示
-│       │   ├── TocNav.vue          # Markdown 目录大纲
-│       │   ├── ThemeToggle.vue     # 暗色/亮色切换
-│       │   ├── SearchBar.vue       # 搜索栏
-│       │   ├── EntryCard.vue       # 索引页条目卡片
+│       │   ├── FileTree.vue        # Recursive file tree
+│       │   ├── CodeViewer.vue      # Code with line numbers, wrap mode
+│       │   ├── MarkdownViewer.vue  # Markdown with TOC, Mermaid
+│       │   ├── BinaryViewer.vue    # Binary download
+│       │   ├── ImageViewer.vue     # Image inline
+│       │   ├── TocNav.vue          # TOC navigation
+│       │   ├── ThemeToggle.vue     # Theme switcher
+│       │   ├── SearchBar.vue       # Search
+│       │   ├── EntryCard.vue       # Entry card
+│       │   └── ui/                 # UI components
+│       │       ├── Button.vue
+│       │       ├── IconButton.vue
+│       │       ├── Tooltip.vue
+│       │       ├── Toast.vue
+│       │       └── LoadingSkeleton.vue
+│       ├── composables/
+│       │   ├── useTheme.ts         # Theme composable
+│       │   ├── useShiki.ts         # Shiki highlighter singleton
+│       │   ├── useEntry.ts         # Entry data composable
+│       │   └── useToast.ts         # Toast notifications
+│       ├── stores/
+│       │   └── theme.ts            # Pinia theme store
+│       ├── styles/
+│       │   ├── variables.css       # Design tokens
+│       │   ├── dark.css            # Dark theme
+│       │   ├── light.css           # Light theme
+│       │   ├── code.css            # Code viewer styles
+│       │   └── components.css      # Component styles
+│       └── types/
+│           └── index.ts            # TypeScript types
+│
+├── frontend/                     # [DEPRECATED] Old frontend - DO NOT USE
+│   └── ...                       # Kept for reference only
+│
+└── README.md
 │       │   └── ActionBar.vue       # 复制/下载/打包按钮
 │       ├── composables/
 │       │   ├── useTheme.ts     # 主题逻辑
@@ -904,10 +930,12 @@ function renderMarkdown(content: string): string {
 cd backend && pip install -e . && peek serve
 
 # 前端（开发模式，热更新）
-cd frontend && npm install && npm run dev
+cd frontend-v3 && npm install && npm run dev
 ```
 
 ### 14.2 生产部署
+
+**注意：** 使用 `frontend-v3/` 目录（当前版本），`frontend/` 已弃用。
 
 前端构建后，由 FastAPI 托管静态文件：
 

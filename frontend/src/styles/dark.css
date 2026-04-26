@@ -45,4 +45,31 @@
   --shiki-token-number: #79C0FF;
   --shiki-token-punctuation: #E6EDF3;
   --shiki-token-operator: #FF7B72;
+
+  /* Dark theme Shiki colors - GitHub Dark */
+  --shiki-foreground: var(--text-primary);
+  --shiki-background: transparent;
+  --shiki-token-constant: #79c0ff;
+  --shiki-token-string: #a5d6ff;
+  --shiki-token-comment: #8b949e;
+  --shiki-token-keyword: #ff7b72;
+  --shiki-token-parameter: #ffdac1;
+  --shiki-token-function: #d2a8ff;
+  --shiki-token-string-expression: #a5d6ff;
+  --shiki-token-punctuation: #c9d1d9;
+  --shiki-token-number: #79c0ff;
+  --shiki-token-property: #79c0ff;
+  --shiki-token-variable: #ffa657;
+  --shiki-token-operator: #ff7b72;
+  --shiki-token-class: #ffa657;
+  --shiki-token-interface: #ffa657;
+  --shiki-token-type: #ffa657;
+  --shiki-token-builtin: #79c0ff;
+  --shiki-token-annotation: #ff7b72;
+  --shiki-token-namespace: #ffa657;
+  --shiki-token-symbol: #ffa657;
+  --shiki-token-tag: #7ee787;
+  --shiki-token-attribute: #79c0ff;
+  --shiki-token-deleted: #ffa198;
+  --shiki-token-inserted: #7ee787;
 }

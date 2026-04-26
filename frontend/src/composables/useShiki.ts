@@ -7,6 +7,32 @@ import {
   type LanguageInput,
 } from 'shiki'
 
+// Import themes
+import githubDark from 'shiki/dist/themes/github-dark.mjs'
+import githubLight from 'shiki/dist/themes/github-light.mjs'
+
+// Import common languages statically
+import python from 'shiki/dist/langs/python.mjs'
+import javascript from 'shiki/dist/langs/javascript.mjs'
+import typescript from 'shiki/dist/langs/typescript.mjs'
+import markdown from 'shiki/dist/langs/markdown.mjs'
+import json from 'shiki/dist/langs/json.mjs'
+import html from 'shiki/dist/langs/html.mjs'
+import css from 'shiki/dist/langs/css.mjs'
+import bash from 'shiki/dist/langs/bash.mjs'
+import yaml from 'shiki/dist/langs/yaml.mjs'
+import rust from 'shiki/dist/langs/rust.mjs'
+import go from 'shiki/dist/langs/go.mjs'
+import java from 'shiki/dist/langs/java.mjs'
+import cpp from 'shiki/dist/langs/cpp.mjs'
+import c from 'shiki/dist/langs/c.mjs'
+import sql from 'shiki/dist/langs/sql.mjs'
+
+const commonLangs = [
+  python, javascript, typescript, markdown, json,
+  html, css, bash, yaml, rust, go, java, cpp, c, sql
+]
+
 /** Singleton highlighter promise — created once, reused everywhere. */
 let highlighterPromise: Promise<Highlighter> | null = null
 
@@ -17,13 +43,13 @@ const loadError = ref<string | null>(null)
 export function useShiki() {
   /**
    * Get or create the singleton Shiki highlighter.
-   * Created once with no pre-loaded languages — they are loaded on demand.
+   * Created once with themes and common languages loaded.
    */
   function getHighlighter(): Promise<Highlighter> {
     if (!highlighterPromise) {
       highlighterPromise = createHighlighter({
-        themes: ['css-variables'],
-        langs: [],  // Load dynamically via loadLanguage()
+        themes: [githubDark as any, githubLight as any],
+        langs: commonLangs as LanguageInput[],
       })
         .then((hl) => {
           isReady.value = true
@@ -31,7 +57,7 @@ export function useShiki() {
         })
         .catch((err) => {
           loadError.value = err.message || 'Failed to initialize Shiki'
-          highlighterPromise = null  // Allow retry
+          highlighterPromise = null
           throw err
         })
     }
@@ -40,46 +66,53 @@ export function useShiki() {
 
   /**
    * Load a language into the highlighter on demand.
-   * Safe to call multiple times — Shiki skips already-loaded languages.
    */
   async function loadLanguage(lang: string): Promise<void> {
     const hl = await getHighlighter()
-
-    // Skip if already loaded
-    const loadedLangs = hl.getLoadedLanguages()
-    if (loadedLangs.includes(lang)) return
+    if (hl.getLoadedLanguages().includes(lang)) return
 
     try {
-      // Import the language grammar dynamically
-      const grammar = await import(
-        `shiki/langs/${lang}.mjs`
-      ).then((m: any) => m.default || m)
+      const grammar = await import(`shiki/langs/${lang}.mjs`)
+        .then((m: any) => m.default || m)
       await hl.loadLanguage(grammar as LanguageInput)
     } catch {
-      // Language not available — will fall back to 'text'
-      console.warn(`Shiki: language '${lang}' not available, falling back to text`)
+      console.warn(`Shiki: language '${lang}' not available`)
     }
   }
 
   /**
-   * Highlight code using CSS variables mode.
-   * Token colors are set via CSS variables (--shiki-token-*) in variables.css.
-   * This works with our data-theme attribute, unlike Shiki's dual-theme mode.
+   * Get current theme based on data-theme attribute
    */
-  async function highlight(
-    code: string,
-    lang: string,
-  ): Promise<string> {
+  function getCurrentTheme(): string {
+    const theme = document.documentElement.getAttribute('data-theme')
+    return theme === 'light' ? 'github-light' : 'github-dark'
+  }
+
+  /**
+   * Generate line numbers HTML
+   */
+  function renderLineNumbers(code: string): string {
+    const lines = code.split('\n')
+    const lineNumbers = lines.map((_, i) => `<span class="line-number">${i + 1}</span>`).join('\n')
+    return `<div class="line-numbers" aria-hidden="true">${lineNumbers}</div>`
+  }
+
+  /**
+   * Highlight code with theme matching current mode.
+   */
+  async function highlight(code: string, lang: string): Promise<string> {
     const hl = await getHighlighter()
+    const theme = getCurrentTheme()
 
-    // Ensure language is loaded
-    await loadLanguage(lang)
+    // Check if language is loaded
+    const loadedLangs = hl.getLoadedLanguages()
+    const useLang = loadedLangs.includes(lang) ? lang : 'text'
 
-    // Use 'css-variables' theme — tokens use var(--shiki-*) CSS variables
-    return hl.codeToHtml(code, {
-      lang: hl.getLoadedLanguages().includes(lang) ? lang : 'text',
-      theme: 'css-variables',
-    })
+    const html = hl.codeToHtml(code, { lang: useLang, theme })
+
+    // Wrap with line numbers
+    const lineNumbersHtml = renderLineNumbers(code)
+    return `<div class="code-container">${lineNumbersHtml}${html}</div>`
   }
 
   return { getHighlighter, loadLanguage, highlight, isReady, loadError }

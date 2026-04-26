@@ -5,22 +5,19 @@
         ← Back
       </router-link>
       <h2>{{ entry?.summary }}</h2>
-      <div class="header-actions">
-        <button
-          v-if="activeFile && !activeFile.is_binary"
-          class="header-btn"
-          @click="copyContent"
-        >
-          {{ copied ? 'Copied!' : 'Copy' }}
-        </button>
-        <button
-          v-if="activeFile"
-          class="header-btn"
-          @click="downloadFile"
-        >
-          Download
-        </button>
-        <ThemeToggle />
+      <div class="header-right desktop-only">
+        <ActionBar
+          :can-copy="canCopy"
+          :can-download="canDownload"
+          :can-wrap="canWrap"
+          :content="fileContent"
+          :filename="activeFile?.filename"
+          :wrap="wrapCode"
+          :is-mobile="false"
+          @copy="copyContent"
+          @download="downloadFile"
+          @toggle-wrap="wrapCode = !wrapCode"
+        />
       </div>
     </header>
 
@@ -88,6 +85,7 @@
           :filename="activeFile.filename"
           :language="activeFile.language"
           :line-count="activeFile.line_count"
+          :wrap="wrapCode"
         />
 
         <!-- Markdown viewer (without internal TOC) -->
@@ -164,18 +162,20 @@
       @close="tocDrawerOpen = false"
       @navigate="scrollToHeading"
     />
-    <MobileBottomBar
-      v-if="entry && !loading"
-      :active-file="activeFile"
-      :has-multiple-files="entry.files.length > 1"
-      :can-copy="!!activeFile && !activeFile.is_binary"
-      :can-download="!!activeFile"
-      :has-toc="markdownHeadings.length > 0"
-      :content="fileContent"
-      @toggle-file-drawer="fileDrawerOpen = true"
-      @toggle-toc="tocDrawerOpen = true"
-      @download="downloadFile"
-    />
+    <div class="mobile-bottom-bar mobile-only" v-if="entry">
+      <ActionBar
+        :can-copy="canCopy"
+        :can-download="canDownload"
+        :can-wrap="canWrap"
+        :content="fileContent"
+        :filename="activeFile?.filename"
+        :wrap="wrapCode"
+        :is-mobile="true"
+        @copy="copyContent"
+        @download="downloadFile"
+        @toggle-wrap="wrapCode = !wrapCode"
+      />
+    </div>
   </div>
 </template>
 
@@ -185,18 +185,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { api } from '../api/client'
 import { useEntry } from '../composables/useEntry'
+import { useToast } from '../composables/useToast'
 import FileTree from '../components/FileTree.vue'
 import CodeViewer from '../components/CodeViewer.vue'
 import MarkdownViewer from '../components/MarkdownViewer.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import MobileFileDrawer from '../components/MobileFileDrawer.vue'
 import MobileTocDrawer from '../components/MobileTocDrawer.vue'
-import MobileBottomBar from '../components/MobileBottomBar.vue'
+import ActionBar from '../components/ActionBar.vue'
 import type { FileResponse, TocHeading } from '../types'
 
 const route = useRoute()
 const router = useRouter()
 const { entry, loading, error, errorCode, fetchEntry, clearCache } = useEntry()
+const { success: showSuccess } = useToast() // INTER-T-04: Toast for copy success
 
 const activeFile = ref<FileResponse | null>(null)
 const fileContent = ref('')
@@ -207,8 +209,14 @@ const tocDrawerOpen = ref(false)
 const activeHeading = ref<string | null>(null)
 const markdownHeadings = ref<TocHeading[]>([])
 const copied = ref(false)
+const wrapCode = ref(false) // WRAP-01: Wrap button state
 
 const isMarkdown = computed(() => activeFile.value?.language === 'markdown')
+
+// Computed properties for ActionBar
+const canCopy = computed(() => !!activeFile.value && !activeFile.value.is_binary)
+const canDownload = computed(() => !!activeFile.value)
+const canWrap = computed(() => !!activeFile.value && !activeFile.value.is_binary && !isMarkdown.value)
 
 const downloadUrl = computed(() =>
   activeFile.value
@@ -320,6 +328,7 @@ async function copyContent() {
   try {
     await navigator.clipboard.writeText(fileContent.value)
     copied.value = true
+    showSuccess('Copied to clipboard!') // INTER-T-04: Toast feedback
     setTimeout(() => copied.value = false, 2000)
   } catch {
     // Clipboard API not available
@@ -366,6 +375,11 @@ onMounted(doFetchEntry)
   align-items: center;
   gap: var(--space-4);
   margin-bottom: var(--space-5);
+  height: 56px; /* STYLE-S-04: Header height 56px */
+  position: sticky; /* RESP-D-01: Header fixed */
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
 }
 
 .back-link {
@@ -387,35 +401,34 @@ onMounted(doFetchEntry)
   white-space: nowrap;
 }
 
-.header-actions {
+/* Responsive utilities */
+.desktop-only {
   display: flex;
-  gap: var(--space-2);
-  align-items: center;
 }
 
-.header-btn {
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-sm);
-  cursor: pointer;
+.mobile-only {
+  display: none;
 }
 
-.header-btn:hover {
-  background: var(--bg-tertiary);
+@media (max-width: 1023px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex;
+  }
 }
 
 /* Entry content layout */
 .entry-content {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 240px 1fr 200px; /* RESP-D-02: Adjust ratio (240:1fr:200 vs ~440 content) */
   gap: 0;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 400px;
+  max-height: calc(100vh - 150px);
 }
 
 /* Left sidebar - File Tree */
@@ -438,6 +451,8 @@ onMounted(doFetchEntry)
   min-width: 0;
   overflow: auto;
   background: var(--bg-primary);
+  flex: 1 1 auto; /* RESP-D-04: Content adaptive */
+  min-height: 0; /* Allow flex shrinking */
 }
 
 /* Right sidebar - TOC */
@@ -714,15 +729,41 @@ onMounted(doFetchEntry)
   font-size: var(--font-sm);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Mobile bottom bar styles */
+.mobile-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-bottom-bar .action-bar {
+  display: flex;
+  justify-content: space-around;
+  height: 100%;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Responsive - use 1023px breakpoint to match desktop-only/mobile-only utilities */
+@media (max-width: 1023px) {
   .entry-detail-view {
     padding: var(--space-3);
-    padding-bottom: 72px; /* Space for bottom bar */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)); /* RESP-M-04/05: iOS safe area + bottom padding */
+    max-width: 100%; /* RESP-M-01: Full width on mobile */
+    width: 100%;
+    margin: 0;
   }
 
   .detail-header {
     flex-wrap: wrap;
+    height: auto; /* Allow auto height on mobile */
+    min-height: 56px;
+    position: relative; /* Disable sticky on mobile */
   }
 
   .detail-header h2 {
@@ -737,6 +778,7 @@ onMounted(doFetchEntry)
     flex-direction: column;
     border: none;
     background: transparent;
+    max-height: none; /* Allow natural height on mobile */
   }
 
   /* Hide desktop sidebars on mobile (replaced by drawers) */
@@ -749,6 +791,7 @@ onMounted(doFetchEntry)
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     min-height: 300px;
+    max-height: calc(100vh - 200px); /* Allow scrolling on mobile */
   }
 }
 </style>

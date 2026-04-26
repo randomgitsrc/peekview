@@ -1,5 +1,5 @@
 <template>
-  <div class="markdown-viewer" ref="viewerRef" v-html="rendered"></div>
+  <div class="markdown-viewer markdown-body" ref="viewerRef" v-html="rendered"></div>
 </template>
 
 <script setup lang="ts">
@@ -151,123 +151,7 @@ onMounted(() => {
 
 <style scoped>
 .markdown-viewer {
-  padding: var(--space-4);
-  line-height: var(--line-height-prose);
-  color: var(--text-primary);
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  hyphens: auto;
-}
-
-/* Paragraph text wrapping */
-.markdown-viewer :deep(p) {
-  margin-bottom: var(--space-3);
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-}
-
-.markdown-viewer :deep(h1),
-.markdown-viewer :deep(h2),
-.markdown-viewer :deep(h3) {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: var(--text-primary);
-  scroll-margin-top: var(--space-4);
-}
-
-.markdown-viewer :deep(h1) { font-size: var(--font-xl); }
-.markdown-viewer :deep(h2) { font-size: var(--font-lg); }
-.markdown-viewer :deep(h3) { font-size: var(--font-md); }
-
-.markdown-viewer :deep(pre) {
-  background: var(--shiki-color-background);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-  white-space: pre;
-  position: relative;
-  font-size: var(--font-sm);
-  line-height: var(--line-height-code);
-}
-
-.markdown-viewer :deep(code) {
-  font-size: var(--font-sm);
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-}
-
-.markdown-viewer :deep(:not(pre) > code) {
-  background: var(--bg-tertiary);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  font-size: 0.85em;
-  white-space: nowrap;
-}
-
-/* Table overflow handling - table content doesn't wrap, scrolls horizontally */
-.markdown-viewer :deep(table) {
-  border-collapse: collapse;
-  display: block;
-  overflow-x: auto;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.markdown-viewer :deep(th),
-.markdown-viewer :deep(td) {
-  border: 1px solid var(--border-color);
-  padding: var(--space-2) var(--space-3);
-}
-
-.markdown-viewer :deep(th) {
-  background: var(--bg-secondary);
-  font-weight: 600;
-}
-
-.markdown-viewer :deep(img) {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-.markdown-viewer :deep(blockquote) {
-  border-left: 3px solid var(--accent-color);
-  margin: var(--space-3) 0;
-  padding: var(--space-2) var(--space-4);
-  color: var(--text-secondary);
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-}
-
-/* Copy button on code blocks */
-.markdown-viewer :deep(.md-copy-btn) {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 2px var(--space-2);
-  font-size: var(--font-xs);
-  color: var(--text-secondary);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.markdown-viewer :deep(pre:hover .md-copy-btn) {
-  opacity: 1;
-}
-
-/* Responsive: hide TOC on mobile */
-@media (max-width: 768px) {
-  .markdown-container {
-    flex-direction: column;
-  }
-
-  .markdown-toc {
-    position: static;
-    max-width: 100%;
-    max-height: none;
-  }
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 </style>

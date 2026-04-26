@@ -82,9 +82,11 @@ peek/
 │       ├── test_api.py             # API endpoint tests
 │       ├── test_security.py        # Security tests (path traversal, allowlist, XSS, SQLi)
 │       └── test_cli.py             # CLI command tests
-├── frontend/
-│   ├── ...
-└── README.md
+├── frontend/                       # [DEPRECATED] Old frontend - DO NOT USE
+│   └── ...                         # Kept for reference only
+└── frontend-v3/                    # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
+    ├── ...
+    └── README.md
 ```
 
 ---

@@ -469,9 +469,11 @@ The design doc (Section 14.3) specifies a Dockerfile:
 FROM python:3.12-slim
 WORKDIR /app
 COPY backend/ .
-COPY --from=frontend /app/frontend/dist /app/static/
+COPY --from=frontend /app/frontend-v3/dist /app/static/
 RUN pip install -e .
 ```
+
+**注意：** 使用 `frontend-v3/` 目录（当前版本）。`frontend/` 目录已弃用。
 
 But the implementation plan **never creates this Dockerfile**. It's not in any task. And even if a developer copies it from the design doc:
 
@@ -499,9 +501,9 @@ A developer wanting to add a new endpoint (say, `GET /entries/{slug}/files` to l
 2. `backend/peek/services/entry_service.py` — Add service method
 3. `backend/peek/api/entries.py` or `files.py` — Add route
 4. `backend/tests/test_api.py` — Add test
-5. `frontend/src/types/index.ts` — Add TypeScript type
-6. `frontend/src/api/client.ts` — Add API method
-7. `frontend/src/views/*.vue` or `components/*.vue` — Use the new data
+5. `frontend-v3/src/types/index.ts` — Add TypeScript type
+6. `frontend-v3/src/api/client.ts` — Add API method
+7. `frontend-v3/src/views/*.vue` or `components/*.vue` — Use the new data
 
 There's **no code generation, no scaffold script, no pattern document**. The developer must manually trace through 7 files in 2 different languages, ensuring the TypeScript types match the Python models.
 

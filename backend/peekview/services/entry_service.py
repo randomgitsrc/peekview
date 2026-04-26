@@ -176,6 +176,14 @@ class EntryService:
                         )
                         written_paths.append(disk_path)
 
+                        # Compute line count for text files
+                        line_count = None
+                        if content and not is_binary:
+                            try:
+                                line_count = content.decode('utf-8').count('\n') + 1
+                            except (UnicodeDecodeError, AttributeError):
+                                line_count = None
+
                         file_record = File(
                             entry_id=entry_id,
                             path=file_path,
@@ -184,6 +192,7 @@ class EntryService:
                             is_binary=is_binary,
                             size=len(content),
                             sha256=self.storage.compute_sha256(content) if content else None,
+                            line_count=line_count,
                         )
                         session.add(file_record)
                         file_records.append(file_record)
@@ -203,6 +212,7 @@ class EntryService:
                             language=f.language,
                             is_binary=f.is_binary,
                             size=f.size,
+                            line_count=f.line_count,
                         )
                         for f in file_records
                     ]
@@ -596,6 +606,7 @@ class EntryService:
                     language=f.language,
                     is_binary=f.is_binary,
                     size=f.size,
+                    line_count=f.line_count,
                 )
             )
 

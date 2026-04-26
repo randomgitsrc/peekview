@@ -50,30 +50,32 @@
 
 ### 前端（Vue 3 + Vite + TypeScript）
 
+> **注意**: 当前使用 `frontend-v3/` 目录。`frontend/` 目录为旧版本，已弃用，仅作参考保留。
+
 | 任务 | 内容 | 状态 | 关键文件 |
 |------|------|------|----------|
-| Task 14 | 项目脚手架 | ✅ | `package.json`, `vite.config.ts`, `tsconfig.json` |
-| Task 14 | 设计系统 | ✅ | `variables.css`, `dark.css`, `light.css` |
-| Task 14 | 主题系统 | ✅ | `useTheme.ts`, FOUC 预防 |
-| Task 15 | 类型定义 | ✅ | `types/index.ts` |
-| Task 15 | API 客户端 | ✅ | `api/client.ts` |
-| Task 15 | UI 组件 | ✅ | `Button.vue`, `IconButton.vue`, `Toast.vue`, `Tooltip.vue`, `LoadingSkeleton.vue` |
-| Task 15 | Toast 系统 | ✅ | `useToast.ts`, `Toast.vue` |
-| Task 16a | 主题基础设施 | ✅ | `index.html` FOUC 脚本, `useTheme.ts` |
-| Task 16b | Shiki 高亮 | ✅ | `useShiki.ts` (单例, CSS variables 模式) |
-| Task 16b | CodeViewer | ✅ | `CodeViewer.vue` (行号、复制、换行、URL hash) |
-| Task 16b | MarkdownViewer | ✅ | `MarkdownViewer.vue` (TOC、代码块复制、表格滚动) |
-| Task 16b | FileTree | ✅ | `FileTree.vue`, `TreeNodeItem.vue` (递归树) |
-| Task 16c | 数据获取 | ✅ | `useEntry.ts` (缓存、错误状态) |
-| Task 16c | 主题切换组件 | ✅ | `ThemeToggle.vue` |
-| Task 16c | 移动端抽屉 | ✅ | `MobileFileDrawer.vue`, `MobileTocDrawer.vue` |
-| Task 16c | 移动端底部栏 | ✅ | `MobileBottomBar.vue` (Wrap/Copy/Download/TOC) |
-| Task 16c | 列表视图 | ✅ | `EntryListView.vue` (搜索、分页、加载/错误态) |
-| Task 16c | 详情视图 | ✅ | `EntryDetailView.vue` (三栏布局、URL 深链接) |
+| Task 14 | 项目脚手架 | ✅ | `frontend-v3/package.json`, `vite.config.ts`, `tsconfig.json` |
+| Task 14 | 设计系统 | ✅ | `frontend-v3/src/styles/variables.css`, `dark.css`, `light.css` |
+| Task 14 | 主题系统 | ✅ | `frontend-v3/src/composables/useTheme.ts`, FOUC 预防 |
+| Task 15 | 类型定义 | ✅ | `frontend-v3/src/types/index.ts` |
+| Task 15 | API 客户端 | ✅ | `frontend-v3/src/api/client.ts` |
+| Task 15 | UI 组件 | ✅ | `frontend-v3/src/components/ui/Button.vue`, `IconButton.vue`, `Toast.vue`, `Tooltip.vue`, `LoadingSkeleton.vue` |
+| Task 15 | Toast 系统 | ✅ | `frontend-v3/src/composables/useToast.ts`, `components/ui/Toast.vue` |
+| Task 16a | 主题基础设施 | ✅ | `frontend-v3/index.html` FOUC 脚本, `useTheme.ts` |
+| Task 16b | Shiki 高亮 | ✅ | `frontend-v3/src/composables/useShiki.ts` (单例, CSS variables 模式) |
+| Task 16b | CodeViewer | ✅ | `frontend-v3/src/components/CodeViewer.vue` (行号、复制、换行、URL hash) |
+| Task 16b | MarkdownViewer | ✅ | `frontend-v3/src/components/MarkdownViewer.vue` (TOC、代码块复制、表格滚动) |
+| Task 16b | FileTree | ✅ | `frontend-v3/src/components/FileTree.vue`, `TreeNodeItem.vue` (递归树) |
+| Task 16c | 数据获取 | ✅ | `frontend-v3/src/composables/useEntry.ts` (缓存、错误状态) |
+| Task 16c | 主题切换组件 | ✅ | `frontend-v3/src/components/ThemeToggle.vue` |
+| Task 16c | 移动端抽屉 | ✅ | `frontend-v3/src/components/MobileFileDrawer.vue`, `MobileTocDrawer.vue` |
+| Task 16c | 移动端底部栏 | ✅ | `frontend-v3/src/components/MobileBottomBar.vue` (Wrap/Copy/Download/TOC) |
+| Task 16c | 列表视图 | ✅ | `frontend-v3/src/views/EntryListView.vue` (搜索、分页、加载/错误态) |
+| Task 16c | 详情视图 | ✅ | `frontend-v3/src/views/EntryDetailView.vue` (三栏布局、URL 深链接) |
 
-**前端架构**:
+**前端架构** (`frontend-v3/src/`):
 ```
-src/
+frontend-v3/src/
 ├── api/
 │   └── client.ts              # API 请求封装
 ├── components/

@@ -297,7 +297,8 @@ describe('EntryDetailView', () => {
     const wrapper = mount(EntryDetailView, mountOptions)
     await flushPromises()
 
-    const buttons = wrapper.findAll('.header-btn')
+    // Check ActionBar for desktop buttons (action-btn class)
+    const buttons = wrapper.findAll('.action-btn')
     const buttonTexts = buttons.map(b => b.text())
 
     expect(buttonTexts).toContain('Copy')
@@ -321,7 +322,8 @@ describe('EntryDetailView', () => {
     const wrapper = mount(EntryDetailView, mountOptions)
     await flushPromises()
 
-    const buttons = wrapper.findAll('.header-btn')
+    // Check ActionBar for desktop buttons (action-btn class)
+    const buttons = wrapper.findAll('.action-btn')
     const buttonTexts = buttons.map(b => b.text())
 
     expect(buttonTexts).not.toContain('Copy')

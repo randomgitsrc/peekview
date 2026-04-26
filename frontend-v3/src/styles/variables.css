@@ -1,0 +1,95 @@
+/* ===== Design Tokens ===== */
+:root {
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Typography */
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 20px;
+  --font-xl: 24px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+
+  /* Border Radius */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-medium: 250ms ease;
+
+  /* Layout */
+  --header-height: 56px;
+  --sidebar-width: 260px;
+  --toc-width: 240px;
+}
+
+/* Light Theme (GitHub Primer) */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #f3f4f6;
+  --bg-code: #f6f8fa;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  --border-color: #d0d7de;
+  --border-hover: #8c959f;
+
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-tertiary: #8c959f;
+  --text-on-accent: #ffffff;
+
+  --accent-color: #0969da;
+  --accent-hover: #0550ae;
+  --accent-light: rgba(9, 105, 218, 0.1);
+
+  --success-color: #1a7f37;
+  --warning-color: #9a6700;
+  --error-color: #cf222e;
+
+  --tag-bg: rgba(9, 105, 218, 0.1);
+  --tag-text: #0969da;
+
+  --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.04);
+  --shadow-md: 0 3px 6px rgba(31, 35, 40, 0.08);
+}
+
+/* Dark Theme (GitHub Dark) */
+[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-code: #161b22;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --border-color: #30363d;
+  --border-hover: #8b949e;
+
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+  --text-on-accent: #ffffff;
+
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: rgba(59, 130, 246, 0.15);
+
+  --success-color: #3fb950;
+  --warning-color: #d29922;
+  --error-color: #f85149;
+
+  --tag-bg: rgba(59, 130, 246, 0.2);
+  --tag-text: #58a6ff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+}

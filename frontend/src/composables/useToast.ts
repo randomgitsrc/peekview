@@ -1,35 +1,73 @@
-// composables/useToast.ts
 import { ref } from 'vue'
-import type { ToastMessage, ToastType } from '../types'
+import type { ToastType } from '../types'
 
-const toasts = ref<ToastMessage[]>([])
+export interface Toast {
+  id: string
+  message: string
+  type: ToastType
+  duration: number
+}
+
+const toasts = ref<Toast[]>([])
 let idCounter = 0
 
-export function useToast() {
-  function show(message: string, type: ToastType = 'info', duration = 3000) {
+export function useToasts() {
+  function add(options: { message: string; type?: ToastType; duration?: number }) {
     const id = String(++idCounter)
-    toasts.value.push({ id, type, message, duration })
-    if (duration > 0) {
-      setTimeout(() => remove(id), duration)
+    const toast: Toast = {
+      id,
+      message: options.message,
+      type: options.type || 'info',
+      duration: options.duration || 3000,
     }
+    toasts.value.push(toast)
+
+    setTimeout(() => {
+      remove(id)
+    }, toast.duration)
+
+    return id
   }
 
   function remove(id: string) {
     const index = toasts.value.findIndex(t => t.id === id)
-    if (index > -1) toasts.value.splice(index, 1)
+    if (index > -1) {
+      toasts.value.splice(index, 1)
+    }
+  }
+
+  function success(message: string, duration?: number) {
+    return add({ message, type: 'success', duration })
+  }
+
+  function error(message: string, duration?: number) {
+    return add({ message, type: 'error', duration })
+  }
+
+  function info(message: string, duration?: number) {
+    return add({ message, type: 'info', duration })
   }
 
   return {
     toasts,
-    show,
-    success: (msg: string) => show(msg, 'success'),
-    error: (msg: string) => show(msg, 'error'),
-    info: (msg: string) => show(msg, 'info'),
+    add,
     remove,
+    success,
+    error,
+    info,
   }
 }
 
-// For use in setup
-export function useToasts() {
-  return { toasts }
+// Backward compatibility
+export function useToast() {
+  const { success, error, info, toasts } = useToasts()
+  return {
+    success,
+    error,
+    info,
+    toasts,
+    show: (options: { message: string; type?: ToastType; duration?: number }) => {
+      return useToasts().add(options)
+    },
+  }
 }

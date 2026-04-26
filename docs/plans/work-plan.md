@@ -307,7 +307,8 @@ server {
 **检查项**:
 - [ ] 前端生产构建成功（`npm run build`）
 - [ ] 后端打包成功（`pip install -e .`）
-- [ ] 静态文件正确嵌入（`frontend/dist/` → FastAPI）
+- [ ] 静态文件正确嵌入（`frontend-v3/dist/` → `backend/peekview/static/`）
+  - **注意**：`frontend/` 目录已弃用，当前使用 `frontend-v3/`
 - [ ] 无构建警告
 
 #### 2.4.2 发布检查清单
