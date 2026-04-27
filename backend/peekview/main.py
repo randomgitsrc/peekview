@@ -196,9 +196,16 @@ def _setup_static_files(app: FastAPI) -> None:
                 return FileResponse(frontend_dist / "index.html")
 
             @app.get("/{path:path}")
-            async def serve_spa_catchall(path: str):
+            async def serve_spa_catchall(request: Request, path: str):
                 """Catch-all for SPA routing — serve index.html for unknown paths."""
                 from fastapi.responses import FileResponse
+
+                # Skip API routes - they should be handled by the API routers
+                if path.startswith("api/") or path.startswith("health"):
+                    # Return 404 so FastAPI continues to try other routes
+                    from fastapi import HTTPException
+                    raise HTTPException(status_code=404, detail="Not found")
+
                 # First try to serve the actual file
                 file_path = frontend_dist / path
                 if file_path.exists() and file_path.is_file():

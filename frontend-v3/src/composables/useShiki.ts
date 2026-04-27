@@ -94,10 +94,29 @@ export function useShiki() {
     return `<div class="code-container">${lineNumbersHtml}${html}</div>`
   }
 
+  // Highlight code without line numbers (for markdown code blocks)
+  async function highlightCode(
+    code: string,
+    lang: string,
+    theme: 'github-dark' | 'github-light'
+  ): Promise<string> {
+    const highlighter = await getHighlighter()
+
+    // Check if language is loaded, fall back to 'text' if not
+    const loadedLangs = highlighter.getLoadedLanguages()
+    const effectiveLang = loadedLangs.includes(lang as BundledLanguage) ? lang : 'text'
+
+    return highlighter.codeToHtml(code, {
+      lang: effectiveLang,
+      theme
+    })
+  }
+
   return {
     isReady,
     loadError,
     getHighlighter,
-    highlight
+    highlight,
+    highlightCode
   }
 }

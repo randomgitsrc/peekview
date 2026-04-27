@@ -285,11 +285,16 @@ function extractHeadings(content: string): TocHeading[] {
     const match = line.match(/^(#{1,6})\s+(.+)$/)
     if (match) {
       const level = match[1].length
+      // Only include h2-h4 headings (same as useMarkdown.ts)
+      if (level < 2 || level > 4) continue
+
       const text = match[2].trim()
+      // Match the slugify logic from useMarkdown.ts - preserve CJK characters
       let id = text.toLowerCase()
-        .replace(/[^\w\s-]/g, '')
+        .replace(/[^\w\s一-龥぀-ゟ゠-ヿ-]/g, '')  // Keep CJK, hiragana, katakana
         .replace(/\s+/g, '-')
-        .substring(0, 50)
+        .replace(/^-+|-+$/g, '')  // Trim leading/trailing dashes
+        .substring(0, 50) || 'heading'  // Fallback if empty
 
       // Ensure unique IDs
       let uniqueId = id
