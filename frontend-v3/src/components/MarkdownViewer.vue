@@ -211,6 +211,56 @@ watch(() => [props.content, theme.value], async () => {
   background-color: #161b22 !important;
 }
 
+/* Shiki code blocks in dark mode */
+[data-theme='dark'] .markdown-body .shiki {
+  background-color: #161b22 !important;
+}
+
+[data-theme='dark'] .markdown-body .shiki code {
+  background-color: transparent !important;
+  color: #c9d1d9 !important;
+}
+
+/* Ensure ALL code tokens don't have backgrounds in dark mode - be very specific */
+[data-theme='dark'] .markdown-body .shiki span,
+[data-theme='dark'] .markdown-body .shiki [class*="hljs-"],
+[data-theme='dark'] .markdown-body pre span,
+[data-theme='dark'] .markdown-body code span {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Override any inline background styles from Shiki */
+[data-theme='dark'] .markdown-body pre [style*="background-color"],
+[data-theme='dark'] .markdown-body pre [style*="background:"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Fix inline code in dark mode */
+[data-theme='dark'] .markdown-body code:not(pre code) {
+  background-color: rgba(110, 118, 129, 0.4) !important;
+  color: #c9d1d9 !important;
+}
+
+/* Ensure pre/code blocks don't have selection-like background */
+[data-theme='dark'] .markdown-body pre code {
+  background-color: transparent !important;
+  color: #c9d1d9 !important;
+}
+
+/* Additional fixes for code block appearance */
+[data-theme='dark'] .markdown-body pre {
+  background-color: #161b22 !important;
+  border: 1px solid #30363d !important;
+}
+
+/* Ensure ALL children of pre don't have backgrounds */
+[data-theme='dark'] .markdown-body pre * {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
 /* Mermaid diagrams */
 .markdown-body .mermaid {
   text-align: center;
