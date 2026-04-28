@@ -31,7 +31,7 @@ from peekview.storage import StorageManager
 
 
 @click.group()
-@click.version_option(version="0.1.6", prog_name="peekview")
+@click.version_option(version="0.1.8", prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
     pass
