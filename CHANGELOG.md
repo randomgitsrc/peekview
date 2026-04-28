@@ -5,6 +5,15 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.10] - 2026-04-28
+
+### 变更
+
+- **所有外部资源本地化**
+  - GitHub Markdown CSS: CDN → `/css/github-markdown.css`
+  - Inter 字体: Google Fonts → `/fonts/inter-*.ttf`
+  - 应用现在可以在无网络环境下正常使用
+
 ## [0.1.9] - 2026-04-28
 
 ### 新增
