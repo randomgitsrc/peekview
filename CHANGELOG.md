@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.7] - 2026-04-28
+
+### 修复
+
+- **代码查看器高度问题**
+  - 修复代码查看器无法填满页面高度的问题
+  - 采用 GitHub/VS Code 风格：代码区始终填满可用空间，内部滚动
+  - 更新 CSS flexbox 布局（`code.css`, `layout.css`）
+  - 短代码和长代码都能正确填满页面，无底部空白
+
 ## [0.1.6] - 2026-04-28
 
 ### 新增
