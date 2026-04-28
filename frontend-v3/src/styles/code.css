@@ -4,6 +4,9 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--bg-code);
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
 }
 
 .code-header {
@@ -34,8 +37,9 @@
 }
 
 .code-body {
-  overflow-x: auto;
-  max-height: calc(100vh - 200px);
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Code container with line numbers - using table for perfect alignment */

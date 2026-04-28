@@ -56,7 +56,9 @@
 
 .content-area {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg-primary);
 }
 
