@@ -18,7 +18,8 @@ peekview/
 ├── docs/
 │   ├── specs/           # Requirements, design, test plan (v2.0, finalized)
 │   ├── plans/           # Implementation plan (v2 revised, 16 tasks)
-│   └── reviews/         # Adversarial reviews (CEO/Design/Eng/DX)
+│   ├── reviews/         # Adversarial reviews (CEO/Design/Eng/DX)
+│   └── process/         # Development workflow and checkpoints
 ├── backend/             # FastAPI backend (Tasks 0-12 complete)
 │   ├── peekview/        # Main package (note: package is "peekview", not "peek")
 │   │   ├── main.py      # FastAPI app factory with DI via app.state
@@ -53,6 +54,7 @@ pipx install peekview      # Recommended: isolated environment, no conflicts
 
 # Development
 make dev                   # uvicorn peekview.main:app --reload (port 8080)
+                           # NOTE: If Makefile fails, use: uvicorn peekview.main:app --reload
 
 # Testing
 make test                  # pytest tests/ -v --tb=short
@@ -78,6 +80,7 @@ npm install
 
 # Development
 npm run dev                # Vite dev server (port 5173)
+npm run preview            # Preview production build locally
 
 # Build
 npm run build              # Build to dist/, copy to backend/peekview/static/
@@ -248,3 +251,15 @@ When reviewing security:
 - Check `docs/reviews/eng-review.md` for original security findings
 - Review `test_security.py` for existing security tests
 - Key files: `storage.py` (path validation), `file_service.py` (allowlist), `main.py` (API key middleware)
+
+## Development Workflow (Important!)
+
+This project follows a checkpoint-driven development workflow defined in `docs/process/workflow.md`. Key rules:
+
+1. **P0: Problem Definition** - Create `problems.md` with acceptance criteria
+2. **P1: Test Design** - Write tests BEFORE code; tests should fail initially
+3. **P2: Implementation** - One issue per commit, no batch changes
+4. **P3: Verification** - UI issues require manual verification with screenshots
+5. **P4: Consistency** - Verify code, tests, and docs are aligned
+
+**Always read `docs/process/workflow.md` before starting new work.**
