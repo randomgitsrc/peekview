@@ -14,6 +14,7 @@ import os
 import platform
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +32,7 @@ from peekview.storage import StorageManager
 
 
 @click.group()
-@click.version_option(version="0.1.8", prog_name="peekview")
+@click.version_option(version="0.1.9", prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
     pass
@@ -346,6 +347,100 @@ def delete(slug: str) -> None:
         sys.exit(1)
 
 
+@cli.group(name="config")
+def config_cmd():
+    """Manage PeekView configuration.
+
+    Examples:
+        peekview config set base_url https://example.com
+        peekview config get base_url
+        peekview config list
+    """
+    pass
+
+
+@config_cmd.command(name="set")
+@click.argument("key")
+@click.argument("value")
+def config_set(key: str, value: str) -> None:
+    """Set a configuration value.
+
+    Supported keys:
+    - base_url: External base URL for generated links
+
+    Examples:
+        peekview config set base_url https://example.com
+    """
+    from peekview.config import load_config_file, save_config_file, CONFIG_FILE
+
+    config = load_config_file()
+
+    # Validate key
+    if key not in ["base_url"]:
+        click.echo(f"Error: Unknown config key '{key}'", err=True)
+        click.echo("Supported keys: base_url", err=True)
+        sys.exit(1)
+
+    # Handle nested keys (e.g., server.base_url)
+    if key == "base_url":
+        if "server" not in config:
+            config["server"] = {}
+        config["server"]["base_url"] = value
+
+    save_config_file(config)
+    click.echo(f"✓ Set {key} = {value}")
+    click.echo(f"  Config file: {CONFIG_FILE}")
+
+
+@config_cmd.command(name="get")
+@click.argument("key")
+def config_get(key: str) -> None:
+    """Get a configuration value.
+
+    Examples:
+        peekview config get base_url
+    """
+    from peekview.config import load_config_file
+
+    config = load_config_file()
+
+    # Handle nested keys
+    if key == "base_url":
+        value = config.get("server", {}).get("base_url", "")
+        if value:
+            click.echo(value)
+        else:
+            click.echo("(not set)")
+    else:
+        click.echo(f"Error: Unknown config key '{key}'", err=True)
+        sys.exit(1)
+
+
+@config_cmd.command(name="list")
+def config_list() -> None:
+    """List all configuration values."""
+    from peekview.config import load_config_file, CONFIG_FILE
+
+    config = load_config_file()
+
+    if not config:
+        click.echo(f"No configuration set. Config file: {CONFIG_FILE}")
+        return
+
+    click.echo(f"Configuration ({CONFIG_FILE}):")
+    _print_config(config)
+
+
+def _print_config(config: dict, prefix: str = "") -> None:
+    """Helper to print nested config."""
+    for key, value in config.items():
+        if isinstance(value, dict):
+            click.echo(f"{prefix}{key}:")
+            _print_config(value, prefix + "  ")
+        else:
+            click.echo(f"  {prefix}{key}: {value}")
+
+
 @cli.group(name="service")
 def service_cmd():
     """Manage PeekView as a system service (systemd/launchd).
@@ -370,7 +465,18 @@ def service_cmd():
 @click.option("--force", is_flag=True, help="Overwrite existing service")
 def install_service(user_mode: bool, host: str | None, port: int | None, base_url: str | None, data_dir: str | None, force: bool) -> None:
     """Install PeekView as a system service."""
+    from peekview.config import load_config_file, save_config_file
+
     system = platform.system()
+
+    # Save base_url to config file if provided
+    if base_url:
+        config = load_config_file()
+        if "server" not in config:
+            config["server"] = {}
+        config["server"]["base_url"] = base_url
+        save_config_file(config)
+        click.echo(f"✓ Config saved: base_url = {base_url}")
 
     if system == "Linux":
         _install_systemd_service(user_mode, host, port, base_url, data_dir, force)

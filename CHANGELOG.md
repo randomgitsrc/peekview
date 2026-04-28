@@ -5,6 +5,21 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.9] - 2026-04-28
+
+### 新增
+
+- **配置文件支持 (`~/.peekview/config.yaml`)**
+  - `peekview config set base_url <url>` - 持久化配置 base URL
+  - `peekview config get base_url` - 查看配置
+  - `peekview config list` - 列出所有配置
+  - CLI `create` 自动读取配置文件中的 base_url
+  - `service install --base-url` 自动写入配置文件
+
+### 修复
+
+- 解决了服务端配置 base_url 后，CLI create 仍返回 127.0.0.1:8080 的问题
+
 ## [0.1.8] - 2026-04-28
 
 ### 修复

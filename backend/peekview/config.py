@@ -3,11 +3,35 @@
 Uses Pydantic Settings for environment variable and config file support.
 """
 
+import os
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
+import yaml
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# Path to local config file
+CONFIG_FILE = Path.home() / ".peekview" / "config.yaml"
+
+
+def load_config_file() -> dict[str, Any]:
+    """Load configuration from YAML config file."""
+    if CONFIG_FILE.exists():
+        try:
+            with open(CONFIG_FILE, encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
+        except Exception:
+            return {}
+    return {}
+
+
+def save_config_file(config: dict[str, Any]) -> None:
+    """Save configuration to YAML config file."""
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=True, allow_unicode=True)
 
 
 class PeekLimits(BaseSettings):
@@ -160,9 +184,10 @@ class PeekConfig(BaseSettings):
     """Main configuration class.
 
     Combines all configuration sections. Values can be set via:
-    1. Environment variables (PEEKVIEW_HOST, PEEKVIEW_DATA_DIR, etc.)
+    1. Environment variables (PEEKVIEW_HOST, PEEKVIEW_DATA_DIR, etc.) - highest priority
     2. Constructor arguments
-    3. Default values
+    3. Config file (~/.peekview/config.yaml)
+    4. Default values - lowest priority
     """
 
     model_config = SettingsConfigDict(
@@ -176,6 +201,18 @@ class PeekConfig(BaseSettings):
     limits: PeekLimits = Field(default_factory=PeekLimits)
     cleanup: PeekCleanup = Field(default_factory=PeekCleanup)
     logging: PeekLogging = Field(default_factory=PeekLogging)
+
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize config with file overrides."""
+        # Load from config file first (lowest priority)
+        file_config = load_config_file()
+
+        # Merge file config into kwargs (env vars will override via Pydantic)
+        for key, value in file_config.items():
+            if key not in kwargs:
+                kwargs[key] = value
+
+        super().__init__(**kwargs)
 
     @property
     def data_dir(self) -> Path:
