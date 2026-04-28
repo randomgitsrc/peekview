@@ -2,7 +2,8 @@
 .entry-detail {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height for mobile */
+  min-height: 100vh; /* Fallback */
   overflow: hidden;
 }
 
@@ -60,6 +61,13 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-primary);
+}
+
+/* Mobile: ensure content area fills space */
+@media (max-width: 1023px) {
+  .content-area {
+    min-height: 0; /* Allow flex to shrink properly */
+  }
 }
 
 .toc-sidebar {

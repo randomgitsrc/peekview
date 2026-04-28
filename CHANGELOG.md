@@ -5,6 +5,15 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.11] - 2026-04-28
+
+### 修复
+
+- **移动端代码查看器高度问题**
+  - 使用 `100dvh` 替代 `100vh` 解决移动端浏览器工具栏导致的高度计算错误
+  - 移动端 `.content-area` 和 `.code-viewer` 添加 `min-height: 0` 确保正确填充
+  - 代码区现在能在手机浏览器中填满可用空间
+
 ## [0.1.10] - 2026-04-28
 
 ### 变更
