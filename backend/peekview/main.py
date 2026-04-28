@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
 def create_app(
     data_dir: Path | None = None,
     db_path: Path | None = None,
+    base_url: str | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -50,6 +51,7 @@ def create_app(
     Args:
         data_dir: Optional data directory override
         db_path: Optional database path override
+        base_url: Optional external base URL override
 
     Returns:
         Configured FastAPI application
@@ -67,6 +69,8 @@ def create_app(
         config.storage.data_dir = data_dir
     if db_path:
         config.storage.db_path = db_path
+    if base_url:
+        config.server.base_url = base_url
     app.state.config = config
 
     # Ensure directories exist

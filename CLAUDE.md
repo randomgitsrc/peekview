@@ -113,10 +113,19 @@ cd frontend-v3 && npm run build
 ```bash
 peekview serve                    # Start server (default: 127.0.0.1:8080)
 peekview serve -p 3000 --reload   # Custom port + dev mode
+peekview serve --base-url https://example.com  # Use custom domain
 
 peekview create file.txt -s "My code"                    # Create from file
 peekview create src/*.py -s "Project" -t python -t cli   # Glob + tags
 peekview create -s "From stdin" --from-stdin < code.py   # From pipe
+
+# Service management (systemd/launchd)
+peekview service install --base-url https://example.com  # Install as system service
+peekview service install --user                          # Install as user service (no sudo)
+peekview service status                                  # Check service status
+peekview service start                                   # Start the service
+peekview service stop                                    # Stop the service
+peekview service uninstall                               # Remove the service
 
 echo "content" | peekview create -s "From pipe" --from-stdin
 
