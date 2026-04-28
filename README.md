@@ -136,6 +136,52 @@ PEEKVIEW_PORT=8080
 PEEKVIEW_API_KEY=your-secret-key
 ```
 
+## 使用自定义域名
+
+如果使用反向代理（如 Cloudflare Tunnel、Nginx），可通过 `--base-url` 指定外部域名：
+
+```bash
+# 服务端
+peekview serve --base-url https://example.com
+
+# 创建条目时使用自定义域名
+peekview create file.txt -s "My code" --base-url https://example.com
+# 输出: URL: https://example.com/xxxxx
+```
+
+## 作为系统服务运行
+
+### Linux (systemd)
+
+```bash
+# 安装为系统服务
+sudo peekview service install --base-url https://example.com
+
+# 或使用用户级服务（无需 sudo）
+peekview service install --user
+
+# 管理命令
+peekview service status   # 查看状态
+peekview service start    # 启动服务
+peekview service stop     # 停止服务
+peekview service uninstall # 卸载服务
+```
+
+### macOS (launchd)
+
+```bash
+# 安装为用户服务
+peekview service install --user
+
+# 管理命令与 Linux 相同
+peekview service status
+```
+
+服务配置：
+- 开机自启动
+- 自动重启（崩溃后 5 秒重启）
+- 日志位置：`/var/log/peekview.log` (系统服务) 或 `~/.peekview/service.log` (用户服务)
+
 ---
 
 ## 技术栈

@@ -97,6 +97,84 @@ docker build -t peek .
 docker run -d -p 8080:8080 -v peek-data:/data peek
 ```
 
+### 方式四：系统服务部署（推荐生产环境）
+
+PeekView 0.1.6+ 内置了服务管理命令，支持一键安装为系统服务：
+
+#### Linux (systemd)
+
+```bash
+# 安装为系统服务（需要 sudo）
+sudo peekview service install --base-url https://yourdomain.com
+
+# 或使用用户级服务（无需 sudo，仅当前用户可用）
+peekview service install --user --base-url https://yourdomain.com
+
+# 管理命令
+peekview service status    # 查看服务状态
+peekview service start     # 启动服务
+peekview service stop      # 停止服务
+peekview service uninstall # 卸载服务
+```
+
+服务特性：
+- 开机自启动
+- 自动重启（崩溃后 5 秒重启）
+- 日志管理（通过 `journalctl -u peekview` 查看）
+
+#### macOS (launchd)
+
+```bash
+# 安装为用户服务
+peekview service install --user
+
+# 管理命令与 Linux 相同
+peekview service status
+```
+
+#### 使用反向代理（Nginx + HTTPS）
+
+结合 `--base-url` 选项使用反向代理：
+
+```bash
+# 1. 安装服务并指定外部域名
+sudo peekview service install --base-url https://peek.yourdomain.com
+
+# 2. 配置 Nginx
+```
+
+```nginx
+server {
+    listen 80;
+    server_name peek.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name peek.yourdomain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+**为什么需要 `--base-url`**：
+- 当使用反向代理时，PeekView 内部生成的 URL（如创建条目时返回的链接）需要知道外部域名
+- 例如：`peekview create` 会返回 `https://peek.yourdomain.com/xxxxx` 而不是 `http://127.0.0.1:8080/xxxxx`
+
 ---
 
 ## 启动服务
@@ -195,6 +273,7 @@ server {
 | `PEEKVIEW_DB_PATH` | `~/.peekview/peek.db` | SQLite 数据库路径 | `/var/peek/peek.db` |
 | `PEEKVIEW_HOST` | `127.0.0.1` | 服务绑定地址 | `0.0.0.0` |
 | `PEEKVIEW_PORT` | `8080` | 服务端口 | `80` |
+| `PEEKVIEW_SERVER__BASE_URL` | - | 外部访问 URL（用于反向代理） | `https://example.com` |
 | `PEEKVIEW_API_KEY` | - | API 认证密钥 | `your-secret-key` |
 | `PEEKVIEW_CORS_ORIGINS` | `http://localhost:5173` | CORS 允许来源 | `https://yourdomain.com` |
 | `PEEKVIEW_ALLOWED_PATHS` | `[]` | 允许读取的本地路径 | `/home/user/docs,/data` |
@@ -253,7 +332,14 @@ echo "console.log('hello')" | peekview create -s "JS代码" --from-stdin
 
 # 指定自定义 slug
 peekview create report.md -s "月度报告" --slug monthly-report-2024
+
+# 使用自定义域名（适用于反向代理场景）
+peekview create report.md -s "月度报告" --base-url https://example.com
+# 输出: URL: https://example.com/monthly-report-2024
 ```
+
+**注意**：`--base-url` 用于指定外部访问域名，当你使用反向代理（如 Nginx、Cloudflare Tunnel）时，
+创建条目返回的 URL 会使用这个域名而不是默认的 `http://127.0.0.1:8080`。
 
 #### 2. 查看条目
 
@@ -377,21 +463,25 @@ rm -rf ~/.peekview
 rm -rf /var/peek
 ```
 
-### 方式三：systemd 服务卸载
+### 方式三：系统服务卸载（推荐）
+
+如果你使用 `peekview service install` 安装的服务：
 
 ```bash
-# 1. 停止并禁用服务
-sudo systemctl stop peek
-sudo systemctl disable peek
+# 卸载系统服务
+sudo peekview service uninstall
 
-# 2. 删除服务文件
-sudo rm /etc/systemd/system/peekview.service
-sudo systemctl daemon-reload
+# 或卸载用户服务
+peekview service uninstall --user
 
-# 3. 卸载程序和数据
-sudo rm -rf /opt/peek
-sudo rm -rf /var/peek
+# 4. 卸载程序
+pip uninstall peekview -y
+
+# 5. 清理数据（可选）
+rm -rf ~/.peekview
 ```
+
+### 方式四：手动 systemd 服务卸载（旧方式）
 
 ### 清理内容清单
 

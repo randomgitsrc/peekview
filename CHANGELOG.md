@@ -5,6 +5,26 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.6] - 2026-04-28
+
+### 新增
+
+- **CLI --base-url 选项**
+  - `peekview serve --base-url https://example.com` - 支持自定义域名
+  - `peekview create --base-url https://example.com` - 创建条目时使用自定义 URL
+  - 适用于反向代理场景（如 Cloudflare Tunnel）
+
+- **服务管理命令 (`peekview service`)**
+  - `peekview service install` - 安装为系统服务（systemd/launchd）
+  - `peekview service install --user` - 安装为用户服务（无需 sudo）
+  - `peekview service status/start/stop/uninstall` - 服务管理
+  - 支持 Linux (systemd) 和 macOS (launchd)
+  - 开机自启、自动重启、日志管理
+
+### 变更
+
+- 版本号更新至 0.1.6
+
 ## [0.1.4] - 2026-04-24
 
 ### 修复
