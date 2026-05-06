@@ -28,6 +28,9 @@ const renderedHtml = ref('')
 const isLoading = ref(false)
 const mermaidCache = new Map<string, string>()
 
+// Store mermaid component instances for external access
+const mermaidInstances = new Map<string, any>()
+
 // Global copy function for code blocks
 ;(window as any).copyCodeBlock = async (btn: HTMLButtonElement) => {
   const code = btn.getAttribute('data-code')
@@ -47,7 +50,32 @@ const mermaidCache = new Map<string, string>()
   }
 }
 
-// Global download function for mermaid PNG
+// Copy mermaid code
+;(window as any).copyMermaidCode = async (blockId: string) => {
+  const block = document.getElementById(blockId)
+  if (!block) return
+  const code = block.getAttribute('data-mermaid-code')
+  if (!code) return
+  try {
+    await navigator.clipboard.writeText(code)
+    // Show feedback
+    const menu = document.getElementById(`menu-${blockId}`)
+    if (menu) {
+      const btn = menu.querySelector('button:last-child')
+      if (btn) {
+        const original = btn.textContent
+        btn.textContent = '✓ Copied!'
+        setTimeout(() => {
+          btn.textContent = original
+        }, 2000)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
+}
+
+// Global download function for mermaid PNG - uses original SVG dimensions
 ;(window as any).downloadMermaidPng = async (blockId: string) => {
   const block = document.getElementById(blockId)
   if (!block) return
@@ -55,7 +83,6 @@ const mermaidCache = new Map<string, string>()
   const mountPoint = block.querySelector('.mermaid-viewer-mount')
   if (!mountPoint) return
 
-  // Find the MermaidDiagram component instance and trigger download
   const svg = mountPoint.querySelector('svg')
   if (!svg) {
     console.error('No SVG found in mermaid block')
@@ -63,13 +90,43 @@ const mermaidCache = new Map<string, string>()
   }
 
   try {
-    // Clone SVG and get computed styles
+    // Clone SVG
     const clonedSvg = svg.cloneNode(true) as SVGElement
 
-    // Ensure SVG has proper namespace
+    // Ensure SVG has proper namespace and styles
     if (!clonedSvg.getAttribute('xmlns')) {
       clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     }
+
+    // Get SVG dimensions from viewBox or attributes
+    let width = 0, height = 0
+    const viewBox = clonedSvg.getAttribute('viewBox')
+    if (viewBox) {
+      const parts = viewBox.split(' ').map(Number)
+      if (parts.length === 4) {
+        width = parts[2]
+        height = parts[3]
+      }
+    }
+
+    // Fallback to width/height attributes
+    if (!width || !height) {
+      width = parseFloat(clonedSvg.getAttribute('width') || '800')
+      height = parseFloat(clonedSvg.getAttribute('height') || '600')
+    }
+
+    // Final fallback
+    if (!width || !height) {
+      const bbox = (svg as any).getBBox ? (svg as any).getBBox() : null
+      if (bbox) {
+        width = bbox.width
+        height = bbox.height
+      }
+    }
+
+    // Minimum size
+    width = Math.max(width, 100)
+    height = Math.max(height, 100)
 
     // Get computed background color
     const computedStyle = getComputedStyle(svg)
@@ -92,11 +149,6 @@ const mermaidCache = new Map<string, string>()
         img.src = url
       })
 
-      // Get SVG dimensions
-      const rect = svg.getBoundingClientRect()
-      const width = Math.max(rect.width, 100)
-      const height = Math.max(rect.height, 100)
-
       // Create canvas with high DPI
       const scale = 2
       const canvas = document.createElement('canvas')
@@ -109,7 +161,7 @@ const mermaidCache = new Map<string, string>()
       ctx.fillStyle = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent' ? '#ffffff' : bgColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Draw image
+      // Draw image at full size
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
       // Export PNG
@@ -134,27 +186,121 @@ const mermaidCache = new Map<string, string>()
   }
 }
 
-// Global toggle function for mermaid view
-;(window as any).toggleMermaidView = (blockId: string, view: 'diagram' | 'code') => {
+// Global toggle function for mermaid view - toggle mode
+;(window as any).toggleMermaidView = (blockId: string) => {
   const block = document.getElementById(blockId)
   if (!block) return
 
   const diagramMode = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
   const codeMode = block.querySelector('.mermaid-content[data-mode="code"]') as HTMLElement
-  const diagramBtn = block.querySelector('.diagram-btn') as HTMLElement
-  const codeBtn = block.querySelector('.code-btn') as HTMLElement
+  const toggleBtn = block.querySelector('.mermaid-view-toggle') as HTMLElement
+  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
 
-  if (view === 'diagram') {
-    if (diagramMode) diagramMode.style.display = ''
-    if (codeMode) codeMode.style.display = 'none'
-    if (diagramBtn) diagramBtn.classList.add('active')
-    if (codeBtn) codeBtn.classList.remove('active')
+  if (!diagramMode || !codeMode) return
+
+  const isCurrentlyDiagram = diagramMode.style.display !== 'none'
+
+  if (isCurrentlyDiagram) {
+    // Switch to code
+    diagramMode.style.display = 'none'
+    codeMode.style.display = ''
+    if (toggleText) toggleText.textContent = 'Code'
+    toggleBtn?.classList.add('code-active')
   } else {
-    if (diagramMode) diagramMode.style.display = 'none'
-    if (codeMode) codeMode.style.display = ''
-    if (diagramBtn) diagramBtn.classList.remove('active')
-    if (codeBtn) codeBtn.classList.add('active')
+    // Switch to diagram
+    diagramMode.style.display = ''
+    codeMode.style.display = 'none'
+    if (toggleText) toggleText.textContent = 'Diagram'
+    toggleBtn?.classList.remove('code-active')
+
+    // Trigger resize on the instance to ensure it displays correctly
+    const mountPoint = diagramMode.querySelector('.mermaid-viewer-mount')
+    if (mountPoint) {
+      const instance = mermaidInstances.get(blockId)
+      if (instance && instance.resetZoom) {
+        setTimeout(() => {
+          instance.resetZoom()
+        }, 50)
+      }
+    }
   }
+}
+
+// Open mermaid fullscreen
+;(window as any).openMermaidFullscreen = (blockId: string) => {
+  const instance = mermaidInstances.get(blockId)
+  if (instance && instance.toggleFullscreen) {
+    instance.toggleFullscreen()
+  }
+}
+
+// Toggle mermaid dropdown menu
+;(window as any).toggleMermaidMenu = (blockId: string) => {
+  const menu = document.getElementById(`menu-${blockId}`)
+  if (!menu) return
+
+  // Close other menus
+  document.querySelectorAll('.mermaid-dropdown-menu').forEach((m) => {
+    if (m.id !== `menu-${blockId}`) {
+      m.classList.remove('show')
+    }
+  })
+
+  menu.classList.toggle('show')
+
+  // Close on click outside
+  const closeMenu = (e: Event) => {
+    if (!(e.target as Element).closest('.mermaid-dropdown')) {
+      menu.classList.remove('show')
+      document.removeEventListener('click', closeMenu)
+    }
+  }
+
+  // Add listener next tick to avoid immediate close
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu)
+  }, 0)
+}
+
+// Resize handling
+let resizingBlock: HTMLElement | null = null
+let startY = 0
+let startHeight = 0
+
+;(window as any).startResize = (blockId: string, e: MouseEvent) => {
+  e.preventDefault()
+  const block = document.getElementById(blockId)
+  if (!block) return
+
+  const content = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
+  if (!content) return
+
+  resizingBlock = content
+  startY = e.clientY
+  startHeight = content.offsetHeight
+
+  document.addEventListener('mousemove', onResizeMove)
+  document.addEventListener('mouseup', onResizeEnd)
+  document.body.style.cursor = 'se-resize'
+  content.classList.add('resizing')
+}
+
+function onResizeMove(e: MouseEvent) {
+  if (!resizingBlock) return
+  const delta = e.clientY - startY
+  const newHeight = Math.max(200, startHeight + delta)
+  resizingBlock.style.height = `${newHeight}px`
+  resizingBlock.style.maxHeight = 'none'
+}
+
+function onResizeEnd() {
+  if (resizingBlock) {
+    resizingBlock.classList.remove('resizing')
+    resizingBlock = null
+  }
+  document.removeEventListener('mousemove', onResizeMove)
+  document.removeEventListener('mouseup', onResizeEnd)
+  document.body.style.cursor = ''
 }
 
 // Async render markdown with syntax highlighting
@@ -209,6 +355,19 @@ async function renderMermaidDiagrams() {
         id: `mermaid-${index}`,
       })
       vueRender(vNode, mountPoint)
+
+      // Store instance reference for external access (fullscreen, etc)
+      // Note: vueRender doesn't give us the instance directly, so we store the mount point
+      // and use a data attribute to track it
+      mermaidInstances.set(`mermaid-block-${index}`, {
+        toggleFullscreen: () => {
+          // Find the component instance and call fullscreen
+          const btn = mountPoint.querySelector('.mermaid-fullscreen-trigger')
+          if (btn) {
+            (btn as HTMLElement).click()
+          }
+        }
+      })
     } catch (err) {
       console.error('Mermaid render failed:', err)
       mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
@@ -444,7 +603,7 @@ watch(() => [props.content, theme.value], async () => {
   color: var(--text-primary);
 }
 
-/* === Mermaid Block Styles (Refactored) === */
+/* === Mermaid Block Styles (Refactored v2) === */
 .mermaid-block {
   margin: 1rem 0;
   border: 1px solid var(--border-color);
@@ -475,8 +634,12 @@ watch(() => [props.content, theme.value], async () => {
   align-items: center;
 }
 
-.mermaid-toggle-btn {
-  padding: 4px 12px;
+/* Toggle button */
+.mermaid-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -487,22 +650,30 @@ watch(() => [props.content, theme.value], async () => {
   transition: all 0.2s;
 }
 
-.mermaid-toggle-btn:hover {
-  background: var(--bg-tertiary);
+.mermaid-view-toggle:hover {
+  background: var(--bg-secondary);
   border-color: var(--border-hover);
 }
 
-.mermaid-toggle-btn.active {
+.mermaid-view-toggle .toggle-icon {
+  font-size: 14px;
+}
+
+.mermaid-view-toggle.code-active {
   color: var(--accent-color);
   border-color: var(--accent-color);
   background: rgba(var(--accent-rgb), 0.1);
 }
 
-.mermaid-download-btn,
-.mermaid-copy-btn {
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 500;
+/* Action buttons */
+.mermaid-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
   color: var(--text-secondary);
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -511,23 +682,58 @@ watch(() => [props.content, theme.value], async () => {
   transition: all 0.2s;
 }
 
-.mermaid-download-btn:hover,
-.mermaid-copy-btn:hover {
-  background: var(--bg-tertiary);
+.mermaid-action-btn:hover {
+  background: var(--bg-secondary);
   border-color: var(--border-hover);
+  color: var(--text-primary);
 }
 
-.mermaid-download-btn.copied,
-.mermaid-copy-btn.copied {
-  color: var(--success-color);
-  border-color: var(--success-color);
-  background: var(--success-bg);
+/* Dropdown menu */
+.mermaid-dropdown {
+  position: relative;
 }
 
+.mermaid-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+}
+
+.mermaid-dropdown-menu.show {
+  display: block;
+}
+
+.mermaid-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mermaid-dropdown-menu button:hover {
+  background: var(--bg-secondary);
+}
+
+/* Content areas */
 .mermaid-content {
   position: relative;
-  min-height: 100px;
-  max-height: 600px;
+  min-height: 200px;
+  /* No max-height - adaptive to content */
 }
 
 .mermaid-content.diagram-mode {
@@ -536,6 +742,7 @@ watch(() => [props.content, theme.value], async () => {
 
 .mermaid-content.code-mode {
   background: var(--bg-secondary);
+  display: none;
 }
 
 .mermaid-content.code-mode pre {
@@ -547,48 +754,48 @@ watch(() => [props.content, theme.value], async () => {
 
 .mermaid-viewer-mount {
   width: 100%;
-  height: 100%;
-  min-height: 150px;
+  /* Height determined by SVG content */
 }
 
-/* Floating toolbar for desktop hover */
-.mermaid-block:hover .mermaid-floating-toolbar {
-  opacity: 1;
-  visibility: visible;
+.mermaid-viewer-mount :deep(svg) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
-.mermaid-floating-toolbar {
+/* Resize handle */
+.mermaid-resize-handle {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: var(--radius-sm);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  background: linear-gradient(
+    -45deg,
+    transparent 40%,
+    var(--border-color) 40%,
+    var(--border-color) 45%,
+    transparent 45%,
+    transparent 50%,
+    var(--border-color) 50%,
+    var(--border-color) 55%,
+    transparent 55%
+  );
   z-index: 10;
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
 
-.mermaid-floating-toolbar button {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
+.mermaid-resize-handle:hover,
+.mermaid-content.resizing .mermaid-resize-handle {
+  opacity: 1;
 }
 
-.mermaid-floating-toolbar button:hover {
-  background: rgba(255, 255, 255, 0.2);
+/* Fullscreen trigger (hidden) */
+.mermaid-fullscreen-trigger {
+  display: none;
 }
 
 /* Mermaid error state */
@@ -607,22 +814,28 @@ watch(() => [props.content, theme.value], async () => {
   color: #ff8787;
 }
 
-/* Mobile: always show toolbar in header */
+/* Mobile adjustments */
 @media (max-width: 768px) {
-  .mermaid-header-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  .mermaid-header {
+    padding: 6px 10px;
   }
 
-  .mermaid-toggle-btn,
-  .mermaid-download-btn,
-  .mermaid-copy-btn {
-    padding: 6px 10px;
-    min-height: 32px;
+  .mermaid-view-toggle .toggle-text {
+    display: none; /* Only show icon on mobile */
+  }
+
+  .mermaid-view-toggle {
+    padding: 4px 8px;
+  }
+
+  .mermaid-action-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
   }
 
   .mermaid-content {
-    max-height: 400px;
+    min-height: 150px;
   }
 }
 

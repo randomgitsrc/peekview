@@ -101,18 +101,28 @@ export function useMarkdown() {
         if (block.lang === 'mermaid') {
           const mermaidBlockId = `mermaid-block-${block.index}`
           // Flattened structure: 2 layers instead of 4
+          // Icons: ⧉ fullscreen, ⬇ download, ⧉ copy, ⋯ menu
           const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-mermaid-code="${escapeHtmlAttribute(block.code)}" data-index="${block.index}">
             <div class="mermaid-header">
               <span class="mermaid-label">MERMAID</span>
               <div class="mermaid-header-actions">
-                <button class="mermaid-toggle-btn diagram-btn active" data-view="diagram" onclick="toggleMermaidView('${mermaidBlockId}', 'diagram')">Diagram</button>
-                <button class="mermaid-toggle-btn code-btn" data-view="code" onclick="toggleMermaidView('${mermaidBlockId}', 'code')">Code</button>
-                <button class="mermaid-download-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="downloadMermaidPng('${mermaidBlockId}')" title="Download PNG">PNG</button>
-                <button class="mermaid-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="copyCodeBlock(this)">Copy</button>
+                <button class="mermaid-view-toggle" onclick="toggleMermaidView('${mermaidBlockId}')" title="Toggle Diagram/Code">
+                  <span class="toggle-icon">◫</span>
+                  <span class="toggle-text">Diagram</span>
+                </button>
+                <button class="mermaid-action-btn fullscreen-btn" onclick="openMermaidFullscreen('${mermaidBlockId}')" title="Fullscreen">⧉</button>
+                <div class="mermaid-dropdown">
+                  <button class="mermaid-action-btn menu-btn" onclick="toggleMermaidMenu('${mermaidBlockId}')" title="More actions">⋯</button>
+                  <div class="mermaid-dropdown-menu" id="menu-${mermaidBlockId}">
+                    <button onclick="downloadMermaidPng('${mermaidBlockId}')">⬇ Download PNG</button>
+                    <button onclick="copyMermaidCode('${mermaidBlockId}')">⧉ Copy Code</button>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="mermaid-content diagram-mode" data-mode="diagram">
               <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
+              <div class="mermaid-resize-handle" onmousedown="startResize('${mermaidBlockId}', event)"></div>
             </div>
             <div class="mermaid-content code-mode" style="display: none;" data-mode="code">
               <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>

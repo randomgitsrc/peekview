@@ -1,6 +1,8 @@
 <template>
   <div ref="containerRef" class="mermaid-viewer" @wheel="onWheel">
     <div ref="svgContainer" class="svg-container" v-html="svgContent"></div>
+    <!-- Hidden fullscreen trigger for external access -->
+    <button class="mermaid-fullscreen-trigger" @click="toggleFullscreen" style="display: none;"></button>
   </div>
 
   <!-- Fullscreen Modal -->
@@ -381,11 +383,9 @@ defineExpose({
 <style scoped>
 .mermaid-viewer {
   width: 100%;
-  height: 100%;
-  min-height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 200px;
+  /* Height determined by SVG content */
+  display: block;
   overflow: hidden;
   cursor: grab;
 }
@@ -396,15 +396,15 @@ defineExpose({
 
 .svg-container {
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  /* SVG determines its own height */
 }
 
 .svg-container :deep(svg) {
   max-width: 100%;
-  max-height: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 /* Modal styles */
