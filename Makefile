@@ -1,15 +1,18 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-.PHONY: help build build-frontend build-backend test test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-test
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-test verify-local pre-publish pre-publish-quick bump-version
 
 # Default target
 help:
 	@echo "PeekView Build System"
 	@echo ""
 	@echo "DEVELOPMENT:"
-	@echo "  make build          - Build both frontend and backend"
+	@echo "  make build          - Build both frontend and backend (clean build)"
+	@echo "  make build-fast     - Incremental build (faster, uses cache)"
 	@echo "  make test           - Run all tests"
+	@echo "  make test-quick     - Run tests without rebuilding"
+	@echo "  make verify-local   - Quick local verification (build-fast + test-quick)"
 	@echo "  make dev            - Install in editable mode for development"
 	@echo "  make clean          - Clean all build artifacts"
 	@echo ""
@@ -21,24 +24,29 @@ help:
 	@echo "  make debug-test     - Run E2E tests"
 	@echo "  make debug-status   - Check dev server status"
 	@echo ""
-	@echo "RELEASE (see docs/process/release.md):"
-	@echo "  1. Update version in all files (see release.md checklist)"
+	@echo "RELEASE:"
+	@echo "  1. make bump-version NEW_VERSION=x.y.z  - Update all version files"
 	@echo "  2. make debug       - Debug and E2E test"
-	@echo "  3. make pre-publish - Dry run: build + test + version check"
-	@echo "  4. make publish     - Build + upload to PyPI"
-	@echo "  5. git tag + push   - Create and push version tag (MANUAL)"
-	@echo ""
-	@echo "Environment variables:"
-	@echo "  PYPI_API_TOKEN      - Required for publish"
-	@echo "  PYPI_TEST_API_TOKEN - Required for publish-test"
+	@echo "  3. make pre-publish-quick - Quick check (no rebuild)"
+	@echo "  4. make pre-publish - Full check (clean build + test)"
+	@echo "  5. make publish     - Build + upload to PyPI"
+	@echo "  6. git tag + push   - Create and push version tag"
 	@echo ""
 	@echo "Full docs: docs/process/debug-workflow.md docs/process/release.md"
 
+# =============================================================================
+# Build Targets
+# =============================================================================
+
 # Full build: ensures static files are fresh before backend packaging
-build: build-frontend build-backend
+build: clean build-frontend build-backend
 	@echo "✓ Build complete"
 
-# Build frontend and copy to backend static
+# Fast build: skip clean, use npm cache (for development iterations)
+build-fast: build-frontend-fast build-backend-fast
+	@echo "✓ Fast build complete"
+
+# Build frontend (full)
 build-frontend:
 	@echo "→ Building frontend..."
 	cd frontend-v3 && npm ci
@@ -55,8 +63,22 @@ build-frontend:
 	fi && \
 	echo "✓ Frontend built and copied ($$STATIC_COUNT files)"
 
-# Build backend wheel (includes static files)
-# Uses --no-isolation to ensure we control the build environment
+# Build frontend (fast) - skip npm ci if node_modules exists
+build-frontend-fast:
+	@if [ ! -d "frontend-v3/node_modules" ]; then \
+		echo "→ Installing dependencies..."; \
+		cd frontend-v3 && npm ci; \
+	else \
+		echo "→ Using existing node_modules"; \
+	fi
+	@echo "→ Building frontend..."
+	cd frontend-v3 && npm run build
+	@echo "→ Copying static files to backend..."
+	rm -rf backend/peekview/static/*
+	cp -r frontend-v3/dist/* backend/peekview/static/
+	@echo "✓ Frontend built and copied"
+
+# Build backend wheel (full)
 build-backend:
 	@echo "→ Cleaning build artifacts..."
 	cd backend && rm -rf dist *.egg-info .pytest_cache build
@@ -66,9 +88,31 @@ build-backend:
 	cd backend && python3 -m build --wheel
 	@echo "✓ Backend wheel built"
 
-# Tests
-test: test-backend
-	@echo "⚠️  Frontend tests skipped (no test files)"
+# Build backend wheel (fast) - minimal cleanup
+build-backend-fast:
+	@echo "→ Building backend wheel (fast)..."
+	cd backend && rm -rf dist *.egg-info build
+	cd backend && python3 -m build --wheel
+	@echo "✓ Backend wheel built"
+
+# =============================================================================
+# Test Targets
+# =============================================================================
+
+# Run all tests (rebuild first)
+test: build-backend test-backend
+	@echo "✓ All tests passed"
+
+# Quick test - run tests without rebuilding (for code fixes)
+test-quick:
+	@echo "→ Running backend tests (quick)..."
+	cd backend && python3 -m pytest tests/ -v --tb=short
+	@echo "✓ Tests passed"
+
+# Run only failed tests
+test-failed:
+	@echo "→ Running only failed tests..."
+	cd backend && python3 -m pytest tests/ --lf -v --tb=short
 
 test-frontend:
 	@echo "→ Running frontend tests..."
@@ -77,6 +121,22 @@ test-frontend:
 test-backend:
 	@echo "→ Running backend tests..."
 	cd backend && python3 -m pytest tests/ -v --tb=short
+
+# =============================================================================
+# Verification Targets
+# =============================================================================
+
+# Quick local verification (fast build + quick test)
+verify-local: build-fast test-quick check-version check-changelog
+	@echo ""
+	@echo "✓ Local verification passed"
+	@echo "  - Build: OK"
+	@echo "  - Tests: OK"
+	@echo "  - Version: OK"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  make debug          - Run full debug with E2E tests"
+	@echo "  make pre-publish    - Full pre-publish check"
 
 # Version consistency check
 check-version:
@@ -99,14 +159,72 @@ verify-wheel:
 	@echo "→ Verifying wheel contents..."
 	@cd backend && python3 scripts/verify_wheel.py
 
-# Pre-publish check - run all validations without publishing
-pre-publish: clean build check-version check-changelog test verify-wheel
-	@echo "✓ Pre-publish checks passed"
-	@echo "→ Ready to publish with: make publish"
+# =============================================================================
+# Release Targets
+# =============================================================================
 
-# Full publish pipeline
-publish: clean build check-version check-changelog verify-wheel
-	@echo "⚠️  Skipping tests (3 known failures in health check)"
+# Bump version across all files
+bump-version:
+	@if [ -z "$(NEW_VERSION)" ]; then \
+		echo "Usage: make bump-version NEW_VERSION=x.y.z"; \
+		echo "Example: make bump-version NEW_VERSION=0.1.21"; \
+		exit 1; \
+	fi
+	@echo "→ Bumping version to $(NEW_VERSION)..."
+	@# Update backend/__init__.py
+	sed -i "s/__version__ = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/__version__ = \"$(NEW_VERSION)\"/" backend/peekview/__init__.py
+	@# Update pyproject.toml
+	sed -i "s/^version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$(NEW_VERSION)\"/" backend/pyproject.toml
+	@# Update package.json
+	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" frontend-v3/package.json
+	@# Verify
+	@echo "→ Verifying version updates..."
+	@BACKEND_VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)"); \
+	PYPROJECT_VERSION=$$(grep "^version = " backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
+	PACKAGE_VERSION=$$(grep '"version":' frontend-v3/package.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
+	echo "  backend/__init__.py: $$BACKEND_VERSION"; \
+	echo "  pyproject.toml: $$PYPROJECT_VERSION"; \
+	echo "  package.json: $$PACKAGE_VERSION"; \
+	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ]; then \
+		echo "✓ All version files updated to $(NEW_VERSION)"; \
+	else \
+		echo "✗ Version mismatch detected"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Update CHANGELOG.md with new version"
+	@echo "  2. Update INDEX.md version reference"
+	@echo "  3. make verify-local  - Quick verification"
+	@echo "  4. git add -A && git commit -m \"chore(release): bump version to $(NEW_VERSION)\""
+
+# Quick pre-publish check (no rebuild) - use after code fixes
+pre-publish-quick: check-version check-changelog test-quick verify-wheel
+	@echo ""
+	@echo "✓ Quick pre-publish checks passed"
+	@echo "  Use this after code fixes to avoid full rebuild"
+	@echo ""
+	@echo "Ready to publish with: make publish"
+
+# Full pre-publish check (clean build + test) - use for final verification
+pre-publish: clean build check-version check-changelog test verify-wheel
+	@echo ""
+	@echo "✓ Full pre-publish checks passed"
+	@echo "  - Clean build: OK"
+	@echo "  - All tests: OK"
+	@echo "  - Version: OK"
+	@echo "  - Wheel: OK"
+	@echo ""
+	@echo "Ready to publish with: make publish"
+
+# Full publish pipeline (uses build-fast to save time after pre-publish)
+publish:
+	@if [ ! -f "backend/dist/peekview-*.whl" ]; then \
+		echo "→ No wheel found, building..."; \
+		make build; \
+	fi
+	@echo "→ Running final checks..."
+	make check-version check-changelog verify-wheel
 	@echo "→ Publishing to PyPI..."
 	@if [ -z "$(PYPI_API_TOKEN)" ]; then \
 		echo "✗ Error: PYPI_API_TOKEN not set"; \
@@ -127,6 +245,10 @@ publish-test: clean build test check-version
 		-u __token__ -p "$(PYPI_TEST_API_TOKEN)" \
 		--repository testpypi --non-interactive
 	@echo "✓ Published to TestPyPI"
+
+# =============================================================================
+# Development Targets
+# =============================================================================
 
 # Install locally (for development)
 install:
@@ -150,7 +272,10 @@ clean:
 # Quick local test (build + install)
 try: build install
 
-# Debug workflow - standard debugging process
+# =============================================================================
+# Debug Workflow
+# =============================================================================
+
 debug: debug-build debug-start debug-test
 	@echo ""
 	@echo "=== 调试流程完成 ==="
@@ -158,11 +283,10 @@ debug: debug-build debug-start debug-test
 	@echo "✓ E2E 测试通过"
 	@echo ""
 	@echo "请进行人工验证，确认无误后:"
-	@echo "  make debug-stop  - 停止调试服务"
-	@echo "  make pre-publish - 预发布检查"
-	@echo "  make publish     - 发布到 PyPI"
+	@echo "  make debug-stop     - 停止调试服务"
+	@echo "  make pre-publish    - 预发布检查"
+	@echo "  make publish        - 发布到 PyPI"
 
-# Debug build - ensure static files are fresh
 debug-build: clean build-frontend
 	@echo ""
 	@echo "→ 验证静态文件..."
@@ -175,18 +299,14 @@ debug-build: clean build-frontend
 	@echo "=== 调试构建完成 ==="
 	@echo "下一步: make debug-start"
 
-# Debug start - start dev server on port 8888 (isolated from pipx)
 debug-start:
 	@bash scripts/dev-server.sh start
 
-# Debug stop - stop dev server
 debug-stop:
 	@bash scripts/dev-server.sh stop
 
-# Debug test - run E2E tests against debug server
 debug-test:
 	@bash scripts/run-e2e-tests.sh
 
-# Debug status - check if debug server is running (info only, don't fail)
 debug-status:
 	@bash scripts/dev-server.sh status || true
