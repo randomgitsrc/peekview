@@ -67,15 +67,7 @@ async function initPanZoom() {
   // Wait for next tick
   await nextTick()
 
-  // Ensure container has dimensions
-  if (svgContainer.value.offsetHeight === 0 || svgContainer.value.offsetWidth === 0) {
-    // Container not visible yet, wait a bit and try again
-    setTimeout(initPanZoom, 100)
-    return
-  }
-
   // Get SVG natural size and set parent container height proportionally
-  // This ensures the diagram uses appropriate space without fixed 400px
   const viewBox = svg.getAttribute('viewBox')
   let svgWidth = 0, svgHeight = 0
   if (viewBox) {
@@ -95,7 +87,7 @@ async function initPanZoom() {
   // Use aspect ratio with min-height of 300px, max of 80vh
   if (svgWidth > 0 && svgHeight > 0) {
     const parentContainer = svgContainer.value.closest('.mermaid-content.diagram-mode') as HTMLElement
-    if (parentContainer && !parentContainer.style.height) {
+    if (parentContainer) {
       // Calculate proportional height based on container width
       const containerWidth = parentContainer.offsetWidth
       const aspectRatio = svgHeight / svgWidth
@@ -103,6 +95,8 @@ async function initPanZoom() {
         Math.max(containerWidth * aspectRatio, 300), // min 300px
         window.innerHeight * 0.8 // max 80vh
       )
+      // Always set the height, don't check if already set
+      // This ensures the container resizes properly
       parentContainer.style.height = `${calculatedHeight}px`
     }
   }

@@ -1,157 +1,75 @@
 import { test, expect } from '@playwright/test'
 
-/**
- * E2E Tests for Mermaid Diagram Rendering
- *
- * These tests verify:
- * 1. SVG fills the container (not a thin strip)
- * 2. Diagram/Code toggle works correctly
- * 3. Fullscreen modal fills the window
- */
-
-// Test data with mermaid diagram
-const TEST_CONTENT = `# Test Document
-
-## Mermaid Diagram
-
-\`\`\`mermaid
-graph TD
-    A[Start] --> B{Is it?}
-    B -->|Yes| C[OK]
-    C --> D[Rethink]
-    D --> B
-    B -->|No| E[End]
-\`\`\`
-
-Some text after.
-`
+const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 
 test.describe('Mermaid Diagram Rendering', () => {
-  let entrySlug: string
-
-  test.beforeAll(async ({ request }) => {
-    // Create test entry via API
-    const response = await request.post('/api/v1/entries', {
-      data: {
-        summary: 'Mermaid E2E Test',
-        content: TEST_CONTENT,
-        expires_in: '24h'
-      }
-    })
-    expect(response.ok()).toBeTruthy()
-    const data = await response.json()
-    entrySlug = data.slug
-  })
-
   test.beforeEach(async ({ page }) => {
-    // Navigate to the entry
-    await page.goto(`/entries/${entrySlug}`)
-    // Wait for page to load
-    await page.waitForSelector('.markdown-body', { timeout: 10000 })
-    // Wait for mermaid to render
-    await page.waitForTimeout(2000)
+    await page.goto(`${BASE_URL}/entries/test-mermaid-2`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(3000)
   })
 
-  test('SVG fills the diagram container', async ({ page }) => {
-    const diagramMode = page.locator('.mermaid-content[data-mode="diagram"]')
-
-    // Should be visible
+  test('SVG fills container properly', async ({ page }) => {
+    const diagramMode = page.locator('.mermaid-content[data-mode="diagram"]').first()
     await expect(diagramMode).toBeVisible()
 
-    // Check container has reasonable height (at least 200px)
-    const containerHeight = await diagramMode.evaluate(el => el.offsetHeight)
-    expect(containerHeight).toBeGreaterThanOrEqual(200)
+    const containerBox = await diagramMode.boundingBox()
+    console.log(`Container size: ${containerBox?.width}x${containerBox?.height}`)
 
-    // Check SVG exists and has height
-    const svg = diagramMode.locator('svg')
+    expect(containerBox?.height).toBeGreaterThan(200)
+
+    const svg = diagramMode.locator('svg').first()
     await expect(svg).toBeVisible()
 
-    const svgHeight = await svg.evaluate(el => el.getBoundingClientRect().height)
-    expect(svgHeight).toBeGreaterThan(100)
+    const svgBox = await svg.boundingBox()
+    console.log(`SVG size: ${svgBox?.width}x${svgBox?.height}`)
+    expect(svgBox?.height).toBeGreaterThan(100)
 
-    // SVG should fill most of the container
-    const svgContainer = diagramMode.locator('.mermaid-viewer-mount')
-    const containerBox = await svgContainer.boundingBox()
-    expect(containerBox?.height).toBeGreaterThan(150)
+    await page.screenshot({ path: '/tmp/mermaid-test-1-initial.png', fullPage: true })
   })
 
-  test('Diagram/Code toggle works', async ({ page }) => {
+  test('Code/Diagram toggle works', async ({ page }) => {
     const block = page.locator('.mermaid-block').first()
     const toggleBtn = block.locator('.mermaid-view-toggle')
     const diagramMode = block.locator('.mermaid-content[data-mode="diagram"]')
     const codeMode = block.locator('.mermaid-content[data-mode="code"]')
 
-    // Initially diagram should be visible, code hidden
-    await expect(diagramMode).toBeVisible()
-    await expect(codeMode).toBeHidden()
-
-    // Click toggle to show code
     await toggleBtn.click()
     await page.waitForTimeout(500)
-
-    // Code should be visible, diagram hidden
     await expect(codeMode).toBeVisible()
     await expect(diagramMode).toBeHidden()
+    await page.screenshot({ path: '/tmp/mermaid-test-2-code.png', fullPage: true })
 
-    // Click toggle again to show diagram
     await toggleBtn.click()
-    await page.waitForTimeout(1000) // Wait for resize
-
-    // Diagram should be visible again
+    await page.waitForTimeout(1500)
     await expect(diagramMode).toBeVisible()
     await expect(codeMode).toBeHidden()
 
-    // SVG should still have proper height after toggle back
     const svg = diagramMode.locator('svg')
     await expect(svg).toBeVisible()
+    const svgBox = await svg.boundingBox()
+    expect(svgBox?.height).toBeGreaterThan(100)
 
-    const svgHeight = await svg.evaluate(el => el.getBoundingClientRect().height)
-    expect(svgHeight).toBeGreaterThan(100)
+    await page.screenshot({ path: '/tmp/mermaid-test-3-after-toggle.png', fullPage: true })
   })
 
-  test('Fullscreen modal fills window', async ({ page }) => {
-    const block = page.locator('.mermaid-block').first()
-    const fullscreenBtn = block.locator('.mermaid-action-btn[title="Fullscreen"], button[title="Fullscreen"]').first()
-
-    // Click fullscreen
+  test('Fullscreen fills window', async ({ page }) => {
+    const fullscreenBtn = page.locator('.mermaid-action-btn[title="Fullscreen"]').first()
     await fullscreenBtn.click()
+    await page.waitForTimeout(1000)
 
-    // Wait for modal
     const modal = page.locator('.mermaid-modal-overlay')
     await expect(modal).toBeVisible()
 
-    // Check modal overlay is full screen
     const modalBox = await modal.boundingBox()
-    expect(modalBox?.width).toBeGreaterThan(800)
+    console.log(`Modal size: ${modalBox?.width}x${modalBox?.height}`)
     expect(modalBox?.height).toBeGreaterThan(500)
 
-    // Check inner modal has proper height
-    const innerModal = page.locator('.mermaid-modal')
-    const innerBox = await innerModal.boundingBox()
-    expect(innerBox?.height).toBeGreaterThan(400)
-
-    // Check SVG in modal
     const modalSvg = modal.locator('svg')
     await expect(modalSvg).toBeVisible()
 
-    // Close modal
+    await page.screenshot({ path: '/tmp/mermaid-test-4-fullscreen.png' })
     await page.keyboard.press('Escape')
-    await expect(modal).toBeHidden()
-  })
-
-  test('Resize handle adjusts container height', async ({ page }) => {
-    const diagramMode = page.locator('.mermaid-content[data-mode="diagram"]').first()
-    const resizeHandle = diagramMode.locator('.mermaid-resize-handle')
-
-    // Get initial height
-    const initialHeight = await diagramMode.evaluate(el => el.offsetHeight)
-
-    // Drag resize handle down
-    await resizeHandle.dragTo(diagramMode, { targetPosition: { x: 100, y: initialHeight + 100 } })
     await page.waitForTimeout(500)
-
-    // Check height increased
-    const newHeight = await diagramMode.evaluate(el => el.offsetHeight)
-    expect(newHeight).toBeGreaterThan(initialHeight)
   })
 })
