@@ -17,9 +17,12 @@ make publish && git tag -a v$(cd backend && python3 -c "from peekview import __v
 - 版本号已在以下文件更新：
   - `backend/peekview/__init__.py`
   - `backend/pyproject.toml`
-  - `frontend-v3/package.json`
+  - `frontend-v3/package.json` ⚠️ **前端版本从此文件自动读取**
   - `CHANGELOG.md`
   - `INDEX.md`
+
+> **注意**：`frontend-v3/src/views/EntryListView.vue` 中的版本号是**自动从 package.json 注入**的，不需要手动修改。
+> 构建时 Vite 会将 `package.json` 中的版本注入为 `__APP_VERSION__` 全局变量。
 
 ### 发布步骤
 

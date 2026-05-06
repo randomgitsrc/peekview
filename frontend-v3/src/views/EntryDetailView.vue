@@ -2,7 +2,7 @@
   <div class="entry-detail">
     <!-- Header -->
     <header class="detail-header">
-      <span class="back-btn" @click="goBack" title="Back to list">&larr;</span>
+      <span class="back-btn" @click="goBack" title="Back to list">⌂</span>
       <h1 class="title">{{ entryTitle }}</h1>
       <div class="header-right">
         <div class="actions" v-if="entryStore.currentEntry">
@@ -36,15 +36,15 @@
             Pack
           </button>
         </div>
+        <button
+          v-if="showTocButton"
+          class="btn btn-sm toc-btn"
+          @click="showTocDrawer = true"
+        >
+          TOC
+        </button>
         <ThemeToggle />
       </div>
-      <button
-        v-if="showTocButton"
-        class="btn btn-sm toc-btn"
-        @click="showTocDrawer = true"
-      >
-        TOC
-      </button>
     </header>
 
     <!-- Content -->
@@ -354,5 +354,36 @@ watch(() => props.slug, (newSlug) => {
 .btn-sm {
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-xs);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.header-right .actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+</style>
+
+<style>
+/* Global styles for detail header */
+.detail-header .back-btn {
+  font-size: 24px;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-header .back-btn:hover {
+  background: var(--bg-tertiary);
 }
 </style>
