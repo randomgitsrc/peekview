@@ -120,11 +120,11 @@ export function useMarkdown() {
                 </div>
               </div>
             </div>
-            <div class="mermaid-content diagram-mode" data-mode="diagram">
+            <div class="mermaid-content diagram-mode is-active" data-mode="diagram">
               <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
               <div class="mermaid-resize-handle" onmousedown="startResize('${mermaidBlockId}', event)"></div>
             </div>
-            <div class="mermaid-content code-mode" style="display: none;" data-mode="code">
+            <div class="mermaid-content code-mode" data-mode="code">
               <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
             </div>
           </div>`

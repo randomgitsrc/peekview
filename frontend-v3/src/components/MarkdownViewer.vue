@@ -198,42 +198,26 @@ const mermaidInstances = new Map<string, any>()
 
   if (!diagramMode || !codeMode) return
 
-  const isCurrentlyDiagram = codeMode.style.display === 'none'
+  const isCurrentlyCode = codeMode.classList.contains('is-active')
 
-  if (isCurrentlyDiagram) {
-    // Switch to code
-    diagramMode.style.display = 'none'
-    codeMode.style.display = ''
-    if (toggleText) toggleText.textContent = 'Code'
-    toggleBtn?.classList.add('code-active')
-  } else {
+  if (isCurrentlyCode) {
     // Switch to diagram
-    diagramMode.style.display = ''
-    codeMode.style.display = 'none'
+    codeMode.classList.remove('is-active')
+    diagramMode.classList.add('is-active')
     if (toggleText) toggleText.textContent = 'Diagram'
     toggleBtn?.classList.remove('code-active')
 
     // Trigger resize on the pan-zoom instance after display change
-    // Must wait for layout to update
-    requestAnimationFrame(() => {
-      const mountPoint = diagramMode.querySelector('.mermaid-viewer-mount')
-      if (mountPoint) {
-        // Find the mermaid-viewer component
-        const viewer = mountPoint.querySelector('.mermaid-viewer')
-        if (viewer) {
-          // Access the pan-zoom instance stored on the element
-          const panZoomInstance = (viewer as any).__panZoomInstance
-          if (panZoomInstance) {
-            // Wait for layout to stabilize
-            setTimeout(() => {
-              panZoomInstance.resize()
-              panZoomInstance.fit()
-              panZoomInstance.center()
-            }, 50)
-          }
-        }
-      }
-    })
+    const viewer = diagramMode.querySelector('.mermaid-viewer')
+    if (viewer) {
+      viewer.dispatchEvent(new CustomEvent('mermaid-refresh', { bubbles: true }))
+    }
+  } else {
+    // Switch to code
+    diagramMode.classList.remove('is-active')
+    codeMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Code'
+    toggleBtn?.classList.add('code-active')
   }
 }
 
@@ -743,27 +727,35 @@ watch(() => [props.content, theme.value], async () => {
 /* Content areas */
 .mermaid-content {
   position: relative;
-  /* Default height - will be adjusted by content via aspect-ratio */
   min-height: 300px;
   height: auto;
-  /* Use aspect-ratio based on typical diagram proportions */
   aspect-ratio: 16 / 9;
 }
 
 .mermaid-content.diagram-mode {
   background: var(--bg-secondary);
   overflow: hidden;
-  /* Ensure minimum height */
   min-height: 300px;
 }
 
 .mermaid-content.code-mode {
   background: var(--bg-secondary);
-  display: none;
-  height: auto;
   min-height: 100px;
-  /* Reset aspect-ratio for code view */
   aspect-ratio: auto;
+}
+
+/* Toggle visibility using is-active class */
+.mermaid-content.diagram-mode:not(.is-active),
+.mermaid-content.code-mode:not(.is-active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .mermaid-content.code-mode pre {

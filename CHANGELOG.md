@@ -7,7 +7,29 @@
 
 ## [Unreleased]
 
-## [0.1.16] - 2026-05-06
+## [0.1.18] - 2026-05-06
+
+### 修复
+
+- **Mermaid 图表显示完全修复**
+  - SVG 填满容器（修复内联样式 `max-width: 177px` 覆盖 CSS 的问题）
+  - Code/Diagram 切换后图表不再消失（改用 CSS clip 方案替代 `display:none`）
+  - Fullscreen 模态框正确铺满窗口
+  - 添加 `refreshPanZoom()` 方法在切换时重新初始化
+
+### 改进
+
+- **分页器增强**
+  - 添加页码列表，支持直接点击跳转
+  - 添加快速跳转输入框（Go to page X / Y）
+  - 当前页码高亮显示
+  - 移动端适配优化
+
+### 文档
+
+- 新增 `docs/frontend/svg-mermaid-patterns.md` - SVG/Mermaid 开发经验总结
+
+## [0.1.17] - 2026-05-06
 
 ### 修复
 

@@ -67,6 +67,15 @@ async function initPanZoom() {
   // Wait for next tick to ensure SVG is fully rendered
   await nextTick()
 
+  // Fix SVG dimensions to fill container
+  // Remove inline styles that constrain the SVG
+  svg.removeAttribute('width')
+  svg.removeAttribute('height')
+  svg.style.width = '100%'
+  svg.style.height = '100%'
+  svg.style.maxWidth = '100%'
+  svg.style.maxHeight = '100%'
+
   // Dynamically import svg-pan-zoom (client-side only)
   const svgPanZoom = (await import('svg-pan-zoom')).default
 
@@ -97,6 +106,14 @@ async function initModalPanZoom() {
   if (!svg) return
 
   await nextTick()
+
+  // Fix SVG dimensions to fill container
+  svg.removeAttribute('width')
+  svg.removeAttribute('height')
+  svg.style.width = '100%'
+  svg.style.height = '100%'
+  svg.style.maxWidth = '100%'
+  svg.style.maxHeight = '100%'
 
   const svgPanZoom = (await import('svg-pan-zoom')).default
 
@@ -352,6 +369,13 @@ onMounted(() => {
     containerRef.value.addEventListener('touchmove', onTouchMove, { passive: false })
     containerRef.value.addEventListener('touchend', onTouchEnd)
   }
+
+  // Listen for refresh events from parent (e.g., after toggle)
+  if (containerRef.value) {
+    containerRef.value.addEventListener('mermaid-refresh', () => {
+      refreshPanZoom()
+    })
+  }
 })
 
 onUnmounted(() => {
@@ -373,12 +397,23 @@ onUnmounted(() => {
   }
 })
 
+// Re-initialize pan-zoom (used after display changes)
+async function refreshPanZoom() {
+  if (panZoomInstance) {
+    panZoomInstance.destroy()
+    panZoomInstance = null
+  }
+  await nextTick()
+  await initPanZoom()
+}
+
 // Expose methods for parent component
 defineExpose({
   zoomIn,
   zoomOut,
   resetZoom,
   toggleFullscreen,
+  refreshPanZoom,
   getSvgElement: () => svgContainer.value?.querySelector('svg'),
   downloadPng,
   exportMermaidToPng,
