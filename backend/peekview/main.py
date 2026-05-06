@@ -131,6 +131,11 @@ def create_app(
     app.include_router(entries_router)
     app.include_router(files_router)
 
+    # Health check (must be before static files to avoid catch-all route)
+    @app.get("/health")
+    async def health_check():
+        return {"status": "ok", "version": app.version}
+
     # Add global exception handler for PeekError
     @app.exception_handler(PeekError)
     async def peek_error_handler(request: Request, exc: PeekError):
@@ -162,11 +167,6 @@ def create_app(
 
     # Static file serving for production SPA build
     _setup_static_files(app)
-
-    # Health check
-    @app.get("/health")
-    async def health_check():
-        return {"status": "ok", "version": app.version}
 
     return app
 
