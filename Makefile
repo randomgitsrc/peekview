@@ -187,6 +187,6 @@ debug-stop:
 debug-test:
 	@bash scripts/run-e2e-tests.sh
 
-# Debug status - check if debug server is running
+# Debug status - check if debug server is running (info only, don't fail)
 debug-status:
-	@bash scripts/dev-server.sh status
+	@bash scripts/dev-server.sh status || true
