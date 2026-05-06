@@ -178,9 +178,9 @@ def _setup_static_files(app: FastAPI) -> None:
 
         # Look for frontend build in standard locations (in order of preference)
         possible_paths = [
-            # Development: frontend/dist
-            Path(__file__).parent.parent.parent / "frontend" / "dist",
-            # Installed package: peekview/static
+            # Development: frontend-v3/dist (current frontend)
+            Path(__file__).parent.parent.parent / "frontend-v3" / "dist",
+            # Installed package: peekview/static (package directory)
             Path(__file__).parent / "static",
         ]
 

@@ -743,14 +743,17 @@ watch(() => [props.content, theme.value], async () => {
 /* Content areas */
 .mermaid-content {
   position: relative;
-  min-height: 200px;
-  /* Default height, can be resized */
-  height: 400px;
+  /* Use min-height instead of fixed height, let content decide */
+  min-height: 300px;
+  /* Default height for empty state, will be adjusted by JS based on SVG */
+  height: auto;
 }
 
 .mermaid-content.diagram-mode {
   background: var(--bg-secondary);
   overflow: hidden;
+  /* Ensure at least 300px for diagram */
+  min-height: 300px;
 }
 
 .mermaid-content.code-mode {
