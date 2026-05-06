@@ -1,0 +1,67 @@
+{
+  "passed": 4,
+  "failed": 4,
+  "skipped": 2,
+  "tests": [
+    {
+      "id": "STYLE-SH-01",
+      "name": "Button shadow (none...)",
+      "status": "FAIL",
+      "msg": "Expected: sm shadow"
+    },
+    {
+      "id": "STYLE-SH-02",
+      "name": "Card shadow",
+      "status": "SKIP",
+      "msg": "No cards found"
+    },
+    {
+      "id": "STYLE-SH-04",
+      "name": "Dark theme shadow opacity",
+      "status": "SKIP",
+      "msg": "Not in dark mode"
+    },
+    {
+      "id": "INTER-A-01",
+      "name": "Transition speed (all...)",
+      "status": "FAIL",
+      "msg": "Expected: 150ms/200ms/300ms"
+    },
+    {
+      "id": "INTER-A-02",
+      "name": "Transition easing",
+      "status": "FAIL",
+      "msg": ""
+    },
+    {
+      "id": "INTER-A-03",
+      "name": "Drawer enter animation (638ms)",
+      "status": "FAIL",
+      "msg": "Expected: ~200ms"
+    },
+    {
+      "id": "INTER-A-04",
+      "name": "Drawer overlay fade (opacity: 1)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "STYLE-S-01",
+      "name": "Base spacing unit (8px 12px)",
+      "status": "PASS",
+      "msg": "4px multiples: 8px 12px"
+    },
+    {
+      "id": "STYLE-S-03",
+      "name": "Component gap (0px)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "STYLE-S-07",
+      "name": "Mobile bottom bar height (56px)",
+      "status": "PASS",
+      "msg": "Expected: 56px"
+    }
+  ]
+}

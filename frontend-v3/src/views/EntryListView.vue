@@ -14,37 +14,65 @@
         No entries found
       </div>
 
-      <div v-else class="entry-grid">
-        <router-link
-          v-for="entry in entries"
-          :key="entry.id"
-          :to="`/${entry.slug}`"
-          class="entry-card"
-        >
-          <h3 class="entry-title">{{ entry.summary }}</h3>
-          <div class="entry-meta">
-            <span class="entry-files">{{ entry.fileCount ?? entry.files?.length ?? 0 }} files</span>
-            <span v-if="entry.tags.length" class="entry-tags">
-              {{ entry.tags.join(', ') }}
-            </span>
-          </div>
-        </router-link>
+      <div v-else>
+        <div class="entry-grid">
+          <router-link
+            v-for="entry in entries"
+            :key="entry.id"
+            :to="`/${entry.slug}`"
+            class="entry-card"
+          >
+            <h3 class="entry-title">{{ entry.summary }}</h3>
+            <div class="entry-meta">
+              <span class="entry-files">{{ entry.fileCount ?? entry.files?.length ?? 0 }} files</span>
+              <span v-if="entry.tags.length" class="entry-tags">
+                {{ entry.tags.join(', ') }}
+              </span>
+            </div>
+          </router-link>
+        </div>
+
+        <Pagination
+          v-if="totalPages > 1"
+          v-model:page="currentPage"
+          :per-page="perPage"
+          :total="total"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useEntryStore } from '@/stores/entry'
 import { storeToRefs } from 'pinia'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import Pagination from '@/components/Pagination.vue'
 
 const store = useEntryStore()
-const { entries, loading, error } = storeToRefs(store)
+const { entries, loading, error, total, page, perPage } = storeToRefs(store)
 const { loadEntries } = store
 
-onMounted(() => loadEntries())
+// Local page state for pagination
+const currentPage = ref(1)
+
+// Computed total pages
+const totalPages = computed(() => Math.ceil(total.value / perPage.value))
+
+// Load entries when page changes
+watch(currentPage, (newPage) => {
+  loadEntries({ page: newPage, perPage: perPage.value })
+})
+
+onMounted(() => {
+  currentPage.value = page.value || 1
+  loadEntries({ page: currentPage.value, perPage: perPage.value })
+})
+</script>
+
+<script lang="ts">
+import { computed } from 'vue'
 </script>
 
 <style scoped>

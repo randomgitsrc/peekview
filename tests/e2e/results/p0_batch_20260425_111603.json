@@ -1,0 +1,109 @@
+{
+  "passed": 13,
+  "failed": 2,
+  "skipped": 2,
+  "tests": [
+    {
+      "id": "INTER-A-01",
+      "name": "Button transition (all...)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "INTER-A-03",
+      "name": "Drawer animation (58ms)",
+      "status": "FAIL",
+      "msg": "Expected ~200ms"
+    },
+    {
+      "id": "A11Y-A-01",
+      "name": "Button aria-label (7/7)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-A-04",
+      "name": "File tree has tree role",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-A-06",
+      "name": "Directory aria-expanded (0)",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-F-01",
+      "name": "Focus indicator visible",
+      "status": "PASS",
+      "msg": "rgb(16, 16, 16) auto 1px"
+    },
+    {
+      "id": "A11Y-F-02",
+      "name": "Focus color contrast",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-F-03",
+      "name": "Button focus outline (1px)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "RESP-B-01",
+      "name": "Large desktop \u22651536px (desktop)",
+      "status": "PASS",
+      "msg": "1600x900: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-02",
+      "name": "Standard desktop 1280-1535px (desktop)",
+      "status": "PASS",
+      "msg": "1400x900: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-03",
+      "name": "Small desktop 1024-1279px (desktop)",
+      "status": "PASS",
+      "msg": "1100x800: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-04",
+      "name": "Tablet landscape 768-1023px (desktop)",
+      "status": "PASS",
+      "msg": "900x700: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-05",
+      "name": "Tablet portrait 640-767px (desktop)",
+      "status": "PASS",
+      "msg": "700x1000: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-06",
+      "name": "Large mobile 375-639px (desktop)",
+      "status": "PASS",
+      "msg": "400x800: sidebar=True, bottom=True"
+    },
+    {
+      "id": "RESP-B-07",
+      "name": "Small mobile <375px (desktop)",
+      "status": "PASS",
+      "msg": "350x600: sidebar=True, bottom=True"
+    },
+    {
+      "id": "STYLE-SH-02",
+      "name": "Card shadow",
+      "status": "SKIP",
+      "msg": "No cards found"
+    },
+    {
+      "id": "STYLE-SH-03",
+      "name": "Drawer shadow (none...)",
+      "status": "FAIL",
+      "msg": ""
+    }
+  ]
+}

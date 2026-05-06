@@ -1,0 +1,78 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (optional)'
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # Required for trusted publishing
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Node.js for frontend build
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend-v3/package-lock.json
+
+      # Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Install frontend dependencies
+      - name: Install frontend dependencies
+        run: |
+          cd frontend-v3
+          npm ci
+
+      # Build frontend
+      - name: Build frontend
+        run: |
+          cd frontend-v3
+          npm run build
+
+      # Copy frontend build to backend static
+      - name: Copy frontend to backend
+        run: |
+          rm -rf backend/peekview/static/*
+          cp -r frontend-v3/dist/* backend/peekview/static/
+
+      # Install Python build dependencies
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      # Check version consistency
+      - name: Check version
+        run: |
+          cd backend
+          python scripts/check_version.py
+
+      # Build Python package
+      - name: Build package
+        run: |
+          cd backend
+          python -m build
+
+      # Publish to PyPI
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: backend/dist/

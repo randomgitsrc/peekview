@@ -22,6 +22,7 @@ import click
 from sqlalchemy import select
 from sqlmodel import Session
 
+from peekview import __version__
 from peekview.config import PeekConfig
 from peekview.database import init_db
 from peekview.main import create_app
@@ -32,7 +33,7 @@ from peekview.storage import StorageManager
 
 
 @click.group()
-@click.version_option(version="0.1.11", prog_name="peekview")
+@click.version_option(version=__version__, prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
     pass

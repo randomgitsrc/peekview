@@ -1,0 +1,115 @@
+{
+  "passed": 7,
+  "failed": 2,
+  "skipped": 9,
+  "tests": [
+    {
+      "id": "COPY-01",
+      "name": "Copy button exists",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "COPY-02",
+      "name": "Copy code content",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "COPY-03",
+      "name": "Copy success feedback",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "THEME-01",
+      "name": "Theme toggle exists",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "THEME-02",
+      "name": "Toggle to dark (False -> False)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "THEME-03",
+      "name": "Toggle to light (False -> False)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "THEME-04",
+      "name": "Theme persists (None)",
+      "status": "FAIL",
+      "msg": ""
+    },
+    {
+      "id": "THEME-05",
+      "name": "System theme preference",
+      "status": "SKIP",
+      "msg": "Requires fresh page"
+    },
+    {
+      "id": "MOBILE-01",
+      "name": "Mobile viewport (375px)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "MOBILE-02",
+      "name": "Hamburger menu exists",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "MOBILE-03",
+      "name": "Menu opens",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "MOBILE-04",
+      "name": "Menu closes",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "MOBILE-05",
+      "name": "Touch gestures",
+      "status": "SKIP",
+      "msg": "Complex gesture testing"
+    },
+    {
+      "id": "WRAP-01",
+      "name": "Wrap button exists",
+      "status": "FAIL",
+      "msg": ""
+    },
+    {
+      "id": "WRAP-03",
+      "name": "Wrap state (pre)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "TOAST-01",
+      "name": "Toast appears",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "TOAST-02",
+      "name": "Toast message",
+      "status": "SKIP",
+      "msg": ""
+    },
+    {
+      "id": "TOAST-03",
+      "name": "Toast auto-dismiss",
+      "status": "SKIP",
+      "msg": ""
+    }
+  ]
+}

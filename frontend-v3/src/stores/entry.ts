@@ -13,6 +13,11 @@ export const useEntryStore = defineStore('entry', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  // Pagination state
+  const page = ref(1)
+  const perPage = ref(20)
+  const total = ref(0)
+
   // Getters (computed)
   const isMultiFile = computed(() => {
     return (currentEntry.value?.files.length ?? 0) > 1
@@ -47,6 +52,10 @@ export const useEntryStore = defineStore('entry', () => {
     try {
       const response = await api.listEntries(params)
       entries.value = response.items
+      // Update pagination state
+      page.value = response.page
+      perPage.value = response.perPage
+      total.value = response.total
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load entries'
       entries.value = []
@@ -117,6 +126,10 @@ export const useEntryStore = defineStore('entry', () => {
     wrapEnabled,
     loading,
     error,
+    // Pagination state
+    page,
+    perPage,
+    total,
     // Getters
     isMultiFile,
     canWrap,

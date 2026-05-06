@@ -25,6 +25,13 @@ export function useMarkdown() {
       .replace(/>/g, '&gt;')
   }
 
+  function escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+  }
+
   // Override inline code renderer
   md.renderer.rules.code_inline = (tokens, idx) => {
     const token = tokens[idx]
@@ -90,6 +97,31 @@ export function useMarkdown() {
     // Second pass: replace placeholders with highlighted code
     for (const block of codeBlocks) {
       try {
+        // Skip mermaid blocks - they will be rendered by Mermaid.js with toggle support
+        if (block.lang === 'mermaid') {
+          const mermaidBlockId = `mermaid-block-${block.index}`
+          // Flattened structure: 2 layers instead of 4
+          const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-mermaid-code="${escapeHtmlAttribute(block.code)}" data-index="${block.index}">
+            <div class="mermaid-header">
+              <span class="mermaid-label">MERMAID</span>
+              <div class="mermaid-header-actions">
+                <button class="mermaid-toggle-btn diagram-btn active" data-view="diagram" onclick="toggleMermaidView('${mermaidBlockId}', 'diagram')">Diagram</button>
+                <button class="mermaid-toggle-btn code-btn" data-view="code" onclick="toggleMermaidView('${mermaidBlockId}', 'code')">Code</button>
+                <button class="mermaid-download-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="downloadMermaidPng('${mermaidBlockId}')" title="Download PNG">PNG</button>
+                <button class="mermaid-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="copyCodeBlock(this)">Copy</button>
+              </div>
+            </div>
+            <div class="mermaid-content diagram-mode" data-mode="diagram">
+              <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
+            </div>
+            <div class="mermaid-content code-mode" style="display: none;" data-mode="code">
+              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
+            </div>
+          </div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, mermaidBlock)
+          continue
+        }
+
         const highlighted = await highlightCode(block.code, block.lang, theme)
         // Wrap highlighted code with our header and copy button
         const wrappedCode = `<div class="code-block-wrapper">

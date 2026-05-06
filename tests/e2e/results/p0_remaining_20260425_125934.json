@@ -1,0 +1,109 @@
+{
+  "passed": 15,
+  "failed": 0,
+  "skipped": 2,
+  "tests": [
+    {
+      "id": "SEARCH-01",
+      "name": "Search input exists",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "SEARCH-02",
+      "name": "Search by keyword (10 results)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "SEARCH-03",
+      "name": "Search by tag click",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "SEARCH-05",
+      "name": "Empty search shows all",
+      "status": "SKIP",
+      "msg": "Search input not available"
+    },
+    {
+      "id": "A11Y-K-01",
+      "name": "Tab navigation (A)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-K-02",
+      "name": "Enter key activation",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "A11Y-K-04",
+      "name": "Focus trap in modals",
+      "status": "SKIP",
+      "msg": "No modals tested"
+    },
+    {
+      "id": "A11Y-K-05",
+      "name": "Escape key handling",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "DOWNLOAD-01",
+      "name": "Download button exists",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "PERF-01",
+      "name": "Page load time (15ms)",
+      "status": "PASS",
+      "msg": "Target: <3000ms"
+    },
+    {
+      "id": "PERF-02",
+      "name": "FCP (36ms)",
+      "status": "PASS",
+      "msg": "Target: <1800ms"
+    },
+    {
+      "id": "PERF-04",
+      "name": "CLS (0.0000)",
+      "status": "PASS",
+      "msg": "Target: <0.1"
+    },
+    {
+      "id": "PERF-06",
+      "name": "Memory usage (9.2MB)",
+      "status": "PASS",
+      "msg": "Target: <100MB"
+    },
+    {
+      "id": "URL-01",
+      "name": "Entry detail URL",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "URL-02",
+      "name": "Invalid slug error",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "LIST-01",
+      "name": "Entries display (70 items)",
+      "status": "PASS",
+      "msg": ""
+    },
+    {
+      "id": "LIST-03",
+      "name": "Entry click navigates (ocalhost:8080/jhh4ce)",
+      "status": "PASS",
+      "msg": ""
+    }
+  ]
+}

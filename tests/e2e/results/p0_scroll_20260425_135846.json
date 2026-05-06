@@ -1,0 +1,78 @@
+{
+  "passed": 3,
+  "failed": 9,
+  "tests": [
+    {
+      "id": "SCROLL-01",
+      "name": "Page scrollable (1080px > 1080px)",
+      "status": "FAIL",
+      "msg": "scrollHeight: 1080, clientHeight: 1080"
+    },
+    {
+      "id": "SCROLL-CODE-01",
+      "name": "Code viewer vertical scroll",
+      "status": "FAIL",
+      "msg": "overflowY: hidden"
+    },
+    {
+      "id": "SCROLL-CODE-02",
+      "name": "Code viewer horizontal scroll",
+      "status": "FAIL",
+      "msg": "overflowX: hidden"
+    },
+    {
+      "id": "SCROLL-CODE-03",
+      "name": "Line numbers fixed during scroll",
+      "status": "FAIL",
+      "msg": "position: static"
+    },
+    {
+      "id": "SCROLL-TREE-01",
+      "name": "File tree independent scroll",
+      "status": "PASS",
+      "msg": "overflow: auto"
+    },
+    {
+      "id": "SCROLL-TREE-02",
+      "name": "Scroll preserves file selection",
+      "status": "PASS",
+      "msg": "1 selected after scroll"
+    },
+    {
+      "id": "SCROLL-MD-01",
+      "name": "Markdown content scrollable",
+      "status": "FAIL",
+      "msg": "3124px content"
+    },
+    {
+      "id": "SCROLL-MD-02",
+      "name": "TOC click scrolls to section",
+      "status": "FAIL",
+      "msg": "scroll: 0 -> 0"
+    },
+    {
+      "id": "SCROLL-PERF-01",
+      "name": "Scroll event frequency",
+      "status": "FAIL",
+      "msg": "0 scroll events"
+    },
+    {
+      "id": "SCROLL-MOBILE-01",
+      "name": "Mobile page scrollable",
+      "status": "FAIL",
+      "msg": "667px > 667px"
+    },
+    {
+      "id": "SCROLL-MOBILE-02",
+      "name": "Bottom bar fixed during scroll",
+      "status": "PASS",
+      "msg": "visible: True, position: 611"
+    },
+    {
+      "id": "SCROLL-MOBILE-03",
+      "name": "Touch/smooth scroll works",
+      "status": "FAIL",
+      "msg": "scrollY: 0"
+    }
+  ]
+}
