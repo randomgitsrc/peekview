@@ -138,6 +138,15 @@ frontend-v3/src/
 | [work-plan.md](docs/plans/work-plan.md) | **工作计划 — 软件工程化** | ✅ 已完成 | v1.0 | 2026-04-24 |
 | [impl-plan.restore.md](docs/plans/impl-plan.restore.md) | v1 计划还原点 | 📦 归档 | v1 | 2026-04-18 |
 
+### 🔧 开发与调试 (`docs/process/`)
+
+| 文件 | 说明 | 状态 |
+|------|------|------|
+| [workflow.md](docs/process/workflow.md) | 开发工作流程 (P0-P4) | ✅ 定稿 |
+| [release.md](docs/process/release.md) | 发布流程 | ✅ 定稿 |
+| [debug-workflow.md](docs/process/debug-workflow.md) | **调试工作流程** | ✅ 新增 |
+| [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 新增 |
+
 ### 🔍 对抗评审 (`docs/reviews/`)
 
 | 文件 | 说明 | 评分 | 日期 |
