@@ -64,8 +64,15 @@ async function initPanZoom() {
   const svg = svgContainer.value.querySelector('svg')
   if (!svg) return
 
-  // Wait for SVG to have proper dimensions
+  // Wait for next tick
   await nextTick()
+
+  // Ensure container has dimensions
+  if (svgContainer.value.offsetHeight === 0 || svgContainer.value.offsetWidth === 0) {
+    // Container not visible yet, wait a bit and try again
+    setTimeout(initPanZoom, 100)
+    return
+  }
 
   // Dynamically import svg-pan-zoom (client-side only)
   const svgPanZoom = (await import('svg-pan-zoom')).default
@@ -83,6 +90,11 @@ async function initPanZoom() {
   }
 
   panZoomInstance = svgPanZoom(svg as SVGSVGElement, options)
+
+  // Store reference for external access
+  if (containerRef.value) {
+    (containerRef.value as any).__panZoomInstance = panZoomInstance
+  }
 }
 
 async function initModalPanZoom() {
@@ -156,8 +168,8 @@ function resetZoomModal() {
 function toggleFullscreen() {
   isFullscreen.value = true
   emit('fullscreen')
-  nextTick(() => {
-    initModalPanZoom()
+  nextTick(async () => {
+    await initModalPanZoom()
   })
 }
 
@@ -383,9 +395,10 @@ defineExpose({
 <style scoped>
 .mermaid-viewer {
   width: 100%;
-  min-height: 200px;
-  /* Height determined by SVG content */
-  display: block;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   cursor: grab;
 }
@@ -396,15 +409,15 @@ defineExpose({
 
 .svg-container {
   width: 100%;
-  display: block;
-  /* SVG determines its own height */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .svg-container :deep(svg) {
   max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
+  max-height: 100%;
 }
 
 /* Modal styles */

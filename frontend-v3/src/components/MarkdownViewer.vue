@@ -198,7 +198,7 @@ const mermaidInstances = new Map<string, any>()
 
   if (!diagramMode || !codeMode) return
 
-  const isCurrentlyDiagram = diagramMode.style.display !== 'none'
+  const isCurrentlyDiagram = codeMode.style.display === 'none'
 
   if (isCurrentlyDiagram) {
     // Switch to code
@@ -213,16 +213,27 @@ const mermaidInstances = new Map<string, any>()
     if (toggleText) toggleText.textContent = 'Diagram'
     toggleBtn?.classList.remove('code-active')
 
-    // Trigger resize on the instance to ensure it displays correctly
-    const mountPoint = diagramMode.querySelector('.mermaid-viewer-mount')
-    if (mountPoint) {
-      const instance = mermaidInstances.get(blockId)
-      if (instance && instance.resetZoom) {
-        setTimeout(() => {
-          instance.resetZoom()
-        }, 50)
+    // Trigger resize on the pan-zoom instance after display change
+    // Must wait for layout to update
+    requestAnimationFrame(() => {
+      const mountPoint = diagramMode.querySelector('.mermaid-viewer-mount')
+      if (mountPoint) {
+        // Find the mermaid-viewer component
+        const viewer = mountPoint.querySelector('.mermaid-viewer')
+        if (viewer) {
+          // Access the pan-zoom instance stored on the element
+          const panZoomInstance = (viewer as any).__panZoomInstance
+          if (panZoomInstance) {
+            // Wait for layout to stabilize
+            setTimeout(() => {
+              panZoomInstance.resize()
+              panZoomInstance.fit()
+              panZoomInstance.center()
+            }, 50)
+          }
+        }
       }
-    }
+    })
   }
 }
 
@@ -733,16 +744,20 @@ watch(() => [props.content, theme.value], async () => {
 .mermaid-content {
   position: relative;
   min-height: 200px;
-  /* No max-height - adaptive to content */
+  /* Default height, can be resized */
+  height: 400px;
 }
 
 .mermaid-content.diagram-mode {
   background: var(--bg-secondary);
+  overflow: hidden;
 }
 
 .mermaid-content.code-mode {
   background: var(--bg-secondary);
   display: none;
+  height: auto;
+  min-height: 100px;
 }
 
 .mermaid-content.code-mode pre {
@@ -754,14 +769,13 @@ watch(() => [props.content, theme.value], async () => {
 
 .mermaid-viewer-mount {
   width: 100%;
-  /* Height determined by SVG content */
+  height: 100%;
+  position: relative;
 }
 
 .mermaid-viewer-mount :deep(svg) {
   max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
+  max-height: 100%;
 }
 
 /* Resize handle */
