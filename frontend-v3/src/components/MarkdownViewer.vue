@@ -75,7 +75,7 @@ const mermaidInstances = new Map<string, any>()
   }
 }
 
-// Global download function for mermaid PNG - uses original SVG dimensions
+// Global download function for mermaid PNG - exports full diagram at 1:1 scale
 ;(window as any).downloadMermaidPng = async (blockId: string) => {
   const block = document.getElementById(blockId)
   if (!block) return
@@ -90,45 +90,95 @@ const mermaidInstances = new Map<string, any>()
   }
 
   try {
-    // Clone SVG
+    // Clone SVG for export
     const clonedSvg = svg.cloneNode(true) as SVGElement
 
-    // Ensure SVG has proper namespace and styles
+    // Ensure proper namespace
     if (!clonedSvg.getAttribute('xmlns')) {
       clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     }
 
-    // Get SVG dimensions from viewBox or attributes
-    let width = 0, height = 0
-    const viewBox = clonedSvg.getAttribute('viewBox')
-    if (viewBox) {
-      const parts = viewBox.split(' ').map(Number)
-      if (parts.length === 4) {
-        width = parts[2]
-        height = parts[3]
+    // Remove any transforms from svg-pan-zoom
+    clonedSvg.removeAttribute('transform')
+    clonedSvg.style.transform = ''
+
+    // Calculate full content bounds from all child elements
+    // Mermaid doesn't set viewBox, so we need to compute the actual content size
+    function calculateContentBounds(svg: SVGElement): { x: number; y: number; width: number; height: number } {
+      const elements = svg.querySelectorAll('rect, circle, ellipse, path, text, g[class*="node"], g[class*="cluster"], line, polyline, polygon')
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+      elements.forEach(elem => {
+        try {
+          const bbox = (elem as SVGGraphicsElement).getBBox?.()
+          if (bbox && bbox.width > 0 && bbox.height > 0) {
+            minX = Math.min(minX, bbox.x)
+            minY = Math.min(minY, bbox.y)
+            maxX = Math.max(maxX, bbox.x + bbox.width)
+            maxY = Math.max(maxY, bbox.y + bbox.height)
+            return
+          }
+        } catch (e) {}
+
+        const x = parseFloat(elem.getAttribute('x') || '0')
+        const y = parseFloat(elem.getAttribute('y') || '0')
+        const width = parseFloat(elem.getAttribute('width') || '0')
+        const height = parseFloat(elem.getAttribute('height') || '0')
+        const r = parseFloat(elem.getAttribute('r') || '0')
+        const cx = parseFloat(elem.getAttribute('cx') || '0')
+        const cy = parseFloat(elem.getAttribute('cy') || '0')
+
+        if (width > 0 || height > 0) {
+          minX = Math.min(minX, x)
+          minY = Math.min(minY, y)
+          maxX = Math.max(maxX, x + width)
+          maxY = Math.max(maxY, y + height)
+        }
+
+        if (r > 0) {
+          minX = Math.min(minX, cx - r)
+          minY = Math.min(minY, cy - r)
+          maxX = Math.max(maxX, cx + r)
+          maxY = Math.max(maxY, cy + r)
+        }
+      })
+
+      if (minX === Infinity || minY === Infinity) {
+        const rect = svg.getBoundingClientRect()
+        return { x: 0, y: 0, width: rect.width, height: rect.height }
+      }
+
+      const padding = 20
+      return {
+        x: minX - padding,
+        y: minY - padding,
+        width: maxX - minX + padding * 2,
+        height: maxY - minY + padding * 2
       }
     }
 
-    // Fallback to width/height attributes
-    if (!width || !height) {
-      width = parseFloat(clonedSvg.getAttribute('width') || '800')
-      height = parseFloat(clonedSvg.getAttribute('height') || '600')
-    }
+    // Get full content bounds
+    const bounds = calculateContentBounds(clonedSvg)
+    let width = bounds.width
+    let height = bounds.height
 
-    // Final fallback
-    if (!width || !height) {
-      const bbox = (svg as any).getBBox ? (svg as any).getBBox() : null
-      if (bbox) {
-        width = bbox.width
-        height = bbox.height
-      }
-    }
-
-    // Minimum size
+    // Ensure minimum size
     width = Math.max(width, 100)
     height = Math.max(height, 100)
 
-    // Get computed background color
+    // Set explicit dimensions for 1:1 export
+    clonedSvg.setAttribute('width', String(width))
+    clonedSvg.setAttribute('height', String(height))
+    clonedSvg.style.width = `${width}px`
+    clonedSvg.style.height = `${height}px`
+    clonedSvg.style.maxWidth = 'none'
+    clonedSvg.style.maxHeight = 'none'
+
+    // Set viewBox to ensure proper coordinate system
+    clonedSvg.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${width} ${height}`)
+
+    // Get background color
     const computedStyle = getComputedStyle(svg)
     const bgColor = computedStyle.backgroundColor || '#ffffff'
 
@@ -149,11 +199,10 @@ const mermaidInstances = new Map<string, any>()
         img.src = url
       })
 
-      // Create canvas with high DPI
-      const scale = 2
+      // Create canvas at 1:1 scale (original size)
       const canvas = document.createElement('canvas')
-      canvas.width = width * scale
-      canvas.height = height * scale
+      canvas.width = width
+      canvas.height = height
 
       const ctx = canvas.getContext('2d')!
 
@@ -161,8 +210,8 @@ const mermaidInstances = new Map<string, any>()
       ctx.fillStyle = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent' ? '#ffffff' : bgColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Draw image at full size
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      // Draw at 1:1 (original size)
+      ctx.drawImage(img, 0, 0, width, height)
 
       // Export PNG
       canvas.toBlob((pngBlob) => {

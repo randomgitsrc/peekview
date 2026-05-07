@@ -215,7 +215,7 @@ async function downloadPng() {
 }
 
 async function exportMermaidToPng(svgElement: SVGElement): Promise<Blob> {
-  // Clone SVG and get computed styles
+  // Clone SVG to avoid modifying the displayed one
   const clonedSvg = svgElement.cloneNode(true) as SVGElement
 
   // Ensure SVG has proper namespace
@@ -223,7 +223,95 @@ async function exportMermaidToPng(svgElement: SVGElement): Promise<Blob> {
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
   }
 
-  // Get computed background color
+  // Remove any transform from svg-pan-zoom to get full content
+  clonedSvg.removeAttribute('transform')
+  clonedSvg.style.transform = ''
+
+  // Calculate full content bounds from all child elements
+  // Mermaid doesn't set viewBox, so we need to compute the actual content size
+  function calculateContentBounds(svg: SVGElement): { x: number; y: number; width: number; height: number } {
+    // Get all graphical elements
+    const elements = svg.querySelectorAll('rect, circle, ellipse, path, text, g[class*="node"], g[class*="cluster"], line, polyline, polygon')
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+    elements.forEach(elem => {
+      // Try getBBox first (most accurate)
+      try {
+        const bbox = (elem as SVGGraphicsElement).getBBox?.()
+        if (bbox && bbox.width > 0 && bbox.height > 0) {
+          minX = Math.min(minX, bbox.x)
+          minY = Math.min(minY, bbox.y)
+          maxX = Math.max(maxX, bbox.x + bbox.width)
+          maxY = Math.max(maxY, bbox.y + bbox.height)
+          return
+        }
+      } catch (e) {
+        // getBBox may fail on some elements
+      }
+
+      // Fallback to attribute parsing
+      const x = parseFloat(elem.getAttribute('x') || '0')
+      const y = parseFloat(elem.getAttribute('y') || '0')
+      const width = parseFloat(elem.getAttribute('width') || '0')
+      const height = parseFloat(elem.getAttribute('height') || '0')
+      const r = parseFloat(elem.getAttribute('r') || '0')
+      const cx = parseFloat(elem.getAttribute('cx') || '0')
+      const cy = parseFloat(elem.getAttribute('cy') || '0')
+
+      if (width > 0 || height > 0) {
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x + width)
+        maxY = Math.max(maxY, y + height)
+      }
+
+      if (r > 0) {
+        minX = Math.min(minX, cx - r)
+        minY = Math.min(minY, cy - r)
+        maxX = Math.max(maxX, cx + r)
+        maxY = Math.max(maxY, cy + r)
+      }
+    })
+
+    // Check if we got valid bounds
+    if (minX === Infinity || minY === Infinity) {
+      // Fallback: use visible container size
+      const rect = svg.getBoundingClientRect()
+      return { x: 0, y: 0, width: rect.width, height: rect.height }
+    }
+
+    // Add some padding for aesthetics
+    const padding = 20
+    return {
+      x: minX - padding,
+      y: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2
+    }
+  }
+
+  // Get full content bounds
+  const bounds = calculateContentBounds(clonedSvg)
+  let width = bounds.width
+  let height = bounds.height
+
+  // Ensure minimum size
+  width = Math.max(width, 100)
+  height = Math.max(height, 100)
+
+  // Set explicit dimensions on cloned SVG for 1:1 export
+  clonedSvg.setAttribute('width', String(width))
+  clonedSvg.setAttribute('height', String(height))
+  clonedSvg.style.width = `${width}px`
+  clonedSvg.style.height = `${height}px`
+  clonedSvg.style.maxWidth = 'none'
+  clonedSvg.style.maxHeight = 'none'
+
+  // Set viewBox to ensure proper coordinate system
+  clonedSvg.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${width} ${height}`)
+
+  // Get background color
   const computedStyle = getComputedStyle(svgElement)
   const bgColor = computedStyle.backgroundColor || '#ffffff'
 
@@ -244,16 +332,10 @@ async function exportMermaidToPng(svgElement: SVGElement): Promise<Blob> {
       img.src = url
     })
 
-    // Get SVG dimensions
-    const rect = svgElement.getBoundingClientRect()
-    const width = Math.max(rect.width, 100)
-    const height = Math.max(rect.height, 100)
-
-    // Create canvas with high DPI
-    const scale = 2
+    // Create canvas at 1:1 scale (original size)
     const canvas = document.createElement('canvas')
-    canvas.width = width * scale
-    canvas.height = height * scale
+    canvas.width = width
+    canvas.height = height
 
     const ctx = canvas.getContext('2d')!
 
@@ -261,8 +343,8 @@ async function exportMermaidToPng(svgElement: SVGElement): Promise<Blob> {
     ctx.fillStyle = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent' ? '#ffffff' : bgColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Draw image
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    // Draw at 1:1 (original size)
+    ctx.drawImage(img, 0, 0, width, height)
 
     // Export PNG
     return new Promise<Blob>((resolve) => {
