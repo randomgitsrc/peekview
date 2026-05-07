@@ -7,8 +7,6 @@ export function useMermaid() {
   const isInitialized = ref(false)
 
   async function init(theme: 'dark' | 'light') {
-    if (isInitialized.value) return
-
     mermaid.initialize({
       startOnLoad: false,
       theme: theme === 'dark' ? 'dark' : 'default',
@@ -21,9 +19,6 @@ export function useMermaid() {
 
   async function render(id: string, code: string, theme: 'dark' | 'light'): Promise<string> {
     await init(theme)
-
-    // Update theme if changed
-    mermaid.initialize({ theme: theme === 'dark' ? 'dark' : 'default' })
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {

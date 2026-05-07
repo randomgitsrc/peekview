@@ -308,6 +308,16 @@ async function renderContent() {
     renderedHtml.value = result.html
     emit('headings', result.headings)
     await nextTick()
+
+    // Reset rendered state for all mermaid blocks to ensure re-render on theme change
+    // This is necessary because Vue may reuse DOM elements, preserving data-rendered attribute
+    if (contentRef.value) {
+      const mountPoints = contentRef.value.querySelectorAll('.mermaid-viewer-mount')
+      mountPoints.forEach(mp => {
+        delete (mp as HTMLElement).dataset.rendered
+      })
+    }
+
     await renderMermaidDiagrams()
   } catch (err) {
     console.error('Markdown render failed:', err)

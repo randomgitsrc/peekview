@@ -29,6 +29,8 @@ async def create_entry(
         file_dict = {}
         if f.path is not None:
             file_dict["path"] = f.path
+        if f.filename is not None:
+            file_dict["filename"] = f.filename
         if f.content is not None:
             file_dict["content"] = f.content
         if f.local_path is not None:
