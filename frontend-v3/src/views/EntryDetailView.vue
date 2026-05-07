@@ -5,7 +5,7 @@
       <span class="back-btn" @click="goBack" title="Back to list">⌂</span>
       <h1 class="title">{{ entryTitle }}</h1>
       <div class="header-right">
-        <div class="actions" v-if="entryStore.currentEntry">
+        <div class="actions desktop-only" v-if="entryStore.currentEntry">
           <button
             v-if="entryStore.canWrap"
             class="btn btn-sm"
@@ -385,5 +385,12 @@ watch(() => props.slug, (newSlug) => {
 
 .detail-header .back-btn:hover {
   background: var(--bg-tertiary);
+}
+
+/* Hide desktop-only elements on mobile */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
 }
 </style>
