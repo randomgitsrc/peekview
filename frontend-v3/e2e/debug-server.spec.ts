@@ -4,9 +4,14 @@ import { test, expect } from '@playwright/test'
  * Debug Server E2E Tests
  * 这些测试在调试服务器 (http://127.0.0.1:8888) 上运行
  * 会自动创建所需的测试数据
+ *
+ * 注意: 所有测试数据设置1小时自动过期
  */
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
+
+// 存储创建的测试条目，用于测试完成后清理
+const testEntries: string[] = []
 
 // ========================================
 // Helper Functions
@@ -17,10 +22,22 @@ async function createTestEntry(page: any, slug: string, data: any) {
     data: {
       slug,
       summary: data.summary || 'Test Entry',
+      expires_in: '1h',  // 自动1小时过期
       files: data.files || []
     }
   })
+  if (response.ok()) {
+    testEntries.push(slug)
+  }
   return response
+}
+
+async function cleanupTestEntry(page: any, slug: string) {
+  try {
+    await page.request.delete(`/api/v1/entries/${slug}`)
+  } catch (e) {
+    // 忽略删除失败
+  }
 }
 
 // ========================================

@@ -1,6 +1,11 @@
 #!/bin/bash
 # PeekView 调试服务管理脚本
 # 用法: ./scripts/dev-server.sh [start|stop|status|restart]
+#
+# 注意: 调试服务使用完全独立的数据库环境，避免污染生产数据
+# - 数据库: /tmp/peekview-debug/peekview.db
+# - 数据目录: /tmp/peekview-debug/data
+# - 条目默认1小时自动过期
 
 set -e
 
@@ -8,6 +13,7 @@ PORT=8888
 DATA_DIR="/tmp/peekview-debug"
 PID_FILE="/tmp/peekview-debug.pid"
 LOG_FILE="/tmp/peekview-debug.log"
+DB_PATH="$DATA_DIR/peekview.db"
 
 check_port() {
     if lsof -i :$PORT > /dev/null 2>&1; then
@@ -56,10 +62,15 @@ start_server() {
 
     # 启动服务
     echo "→ 启动 uvicorn (端口 $PORT)..."
+    echo "  数据库: $DB_PATH"
+    echo "  数据目录: $DATA_DIR/data"
+    echo "  自动过期: 3600秒 (1小时)"
     cd backend
     PEEKVIEW_DATA_DIR="$DATA_DIR/data" \
-    PEEKVIEW_DB_PATH="$DATA_DIR/peek.db" \
+    PEEKVIEW_DB_PATH="$DB_PATH" \
     PEEKVIEW_PORT=$PORT \
+    PEEKVIEW_CLEANUP__INTERVAL_SECONDS=600 \
+    PEEKVIEW_DEBUG_MODE=1 \
         python3 -m uvicorn peekview.main:get_app \
         --host 127.0.0.1 \
         --port $PORT \
@@ -113,6 +124,11 @@ stop_server() {
     fi
 
     rm -f "$PID_FILE"
+
+    # 可选：清理调试数据（取消注释以启用）
+    # echo "→ 清理调试数据..."
+    # rm -rf "$DATA_DIR"
+
     echo "✓ 服务已停止"
 }
 
