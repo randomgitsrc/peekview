@@ -199,4 +199,120 @@ npx playwright test --ui
 
 ---
 
-**总结**: 好记性不如烂笔头，标准化流程避免重复踩坑。
+## 调试环境数据隔离（v0.1.22 教训）
+
+### 教训 4: 环境变量名必须与配置类结构匹配
+
+**问题**: `make debug-start` 启动的调试服务使用了生产数据库 `~/.peekview/peekview.db`，而非隔离的 `/tmp/peekview-debug/peekview.db`
+
+**根本原因**: 
+- `PeekConfig` 使用嵌套的 `PeekStorage` 类
+- Pydantic Settings 对于嵌套类需要 `__` 分隔符
+- 脚本错误地使用了 `PEEKVIEW_DB_PATH` 而非 `PEEKVIEW_STORAGE__DB_PATH`
+
+**配置结构**:
+```python
+class PeekConfig(BaseSettings):
+    storage: PeekStorage  # 嵌套配置
+
+class PeekStorage(BaseSettings):
+    db_path: Path         # 实际字段在此
+```
+
+**错误 vs 正确**:
+```bash
+# ❌ 错误（无效，仍使用默认值）
+PEEKVIEW_DB_PATH=/tmp/peekview-debug/peekview.db
+PEEKVIEW_DATA_DIR=/tmp/peekview-debug/data
+
+# ✅ 正确（覆盖嵌套字段）
+PEEKVIEW_STORAGE__DB_PATH=/tmp/peekview-debug/peekview.db
+PEEKVIEW_STORAGE__DATA_DIR=/tmp/peekview-debug/data
+```
+
+**验证隔离**:
+```bash
+# 调试环境应该为空或只有测试数据
+curl -s http://127.0.0.1:8888/api/v1/entries | jq '.items | length'
+
+# 正式环境保持原有数据
+curl -s http://127.0.0.1:8080/api/v1/entries | jq '.items | length'
+
+# 检查进程打开的数据库文件
+lsof -p $(pgrep -f "uvicorn.*8888") | grep peekview.db
+# 应该显示: /tmp/peekview-debug/peekview.db
+```
+
+---
+
+### 教训 5: 测试数据管理策略
+
+**问题**: 调试环境积累了 224 条测试条目，与生产数据混在一起，清理时误删了真实数据
+
+**策略**: 
+
+1. **自动过期**: 调试服务已配置 `PEEKVIEW_CLEANUP__INTERVAL_SECONDS=600`，但仅对调试模式有效
+
+2. **命名约定**: 测试条目使用可识别的前缀/后缀
+   ```bash
+   # 测试代码中
+   summary="TEST: auto-generated test entry"
+   ```
+
+3. **批量清理前验证**:
+   ```bash
+   # 先列出要删除的内容，人工确认
+   peekview list -q "TEST:" --json | jq '.[].slug'
+   
+   # 确认后再删除
+   peekview delete $(peekview list -q "TEST:" --json | jq -r '.[].slug')
+   ```
+
+4. **生产数据保护**: 
+   - 清理脚本应该白名单而非黑名单
+   - 保留条目标记（如 `expires_at` 为空表示永久保留）
+
+---
+
+### 教训 6: 网络不稳定时的发布流程
+
+**问题**: `git push` 和 PyPI 上传可能因网络问题失败
+
+**改进**:
+
+```bash
+# Git 推送重试机制
+git_push_with_retry() {
+    for i in 1 2 3; do
+        git push "$@" && break
+        echo "Push failed, retrying in 5s... ($i/3)"
+        sleep 5
+    done
+}
+
+# 或者使用 SSH 代替 HTTPS（如果可用）
+git remote set-url origin git@github.com:randomgitsrc/peekview.git
+```
+
+**发布检查点**:
+- [ ] 本地测试通过
+- [ ] 版本号已更新
+- [ ] CHANGELOG 已更新  
+- [ ] PyPI 发布成功（检查 https://pypi.org/project/peekview/）
+- [ ] Git 推送成功
+- [ ] Tag 推送成功
+
+**失败恢复**:
+```bash
+# 如果 PyPI 成功但 git 失败
+# 手动推送
+git push origin main
+git push origin v0.1.22
+
+# 如果 git 成功但 PyPI 失败
+# 重新发布（PyPI 不允许重复上传相同版本，需要 patch 版本）
+make bump-version NEW_VERSION=0.1.23
+make publish
+```
+
+---

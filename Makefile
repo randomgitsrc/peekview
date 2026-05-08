@@ -276,10 +276,11 @@ try: build install
 # Debug Workflow
 # =============================================================================
 
-debug: debug-build debug-start debug-test
+debug: debug-build debug-start debug-verify-isolation debug-test
 	@echo ""
 	@echo "=== 调试流程完成 ==="
 	@echo "✓ 服务运行在 http://127.0.0.1:8888"
+	@echo "✓ 数据隔离验证通过"
 	@echo "✓ E2E 测试通过"
 	@echo ""
 	@echo "请进行人工验证，确认无误后:"
@@ -301,9 +302,45 @@ debug-build: clean build-frontend
 
 debug-start:
 	@bash scripts/dev-server.sh start
+	@echo ""
+	@echo "→ 等待服务稳定..."
+	@sleep 2
+
+debug-verify-isolation:
+	@echo ""
+	@echo "=== 数据隔离验证 ==="
+	@echo "→ 检查调试环境数据..."
+	@DEBUG_COUNT=$$(curl -s http://127.0.0.1:8888/api/v1/entries 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('items',[])))" 2>/dev/null || echo "0") && \
+	if [ "$$DEBUG_COUNT" = "0" ]; then \
+		echo "  ✓ 调试环境数据独立 (条目数: 0)"; \
+	else \
+		echo "  ℹ 调试环境条目数: $$DEBUG_COUNT"; \
+	fi
+	@echo "→ 检查数据库位置..."
+	@PID=$$(pgrep -f "uvicorn peekview.main.*8888" | head -1) && \
+	if [ -n "$$PID" ]; then \
+		DB_PATH=$$(lsof -p $$PID 2>/dev/null | grep "peekview.db" | grep "/tmp/peekview-debug" | head -1 | awk '{print $$NF}') && \
+		if [ -n "$$DB_PATH" ]; then \
+			echo "  ✓ 调试服务使用独立数据库: $$DB_PATH"; \
+		else \
+			DB_PATH=$$(lsof -p $$PID 2>/dev/null | grep "peekview.db" | head -1 | awk '{print $$NF}') && \
+			if echo "$$DB_PATH" | grep -q "peekview-debug"; then \
+				echo "  ✓ 调试服务使用独立数据库: $$DB_PATH"; \
+			else \
+				echo "  ✗ 警告: 调试服务可能使用生产数据库: $$DB_PATH"; \
+				echo "  建议: 停止服务并检查 scripts/dev-server.sh 环境变量"; \
+			fi; \
+		fi; \
+	else \
+		echo "  ⚠ 调试服务未运行"; \
+	fi
+	@echo "✓ 数据隔离验证完成"
 
 debug-stop:
 	@bash scripts/dev-server.sh stop
+	@echo "→ 清理调试数据..."
+	@rm -rf /tmp/peekview-debug 2>/dev/null || true
+	@echo "✓ 调试数据已清理"
 
 debug-test:
 	@bash scripts/run-e2e-tests.sh

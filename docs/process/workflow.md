@@ -167,16 +167,35 @@
 
 | 检查点 | 内容 | 输出文件 | 完成标准 |
 |--------|------|----------|----------|
+| P5.0 | **调试环境隔离验证** | `debug-isolation-check.md` | 确认调试服务使用独立数据库，未污染生产数据 |
 | P5.1 | 构建验证 | `build-log.md` | 前端构建成功，静态文件已复制 |
-| P5.2 | 端到端验证 | `e2e-verification.md` | peekview serve 启动后访问正常 |
+| P5.2 | 端到端验证 | `e2e-verification.md` | `make debug` 启动后访问正常 |
 | P5.3 | GitHub Push | git log | 代码+tag已推送 |
 | P5.4 | PyPI发布 | `pypi-release.md` | 包已上传，可安装 |
 
+**P5.0 调试环境隔离验证**（v0.1.22 教训，强制）:
+```bash
+# 启动调试服务（会自动使用 /tmp/peekview-debug/）
+make debug-start
+
+# 验证1: 确认调试环境数据独立
+curl -s http://127.0.0.1:8888/api/v1/entries | jq '.total'
+# 期望: 0 或只有测试数据（生产数据不应出现）
+
+# 验证2: 确认生产环境数据完整
+curl -s http://127.0.0.1:8080/api/v1/entries | jq '.total'
+# 期望: 生产数据条目数，与调试环境不同
+
+# 验证3: 确认数据库文件位置
+lsof -p $(pgrep -f "uvicorn.*8888") | grep peekview.db
+# 期望: /tmp/peekview-debug/peekview.db （不是 ~/.peekview/）
+```
+
 **P5.2 端到端验证**（强制）:
 ```bash
-# 必须实际执行
-peekview serve &
-# 浏览器访问 http://localhost:8080
+# 使用 make debug 而非直接 peekview serve
+make debug
+# 浏览器访问 http://127.0.0.1:8888
 # 验证: 截图保存到 test-results/e2e-homepage.png
 ```
 
@@ -311,6 +330,7 @@ P4: 一致性检查
    └─ CHANGELOG.md + 版本号更新
 
 P5: 发布
+   ├─ P5.0 debug-isolation-check.md (数据隔离验证)
    ├─ build-log.md
    ├─ e2e-verification.md (实际访问截图)
    ├─ GitHub push + tag

@@ -20,7 +20,7 @@ make publish && git tag -a v$(cd backend && python3 -c "from peekview import __v
 
 ```bash
 # 一键更新所有版本文件
-make bump-version NEW_VERSION=0.1.21
+make bump-version NEW_VERSION=0.1.22
 
 # 手动更新 CHANGELOG.md 和 INDEX.md
 # 然后提交
@@ -36,8 +36,12 @@ make verify-local
 ### 3. 调试和 E2E 测试
 
 ```bash
-# 启动调试服务并运行 E2E 测试
+# 启动调试服务并运行 E2E 测试（包含数据隔离验证）
 make debug
+
+# 关键检查点：确认数据隔离验证通过
+# - ✓ 调试环境条目数: 0 或测试数据
+# - ✓ 数据库路径: /tmp/peekview-debug/peekview.db
 
 # 人工验证 http://127.0.0.1:8888
 ```
@@ -63,7 +67,10 @@ make publish
 ```bash
 VERSION=$(cd backend && python3 -c "from peekview import __version__; print(__version__)")
 git tag -a "v$VERSION" -m "Release v$VERSION"
-git push origin "v$VERSION"
+
+# 推送（带重试机制）
+git push origin main || (sleep 5 && git push origin main)
+git push origin "v$VERSION" || (sleep 5 && git push origin "v$VERSION")
 ```
 
 ## 详细步骤说明
@@ -112,6 +119,46 @@ pipx upgrade peekview
 peekview --version
 ```
 
+### 发布失败恢复
+
+**场景 1: PyPI 成功，Git push 失败**
+```bash
+# 手动重试推送
+git push origin main
+git push origin v0.1.22
+
+# 或带延迟重试
+for i in 1 2 3; do
+    git push origin main && break
+    echo "Push failed, retrying in 5s..."
+    sleep 5
+done
+```
+
+**场景 2: Git push 成功，PyPI 失败**
+```bash
+# PyPI 不允许重复上传相同版本
+# 必须 bump 新版本
+make bump-version NEW_VERSION=0.1.23
+# 更新 CHANGELOG，然后重新发布
+make pre-publish && make publish
+```
+
+**场景 3: 调试服务数据污染了生产环境**
+```bash
+# 立即停止调试服务
+make debug-stop
+
+# 检查数据是否受损
+curl -s http://127.0.0.1:8080/api/v1/entries | jq '.total'
+
+# 如果有测试数据，清理（使用 peekview CLI）
+peekview list --json | jq -r '.[] | select(.summary | contains("TEST:")) | .slug' | xargs -r peekview delete
+
+# 重新配置调试服务，确保环境变量正确
+# 检查 scripts/dev-server.sh 中的 PEEKVIEW_STORAGE__* 变量
+```
+
 ## Makefile 命令速查
 
 ### 构建命令
@@ -145,6 +192,7 @@ peekview --version
 | 命令 | 作用 |
 |------|------|
 | `make bump-version NEW_VERSION=x.y.z` | 自动更新所有版本文件 |
+| `make debug` | 启动调试服务 + E2E 测试 + 数据隔离验证 |
 | `make pre-publish` | 发布前完整检查 |
 | `make pre-publish-quick` | 发布前快速检查 |
 | `make publish` | 发布到 PyPI |

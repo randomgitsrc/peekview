@@ -16,12 +16,18 @@
 make debug
 
 # 或分步执行（推荐用于问题排查）
-make debug-build    # 步骤1: 构建并检查 static 文件
-make debug-start    # 步骤2: 启动调试服务 (:8888)
-make debug-test     # 步骤3: 运行 E2E 测试（自动创建测试数据）
-# 步骤4: 用户人工验证 http://127.0.0.1:8888
-make debug-stop     # 步骤5: 停止调试服务
+make debug-build       # 步骤1: 构建并检查 static 文件
+make debug-start       # 步骤2: 启动调试服务 (:8888)
+make debug-verify-isolation  # 步骤3: 验证数据隔离（v0.1.22+ 新增！）
+make debug-test        # 步骤4: 运行 E2E 测试（自动创建测试数据）
+# 步骤5: 用户人工验证 http://127.0.0.1:8888
+make debug-stop        # 步骤6: 停止调试服务（自动清理数据）
 ```
+
+**⚠️ 重要: 数据隔离验证必须通过**
+- `make debug` 会自动执行 `debug-verify-isolation`
+- 如果显示 "✗ 警告: 调试服务可能使用生产数据库"，立即停止！
+- 检查 `scripts/dev-server.sh` 的环境变量配置
 
 **⚠️ 重要: E2E 测试必须手动触发**
 - `make debug` 包含 `debug-test`
@@ -61,17 +67,45 @@ make debug-start
 
 ```bash
 cd backend
-PEEKVIEW_DATA_DIR=/tmp/peekview-debug/data \
-PEEKVIEW_DB_PATH=/tmp/peekview-debug/peek.db \
+# ⚠️ 必须使用 PEEKVIEW_STORAGE__ 前缀（嵌套配置）
+PEEKVIEW_STORAGE__DATA_DIR=/tmp/peekview-debug/data \
+PEEKVIEW_STORAGE__DB_PATH=/tmp/peekview-debug/peek.db \
   uvicorn peekview.main:get_app --host 127.0.0.1 --port 8888 --factory --reload
 ```
 
 **关键参数**:
 - `--port 8888`: 避免与 pipx 服务（8080）冲突
 - `--reload`: 开发模式，代码变更自动重启
-- `PEEKVIEW_DATA_DIR=/tmp/...`: 使用临时数据目录，不污染生产数据
+- `PEEKVIEW_STORAGE__DATA_DIR`: 使用临时数据目录（注意 `__` 分隔符）
 
-### 步骤 3: E2E 测试
+### 步骤 2.5: 数据隔离验证（v0.1.22 教训）
+
+**必须在 E2E 测试前执行！**
+
+```bash
+# 自动验证（推荐）
+make debug-verify-isolation
+
+# 或手动验证
+# 1. 检查调试环境条目数（应为 0 或测试数据）
+curl -s http://127.0.0.1:8888/api/v1/entries | jq '.total'
+
+# 2. 检查生产环境条目数（应保持不变）
+curl -s http://127.0.0.1:8080/api/v1/entries | jq '.total'
+
+# 3. 确认数据库文件位置
+lsof -p $(pgrep -f "uvicorn peekview.main.*8888" | head -1) | grep peekview.db
+# 期望: /tmp/peekview-debug/peekview.db
+```
+
+**检查点**:
+- [ ] 调试环境条目数与生产环境不同
+- [ ] 数据库路径包含 `/tmp/peekview-debug/`
+- [ ] `make debug-verify-isolation` 输出 "✓ 数据隔离验证通过"
+
+### 步骤 4: E2E 测试
+
+**前提**: 数据隔离验证通过
 
 ```bash
 # 运行完整 E2E 测试（自动创建测试数据，测试核心功能）
@@ -102,7 +136,7 @@ cd frontend-v3
 BASE_URL=http://127.0.0.1:8888 npx playwright test --ui
 ```
 
-### 步骤 4: 用户验证
+### 步骤 5: 用户验证
 
 1. 访问 `http://127.0.0.1:8888/entries/demo` 或测试创建的条目
 2. 验证修改的功能点
@@ -110,15 +144,22 @@ BASE_URL=http://127.0.0.1:8888 npx playwright test --ui
 
 **注意**: E2E 测试通过 ≠ 用户体验 OK，必须人工确认！
 
-### 步骤 5: 清理与发布
+### 步骤 6: 清理与发布
 
 ```bash
-# 停止调试服务
+# 停止调试服务（自动清理 /tmp/peekview-debug/）
 make debug-stop
 
 # 执行发布流程（如果用户已确认）
 make pre-publish
 make publish
+```
+
+**清理后验证**:
+```bash
+# 确认生产数据完整
+curl -s http://127.0.0.1:8080/api/v1/entries | jq '.total'
+# 应与调试前数量一致
 ```
 
 ## 调试检查清单
@@ -132,11 +173,33 @@ make publish
 - [ ] 每次测试前确认 static/ 是最新的
 
 ### 修改后
-- [ ] 通过 E2E 自动化测试
+- [ ] **数据隔离验证**: `make debug-verify-isolation` 通过
+- [ ] E2E 自动化测试通过
 - [ ] 用户手动验证通过
 - [ ] 确认可以进入发布流程
 
 ## 常见问题
+
+### Q: 调试服务使用了生产数据库
+```bash
+# 症状: 调试环境显示了生产数据
+# 原因: 环境变量名错误
+
+# 检查当前使用的数据库
+lsof -p $(pgrep -f "uvicorn peekview.main.*8888" | head -1) | grep peekview.db
+
+# 错误输出: /home/user/.peekview/peekview.db （污染！）
+# 正确输出: /tmp/peekview-debug/peekview.db （隔离）
+
+# 修复: 使用正确的环境变量名
+# ❌ 错误
+PEEKVIEW_DB_PATH=/tmp/peekview-debug/peek.db
+PEEKVIEW_DATA_DIR=/tmp/peekview-debug/data
+
+# ✅ 正确（使用 __ 分隔符）
+PEEKVIEW_STORAGE__DB_PATH=/tmp/peekview-debug/peek.db
+PEEKVIEW_STORAGE__DATA_DIR=/tmp/peekview-debug/data
+```
 
 ### Q: 调试服务启动失败（端口被占用）
 ```bash
@@ -199,11 +262,13 @@ ps aux | grep peekview
 
 | 命令 | 用途 |
 |------|------|
-| `make debug` | 完整调试流程（构建+启动+测试）|
+| `make debug` | 完整调试流程（构建+启动+验证隔离+测试）|
 | `make debug-build` | 构建并验证 |
 | `make debug-start` | 启动调试服务（端口 8888）|
-| `make debug-stop` | 停止调试服务 |
+| `make debug-verify-isolation` | **验证数据隔离（v0.1.22+）** |
+| `make debug-stop` | 停止调试服务（清理数据）|
 | `make debug-test` | 运行 E2E 测试 |
+| `make debug-status` | 检查调试服务状态 |
 | `make pre-publish` | 预发布检查 |
 | `make publish` | 发布到 PyPI |
 
