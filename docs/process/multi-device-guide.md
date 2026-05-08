@@ -37,7 +37,7 @@ make test  # 应显示 292 passed
 
 **前端（Node.js 18+）:**
 ```bash
-cd frontend
+cd frontend-v3
 npm install
 # 验证
 npm run test  # 应显示 100 passed
@@ -270,7 +270,7 @@ git push origin main
 mkdir -p docs/process/checkpoints/P5-T{task-id}
 
 # 2. 构建验证
-cd frontend
+cd frontend-v3
 npm run build > ../docs/process/checkpoints/P5-T{task-id}/build-log.md 2>&1
 
 # 3. 端到端验证（实际启动服务）

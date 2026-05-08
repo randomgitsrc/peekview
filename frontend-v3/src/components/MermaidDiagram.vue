@@ -191,16 +191,10 @@ function closeFullscreen() {
   }
 }
 
-// PNG download
+// PNG download - uses original SVG string to avoid DOM tainting issues
 async function downloadPng() {
-  const svgElement = isFullscreen.value
-    ? modalSvgWrapper.value?.querySelector('svg')
-    : svgContainer.value?.querySelector('svg')
-
-  if (!svgElement) return
-
   try {
-    const blob = await exportMermaidToPng(svgElement as SVGElement)
+    const blob = await exportMermaidToPng()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -214,145 +208,125 @@ async function downloadPng() {
   }
 }
 
-async function exportMermaidToPng(svgElement: SVGElement): Promise<Blob> {
-  // Clone SVG to avoid modifying the displayed one
-  const clonedSvg = svgElement.cloneNode(true) as SVGElement
-
-  // Ensure SVG has proper namespace
-  if (!clonedSvg.getAttribute('xmlns')) {
-    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+// Export original SVG to PNG - uses props.svgContent (original SVG string)
+// This avoids canvas tainting from DOM elements like foreignObject
+async function exportMermaidToPng(): Promise<Blob> {
+  const svgString = props.svgContent
+  if (!svgString) {
+    throw new Error('No SVG content available')
   }
 
-  // Remove any transform from svg-pan-zoom to get full content
-  clonedSvg.removeAttribute('transform')
-  clonedSvg.style.transform = ''
+  // Parse the original SVG string (not from DOM)
+  // Fix: mermaid uses <br> but DOMParser requires XHTML <br/>
+  const fixedSvg = svgString.replace(/<br>/gi, '<br/>')
+  const parser = new DOMParser()
+  const svgDoc = parser.parseFromString(fixedSvg, 'image/svg+xml')
+  const svgEl = svgDoc.documentElement as unknown as SVGElement
 
-  // Calculate full content bounds from all child elements
-  // Mermaid doesn't set viewBox, so we need to compute the actual content size
-  function calculateContentBounds(svg: SVGElement): { x: number; y: number; width: number; height: number } {
-    // Get all graphical elements
-    const elements = svg.querySelectorAll('rect, circle, ellipse, path, text, g[class*="node"], g[class*="cluster"], line, polyline, polygon')
+  // Check for parse errors
+  const parseError = svgDoc.querySelector('parsererror')
+  if (parseError) {
+    console.error('SVG Parse Error:', parseError.textContent)
+    console.error('SVG String preview:', svgString.substring(0, 500))
+    throw new Error(`Failed to parse SVG: ${parseError.textContent?.substring(0, 100)}`)
+  }
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  // Get dimensions from viewBox (mermaid calculates this accurately including foreignObject content)
+  // Just use viewBox width/height directly - mermaid already includes all content boundaries
+  let width = 0, height = 0
+  const viewBox = svgEl.getAttribute('viewBox')
+  if (viewBox) {
+    const parts = viewBox.split(/\s+/).map(parseFloat)
+    if (parts.length >= 4) {
+      // parts = [x, y, width, height], e.g., "-8 -8 142 284"
+      // Use width/height directly, don't modify viewBox or add transforms
+      width = Math.ceil(parts[2] + 20)  // Small padding
+      height = Math.ceil(parts[3] + 20)
+    }
+  }
 
-    elements.forEach(elem => {
-      // Try getBBox first (most accurate)
-      try {
-        const bbox = (elem as SVGGraphicsElement).getBBox?.()
-        if (bbox && bbox.width > 0 && bbox.height > 0) {
-          minX = Math.min(minX, bbox.x)
-          minY = Math.min(minY, bbox.y)
-          maxX = Math.max(maxX, bbox.x + bbox.width)
-          maxY = Math.max(maxY, bbox.y + bbox.height)
-          return
+  // Fallback: try to get dimensions from g.root bbox
+  // Note: getBBox() may not include foreignObject content accurately
+  if (width === 0 || height === 0) {
+    try {
+      const tempDiv = document.createElement('div')
+      tempDiv.style.cssText = 'position: absolute; left: -9999px; top: 0; visibility: hidden;'
+      tempDiv.innerHTML = svgString
+      document.body.appendChild(tempDiv)
+      const svg = tempDiv.querySelector('svg')
+      if (svg) {
+        const rootGroup = svg.querySelector('g.root')
+        if (rootGroup) {
+          const bbox = (rootGroup as SVGGElement).getBBox()
+          if (bbox && bbox.width > 0 && bbox.height > 0) {
+            width = Math.ceil(bbox.width + 40)
+            height = Math.ceil(bbox.height + 40)
+          }
         }
-      } catch (e) {
-        // getBBox may fail on some elements
       }
-
-      // Fallback to attribute parsing
-      const x = parseFloat(elem.getAttribute('x') || '0')
-      const y = parseFloat(elem.getAttribute('y') || '0')
-      const width = parseFloat(elem.getAttribute('width') || '0')
-      const height = parseFloat(elem.getAttribute('height') || '0')
-      const r = parseFloat(elem.getAttribute('r') || '0')
-      const cx = parseFloat(elem.getAttribute('cx') || '0')
-      const cy = parseFloat(elem.getAttribute('cy') || '0')
-
-      if (width > 0 || height > 0) {
-        minX = Math.min(minX, x)
-        minY = Math.min(minY, y)
-        maxX = Math.max(maxX, x + width)
-        maxY = Math.max(maxY, y + height)
-      }
-
-      if (r > 0) {
-        minX = Math.min(minX, cx - r)
-        minY = Math.min(minY, cy - r)
-        maxX = Math.max(maxX, cx + r)
-        maxY = Math.max(maxY, cy + r)
-      }
-    })
-
-    // Check if we got valid bounds
-    if (minX === Infinity || minY === Infinity) {
-      // Fallback: use visible container size
-      const rect = svg.getBoundingClientRect()
-      return { x: 0, y: 0, width: rect.width, height: rect.height }
-    }
-
-    // Add some padding for aesthetics
-    const padding = 20
-    return {
-      x: minX - padding,
-      y: minY - padding,
-      width: maxX - minX + padding * 2,
-      height: maxY - minY + padding * 2
+      document.body.removeChild(tempDiv)
+    } catch (e) {
+      console.error('Error getting bbox:', e)
     }
   }
 
-  // Get full content bounds
-  const bounds = calculateContentBounds(clonedSvg)
-  let width = bounds.width
-  let height = bounds.height
+  // Final fallback
+  if (width === 0 || height === 0) {
+    width = 800
+    height = 600
+  }
 
   // Ensure minimum size
   width = Math.max(width, 100)
   height = Math.max(height, 100)
 
-  // Set explicit dimensions on cloned SVG for 1:1 export
-  clonedSvg.setAttribute('width', String(width))
-  clonedSvg.setAttribute('height', String(height))
-  clonedSvg.style.width = `${width}px`
-  clonedSvg.style.height = `${height}px`
-  clonedSvg.style.maxWidth = 'none'
-  clonedSvg.style.maxHeight = 'none'
+  // Set explicit dimensions for export
+  svgEl.setAttribute('width', String(width))
+  svgEl.setAttribute('height', String(height))
+  svgEl.style.width = `${width}px`
+  svgEl.style.height = `${height}px`
+  svgEl.style.maxWidth = 'none'
+  svgEl.style.maxHeight = 'none'
 
-  // Set viewBox to ensure proper coordinate system
-  clonedSvg.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${width} ${height}`)
-
-  // Get background color
-  const computedStyle = getComputedStyle(svgElement)
-  const bgColor = computedStyle.backgroundColor || '#ffffff'
+  // Ensure namespace
+  if (!svgEl.getAttribute('xmlns')) {
+    svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  }
 
   // Serialize SVG
   const serializer = new XMLSerializer()
-  const svgString = serializer.serializeToString(clonedSvg)
+  const serialized = serializer.serializeToString(svgEl)
 
-  // Create blob and URL
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
+  // Create data URL (avoids CORS issues)
+  const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
+  const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
 
-  try {
-    // Load into image
-    const img = new Image()
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = reject
-      img.src = url
-    })
+  // Load into image and draw to canvas
+  const img = new Image()
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = reject
+    img.src = dataUrl
+  })
 
-    // Create canvas at 1:1 scale (original size)
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
+  // Create canvas at content size
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
 
-    const ctx = canvas.getContext('2d')!
+  const ctx = canvas.getContext('2d')!
 
-    // Fill background
-    ctx.fillStyle = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent' ? '#ffffff' : bgColor
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  // Fill white background
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Draw at 1:1 (original size)
-    ctx.drawImage(img, 0, 0, width, height)
+  // Draw SVG
+  ctx.drawImage(img, 0, 0, width, height)
 
-    // Export PNG
-    return new Promise<Blob>((resolve) => {
-      canvas.toBlob((b) => resolve(b!), 'image/png')
-    })
-  } finally {
-    URL.revokeObjectURL(url)
-  }
+  // Export PNG
+  return new Promise<Blob>((resolve) => {
+    canvas.toBlob((b) => resolve(b!), 'image/png')
+  })
 }
 
 // Custom wheel handler for smoother zoom

@@ -823,7 +823,7 @@ class Entry(SQLModel, table=True):
 
 The design doc (§14.2) says: "Frontend builds, then FastAPI serves static files." But `main.py` (Task 10) has **no static file serving code**. The `create_app()` function only mounts API routes and the health check.
 
-Task 17's title mentions "Modify: `backend/peek/main.py` (add static file serving for built frontend)" but the actual task content only creates an integration test — it never adds the static file serving code.
+Task 17's title mentions "Modify: `backend/peekview/main.py` (add static file serving for built frontend)" but the actual task content only creates an integration test — it never adds the static file serving code.
 
 Without this, running `peek serve` in production (after `npm run build`) serves only the API. Visiting `http://localhost:8080/` returns 404. The SPA is unreachable.
 

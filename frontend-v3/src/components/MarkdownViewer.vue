@@ -7,6 +7,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, h, render as vueRender } from 'vue'
+import mermaid from 'mermaid'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { useMermaid } from '@/composables/useMermaid'
 import { useThemeStore } from '@/stores/theme'
@@ -75,160 +76,138 @@ const mermaidInstances = new Map<string, any>()
   }
 }
 
-// Global download function for mermaid PNG - exports full diagram at 1:1 scale
+// Global download function for mermaid PNG - re-renders mermaid code to clean SVG
 ;(window as any).downloadMermaidPng = async (blockId: string) => {
   const block = document.getElementById(blockId)
   if (!block) return
 
-  const mountPoint = block.querySelector('.mermaid-viewer-mount')
-  if (!mountPoint) return
-
-  const svg = mountPoint.querySelector('svg')
-  if (!svg) {
-    console.error('No SVG found in mermaid block')
+  const code = block.getAttribute('data-mermaid-code')
+  if (!code) {
+    console.error('No mermaid code found')
     return
   }
 
   try {
-    // Clone SVG for export
-    const clonedSvg = svg.cloneNode(true) as SVGElement
+    // Re-render the mermaid code to get a clean SVG (no DOM transforms/foreignObject)
+    const { svg } = await mermaid.render(`export-${blockId}`, code)
 
-    // Ensure proper namespace
-    if (!clonedSvg.getAttribute('xmlns')) {
-      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    // Parse the clean SVG
+    // Fix: mermaid uses <br> but DOMParser requires XHTML <br/>
+    const fixedSvg = svg.replace(/<br>/gi, '<br/>')
+    const parser = new DOMParser()
+    const svgDoc = parser.parseFromString(fixedSvg, 'image/svg+xml')
+    const svgEl = svgDoc.documentElement as unknown as SVGElement
+
+    // Check for parse errors
+    const parseError = svgDoc.querySelector('parsererror')
+    if (parseError) {
+      console.error('SVG Parse Error:', parseError.textContent)
+      console.error('SVG preview:', svg.substring(0, 500))
+      throw new Error(`Failed to parse SVG: ${parseError.textContent?.substring(0, 100)}`)
     }
 
-    // Remove any transforms from svg-pan-zoom
-    clonedSvg.removeAttribute('transform')
-    clonedSvg.style.transform = ''
+    // Get dimensions from viewBox (mermaid calculates this accurately including foreignObject content)
+    // Just use viewBox width/height directly - mermaid already includes all content boundaries
+    let width = 0, height = 0
+    const viewBox = svgEl.getAttribute('viewBox')
+    if (viewBox) {
+      const parts = viewBox.split(/\s+/).map(parseFloat)
+      if (parts.length >= 4) {
+        // parts = [x, y, width, height], e.g., "-8 -8 142 284"
+        // Use width/height directly, don't modify viewBox or add transforms
+        width = Math.ceil(parts[2] + 20)  // Small padding
+        height = Math.ceil(parts[3] + 20)
+      }
+    }
 
-    // Calculate full content bounds from all child elements
-    // Mermaid doesn't set viewBox, so we need to compute the actual content size
-    function calculateContentBounds(svg: SVGElement): { x: number; y: number; width: number; height: number } {
-      const elements = svg.querySelectorAll('rect, circle, ellipse, path, text, g[class*="node"], g[class*="cluster"], line, polyline, polygon')
-
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-
-      elements.forEach(elem => {
-        try {
-          const bbox = (elem as SVGGraphicsElement).getBBox?.()
-          if (bbox && bbox.width > 0 && bbox.height > 0) {
-            minX = Math.min(minX, bbox.x)
-            minY = Math.min(minY, bbox.y)
-            maxX = Math.max(maxX, bbox.x + bbox.width)
-            maxY = Math.max(maxY, bbox.y + bbox.height)
-            return
+    // Fallback: try to get dimensions from g.root bbox
+    // Note: getBBox() may not include foreignObject content accurately
+    if (width === 0 || height === 0) {
+      try {
+        const tempDiv = document.createElement('div')
+        tempDiv.style.cssText = 'position: absolute; left: -9999px; top: 0; visibility: hidden;'
+        tempDiv.innerHTML = svg
+        document.body.appendChild(tempDiv)
+        const tempSvg = tempDiv.querySelector('svg')
+        if (tempSvg) {
+          const rootGroup = tempSvg.querySelector('g.root')
+          if (rootGroup) {
+            const bbox = (rootGroup as SVGGElement).getBBox()
+            if (bbox && bbox.width > 0 && bbox.height > 0) {
+              width = Math.ceil(bbox.width + 40)
+              height = Math.ceil(bbox.height + 40)
+            }
           }
-        } catch (e) {}
-
-        const x = parseFloat(elem.getAttribute('x') || '0')
-        const y = parseFloat(elem.getAttribute('y') || '0')
-        const width = parseFloat(elem.getAttribute('width') || '0')
-        const height = parseFloat(elem.getAttribute('height') || '0')
-        const r = parseFloat(elem.getAttribute('r') || '0')
-        const cx = parseFloat(elem.getAttribute('cx') || '0')
-        const cy = parseFloat(elem.getAttribute('cy') || '0')
-
-        if (width > 0 || height > 0) {
-          minX = Math.min(minX, x)
-          minY = Math.min(minY, y)
-          maxX = Math.max(maxX, x + width)
-          maxY = Math.max(maxY, y + height)
         }
-
-        if (r > 0) {
-          minX = Math.min(minX, cx - r)
-          minY = Math.min(minY, cy - r)
-          maxX = Math.max(maxX, cx + r)
-          maxY = Math.max(maxY, cy + r)
-        }
-      })
-
-      if (minX === Infinity || minY === Infinity) {
-        const rect = svg.getBoundingClientRect()
-        return { x: 0, y: 0, width: rect.width, height: rect.height }
-      }
-
-      const padding = 20
-      return {
-        x: minX - padding,
-        y: minY - padding,
-        width: maxX - minX + padding * 2,
-        height: maxY - minY + padding * 2
+        document.body.removeChild(tempDiv)
+      } catch (e) {
+        console.error('Error getting bbox:', e)
       }
     }
 
-    // Get full content bounds
-    const bounds = calculateContentBounds(clonedSvg)
-    let width = bounds.width
-    let height = bounds.height
+    // Final fallback
+    if (width === 0 || height === 0) {
+      width = 800
+      height = 600
+    }
 
     // Ensure minimum size
     width = Math.max(width, 100)
     height = Math.max(height, 100)
 
-    // Set explicit dimensions for 1:1 export
-    clonedSvg.setAttribute('width', String(width))
-    clonedSvg.setAttribute('height', String(height))
-    clonedSvg.style.width = `${width}px`
-    clonedSvg.style.height = `${height}px`
-    clonedSvg.style.maxWidth = 'none'
-    clonedSvg.style.maxHeight = 'none'
+    // Set dimensions
+    svgEl.setAttribute('width', String(width))
+    svgEl.setAttribute('height', String(height))
+    svgEl.style.width = `${width}px`
+    svgEl.style.height = `${height}px`
+    svgEl.style.maxWidth = 'none'
+    svgEl.style.maxHeight = 'none'
 
-    // Set viewBox to ensure proper coordinate system
-    clonedSvg.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${width} ${height}`)
-
-    // Get background color
-    const computedStyle = getComputedStyle(svg)
-    const bgColor = computedStyle.backgroundColor || '#ffffff'
-
-    // Serialize SVG
-    const serializer = new XMLSerializer()
-    const svgString = serializer.serializeToString(clonedSvg)
-
-    // Create blob and URL
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-
-    try {
-      // Load into image
-      const img = new Image()
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve()
-        img.onerror = reject
-        img.src = url
-      })
-
-      // Create canvas at 1:1 scale (original size)
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-
-      const ctx = canvas.getContext('2d')!
-
-      // Fill background
-      ctx.fillStyle = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent' ? '#ffffff' : bgColor
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Draw at 1:1 (original size)
-      ctx.drawImage(img, 0, 0, width, height)
-
-      // Export PNG
-      canvas.toBlob((pngBlob) => {
-        if (pngBlob) {
-          const pngUrl = URL.createObjectURL(pngBlob)
-          const a = document.createElement('a')
-          a.href = pngUrl
-          a.download = `mermaid-diagram-${blockId.replace('mermaid-block-', '')}.png`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(pngUrl)
-        }
-      }, 'image/png')
-    } finally {
-      URL.revokeObjectURL(url)
+    // Ensure namespace
+    if (!svgEl.getAttribute('xmlns')) {
+      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     }
+
+    // Serialize to data URL
+    const serializer = new XMLSerializer()
+    const serialized = serializer.serializeToString(svgEl)
+    const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
+    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
+
+    // Load and draw to canvas
+    const img = new Image()
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = reject
+      img.src = dataUrl
+    })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const ctx = canvas.getContext('2d')!
+
+    // Fill white background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw SVG
+    ctx.drawImage(img, 0, 0, width, height)
+
+    // Export PNG
+    canvas.toBlob((pngBlob) => {
+      if (pngBlob) {
+        const pngUrl = URL.createObjectURL(pngBlob)
+        const a = document.createElement('a')
+        a.href = pngUrl
+        a.download = `mermaid-diagram-${blockId.replace('mermaid-block-', '')}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(pngUrl)
+      }
+    }, 'image/png')
   } catch (err) {
     console.error('Failed to export PNG:', err)
     alert('Failed to download PNG. Please try again.')
@@ -321,7 +300,9 @@ let startHeight = 0
 
   resizingBlock = content
   startY = e.clientY
-  startHeight = content.offsetHeight
+  // Get current computed height
+  const computedStyle = window.getComputedStyle(content)
+  startHeight = parseInt(computedStyle.height) || 400
 
   document.addEventListener('mousemove', onResizeMove)
   document.addEventListener('mouseup', onResizeEnd)
@@ -334,6 +315,7 @@ function onResizeMove(e: MouseEvent) {
   const delta = e.clientY - startY
   const newHeight = Math.max(200, startHeight + delta)
   resizingBlock.style.height = `${newHeight}px`
+  // Remove maxHeight constraint during resize
   resizingBlock.style.maxHeight = 'none'
 }
 
@@ -788,13 +770,16 @@ watch(() => [props.content, theme.value], async () => {
   position: relative;
   min-height: 300px;
   height: auto;
-  aspect-ratio: 16 / 9;
+  width: 100%;
+  /* Remove aspect-ratio to allow free resizing */
 }
 
 .mermaid-content.diagram-mode {
   background: var(--bg-secondary);
   overflow: hidden;
   min-height: 300px;
+  height: 400px; /* Default height for initial render */
+  width: 100%;
 }
 
 .mermaid-content.code-mode {
@@ -854,14 +839,24 @@ watch(() => [props.content, theme.value], async () => {
     var(--border-color) 55%,
     transparent 55%
   );
-  z-index: 10;
+  z-index: 100;
   opacity: 0.6;
   transition: opacity 0.2s;
+  /* Ensure handle stays at corner during resize */
+  pointer-events: auto;
 }
 
-.mermaid-resize-handle:hover,
+.mermaid-content.resizing {
+  /* Ensure proper positioning during resize */
+  position: relative !important;
+}
+
 .mermaid-content.resizing .mermaid-resize-handle {
   opacity: 1;
+  /* Force handle to stay at bottom-right during resize */
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
 }
 
 /* Fullscreen trigger (hidden) */
@@ -1050,5 +1045,110 @@ watch(() => [props.content, theme.value], async () => {
   margin: 0 !important;
   border-radius: 0 !important;
   border: none !important;
+}
+
+/* === Front Matter Styles === */
+.front-matter {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.front-matter-content {
+  padding: var(--space-3) var(--space-4);
+}
+
+.front-matter-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 3px 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.front-matter-row.multi-line {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.front-matter-key {
+  color: var(--accent-color);
+  font-weight: 500;
+  flex-shrink: 0;
+  /* Fixed width for alignment */
+  width: 120px;
+  min-width: 120px;
+}
+
+.front-matter-separator {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.front-matter-value {
+  color: var(--text-primary);
+  flex: 1;
+  word-break: break-word;
+  /* Allow wrapping but start at same position */
+  min-width: 0;
+}
+
+.front-matter-value.empty {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Tags display */
+.front-matter-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.front-matter-tag:hover {
+  background: var(--bg-primary);
+  border-color: var(--border-hover);
+}
+
+/* Multi-line values */
+.front-matter-line {
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+
+.front-matter-line:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode adjustments for front matter */
+[data-theme='dark'] .front-matter {
+  background: var(--bg-secondary);
+  border-color: #30363d;
+}
+
+[data-theme='dark'] .front-matter-key {
+  color: #58a6ff;
+}
+
+[data-theme='dark'] .front-matter-tag {
+  background: #21262d;
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+[data-theme='dark'] .front-matter-tag:hover {
+  background: #30363d;
+  border-color: #484f58;
 }
 </style>

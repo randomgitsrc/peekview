@@ -75,7 +75,7 @@ This will either: (a) trigger a browser download dialog, (b) return garbled bina
 The CEO review flagged this as an operational concern, but the DX impact is severe and worth detailing:
 
 ```python
-# backend/peek/main.py — line 2832
+# backend/peekview/main.py — line 2832
 app = create_app()
 ```
 
@@ -497,9 +497,9 @@ But the implementation plan **never creates this Dockerfile**. It's not in any t
 
 A developer wanting to add a new endpoint (say, `GET /entries/{slug}/files` to list files) must touch:
 
-1. `backend/peek/models.py` — Add response model
-2. `backend/peek/services/entry_service.py` — Add service method
-3. `backend/peek/api/entries.py` or `files.py` — Add route
+1. `backend/peekview/models.py` — Add response model
+2. `backend/peekview/services/entry_service.py` — Add service method
+3. `backend/peekview/api/entries.py` or `files.py` — Add route
 4. `backend/tests/test_api.py` — Add test
 5. `frontend-v3/src/types/index.ts` — Add TypeScript type
 6. `frontend-v3/src/api/client.ts` — Add API method

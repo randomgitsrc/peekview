@@ -1,8 +1,8 @@
-# Peek — 项目工作计划 v1.0
+# PeekView — 项目工作计划 v1.0
 
 > 版本: 1.0  
 > 日期: 2026-04-23  
-> 状态: 实施中  
+> 状态: ✅ 已完成  
 > 关联文档:
 > - [需求规格](../specs/spec-requirements.md) — v2.0
 > - [技术设计](../specs/spec-design.md) — v2.0
@@ -213,7 +213,7 @@
 
 **前端构建**:
 - [ ] `npm run build` 成功，输出到 `dist/`
-- [ ] 构建产物复制到 `backend/peek/static/`
+- [ ] 构建产物复制到 `backend/peekview/static/`
 - [ ] 构建无警告、无错误
 
 **后端集成**:

@@ -7,7 +7,33 @@
 
 ## [Unreleased]
 
-## [0.1.20] - 2026-05-06
+## [0.1.21] - 2026-05-08
+
+### 新增
+
+- **Front Matter 支持**
+  - Markdown详情页自动检测并渲染Front Matter元数据
+  - 支持YAML格式key-value显示
+  - 支持数组类型（如tags）渲染为标签
+  - 支持多行文本（`>`折叠语法）
+  - 紧凑设计，key对齐，暗色主题适配
+
+### 修复
+
+- **Mermaid resize handle 位置问题**
+  - 移除`aspect-ratio`约束，修复resize后handle错位
+  - 优化resize起始高度计算
+  - 添加`resizing`状态样式确保handle固定
+
+### 文档
+
+- 全面文档整理
+  - 归档过时过程文档（P0-P4 checkpoints, superpowers, design等）
+  - 修复API路径引用（`/api/entries` → `/api/v1/entries`）
+  - 修复包名路径（`backend/peek/` → `backend/peekview/`）
+  - 修复前端目录引用（`frontend/` → `frontend-v3/`）
+  - 更新active-tasks.md，清理已完成任务
+  - 添加归档文档索引
 
 ### 新增
 

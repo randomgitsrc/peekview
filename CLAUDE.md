@@ -20,7 +20,7 @@ peekview/
 │   ├── specs/           # Requirements, design, test plan (v2.0, finalized)
 │   ├── plans/           # Implementation plan (v2 revised, 16 tasks)
 │   ├── reviews/         # Adversarial reviews (CEO/Design/Eng/DX)
-│   └── process/         # Development workflow and checkpoints
+│   └── process/         # Development workflow (workflow.md, release.md, debug-*.md)
 ├── backend/             # FastAPI backend (Tasks 0-12 complete)
 │   ├── peekview/        # Main package (note: package is "peekview", not "peek")
 │   │   ├── main.py      # FastAPI app factory with DI via app.state

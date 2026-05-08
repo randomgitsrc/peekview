@@ -28,7 +28,7 @@ cd peekview
 ```
 peekview/
 ├── backend/          # FastAPI 后端
-├── frontend/         # Vue3 前端
+├── frontend-v3/      # Vue3 前端 (当前使用)
 └── docs/             # 文档
 ```
 
@@ -58,7 +58,7 @@ peekview --version
 ### 前端构建
 
 ```bash
-cd frontend
+cd frontend-v3
 
 # 安装依赖
 npm install
@@ -173,7 +173,7 @@ export PEEKVIEW_CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
 ### 开发服务器（热重载）
 
 ```bash
-cd frontend
+cd frontend-v3
 
 # 启动 Vite 开发服务器
 npm run dev
@@ -227,7 +227,7 @@ cd backend && source .venv/bin/activate
 uvicorn peekview.main:get_app --factory --reload --port 8080
 
 # 终端 2: 启动前端开发服务器
-cd frontend && npm run dev
+cd frontend-v3 && npm run dev
 
 # 浏览器访问 http://localhost:5173 (前端)
 # API 请求自动代理到 http://localhost:8080 (后端)
@@ -237,7 +237,7 @@ cd frontend && npm run dev
 
 ```bash
 # 1. 构建前端
-cd frontend && npm run build
+cd frontend-v3 && npm run build
 
 # 2. 启动生产服务器（使用静态文件）
 cd backend && source .venv/bin/activate
@@ -351,10 +351,10 @@ Ctrl + F5
 |------|------|------|
 | pytest | 后端单元测试 | `cd backend && make test` |
 | ruff | 代码检查 | `cd backend && make lint` |
-| Vitest | 前端单元测试 | `cd frontend && npm run test` |
-| Playwright | E2E 测试 | `cd frontend && npm run test:e2e` |
+| Vitest | 前端单元测试 | `cd frontend-v3 && npm run test` |
+| Playwright | E2E 测试 | `cd frontend-v3 && npm run test:e2e` |
 | sqlite3 | 数据库查询 | `sqlite3 ~/.peekview/peek.db` |
-| curl | API 测试 | `curl http://localhost:8080/api/entries` |
+| curl | API 测试 | `curl http://localhost:8080/api/v1/entries` |
 
 ---
 
@@ -365,14 +365,14 @@ Ctrl + F5
 alias pv-backend='cd /home/kity/lab/projects/peekview/backend && source .venv/bin/activate && uvicorn peekview.main:get_app --factory --reload'
 
 # 快速启动前端
-alias pv-frontend='cd /home/kity/lab/projects/peekview/frontend && npm run dev'
+alias pv-frontend='cd /home/kity/lab/projects/peekview/frontend-v3 && npm run dev'
 
 # 快速运行测试
 alias pv-test='cd /home/kity/lab/projects/peekview/backend && source .venv/bin/activate && make test'
-alias pv-test-fe='cd /home/kity/lab/projects/peekview/frontend && npm run test -- --run'
+alias pv-test-fe='cd /home/kity/lab/projects/peekview/frontend-v3 && npm run test -- --run'
 
 # 快速构建
-alias pv-build='cd /home/kity/lab/projects/peekview/frontend && npm run build'
+alias pv-build='cd /home/kity/lab/projects/peekview/frontend-v3 && npm run build'
 ```
 
 ---

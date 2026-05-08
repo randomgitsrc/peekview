@@ -544,12 +544,12 @@ kill -9 <PID>
 
 ```bash
 # 确认静态文件存在
-ls backend/peek/static/index.html
+ls backend/peekview/static/index.html
 
 # 重新构建前端
-cd frontend
+cd frontend-v3
 npm run build
-cp -r dist ../backend/peek/static
+cp -r dist ../backend/peekview/static
 ```
 
 #### 2. API 返回 500
@@ -576,6 +576,6 @@ cp -r /backup/peek-backup-xxx ~/.peekview
 
 ## 获取帮助
 
-- **CLI 帮助**: `peek --help` 或 `peek <command> --help`
+- **CLI 帮助**: `peekview --help` 或 `peek <command> --help`
 - **API 文档**: 启动服务后访问 `http://localhost:8080/docs`
 - **项目主页**: https://github.com/randomgitsrc/peekview

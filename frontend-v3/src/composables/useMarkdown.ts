@@ -6,6 +6,9 @@ export function useMarkdown() {
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true })
   const { highlightCode } = useShiki()
 
+  // Front matter extraction regex
+  const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/m
+
   function slugify(text: string): string {
     // Keep CJK characters and other word characters, remove punctuation
     return text
@@ -54,6 +57,124 @@ export function useMarkdown() {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
 
+    // Extract front matter before processing
+    let frontMatterHtml = ''
+    let processedContent = content
+    const frontMatterMatch = content.match(frontMatterRegex)
+    if (frontMatterMatch) {
+      const frontMatterContent = frontMatterMatch[1].trim()
+      processedContent = content.slice(frontMatterMatch[0].length)
+
+      // Parse front matter into key-value pairs (supporting multi-line values)
+      const frontMatterData: Array<{ key: string; value: string; isMultiLine: boolean }> = []
+      const lines = frontMatterContent.split('\n')
+      let currentKey = ''
+      let currentValue = ''
+      let isMultiLine = false
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const match = line.match(/^(\w+):\s*(.*)$/)
+
+        if (match) {
+          // Save previous entry if exists
+          if (currentKey) {
+            frontMatterData.push({
+              key: currentKey,
+              value: currentValue.trim(),
+              isMultiLine
+            })
+          }
+          currentKey = match[1]
+          const valuePart = match[2].trim()
+
+          // Check for multi-line indicator (>)
+          if (valuePart === '>') {
+            isMultiLine = true
+            currentValue = ''
+            // Collect following indented lines
+            i++
+            while (i < lines.length && (lines[i].startsWith('  ') || lines[i] === '')) {
+              currentValue += (currentValue ? '\n' : '') + lines[i].replace(/^  /, '')
+              i++
+            }
+            i-- // Step back one line since the outer loop will increment
+          } else if (valuePart.startsWith('>')) {
+            // Folded style with content on same line
+            isMultiLine = true
+            currentValue = valuePart.slice(1).trim()
+            // Collect following indented lines
+            i++
+            while (i < lines.length && (lines[i].startsWith('  ') || lines[i] === '')) {
+              currentValue += (currentValue ? '\n' : '') + lines[i].replace(/^  /, '')
+              i++
+            }
+            i-- // Step back one line
+          } else {
+            isMultiLine = false
+            currentValue = valuePart
+          }
+        } else if (currentKey && isMultiLine && line.startsWith('  ')) {
+          // Continuation of multi-line value
+          currentValue += (currentValue ? '\n' : '') + line.replace(/^  /, '')
+        }
+      }
+
+      // Save last entry
+      if (currentKey) {
+        frontMatterData.push({
+          key: currentKey,
+          value: currentValue.trim(),
+          isMultiLine
+        })
+      }
+
+      if (frontMatterData.length > 0) {
+        // Build front matter HTML (compact design without header)
+        frontMatterHtml = `<div class="front-matter">
+          <div class="front-matter-content">
+            ${frontMatterData.map(({ key, value, isMultiLine }) => {
+              // Handle array format like [tag1, tag2]
+              if (value.startsWith('[') && value.endsWith(']')) {
+                const items = value.slice(1, -1).split(',').map(v => v.trim()).filter(Boolean)
+                return `<div class="front-matter-row">
+                  <span class="front-matter-key">${escapeHtml(key)}</span>
+                  <span class="front-matter-separator">:</span>
+                  <span class="front-matter-value">
+                    ${items.map(item => `<span class="front-matter-tag">${escapeHtml(item)}</span>`).join('')}
+                  </span>
+                </div>`
+              }
+              // Handle multi-line text
+              if (isMultiLine) {
+                return `<div class="front-matter-row multi-line">
+                  <span class="front-matter-key">${escapeHtml(key)}</span>
+                  <span class="front-matter-separator">:</span>
+                  <span class="front-matter-value">
+                    ${value.split('\n').map(v => `<span class="front-matter-line">${escapeHtml(v)}</span>`).join('')}
+                  </span>
+                </div>`
+              }
+              // Handle empty value (like place:)
+              if (!value) {
+                return `<div class="front-matter-row">
+                  <span class="front-matter-key">${escapeHtml(key)}</span>
+                  <span class="front-matter-separator">:</span>
+                  <span class="front-matter-value empty">—</span>
+                </div>`
+              }
+              // Standard key-value
+              return `<div class="front-matter-row">
+                <span class="front-matter-key">${escapeHtml(key)}</span>
+                <span class="front-matter-separator">:</span>
+                <span class="front-matter-value">${escapeHtml(value)}</span>
+              </div>`
+            }).join('')}
+          </div>
+        </div>`
+      }
+    }
+
     // Store original fence renderer
     const originalFence = md.renderer.rules.fence
 
@@ -85,8 +206,8 @@ export function useMarkdown() {
       return originalHeading ? originalHeading(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options)
     }
 
-    // Render markdown (with placeholders)
-    let html = md.render(content)
+    // Render markdown (with placeholders) - use processedContent (without front matter)
+    let html = md.render(processedContent)
 
     // Restore heading renderer
     md.renderer.rules.heading_open = originalHeading
@@ -157,6 +278,11 @@ export function useMarkdown() {
         </div>`
         html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, fallbackCode)
       }
+    }
+
+    // Prepend front matter HTML if present
+    if (frontMatterHtml) {
+      html = frontMatterHtml + html
     }
 
     return { html, headings }

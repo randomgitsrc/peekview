@@ -327,8 +327,8 @@ git commit -m "chore(backend): .gitignore, Makefile, and shared test fixtures (T
 
 **Files:**
 - Create: `backend/pyproject.toml`
-- Create: `backend/peek/__init__.py`
-- Create: `backend/peek/__main__.py`
+- Create: `backend/peekview/__init__.py`
+- Create: `backend/peekview/__main__.py`
 
 **Review fixes applied:**
 - Remove `app = create_app()` module-level global from `main.py` (moved to Task 10)
@@ -395,7 +395,7 @@ __version__ = "0.1.0"
 - [ ] **Step 3: Create \_\_main\_\_.py entry point**
 
 ```python
-# backend/peek/__main__.py
+# backend/peekview/__main__.py
 """Entry point for `python -m peek`."""
 
 import uvicorn
@@ -425,7 +425,7 @@ Expected: Successfully installed peek-0.1.0
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/pyproject.toml backend/peek/__init__.py backend/peek/__main__.py
+git add backend/pyproject.toml backend/peekview/__init__.py backend/peekview/__main__.py
 git commit -m "feat(backend): project scaffolding with pyproject.toml and __main__.py entry point"
 ```
 
@@ -434,7 +434,7 @@ git commit -m "feat(backend): project scaffolding with pyproject.toml and __main
 ### Task 2: Exception Hierarchy
 
 **Files:**
-- Create: `backend/peek/exceptions.py`
+- Create: `backend/peekview/exceptions.py`
 
 **Review fixes applied:**
 - No major changes needed. `ForbiddenPathError` docstring updated to reference allowlist rather than blacklist.
@@ -519,7 +519,7 @@ Expected: FAIL — ModuleNotFoundError: No module named 'peek.exceptions'
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/exceptions.py
+# backend/peekview/exceptions.py
 """Unified exception hierarchy for Peek API errors."""
 
 
@@ -580,7 +580,7 @@ Expected: 9 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/exceptions.py backend/tests/test_exceptions.py
+git add backend/peekview/exceptions.py backend/tests/test_exceptions.py
 git commit -m "feat(backend): exception hierarchy with unified error codes"
 ```
 
@@ -589,7 +589,7 @@ git commit -m "feat(backend): exception hierarchy with unified error codes"
 ### Task 3: Configuration Management
 
 **Files:**
-- Create: `backend/peek/config.py`
+- Create: `backend/peekview/config.py`
 
 **Review fixes applied:**
 - Add `PEEK_API_KEY: str | None = None` field for API key auth
@@ -759,7 +759,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/config.py
+# backend/peekview/config.py
 """Configuration management using Pydantic BaseSettings."""
 
 from __future__ import annotations
@@ -921,7 +921,7 @@ Expected: 13 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/config.py backend/tests/test_config.py
+git add backend/peekview/config.py backend/tests/test_config.py
 git commit -m "feat(backend): Pydantic BaseSettings config with allowlist, API key, CORS"
 ```
 
@@ -930,7 +930,7 @@ git commit -m "feat(backend): Pydantic BaseSettings config with allowlist, API k
 ### Task 4: Data Models
 
 **Files:**
-- Create: `backend/peek/models.py`
+- Create: `backend/peekview/models.py`
 
 **Review fixes applied:**
 - Add `sa_column` with `default` for `created_at` and `updated_at` (server-side defaults, not just Python-side)
@@ -1079,7 +1079,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/models.py
+# backend/peekview/models.py
 """SQLModel data models for entries and files."""
 
 from __future__ import annotations
@@ -1231,7 +1231,7 @@ Expected: 17 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/models.py backend/tests/test_models.py
+git add backend/peekview/models.py backend/tests/test_models.py
 git commit -m "feat(backend): SQLModel data models + Pydantic API schemas (no line_count, server-side defaults)"
 ```
 
@@ -1240,7 +1240,7 @@ git commit -m "feat(backend): SQLModel data models + Pydantic API schemas (no li
 ### Task 5: Language Detection
 
 **Files:**
-- Create: `backend/peek/language.py`
+- Create: `backend/peekview/language.py`
 
 **Review fixes applied:**
 - No major changes needed.
@@ -1334,7 +1334,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/language.py
+# backend/peekview/language.py
 """Language detection from file extensions and filenames."""
 
 from __future__ import annotations
@@ -1463,7 +1463,7 @@ Expected: 24 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/language.py backend/tests/test_language.py
+git add backend/peekview/language.py backend/tests/test_language.py
 git commit -m "feat(backend): language detection from extension/filename"
 ```
 
@@ -1472,7 +1472,7 @@ git commit -m "feat(backend): language detection from extension/filename"
 ### Task 6: Database Initialization (WAL + FTS5)
 
 **Files:**
-- Create: `backend/peek/database.py`
+- Create: `backend/peekview/database.py`
 
 **Review fixes applied:**
 - Define `get_engine()` function properly (was referencing module global; now uses `app.state`)
@@ -1596,7 +1596,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/database.py
+# backend/peekview/database.py
 """Database initialization with WAL mode, FTS5, and triggers."""
 
 from __future__ import annotations
@@ -1730,7 +1730,7 @@ Expected: 8 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/database.py backend/tests/test_database.py
+git add backend/peekview/database.py backend/tests/test_database.py
 git commit -m "feat(backend): database init with WAL, FTS5, app.state caching, connection PRAGMA handler"
 ```
 
@@ -1739,7 +1739,7 @@ git commit -m "feat(backend): database init with WAL, FTS5, app.state caching, c
 ### Task 7: File Storage Layer
 
 **Files:**
-- Create: `backend/peek/storage.py`
+- Create: `backend/peekview/storage.py`
 
 **Review fixes applied:**
 - Add path validation in `get_disk_path()` — verify resolved path stays within entry directory
@@ -1894,7 +1894,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/storage.py
+# backend/peekview/storage.py
 """File storage management — write, read, delete, path computation + validation."""
 
 from __future__ import annotations
@@ -2060,7 +2060,7 @@ Expected: 17 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/storage.py backend/tests/test_storage.py
+git add backend/peekview/storage.py backend/tests/test_storage.py
 git commit -m "feat(backend): file storage with path traversal validation and atomic writes"
 ```
 
@@ -2069,8 +2069,8 @@ git commit -m "feat(backend): file storage with path traversal validation and at
 ### Task 8: File Service (allowlist security + directory scan)
 
 **Files:**
-- Create: `backend/peek/services/__init__.py`
-- Create: `backend/peek/services/file_service.py`
+- Create: `backend/peekview/services/__init__.py`
+- Create: `backend/peekview/services/file_service.py`
 
 **Review fixes applied (MAJOR):**
 - **Replace blacklist with allowlist**: `validate_local_path` checks path is within `config.allowed_dirs` (or data_dir if no allowed_dirs configured)
@@ -2281,12 +2281,12 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/services/__init__.py
+# backend/peekview/services/__init__.py
 """Peek service layer."""
 ```
 
 ```python
-# backend/peek/services/file_service.py
+# backend/peekview/services/file_service.py
 """File processing logic — local_path allowlist security, directory scanning, binary detection."""
 
 from __future__ import annotations
@@ -2530,7 +2530,7 @@ Expected: 23 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/services/ backend/tests/test_file_service.py
+git add backend/peekview/services/ backend/tests/test_file_service.py
 git commit -m "feat(backend): file service with allowlist security, hardlink detection, expires_in bounds"
 ```
 
@@ -2539,7 +2539,7 @@ git commit -m "feat(backend): file service with allowlist security, hardlink det
 ### Task 9: Entry Service (business logic)
 
 **Files:**
-- Create: `backend/peek/services/entry_service.py`
+- Create: `backend/peekview/services/entry_service.py`
 
 **Review fixes applied:**
 - Fix DI: `get_entry_service()` should use `app.state` services, not create new instances each time
@@ -2744,7 +2744,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/services/entry_service.py
+# backend/peekview/services/entry_service.py
 """Entry business logic — create, get, list, update, delete."""
 
 from __future__ import annotations
@@ -3333,7 +3333,7 @@ Expected: 16 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/services/entry_service.py backend/tests/test_entry_service.py
+git add backend/peekview/services/entry_service.py backend/tests/test_entry_service.py
 git commit -m "feat(backend): entry service with CRUD, transaction rollback, TOCTOU slug protection, disk cleanup"
 ```
 
@@ -3342,10 +3342,10 @@ git commit -m "feat(backend): entry service with CRUD, transaction rollback, TOC
 ### Task 10: FastAPI Application + API Routes
 
 **Files:**
-- Create: `backend/peek/api/__init__.py`
-- Create: `backend/peek/api/entries.py`
-- Create: `backend/peek/api/files.py`
-- Create: `backend/peek/main.py`
+- Create: `backend/peekview/api/__init__.py`
+- Create: `backend/peekview/api/entries.py`
+- Create: `backend/peekview/api/files.py`
+- Create: `backend/peekview/main.py`
 
 **Review fixes applied (MAJOR):**
 - **Add file content inline endpoint**: `GET /api/v1/entries/{slug}/files/{file_id}/content` returning raw text with proper Content-Type (no Content-Disposition)
@@ -3571,12 +3571,12 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/api/__init__.py
+# backend/peekview/api/__init__.py
 """Peek API routes."""
 ```
 
 ```python
-# backend/peek/api/entries.py
+# backend/peekview/api/entries.py
 """Entry CRUD API routes."""
 
 from __future__ import annotations
@@ -3652,7 +3652,7 @@ async def delete_entry(
 ```
 
 ```python
-# backend/peek/api/files.py
+# backend/peekview/api/files.py
 """File download and content API routes."""
 
 from __future__ import annotations
@@ -3770,7 +3770,7 @@ def _language_to_content_type(language: str | None) -> str:
 ```
 
 ```python
-# backend/peek/main.py
+# backend/peekview/main.py
 """FastAPI application factory — entry point, middleware, exception handlers.
 
 IMPORTANT: This module does NOT create a module-level app instance.
@@ -3932,7 +3932,7 @@ Expected: 19 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/api/ backend/peek/main.py backend/tests/test_api.py
+git add backend/peekview/api/ backend/peekview/main.py backend/tests/test_api.py
 git commit -m "feat(backend): FastAPI app with 201 status, file content endpoint, API key auth, CORS config"
 ```
 
@@ -4154,7 +4154,7 @@ git commit -m "test(backend): security tests — allowlist, path traversal, hard
 ### Task 12: CLI Commands
 
 **Files:**
-- Create: `backend/peek/cli.py`
+- Create: `backend/peekview/cli.py`
 
 **Review fixes applied:**
 - Fix status code check: 201 not 200 for create
@@ -4228,7 +4228,7 @@ Expected: FAIL — ModuleNotFoundError
 - [ ] **Step 3: Write implementation**
 
 ```python
-# backend/peek/cli.py
+# backend/peekview/cli.py
 """Peek CLI commands using Click."""
 
 from __future__ import annotations
@@ -4443,7 +4443,7 @@ Expected: 6 passed
 
 ```bash
 cd ~/lab/projects/peek
-git add backend/peek/cli.py backend/tests/test_cli.py
+git add backend/peekview/cli.py backend/tests/test_cli.py
 git commit -m "feat(backend): Click CLI — serve, create, list, get, delete, config (201 status fix)"
 ```
 
@@ -5023,7 +5023,7 @@ app.mount('#app')
 - [ ] **Step 11: Verify build**
 
 ```bash
-cd frontend
+cd frontend-v3
 npm install
 npm run build
 ```
@@ -6029,7 +6029,7 @@ defineProps<Props>()
 - [ ] **Step 9: Verify components**
 
 ```bash
-cd frontend
+cd frontend-v3
 npm run type-check
 ```
 

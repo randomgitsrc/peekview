@@ -16,114 +16,12 @@
 
 ---
 
-### Task 18: 修复前端桌面端显示问题
+## 当前活跃任务
 
-**状态**: ✅ 已完成  
-**完成日期**: 2026-04-24  
-**版本**: v0.1.4 (待发布)
+> 当前版本 v0.1.20 已发布，项目处于稳定维护阶段。  
+> 如需新增功能，请在 `docs/plans/impl-plan.md` 中规划新任务。
 
-**问题描述**:
-1. Markdown 标题显示 `#` 符号（anchor permalink）
-2. 页面无法滚动（App.vue 设置 `height: 100vh`）
-3. 代码高亮样式可能不正确
-4. 桌面端详情页缺少 Copy/Download 按钮
-
-**修复内容**:
-- [x] MarkdownViewer: 禁用 anchor permalink (`permalink: false`)
-- [x] App.vue: 改为 `min-height: 100vh` 允许滚动
-- [x] CodeViewer: 添加 Shiki CSS 变量支持
-- [x] EntryDetailView: 在 header 添加 Copy/Download 按钮
-- [x] 添加测试：VED9 Copy/Download 按钮显示测试
-
-**测试状态**:
-- [x] 前端测试：100 passed
-- [x] 后端测试：292 passed, 2 skipped
-- [x] 构建成功
-
-**测试记录**:
-```bash
-# 后端测试 (backend/)
-$ make test
-pytest tests/ -v --tb=short
-============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.0.0
-rootdir: /home/xz/lab/projects/peekview/backend
-configfile: pyproject.toml
-testpaths: tests
-collecting ...
-collected 294 items
-
- tests/test_api.py::test_list_entries_empty ✓                         2% ▎
- tests/test_api.py::test_create_entry ✓                               2% ▎
- ...
- tests/test_security.py::test_path_traversal_via_symlink ✓           99% ██████████
- tests/test_cli.py::test_cli_list_search ✓                          100% ██████████
-
-======================== 292 passed, 2 skipped in 3.45s ========================
-
-# 前端测试 (frontend/)
-$ npm run test
-> vitest
- ✓ src/components/__tests__/CodeViewer.spec.ts (12 tests) 156ms
- ✓ src/components/__tests__/FileTree.spec.ts (8 tests) 89ms
- ✓ src/components/__tests__/MarkdownViewer.spec.ts (6 tests) 45ms
- ✓ src/views/__tests__/EntryDetailView.spec.ts (10 tests) 234ms
-   - VED9: shows Copy and Download buttons for text files
-   - VED9: hides Copy button for binary files
- ✓ ...
-
-Test Files  10 passed (10)
-     Tests  100 passed (100)
-  Duration  4.2s
-
-# 构建验证
-$ npm run build
-dist/                     424.15 kB │ gzip: 138.52 kB
-✓ built in 2.85s
-```
-
----
-
-**状态**: ✅ 已完成  
-**完成日期**: 2026-04-24  
-**版本**: v0.1.4 (待发布)
-
-**问题**: `peekview create` 生成的 URL 包含 `/view/` 前缀，但实际路由不匹配
-
-**修复内容**:
-- [x] 修改 `backend/peekview/config.py` - 移除 `/view/` 前缀
-- [x] 更新 `backend/tests/test_config.py` - 修复 URL 测试断言
-- [x] 更新 `backend/tests/test_entry_service.py` - 修复 URL 测试断言  
-- [x] 更新 `backend/tests/test_api.py` - 修复 URL 测试断言
-- [x] 更新 `CHANGELOG.md` - 记录修复
-- [x] 全量测试通过 (292 passed, 2 skipped)
-
-**变更说明**:
-- 前端路由配置为 `/:slug`，后端生成 URL 应该匹配此格式
-- 移除 `/view/` 前缀后，URL 从 `http://host/view/slug` 变为 `http://host/slug`
-
-**测试记录**:
-```bash
-# 配置测试
-$ pytest tests/test_config.py -v
- tests/test_config.py::test_build_view_url_without_port ✓
- tests/test_config.py::test_build_view_url_with_port ✓
- tests/test_config.py::test_build_view_url_with_prefix ✓
-
-# Entry Service 测试
-$ pytest tests/test_entry_service.py -v
- tests/test_entry_service.py::test_create_entry_builds_correct_url ✓
-
-# API 集成测试
-$ pytest tests/test_api.py::test_create_entry -v
- tests/test_api.py::test_create_entry ✓
-
-# 全量测试通过
-$ make test
-======================== 292 passed, 2 skipped =========================
-```
-
----
+**无进行中任务**
 
 ---
 
@@ -132,9 +30,10 @@ $ make test
 - **需求规划**：`docs/specs/spec-requirements.md`
 - **技术设计**：`docs/specs/spec-design.md`
 - **实现计划**：`docs/plans/impl-plan.md`
-- **历史完成**：`INDEX.md`
+- **项目索引**：`INDEX.md`
 - **发布记录**：`CHANGELOG.md`
 - **开发流程**：`docs/process/workflow.md`
+- **调试流程**：`docs/process/debug-workflow.md`
 
 ---
 
@@ -190,6 +89,18 @@ $ make test
 ---
 
 ## 历史归档（已完成的任务）
+
+### Task 18: 修复前端桌面端显示问题
+- **状态**: ✅ 已完成 (v0.1.4)
+- **完成日期**: 2026-04-24
+- **主要内容**: Markdown标题锚点、滚动问题、桌面端Copy/Download按钮
+- **详情**: 见 CHANGELOG.md
+
+### Task 17: 修复URL路径问题
+- **状态**: ✅ 已完成 (v0.1.4)
+- **完成日期**: 2026-04-24
+- **主要内容**: 移除`/view/`前缀，统一URL格式
+- **详情**: 见 CHANGELOG.md
 
 ### Task 16: 前端核心功能实现
 - **状态**: ✅ 已完成 (v0.1.3)

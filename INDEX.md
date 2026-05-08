@@ -1,6 +1,6 @@
 # PeekView — 项目索引
 
-> 最后更新：2026-05-06  
+> 最后更新：2026-05-08  
 > 当前版本：v0.1.20
 > 工作计划：[docs/plans/work-plan.md](docs/plans/work-plan.md)
 
@@ -29,18 +29,18 @@
 | 任务 | 内容 | 状态 | 关键文件 |
 |------|------|------|----------|
 | Task 0 | 测试基础设施 | ✅ | `tests/conftest.py`, `tests/factories.py` |
-| Task 1 | 项目脚手架 | ✅ | `pyproject.toml`, `peek/__main__.py` |
-| Task 2 | 异常层级 | ✅ | `peek/exceptions.py` |
-| Task 3 | 配置管理 | ✅ | `peek/config.py` |
-| Task 4 | 数据模型 | ✅ | `peek/models.py` |
-| Task 5 | 语言检测 | ✅ | `peek/language.py` |
-| Task 6 | 数据库初始化 | ✅ | `peek/database.py` (WAL + FTS5) |
-| Task 7 | 文件存储层 | ✅ | `peek/storage.py` (原子写入、路径安全) |
-| Task 8 | 文件服务 | ✅ | `peek/services/file_service.py` (allowlist) |
-| Task 9 | 条目服务 | ✅ | `peek/services/entry_service.py` (事务) |
-| Task 10 | API 路由 | ✅ | `peek/api/entries.py`, `peek/api/files.py` |
+| Task 1 | 项目脚手架 | ✅ | `pyproject.toml`, `peekview/__main__.py` |
+| Task 2 | 异常层级 | ✅ | `peekview/exceptions.py` |
+| Task 3 | 配置管理 | ✅ | `peekview/config.py` |
+| Task 4 | 数据模型 | ✅ | `peekview/models.py` |
+| Task 5 | 语言检测 | ✅ | `peekview/language.py` |
+| Task 6 | 数据库初始化 | ✅ | `peekview/database.py` (WAL + FTS5) |
+| Task 7 | 文件存储层 | ✅ | `peekview/storage.py` (原子写入、路径安全) |
+| Task 8 | 文件服务 | ✅ | `peekview/services/file_service.py` (allowlist) |
+| Task 9 | 条目服务 | ✅ | `peekview/services/entry_service.py` (事务) |
+| Task 10 | API 路由 | ✅ | `peekview/api/entries.py`, `peekview/api/files.py` |
 | Task 11 | 安全测试 | ✅ | `tests/test_security.py` (26 tests) |
-| Task 12 | CLI 命令 | ✅ | `peek/cli.py`, `tests/test_cli.py` (32 tests) |
+| Task 12 | CLI 命令 | ✅ | `peekview/cli.py`, `tests/test_cli.py` (32 tests) |
 
 **后端测试覆盖**:
 - 单元测试：models, storage, language, cleanup
@@ -136,7 +136,17 @@ frontend-v3/src/
 |------|------|------|------|------|
 | [impl-plan.md](docs/plans/impl-plan.md) | MVP 实现计划 — 16 任务 | ✅ 定稿 | v2 | 2026-04-18 |
 | [work-plan.md](docs/plans/work-plan.md) | **工作计划 — 软件工程化** | ✅ 已完成 | v1.0 | 2026-04-24 |
-| [impl-plan.restore.md](docs/plans/impl-plan.restore.md) | v1 计划还原点 | 📦 归档 | v1 | 2026-04-18 |
+
+### 📦 归档文档 (`docs/archived/`)
+
+> 已完成或废弃的过程文档，保留供参考
+
+| 文件/目录 | 说明 | 归档日期 |
+|-----------|------|----------|
+| `impl-plan.restore.md` | v1 计划还原点 | 2026-05-08 |
+| `P0-T19/` ~ `P4-T19/` | 软件工程化检查点文档 | 2026-05-08 |
+| `superpowers/` | AI辅助设计历史文档 | 2026-05-08 |
+| `design/` | UI设计规范v1.0（已过时） | 2026-05-08 |
 
 ### 🔧 开发与调试 (`docs/process/`)
 
@@ -144,8 +154,16 @@ frontend-v3/src/
 |------|------|------|
 | [workflow.md](docs/process/workflow.md) | 开发工作流程 (P0-P4) | ✅ 定稿 |
 | [release.md](docs/process/release.md) | 发布流程 | ✅ 定稿 |
-| [debug-workflow.md](docs/process/debug-workflow.md) | **调试工作流程** | ✅ 新增 |
-| [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 新增 |
+| [debug-workflow.md](docs/process/debug-workflow.md) | **调试工作流程** | ✅ 定稿 |
+| [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 定稿 |
+| [active-tasks.md](docs/process/active-tasks.md) | 活跃任务看板 | 🔄 使用中 |
+| [multi-device-guide.md](docs/process/multi-device-guide.md) | 多设备开发指南 | ✅ 定稿 |
+
+### 🎨 前端技术文档 (`docs/frontend/`)
+
+| 文件 | 说明 | 状态 |
+|------|------|------|
+| [svg-mermaid-patterns.md](docs/frontend/svg-mermaid-patterns.md) | SVG/Mermaid组件开发经验 | ✅ 定稿 |
 
 ### 🔍 对抗评审 (`docs/reviews/`)
 

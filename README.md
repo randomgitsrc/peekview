@@ -200,9 +200,13 @@ peekview service status
 ## 项目文档
 
 - [部署指南](docs/DEPLOYMENT.md) - 完整安装、配置、部署教程
-- [项目索引](INDEX.md) - 实现进度与文档清单
+- [调试指南](docs/DEBUGGING.md) - 本地源码调试指南
+- [项目索引](INDEX.md) - 实现进度与完整文档清单
 - [需求规格](docs/specs/spec-requirements.md) - 用户故事与验收标准
 - [技术设计](docs/specs/spec-design.md) - 架构设计文档
+- [测试计划](docs/specs/spec-test-plan.md) - 详细测试用例
+- [开发流程](docs/process/workflow.md) - P0-P4 标准开发流程
+- [发布流程](docs/process/release.md) - 版本发布规范
 - [API 文档](backend/README.md) - 后端详细说明
 
 ---
