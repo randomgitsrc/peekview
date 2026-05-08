@@ -116,8 +116,12 @@
 
     <!-- Mobile Actions -->
     <div class="mobile-actions" v-if="entryStore.currentEntry">
-      <button class="btn btn-sm menu-btn" @click="showFileDrawer = true">
-        Files
+      <button
+        v-if="entryStore.isMultiFile"
+        class="btn btn-sm menu-btn"
+        @click="showFileDrawer = true"
+      >
+        Files ({{ entryStore.currentEntry?.files.length || 0 }})
       </button>
       <button
         v-if="entryStore.canWrap"

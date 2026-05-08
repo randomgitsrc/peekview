@@ -265,4 +265,50 @@ test.describe('Debug Server - Mobile', () => {
 
     await page.screenshot({ path: '/tmp/e2e-results/09-mobile.png' })
   })
+
+  test('single file hides Files button on mobile', async ({ page }) => {
+    // Create a single file entry
+    const response = await page.request.post('/api/v1/entries', {
+      data: {
+        summary: 'mobile-single-file-test',
+        files: [{ content: 'console.log(1)', filename: 'main.js' }]
+      }
+    })
+    const entry = await response.json()
+
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto(`/#/entry/${entry.slug}`)
+    await page.waitForTimeout(500)
+
+    // Single file should NOT show Files button
+    await expect(page.locator('.mobile-actions .menu-btn')).not.toBeVisible()
+
+    await page.screenshot({ path: '/tmp/e2e-results/10-mobile-single-file.png' })
+  })
+
+  test('multi file shows Files button with count on mobile', async ({ page }) => {
+    // Create a multi-file entry
+    const response = await page.request.post('/api/v1/entries', {
+      data: {
+        summary: 'mobile-multi-file-test',
+        files: [
+          { content: 'file1', filename: 'a.js' },
+          { content: 'file2', filename: 'b.js' },
+          { content: 'file3', filename: 'c.js' }
+        ]
+      }
+    })
+    const entry = await response.json()
+
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto(`/#/entry/${entry.slug}`)
+    await page.waitForTimeout(500)
+
+    // Multi file should show Files button with count
+    const filesButton = page.locator('.mobile-actions .menu-btn')
+    await expect(filesButton).toBeVisible()
+    await expect(filesButton).toContainText('Files (3)')
+
+    await page.screenshot({ path: '/tmp/e2e-results/11-mobile-multi-file.png' })
+  })
 })
