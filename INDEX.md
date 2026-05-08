@@ -157,6 +157,7 @@ frontend-v3/src/
 | [debug-workflow.md](docs/process/debug-workflow.md) | **调试工作流程** | ✅ 定稿 |
 | [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 定稿 |
 | [doc-sync-guide.md](docs/process/doc-sync-guide.md) | **文档同步指南** | ✅ 定稿 |
+| [doc-sync-pipeline.md](docs/process/doc-sync-pipeline.md) | **文档同步流水线机制** | ✅ 定稿 |
 | [incident-report-data-pollution.md](tests/archived/incident-report-data-pollution.md) | **数据污染事件报告** | ✅ 归档 |
 | [active-tasks.md](docs/process/active-tasks.md) | 活跃任务看板 | 🔄 使用中 |
 | [multi-device-guide.md](docs/process/multi-device-guide.md) | 多设备开发指南 | ✅ 定稿 |

@@ -373,6 +373,27 @@ doc-audit: check-docs
 	@echo "=== 文档审计完成 ==="
 	@echo "请检查上述输出，修复不一致的文档"
 
+## Check documentation sync with code (comprehensive)
+check-doc-sync:
+	@echo "=== 文档同步检查 ==="
+	@echo "→ 检查功能特性文档..."
+	@python3 scripts/doc-sync/check_feature_sync.py || true
+	@echo "→ 检查版本同步..."
+	@python3 scripts/doc-sync/check_version_sync.py || true
+	@echo "→ 检查 API 文档..."
+	@python3 scripts/doc-sync/check_api_docs.py || true
+	@echo "→ 生成功能矩阵..."
+	@python3 scripts/doc-sync/generate_feature_matrix.py
+	@echo "=== 检查完成 ==="
+
+## Auto-update documentation where possible
+update-docs:
+	@echo "=== 自动更新文档 ==="
+	@python3 scripts/doc-sync/generate_feature_matrix.py
+	@echo "✓ FEATURES.md 已更新"
+	@echo ""
+	@echo "注意：README.md 等需要手动更新"
+
 # Setup Git hooks for automatic documentation checking
 setup-hooks:
 	@echo "=== 安装 Git Hooks ==="

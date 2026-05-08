@@ -1,0 +1,57 @@
+name: Documentation Sync Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  doc-sync-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Check README features match code
+      run: |
+        python3 scripts/doc-sync/check_feature_sync.py
+
+    - name: Check version consistency
+      run: |
+        python3 scripts/doc-sync/check_version_sync.py
+
+    - name: Check API documentation
+      run: |
+        python3 scripts/doc-sync/check_api_docs.py
+
+    - name: Auto-generate feature list
+      run: |
+        python3 scripts/doc-sync/generate_feature_matrix.py
+        git diff --exit-code README.md || echo "::warning::README.md needs update"
+
+  release-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check CHANGELOG updated
+      run: |
+        VERSION=$(grep -oP '(?<=version = ")\d+\.\d+\.\d+' backend/pyproject.toml | head -1)
+        if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
+          echo "::error::CHANGELOG.md does not contain version $VERSION"
+          exit 1
+        fi
+
+    - name: Check README version badge
+      run: |
+        VERSION=$(grep -oP '(?<=version = ")\d+\.\d+\.\d+' backend/pyproject.toml | head -1)
+        if ! grep -q "$VERSION" README.md; then
+          echo "::error::README.md does not reference version $VERSION"
+          exit 1
+        fi

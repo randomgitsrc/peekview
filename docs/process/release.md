@@ -50,6 +50,25 @@ make debug
 
 ### 4. 预发布检查
 
+**发布前文档同步检查** (关键步骤):
+```bash
+# 检查文档是否与代码同步
+make check-doc-sync
+
+# 自动更新可自动生成的文档
+make update-docs
+
+# 检查 FEATURES.md 已生成
+ls -la FEATURES.md
+```
+
+**手动检查清单**:
+- [ ] README.md 功能列表与 FEATURES.md 一致
+- [ ] README.md 版本号已更新
+- [ ] CHANGELOG.md 包含当前版本
+- [ ] API 路径示例正确 (`/api/v1/entries`)
+- [ ] 环境变量名使用 `__` 分隔符
+
 **发布前检查生产环境数据**:
 ```bash
 # 检查生产环境是否有异常数据
