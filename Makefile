@@ -347,3 +347,28 @@ debug-test:
 
 debug-status:
 	@bash scripts/dev-server.sh status || true
+
+# =============================================================================
+# Documentation Consistency Checks
+# =============================================================================
+
+# Check documentation consistency with code
+check-docs:
+	@echo "=== 检查文档一致性 ==="
+	@echo "→ 检查环境变量..."
+	@bash scripts/check_doc_consistency.sh
+	@echo "✓ 文档一致性检查完成"
+
+# Check for old-style environment variables
+check-env-vars:
+	@echo "=== 检查环境变量命名 ==="
+	@grep -rE "PEEKVIEW_(DATA_DIR|DB_PATH|HOST|PORT|API_KEY|CORS_ORIGINS|ALLOWED_PATHS)" \
+	  README.md CLAUDE.md backend/README.md docs/ --include="*.md" 2>/dev/null | \
+	  grep -v "STORAGE__\|SERVER__\|CLEANUP__\|LIMITS__\|LOGGING__\|^[[:space:]]*#" | \
+	  grep -E "(\||\`).*PEEKVIEW_(DATA_DIR|DB_PATH|HOST|PORT)" | \
+	  head -20 | sed 's/^/  ⚠ /' || echo "  ✓ 未发现旧格式环境变量"
+
+# Full documentation audit
+doc-audit: check-docs
+	@echo "=== 文档审计完成 ==="
+	@echo "请检查上述输出，修复不一致的文档"
