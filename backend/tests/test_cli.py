@@ -26,8 +26,11 @@ def runner():
 
 
 @pytest.fixture
-def isolated_fs(runner):
-    """Run in isolated filesystem."""
+def isolated_fs(runner, monkeypatch, tmp_path):
+    """Run in isolated filesystem with temporary database."""
+    # Set temporary database path for CLI tests
+    monkeypatch.setenv("PEEKVIEW_STORAGE__DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("PEEKVIEW_STORAGE__DB_PATH", str(tmp_path / "peekview.db"))
     with runner.isolated_filesystem() as fs:
         yield fs
 
