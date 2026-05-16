@@ -68,7 +68,7 @@ test.describe('Debug Server - Basic', () => {
     expect(response.status()).toBe(201)
 
     // View entry
-    await page.goto('/#/entry/e2e-code-test')
+    await page.goto('/e2e-code-test')
     await page.waitForSelector('.code-body', { timeout: 5000 })
 
     // Verify code is displayed
@@ -106,7 +106,7 @@ graph TD
     expect(response.status()).toBe(201)
 
     // View entry
-    await page.goto('/#/entry/e2e-mermaid-test')
+    await page.goto('/e2e-mermaid-test')
     await page.waitForTimeout(3000)
 
     // Take screenshot
@@ -124,7 +124,7 @@ graph TD
   })
 
   test('mermaid code/diagram toggle preserves chart', async ({ page }) => {
-    await page.goto('/#/entry/e2e-mermaid-test')
+    await page.goto('/e2e-mermaid-test')
     await page.waitForTimeout(3000)
 
     // Click Code to switch to code view
@@ -151,7 +151,7 @@ graph TD
 
   test('mermaid fullscreen fills window', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto('/#/entry/e2e-mermaid-test')
+    await page.goto('/e2e-mermaid-test')
     await page.waitForTimeout(3000)
 
     // Click fullscreen
@@ -253,7 +253,7 @@ test.describe('Debug Server - Theme', () => {
 test.describe('Debug Server - Mobile', () => {
   test('mobile layout', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto('/#/entry/e2e-code-test')
+    await page.goto('/e2e-code-test')
     await page.waitForTimeout(1000)
 
     // Mobile should not show sidebars
