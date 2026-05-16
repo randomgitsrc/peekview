@@ -35,6 +35,11 @@ make debug-stop        # 步骤6: 停止调试服务（自动清理数据）
 - 如果单独运行 `make debug-start`，稍后需要手动运行 `make debug-test`
 - **严禁跳过 E2E 直接发布！**
 
+**Remote CLI 测试 (v0.1.25+)**
+- `make debug-test-remote` - 测试 Remote CLI 模式功能
+- 需要调试服务已启动 (`make debug-start`)
+- 测试覆盖: 单文件上传、目录上传、stdin、标签过滤、二进制文件跳过等
+
 ## 详细流程
 
 ### 步骤 1: 准备（文件状态检查）
@@ -268,6 +273,7 @@ ps aux | grep peekview
 | `make debug-verify-isolation` | **验证数据隔离（v0.1.22+）** |
 | `make debug-stop` | 停止调试服务（清理数据）|
 | `make debug-test` | 运行 E2E 测试 |
+| `make debug-test-remote` | **运行 Remote CLI 集成测试 (v0.1.25+)** |
 | `make debug-status` | 检查调试服务状态 |
 | `make pre-publish` | 预发布检查 |
 | `make publish` | 发布到 PyPI |

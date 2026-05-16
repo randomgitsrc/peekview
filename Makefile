@@ -345,6 +345,11 @@ debug-stop:
 debug-test:
 	@bash scripts/run-e2e-tests.sh
 
+debug-test-remote:
+	@echo ""
+	@echo "=== Remote CLI Mode Tests ==="
+	@bash scripts/debug-remote-cli.sh test
+
 debug-status:
 	@bash scripts/dev-server.sh status || true
 
