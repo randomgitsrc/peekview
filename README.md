@@ -113,6 +113,16 @@ peekview delete my-entry
 peekview delete my-entry --force
 ```
 
+### API 文档
+
+```bash
+# 查看所有 API 端点
+peekview api endpoints
+
+# 查看 OpenAPI/Swagger 文档地址
+peekview api openapi
+```
+
 ---
 
 ## 配置
