@@ -109,6 +109,37 @@ PEEKVIEW_SERVER__PORT=8080
 PEEKVIEW_SERVER__API_KEY=your-secret-key
 ```
 
+## API 端点
+
+### 健康检查
+
+```bash
+GET /health
+```
+
+返回服务健康状态：
+
+```json
+{
+  "status": "ok",
+  "version": "0.1.24"
+}
+```
+
+### 条目 API
+
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | `/api/v1/entries` | 列出入库（支持分页、搜索） |
+| POST | `/api/v1/entries` | 创建新条目 |
+| GET | `/api/v1/entries/{slug}` | 获取条目详情 |
+| PATCH | `/api/v1/entries/{slug}` | 更新条目 |
+| DELETE | `/api/v1/entries/{slug}` | 删除条目 |
+| GET | `/api/v1/entries/{slug}/files/{file_id}` | 获取文件信息 |
+| GET | `/api/v1/entries/{slug}/files/{file_id}/content` | 获取文件内容 |
+
+详细 API 文档请参考源码中的 `peekview/api/` 目录。
+
 ## 特性
 
 - 🎨 **代码高亮** - 基于 Shiki 的语法高亮，支持 100+ 语言
