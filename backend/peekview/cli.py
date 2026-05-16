@@ -197,8 +197,8 @@ def create(
     backend = _get_backend(config, cli_remote_url=remote_url)
     is_remote = _is_remote_mode(backend)
 
-    # Show remote mode indicator
-    if is_remote:
+    # Show remote mode indicator (only in non-JSON mode)
+    if is_remote and not json_output:
         click.echo(f"→ Remote mode: {config.remote.url or remote_url}")
 
     # Set base_url from CLI if provided (for local mode URL generation)
@@ -304,8 +304,8 @@ def get(slug: str, remote_url: str | None, json_output: bool) -> None:
     backend = _get_backend(config, cli_remote_url=remote_url)
     is_remote = _is_remote_mode(backend)
 
-    # Show remote mode indicator
-    if is_remote:
+    # Show remote mode indicator (only in non-JSON mode)
+    if is_remote and not json_output:
         click.echo(f"→ Remote mode: {config.remote.url or remote_url}")
 
     try:
@@ -379,8 +379,8 @@ def list_entries(
     backend = _get_backend(config, cli_remote_url=remote_url)
     is_remote = _is_remote_mode(backend)
 
-    # Show remote mode indicator
-    if is_remote:
+    # Show remote mode indicator (only in non-JSON mode)
+    if is_remote and not json_output:
         click.echo(f"→ Remote mode: {config.remote.url or remote_url}")
 
     try:
