@@ -1,8 +1,8 @@
 # PeekView HTML 网页渲染 技术设计文档
 
-> 版本: 1.1
+> 版本: 1.2
 > 日期: 2026-05-18
-> 状态: 草案（已评审）
+> 状态: 评审完成
 > 关联: 用户需求 — Agent 生成网页的发布与浏览
 
 ---
@@ -70,7 +70,7 @@ language === 'markdown' → MarkdownViewer
 ```html
 <iframe
   :srcdoc="content"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+  sandbox="allow-scripts allow-forms allow-popups"
   referrerpolicy="no-referrer"
   class="html-frame"
 />
@@ -81,14 +81,24 @@ language === 'markdown' → MarkdownViewer
 | 权限 | 说明 |
 |------|------|
 | `allow-scripts` | 允许 JS 执行（图表、交互必须）|
-| `allow-same-origin` | 允许 localStorage、IndexedDB（部分 App 需要）|
 | `allow-forms` | 允许表单提交 |
 | `allow-popups` | 允许 window.open（外链跳转）|
+| ❌ `allow-same-origin` | **禁止**。`allow-scripts` + `allow-same-origin` 同时开启时，iframe 内 JS 可移除 sandbox 属性，沙盒完全失效（MDN 明确警告）|
 | ❌ `allow-top-navigation` | 禁止，防止 iframe 劫持父页面跳转 |
+
+> **安全说明：** 去掉 `allow-same-origin` 后，iframe 运行在 `null origin` 下，无法访问父页面的 DOM、cookie、localStorage，XSS 防护有效。代价是 iframe 内 JS 也无法使用 localStorage/IndexedDB，Agent 生成的展示型网页通常不需要此能力。
 
 **iframe 高度策略：**
 
 撑满内容区剩余高度，内容在 iframe 内自己滚动，不动态调整高度。
+
+**加载状态：**
+
+监听 iframe 的 `load` 事件判断渲染完成，加载期间显示 Loading 占位，与 CodeViewer 的 Shiki 加载态保持一致。
+
+**大文件处理：**
+
+`srcdoc` 将完整 HTML 内容作为属性值注入，文件过大时（尤其内联 base64 图片）会有渲染性能问题。超过 **512KB** 时在内容区顶部显示警告提示，仍正常渲染，不阻断。
 
 ### 3.3 布局（与 Markdown 完全对齐）
 
@@ -137,7 +147,25 @@ language === 'markdown' → MarkdownViewer
 | 使用 CDN 外链（Tailwind、ECharts 等）| ✅ 完美渲染 |
 | 依赖同 entry 内其他文件的相对路径 | ⚠️ 样式/脚本缺失，HTML 结构仍显示 |
 
-### 3.5 CLI 侧
+### 3.5 操作行为定义
+
+| 操作 | 行为 | 说明 |
+|------|------|------|
+| Copy | 复制 HTML 源码 | 与 Markdown、代码文件一致，均复制文件原始内容 |
+| Download | 下载 HTML 文件 | 与其他文件类型一致 |
+| Wrap | **不显示** | 对网页渲染无意义 |
+
+### 3.6 安全风险记录
+
+**已处理：XSS / 沙盒逃逸**
+
+通过去掉 `allow-same-origin` + `null origin` 隔离解决，见 3.2。
+
+**已知风险：iframe 内脚本可发起外部网络请求**
+
+`allow-scripts` 允许 iframe 内 JS 执行 `fetch` / `XMLHttpRequest`，可能将用户数据发到外部服务器。这是 Agent 生成内容的固有风险，与直接打开 HTML 文件无本质区别。本期记录在案，不做额外限制，后续可通过后端 CSP header 收紧。
+
+### 3.7 CLI 侧
 
 `peekview create` 无需改动，已支持任意文件上传。
 
@@ -170,7 +198,8 @@ peekview create index.html style.css main.js
 | HTML 文件包含外部 CDN 资源 | 正常加载，浏览器直接请求 |
 | HTML 文件包含相对路径资源 | 静默失败，文档说明此限制 |
 | 多文件 entry 含多个 .html | 每个各自独立渲染，FileTree 切换 |
-| 恶意 HTML（XSS）| sandbox 隔离，无法访问父页面 |
+| 恶意 HTML（XSS）| sandbox `null origin` 隔离，无法访问父页面（见 3.2）|
+| HTML 文件 > 512KB | srcdoc 注入，显示性能警告，仍正常渲染 |
 
 ---
 
