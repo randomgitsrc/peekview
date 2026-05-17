@@ -29,7 +29,7 @@
 
 - **认证规格**：`docs/specs/spec-user-auth.md`
 - **远程 CLI 规格**：`docs/specs/spec-remote-cli.md`
-- **Admin 角色计划**：`docs/plans/impl-plan-admin-role.md`
+- **Admin 角色计划**：`docs/archived/plans/impl-plan-admin-role.md`（已完成）
 - **项目索引**：`INDEX.md`
 - **发布记录**：`CHANGELOG.md`
 - **开发流程**：`docs/process/workflow.md`

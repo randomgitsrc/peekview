@@ -118,11 +118,7 @@ frontend-v3/src/
 
 ### 📝 实现计划 (`docs/plans/`)
 
-| 文件 | 说明 | 状态 |
-|------|------|------|
-| [impl-plan-admin-role.md](docs/plans/impl-plan-admin-role.md) | Admin 角色计划 | 🔄 部分完成 |
-
-> 已完成的计划已归档至 `docs/archived/plans/`
+> 当前无活跃实现计划。已完成的计划均已归档至 `docs/archived/plans/`
 
 ### 🔍 评审 (`docs/reviews/`)
 
