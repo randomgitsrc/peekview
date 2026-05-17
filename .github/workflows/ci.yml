@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -54,6 +56,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -67,10 +71,10 @@ jobs:
           cd frontend-v3
           npm ci
 
-      - name: Type check
+      - name: Type check (vue-tsc)
         run: |
           cd frontend-v3
-          npx tsc --noEmit
+          npx vue-tsc --noEmit
 
       - name: Build
         run: |
@@ -92,6 +96,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
