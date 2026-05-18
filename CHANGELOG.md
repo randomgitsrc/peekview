@@ -9,6 +9,17 @@
 
 ## [0.1.28] - 2026-05-17
 
+### 新增
+
+- **HTML 网页渲染**：HTML 文件（`.html`）现在直接渲染为网页，而非显示源码
+  - 使用 Blob URL + `<iframe sandbox="allow-scripts">` 实现，最小权限沙盒
+  - 自动检测相对路径引用并显示警告条（DOMParser 静态检测）
+  - 大文件分级处理：< 512KB 正常 / 512KB~2MB 性能警告 / > 2MB 手动触发
+  - iframe load/error 事件控制 Loading 态
+  - 多文件 entry：`.html` 文件渲染为网页，其他文件保持原有渲染方式
+  - Copy 按钮 tooltip 显示"Copy HTML source"，明确复制的是源码
+  - HTML 文件不显示 Wrap 按钮
+
 ### 修复
 
 - **前端兼容性**：`isPublic` 字段缺失时默认为 `true`（升级自 v0.1.24 时所有条目被错误标为私有）

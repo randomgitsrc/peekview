@@ -95,3 +95,13 @@
 - ✅ JWT user authentication
 - ✅ Binary file detection
 - ✅ Integration tests
+
+## HTML Rendering
+
+- ✅ HTML files rendered as webpages (Blob URL iframe sandbox)
+- ✅ Minimal sandbox: `allow-scripts` only, no `allow-forms` / `allow-popups`
+- ✅ Relative path detection with warning bar (DOMParser, static attributes only)
+- ✅ Large file handling: < 512KB auto / 512KB~2MB warning / > 2MB manual trigger
+- ✅ Multi-file entry: `.html` → iframe, other files → CodeViewer / MarkdownViewer
+- ✅ Copy HTML source (tooltip clarifies source code, not rendered text)
+- ✅ iframe load/error state with Loading indicator

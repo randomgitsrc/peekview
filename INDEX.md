@@ -113,7 +113,7 @@ frontend-v3/src/
 |------|------|------|
 | [spec-user-auth.md](docs/specs/spec-user-auth.md) | 用户认证规格 — JWT + 可见性 + API Key | ✅ 已实现（v0.1.25）|
 | [spec-remote-cli.md](docs/specs/spec-remote-cli.md) | 远程 CLI 规格 | ✅ 已实现（v0.1.25）|
-| [spec-html-render.md](docs/specs/spec-html-render.md) | HTML 网页渲染规格 — iframe 沙盒渲染 | 🔲 待实现 |
+| [spec-html-render.md](docs/specs/spec-html-render.md) | HTML 网页渲染规格 — iframe 沙盒渲染 | ✅ 已实现（v0.1.28）|
 
 > MVP 阶段规格文档已归档至 `docs/archived/specs/`
 
