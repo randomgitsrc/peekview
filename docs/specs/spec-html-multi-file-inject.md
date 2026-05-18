@@ -110,8 +110,10 @@ iframe (sandbox="allow-scripts")
 function normalizeRef(ref: string): string | null {
   const trimmed = ref.trim()
   if (!trimmed) return null
-  if (/^(https?:\/\/|data:|#|mailto:|tel:)/.test(trimmed)) return null
+  // 排除绝对 URL 和特殊协议
+  if (/^(https?:\/\/|data:|blob:|mailto:|tel:)/.test(trimmed)) return null
   if (trimmed.startsWith('//')) return null
+  if (trimmed.startsWith('#')) return null
   // 排除绝对路径（以 / 开头），在 Blob URL 上下文中无法解析，不做注入
   if (trimmed.startsWith('/')) return null
   return trimmed.replace(/^\.\//,'')
