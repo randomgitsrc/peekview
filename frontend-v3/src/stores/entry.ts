@@ -27,6 +27,7 @@ export const useEntryStore = defineStore('entry', () => {
     if (!activeFile.value) return false
     if (activeFile.value.isBinary) return false
     if (activeFile.value.language === 'markdown') return false
+    if (activeFile.value.language === 'html') return false
     return true
   })
 

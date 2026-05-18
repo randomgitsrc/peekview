@@ -59,17 +59,6 @@ const HTML_CDN_ONLY = `
 </html>
 `
 
-// ─── 大文件：mock content 长度而非真实生成大字符串 ────────────────────────────
-// 避免在 jsdom 里分配 2MB+ 字符串导致测试超时
-
-/** 创建一个 content 属性值为指定长度的 mock prop */
-function makeContentOfSize(bytes: number): string {
-  // 足够小可以被 jsdom 快速处理，但通过 computed 模拟大小判断
-  // 实际实现里大小检查用 content.length（JS 字符串为 UTF-16，每字符 2 字节）
-  // 这里生成真实内容但控制在合理范围：用 512B 内容并让测试 mock 大小计算
-  return '<html><body>' + 'x'.repeat(Math.min(bytes, 100)) + '</body></html>'
-}
-
 const MB = 1024 * 1024
 
 // ─── Blob URL 创建与释放 ──────────────────────────────────────────────────────
@@ -81,10 +70,10 @@ describe('Blob URL 创建与释放', () => {
     await flushPromises()
 
     expect(createObjectURLMock).toHaveBeenCalledOnce()
-    const blob = createObjectURLMock.mock.calls[0]?.[0]
-    expect(blob).toBeDefined()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blob = (createObjectURLMock.mock.calls as any[][])[0][0]
     expect(blob).toBeInstanceOf(Blob)
-    expect(blob.type).toBe('text/html')
+    expect((blob as Blob).type).toBe('text/html')
 
     const iframe = wrapper.find('iframe')
     expect(iframe.exists()).toBe(true)

@@ -44,6 +44,8 @@
           <button
             v-if="entryStore.canCopy"
             class="btn btn-sm"
+            :title="isHtml ? 'Copy HTML source' : 'Copy'"
+            :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
             @click="copyContent"
           >
             Copy
@@ -104,9 +106,23 @@
 
         <!-- Content -->
         <template v-else-if="entryStore.activeFile">
+          <!-- HTML File -->
+          <HtmlViewer
+            v-if="isHtml"
+            :content="entryStore.fileContent"
+          />
+
+          <!-- Markdown File -->
+          <MarkdownViewer
+            v-else-if="isMarkdown"
+            :content="entryStore.fileContent"
+            :headings="tocHeadings"
+            @select-heading="scrollToHeading"
+          />
+
           <!-- Code File -->
           <CodeViewer
-            v-if="!isMarkdown"
+            v-else
             :content="entryStore.fileContent"
             :filename="entryStore.activeFile.filename"
             :language="entryStore.activeFile.language"
@@ -114,14 +130,6 @@
             :can-wrap="entryStore.canWrap"
             :loading="entryStore.loading"
             @toggle-wrap="entryStore.toggleWrap()"
-          />
-
-          <!-- Markdown File -->
-          <MarkdownViewer
-            v-else
-            :content="entryStore.fileContent"
-            :headings="tocHeadings"
-            @select-heading="scrollToHeading"
           />
         </template>
 
@@ -177,6 +185,8 @@
       <button
         v-if="entryStore.canCopy"
         class="btn btn-sm"
+        :title="isHtml ? 'Copy HTML source' : 'Copy'"
+        :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
         @click="copyContent"
       >
         Copy
@@ -247,6 +257,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
+import HtmlViewer from '@/components/HtmlViewer.vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -312,6 +323,10 @@ const entryTitle = computed(() => {
 
 const isMarkdown = computed(() => {
   return activeFile.value?.language === 'markdown'
+})
+
+const isHtml = computed(() => {
+  return activeFile.value?.language === 'html'
 })
 
 const showFileSidebar = computed(() => {
