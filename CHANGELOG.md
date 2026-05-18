@@ -7,6 +7,56 @@
 
 ## [Unreleased]
 
+## [0.1.29] - 2026-05-18
+
+### 新增
+
+- **FileTree 目录树层级结构** — 多文件 entry 支持嵌套目录显示
+  - 支持层级路径（如 `css/style.css`、`assets/images/logo.png`）
+  - 目录折叠/展开功能（默认全部展开）
+  - 点击文件切换内容，点击目录切换折叠状态
+  - 自动展开包含当前选中文件的目录
+  - 扁平文件列表（无 path）保持向后兼容
+
+- **HTML 多文件资源注入** — HTML 文件可引用同 entry 的其他文件
+  - CSS 文件自动注入为 `<style>` 标签（内联）
+  - JS 文件自动注入为 `<script>` 标签（内联）
+  - 图片文件（PNG/JPG/GIF/SVG/WebP）自动转换为 data URI
+  - 相对路径警告仅显示未匹配成功的引用
+  - 支持层级路径引用（如 `../css/style.css`）
+
+- **SVG 图片渲染** — SVG 文件现在作为图片渲染，而非显示源码
+  - 新增 `image/svg+xml` MIME 类型映射
+  - SVG 作为文本格式特殊处理（不依赖 isBinary 标志）
+  - 支持点击缩放查看
+
+### 修复
+
+- **Pack 按钮功能** — 实现多文件打包下载
+  - 新增后端 API `/api/v1/entries/{slug}/download`，返回 ZIP 归档
+  - 桌面端 Pack 按钮点击下载 ZIP
+  - 移动端操作栏添加 Pack 按钮
+  - ZIP 包含 entry 所有文件，保持原始文件名
+
+### 测试
+
+- **FileTree 单元测试**：`FileTree.spec.ts` 13 项测试
+  - buildTree 逻辑：层级/扁平/混合场景
+  - 折叠状态管理
+  - 文件选择事件
+
+- **E2E 测试**：`html-render.spec.ts` 新增
+  - TC-TREE-01/02/03：目录树层级结构
+  - TC-HTML-INJECT-001~004：资源注入功能
+  - TC-HTML-BIN-001~003：二进制资源注入
+
+- **总计**：393 后端测试 + 55+ E2E 测试通过
+
+### 变更
+
+- `guessMimeType()` 新增 SVG 映射
+- `isImage` computed 特殊处理 SVG（文本格式）
+
 ## [0.1.28] - 2026-05-17
 
 ### 新增

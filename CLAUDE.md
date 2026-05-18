@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI → humans view formatted content in browser.
 
-- **Current State:** Backend and frontend both complete (Tasks 0-16), Auth + API Key features added
-- **Current Version:** v0.1.28
+- **Current State:** Backend and frontend both complete (Tasks 0-30), FileTree + HTML resource injection + Pack download added
+- **Current Version:** v0.1.29
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend
 - **Key Docs:** Auth spec in `docs/specs/spec-user-auth.md`, remote CLI spec in `docs/specs/spec-remote-cli.md`
 - **Dev Process:** Standard workflow in `docs/process/workflow.md` - **READ THIS FIRST** before starting any work
@@ -219,6 +219,8 @@ All core features complete:
 - Auth: JWT auth, bcrypt, register/login/logout/me, entry visibility, owner permissions
 - API Keys: User-level `pv_` keys, HMAC-SHA256, CRUD, expiration, CLI management
 - Admin: First user auto-admin, promote/demote commands
+- **FileTree:** Hierarchical file paths, nested directories
+- **Resource Injection:** `content_base64` for binary files, `/entries/{slug}/download` for ZIP pack
 - 393 backend tests passing
 
 **Frontend:**
@@ -226,7 +228,11 @@ All core features complete:
 - Auth: LoginDialog, auth store, card actions, user menu
 - API Keys: Dedicated management page at `/settings/apikeys`
 - All/Mine tabs for entry filtering
-- 52 E2E tests passing
+- **FileTree:** Hierarchical directory tree with fold/unfold
+- **HTML Rendering:** iframe sandbox, resource injection (CSS/JS/images)
+- **Image Viewer:** PNG/JPG/GIF/WebP/SVG with zoom, size warnings
+- **Pack Download:** ZIP download for multi-file entries
+- 55+ E2E tests passing
 
 ## Debug Workflow (CRITICAL!)
 
