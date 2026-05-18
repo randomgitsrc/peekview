@@ -9,6 +9,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@vue/test-utils": "^2.4.10",
     "axios": "^1.7.0",
     "github-markdown-css": "^5.9.0",
     "markdown-it": "^14.1.0",
