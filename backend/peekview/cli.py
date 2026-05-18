@@ -1319,6 +1319,7 @@ def api_endpoints(base_url: str | None) -> None:
     click.echo("Files API:")
     click.echo(f"  GET    {url}/api/v1/entries/<slug>/files/<file_id> - Download file")
     click.echo(f"  GET    {url}/api/v1/entries/<slug>/files/<file_id>/content - Get file content")
+    click.echo(f"  GET    {url}/api/v1/entries/<slug>/download - Download entry as ZIP pack")
     click.echo("")
     click.echo("Query Parameters:")
     click.echo("  /api/v1/entries?q=keyword          - Full-text search")
