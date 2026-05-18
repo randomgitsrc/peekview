@@ -126,9 +126,11 @@ function normalizeRef(ref: string): string | null {
 
 仅处理 `rel="stylesheet"` 的 `<link>`。`rel="icon"`、`rel="preload"` 等不替换。
 
-**JS — `<script src>` → `<script>`**：
+**JS — `<script src>` → `<script>`，移到 body 末尾**：
 
 仅处理无 `type` 或 `type="text/javascript"` 的 `<script>`。
+
+注入后的 inline `<script>` 移到 `<body>` 末尾而非保留原位。原因：外部脚本在下载完成后执行（此时 DOM 已就绪），但 inline 脚本是同步执行的——若保留原位（如 `<head>` 中），执行时 `<body>` 尚未解析，DOM 查询会失败。移到 body 末尾可保证 DOM 就绪后再执行。
 
 **`type="module"` 排除注入**：inline module 无文件 URL，内部 `import` 语句会**静默失败**（无任何报错提示）。保留原 `<script src="..." type="module">` 节点，让它在 Blob URL 下自然 404 → 计入警告条，行为透明可预期。
 

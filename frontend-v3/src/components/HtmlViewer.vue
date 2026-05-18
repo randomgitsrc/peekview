@@ -8,7 +8,7 @@
     >
       <span class="warning-icon">⚠️</span>
       <span class="warning-text">
-        此 HTML 含 {{ relativePathCount }} 个本地资源引用，PeekView 当前不支持多文件相对路径，这些资源不会加载。
+        此 HTML 含 {{ relativePathWarningCount }} 个本地资源引用，PeekView 当前不支持多文件相对路径，这些资源不会加载。
       </span>
       <button
         data-testid="relative-path-warning-close"
@@ -51,9 +51,9 @@
 
     <!-- iframe 容器（正常渲染 / 512KB~2MB 时也显示此区域）-->
     <div v-else class="html-frame-container">
-      <!-- Loading 态：blobUrl 创建后到 iframe load 事件前 -->
+      <!-- Loading 态：fetch 兄弟文件中 / blobUrl 创建后到 iframe load 事件前 -->
       <div
-        v-if="isLoading"
+        v-if="isLoading || props.loadingSiblings"
         data-testid="html-loading"
         class="html-loading"
       >
@@ -83,7 +83,15 @@ import { HTML_VIEWER_TEST_SIZE_KEY } from './HtmlViewerTestKeys'
 
 const props = defineProps<{
   content: string
+  siblingFiles?: SiblingFile[]
+  loadingSiblings?: boolean
 }>()
+
+export interface SiblingFile {
+  filename: string
+  content: string
+  language: string
+}
 
 // ── 文件大小阈值 ──────────────────────────────────────────────────────────
 const SIZE_WARN  = 512 * 1024       // 512KB
@@ -118,32 +126,88 @@ function triggerManualRender() {
   manuallyTriggered.value = true
 }
 
-// ── 相对路径检测 ─────────────────────────────────────────────────────────
-// 检测范围：静态 HTML 属性（href / src / action）
-// 不覆盖 JS 动态创建的资源请求（已知限制，见 spec §3.4）
-const relativePathCount = computed(() => {
-  if (!props.content) return 0
-  try {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(props.content, 'text/html')
-    const attrs = [
-      ...Array.from(doc.querySelectorAll('[href]')).map(el => el.getAttribute('href') ?? ''),
-      ...Array.from(doc.querySelectorAll('[src]')).map(el => el.getAttribute('src') ?? ''),
-      ...Array.from(doc.querySelectorAll('[action]')).map(el => el.getAttribute('action') ?? ''),
-    ]
-    return attrs.filter(attr =>
-      attr &&
-      !attr.startsWith('http://') &&
-      !attr.startsWith('https://') &&
-      !attr.startsWith('//') &&
-      !attr.startsWith('data:') &&
-      !attr.startsWith('#') &&
-      attr.trim() !== ''
-    ).length
-  } catch {
-    return 0
+// ── 资源注入 ────────────────────────────────────────────────────────────
+
+function normalizeRef(ref: string): string | null {
+  const trimmed = ref.trim()
+  if (!trimmed) return null
+  if (/^(https?:\/\/|data:|blob:|mailto:|tel:)/.test(trimmed)) return null
+  if (trimmed.startsWith('//')) return null
+  if (trimmed.startsWith('#')) return null
+  if (trimmed.startsWith('/')) return null
+  return trimmed.replace(/^\.\//, '')
+}
+
+function injectResources(
+  html: string,
+  siblings: SiblingFile[]
+): { html: string; unmatchedCount: number } {
+  if (!siblings || siblings.length === 0) {
+    return { html, unmatchedCount: countRelativePaths(html) }
   }
-})
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  const fileMap = new Map(
+    siblings
+      .map(f => [normalizeRef(f.filename), f.content] as const)
+      .filter((entry): entry is [string, string] => entry[0] !== null)
+  )
+
+  // CSS: <link rel="stylesheet"> → <style>
+  doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const href = normalizeRef(link.getAttribute('href') ?? '')
+    if (!href || !fileMap.has(href)) return
+    const style = doc.createElement('style')
+    style.textContent = `/* injected from: ${href} */\n${fileMap.get(href)}`
+    link.replaceWith(style)
+  })
+
+  // JS: <script src> → inline <script>，移到 body 末尾
+  // 外部脚本在加载完成时执行（DOM 已就绪），内联脚本则同步执行。
+  // 若保留原位（如 <head>），执行时 <body> 尚未解析，DOM 查询会失败。
+  // 移到 body 末尾可保证 DOM 就绪后再执行。
+  // type="module" 排除注入：inline module 内部 import 静默失败，
+  // 保留原节点 404 → 计入警告条，行为更透明
+  doc.querySelectorAll('script[src]').forEach(script => {
+    const src = normalizeRef(script.getAttribute('src') ?? '')
+    if (!src || !fileMap.has(src)) return
+    const type = script.getAttribute('type')
+    if (type && type !== 'text/javascript') return
+    const inline = doc.createElement('script')
+    inline.textContent = `/* injected from: ${src} */\n${fileMap.get(src)}`
+    script.remove()
+    doc.body.appendChild(inline)
+  })
+
+  const unmatchedCount = countRelativePathsInDoc(doc)
+  return { html: serializeDoc(doc), unmatchedCount }
+}
+
+function serializeDoc(doc: Document): string {
+  const dt = doc.doctype
+  const doctypeStr = dt ? `<!DOCTYPE ${dt.name}>` : '<!DOCTYPE html>'
+  return doctypeStr + '\n' + doc.documentElement.outerHTML
+}
+
+function countRelativePaths(html: string): number {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return countRelativePathsInDoc(doc)
+}
+
+function countRelativePathsInDoc(doc: Document): number {
+  const attrs = [
+    ...Array.from(doc.querySelectorAll('[href]')).map(el => el.getAttribute('href') ?? ''),
+    ...Array.from(doc.querySelectorAll('[src]')).map(el => el.getAttribute('src') ?? ''),
+  ]
+  return attrs.filter(a => a && normalizeRef(a) !== null).length
+}
+
+// ── 相对路径检测 ─────────────────────────────────────────────────────────
+// 检测范围：静态 HTML 属性（href / src）
+// 不覆盖 JS 动态创建的资源请求（已知限制，见 spec §3.4）
+const relativePathWarningCount = ref(0)
 
 // 用户是否主动关闭了警告（切换文件时 content 变更自动重置）
 const relativePathWarningDismissed = ref(false)
@@ -152,9 +216,8 @@ watch(() => props.content, () => {
   relativePathWarningDismissed.value = false
 })
 
-// 单一 computed 决定显示逻辑，避免 ref+watch 隐式耦合
 const showRelativePathWarning = computed(() =>
-  relativePathCount.value > 0 && !relativePathWarningDismissed.value
+  relativePathWarningCount.value > 0 && !relativePathWarningDismissed.value
 )
 
 // ── Blob URL 管理 ─────────────────────────────────────────────────────────
@@ -173,12 +236,16 @@ function revokeBlobUrl(url: string | null) {
 function initRender(content: string) {
   // 空内容不渲染，避免创建空 Blob 导致 iframe 短暂闪白
   if (!content) return
+  // 正在 fetch 兄弟文件，等数据到齐后再渲染
+  if (props.loadingSiblings) return
   // 大文件且未手动触发，不创建 Blob URL
   if (isBlockedBySize.value && !manuallyTriggered.value) return
 
+  const { html: processed, unmatchedCount } = injectResources(content, props.siblingFiles ?? [])
+  relativePathWarningCount.value = unmatchedCount
   revokeBlobUrl(blobUrl.value)
   isLoading.value = true
-  blobUrl.value = createBlobUrl(content)
+  blobUrl.value = createBlobUrl(processed)
 }
 
 // content 变更时重新渲染（entry 切换文件时 content 会先置空再填充）
@@ -190,6 +257,13 @@ watch(
   },
   { immediate: true }
 )
+
+// siblingFiles 到齐后触发渲染
+// 不合并到 content watch：合并会导致 content 先到时先渲染无注入版本，
+// siblingFiles 到了再渲染一次有注入版本，用户看到闪烁
+watch(() => props.siblingFiles, (siblings) => {
+  if (siblings && siblings.length > 0) initRender(props.content)
+})
 
 // 手动触发时渲染
 watch(manuallyTriggered, (triggered) => {

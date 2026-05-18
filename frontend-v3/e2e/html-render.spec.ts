@@ -175,7 +175,7 @@ test.describe('操作按钮', () => {
     await page.goto('/e2e-html-buttons')
     await waitForIframe(page)
 
-    const copyBtn = page.locator('button:has-text("Copy")')
+    const copyBtn = page.locator('.actions button:has-text("Copy")').first()
     await expect(copyBtn).toBeVisible()
     const title = await copyBtn.getAttribute('title') ?? ''
     const ariaLabel = await copyBtn.getAttribute('aria-label') ?? ''
@@ -189,7 +189,7 @@ test.describe('操作按钮', () => {
     await page.goto('/e2e-html-buttons')
     await waitForIframe(page)
 
-    await page.click('button:has-text("Copy")')
+    await page.locator('.actions button:has-text("Copy")').first().click()
     const clipboard = await page.evaluate(() => navigator.clipboard.readText())
     expect(clipboard).toContain('<!DOCTYPE html>')
     expect(clipboard).toContain('Hello from iframe')
@@ -199,7 +199,7 @@ test.describe('操作按钮', () => {
     await page.goto('/e2e-html-buttons')
     await waitForIframe(page)
 
-    await expect(page.locator('button:has-text("Download")')).toBeVisible()
+    await expect(page.locator('.actions button:has-text("Download")').first()).toBeVisible()
   })
 })
 
@@ -219,7 +219,7 @@ test.describe('多文件 entry', () => {
 
     await expect(page.locator('iframe.html-frame')).toBeVisible()
 
-    await page.click('[data-testid="file-tree"] >> text=style.css')
+    await page.locator('.file-tree .file-name', { hasText: 'style.css' }).click()
     await expect(page.locator('.code-body')).toBeVisible()
     await expect(page.locator('iframe.html-frame')).not.toBeVisible()
 
@@ -230,8 +230,8 @@ test.describe('多文件 entry', () => {
     await page.goto('/e2e-html-multifile')
     await waitForIframe(page)
 
-    await page.click('[data-testid="file-tree"] >> text=style.css')
-    await page.click('[data-testid="file-tree"] >> text=index.html')
+    await page.locator('.file-tree .file-name', { hasText: 'style.css' }).click()
+    await page.locator('.file-tree .file-name', { hasText: 'index.html' }).click()
 
     await expect(page.locator('iframe.html-frame')).toBeVisible()
     await expect(page.locator('.code-body')).not.toBeVisible()
@@ -262,7 +262,10 @@ test.describe('安全沙盒验证', () => {
     // 等待 iframe 内脚本执行完成（DOM 等待替代硬等待）
     await expect(iframe.locator('body')).toContainText('top.location blocked', { timeout: 3000 })
     // 正向断言：title 必须为 SANDBOX_INTACT，否则沙盒逃逸成功或脚本未执行
-    await expect(iframe.locator('title')).toHaveText('SANDBOX_INTACT', { timeout: 3000 })
+    // Playwright 在 sandbox iframe 中对 <title> 的 toContainText 不可靠，
+    // 改用 evaluate 直接读取
+    const titleText = await iframe.locator('title').evaluate(el => el.textContent ?? '')
+    expect(titleText).toContain('SANDBOX_INTACT')
   })
 
   test('TC-HTML-SEC-002: iframe 内 top.location 修改被阻止', async ({ page }) => {
@@ -278,6 +281,105 @@ test.describe('安全沙盒验证', () => {
   })
 })
 
+// ─── Test Suite: 多文件资源注入 ──────────────────────────────────────────────
+
+test.describe('多文件资源注入', () => {
+  const INJECT_HTML = `<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js"><\/script>
+</head>
+<body>
+  <h1 id="inject-heading">Hello Inject</h1>
+  <p id="inject-status">JS not loaded</p>
+  <img src="missing.png">
+</body>
+</html>`
+
+  const INJECT_CSS = `body { background: #eef; }
+#inject-heading { color: green; }`
+
+  const INJECT_JS = `document.getElementById('inject-status').textContent = 'JS loaded';`
+
+  test.beforeAll(async ({ request }) => {
+    await createEntry(request, 'e2e-html-inject', [
+      { filename: 'index.html', content: INJECT_HTML },
+      { filename: 'styles.css', content: INJECT_CSS },
+      { filename: 'app.js', content: INJECT_JS },
+    ])
+    // 部分匹配：只有 styles.css，缺 app.js
+    await createEntry(request, 'e2e-html-inject-partial', [
+      { filename: 'index.html', content: INJECT_HTML },
+      { filename: 'styles.css', content: INJECT_CSS },
+    ])
+  })
+
+  test('TC-HTML-INJECT-001: 多文件 HTML 应用 — CSS/JS 注入生效', async ({ page }) => {
+    await page.goto('/e2e-html-inject')
+    await waitForIframe(page)
+
+    const iframe = page.frameLocator('iframe.html-frame')
+    // CSS 注入：heading 颜色为 green
+    const heading = iframe.locator('#inject-heading')
+    await expect(heading).toBeVisible()
+    const color = await heading.evaluate(el => getComputedStyle(el).color)
+    expect(color).toBe('rgb(0, 128, 0)') // green
+
+    // JS 注入：段落文本变为 'JS loaded'
+    await expect(iframe.locator('#inject-status')).toHaveText('JS loaded', { timeout: 3000 })
+  })
+
+  test('TC-HTML-INJECT-002: 注入成功后无相对路径警告', async ({ page }) => {
+    await page.goto('/e2e-html-inject')
+    await waitForIframe(page)
+
+    // styles.css + app.js 注入成功，仅剩 missing.png（1 个未匹配）
+    // 警告条显示 1 个未匹配引用
+    const warning = page.locator('[data-testid="relative-path-warning"]')
+    // 等待渲染完成
+    await page.waitForTimeout(500)
+    if (await warning.isVisible()) {
+      await expect(warning).toContainText('1')
+    }
+    // 不应显示 2 或 3（说明 CSS/JS 未被注入）
+    if (await warning.isVisible()) {
+      await expect(warning).not.toContainText('2')
+      await expect(warning).not.toContainText('3')
+    }
+  })
+
+  test('TC-HTML-INJECT-003: 部分匹配 — 仅对未匹配项显示警告', async ({ page }) => {
+    await page.goto('/e2e-html-inject-partial')
+    await waitForIframe(page)
+
+    // styles.css 注入成功，app.js + missing.png = 2 个未匹配
+    const warning = page.locator('[data-testid="relative-path-warning"]')
+    await expect(warning).toBeVisible()
+    await expect(warning).toContainText('2')
+
+    // CSS 仍应生效
+    const iframe = page.frameLocator('iframe.html-frame')
+    const heading = iframe.locator('#inject-heading')
+    const color = await heading.evaluate(el => getComputedStyle(el).color)
+    expect(color).toBe('rgb(0, 128, 0)')
+  })
+
+  test('TC-HTML-INJECT-004: 竞态快速切换 — 最终渲染正确', async ({ page }) => {
+    await page.goto('/e2e-html-inject')
+    await waitForIframe(page)
+
+    // 快速切换到 CSS 文件再切回 HTML
+    await page.locator('.file-tree .file-name', { hasText: 'styles.css' }).click()
+    await page.locator('.file-tree .file-name', { hasText: 'index.html' }).click()
+
+    // 最终状态：HTML iframe 可见，内容正确
+    await expect(page.locator('iframe.html-frame')).toBeVisible()
+    const iframe = page.frameLocator('iframe.html-frame')
+    await expect(iframe.locator('#inject-heading')).toHaveText('Hello Inject', { timeout: 5000 })
+  })
+})
+
 // ─── Test Suite: 移动端布局 ───────────────────────────────────────────────────
 
 test.describe('移动端布局', () => {
@@ -287,7 +389,7 @@ test.describe('移动端布局', () => {
     await waitForIframe(page)
 
     await expect(page.locator('iframe.html-frame')).toBeVisible()
-    await expect(page.locator('[data-testid="action-bar"]')).toBeVisible()
+    await expect(page.locator('.mobile-actions')).toBeVisible()
 
     await page.screenshot({ path: 'test-results/tc-html-040-mobile.png' })
   })

@@ -110,6 +110,8 @@
           <HtmlViewer
             v-if="isHtml"
             :content="entryStore.fileContent"
+            :sibling-files="siblingFilesContent"
+            :loading-siblings="isFetchingSiblings"
           />
 
           <!-- Markdown File -->
@@ -258,11 +260,13 @@ import { useToast } from '@/composables/useToast'
 import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import HtmlViewer from '@/components/HtmlViewer.vue'
+import type { SiblingFile } from '@/components/HtmlViewer.vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { TocHeading } from '@/types'
+import { api } from '@/api/client'
 
 const props = defineProps<{
   slug: string
@@ -277,6 +281,48 @@ const { currentEntry, activeFile } = storeToRefs(entryStore)
 // Drawer state
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
+
+// Sibling files for HTML multi-file injection
+const siblingFilesContent = ref<SiblingFile[]>([])
+const isFetchingSiblings = ref(false)
+let fetchToken = 0
+
+watch(
+  () => entryStore.activeFile,
+  async (file) => {
+    siblingFilesContent.value = []
+    if (!file || file.language !== 'html') return
+    if (!currentEntry.value) return
+
+    const siblings = currentEntry.value.files.filter(f => f.id !== file.id && !f.isBinary)
+    if (siblings.length === 0) return
+
+    isFetchingSiblings.value = true
+    const token = ++fetchToken
+    try {
+      const settled = await Promise.allSettled(
+        siblings.map(async f => ({
+          filename: f.filename,
+          language: f.language ?? '',
+          content: await api.getFileContent(currentEntry.value!.slug, f.id),
+        }))
+      )
+      if (token !== fetchToken) return
+
+      const results = settled
+        .filter((r): r is PromiseFulfilledResult<SiblingFile> => r.status === 'fulfilled')
+        .map(r => r.value)
+      const failedCount = settled.filter(r => r.status === 'rejected').length
+      if (failedCount > 0) {
+        toast.show(`${failedCount} 个资源文件加载失败，部分引用无法注入`, 'warning')
+      }
+      siblingFilesContent.value = results
+    } finally {
+      if (token === fetchToken) isFetchingSiblings.value = false
+    }
+  },
+  { immediate: true }
+)
 
 // Delete confirmation
 const showConfirmDelete = ref(false)
