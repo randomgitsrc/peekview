@@ -229,9 +229,11 @@ Delete an entry by slug.
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `PEEKVIEW_URL` | Yes | - | PeekView API base URL |
-| `PEEKVIEW_API_KEY` | Yes | - | API Key for authentication |
+| `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key（服务端内部，不暴露给客户端） |
+| `MCP_TOKEN` | Yes | - | SSE 连接认证 Token（客户端使用） |
 | `MCP_PORT` | No | 3000 | MCP Server listening port |
 | `MCP_HOST` | No | 0.0.0.0 | MCP Server bind address |
+| `MCP_CORS_ORIGINS` | No | `*` | CORS 允许来源（逗号分隔） |
 | `LOG_LEVEL` | No | info | Logging level (debug, info, warn, error) |
 
 ### 4.2 Claude Code Configuration
@@ -242,35 +244,118 @@ Delete an entry by slug.
     "peekview": {
       "url": "http://localhost:3000/sse",
       "env": {
-        "PEEKVIEW_API_KEY": "pv_your_api_key"
+        "MCP_TOKEN": "mct_your_token"
       }
     }
   }
 }
 ```
 
+**注意：** `PEEKVIEW_API_KEY` 不出现在客户端配置中，只在服务端环境变量中。
+
 ---
 
 ## 5. Security Considerations
 
-### 5.1 Authentication
+### 5.1 Authentication Model
 
-- API Key passed via environment variable (not in code)
-- MCP Server validates key on startup
-- No key = Server refuses to start with clear error message
+**SSE 模式下的认证分层：**
 
-### 5.2 Transport Security
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     认证架构                                  │
+│                                                             │
+│  ┌──────────┐         ┌──────────────────┐                 │
+│  │  Claude  │──SSE──► │  MCP Server      │                 │
+│  │  Code    │         │                  │                 │
+│  │          │         │  Layer 1: SSE    │                 │
+│  │          │         │  连接认证         │                 │
+│  │  (携带   │         │  (MCP_TOKEN)     │                 │
+│  │  MCP_    │         │                  │                 │
+│  │  TOKEN)  │         │  Layer 2: API    │──HTTP──►PeekView│
+│  │          │         │  Key 转发         │                 │
+│  └──────────┘         │  (PEEKVIEW_      │                 │
+│                       │   API_KEY)        │                 │
+│                       └──────────────────┘                 │
+│                                                             │
+│  MCP_TOKEN:     客户端 → MCP Server 的连接认证              │
+│  PEEKVIEW_API_KEY: MCP Server → PeekView API 的操作认证     │
+│                                                             │
+│  两层分离：                                                  │
+│  - MCP_TOKEN 控制"谁能连接 MCP Server"                      │
+│  - PEEKVIEW_API_KEY 控制"连接后能做什么操作"                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**为什么两层分离？**
+- MCP Server 是公网暴露的 — 需要独立的连接认证防止未授权接入
+- PeekView API Key 是内部凭证 — 只在服务端使用，不传递给客户端
+- 如果只靠 PeekView API Key，任何拿到 Key 的人都能直接调用 API（绕过 MCP Server）
+
+**Claude Code 配置（修正版）：**
+```json
+{
+  "mcpServers": {
+    "peekview": {
+      "url": "http://localhost:3000/sse",
+      "env": {
+        "MCP_TOKEN": "mct_your_token"       // ← 连接认证，不再暴露 PEEKVIEW_API_KEY
+      }
+    }
+  }
+}
+```
+
+**服务端配置：**
+```bash
+# MCP Server 启动时需要两个凭证
+export PEEKVIEW_URL=http://localhost:8080
+export PEEKVIEW_API_KEY=pv_internal_key    # ← 内部 API Key，只在服务端
+export MCP_TOKEN=mct_your_token            # ← 客户端连接凭证
+```
+
+### 5.2 SSE 连接认证流程
+
+```
+1. AI Client 连接 /sse
+   → 请求头携带: Authorization: Bearer mct_your_token
+   → 或 URL 参数: /sse?token=mct_your_token
+
+2. MCP Server 验证 MCP_TOKEN
+   → 无效/缺失 → 关闭 SSE 连接，返回 401
+
+3. 验证通过 → 建立 SSE session
+   → 所有 Tool 调用使用 PEEKVIEW_API_KEY（服务端内部）
+```
+
+### 5.3 Transport Security
 
 **Production:**
 - MCP Server behind reverse proxy (nginx/traefik)
 - TLS termination at proxy
 - Internal communication to PeekView can be HTTP (localhost)
+- CORS 配置允许 AI 客户端来源
 
 **Development:**
 - HTTP acceptable for localhost
 - Warning logged if no TLS detected
 
-### 5.3 Error Handling
+### 5.4 CORS Policy
+
+MCP Server 需配置 CORS 以允许 AI 客户端跨域连接 SSE：
+
+```typescript
+// 允许的来源（可配置）
+const corsOptions = {
+  origin: process.env.MCP_CORS_ORIGINS?.split(',') || ['*'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+```
+
+**生产环境建议：** 限制为已知 AI 客户端域名，不使用 `*`。
+
+### 5.5 Error Handling
 
 - Never expose API Key in error messages
 - Never expose internal paths or stack traces to AI Client
@@ -344,13 +429,16 @@ Machine B (MCP):       peekview-mcp serve
 
 ## 8. Out of Scope
 
-The following are intentionally excluded from Phase 2:
+The following are intentionally excluded from initial implementation:
 
 - **Resources:** Exposing entry content as MCP Resources (future)
 - **Prompts:** Pre-defined prompt templates (future)
-- **Multi-user authentication:** Per-user API keys (use PeekView's user system)
 - **WebSocket transport:** Only SSE for now
-- **stdio transport:** Phase 1 skipped, going directly to Phase 2
+- **Multi-user SSE sessions:** Initial implementation is single-session
+
+**Note on stdio transport:** stdio 模式不作为主要目标，但架构上保留扩展能力。
+MCP Server 的 Tool/Client 层与传输层解耦，未来可添加 stdio transport adapter
+而不改动业务逻辑。开发调试时可临时使用 stdio 模式。
 
 ---
 

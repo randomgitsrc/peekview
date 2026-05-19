@@ -89,10 +89,12 @@ packages/mcp-server/
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "cors": "^2.8.5",
     "express": "^4.18.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.0",
     "@types/express": "^4.17.0",
     "@types/node": "^20.0.0",
     "typescript": "^5.3.0",
@@ -217,8 +219,10 @@ export interface ListEntriesResponse {
 export interface ServerConfig {
   peekviewUrl: string;
   apiKey: string;
+  mcpToken: string;
   port: number;
   host: string;
+  corsOrigins: string[];
   logLevel: string;
 }
 
@@ -272,8 +276,10 @@ import type { ServerConfig } from './types.js';
 const configSchema = z.object({
   PEEKVIEW_URL: z.string().url().min(1),
   PEEKVIEW_API_KEY: z.string().min(1),
+  MCP_TOKEN: z.string().min(1),
   MCP_PORT: z.string().regex(/^\d+$/).default('3000'),
   MCP_HOST: z.string().default('0.0.0.0'),
+  MCP_CORS_ORIGINS: z.string().default('*'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
@@ -282,7 +288,7 @@ export function loadConfig(): ServerConfig {
   
   if (!result.success) {
     const errors = result.error.errors.map(e => `${e.path}: ${e.message}`).join('\n');
-    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL\n- PEEKVIEW_API_KEY: API key for authentication`);
+    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL\n- PEEKVIEW_API_KEY: PeekView API key (server-side only)\n- MCP_TOKEN: Client connection token`);
   }
 
   const env = result.data;
@@ -290,8 +296,10 @@ export function loadConfig(): ServerConfig {
   return {
     peekviewUrl: env.PEEKVIEW_URL.replace(/\/$/, ''),
     apiKey: env.PEEKVIEW_API_KEY,
+    mcpToken: env.MCP_TOKEN,
     port: parseInt(env.MCP_PORT, 10),
     host: env.MCP_HOST,
+    corsOrigins: env.MCP_CORS_ORIGINS.split(','),
     logLevel: env.LOG_LEVEL,
   };
 }
@@ -902,12 +910,13 @@ git commit -m "feat(mcp): implement all four MCP tools"
 - Create: `packages/mcp-server/src/index.ts`
 - Modify: `packages/mcp-server/package.json` (add bin shebang)
 
-### Step 1: Implement MCP Server with SSE
+### Step 1: Implement MCP Server with SSE and Authentication
 
 ```typescript
 /**
- * MCP Server with SSE transport
+ * MCP Server with SSE transport and connection authentication
  */
+import cors from 'cors';
 import express from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
@@ -916,7 +925,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { PeekViewClient } from './client.js';
-import type { ToolDefinition } from './types.js';
+import type { ServerConfig, ToolDefinition } from './types.js';
 
 export function createMCPServer(tools: ToolDefinition[]): Server {
   const server = new Server(
@@ -968,27 +977,65 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
   return server;
 }
 
-export function createExpressApp(server: Server): express.Application {
+// Session store for SSE connections
+const sessions = new Map<string, SSEServerTransport>();
+
+export function createExpressApp(
+  server: Server,
+  config: ServerConfig
+): express.Application {
   const app = express();
-  
+
+  // CORS — allow AI client origins
+  const corsOrigins = process.env.MCP_CORS_ORIGINS?.split(',') || ['*'];
+  app.use(cors({ origin: corsOrigins, methods: ['GET', 'POST'] }));
+
   app.use(express.json());
 
-  // Health check
+  // SSE connection authentication middleware
+  function authenticateSSE(req: express.Request, res: express.Response, next: express.NextFunction) {
+    // Token from Authorization header or query parameter
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token as string;
+
+    if (!token || token !== config.mcpToken) {
+      res.status(401).json({ error: 'Invalid or missing MCP_TOKEN' });
+      return;
+    }
+
+    next();
+  }
+
+  // Health check (no auth required)
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', version: '0.1.0' });
   });
 
-  // SSE endpoint for MCP
-  app.get('/sse', async (_req, res) => {
+  // SSE endpoint — authenticated
+  app.get('/sse', authenticateSSE, async (req, res) => {
     const transport = new SSEServerTransport('/messages', res);
+    const sessionId = transport.sessionId;
+
+    sessions.set(sessionId, transport);
+
+    // Cleanup on close
+    res.on('close', () => {
+      sessions.delete(sessionId);
+    });
+
     await server.connect(transport);
   });
 
-  // Message endpoint for MCP
-  app.post('/messages', async (req, res) => {
-    // Note: In production, need to handle session management
-    // This is simplified for single-session use
-    res.status(200).json({ status: 'received' });
+  // Message endpoint — routes to correct session
+  app.post('/messages', authenticateSSE, async (req, res) => {
+    const sessionId = req.query.sessionId as string;
+    const transport = sessions.get(sessionId);
+
+    if (!transport) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    await transport.handlePostMessage(req, res);
   });
 
   return app;
@@ -1068,27 +1115,29 @@ git commit -m "feat(mcp): implement SSE server with express"
 ### Step 1: Create Dockerfile
 
 ```dockerfile
+# Multi-stage build: build in stage 1, run in stage 2
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY tsconfig.json ./
+COPY src/ ./src/
+RUN npm run build
+
+# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci --only=production
+COPY --from=builder /app/dist/ ./dist/
 
-# Copy built application
-COPY dist/ ./dist/
-
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Run server
 CMD ["node", "dist/index.js"]
 ```
 
@@ -1100,8 +1149,10 @@ version: '3.8'
 services:
   peekview:
     image: peekview:latest
+    # Build from backend directory (run from project root)
+    # docker-compose -f packages/mcp-server/docker-compose.yml build
     build:
-      context: ../../backend
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -1116,15 +1167,17 @@ services:
   mcp-server:
     image: peekview/mcp-server:latest
     build:
-      context: .
+      context: ./packages/mcp-server
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
       - PEEKVIEW_URL=http://peekview:8080
       - PEEKVIEW_API_KEY=${PEEKVIEW_API_KEY}
+      - MCP_TOKEN=${MCP_TOKEN}
       - MCP_PORT=3000
       - MCP_HOST=0.0.0.0
+      - MCP_CORS_ORIGINS=*
       - LOG_LEVEL=info
     depends_on:
       - peekview
@@ -1133,6 +1186,9 @@ services:
 volumes:
   peekview-data:
 ```
+
+**注意：** docker-compose.yml 应放在项目根目录，而不是 `packages/mcp-server/`，
+因为需要引用 `./backend` 和 `./packages/mcp-server` 两个路径。
 
 ### Step 3: Add .dockerignore
 
@@ -1174,35 +1230,45 @@ Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgits
 ### Docker Compose (Recommended)
 
 ```bash
-# 1. Set your API key
-export PEEKVIEW_API_KEY=$(peekview apikey create "MCP Server" -j | jq -r '.key')
+# 1. Generate tokens on your PeekView server
+# On the server running PeekView:
+peekview apikey create "MCP Server"     # → gives PEEKVIEW_API_KEY
+# Generate MCP_TOKEN (any secure string):
+export MCP_TOKEN=$(openssl rand -hex 16)
 
-# 2. Start services
+# 2. Configure in .env file
+echo "PEEKVIEW_API_KEY=pv_your_key" > .env
+echo "MCP_TOKEN=$MCP_TOKEN" >> .env
+
+# 3. Start services (from project root)
 docker-compose up -d
 
-# 3. Configure Claude Code
+# 4. Configure Claude Code (on your local machine)
 # Add to ~/.claude/settings.json:
 {
   "mcpServers": {
     "peekview": {
-      "url": "http://localhost:3000/sse",
+      "url": "http://your-server:3000/sse",
       "env": {
-        "PEEKVIEW_API_KEY": "your-api-key"
+        "MCP_TOKEN": "the_mcp_token_you_generated"
       }
     }
   }
 }
 ```
 
-### NPM
+### NPM (standalone)
 
 ```bash
 # Install
 npm install -g @peekview/mcp-server
 
+# Configure (all three required)
+export PEEKVIEW_URL=http://localhost:8080      # PeekView server URL
+export PEEKVIEW_API_KEY=pv_your_api_key        # Get from: peekview apikey create "MCP"
+export MCP_TOKEN=mct_your_connection_token     # Any secure string you choose
+
 # Run
-export PEEKVIEW_URL=http://localhost:8080
-export PEEKVIEW_API_KEY=pv_your_key
 peekview-mcp
 ```
 
@@ -1210,10 +1276,18 @@ peekview-mcp
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PEEKVIEW_URL` | Yes | - | PeekView API URL |
-| `PEEKVIEW_API_KEY` | Yes | - | API Key |
+| `PEEKVIEW_URL` | Yes | - | PeekView API URL (server-side only) |
+| `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key (server-side only, never exposed to clients) |
+| `MCP_TOKEN` | Yes | - | Connection token for AI clients to authenticate |
 | `MCP_PORT` | No | 3000 | Server port |
 | `MCP_HOST` | No | 0.0.0.0 | Bind address |
+| `MCP_CORS_ORIGINS` | No | `*` | CORS origins (comma-separated) |
+
+## Security
+
+- **Two-layer authentication**: MCP_TOKEN for connections, PEEKVIEW_API_KEY for API operations
+- **PEEKVIEW_API_KEY never leaves the server**: clients only use MCP_TOKEN
+- **CORS configurable**: restrict origins in production
 
 ## Tools
 
