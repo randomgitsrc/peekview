@@ -88,10 +88,11 @@ packages/mcp-server/
   "author": "PeekView Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "1.4.0",
     "cors": "^2.8.5",
     "express": "^4.18.0",
     "uuid": "^9.0.0",
+    "pino": "^8.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
@@ -277,10 +278,10 @@ import type { ServerConfig } from './types.js';
 
 const configSchema = z.object({
   PEEKVIEW_URL: z.string().url().min(1),
-  PEEKVIEW_PUBLIC_URL: z.string().url().min(1),  // ← 新增
+  PEEKVIEW_PUBLIC_URL: z.string().url().min(1),
   PEEKVIEW_API_KEY: z.string().min(1),
   MCP_TOKEN: z.string().min(1),
-  MCP_PORT: z.string().regex(/^\d+$/).default('3000'),
+  MCP_PORT: z.coerce.number().int().positive().default(3000),  // ← coerce instead of manual parseInt
   MCP_HOST: z.string().default('0.0.0.0'),
   MCP_CORS_ORIGINS: z.string().default('*'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
@@ -298,10 +299,10 @@ export function loadConfig(): ServerConfig {
   
   return {
     peekviewUrl: env.PEEKVIEW_URL.replace(/\/$/, ''),
-    publicUrl: env.PEEKVIEW_PUBLIC_URL.replace(/\/$/, ''),  // ← 新增
+    publicUrl: env.PEEKVIEW_PUBLIC_URL.replace(/\/$/, ''),
     apiKey: env.PEEKVIEW_API_KEY,
     mcpToken: env.MCP_TOKEN,
-    port: parseInt(env.MCP_PORT, 10),
+    port: env.MCP_PORT,  // ← 已经是 number 类型（z.coerce.number）
     host: env.MCP_HOST,
     corsOrigins: env.MCP_CORS_ORIGINS.split(','),
     logLevel: env.LOG_LEVEL,
@@ -453,6 +454,12 @@ export class PeekViewClient {
         return undefined as T;
       }
 
+      // Validate content-type before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error(`Expected JSON response, got ${contentType}`);
+      }
+
       return response.json() as Promise<T>;
     } finally {
       clearTimeout(timeout);
@@ -490,6 +497,17 @@ export class PeekViewClient {
     await this.request<void>(`/api/v1/entries/${slug}`, {
       method: 'DELETE',
     });
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.request<EntryResponse>('/api/v1/entries?page=1&per_page=1', {
+        method: 'GET',
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 ```
@@ -786,7 +804,7 @@ const schema = z.object({
   query: z.string().optional(),
   tags: z.array(z.string()).optional(),
   page: z.number().int().positive().optional(),
-  per_page: z.number().int().positive().max(100).optional(),
+  per_page: z.number().int().positive().max(100).default(20),
 });
 
 export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
@@ -946,7 +964,8 @@ git commit -m "feat(mcp): implement all four MCP tools"
 import cors from 'cors';
 import express from 'express';
 import { randomUUID } from 'crypto';
-import { validate as validateUUID } from 'uuid';  // ← 新增：UUID 验证
+import { validate as validateUUID } from 'uuid';
+import pino from 'pino';  // ← 新增：结构化日志
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
@@ -1013,15 +1032,29 @@ const sessions = new Map<string, SSEServerTransport>();
 
 export function createExpressApp(
   server: Server,
-  config: ServerConfig
+  config: ServerConfig,
+  client: PeekViewClient  // ← 新增：用于 health check 依赖探测
 ): express.Application {
   const app = express();
+
+  // Initialize structured logging
+  const logger = pino({
+    level: config.logLevel,
+    transport: process.env.NODE_ENV === 'development' 
+      ? { target: 'pino-pretty' }
+      : undefined,
+  });
 
   // CORS — allow AI client origins
   const corsOrigins = process.env.MCP_CORS_ORIGINS?.split(',') || ['*'];
   app.use(cors({ origin: corsOrigins, methods: ['GET', 'POST'] }));
-
   app.use(express.json());
+  
+  // Request logging
+  app.use((req, res, next) => {
+    logger.info({ method: req.method, path: req.path }, 'request');
+    next();
+  });
 
   // SSE connection authentication middleware
   function authenticateSSE(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -1042,8 +1075,20 @@ export function createExpressApp(
     next();
   }
 
-  // Health check (no auth required)
-  app.get('/health', (_req, res) => {
+  // Health check with dependency probing
+  app.get('/health', async (_req, res) => {
+    // Check PeekView API availability
+    const isPeekViewHealthy = await client.ping();
+    
+    if (!isPeekViewHealthy) {
+      res.status(503).json({ 
+        status: 'degraded', 
+        version: '0.1.0',
+        peekview: 'unreachable'
+      });
+      return;
+    }
+    
     res.json({ status: 'ok', version: '0.1.0' });
   });
 
@@ -1115,7 +1160,7 @@ async function main() {
   
   // Create and start server
   const mcpServer = createMCPServer(tools);
-  const app = createExpressApp(mcpServer, config);  // ← 修复：补上 config 参数
+  const app = createExpressApp(mcpServer, config, client);  // ← 传入 client
   
   app.listen(config.port, config.host, () => {
     console.log(`✓ MCP Server ready at http://${config.host}:${config.port}`);
@@ -1177,7 +1222,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 COPY --from=builder /app/dist/ ./dist/
 
 EXPOSE 3000
