@@ -1456,6 +1456,239 @@ git commit -m "docs(mcp): add usage documentation"
 
 ---
 
+## Task 8: Additional Tests
+
+**Files:**
+- Create: `packages/mcp-server/tests/server.test.ts`
+- Create: `packages/mcp-server/tests/tools.test.ts`
+- Modify: `packages/mcp-server/tests/client.test.ts` (add ping tests)
+
+### Step 1: Server Tests
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import request from 'supertest';
+import { createMCPServer, createExpressApp } from '../src/server.js';
+import { PeekViewClient } from '../src/client.js';
+import type { ServerConfig } from '../src/types.js';
+import { createTools } from '../src/tools/index.js';
+
+const testConfig: ServerConfig = {
+  peekviewUrl: 'http://localhost:8080',
+  publicUrl: 'http://localhost:8080',
+  apiKey: 'pv_test_key',
+  mcpToken: 'mct_test_token',
+  port: 3000,
+  host: '0.0.0.0',
+  corsOrigins: ['*'],
+  logLevel: 'info',
+};
+
+describe('SSE Server', () => {
+  let app: any;
+  let client: PeekViewClient;
+
+  beforeAll(() => {
+    client = new PeekViewClient(testConfig);
+    const tools = createTools(client, testConfig);
+    const server = createMCPServer(tools);
+    app = createExpressApp(server, testConfig, client);
+  });
+
+  it('should reject /sse without token', async () => {
+    const res = await request(app)
+      .get('/sse')
+      .expect(401);
+    expect(res.body.error).toContain('MCP_TOKEN');
+  });
+
+  it('should reject /sse with invalid token', async () => {
+    const res = await request(app)
+      .get('/sse')
+      .set('Authorization', 'Bearer invalid_token')
+      .expect(401);
+    expect(res.body.error).toContain('Invalid');
+  });
+
+  it('should return 200 for /health', async () => {
+    const res = await request(app)
+      .get('/health')
+      .expect(200);
+    expect(res.body.status).toBe('ok');
+  });
+
+  it('should reject /messages with invalid sessionId format', async () => {
+    const res = await request(app)
+      .post('/messages?sessionId=invalid')
+      .set('Authorization', 'Bearer mct_test_token')
+      .expect(400);
+    expect(res.body.error).toContain('Invalid sessionId');
+  });
+
+  it('should return 404 for unknown sessionId', async () => {
+    const res = await request(app)
+      .post('/messages?sessionId=12345678-1234-1234-1234-123456789abc')
+      .set('Authorization', 'Bearer mct_test_token')
+      .expect(404);
+    expect(res.body.error).toContain('Session not found');
+  });
+});
+```
+
+### Step 2: Tools Tests
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { PeekViewClient } from '../src/client.js';
+import { createEntryTool } from '../src/tools/createEntry.js';
+import { deleteEntryTool } from '../src/tools/deleteEntry.js';
+import type { ServerConfig } from '../src/types.js';
+
+const mockServer = setupServer();
+
+beforeAll(() => mockServer.listen());
+afterEach(() => mockServer.resetHandlers());
+afterAll(() => mockServer.close());
+
+const testConfig: ServerConfig = {
+  peekviewUrl: 'http://localhost:8080',
+  publicUrl: 'https://peek.example.com',  // 用于验证返回的是 publicUrl
+  apiKey: 'pv_test_key',
+  mcpToken: 'mct_test',
+  port: 3000,
+  host: '0.0.0.0',
+  corsOrigins: ['*'],
+  logLevel: 'info',
+};
+
+const client = new PeekViewClient(testConfig);
+
+describe('Tools', () => {
+  describe('create_entry', () => {
+    it('should return publicUrl in response', async () => {
+      mockServer.use(
+        http.post('http://localhost:8080/api/v1/entries', async () => {
+          return HttpResponse.json({
+            id: 1,
+            slug: 'test-entry',
+            summary: 'Test',
+            tags: [],
+            files: [],
+            created_at: new Date().toISOString(),
+            expires_at: null,
+            is_public: true,
+          });
+        })
+      );
+
+      const tool = createEntryTool(client, testConfig);
+      const result = await tool.handler({
+        summary: 'Test',
+        files: [{ filename: 'test.txt', content: 'Hello' }],
+      });
+
+      // 验证返回的是 publicUrl，不是 peekviewUrl
+      expect(result.content[0].text).toContain('https://peek.example.com/test-entry');
+    });
+  });
+
+  describe('delete_entry', () => {
+    it('should require confirm before deleting', async () => {
+      const tool = deleteEntryTool(client);
+      const result = await tool.handler({
+        slug: 'test-entry',
+        // confirm: false (not provided)
+      });
+
+      // 应该返回确认提示，不是删除成功
+      expect(result.content[0].text).toContain('About to delete');
+      expect(result.content[0].text).toContain('confirm: true');
+      expect(result.isError).toBeUndefined();
+    });
+
+    it('should delete when confirmed', async () => {
+      mockServer.use(
+        http.delete('http://localhost:8080/api/v1/entries/test-entry', () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const tool = deleteEntryTool(client);
+      const result = await tool.handler({
+        slug: 'test-entry',
+        confirm: true,
+      });
+
+      expect(result.content[0].text).toContain('deleted successfully');
+    });
+  });
+
+  describe('list_entries', () => {
+    it('should format tags as comma-separated', async () => {
+      let capturedUrl = '';
+      mockServer.use(
+        http.get('http://localhost:8080/api/v1/entries', ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            items: [],
+            total: 0,
+            page: 1,
+            per_page: 20,
+          });
+        })
+      );
+
+      // 调用 client.listEntries 验证 tags 格式
+      await client.listEntries(1, 20, undefined, ['foo', 'bar']);
+
+      // 验证 URL 包含 ?tags=foo,bar
+      expect(capturedUrl).toContain('tags=foo%2Cbar');
+    });
+  });
+});
+```
+
+### Step 3: Add ping() tests to client.test.ts
+
+Add to existing `client.test.ts`:
+
+```typescript
+  describe('ping()', () => {
+    it('should return true when PeekView is healthy', async () => {
+      mockServer.use(
+        http.get('http://localhost:8080/health', () => {
+          return HttpResponse.json({ status: 'ok' });
+        })
+      );
+
+      const result = await client.ping();
+      expect(result).toBe(true);
+    });
+
+    it('should return false when PeekView is unreachable', async () => {
+      mockServer.use(
+        http.get('http://localhost:8080/health', () => {
+          return new HttpResponse(null, { status: 503 });
+        })
+      );
+
+      const result = await client.ping();
+      expect(result).toBe(false);
+    });
+  });
+```
+
+### Step 4: Commit
+
+```bash
+git add tests/
+git commit -m "test(mcp): add server and tools integration tests"
+```
+
+---
+
 ## Task 9: Final Verification
 
 ### Step 1: Build and Test
