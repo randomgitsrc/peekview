@@ -325,6 +325,11 @@ describe('Config', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Set required env vars for each test
+    process.env.PEEKVIEW_URL = 'http://localhost:8080';
+    process.env.PEEKVIEW_PUBLIC_URL = 'http://localhost:8080';
+    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
+    process.env.MCP_TOKEN = 'mct_test_token';
   });
 
   afterEach(() => {
@@ -332,42 +337,55 @@ describe('Config', () => {
   });
 
   it('should load valid config', () => {
-    process.env.PEEKVIEW_URL = 'http://localhost:8080';
-    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
-    
     const config = loadConfig();
     
     expect(config.peekviewUrl).toBe('http://localhost:8080');
+    expect(config.publicUrl).toBe('http://localhost:8080');
     expect(config.apiKey).toBe('pv_test_key');
+    expect(config.mcpToken).toBe('mct_test_token');
     expect(config.port).toBe(3000);
     expect(config.host).toBe('0.0.0.0');
   });
 
-  it('should remove trailing slash from URL', () => {
+  it('should remove trailing slash from PEEKVIEW_URL', () => {
     process.env.PEEKVIEW_URL = 'http://localhost:8080/';
-    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
     
     const config = loadConfig();
     expect(config.peekviewUrl).toBe('http://localhost:8080');
   });
 
+  it('should remove trailing slash from PEEKVIEW_PUBLIC_URL', () => {
+    process.env.PEEKVIEW_PUBLIC_URL = 'https://peek.example.com/';
+    
+    const config = loadConfig();
+    expect(config.publicUrl).toBe('https://peek.example.com');
+  });
+
   it('should throw on missing PEEKVIEW_URL', () => {
     delete process.env.PEEKVIEW_URL;
-    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
     
     expect(() => loadConfig()).toThrow('PEEKVIEW_URL');
   });
 
+  it('should throw on missing PEEKVIEW_PUBLIC_URL', () => {
+    delete process.env.PEEKVIEW_PUBLIC_URL;
+    
+    expect(() => loadConfig()).toThrow('PEEKVIEW_PUBLIC_URL');
+  });
+
   it('should throw on missing PEEKVIEW_API_KEY', () => {
-    process.env.PEEKVIEW_URL = 'http://localhost:8080';
     delete process.env.PEEKVIEW_API_KEY;
     
     expect(() => loadConfig()).toThrow('PEEKVIEW_API_KEY');
   });
 
+  it('should throw on missing MCP_TOKEN', () => {
+    delete process.env.MCP_TOKEN;
+    
+    expect(() => loadConfig()).toThrow('MCP_TOKEN');
+  });
+
   it('should use custom port', () => {
-    process.env.PEEKVIEW_URL = 'http://localhost:8080';
-    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
     process.env.MCP_PORT = '4000';
     
     const config = loadConfig();
@@ -381,7 +399,7 @@ describe('Config', () => {
 ```bash
 npm install
 npm run test
-# Expected: 5 tests pass
+# Expected: 8 tests pass
 ```
 
 ### Step 4: Commit
@@ -500,11 +518,15 @@ export class PeekViewClient {
   }
 
   async ping(): Promise<boolean> {
+    // Use /health endpoint for lightweight probe (no auth required)
     try {
-      await this.request<EntryResponse>('/api/v1/entries?page=1&per_page=1', {
-        method: 'GET',
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`${this.baseUrl}/health`, { 
+        signal: controller.signal 
       });
-      return true;
+      clearTimeout(timeout);
+      return res.ok;
     } catch {
       return false;
     }
@@ -929,10 +951,10 @@ import { deleteEntryTool } from './deleteEntry.js';
 
 export function createTools(client: PeekViewClient, config: ServerConfig): ToolDefinition[] {
   return [
-    createEntryTool(client, config),  // ← 传入 config
-    getEntryTool(client),
-    listEntriesTool(client),
-    deleteEntryTool(client),
+    createEntryTool(client, config),  // ← 需要 config.publicUrl
+    getEntryTool(client),             // 不需要 config
+    listEntriesTool(client),          // 不需要 config
+    deleteEntryTool(client),          // 不需要 config
   ];
 }
 
@@ -949,6 +971,16 @@ git commit -m "feat(mcp): implement all four MCP tools"
 ---
 
 ## Task 6: SSE Server Implementation
+
+**Prerequisite:** Verify SDK API before implementation
+
+```bash
+cd packages/mcp-server
+npm install
+node -e "const m = require('@modelcontextprotocol/sdk/server/sse.js'); console.log(m.SSEServerTransport.toString().split('\n')[0])"
+# Expected output should show constructor signature
+# If different from (endpoint, res), update code accordingly
+```
 
 **Files:**
 - Create: `packages/mcp-server/src/server.ts`
@@ -1094,11 +1126,10 @@ export function createExpressApp(
 
   // SSE endpoint — authenticated
   app.get('/sse', authenticateSSE, async (req, res) => {
-    const transport = new SSEServerTransport('/messages', res);
-    
-    // 自生成 sessionId（兼容不同 SDK 版本）
-    // 若 SDK 暴露 sessionId 可直接用，否则用 crypto.randomUUID
-    const sessionId = (transport as any).sessionId || randomUUID();
+    // 先生成 sessionId，再构造 transport，把 sessionId 注入 endpoint
+    // SDK 会自动通过 endpoint event 把 /messages?sessionId=<uuid> 推给客户端
+    const sessionId = randomUUID();
+    const transport = new SSEServerTransport(`/messages?sessionId=${sessionId}`, res);
 
     sessions.set(sessionId, transport);
 
@@ -1202,7 +1233,7 @@ git commit -m "feat(mcp): implement SSE server with express"
 
 **Files:**
 - Create: `packages/mcp-server/Dockerfile`
-- Create: `packages/mcp-server/docker-compose.yml`
+- Create: `docker-compose.yml`（项目根目录）
 
 ### Step 1: Create Dockerfile
 
@@ -1278,9 +1309,6 @@ services:
 volumes:
   peekview-data:
 ```
-
-**注意：** docker-compose.yml 应放在项目根目录，而不是 `packages/mcp-server/`，
-因为需要引用 `./backend` 和 `./packages/mcp-server` 两个路径。
 
 ### Step 3: Add .dockerignore
 
@@ -1428,7 +1456,9 @@ peekview serve
 
 # Terminal 2: Start MCP Server
 export PEEKVIEW_URL=http://localhost:8080
+export PEEKVIEW_PUBLIC_URL=http://localhost:8080   # 本地开发时同地址
 export PEEKVIEW_API_KEY=$(peekview apikey create "MCP" -j | jq -r '.key')
+export MCP_TOKEN=$(openssl rand -hex 32)
 npm start
 
 # Terminal 3: Test endpoints
@@ -1455,6 +1485,7 @@ git commit -m "feat(mcp): complete MCP server with SSE transport (Phase 2)"
 - [ ] Configuration via environment variables
 - [ ] Error handling with isError flag
 - [ ] README with setup instructions
+- [ ] create_entry 返回的 URL 是 PEEKVIEW_PUBLIC_URL 而非内网地址
 
 ---
 
