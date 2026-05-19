@@ -228,7 +228,8 @@ Delete an entry by slug.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PEEKVIEW_URL` | Yes | - | PeekView API base URL |
+| `PEEKVIEW_URL` | Yes | - | PeekView API base URL（服务端内部使用，如 `http://peekview:8080`） |
+| `PEEKVIEW_PUBLIC_URL` | Yes | - | PeekView 对外 URL（返回给用户，如 `https://peek.example.com`） |
 | `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key（服务端内部，不暴露给客户端） |
 | `MCP_TOKEN` | Yes | - | SSE 连接认证 Token（客户端使用） |
 | `MCP_PORT` | No | 3000 | MCP Server listening port |

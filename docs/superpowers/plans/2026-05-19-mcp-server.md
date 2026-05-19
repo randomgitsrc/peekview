@@ -220,6 +220,7 @@ export interface ServerConfig {
   peekviewUrl: string;
   apiKey: string;
   mcpToken: string;
+  publicUrl: string;  // ← 新增：返回给用户的可访问 URL
   port: number;
   host: string;
   corsOrigins: string[];
@@ -275,6 +276,7 @@ import type { ServerConfig } from './types.js';
 
 const configSchema = z.object({
   PEEKVIEW_URL: z.string().url().min(1),
+  PEEKVIEW_PUBLIC_URL: z.string().url().min(1),  // ← 新增
   PEEKVIEW_API_KEY: z.string().min(1),
   MCP_TOKEN: z.string().min(1),
   MCP_PORT: z.string().regex(/^\d+$/).default('3000'),
@@ -288,13 +290,14 @@ export function loadConfig(): ServerConfig {
   
   if (!result.success) {
     const errors = result.error.errors.map(e => `${e.path}: ${e.message}`).join('\n');
-    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL\n- PEEKVIEW_API_KEY: PeekView API key (server-side only)\n- MCP_TOKEN: Client connection token`);
+    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL (internal)\n- PEEKVIEW_PUBLIC_URL: PeekView public URL (for user-facing links)\n- PEEKVIEW_API_KEY: PeekView API key (server-side only)\n- MCP_TOKEN: Client connection token`);
   }
 
   const env = result.data;
   
   return {
     peekviewUrl: env.PEEKVIEW_URL.replace(/\/$/, ''),
+    publicUrl: env.PEEKVIEW_PUBLIC_URL.replace(/\/$/, ''),  // ← 新增
     apiKey: env.PEEKVIEW_API_KEY,
     mcpToken: env.MCP_TOKEN,
     port: parseInt(env.MCP_PORT, 10),
@@ -632,7 +635,7 @@ const schema = z.object({
   expires_in: z.string().optional(),
 });
 
-export const createEntryTool = (client: PeekViewClient): ToolDefinition => ({
+export const createEntryTool = (client: PeekViewClient, config: ServerConfig): ToolDefinition => ({
   name: 'create_entry',
   description: `Create a new PeekView entry with files. Returns the entry URL.
 
@@ -675,7 +678,8 @@ Examples:
         expires_in: params.expires_in,
       });
 
-      const baseUrl = process.env.PEEKVIEW_URL?.replace(/\/$/, '') || 'http://localhost:8080';
+      // 使用 publicUrl 返回给用户（修复 Docker 内网 URL 问题）
+      const baseUrl = config.publicUrl;
       
       return {
         content: [{
@@ -876,15 +880,15 @@ export const deleteEntryTool = (client: PeekViewClient): ToolDefinition => ({
 
 ```typescript
 import type { PeekViewClient } from '../client.js';
-import type { ToolDefinition } from '../types.js';
+import type { ServerConfig, ToolDefinition } from '../types.js';
 import { createEntryTool } from './createEntry.js';
 import { getEntryTool } from './getEntry.js';
 import { listEntriesTool } from './listEntries.js';
 import { deleteEntryTool } from './deleteEntry.js';
 
-export function createTools(client: PeekViewClient): ToolDefinition[] {
+export function createTools(client: PeekViewClient, config: ServerConfig): ToolDefinition[] {
   return [
-    createEntryTool(client),
+    createEntryTool(client, config),  // ← 传入 config
     getEntryTool(client),
     listEntriesTool(client),
     deleteEntryTool(client),
@@ -918,6 +922,7 @@ git commit -m "feat(mcp): implement all four MCP tools"
  */
 import cors from 'cors';
 import express from 'express';
+import { randomUUID } from 'crypto';  // ← 新增：用于自生成 sessionId
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
@@ -1013,7 +1018,10 @@ export function createExpressApp(
   // SSE endpoint — authenticated
   app.get('/sse', authenticateSSE, async (req, res) => {
     const transport = new SSEServerTransport('/messages', res);
-    const sessionId = transport.sessionId;
+    
+    // 自生成 sessionId（兼容不同 SDK 版本）
+    // 若 SDK 暴露 sessionId 可直接用，否则用 crypto.randomUUID
+    const sessionId = (transport as any).sessionId || randomUUID();
 
     sessions.set(sessionId, transport);
 
@@ -1064,11 +1072,11 @@ async function main() {
   
   // Initialize client and tools
   const client = new PeekViewClient(config);
-  const tools = createTools(client);
+  const tools = createTools(client, config);  // ← 传入 config
   
   // Create and start server
   const mcpServer = createMCPServer(tools);
-  const app = createExpressApp(mcpServer);
+  const app = createExpressApp(mcpServer, config);  // ← 修复：补上 config 参数
   
   app.listen(config.port, config.host, () => {
     console.log(`✓ MCP Server ready at http://${config.host}:${config.port}`);
