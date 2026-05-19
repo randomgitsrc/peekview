@@ -91,6 +91,7 @@ packages/mcp-server/
     "@modelcontextprotocol/sdk": "^1.0.0",
     "cors": "^2.8.5",
     "express": "^4.18.0",
+    "uuid": "^9.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
@@ -430,23 +431,32 @@ export class PeekViewClient {
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+    // 30s timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `PeekView API error ${response.status}: ${errorText || response.statusText}`
-      );
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `PeekView API error ${response.status}: ${errorText || response.statusText}`
+        );
+      }
+
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      return response.json() as Promise<T>;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    return response.json() as Promise<T>;
   }
 
   async createEntry(request: CreateEntryRequest): Promise<EntryResponse> {
@@ -841,21 +851,34 @@ import type { ToolDefinition, ToolResult } from '../types.js';
 
 const schema = z.object({
   slug: z.string().min(1),
+  confirm: z.boolean().optional(),
 });
 
 export const deleteEntryTool = (client: PeekViewClient): ToolDefinition => ({
   name: 'delete_entry',
-  description: 'Delete a PeekView entry by slug. This action cannot be undone.',
+  description: 'Delete a PeekView entry by slug. This action cannot be undone. Requires confirmation.',
   inputSchema: {
     type: 'object',
     properties: {
       slug: { type: 'string', description: 'Entry slug to delete' },
+      confirm: { type: 'boolean', description: 'Set to true to confirm deletion' },
     },
     required: ['slug'],
   },
   handler: async (args: unknown): Promise<ToolResult> => {
     try {
-      const { slug } = schema.parse(args);
+      const { slug, confirm } = schema.parse(args);
+      
+      // Require explicit confirmation to prevent accidental deletion
+      if (!confirm) {
+        return {
+          content: [{
+            type: 'text',
+            text: `⚠️ About to delete entry "${slug}". This action cannot be undone.\n\nTo confirm, call delete_entry with {"slug": "${slug}", "confirm": true}`,
+          }],
+        };
+      }
+      
       await client.deleteEntry(slug);
       return {
         content: [{
@@ -922,7 +945,8 @@ git commit -m "feat(mcp): implement all four MCP tools"
  */
 import cors from 'cors';
 import express from 'express';
-import { randomUUID } from 'crypto';  // ← 新增：用于自生成 sessionId
+import { randomUUID } from 'crypto';
+import { validate as validateUUID } from 'uuid';  // ← 新增：UUID 验证
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
@@ -1001,8 +1025,14 @@ export function createExpressApp(
 
   // SSE connection authentication middleware
   function authenticateSSE(req: express.Request, res: express.Response, next: express.NextFunction) {
-    // Token from Authorization header or query parameter
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token as string;
+    // Token from Authorization header only (production)
+    // Query param allowed only in development (prevents token leakage to logs)
+    const authHeader = req.headers.authorization?.replace('Bearer ', '');
+    const queryToken = req.query.token as string;
+    
+    const token = process.env.NODE_ENV === 'production'
+      ? authHeader
+      : (authHeader || queryToken);
 
     if (!token || token !== config.mcpToken) {
       res.status(401).json({ error: 'Invalid or missing MCP_TOKEN' });
@@ -1038,6 +1068,13 @@ export function createExpressApp(
   // Message endpoint — routes to correct session
   app.post('/messages', authenticateSSE, async (req, res) => {
     const sessionId = req.query.sessionId as string;
+    
+    // Validate sessionId format to prevent pollution attacks
+    if (!sessionId || !validateUUID(sessionId)) {
+      res.status(400).json({ error: 'Invalid sessionId format' });
+      return;
+    }
+    
     const transport = sessions.get(sessionId);
 
     if (!transport) {
@@ -1297,7 +1334,14 @@ peekview-mcp
 
 - **Two-layer authentication**: MCP_TOKEN for connections, PEEKVIEW_API_KEY for API operations
 - **PEEKVIEW_API_KEY never leaves the server**: clients only use MCP_TOKEN
-- **CORS configurable**: restrict origins in production
+- **CORS configurable**: restrict origins in production — never use `*` in production
+  ```bash
+  # Development
+  MCP_CORS_ORIGINS=*
+  
+  # Production (restrict to known AI clients)
+  MCP_CORS_ORIGINS=https://claude.ai,https://cursor.sh
+  ```
 
 ## Tools
 
