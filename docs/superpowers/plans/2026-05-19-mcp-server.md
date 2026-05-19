@@ -136,7 +136,21 @@ packages/mcp-server/
 }
 ```
 
-### Step 3: Create .gitignore
+### Step 3: Create vitest.config.ts
+
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['tests/**/*.test.ts'],
+  },
+});
+```
+
+### Step 4: Create .gitignore
 
 ```gitignore
 node_modules/
@@ -150,7 +164,7 @@ coverage/
 *.tsbuildinfo
 ```
 
-### Step 4: Commit
+### Step 5: Commit
 
 ```bash
 cd packages/mcp-server
@@ -847,8 +861,8 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
     try {
       const params = schema.parse(args);
       const result = await client.listEntries(
-        params.page,
-        params.per_page,
+        params.page ?? 1,        // ← 默认值防止 undefined
+        params.per_page ?? 20,   // ← 默认值防止 undefined
         params.query,
         params.tags
       );
@@ -1386,10 +1400,11 @@ docker-compose up -d
 # Install
 npm install -g @peekview/mcp-server
 
-# Configure (all three required)
-export PEEKVIEW_URL=http://localhost:8080      # PeekView server URL
-export PEEKVIEW_API_KEY=pv_your_api_key        # Get from: peekview apikey create "MCP"
-export MCP_TOKEN=mct_your_connection_token     # Any secure string you choose
+# Configure (all four required)
+export PEEKVIEW_URL=http://localhost:8080         # PeekView server URL (internal)
+export PEEKVIEW_PUBLIC_URL=http://localhost:8080  # Public URL shown to users
+export PEEKVIEW_API_KEY=pv_your_api_key           # Get from: peekview apikey create "MCP"
+export MCP_TOKEN=mct_your_connection_token        # Any secure string you choose
 
 # Run
 peekview-mcp
@@ -1400,6 +1415,7 @@ peekview-mcp
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `PEEKVIEW_URL` | Yes | - | PeekView API URL (server-side only) |
+| `PEEKVIEW_PUBLIC_URL` | Yes | - | Public URL for user-facing links (e.g. https://peek.example.com) |
 | `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key (server-side only, never exposed to clients) |
 | `MCP_TOKEN` | Yes | - | Connection token for AI clients (`openssl rand -hex 32`) |
 | `MCP_PORT` | No | 3000 | Server port |
