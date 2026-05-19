@@ -99,6 +99,7 @@ packages/mcp-server/
     "@types/cors": "^2.8.0",
     "@types/express": "^4.17.0",
     "@types/node": "^20.0.0",
+    "pino-pretty": "^10.0.0",
     "typescript": "^5.3.0",
     "vitest": "^1.0.0",
     "msw": "^2.0.0",
@@ -185,7 +186,7 @@ export interface CreateEntryRequest {
   files: EntryFile[];
   tags?: string[];
   expires_in?: string;
-  visibility?: 'public' | 'private';
+  is_public?: boolean;  // ← 改为与后端 API 一致（backend 用 is_public: bool）
 }
 
 // Entry file in response
@@ -506,7 +507,8 @@ export class PeekViewClient {
     params.append('per_page', perPage.toString());
     if (query) params.append('q', query);
     if (tags?.length) {
-      tags.forEach((tag) => params.append('tag', tag));
+      params.append('tags', tags.join(','));  // ← 后端期望逗号分隔：?tags=foo,bar
+    }
     }
     return this.request<ListEntriesResponse>(`/api/v1/entries?${params}`);
   }
@@ -681,7 +683,7 @@ const schema = z.object({
   })).min(1),
   slug: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  visibility: z.enum(['public', 'private']).optional(),
+  is_public: z.boolean().optional(),  // ← 改为与后端 API 一致（is_public: bool）
   expires_in: z.string().optional(),
 });
 
@@ -691,7 +693,7 @@ export const createEntryTool = (client: PeekViewClient, config: ServerConfig): T
 
 Examples:
 - Create a code snippet: {"summary": "Fix for bug #123", "files": [{"filename": "fix.py", "content": "..."}]}
-- Create private entry: {"summary": "Internal notes", "files": [...], "visibility": "private"}
+- Create private entry: {"summary": "Internal notes", "files": [...], "is_public": false}
 - With expiration: {"summary": "Temp report", "files": [...], "expires_in": "7d"}`,
   inputSchema: {
     type: 'object',
@@ -711,7 +713,7 @@ Examples:
       },
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
-      visibility: { type: 'string', enum: ['public', 'private'] },
+      is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h")' },
     },
     required: ['summary', 'files'],
@@ -724,7 +726,7 @@ Examples:
         files: params.files,
         slug: params.slug,
         tags: params.tags,
-        visibility: params.visibility,
+        is_public: params.is_public,  // ← 改为 is_public
         expires_in: params.expires_in,
       });
 
@@ -1273,7 +1275,7 @@ services:
   peekview:
     image: peekview:latest
     # Build from backend directory (run from project root)
-    # docker-compose -f packages/mcp-server/docker-compose.yml build
+    # docker-compose up -d
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -1296,6 +1298,7 @@ services:
       - "3000:3000"
     environment:
       - PEEKVIEW_URL=http://peekview:8080
+      - PEEKVIEW_PUBLIC_URL=${PEEKVIEW_PUBLIC_URL}   # ← 必填：对外 URL
       - PEEKVIEW_API_KEY=${PEEKVIEW_API_KEY}
       - MCP_TOKEN=${MCP_TOKEN}
       - MCP_PORT=3000
