@@ -983,6 +983,8 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
 }
 
 // Session store for SSE connections
+// ⚠️ TD-MCP-01: 单进程内存结构，跨进程不共享，无法水平扩展
+//    当前单机部署无问题，未来如需多实例部署需改用 Redis 等共享存储
 const sessions = new Map<string, SSEServerTransport>();
 
 export function createExpressApp(
@@ -1242,7 +1244,7 @@ Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgits
 # On the server running PeekView:
 peekview apikey create "MCP Server"     # → gives PEEKVIEW_API_KEY
 # Generate MCP_TOKEN (any secure string):
-export MCP_TOKEN=$(openssl rand -hex 16)
+export MCP_TOKEN=$(openssl rand -hex 32)  # or: pwgen -s 32 1
 
 # 2. Configure in .env file
 echo "PEEKVIEW_API_KEY=pv_your_key" > .env
@@ -1286,7 +1288,7 @@ peekview-mcp
 |----------|----------|---------|-------------|
 | `PEEKVIEW_URL` | Yes | - | PeekView API URL (server-side only) |
 | `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key (server-side only, never exposed to clients) |
-| `MCP_TOKEN` | Yes | - | Connection token for AI clients to authenticate |
+| `MCP_TOKEN` | Yes | - | Connection token for AI clients (`openssl rand -hex 32`) |
 | `MCP_PORT` | No | 3000 | Server port |
 | `MCP_HOST` | No | 0.0.0.0 | Bind address |
 | `MCP_CORS_ORIGINS` | No | `*` | CORS origins (comma-separated) |
