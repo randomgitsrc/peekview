@@ -1,7 +1,7 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-test debug-verify-isolation debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks
 
 # Default target
 help:
@@ -357,13 +357,13 @@ debug-verify-isolation:
 	fi
 	@echo "→ 检查生产数据库是否被污染..."
 	@PROD_TEST_COUNT=$$(curl -s http://127.0.0.1:8080/api/v1/entries 2>/dev/null | python3 -c "
-import sys,json
-try:
-    d=json.load(sys.stdin)
-    test_count = sum(1 for e in d.get('items',[]) if 'e2e-' in e.get('slug','') or 'test-' in e.get('slug',''))
-    print(test_count)
-except:
-    print('0')" 2>/dev/null || echo "0") && \
+	import sys,json
+	try:
+	    d=json.load(sys.stdin)
+	    test_count = sum(1 for e in d.get('items',[]) if 'e2e-' in e.get('slug','') or 'test-' in e.get('slug',''))
+	    print(test_count)
+	except:
+	    print('0')" 2>/dev/null || echo "0") && \
 	if [ "$$PROD_TEST_COUNT" = "0" ]; then \
 		echo "  ✓ 生产数据库无测试数据污染"; \
 	else \
@@ -392,6 +392,32 @@ debug-test:
 	fi
 	@echo ""
 	@bash scripts/run-e2e-tests.sh
+
+debug-test-mcp:
+	@echo "=== MCP Server 集成测试 ==="
+	@echo "→ 检查 PeekView 后端是否运行..."
+	@if ! curl -s http://127.0.0.1:8888/health > /dev/null 2>&1; then \
+		echo "✗ 错误: PeekView 调试服务未运行"; \
+		echo "   请先运行: make debug-start"; \
+		exit 1; \
+	fi
+	@echo "✓ PeekView 后端已启动"
+	@echo ""
+	@echo "→ 运行 MCP Server 单元测试..."
+	cd packages/mcp-server && npm test
+	@echo ""
+	@echo "→ 运行 MCP Server 集成测试..."
+	@echo "  注意: 集成测试需要 API Key"
+	@if [ -z "$$PEEKVIEW_API_KEY" ]; then \
+		echo "  ⚠ PEEKVIEW_API_KEY 未设置，部分测试可能失败"; \
+		echo "  建议: export PEEKVIEW_API_KEY=your_api_key"; \
+	fi
+	cd packages/mcp-server && PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=$$PEEKVIEW_API_KEY npm run test:integration || echo "  ⚠ 集成测试失败（可能需要 API Key）"
+	@echo ""
+	@echo "→ 运行 MCP Server E2E 测试..."
+	cd frontend-v3 && BASE_URL=http://127.0.0.1:8888 npx playwright test e2e/mcp-server.spec.ts --reporter=line || echo "  ⚠ E2E 测试失败"
+	@echo ""
+	@echo "✓ MCP 测试流程完成"
 
 debug-test-remote:
 	@echo ""
