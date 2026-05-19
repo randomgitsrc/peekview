@@ -5,7 +5,7 @@ import cors from 'cors';
 import express from 'express';
 import { randomUUID } from 'crypto';
 import { validate as validateUUID } from 'uuid';
-import pino from 'pino';
+import { pino } from 'pino';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
@@ -13,7 +13,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { PeekViewClient } from './client.js';
-import type { ServerConfig, ToolDefinition } from './types.js';
+import type { ServerConfig, ToolDefinition, ToolResult } from './types.js';
 
 export function createMCPServer(tools: ToolDefinition[]): Server {
   const server = new Server(
@@ -46,11 +46,12 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
       return {
         content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }],
         isError: true,
-      };
+      } as any;
     }
 
     try {
-      return await tool.handler(request.params.arguments);
+      const result = await tool.handler(request.params.arguments);
+      return result as any;
     } catch (error) {
       return {
         content: [{
@@ -58,7 +59,7 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
           text: `Tool execution error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         }],
         isError: true,
-      };
+      } as any;
     }
   });
 
