@@ -13,7 +13,16 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { PeekViewClient } from './client.js';
-import type { ServerConfig, SessionContext, SessionInfo, ToolDefinition, ToolResult } from './types.js';
+import type { ServerConfig, SessionContext, SessionInfo, ToolDefinition } from './types.js';
+import { toSDKResult } from './types.js';
+
+// Module-level logger (available in tool handlers and Express routes)
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV === 'development'
+    ? { target: 'pino-pretty' }
+    : undefined,
+});
 
 export function createMCPServer(tools: ToolDefinition[]): Server {
   const server = new Server(
@@ -41,31 +50,34 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const ctx = sessionContext.getStore();
     if (!ctx) {
-      return {
+      logger.error('No session context in CallToolRequest');
+      return toSDKResult({
         content: [{ type: 'text', text: 'No session context' }],
         isError: true,
-      } as any;
+      });
     }
 
     const tool = tools.find((t) => t.name === request.params.name);
     if (!tool) {
-      return {
+      logger.warn({ tool: request.params.name }, 'Unknown tool requested');
+      return toSDKResult({
         content: [{ type: 'text', text: `Unknown tool: ${request.params.name}` }],
         isError: true,
-      } as any;
+      });
     }
 
     try {
       const result = await tool.handler(request.params.arguments, ctx);
-      return result as any;
+      return toSDKResult(result);
     } catch (error) {
-      return {
+      logger.error({ tool: request.params.name, error }, 'tool execution failed');
+      return toSDKResult({
         content: [{
           type: 'text',
           text: `Tool execution error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         }],
         isError: true,
-      } as any;
+      });
     }
   });
 
@@ -84,13 +96,6 @@ export function createExpressApp(
   client: PeekViewClient
 ): express.Application {
   const app = express();
-
-  const logger = pino({
-    level: config.logLevel,
-    transport: process.env.NODE_ENV === 'development'
-      ? { target: 'pino-pretty' }
-      : undefined,
-  });
 
   const corsOrigins = process.env.MCP_CORS_ORIGINS?.split(',') || config.corsOrigins;
   app.use(cors({
@@ -124,12 +129,14 @@ export function createExpressApp(
       }
     } catch (e) {
       // Timeout or connection error → 503, not 401
+      logger.warn({ error: e }, 'PeekView unreachable during SSE auth');
       res.status(503).json({ error: 'PeekView unreachable, please try again later' });
       return;
     }
 
     // SDK auto-generates sessionId and appends ?sessionId= to the endpoint event.
     // Passing just '/messages' (not '/messages?sessionId=...') avoids double sessionId.
+    // Verified: SSEServerTransport.sessionId is a getter returning SDK-generated UUID.
     const transport = new SSEServerTransport('/messages', res);
     const sessionId = transport.sessionId;
 

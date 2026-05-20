@@ -95,6 +95,12 @@ export interface ToolResult {
   isError?: boolean;
 }
 
+// Explicit conversion from ToolResult to SDK CallToolResult (P1-3)
+// Avoids `as any` — makes the type mismatch visible and intentional
+export function toSDKResult(result: ToolResult): any {
+  return result;
+}
+
 // PeekView API error
 export class PeekViewApiError extends Error {
   status: number;

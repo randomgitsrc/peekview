@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { validate as validateUUID } from 'uuid';
 import request from 'supertest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createMCPServer, createExpressApp } from '../src/server.js';
 import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
@@ -40,6 +42,18 @@ describe('SSE Server', () => {
       corsOrigins: ['*'],
       logLevel: 'info',
     }, client);
+  });
+
+  describe('SDK transport.sessionId verification', () => {
+    it('SSEServerTransport exposes sessionId as UUID', () => {
+      // P0-1 verification: SDK source confirmed sessionId is a getter
+      // returning a randomUUID(). This test proves it exists at runtime.
+      const mockRes = { writeHead: () => {}, write: () => {}, on: () => {}, end: () => {} } as any;
+      const transport = new SSEServerTransport('/messages', mockRes);
+      expect(transport.sessionId).toBeDefined();
+      expect(typeof transport.sessionId).toBe('string');
+      expect(validateUUID(transport.sessionId)).toBe(true);
+    });
   });
 
   describe('Authentication - pv_ prefix check', () => {
@@ -101,15 +115,29 @@ describe('SSE Server', () => {
       };
     });
 
-    it('should accept valid pv_ token for SSE connection', async () => {
-      // SSE is long-lived, supertest can't fully handle it.
-      // We verify the token passes prefix check + validation by checking
-      // that the response does NOT return 401 immediately.
-      // Since SSE hangs open, we just test that invalid tokens are rejected
-      // and valid tokens get through the auth gate.
-      // This is implicitly tested by the server starting without error
-      // and other SSE tests passing auth checks.
-      expect(true).toBe(true); // Auth gate verified by rejection tests above
+    it('should call validateToken for valid pv_ token', async () => {
+      let capturedToken: string | undefined;
+      client.validateToken = async (token: string) => {
+        capturedToken = token;
+        return token === VALID_TOKEN ? { id: 1, username: 'alice' } : null;
+      };
+
+      // SSE is long-lived so we can't wait for full response,
+      // but we can verify validateToken was called with the right token
+      request(app)
+        .get('/sse')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .end(() => {});
+
+      // Give async validation time to execute
+      await new Promise(r => setTimeout(r, 50));
+      expect(capturedToken).toBe(VALID_TOKEN);
+
+      // Restore
+      client.validateToken = async (token: string) => {
+        if (token === VALID_TOKEN) return { id: 1, username: 'alice' };
+        return null;
+      };
     });
   });
 
@@ -160,8 +188,6 @@ describe('SSE Server', () => {
         })
       );
 
-      // This tests the tool handler's error translation, not the SSE auth
-      // We verify through the tools module directly
       const tools = createTools(client, 'http://localhost:8080');
       const createEntry = tools.find(t => t.name === 'create_entry');
       const result = await createEntry!.handler(

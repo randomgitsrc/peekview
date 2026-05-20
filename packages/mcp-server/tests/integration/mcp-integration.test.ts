@@ -232,6 +232,62 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
 
   // Multi-user isolation
   describe('Multi-user isolation', () => {
+    // Bob's API key for cross-user testing
+    const BOB_API_KEY = process.env.PEEKVIEW_API_KEY_BOB || 'pv_RNsaFaHyOHzbydy4qCeF2eHWUkVTuHtY';
+    const bobContext: SessionContext = {
+      userToken: BOB_API_KEY,
+      userId: 0,
+      username: '',
+    };
+
+    beforeAll(async () => {
+      // Validate Bob's key and populate bobContext
+      const bobInfo = await client.validateToken(BOB_API_KEY);
+      if (bobInfo) {
+        bobContext.userId = bobInfo.id;
+        bobContext.username = bobInfo.username;
+      }
+    });
+
+    itIfReady('should not see Alice\'s private entry when listing as Bob', async () => {
+      // Alice creates a private entry
+      const slug = `mcp-alice-private-${Date.now()}`;
+      await tools.create_entry.handler({
+        slug,
+        summary: 'Alice Private Entry',
+        files: [{ filename: 'secret.txt', content: 'alice secret' }],
+        is_public: false,
+      }, testContext);
+      createdSlugs.push(slug);
+
+      // Bob lists entries — should NOT see Alice's private entry
+      const result = await tools.list_entries.handler({}, bobContext);
+      const text = result.content[0].text;
+      if (text.includes('Found')) {
+        expect(text).not.toContain('Alice Private Entry');
+        expect(text).not.toContain(slug);
+      }
+    });
+
+    itIfReady('should return error when Bob tries to delete Alice\'s entry', async () => {
+      // Alice creates a public entry
+      const slug = `mcp-alice-public-${Date.now()}`;
+      await tools.create_entry.handler({
+        slug,
+        summary: 'Alice Public Entry',
+        files: [{ filename: 'pub.txt', content: 'alice public' }],
+        is_public: true,
+      }, testContext);
+      createdSlugs.push(slug);
+
+      // Bob tries to delete Alice's entry
+      // PeekView returns 404 (Bob can't see it via visibility filter) or 403 (not owner)
+      const result = await tools.delete_entry.handler({ slug, confirm: true }, bobContext);
+      expect(result.isError).toBe(true);
+      // Either 403 (权限不足) or 404 (entry not found from Bob's perspective)
+      expect(result.content[0].text).toMatch(/权限不足|操作失败|not found|not exist/i);
+    });
+
     itIfReady('should note behavior with invalid API key (PeekView may allow anonymous creation)', async () => {
       const badContext: SessionContext = {
         userToken: 'pv_invalid_key_that_does_not_exist',
