@@ -1,7 +1,7 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks
 
 # Default target
 help:
@@ -378,6 +378,11 @@ debug-stop:
 	@echo "→ 清理调试数据..."
 	@rm -rf /tmp/peekview-debug 2>/dev/null || true
 	@echo "✓ 调试数据已清理"
+
+debug-restart:
+	@bash scripts/dev-server.sh restart
+	@echo "→ 等待服务稳定..."
+	@sleep 2
 
 debug-test:
 	@echo "=== E2E 测试安全启动 ==="
