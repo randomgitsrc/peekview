@@ -67,11 +67,12 @@ LOG_LEVEL=info
 ### 认证流程
 
 **SSE 连接（GET /sse）：**
-1. 客户端发送 `Authorization: Bearer pv_xxx`
-2. MCP Server 调用 PeekView `/api/v1/auth/me` 验证 token（5s 超时）
-3. 验证通过 → 建立 SSE session，存入 token + userId + username
-4. 验证失败 → 401 拒绝连接
-5. 不再支持 query parameter 传 token（防止泄露到日志）
+1. 从 Authorization header 提取 token
+2. **前缀检查**：token 必须以 `pv_` 开头，否则 401（"只支持 PeekView API Key，不支持 JWT token"）
+3. MCP Server 调用 PeekView `/api/v1/auth/me` 验证 token（5s 超时）
+4. 验证通过 → 建立 SSE session，存入 token + userId + username
+5. 验证失败 → 401 拒绝连接
+6. 不再支持 query parameter 传 token（防止泄露到日志）
 
 **POST /messages：**
 1. 取 sessionId → validateUUID → 无效则 400
@@ -149,7 +150,7 @@ const sessions = new Map<string, SessionInfo>();
 
 **设计决策：** 每次 SSE 连接都调用 `/auth/me` 验证 token，不做缓存。理由：同一 token 在短时间内建立多个 session（如重连）是低频操作，缓存收益不大，且 API Key 可在 PeekView 侧随时撤销。
 
-**AsyncLocalStorage 行为：** `sessionContext.run(ctx, () => transport.handlePostMessage(req, res))` 在 SSE POST 处理链路中有效。Node.js AsyncLocalStorage 在同一异步请求上下文中传播。需在测试中验证 POST → tool handler 能正确读到 sessionContext（如果 SDK 内部有 setImmediate 等脱离当前上下文的调用，context 可能丢失）。
+**AsyncLocalStorage 行为：** `AsyncLocalStorage` 在 Promise 和 setImmediate 中均可正确传播（Node 17+ 保证行为），测试中验证端到端链路即可，无需特殊规避。
 
 ### PeekView Client 变更
 
@@ -164,23 +165,35 @@ class PeekViewClient {
     return fetch(`${this.peekviewUrl}${path}`, { ...options, headers });
   }
 
-  // SSE 连接时验证 token（5s 超时）
+  // SSE 连接时验证 token（使用 AbortController 模式，与 request() 一致）
   async validateToken(token: string): Promise<{ id: number; username: string } | null> {
-    const res = await fetch(`${this.peekviewUrl}/api/v1/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const user = await res.json();
-    return { id: user.id, username: user.username };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(`${this.peekviewUrl}/api/v1/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      const user = await res.json();
+      return { id: user.id, username: user.username };
+    } catch {
+      clearTimeout(timeout);
+      return null;
+    }
   }
 
-  // health check 不需要 auth
+  // health check 不需要 auth（3s 超时）
   async ping(): Promise<boolean> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
     try {
-      const res = await fetch(`${this.peekviewUrl}/health`);
+      const res = await fetch(`${this.peekviewUrl}/health`, { signal: controller.signal });
+      clearTimeout(timeout);
       return res.ok;
     } catch {
+      clearTimeout(timeout);
       return false;
     }
   }
@@ -234,7 +247,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 **多 session：** 同一用户多个 Claude Code 实例会建立多个 SSE session，共享同一个 API Key。功能正常，但注意：一个实例撤销 key 后，另一个也会失效。
 
-**Token 中途失效：** 用户 API Key 被撤销/过期/用户被禁用时，已有的 SSE session 不会主动断开，但后续所有 tool 调用都会收到 401 错误。用户看到重复的"认证失败"信息。不做主动 session 关闭（复杂度高、收益低）。
+**Token 中途失效：** 用户 API Key 被撤销/过期/用户被禁用时，已有的 SSE session 不会主动断开，但后续所有 tool 调用都会收到 401 错误。用户看到"认证失败：API Key 无效或已过期，请检查配置"。后端不区分过期和无效，统一提示。不做主动 session 关闭（复杂度高、收益低）。
 
 ### 错误处理
 
@@ -267,6 +280,7 @@ app.use(cors({
   origin: corsOrigins,
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization', 'Content-Type'],
+  // 如 SDK 升级后 CORS 被拒，优先检查 allowedHeaders 是否覆盖新 header
 }));
 ```
 
@@ -304,7 +318,7 @@ claude mcp add peekview --transport sse https://peek.example.com:33333/sse \
 用户乙通过 Claude Code 创建条目 → 条目 owner = 乙
 用户甲 list_entries → 看到公开 + 甲的私有条目
 用户乙 list_entries → 看到公开 + 乙的私有条目
-甲的 key 过期 → SSE 连接保持，但所有 tool 调用返回"认证失败：API Key 已过期"
+甲的 key 过期 → SSE 连接保持，但所有 tool 调用返回"认证失败：API Key 无效或已过期，请检查配置"（后端不区分过期和无效，统一提示）
 ```
 
 ## 不支持的场景
@@ -326,6 +340,7 @@ claude mcp add peekview --transport sse https://peek.example.com:33333/sse \
 5. 更新 Docker Compose `.env` 文件（移除 MCP_TOKEN 和 PEEKVIEW_API_KEY）
 6. README 顶部加 migration notice
 7. 重新构建 MCP Server（新版本不兼容旧配置）
+8. 验证迁移成功：`curl https://peek.example.com:33333/health` → `{"status":"ok"}`，然后配置 Claude Code 并用 `/mcp` 命令确认工具可用
 
 不支持过渡期（新旧配置完全不兼容，无法同时运行）。
 
