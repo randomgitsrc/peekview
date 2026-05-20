@@ -21,12 +21,14 @@
 ┌──────────────────────────────────────────┐
 │          MCP Server (远程)               │
 │                                          │
-│  1. 从 Authorization header 提取 token   │
-│  2. 原样透传给 PeekView API             │
-│  3. 不做认证、不做用户判断               │
+│  1. SSE 连接时验证 token（调 PeekView） │
+│  2. 验证通过 → 建立 SSE session          │
+│  3. token + userId 存入 session          │
+│  4. tool handler 通过 AsyncLocalStorage │
+│     获取当前 session 的 token            │
+│  5. 调用 PeekView 时透传 token          │
 │                                          │
-│  连接级验证：token 非空即可建立 SSE      │
-│  业务级验证：交给 PeekView               │
+│  验证失败 → 401 拒绝连接                │
 └──────────────────────────────────────────┘
                     │
                     ▼
@@ -58,49 +60,145 @@ PEEKVIEW_URL=http://peekview:8080          # PeekView 内部地址
 PEEKVIEW_PUBLIC_URL=https://peek.example.com # 用户可见地址
 MCP_PORT=33333
 MCP_HOST=0.0.0.0
+MCP_CORS_ORIGINS=*
+LOG_LEVEL=info
 ```
 
-### 认证流程变更
+### 认证流程
 
 **SSE 连接（GET /sse）：**
 1. 客户端发送 `Authorization: Bearer pv_xxx`
-2. MCP Server 提取 token，存入 session
-3. 允许连接（token 非空即可，具体验证由 PeekView 在业务调用时完成）
+2. MCP Server 调用 PeekView `/api/v1/auth/me` 验证 token
+3. 验证通过 → 建立 SSE session，存入 token + userId
+4. 验证失败 → 401 拒绝连接
+5. 不再支持 query parameter 传 token（防止泄露到日志）
 
-**业务调用（POST /messages → tool handler）：**
-1. 从 session 中取出 token
-2. 调用 PeekView API 时带上 `Authorization: Bearer pv_xxx`
-3. PeekView 验证 token，返回用户身份和权限
-4. 如果 token 无效，返回错误信息给客户端
+**POST /messages：**
+- Claude Code 的 SSE 客户端不会在 POST 请求上发送 Authorization header
+- 认证通过 sessionId 查找 session 中的 token（不再用 authenticateSSE middleware）
+- POST handler 查找 session → 取出 token → 通过 AsyncLocalStorage 传递给 SDK handler
+
+**业务调用（tool handler）：**
+1. AsyncLocalStorage 提供当前请求的 token
+2. tool handler 从 AsyncLocalStorage 获取 token
+3. 调用 PeekView API 时带上 `Authorization: Bearer pv_xxx`
+4. 如果 PeekView 返回 401，返回结构化错误信息给客户端
 
 **Health check（GET /health）：**
-- 不带用户 token，使用 PeekView 的 `/api/v1/health` 或简单的 HTTP 连通性检查
+- 不带用户 token，直接 HTTP 连通性检查（不经过 PeekViewClient）
+
+### Token 传递机制（AsyncLocalStorage）
+
+SDK 的 `Server` 实例是所有 session 共享的，`CallToolRequestSchema` handler 只收到 JSON-RPC request，没有 session 上下文。用 `AsyncLocalStorage` 解决：
+
+```typescript
+import { AsyncLocalStorage } from 'async_hooks';
+
+const sessionContext = new AsyncLocalStorage<SessionContext>();
+
+interface SessionContext {
+  userToken: string;   // pv_xxx API Key
+  userId: number;      // PeekView 用户 ID
+  username: string;    // PeekView 用户名
+}
+```
+
+**Express middleware → SDK handler 链路：**
+
+```typescript
+// POST /messages handler
+app.post('/messages', async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  const sessionInfo = sessions.get(sessionId);
+  if (!sessionInfo) return res.status(404).json({ error: 'Session not found' });
+
+  // 在 AsyncLocalStorage 上下文中调用 SDK handler
+  sessionContext.run(
+    { userToken: sessionInfo.userToken, userId: sessionInfo.userId, username: sessionInfo.username },
+    () => transport.handlePostMessage(req, res)
+  );
+});
+
+// CallToolRequestSchema handler 中读取
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const ctx = sessionContext.getStore();
+  // ctx.userToken → 传给 PeekViewClient
+});
+```
 
 ### Session 存储
 
 ```typescript
-// session 存储结构变更
 interface SessionInfo {
   transport: SSEServerTransport;
-  userToken: string;  // 客户端传来的 pv_ API Key
+  userToken: string;    // 客户端传来的 pv_ API Key
+  userId: number;       // 从 PeekView /auth/me 获取
+  username: string;     // 从 PeekView /auth/me 获取
 }
 
 const sessions = new Map<string, SessionInfo>();
 ```
 
+**安全说明：** userToken 以明文存储在内存中，这是透传设计的固有特性。风险可控：
+- MCP Server 与 PeekView 在同一信任边界（同一 Docker 网络 / 同一主机）
+- SSE 断开时 session 自动清理
+- 绝不在日志中输出 token 值
+
 ### PeekView Client 变更
 
 ```typescript
-// 调用 PeekView API 时使用用户的 token
 class PeekViewClient {
-  async request(path: string, options: RequestInit, userToken?: string) {
-    const headers = {
-      ...options.headers,
+  // 不再持有全局 apiKey，每次请求传入 userToken
+  async request(path: string, options: RequestInit, userToken: string) {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${userToken}`,
     };
     return fetch(`${this.peekviewUrl}${path}`, { ...options, headers });
   }
+
+  // SSE 连接时验证 token
+  async validateToken(token: string): Promise<{ id: number; username: string } | null> {
+    const res = await fetch(`${this.peekviewUrl}/api/v1/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const user = await res.json();
+    return { id: user.id, username: user.username };
+  }
+
+  // health check 不需要 auth
+  async ping(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.peekviewUrl}/health`);
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
 }
+```
+
+### Tool handler 变更
+
+```typescript
+// handler 签名变更：接收 context
+interface ToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: object;
+  handler: (args: unknown, context: SessionContext) => Promise<ToolResult>;
+}
+
+// CallToolRequestSchema handler
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const ctx = sessionContext.getStore();  // 从 AsyncLocalStorage 获取
+  if (!ctx) {
+    return { content: [{ type: 'text', text: 'No session context' }], isError: true };
+  }
+  const tool = tools.find(t => t.name === request.params.name);
+  return tool.handler(request.params.arguments, ctx);
+});
 ```
 
 ### 工具行为
@@ -112,14 +210,44 @@ class PeekViewClient {
 | list_entries | 同 get_entry | 同上 |
 | delete_entry | 只能删自己的条目 | PeekView 已有 owner 权限检查 |
 
+**管理员用户：** 如果 admin 用户通过 MCP 连接，PeekView 会赋予管理员权限（可看所有私有条目、可删任何条目）。这是 PeekView 已有的行为，MCP 不做额外限制。
+
+**多 session：** 同一用户多个 Claude Code 实例会建立多个 SSE session，共享同一个 API Key。功能正常，但注意：一个实例撤销 key 后，另一个也会失效。
+
+**Token 中途失效：** 用户 API Key 被撤销/过期/用户被禁用时，已有的 SSE session 不会主动断开，但后续所有 tool 调用都会收到 401 错误。用户看到重复的"认证失败"信息。不做主动 session 关闭（复杂度高、收益低）。
+
 ### 错误处理
 
-| 场景 | PeekView 返回 | MCP Server 返回给客户端 |
-|------|---------------|------------------------|
-| API Key 无效 | 401 | tool result isError: true, "认证失败：API Key 无效" |
-| API Key 过期 | 401 | tool result isError: true, "认证失败：API Key 已过期" |
-| 用户被禁用 | 401 | tool result isError: true, "认证失败：用户已被禁用" |
-| 权限不足 | 403 | tool result isError: true, "权限不足" |
+PeekView 返回的 JSON error body 包含具体错误码，MCP Server 需解析并翻译：
+
+| PeekView 返回 | error.code | MCP 返回给客户端 |
+|---------------|------------|-----------------|
+| 401 | `INVALID_API_KEY` | "认证失败：API Key 无效" |
+| 401 | `EXPIRED_API_KEY` | "认证失败：API Key 已过期" |
+| 401 | `USER_DISABLED` | "认证失败：用户已被禁用" |
+| 403 | - | "权限不足" |
+
+PeekViewClient 应抛出结构化错误（不是泛 Error），便于 tool handler 映射：
+
+```typescript
+class PeekViewApiError extends Error {
+  constructor(public status: number, public code: string, public message: string) {
+    super(message);
+  }
+}
+```
+
+### CORS 配置
+
+`Authorization` header 必须在 CORS 中显式允许：
+
+```typescript
+app.use(cors({
+  origin: corsOrigins,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+}));
+```
 
 ## 用户使用流程
 
@@ -153,20 +281,28 @@ claude mcp add peekview --transport sse https://peek.example.com/mcp \
 用户乙通过 Claude Code 创建条目 → 条目 owner = 乙
 用户甲 list_entries → 看到公开 + 甲的私有条目
 用户乙 list_entries → 看到公开 + 乙的私有条目
+甲的 key 过期 → SSE 连接保持，但所有 tool 调用返回"认证失败：API Key 已过期"
 ```
 
 ## 不支持的场景
 
 - JWT token（`eyJ` 前缀）：不支持，7 天过期不适合 MCP 配置
-- 无 token 连接：SSE 建立阶段拒绝，返回 401
+- 无 token 连接：SSE 建立阶段验证 token，无效直接 401
 - 服务级全局 API Key（`PEEKVIEW_SERVER__API_KEY`）：不通过 MCP 使用
+- query parameter 传 token：完全移除，防止 token 泄露到日志
 
 ## 兼容性说明
 
-现有 `MCP_TOKEN` + `PEEKVIEW_API_KEY` 配置方式将移除。升级后：
-- 删除 `MCP_TOKEN` 和 `PEEKVIEW_API_KEY` 环境变量
-- 每个用户用各自的 `pv_` API Key 配置 Claude Code
-- Docker Compose `.env` 文件需要更新
+**破坏性变更**，需要协调更新：
+
+迁移清单：
+1. 删除 `MCP_TOKEN` 和 `PEEKVIEW_API_KEY` 环境变量
+2. 每个用户在 PeekView 上创建各自的 API Key
+3. 更新 Claude Code MCP 配置（从 `MCP_TOKEN` 改为 `pv_` API Key）
+4. 更新 Docker Compose `.env` 文件（移除 MCP_TOKEN 和 PEEKVIEW_API_KEY）
+5. 重新构建 MCP Server（新版本不兼容旧配置）
+
+不支持过渡期（新旧配置完全不兼容，无法同时运行）。
 
 ## Docker Compose 变更
 
@@ -179,6 +315,23 @@ mcp-server:
     # 移除: MCP_TOKEN
     - MCP_PORT=33333
     - MCP_HOST=0.0.0.0
+    - MCP_CORS_ORIGINS=https://claude.ai,https://cursor.sh
 ```
 
-用户各自在 Claude Code 配置自己的 API Key。
+## 需更新的文件清单
+
+| 文件 | 变更 |
+|------|------|
+| `src/server.ts` | 认证流程重写：AsyncLocalStorage、session 结构、SSE 验证、POST handler |
+| `src/client.ts` | 移除 apiKey，新增 validateToken()，request() 传入 userToken |
+| `src/config.ts` | 移除 MCP_TOKEN 和 PEEKVIEW_API_KEY |
+| `src/types.ts` | SessionContext、SessionInfo、ToolDefinition.handler 签名变更 |
+| `src/tools.ts` | 所有 handler 接收 SessionContext，透传给 PeekViewClient |
+| `src/index.ts` | 启动流程变更（不再需要 apiKey/mcpToken） |
+| `tests/server.test.ts` | 新认证流程测试 |
+| `tests/client.test.ts` | request() 签名变更、validateToken() 测试 |
+| `tests/config.test.ts` | 移除 MCP_TOKEN/API_KEY 测试 |
+| `tests/tools.test.ts` | handler 签名变更测试 |
+| `docker-compose.yml` | 移除 PEEKVIEW_API_KEY、MCP_TOKEN |
+| `README.md` | 更新配置说明、使用流程 |
+| `Dockerfile` | 无变更 |
