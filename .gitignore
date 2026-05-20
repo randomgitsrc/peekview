@@ -45,6 +45,7 @@ htmlcov/
 test-results/
 screenshot*.png
 connect_cdp.py
+.env.test.local
 
 # Node.js (if accidentally committed from frontend)
 node_modules/

@@ -84,7 +84,7 @@ export interface ToolDefinition {
   handler: ToolHandler;
 }
 
-// Tool result
+// Tool result — compatible with SDK CallToolResult
 export interface ToolResult {
   content: Array<{
     type: 'text' | 'image' | 'resource';
@@ -95,10 +95,12 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-// Explicit conversion from ToolResult to SDK CallToolResult (P1-3)
-// Avoids `as any` — makes the type mismatch visible and intentional
-export function toSDKResult(result: ToolResult): any {
-  return result;
+// Explicit conversion from ToolResult to SDK CallToolResult
+// Makes type mismatch intentional and catchable on SDK upgrades
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
+export function toSDKResult(result: ToolResult): CallToolResult {
+  return result as CallToolResult;
 }
 
 // PeekView API error

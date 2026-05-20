@@ -232,16 +232,21 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
 
   // Multi-user isolation
   describe('Multi-user isolation', () => {
-    // Bob's API key for cross-user testing
-    const BOB_API_KEY = process.env.PEEKVIEW_API_KEY_BOB || 'pv_RNsaFaHyOHzbydy4qCeF2eHWUkVTuHtY';
+    // Bob's API key for cross-user testing (must be set via PEEKVIEW_API_KEY_BOB env)
+    const BOB_API_KEY = process.env.PEEKVIEW_API_KEY_BOB;
+    const bobReady = backendAvailable && PEEKVIEW_API_KEY && BOB_API_KEY;
+
     const bobContext: SessionContext = {
-      userToken: BOB_API_KEY,
+      userToken: BOB_API_KEY || '',
       userId: 0,
       username: '',
     };
 
     beforeAll(async () => {
-      // Validate Bob's key and populate bobContext
+      if (!BOB_API_KEY) {
+        console.warn('PEEKVIEW_API_KEY_BOB not set, skipping multi-user isolation tests');
+        return;
+      }
       const bobInfo = await client.validateToken(BOB_API_KEY);
       if (bobInfo) {
         bobContext.userId = bobInfo.id;
@@ -249,8 +254,17 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
       }
     });
 
-    itIfReady('should not see Alice\'s private entry when listing as Bob', async () => {
-      // Alice creates a private entry
+    const itIfBothReady = (name: string, fn: () => Promise<void>) => {
+      it(name, async () => {
+        if (!bobReady || !bobContext.userId) {
+          console.warn(`Skipping "${name}" - both users' API keys required`);
+          return;
+        }
+        await fn();
+      });
+    };
+
+    itIfBothReady('should not see Alice\'s private entry when listing as Bob', async () => {
       const slug = `mcp-alice-private-${Date.now()}`;
       await tools.create_entry.handler({
         slug,
@@ -260,7 +274,6 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
       }, testContext);
       createdSlugs.push(slug);
 
-      // Bob lists entries — should NOT see Alice's private entry
       const result = await tools.list_entries.handler({}, bobContext);
       const text = result.content[0].text;
       if (text.includes('Found')) {
@@ -269,8 +282,7 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
       }
     });
 
-    itIfReady('should return error when Bob tries to delete Alice\'s entry', async () => {
-      // Alice creates a public entry
+    itIfBothReady('should return error when Bob tries to delete Alice\'s entry', async () => {
       const slug = `mcp-alice-public-${Date.now()}`;
       await tools.create_entry.handler({
         slug,
@@ -280,11 +292,8 @@ describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
       }, testContext);
       createdSlugs.push(slug);
 
-      // Bob tries to delete Alice's entry
-      // PeekView returns 404 (Bob can't see it via visibility filter) or 403 (not owner)
       const result = await tools.delete_entry.handler({ slug, confirm: true }, bobContext);
       expect(result.isError).toBe(true);
-      // Either 403 (权限不足) or 404 (entry not found from Bob's perspective)
       expect(result.content[0].text).toMatch(/权限不足|操作失败|not found|not exist/i);
     });
 

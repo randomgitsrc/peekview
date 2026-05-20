@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { AsyncLocalStorage } from 'async_hooks';
 import { validate as validateUUID } from 'uuid';
 import request from 'supertest';
 import { http, HttpResponse } from 'msw';
@@ -7,6 +8,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createMCPServer, createExpressApp } from '../src/server.js';
 import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
+import type { SessionContext } from '../src/types.js';
 
 const mockServer = setupServer();
 
@@ -216,6 +218,56 @@ describe('SSE Server', () => {
       );
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('权限不足');
+    });
+  });
+
+  describe('Multi-user session isolation (mock)', () => {
+    it('should maintain separate AsyncLocalStorage contexts for concurrent sessions', async () => {
+      // This test runs in CI without real PeekView — validates core isolation mechanism
+      const sessionContext = new AsyncLocalStorage<SessionContext>();
+
+      const aliceCtx: SessionContext = { userToken: 'pv_alice', userId: 1, username: 'alice' };
+      const bobCtx: SessionContext = { userToken: 'pv_bob', userId: 2, username: 'bob' };
+
+      let aliceCaptured: string | undefined;
+      let bobCaptured: string | undefined;
+
+      await Promise.all([
+        sessionContext.run(aliceCtx, async () => {
+          await new Promise(r => setTimeout(r, 10));
+          aliceCaptured = sessionContext.getStore()?.userToken;
+        }),
+        sessionContext.run(bobCtx, async () => {
+          await new Promise(r => setTimeout(r, 5));
+          bobCaptured = sessionContext.getStore()?.userToken;
+        }),
+      ]);
+
+      expect(aliceCaptured).toBe('pv_alice');
+      expect(bobCaptured).toBe('pv_bob');
+    });
+
+    it('should not leak context between sequential sessions', async () => {
+      const sessionContext = new AsyncLocalStorage<SessionContext>();
+
+      const aliceCtx: SessionContext = { userToken: 'pv_alice', userId: 1, username: 'alice' };
+      const bobCtx: SessionContext = { userToken: 'pv_bob', userId: 2, username: 'bob' };
+
+      // Alice's session
+      sessionContext.run(aliceCtx, () => {
+        expect(sessionContext.getStore()?.userToken).toBe('pv_alice');
+      });
+
+      // After Alice's session ends, no context should remain
+      expect(sessionContext.getStore()).toBeUndefined();
+
+      // Bob's session
+      sessionContext.run(bobCtx, () => {
+        expect(sessionContext.getStore()?.userToken).toBe('pv_bob');
+      });
+
+      // After Bob's session ends, no context should remain
+      expect(sessionContext.getStore()).toBeUndefined();
     });
   });
 });
