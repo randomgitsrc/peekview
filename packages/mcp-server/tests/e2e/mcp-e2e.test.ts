@@ -6,7 +6,7 @@
  *
  * Run with: PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=pv_xxx npm run test:e2e
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { createMCPServer, createExpressApp } from '../../src/server.js';
 import { PeekViewClient } from '../../src/client.js';
 import { createTools } from '../../src/tools/index.js';
@@ -19,6 +19,11 @@ const PEEKVIEW_API_KEY = process.env.PEEKVIEW_API_KEY || '';
 let backendAvailable = false;
 let userInfo: { id: number; username: string } | null = null;
 
+// Shared client/tools/server/app — created once in beforeAll
+let client: PeekViewClient;
+let tools: ReturnType<typeof createTools>;
+let app: ReturnType<typeof createExpressApp>;
+
 beforeAll(async () => {
   try {
     const res = await fetch(`${PEEKVIEW_URL}/health`);
@@ -26,9 +31,22 @@ beforeAll(async () => {
   } catch { /* backend not available */ }
 
   if (PEEKVIEW_API_KEY && backendAvailable) {
-    const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
+    client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
     userInfo = await client.validateToken(PEEKVIEW_API_KEY);
   }
+
+  // Build shared app once (no key/token needed for server creation)
+  client = client ?? new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
+  tools = createTools(client, PEEKVIEW_PUBLIC_URL);
+  const server = createMCPServer(tools);
+  app = createExpressApp(server, {
+    peekviewUrl: PEEKVIEW_URL,
+    publicUrl: PEEKVIEW_PUBLIC_URL,
+    port: 33333,
+    host: '0.0.0.0',
+    corsOrigins: ['*'],
+    logLevel: 'info',
+  }, client);
 });
 
 const itIfReady = (name: string, fn: () => Promise<void>) => {
@@ -44,18 +62,6 @@ const itIfReady = (name: string, fn: () => Promise<void>) => {
 describe('E2E: SSE Server + PeekView Backend', () => {
   describe('SSE auth with real backend', () => {
     itIfReady('should reject SSE with invalid pv_ key (validated against real backend)', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
       const res = await request(app)
         .get('/sse')
         .set('Authorization', 'Bearer pv_totally_fake_invalid_key')
@@ -65,18 +71,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     it('should reject SSE without any auth header', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
       const res = await request(app)
         .get('/sse')
         .expect(401);
@@ -85,18 +79,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     it('should reject JWT token even if valid format', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
       const res = await request(app)
         .get('/sse')
         .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig')
@@ -108,18 +90,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
   describe('Health check with real backend', () => {
     itIfReady('should return ok when PeekView is reachable', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
       const res = await request(app)
         .get('/health')
         .expect(200);
@@ -131,37 +101,13 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
   describe('Full SSE → tool invocation flow', () => {
     itIfReady('should establish SSE session and get valid sessionId', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      // Override validateToken to avoid real HTTP call in test
-      client.validateToken = async (token: string) => {
-        if (token === PEEKVIEW_API_KEY && userInfo) {
-          return userInfo;
-        }
-        return null;
-      };
-
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
-      // SSE is long-lived, we test that auth gate passes
-      // supertest can't fully handle SSE stream, so we verify
-      // via session-based POST /messages flow instead
-      // (SSE connect + POST /messages is tested in server.test.ts with mock)
-      // Here we validate the full chain works with real backend
-      expect(true).toBe(true); // Auth validated above, full SSE flow tested via curl integration
+      // SSE is long-lived, supertest can't fully handle SSE stream.
+      // Auth gate is verified by rejection tests above; full SSE flow
+      // tested via curl integration.
+      expect(true).toBe(true);
     });
 
     itIfReady('should call create_entry via tool handler with real backend', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const createEntry = tools.find(t => t.name === 'create_entry');
 
       const slug = `e2e-test-${Date.now()}`;
@@ -195,8 +141,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     itIfReady('should call get_entry with real backend', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const getEntry = tools.find(t => t.name === 'get_entry');
 
       const result = await getEntry!.handler({ slug: 'zufvwz' }, {
@@ -209,8 +153,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     itIfReady('should call list_entries with real backend', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const listEntries = tools.find(t => t.name === 'list_entries');
 
       const result = await listEntries!.handler({}, {
@@ -223,11 +165,10 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     itIfReady('should call delete_entry with real backend', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
+      const createEntry = tools.find(t => t.name === 'create_entry');
+      const deleteEntry = tools.find(t => t.name === 'delete_entry');
 
       // Create entry to delete
-      const createEntry = tools.find(t => t.name === 'create_entry');
       const slug = `e2e-delete-${Date.now()}`;
       await createEntry!.handler({
         slug,
@@ -240,7 +181,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
       });
 
       // Delete it
-      const deleteEntry = tools.find(t => t.name === 'delete_entry');
       const result = await deleteEntry!.handler({ slug, confirm: true }, {
         userToken: PEEKVIEW_API_KEY,
         userId: userInfo!.id,
@@ -259,8 +199,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
   describe('Entry ownership verification', () => {
     itIfReady('should create entry owned by API key user', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const createEntry = tools.find(t => t.name === 'create_entry');
 
       const slug = `e2e-owner-${Date.now()}`;
@@ -292,8 +230,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
   describe('Error handling with real backend', () => {
     itIfReady('should return 401 error for invalid API key', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const createEntry = tools.find(t => t.name === 'create_entry');
 
       const result = await createEntry!.handler({
@@ -313,8 +249,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
     });
 
     itIfReady('should return error for non-existent entry', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
       const getEntry = tools.find(t => t.name === 'get_entry');
 
       const result = await getEntry!.handler({ slug: 'nonexistent-entry-e2e-test' }, {
@@ -329,18 +263,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
   describe('CORS configuration', () => {
     it('should include Authorization in allowed headers', async () => {
-      const client = new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-      const tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-      const server = createMCPServer(tools);
-      const app = createExpressApp(server, {
-        peekviewUrl: PEEKVIEW_URL,
-        publicUrl: PEEKVIEW_PUBLIC_URL,
-        port: 33333,
-        host: '0.0.0.0',
-        corsOrigins: ['*'],
-        logLevel: 'info',
-      }, client);
-
       const res = await request(app)
         .options('/sse')
         .set('Origin', 'http://localhost:5173')
