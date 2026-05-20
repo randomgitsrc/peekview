@@ -24,13 +24,13 @@ services:
       context: ./packages/mcp-server
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "33333:33333"
     environment:
       - PEEKVIEW_URL=http://peekview:8080
       - PEEKVIEW_PUBLIC_URL=${PEEKVIEW_PUBLIC_URL}   # Required: public URL
       - PEEKVIEW_API_KEY=${PEEKVIEW_API_KEY}
       - MCP_TOKEN=${MCP_TOKEN}
-      - MCP_PORT=3000
+      - MCP_PORT=33333
       - MCP_HOST=0.0.0.0
       - MCP_CORS_ORIGINS=*
       - LOG_LEVEL=info

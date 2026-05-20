@@ -9,7 +9,7 @@ const configSchema = z.object({
   PEEKVIEW_PUBLIC_URL: z.string().url().min(1),
   PEEKVIEW_API_KEY: z.string().min(1),
   MCP_TOKEN: z.string().min(1),
-  MCP_PORT: z.coerce.number().int().positive().default(3000),
+  MCP_PORT: z.coerce.number().int().positive().default(33333),
   MCP_HOST: z.string().default('0.0.0.0'),
   MCP_CORS_ORIGINS: z.string().default('*'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

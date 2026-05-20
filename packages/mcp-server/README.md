@@ -22,17 +22,8 @@ echo "MCP_TOKEN=$MCP_TOKEN" >> .env
 docker-compose up -d
 
 # 4. Configure Claude Code (on your local machine)
-# Add to ~/.claude/settings.json:
-{
-  "mcpServers": {
-    "peekview": {
-      "url": "http://your-server:3000/sse",
-      "env": {
-        "MCP_TOKEN": "the_mcp_token_you_generated"
-      }
-    }
-  }
-}
+# Add MCP server:
+claude mcp add peekview http://your-server:33333/sse --transport http --header "Authorization: Bearer $MCP_TOKEN"
 ```
 
 ### NPM (standalone)
@@ -46,6 +37,7 @@ export PEEKVIEW_URL=http://localhost:8080         # PeekView server URL (interna
 export PEEKVIEW_PUBLIC_URL=http://localhost:8080  # Public URL shown to users
 export PEEKVIEW_API_KEY=pv_your_api_key           # Get from: peekview apikey create "MCP"
 export MCP_TOKEN=mct_your_connection_token        # Any secure string you choose
+export MCP_PORT=33333                             # Use high port to avoid conflicts
 
 # Run
 peekview-mcp
@@ -59,9 +51,11 @@ peekview-mcp
 | `PEEKVIEW_PUBLIC_URL` | Yes | - | Public URL for user-facing links (e.g. https://peek.example.com) |
 | `PEEKVIEW_API_KEY` | Yes | - | PeekView API Key (server-side only, never exposed to clients) |
 | `MCP_TOKEN` | Yes | - | Connection token for AI clients (`openssl rand -hex 32`) |
-| `MCP_PORT` | No | 3000 | Server port |
+| `MCP_PORT` | No | **33333** | Server port (use high port to avoid conflicts) |
 | `MCP_HOST` | No | 0.0.0.0 | Bind address |
 | `MCP_CORS_ORIGINS` | No | `*` | CORS origins (comma-separated) |
+
+> ⚠️ **Port Selection**: Default port 33333 is chosen to avoid conflicts with common development servers (3000, 8080, etc.). If you encounter "port in use" errors, specify a different high port like 33334, 33335, etc.
 
 ## Security
 
