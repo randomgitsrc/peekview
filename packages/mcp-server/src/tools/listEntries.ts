@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PeekViewClient } from '../client.js';
 import type { SessionContext, ToolDefinition, ToolResult } from '../types.js';
-import { PeekViewApiError } from '../types.js';
+import { translateError } from './utils.js';
 
 const schema = z.object({
   query: z.string().optional(),
@@ -26,11 +26,11 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
     try {
       const params = schema.parse(args);
       const result = await client.listEntries(
+        ctx.userToken,
         params.page ?? 1,
         params.per_page ?? 20,
         params.query,
         params.tags,
-        ctx.userToken
       );
 
       if (result.items.length === 0) {
@@ -41,7 +41,7 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
 
       const entries = result.items
         .map((e, i) => {
-          const fileCount = e.files?.length ?? (e as any).file_count ?? 0;
+          const fileCount = e.files?.length ?? 0;
           return `${i + 1}. ${e.summary} (${e.slug})\n   Files: ${fileCount} | Tags: ${e.tags?.join(', ') || 'none'} | ${e.is_public ? 'public' : 'private'}`;
         })
         .join('\n\n');
@@ -55,18 +55,7 @@ ${entries}`,
         }],
       };
     } catch (error) {
-      if (error instanceof PeekViewApiError) {
-        if (error.status === 401) {
-          return { content: [{ type: 'text', text: '✗ 认证失败：API Key 无效或已过期，请检查配置' }], isError: true };
-        }
-      }
-      return {
-        content: [{
-          type: 'text',
-          text: `✗ Failed to list entries: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        }],
-        isError: true,
-      };
+      return translateError(error, 'list entries');
     }
   },
 });

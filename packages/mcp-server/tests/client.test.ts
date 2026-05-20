@@ -171,7 +171,7 @@ describe('PeekViewClient', () => {
         })
       );
 
-      const result = await client.listEntries(undefined, undefined, undefined, undefined, 'pv_alice_key');
+      const result = await client.listEntries('pv_alice_key');
       expect(result.items).toHaveLength(0);
       expect(capturedAuth).toBe('Bearer pv_alice_key');
     });
@@ -190,7 +190,7 @@ describe('PeekViewClient', () => {
         })
       );
 
-      await client.listEntries(1, 20, undefined, ['foo', 'bar'], 'pv_key');
+      await client.listEntries('pv_key', 1, 20, undefined, ['foo', 'bar']);
 
       expect(capturedUrl).toContain('tags=foo%2Cbar');
     });

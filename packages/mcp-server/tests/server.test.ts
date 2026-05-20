@@ -82,6 +82,25 @@ describe('SSE Server', () => {
       expect(res.body.error).toContain('Invalid');
     });
 
+    it('should return 503 when PeekView is unreachable during validation', async () => {
+      // Override validateToken to throw timeout error
+      client.validateToken = async () => {
+        throw new Error('PeekView connection timeout during token validation');
+      };
+
+      const res = await request(app)
+        .get('/sse')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .expect(503);
+      expect(res.body.error).toContain('unreachable');
+
+      // Restore original validateToken
+      client.validateToken = async (token: string) => {
+        if (token === VALID_TOKEN) return { id: 1, username: 'alice' };
+        return null;
+      };
+    });
+
     it('should accept valid pv_ token for SSE connection', async () => {
       // SSE is long-lived, supertest can't fully handle it.
       // We verify the token passes prefix check + validation by checking

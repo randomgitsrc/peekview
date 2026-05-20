@@ -115,21 +115,29 @@ export function createExpressApp(
     }
 
     // Validate token with PeekView
-    const userInfo = await client.validateToken(authHeader);
-    if (!userInfo) {
-      res.status(401).json({ error: 'Invalid or expired API Key' });
+    let userInfo: { id: number; username: string } | null;
+    try {
+      userInfo = await client.validateToken(authHeader);
+      if (!userInfo) {
+        res.status(401).json({ error: 'Invalid or expired API Key' });
+        return;
+      }
+    } catch (e) {
+      // Timeout or connection error → 503, not 401
+      res.status(503).json({ error: 'PeekView unreachable, please try again later' });
       return;
     }
 
-    // Establish SSE session
+    // SDK auto-generates sessionId and appends ?sessionId= to the endpoint event.
+    // Passing just '/messages' (not '/messages?sessionId=...') avoids double sessionId.
     const transport = new SSEServerTransport('/messages', res);
     const sessionId = transport.sessionId;
 
     sessions.set(sessionId, {
       transport,
       userToken: authHeader,
-      userId: userInfo.id,
-      username: userInfo.username,
+      userId: userInfo!.id,
+      username: userInfo!.username,
     });
 
     res.on('close', () => {

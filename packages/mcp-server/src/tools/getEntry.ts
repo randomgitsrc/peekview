@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { PeekViewClient } from '../client.js';
 import type { SessionContext, ToolDefinition, ToolResult } from '../types.js';
-import { PeekViewApiError } from '../types.js';
+import { translateError } from './utils.js';
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -42,21 +42,7 @@ ${fileList || '  (no files)'}`,
         }],
       };
     } catch (error) {
-      if (error instanceof PeekViewApiError) {
-        if (error.status === 401) {
-          return { content: [{ type: 'text', text: '✗ 认证失败：API Key 无效或已过期，请检查配置' }], isError: true };
-        }
-        if (error.status === 403) {
-          return { content: [{ type: 'text', text: '✗ 权限不足' }], isError: true };
-        }
-      }
-      return {
-        content: [{
-          type: 'text',
-          text: `✗ Failed to get entry: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        }],
-        isError: true,
-      };
+      return translateError(error, 'get entry');
     }
   },
 });

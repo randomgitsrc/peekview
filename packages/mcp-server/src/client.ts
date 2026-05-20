@@ -72,8 +72,12 @@ export class PeekViewClient {
       if (!res.ok) return null;
       const user = await res.json();
       return { id: user.id, username: user.username };
-    } catch {
+    } catch (e) {
       clearTimeout(timeout);
+      // Distinguish timeout (503) from other errors
+      if (e instanceof Error && e.name === 'AbortError') {
+        throw new Error('PeekView connection timeout during token validation');
+      }
       return null;
     }
   }
@@ -90,11 +94,11 @@ export class PeekViewClient {
   }
 
   async listEntries(
+    userToken: string,
     page = 1,
     perPage = 20,
     query?: string,
     tags?: string[],
-    userToken: string = ''
   ): Promise<ListEntriesResponse> {
     const params = new URLSearchParams();
     params.append('page', page.toString());
