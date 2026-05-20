@@ -6,7 +6,7 @@ import { createEntryTool } from '../src/tools/createEntry.js';
 import { getEntryTool } from '../src/tools/getEntry.js';
 import { listEntriesTool } from '../src/tools/listEntries.js';
 import { deleteEntryTool } from '../src/tools/deleteEntry.js';
-import type { ServerConfig } from '../src/types.js';
+import type { SessionContext } from '../src/types.js';
 
 const mockServer = setupServer();
 
@@ -14,21 +14,13 @@ beforeAll(() => mockServer.listen());
 afterEach(() => mockServer.resetHandlers());
 afterAll(() => mockServer.close());
 
-const testConfig: ServerConfig = {
-  peekviewUrl: 'http://localhost:8080',
-  publicUrl: 'https://peek.example.com',
-  apiKey: 'pv_test_key',
-  mcpToken: 'mct_test',
-  port: 3000,
-  host: '0.0.0.0',
-  corsOrigins: ['*'],
-  logLevel: 'info',
-};
+const client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
 
-const client = new PeekViewClient({
-  peekviewUrl: testConfig.peekviewUrl,
-  apiKey: testConfig.apiKey,
-});
+const testContext: SessionContext = {
+  userToken: 'pv_test_key',
+  userId: 1,
+  username: 'alice',
+};
 
 describe('Tools', () => {
   describe('create_entry', () => {
@@ -48,13 +40,12 @@ describe('Tools', () => {
         })
       );
 
-      const tool = createEntryTool(client, testConfig);
+      const tool = createEntryTool(client, 'https://peek.example.com');
       const result = await tool.handler({
         summary: 'Test Summary',
         files: [{ filename: 'test.txt', content: 'Hello' }],
-      });
+      }, testContext);
 
-      // Verify returned URL uses publicUrl, not peekviewUrl
       expect(result.content[0].text).toContain('https://peek.example.com/test-entry');
       expect(result.content[0].text).not.toContain('http://localhost:8080');
     });
@@ -77,14 +68,34 @@ describe('Tools', () => {
         })
       );
 
-      const tool = createEntryTool(client, testConfig);
+      const tool = createEntryTool(client, 'https://peek.example.com');
       await tool.handler({
         summary: 'Test',
         files: [{ filename: 'test.txt', content: 'Hello' }],
         is_public: false,
-      });
+      }, testContext);
 
       expect(requestBody).toMatchObject({ is_public: false });
+    });
+
+    it('should translate 401 error to Chinese', async () => {
+      mockServer.use(
+        http.post('http://localhost:8080/api/v1/entries', () => {
+          return HttpResponse.json(
+            { error: { code: 'UNAUTHORIZED', message: 'Invalid API key' } },
+            { status: 401 }
+          );
+        })
+      );
+
+      const tool = createEntryTool(client, 'https://peek.example.com');
+      const result = await tool.handler({
+        summary: 'Test',
+        files: [{ filename: 'test.txt', content: 'Hello' }],
+      }, testContext);
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('认证失败');
     });
   });
 
@@ -109,7 +120,7 @@ describe('Tools', () => {
       );
 
       const tool = getEntryTool(client);
-      const result = await tool.handler({ slug: 'test' });
+      const result = await tool.handler({ slug: 'test' }, testContext);
 
       expect(result.content[0].text).toContain('Test Entry');
       expect(result.content[0].text).toContain('Files (2):');
@@ -134,7 +145,7 @@ describe('Tools', () => {
       );
 
       const tool = listEntriesTool(client);
-      const result = await tool.handler({});
+      const result = await tool.handler({}, testContext);
 
       expect(result.content[0].text).toContain('Found 2 entries');
       expect(result.content[0].text).toContain('Entry 1');
@@ -154,7 +165,7 @@ describe('Tools', () => {
       );
 
       const tool = listEntriesTool(client);
-      const result = await tool.handler({});
+      const result = await tool.handler({}, testContext);
 
       expect(result.content[0].text).toBe('No entries found.');
     });
@@ -165,9 +176,8 @@ describe('Tools', () => {
       const tool = deleteEntryTool(client);
       const result = await tool.handler({
         slug: 'test-entry',
-      });
+      }, testContext);
 
-      // Should return confirmation prompt, not delete
       expect(result.content[0].text).toContain('About to delete');
       expect(result.content[0].text).toContain('"confirm": true');
       expect(result.isError).toBeUndefined();
@@ -184,9 +194,29 @@ describe('Tools', () => {
       const result = await tool.handler({
         slug: 'test-entry',
         confirm: true,
-      });
+      }, testContext);
 
       expect(result.content[0].text).toContain('deleted successfully');
+    });
+
+    it('should translate 403 error to Chinese', async () => {
+      mockServer.use(
+        http.delete('http://localhost:8080/api/v1/entries/some-entry', () => {
+          return HttpResponse.json(
+            { error: { code: 'FORBIDDEN', message: 'Not your entry' } },
+            { status: 403 }
+          );
+        })
+      );
+
+      const tool = deleteEntryTool(client);
+      const result = await tool.handler({
+        slug: 'some-entry',
+        confirm: true,
+      }, testContext);
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('权限不足');
     });
   });
 });

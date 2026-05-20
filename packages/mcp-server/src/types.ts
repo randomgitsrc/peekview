@@ -16,7 +16,7 @@ export interface CreateEntryRequest {
   files: EntryFile[];
   tags?: string[];
   expires_in?: string;
-  is_public?: boolean;  // Backend uses is_public, not visibility
+  is_public?: boolean;
 }
 
 // Entry file in response
@@ -48,20 +48,33 @@ export interface ListEntriesResponse {
   per_page: number;
 }
 
-// Server configuration
+// Server configuration (no apiKey/mcpToken - users bring their own pv_ keys)
 export interface ServerConfig {
   peekviewUrl: string;
   publicUrl: string;
-  apiKey: string;
-  mcpToken: string;
   port: number;
   host: string;
   corsOrigins: string[];
   logLevel: string;
 }
 
-// Tool handler type
-export type ToolHandler = (args: unknown) => Promise<ToolResult>;
+// Session context for tool handlers (from AsyncLocalStorage)
+export interface SessionContext {
+  userToken: string;   // pv_xxx API Key
+  userId: number;      // PeekView user ID
+  username: string;    // PeekView username
+}
+
+// Session info stored in memory
+export interface SessionInfo {
+  transport: SSEServerTransport;
+  userToken: string;
+  userId: number;
+  username: string;
+}
+
+// Tool handler type - receives args + session context
+export type ToolHandler = (args: unknown, context: SessionContext) => Promise<ToolResult>;
 
 // Tool definition
 export interface ToolDefinition {
@@ -81,3 +94,16 @@ export interface ToolResult {
   }>;
   isError?: boolean;
 }
+
+// PeekView API error
+export class PeekViewApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(`PeekView API error ${status}: ${message}`);
+    this.status = status;
+  }
+}
+
+// SSEServerTransport type reference (imported from SDK)
+import type { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';

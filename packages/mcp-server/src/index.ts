@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PeekView MCP Server - Entry Point
+ * PeekView MCP Server - Entry Point (v0.2.0 multi-user)
  */
 import { createMCPServer, createExpressApp } from './server.js';
 import { PeekViewClient } from './client.js';
@@ -8,7 +8,6 @@ import { loadConfig } from './config.js';
 import { createTools } from './tools/index.js';
 
 async function main() {
-  // Load and validate configuration
   const config = loadConfig();
 
   console.log(`Starting PeekView MCP Server...`);
@@ -16,11 +15,9 @@ async function main() {
   console.log(`Public URL: ${config.publicUrl}`);
   console.log(`Listening on: ${config.host}:${config.port}`);
 
-  // Initialize client and tools
-  const client = new PeekViewClient(config);
-  const tools = createTools(client, config);
+  const client = new PeekViewClient({ peekviewUrl: config.peekviewUrl });
+  const tools = createTools(client, config.publicUrl);
 
-  // Create and start server
   const mcpServer = createMCPServer(tools);
   const app = createExpressApp(mcpServer, config, client);
 

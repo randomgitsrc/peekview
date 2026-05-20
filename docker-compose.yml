@@ -28,11 +28,10 @@ services:
     environment:
       - PEEKVIEW_URL=http://peekview:8080
       - PEEKVIEW_PUBLIC_URL=${PEEKVIEW_PUBLIC_URL}   # Required: public URL
-      - PEEKVIEW_API_KEY=${PEEKVIEW_API_KEY}
-      - MCP_TOKEN=${MCP_TOKEN}
+      # Removed: PEEKVIEW_API_KEY, MCP_TOKEN (v0.2.0 - users bring their own pv_ API Key)
       - MCP_PORT=33333
       - MCP_HOST=0.0.0.0
-      - MCP_CORS_ORIGINS=*
+      - MCP_CORS_ORIGINS=https://claude.ai,https://cursor.sh
       - LOG_LEVEL=info
     depends_on:
       - peekview

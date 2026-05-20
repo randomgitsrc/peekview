@@ -6,26 +6,23 @@ describe('Config', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    // Set required env vars for each test
     process.env.PEEKVIEW_URL = 'http://localhost:8080';
     process.env.PEEKVIEW_PUBLIC_URL = 'http://localhost:8080';
-    process.env.PEEKVIEW_API_KEY = 'pv_test_key';
-    process.env.MCP_TOKEN = 'mct_test_token';
   });
 
   afterEach(() => {
     process.env = originalEnv;
   });
 
-  it('should load valid config', () => {
+  it('should load valid config without MCP_TOKEN and PEEKVIEW_API_KEY', () => {
     const config = loadConfig();
 
     expect(config.peekviewUrl).toBe('http://localhost:8080');
     expect(config.publicUrl).toBe('http://localhost:8080');
-    expect(config.apiKey).toBe('pv_test_key');
-    expect(config.mcpToken).toBe('mct_test_token');
-    expect(config.port).toBe(3000);
+    expect(config.port).toBe(33333);
     expect(config.host).toBe('0.0.0.0');
+    expect(config.corsOrigins).toEqual(['*']);
+    expect(config.logLevel).toBe('info');
   });
 
   it('should remove trailing slash from PEEKVIEW_URL', () => {
@@ -54,22 +51,35 @@ describe('Config', () => {
     expect(() => loadConfig()).toThrow('PEEKVIEW_PUBLIC_URL');
   });
 
-  it('should throw on missing PEEKVIEW_API_KEY', () => {
-    delete process.env.PEEKVIEW_API_KEY;
-
-    expect(() => loadConfig()).toThrow('PEEKVIEW_API_KEY');
-  });
-
-  it('should throw on missing MCP_TOKEN', () => {
-    delete process.env.MCP_TOKEN;
-
-    expect(() => loadConfig()).toThrow('MCP_TOKEN');
-  });
-
   it('should use custom port', () => {
     process.env.MCP_PORT = '4000';
 
     const config = loadConfig();
     expect(config.port).toBe(4000);
+  });
+
+  it('should parse CORS origins as comma-separated', () => {
+    process.env.MCP_CORS_ORIGINS = 'https://claude.ai,https://cursor.sh';
+
+    const config = loadConfig();
+    expect(config.corsOrigins).toEqual(['https://claude.ai', 'https://cursor.sh']);
+  });
+
+  it('should NOT require MCP_TOKEN', () => {
+    // MCP_TOKEN is no longer a required config
+    delete process.env.MCP_TOKEN;
+
+    const config = loadConfig();
+    // Should not throw - MCP_TOKEN removed from schema
+    expect(config).toBeDefined();
+  });
+
+  it('should NOT require PEEKVIEW_API_KEY', () => {
+    // PEEKVIEW_API_KEY is no longer a required config
+    delete process.env.PEEKVIEW_API_KEY;
+
+    const config = loadConfig();
+    // Should not throw - PEEKVIEW_API_KEY removed from schema
+    expect(config).toBeDefined();
   });
 });

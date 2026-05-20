@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { PeekViewClient } from '../client.js';
-import type { ToolDefinition, ToolResult } from '../types.js';
+import type { SessionContext, ToolDefinition, ToolResult } from '../types.js';
+import { PeekViewApiError } from '../types.js';
 
 const schema = z.object({
   query: z.string().optional(),
@@ -21,14 +22,15 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
       per_page: { type: 'number', default: 20 },
     },
   },
-  handler: async (args: unknown): Promise<ToolResult> => {
+  handler: async (args: unknown, ctx: SessionContext): Promise<ToolResult> => {
     try {
       const params = schema.parse(args);
       const result = await client.listEntries(
         params.page ?? 1,
         params.per_page ?? 20,
         params.query,
-        params.tags
+        params.tags,
+        ctx.userToken
       );
 
       if (result.items.length === 0) {
@@ -50,6 +52,11 @@ ${entries}`,
         }],
       };
     } catch (error) {
+      if (error instanceof PeekViewApiError) {
+        if (error.status === 401) {
+          return { content: [{ type: 'text', text: '✗ 认证失败：API Key 无效或已过期，请检查配置' }], isError: true };
+        }
+      }
       return {
         content: [{
           type: 'text',

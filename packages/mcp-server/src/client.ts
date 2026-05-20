@@ -1,6 +1,7 @@
 /**
- * PeekView API HTTP Client
+ * PeekView API HTTP Client - user token passthrough
  */
+import { PeekViewApiError } from './types.js';
 import type {
   CreateEntryRequest,
   EntryResponse,
@@ -9,30 +10,26 @@ import type {
 
 interface ClientConfig {
   peekviewUrl: string;
-  apiKey: string;
 }
 
 export class PeekViewClient {
   private baseUrl: string;
-  private apiKey: string;
 
   constructor(config: ClientConfig) {
     this.baseUrl = config.peekviewUrl;
-    this.apiKey = config.apiKey;
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    userToken: string
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-API-Key': this.apiKey,
-      ...((options.headers as Record<string, string>) || {}),
+      'Authorization': `Bearer ${userToken}`,
     };
 
-    // 30s timeout to prevent hanging requests
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -45,19 +42,16 @@ export class PeekViewClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `PeekView API error ${response.status}: ${errorText || response.statusText}`
-        );
+        throw new PeekViewApiError(response.status, errorText || response.statusText);
       }
 
       if (response.status === 204) {
         return undefined as T;
       }
 
-      // Validate content-type before parsing JSON
       const contentType = response.headers.get('content-type');
       if (!contentType?.includes('application/json')) {
-        throw new Error(`Expected JSON response, got ${contentType}`);
+        throw new PeekViewApiError(response.status, `Expected JSON response, got ${contentType}`);
       }
 
       return response.json() as Promise<T>;
@@ -66,50 +60,67 @@ export class PeekViewClient {
     }
   }
 
-  async createEntry(request: CreateEntryRequest): Promise<EntryResponse> {
+  async validateToken(token: string): Promise<{ id: number; username: string } | null> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/v1/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      const user = await res.json();
+      return { id: user.id, username: user.username };
+    } catch {
+      clearTimeout(timeout);
+      return null;
+    }
+  }
+
+  async createEntry(request: CreateEntryRequest, userToken: string): Promise<EntryResponse> {
     return this.request<EntryResponse>('/api/v1/entries', {
       method: 'POST',
       body: JSON.stringify(request),
-    });
+    }, userToken);
   }
 
-  async getEntry(slug: string): Promise<EntryResponse> {
-    return this.request<EntryResponse>(`/api/v1/entries/${slug}`);
+  async getEntry(slug: string, userToken: string): Promise<EntryResponse> {
+    return this.request<EntryResponse>(`/api/v1/entries/${slug}`, undefined, userToken);
   }
 
   async listEntries(
     page = 1,
     perPage = 20,
     query?: string,
-    tags?: string[]
+    tags?: string[],
+    userToken: string = ''
   ): Promise<ListEntriesResponse> {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('per_page', perPage.toString());
     if (query) params.append('q', query);
     if (tags?.length) {
-      params.append('tags', tags.join(',')); // Backend expects comma-separated
+      params.append('tags', tags.join(','));
     }
-    return this.request<ListEntriesResponse>(`/api/v1/entries?${params}`);
+    return this.request<ListEntriesResponse>(`/api/v1/entries?${params}`, undefined, userToken);
   }
 
-  async deleteEntry(slug: string): Promise<void> {
+  async deleteEntry(slug: string, userToken: string): Promise<void> {
     await this.request<void>(`/api/v1/entries/${slug}`, {
       method: 'DELETE',
-    });
+    }, userToken);
   }
 
   async ping(): Promise<boolean> {
-    // Use /health endpoint for lightweight probe (no auth required)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(`${this.baseUrl}/health`, {
-        signal: controller.signal,
-      });
+      const res = await fetch(`${this.baseUrl}/health`, { signal: controller.signal });
       clearTimeout(timeout);
       return res.ok;
     } catch {
+      clearTimeout(timeout);
       return false;
     }
   }

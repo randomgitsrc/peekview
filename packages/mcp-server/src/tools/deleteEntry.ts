@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { PeekViewClient } from '../client.js';
-import type { ToolDefinition, ToolResult } from '../types.js';
+import type { SessionContext, ToolDefinition, ToolResult } from '../types.js';
+import { PeekViewApiError } from '../types.js';
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -18,11 +19,10 @@ export const deleteEntryTool = (client: PeekViewClient): ToolDefinition => ({
     },
     required: ['slug'],
   },
-  handler: async (args: unknown): Promise<ToolResult> => {
+  handler: async (args: unknown, ctx: SessionContext): Promise<ToolResult> => {
     try {
       const { slug, confirm } = schema.parse(args);
 
-      // Require explicit confirmation to prevent accidental deletion
       if (!confirm) {
         return {
           content: [{
@@ -32,7 +32,7 @@ export const deleteEntryTool = (client: PeekViewClient): ToolDefinition => ({
         };
       }
 
-      await client.deleteEntry(slug);
+      await client.deleteEntry(slug, ctx.userToken);
       return {
         content: [{
           type: 'text',
@@ -40,6 +40,14 @@ export const deleteEntryTool = (client: PeekViewClient): ToolDefinition => ({
         }],
       };
     } catch (error) {
+      if (error instanceof PeekViewApiError) {
+        if (error.status === 401) {
+          return { content: [{ type: 'text', text: '✗ 认证失败：API Key 无效或已过期，请检查配置' }], isError: true };
+        }
+        if (error.status === 403) {
+          return { content: [{ type: 'text', text: '✗ 权限不足' }], isError: true };
+        }
+      }
       return {
         content: [{
           type: 'text',

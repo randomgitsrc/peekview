@@ -7,8 +7,6 @@ import type { ServerConfig } from './types.js';
 const configSchema = z.object({
   PEEKVIEW_URL: z.string().url().min(1),
   PEEKVIEW_PUBLIC_URL: z.string().url().min(1),
-  PEEKVIEW_API_KEY: z.string().min(1),
-  MCP_TOKEN: z.string().min(1),
   MCP_PORT: z.coerce.number().int().positive().default(33333),
   MCP_HOST: z.string().default('0.0.0.0'),
   MCP_CORS_ORIGINS: z.string().default('*'),
@@ -20,7 +18,7 @@ export function loadConfig(): ServerConfig {
 
   if (!result.success) {
     const errors = result.error.errors.map(e => `${e.path}: ${e.message}`).join('\n');
-    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL (internal)\n- PEEKVIEW_PUBLIC_URL: PeekView public URL (for user-facing links)\n- PEEKVIEW_API_KEY: PeekView API key (server-side only)\n- MCP_TOKEN: Client connection token`);
+    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL (internal)\n- PEEKVIEW_PUBLIC_URL: PeekView public URL (for user-facing links)`);
   }
 
   const env = result.data;
@@ -28,8 +26,6 @@ export function loadConfig(): ServerConfig {
   return {
     peekviewUrl: env.PEEKVIEW_URL.replace(/\/$/, ''),
     publicUrl: env.PEEKVIEW_PUBLIC_URL.replace(/\/$/, ''),
-    apiKey: env.PEEKVIEW_API_KEY,
-    mcpToken: env.MCP_TOKEN,
     port: env.MCP_PORT,
     host: env.MCP_HOST,
     corsOrigins: env.MCP_CORS_ORIGINS.split(','),

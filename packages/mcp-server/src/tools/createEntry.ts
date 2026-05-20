@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { PeekViewClient } from '../client.js';
-import type { ServerConfig, ToolDefinition, ToolResult } from '../types.js';
+import type { SessionContext, ToolDefinition, ToolResult } from '../types.js';
+import { PeekViewApiError } from '../types.js';
 
 const schema = z.object({
   summary: z.string().min(1),
@@ -15,7 +16,7 @@ const schema = z.object({
   expires_in: z.string().optional(),
 });
 
-export const createEntryTool = (client: PeekViewClient, config: ServerConfig): ToolDefinition => ({
+export const createEntryTool = (client: PeekViewClient, publicUrl: string): ToolDefinition => ({
   name: 'create_entry',
   description: `Create a new PeekView entry with files. Returns the entry URL.
 
@@ -46,7 +47,7 @@ Examples:
     },
     required: ['summary', 'files'],
   },
-  handler: async (args: unknown): Promise<ToolResult> => {
+  handler: async (args: unknown, ctx: SessionContext): Promise<ToolResult> => {
     try {
       const params = schema.parse(args);
       const entry = await client.createEntry({
@@ -56,10 +57,7 @@ Examples:
         tags: params.tags,
         is_public: params.is_public,
         expires_in: params.expires_in,
-      });
-
-      // Use publicUrl for user-facing links (fixes Docker internal URL issue)
-      const baseUrl = config.publicUrl;
+      }, ctx.userToken);
 
       return {
         content: [{
@@ -67,7 +65,7 @@ Examples:
           text: `✓ Entry created successfully
 
 Title: ${entry.summary}
-URL: ${baseUrl}/${entry.slug}
+URL: ${publicUrl}/${entry.slug}
 Slug: ${entry.slug}
 Files: ${entry.files.length}
 Visibility: ${entry.is_public ? 'public' : 'private'}
@@ -75,13 +73,31 @@ Created: ${entry.created_at}`,
         }],
       };
     } catch (error) {
-      return {
-        content: [{
-          type: 'text',
-          text: `✗ Failed to create entry: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        }],
-        isError: true,
-      };
+      return translateError(error, 'create entry');
     }
   },
 });
+
+function translateError(error: unknown, action: string): ToolResult {
+  if (error instanceof PeekViewApiError) {
+    let message: string;
+    if (error.status === 401) {
+      message = '认证失败：API Key 无效或已过期，请检查配置';
+    } else if (error.status === 403) {
+      message = '权限不足';
+    } else {
+      message = `操作失败：${error.message}`;
+    }
+    return {
+      content: [{ type: 'text', text: `✗ ${message}` }],
+      isError: true,
+    };
+  }
+  return {
+    content: [{
+      type: 'text',
+      text: `✗ Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    }],
+    isError: true,
+  };
+}
