@@ -40,7 +40,10 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
       }
 
       const entries = result.items
-        .map((e, i) => `${i + 1}. ${e.summary} (${e.slug})\n   Files: ${e.files.length} | Tags: ${e.tags.join(', ') || 'none'} | ${e.is_public ? 'public' : 'private'}`)
+        .map((e, i) => {
+          const fileCount = e.files?.length ?? (e as any).file_count ?? 0;
+          return `${i + 1}. ${e.summary} (${e.slug})\n   Files: ${fileCount} | Tags: ${e.tags?.join(', ') || 'none'} | ${e.is_public ? 'public' : 'private'}`;
+        })
         .join('\n\n');
 
       return {
