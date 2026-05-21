@@ -178,42 +178,62 @@ verify-wheel:
 # Release Targets
 # =============================================================================
 
-# Bump version across all files
+# Bump version across all files (improved with auto-build and commit)
 bump-version:
 	@if [ -z "$(NEW_VERSION)" ]; then \
 		echo "Usage: make bump-version NEW_VERSION=x.y.z"; \
 		echo "Example: make bump-version NEW_VERSION=0.1.29"; \
 		exit 1; \
 	fi
-	@echo "→ Bumping version to $(NEW_VERSION)..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "→ Step 1/6: 更新版本号到 $(NEW_VERSION)..."
 	@# Update backend/__init__.py
 	sed -i "s/__version__ = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/__version__ = \"$(NEW_VERSION)\"/" backend/peekview/__init__.py
 	@# Update pyproject.toml
 	sed -i "s/^version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$(NEW_VERSION)\"/" backend/pyproject.toml
-	@# Update package.json
+	@# Update package.json (frontend only, NOT MCP Server)
 	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" frontend-v3/package.json
-	@# Verify code files
+	@echo "→ Step 2/6: 验证版本一致性..."
 	@BACKEND_VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)"); \
 	PYPROJECT_VERSION=$$(grep "^version = " backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
 	PACKAGE_VERSION=$$(grep '\"version\":' frontend-v3/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
 	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ]; then \
-		echo "✓ 代码版本文件已更新: v$(NEW_VERSION)"; \
+		echo "  ✓ 版本文件已更新: v$(NEW_VERSION)"; \
 	else \
-		echo "✗ 版本不一致，请检查"; exit 1; \
+		echo "  ✗ 版本不一致，请检查"; exit 1; \
 	fi
-	@# Auto-sync all documentation
-	@echo "→ 自动同步文档版本引用..."
-	@python3 scripts/doc-sync/update_version_docs.py
+	@echo "→ Step 3/6: 自动同步文档版本引用..."
+	@python3 scripts/doc-sync/update_version_docs.py 2>/dev/null || echo "  ⚠️ 文档同步脚本未找到，跳过"
+	@echo "→ Step 4/6: 构建前端并更新静态文件..."
+	@make build-frontend-fast > /tmp/build.log 2>&1 && echo "  ✓ 前端构建成功" || (echo "  ✗ 前端构建失败，查看 /tmp/build.log"; exit 1)
+	@echo "→ Step 5/6: 提交版本和静态文件..."
+	@git add -A
+	@git commit -m "chore(release): bump to v$(NEW_VERSION)" --quiet
+	@echo "  ✓ 已提交版本和静态文件"
+	@echo "→ Step 6/6: 创建 tag v$(NEW_VERSION)..."
+	@git tag "v$(NEW_VERSION)"
+	@echo "  ✓ 已创建 tag"
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "✅ bump-version 完成: v$(NEW_VERSION)"
 	@echo ""
-	@echo "还需手动完成："
+	@echo "⚠️  重要：还需手动完成以下步骤："
+	@echo ""
 	@echo "  1. 编辑 CHANGELOG.md，填写 [$(NEW_VERSION)] 具体变更内容"
-	@echo "  2. git add -A && git commit -m \"chore(release): bump to v$(NEW_VERSION)\""
+	@echo "     (参考: git log v$$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "上一个tag")..HEAD --oneline)"
+	@echo ""
+	@echo "  2. 更新 CHANGELOG 后执行："
+	@echo "     git add CHANGELOG.md && git commit --amend --no-edit"
+	@echo ""
+	@echo "  3. 运行测试并发布："
+	@echo "     make pre-publish-quick  # 快速检查"
+	@echo "     make publish            # 发布到 PyPI"
+	@echo ""
+	@echo "  4. 推送到远程："
+	@echo "     git push && git push origin v$(NEW_VERSION)"
 	@echo ""
 	@echo "⚠️  MCP Server 版本独立管理，如需更新请单独执行："
-	@echo "    make bump-mcp-version NEW_MCP_VERSION=x.y.z"
+	@echo "     make bump-mcp-version NEW_MCP_VERSION=x.y.z"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Bump MCP Server version independently
@@ -245,6 +265,53 @@ bump-mcp-version:
 	@echo "  1. 编辑 CHANGELOG.md，填写 [mcp-v$(NEW_MCP_VERSION)] 变更内容"
 	@echo "  2. git add -A && git commit -m \"chore(mcp): bump to v$(NEW_MCP_VERSION)\""
 	@echo "  3. git tag mcp-v$(NEW_MCP_VERSION) && git push origin mcp-v$(NEW_MCP_VERSION)"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 一键发布（包含完整流程，需设置 CHANGELOG）
+release:
+	@if [ -z "$(NEW_VERSION)" ]; then \
+		echo "Usage: make release NEW_VERSION=x.y.z"; \
+		echo "Example: make release NEW_VERSION=0.1.32"; \
+		exit 1; \
+	fi
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "🚀 PeekView 一键发布流程"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "此命令将执行："
+	@echo "  1. bump-version (版本号 + 构建 + 提交 + tag)"
+	@echo "  2. 等待你编辑 CHANGELOG"
+	@echo "  3. pre-publish-quick (快速验证)"
+	@echo "  4. publish (发布到 PyPI)"
+	@echo "  5. push (推送到 GitHub)"
+	@echo ""
+	@read -p "确定要继续? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@echo "→ Step 1/5: bump-version..."
+	@make bump-version NEW_VERSION=$(NEW_VERSION)
+	@echo ""
+	@echo "→ Step 2/5: 请编辑 CHANGELOG.md..."
+	@echo "   建议命令: git log v$$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "上一个tag")..HEAD --oneline"
+	@read -p "   编辑完成后按 Enter 继续..."
+	@echo ""
+	@echo "→ Step 3/5: 提交 CHANGELOG 更新..."
+	@git add CHANGELOG.md && git commit --amend --no-edit
+	@echo "   ✓ CHANGELOG 已提交"
+	@echo ""
+	@echo "→ Step 4/5: 运行预发布检查..."
+	@make pre-publish-quick
+	@echo ""
+	@echo "→ Step 5/5: 发布到 PyPI..."
+	@make publish
+	@echo ""
+	@echo "→ 推送到 GitHub..."
+	@git push && git push origin v$(NEW_VERSION)
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ 发布完成: v$(NEW_VERSION)"
+	@echo ""
+	@echo "PyPI: https://pypi.org/project/peekview/$(NEW_VERSION)/"
+	@echo "GitHub: https://github.com/randomgitsrc/peekview/releases/tag/v$(NEW_VERSION)"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 单独同步文档版本（不 bump，用于修复漏掉的文档同步）
@@ -282,11 +349,39 @@ pre-publish: clean build check-version check-changelog test verify-wheel
 
 # Full publish pipeline (uses build-fast to save time after pre-publish)
 publish:
+	@echo "→ Step 1/4: 检查是否有未提交的静态文件..."
+	@if [ -n "$$(git status --porcelain backend/peekview/static/ 2>/dev/null)" ]; then \
+		echo ""; \
+		echo "✗ 错误: 发现未提交的静态文件"; \
+		echo ""; \
+		echo "可能原因:"; \
+		echo "  - bump-version 后没有提交 CHANGELOG"; \
+		echo "  - 手动修改了静态文件"; \
+		echo ""; \
+		echo "解决方案:"; \
+		echo "  1. 如果是修改 CHANGELOG 后: git add -A && git commit --amend --no-edit"; \
+		echo "  2. 如果是意外修改: git checkout backend/peekview/static/"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "  ✓ 静态文件已提交"
+	@echo "→ Step 2/4: 检查 wheel 是否存在..."
 	@if [ ! -f "backend/dist/peekview-*.whl" ]; then \
 		echo "→ No wheel found, building..."; \
 		make build; \
 	fi
-	@echo "→ Running final checks..."
+	@echo "→ Step 3/4: 运行最终检查..."
+	@make check-version check-changelog verify-wheel
+	@echo "→ Step 4/4: 发布到 PyPI..."
+	@if [ -z "$(PYPI_API_TOKEN)" ]; then \
+		echo "✗ Error: PYPI_API_TOKEN not set"; \
+		exit 1; \
+	fi
+	cd backend && pipx run twine upload dist/* \
+		-u __token__ -p "$(PYPI_API_TOKEN)" --non-interactive
+	@echo ""
+	@echo "✅ Published to PyPI"
+	@echo "   URL: https://pypi.org/project/peekview/$$(cd backend && python3 -c 'from peekview import __version__; print(__version__)')/"
 	make check-version check-changelog verify-wheel
 	@echo "→ Publishing to PyPI..."
 	@if [ -z "$(PYPI_API_TOKEN)" ]; then \
