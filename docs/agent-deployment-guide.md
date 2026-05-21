@@ -350,6 +350,25 @@ sudo systemctl restart peekview-mcp
 
 ## 🗑️ 卸载
 
+### 推荐方式：使用 uninstall 命令（最简单）
+
+```bash
+# 卸载 PeekView（交互式，会询问确认）
+peekview uninstall
+
+# 跳过确认直接卸载
+peekview uninstall -y
+
+# 卸载但保留数据目录
+peekview uninstall -y --keep-data
+
+# 查看 MCP Server 卸载说明
+peekview-mcp uninstall
+
+# 然后执行卸载
+npm uninstall -g @peekview/mcp-server
+```
+
 ### 方式一：完全卸载（删除所有内容）
 
 ```bash
