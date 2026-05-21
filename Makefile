@@ -398,14 +398,7 @@ debug-verify-isolation:
 		echo "  ⚠ 调试服务未运行"; \
 	fi
 	@echo "→ 检查生产数据库是否被污染..."
-	@PROD_TEST_COUNT=$$(curl -s http://127.0.0.1:8080/api/v1/entries 2>/dev/null | python3 -c "
-	import sys,json
-	try:
-	    d=json.load(sys.stdin)
-	    test_count = sum(1 for e in d.get('items',[]) if 'e2e-' in e.get('slug','') or 'test-' in e.get('slug',''))
-	    print(test_count)
-	except:
-	    print('0')" 2>/dev/null || echo "0") && \
+	@PROD_TEST_COUNT=$$(curl -s http://127.0.0.1:8080/api/v1/entries 2>/dev/null | python3 -c "import sys,json; try: d=json.load(sys.stdin); print(sum(1 for e in d.get('items',[]) if 'e2e-' in e.get('slug','') or 'test-' in e.get('slug',''))) except: print('0')" 2>/dev/null || echo "0") && \
 	if [ "$$PROD_TEST_COUNT" = "0" ]; then \
 		echo "  ✓ 生产数据库无测试数据污染"; \
 	else \
