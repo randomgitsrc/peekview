@@ -7,6 +7,34 @@
 
 ## [Unreleased]
 
+## [0.1.30] - 2026-05-21
+
+### 安全加固（P0）
+
+- Rate limiting：slowapi 限速，login/register 10次/分钟，可配置（`PEEKVIEW_SERVER__RATE_LIMIT_*`）
+- 安全响应头：X-Content-Type-Options、X-Frame-Options、Cache-Control、Referrer-Policy、CSP（API-only）
+- Health check 增强：DB 连通性、存储目录可写、磁盘空间监控，降级报 "degraded"（`PEEKVIEW_STORAGE__HEALTH_DISK_WARNING_MB`）
+- Content-Disposition 头注入修复：ZIP download 端点复用 `_sanitize_filename`
+
+### 新增
+
+- npm publish workflow：GitHub Actions CI，mcp-v* tag 触发，Node 18/20 并行测试 + 发布
+- `make bump-mcp-version`：MCP Server 版本独立管理（不再与 Python 版本强制同步）
+- `make pre-publish-npm`：含 dry-run + unit test，不再双重构建
+- 安全规格文档：`docs/specs/spec-security-hardening.md`
+- 实现计划文档：`docs/plans/impl-plan-security-hardening.md`
+
+### 修复
+
+- Makefile `debug-verify-isolation` shell 语法错误（多行 Python 转单行）
+- npm workflow 并发控制、版本校验（3轮 gstack 评审全部通过）
+- MCP Server package-lock.json 版本同步（`npm install --package-lock-only`）
+
+### 变更
+
+- MCP Server 版本独立演进（当前 v0.2.0），`bump-version` 不再覆盖 MCP package.json
+
+
 ## [mcp-v0.2.0] - 2026-05-20
 
 ### 新增
