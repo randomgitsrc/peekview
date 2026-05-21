@@ -1340,5 +1340,126 @@ def api_openapi(base_url: str | None) -> None:
     click.echo(f"  OpenAPI JSON:  {url}/openapi.json")
 
 
+@cli.command(name="uninstall")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+@click.option("--keep-data", is_flag=True, help="Keep data directory (~/.peekview/)")
+def uninstall_cmd(yes: bool, keep_data: bool) -> None:
+    """Uninstall PeekView and optionally remove data.
+
+    Examples:
+        peekview uninstall              # Interactive uninstall
+        peekview uninstall -y           # Skip confirmation
+        peekview uninstall -y --keep-data # Uninstall but keep data
+    """
+    import shutil
+
+    click.echo("=== PeekView Uninstall ===")
+    click.echo("")
+
+    # Check if installed via pipx
+    pipx_installed = shutil.which("pipx") is not None
+    pip_installed = False
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "show", "peekview"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        pip_installed = result.returncode == 0
+    except Exception:
+        pass
+
+    # Show what will be removed
+    click.echo("The following will be removed:")
+    if pipx_installed:
+        click.echo("  - pipx package: peekview")
+    elif pip_installed:
+        click.echo("  - pip package: peekview")
+    else:
+        click.echo("  - Installation method unknown (pipx/pip not found)")
+
+    if not keep_data:
+        data_dir = Path.home() / ".peekview"
+        click.echo(f"  - Data directory: {data_dir}")
+    else:
+        click.echo("  - Data directory: will be preserved (--keep-data)")
+
+    click.echo("")
+
+    # Confirm
+    if not yes:
+        if not click.confirm("Proceed with uninstall?"):
+            click.echo("Cancelled.")
+            return
+
+    # Stop services first
+    click.echo("→ Stopping services...")
+    try:
+        subprocess.run(
+            ["systemctl", "stop", "peekview"],
+            capture_output=True,
+            check=False
+        )
+        subprocess.run(
+            ["systemctl", "disable", "peekview"],
+            capture_output=True,
+            check=False
+        )
+    except Exception:
+        pass
+
+    # Uninstall
+    click.echo("→ Uninstalling PeekView...")
+    try:
+        if pipx_installed:
+            result = subprocess.run(
+                ["pipx", "uninstall", "peekview", "-y"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                click.echo("✓ PeekView uninstalled via pipx")
+            else:
+                click.echo(f"⚠ pipx uninstall output: {result.stderr}", err=True)
+        elif pip_installed:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "uninstall", "-y", "peekview"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                click.echo("✓ PeekView uninstalled via pip")
+            else:
+                click.echo(f"⚠ pip uninstall output: {result.stderr}", err=True)
+    except Exception as e:
+        click.echo(f"✗ Error uninstalling: {e}", err=True)
+        click.echo("You may need to manually uninstall with:")
+        click.echo("  pipx uninstall peekview")
+        click.echo("  # or")
+        click.echo("  pip uninstall peekview")
+
+    # Remove data
+    if not keep_data:
+        data_dir = Path.home() / ".peekview"
+        if data_dir.exists():
+            click.echo(f"→ Removing data directory: {data_dir}")
+            try:
+                shutil.rmtree(data_dir)
+                click.echo("✓ Data directory removed")
+            except Exception as e:
+                click.echo(f"⚠ Could not remove data directory: {e}", err=True)
+                click.echo(f"   You may need to manually remove: rm -rf {data_dir}")
+
+    click.echo("")
+    click.echo("=== Uninstall Complete ===")
+    if keep_data:
+        click.echo(f"Data preserved at: {Path.home() / '.peekview'}")
+        click.echo("To remove data: rm -rf ~/.peekview")
+
+
 if __name__ == "__main__":
     cli()

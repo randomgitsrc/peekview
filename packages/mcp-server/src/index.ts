@@ -41,11 +41,43 @@ Environment Variables:
 Options:
   -v, --version       Show version
   -h, --help          Show help
+  uninstall           Show uninstall instructions
 
 Example:
   export PEEKVIEW_URL=https://api.example.com
   export PEEKVIEW_PUBLIC_URL=https://app.example.com
   peekview-mcp
+
+Uninstall:
+  npm uninstall -g @peekview/mcp-server
+`);
+  process.exit(0);
+}
+
+if (args.includes('uninstall')) {
+  console.log(`
+=== Uninstall PeekView MCP Server ===
+
+To uninstall, run:
+
+  npm uninstall -g @peekview/mcp-server
+
+This will remove:
+  - The peekview-mcp command
+  - MCP Server package files
+
+Your data in PeekView server will NOT be affected.
+
+=== Optional Cleanup ===
+
+Remove environment variables from ~/.bashrc or ~/.profile:
+  - PEEKVIEW_URL
+  - PEEKVIEW_PUBLIC_URL
+  - PEEKVIEW_API_KEY
+
+Stop systemd service (if configured):
+  sudo systemctl stop peekview-mcp
+  sudo systemctl disable peekview-mcp
 `);
   process.exit(0);
 }
