@@ -350,19 +350,155 @@ sudo systemctl restart peekview-mcp
 
 ## 🗑️ 卸载
 
+### 方式一：完全卸载（删除所有内容）
+
 ```bash
-# 停止服务
+#!/bin/bash
+# save as: uninstall-peekview.sh
+# chmod +x uninstall-peekview.sh
+# ./uninstall-peekview.sh
+
+echo "=== PeekView + MCP Server 完全卸载 ==="
+
+# 1. 停止并删除系统服务
+echo "→ 停止服务..."
+sudo systemctl stop peekview peekview-mcp 2>/dev/null || true
+sudo systemctl disable peekview peekview-mcp 2>/dev/null || true
+sudo rm -f /etc/systemd/system/peekview.service
+sudo rm -f /etc/systemd/system/peekview-mcp.service
+sudo systemctl daemon-reload
+
+# 2. 卸载 PeekView
+echo "→ 卸载 PeekView..."
+pipx uninstall peekview 2>/dev/null || pip uninstall -y peekview 2>/dev/null || true
+
+# 3. 卸载 MCP Server
+echo "→ 卸载 MCP Server..."
+npm uninstall -g @peekview/mcp-server 2>/dev/null || true
+
+# 4. 清理数据
+echo "→ 清理数据目录..."
+read -p "⚠️  确定要删除所有数据吗？包括数据库和上传的文件？[y/N] " confirm
+if [ "$confirm" = "y" ]; then
+    rm -rf ~/.peekview/
+    rm -rf /tmp/peekview-*
+    echo "✓ 数据已删除"
+else
+    echo "ℹ  保留数据目录: ~/.peekview/"
+fi
+
+# 5. 清理日志
+echo "→ 清理日志..."
+sudo rm -f /var/log/peekview*.log 2>/dev/null || true
+sudo journalctl --vacuum-time=1s --unit=peekview --unit=peekview-mcp 2>/dev/null || true
+
+echo ""
+echo "=== 卸载完成 ==="
+echo "如需重新安装，请运行:"
+echo "  pipx install peekview"
+echo "  npm install -g @peekview/mcp-server"
+```
+
+### 方式二：分步卸载（按需选择）
+
+#### 只卸载服务（保留数据和配置）
+
+```bash
+# 停止并禁用服务
 sudo systemctl stop peekview peekview-mcp
 sudo systemctl disable peekview peekview-mcp
 
-# 卸载 PeekView
+# 删除服务文件
+sudo rm -f /etc/systemd/system/peekview.service
+sudo rm -f /etc/systemd/system/peekview-mcp.service
+sudo systemctl daemon-reload
+
+echo "✓ 服务已卸载，数据保留在 ~/.peekview/"
+```
+
+#### 卸载 PeekView（保留 MCP Server）
+
+```bash
+# 停止服务
+sudo systemctl stop peekview 2>/dev/null || true
+
+# 卸载
 pipx uninstall peekview
 
-# 卸载 MCP Server
+# 或如果是 pip 安装
+pip uninstall peekview
+```
+
+#### 卸载 MCP Server（保留 PeekView）
+
+```bash
+# 停止服务
+sudo systemctl stop peekview-mcp 2>/dev/null || true
+
+# 卸载
 npm uninstall -g @peekview/mcp-server
 
-# 删除数据（谨慎）
-rm -rf ~/.peekview/
+# 清理环境变量（从 ~/.bashrc 或 ~/.profile 中删除）
+sed -i '/PEEKVIEW_URL/d' ~/.bashrc
+sed -i '/PEEKVIEW_API_KEY/d' ~/.bashrc
+```
+
+### 方式三：手动清理（如果自动卸载失败）
+
+```bash
+# 查找并删除 PeekView 相关文件
+which peekview
+# 手动删除: rm -f /path/to/peekview
+
+# 查找并删除 MCP Server
+which peekview-mcp
+ls $(npm config get prefix)/bin/peekview-mcp
+rm -f $(npm config get prefix)/bin/peekview-mcp
+
+# 清理 npm 缓存
+npm cache clean --force
+
+# 清理 pip/pipx 缓存
+pipx uninstall peekview 2>/dev/null || true
+pip cache purge
+```
+
+### 卸载检查清单
+
+卸载后确认以下内容已删除：
+
+```bash
+# 检查服务
+systemctl status peekview 2>&1 | grep "Active: failed" && echo "✓ PeekView 服务已停止" || echo "✗ 服务仍在运行"
+systemctl status peekview-mcp 2>&1 | grep "Active: failed" && echo "✓ MCP 服务已停止" || echo "✗ 服务仍在运行"
+
+# 检查命令
+which peekview && echo "✗ peekview 命令仍存在" || echo "✓ peekview 已删除"
+which peekview-mcp && echo "✗ peekview-mcp 命令仍存在" || echo "✓ peekview-mcp 已删除"
+
+# 检查数据（确认是否保留）
+ls -la ~/.peekview 2>/dev/null && echo "ℹ 数据目录仍存在" || echo "✓ 数据目录已删除"
+
+# 检查端口
+lsof -i :8080 2>/dev/null | grep peekview && echo "✗ 端口 8080 仍被占用" || echo "✓ 端口 8080 已释放"
+lsof -i :33333 2>/dev/null | grep peekview-mcp && echo "✗ 端口 33333 仍被占用" || echo "✓ 端口 33333 已释放"
+```
+
+### 重新安装
+
+卸载后如需重新安装：
+
+```bash
+# 完整重装
+pipx install peekview
+npm install -g @peekview/mcp-server
+
+# 恢复数据（如果备份了）
+tar xzf peekview-backup-xxxx.tar.gz -C ~/
+
+# 重新配置服务
+sudo systemctl start peekview
+sudo systemctl start peekview-mcp
 ```
 
 ---
