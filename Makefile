@@ -1,7 +1,7 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target
 help:
@@ -45,6 +45,7 @@ help:
 	@echo "  make test-mcp           - Run all MCP tests"
 	@echo "  make publish-npm-dry    - Dry-run npm publish"
 	@echo "  make publish-npm        - Publish MCP Server to npm"
+	@echo "  make bump-mcp-version NEW_MCP_VERSION=x.y.z - Bump MCP version independently"
 	@echo ""
 	@echo "Full docs: docs/process/debug-workflow.md docs/process/release.md"
 
@@ -191,16 +192,11 @@ bump-version:
 	sed -i "s/^version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$(NEW_VERSION)\"/" backend/pyproject.toml
 	@# Update package.json
 	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" frontend-v3/package.json
-	@# Update MCP Server package.json
-	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" packages/mcp-server/package.json
-	@# Rebuild MCP dist with new version
-	cd packages/mcp-server && npm run build
 	@# Verify code files
 	@BACKEND_VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)"); \
 	PYPROJECT_VERSION=$$(grep "^version = " backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
-	PACKAGE_VERSION=$$(grep '"version":' frontend-v3/package.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
-	MCP_VERSION=$$(grep '"version":' packages/mcp-server/package.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
-	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ] && [ "$$MCP_VERSION" = "$(NEW_VERSION)" ]; then \
+	PACKAGE_VERSION=$$(grep '\"version\":' frontend-v3/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
+	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ]; then \
 		echo "✓ 代码版本文件已更新: v$(NEW_VERSION)"; \
 	else \
 		echo "✗ 版本不一致，请检查"; exit 1; \
@@ -215,6 +211,37 @@ bump-version:
 	@echo "还需手动完成："
 	@echo "  1. 编辑 CHANGELOG.md，填写 [$(NEW_VERSION)] 具体变更内容"
 	@echo "  2. git add -A && git commit -m \"chore(release): bump to v$(NEW_VERSION)\""
+	@echo ""
+	@echo "⚠️  MCP Server 版本独立管理，如需更新请单独执行："
+	@echo "    make bump-mcp-version NEW_MCP_VERSION=x.y.z"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Bump MCP Server version independently
+bump-mcp-version:
+	@if [ -z "$(NEW_MCP_VERSION)" ]; then \
+		echo "Usage: make bump-mcp-version NEW_MCP_VERSION=x.y.z"; \
+		echo "Example: make bump-mcp-version NEW_MCP_VERSION=0.3.0"; \
+		exit 1; \
+	fi
+	@echo "→ Bumping MCP Server version to $(NEW_MCP_VERSION)..."
+	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_MCP_VERSION)\"/" packages/mcp-server/package.json
+	@# Rebuild MCP dist with new version
+	cd packages/mcp-server && npm run build
+	@# Verify
+	@MCP_VERSION=$$(grep '\"version\":' packages/mcp-server/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
+	if [ "$$MCP_VERSION" = "$(NEW_MCP_VERSION)" ]; then \
+		echo "✓ MCP Server 版本已更新: v$(NEW_MCP_VERSION)"; \
+	else \
+		echo "✗ MCP 版本不一致，请检查"; exit 1; \
+	fi
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ bump-mcp-version 完成: v$(NEW_MCP_VERSION)"
+	@echo ""
+	@echo "还需手动完成："
+	@echo "  1. 编辑 CHANGELOG.md，填写 [mcp-v$(NEW_MCP_VERSION)] 变更内容"
+	@echo "  2. git add -A && git commit -m \"chore(mcp): bump to v$(NEW_MCP_VERSION)\""
+	@echo "  3. git tag mcp-v$(NEW_MCP_VERSION) && git push origin mcp-v$(NEW_MCP_VERSION)"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 单独同步文档版本（不 bump，用于修复漏掉的文档同步）
@@ -463,9 +490,11 @@ test-mcp:
 	cd packages/mcp-server && npm test
 	@echo "✓ MCP tests passed"
 
-pre-publish-npm: build-mcp test-mcp-unit
-	@echo "✓ MCP Server pre-publish checks passed"
-
+pre-publish-npm: test-mcp-unit
+	@echo "→ Dry-run npm publish..."
+	cd packages/mcp-server && npm publish --access public --dry-run
+	@echo "✓ MCP Server pre-publish checks passed (dry-run OK)"
+	@echo "  Note: npm publish automatically runs prepublishOnly (build + test:unit)"
 publish-npm-dry:
 	@echo "→ Dry-run npm publish..."
 	cd packages/mcp-server && npm publish --access public --dry-run

@@ -206,7 +206,7 @@ open https://github.com/randomgitsrc/peekview/releases
 pipx upgrade peekview
 peekview --version
 
-# 4. 重启生产服务（必须！pipx upgrade 不会自动重启）
+# 4. 重启生产服务（⚠️ 必须手动执行，见第 5.5 节说明！pipx upgrade 不会自动重启）
 sudo systemctl restart peekview
 
 # 5. 验证生产服务已更新
