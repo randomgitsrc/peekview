@@ -140,26 +140,28 @@ git push origin main || (sleep 5 && git push origin main)
 git push origin "v$VERSION" || (sleep 5 && git push origin "v$VERSION")
 ```
 
-### 6.5 发布 MCP Server 到 npm（如有 MCP 变更）
+### 6.5 发布 MCP Server 到 npm（独立版本管理）
+
+MCP Server 与 Python Backend 版本独立管理。发布流程：
 
 ```bash
-# 确认 MCP Server 代码已构建并测试
-make build-mcp && make test-mcp-unit
+# 1. 更新 MCP Server 版本
+make bump-mcp-version NEW_MCP_VERSION=0.3.0
 
-# 发布到 npm
+# 2. 编辑 CHANGELOG.md，填写 [mcp-v0.3.0] 变更内容
+
+# 3. 预发布检查（unit test + dry-run）
+make pre-publish-npm
+
+# 4. 手动发布到 npm
 make publish-npm
 
-# 或先 dry-run 验证
-make publish-npm-dry
+# 5. 提交并推送 tag 触发 CI 自动发布
+git add -A && git commit -m "chore(mcp): bump to v0.3.0"
+git tag mcp-v0.3.0 && git push origin mcp-v0.3.0
 ```
 
-如果 MCP Server 有独立版本变更，推送 `mcp-v*` 标签触发 GitHub Actions 自动发布：
-
-```bash
-MCP_VERSION=$(node -p "require('./packages/mcp-server/package.json').version")
-git tag -a "mcp-v$MCP_VERSION" -m "MCP Server v$MCP_VERSION"
-git push origin "mcp-v$MCP_VERSION"
-```
+**CI 自动发布**：推送 `mcp-v*` tag 会触发 GitHub Actions，自动在 Node 18/20 并行测试后发布到 npm。
 
 ## 详细步骤说明
 

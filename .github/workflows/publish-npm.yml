@@ -10,19 +10,14 @@ on:
         required: false
         type: string
 
-concurrency:
-  group: npm-publish
-  cancel-in-progress: false
-
 jobs:
-  publish:
-    name: Build & Publish to npm
+  test:
+    name: Test on Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
-    environment: npm
-
     strategy:
       matrix:
         node-version: ['18', '20']
+      fail-fast: false
 
     steps:
       - name: Checkout
@@ -32,6 +27,33 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: cd packages/mcp-server && npm ci
+
+      - name: Build
+        run: cd packages/mcp-server && npm run build
+
+      - name: Run unit tests
+        run: cd packages/mcp-server && npm run test:unit
+
+  publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    environment: npm
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
           cache-dependency-path: packages/mcp-server/package-lock.json
@@ -72,7 +94,6 @@ jobs:
           fi
 
       - name: Publish to npm
-        if: matrix.node-version == '20'
         run: cd packages/mcp-server && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

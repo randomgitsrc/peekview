@@ -225,6 +225,8 @@ bump-mcp-version:
 	fi
 	@echo "→ Bumping MCP Server version to $(NEW_MCP_VERSION)..."
 	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_MCP_VERSION)\"/" packages/mcp-server/package.json
+	@# Sync lock file version metadata (no dependency resolution)
+	cd packages/mcp-server && npm install --package-lock-only
 	@# Rebuild MCP dist with new version
 	cd packages/mcp-server && npm run build
 	@# Verify
@@ -236,6 +238,7 @@ bump-mcp-version:
 	fi
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@# Note: No auto doc sync here (MCP version refs are few, manual update sufficient)
 	@echo "✅ bump-mcp-version 完成: v$(NEW_MCP_VERSION)"
 	@echo ""
 	@echo "还需手动完成："
