@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from peekview.auth import get_current_user
+from peekview.api.files import _sanitize_filename
 from peekview.exceptions import AuthenticationError
 from peekview.models import API_KEY_PREFIX, CreateEntryRequest, EntryUpdate, User
 from peekview.services.entry_service import EntryService, get_entry_service
@@ -261,7 +262,7 @@ async def download_entry_files(
 
     zip_buffer.seek(0)
 
-    filename = f"{entry.slug}.zip"
+    filename = _sanitize_filename(f"{entry.slug}.zip")
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",

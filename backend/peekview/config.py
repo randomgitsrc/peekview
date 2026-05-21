@@ -96,6 +96,10 @@ class PeekStorage(BaseSettings):
         default_factory=list,
         description="Allowed paths for local_path reads (allowlist)",
     )
+    health_disk_warning_mb: int = Field(
+        default=100,
+        description="Warn in health check when available disk space drops below this (MB)",
+    )
     ignored_dirs: set[str] = Field(
         default_factory=lambda: {
             ".git",
@@ -145,12 +149,31 @@ class PeekServer(BaseSettings):
         default_factory=lambda: ["http://localhost:5173"],
         description="CORS allowed origins",
     )
+    rate_limit_enabled: bool = Field(
+        default=True,
+        description="Enable rate limiting on sensitive endpoints",
+    )
+    rate_limit_per_minute: int = Field(
+        default=60,
+        description="Default rate limit (requests per minute per IP)",
+    )
+    rate_limit_login_per_minute: int = Field(
+        default=10,
+        description="Rate limit for login/register attempts (per minute per IP)",
+    )
 
     @field_validator("port")
     @classmethod
     def validate_port(cls, v: int) -> int:
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @field_validator("rate_limit_per_minute", "rate_limit_login_per_minute")
+    @classmethod
+    def validate_positive_rate(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("Rate limits must be positive")
         return v
 
 

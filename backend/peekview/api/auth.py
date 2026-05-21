@@ -15,6 +15,7 @@ from peekview.auth import (
     hash_password,
     require_auth,
 )
+from peekview.api.rate_limit import limiter
 from peekview.database import get_engine
 from peekview.exceptions import InvalidCredentialsError, RegistrationError
 from peekview.models import (
@@ -32,6 +33,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
 @router.post("/register", status_code=201)
+@limiter.limit("10/minute")
 async def register(data: UserRegister, request: Request) -> AuthResponse:
     """Register a new user.
 
@@ -100,6 +102,7 @@ async def register(data: UserRegister, request: Request) -> AuthResponse:
 
 
 @router.post("/login")
+@limiter.limit("10/minute")
 async def login(data: UserLogin, request: Request) -> AuthResponse:
     """Login with username and password.
 

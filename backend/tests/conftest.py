@@ -9,6 +9,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, SQLModel, create_engine
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset rate limiter storage between tests to prevent cross-test rate limiting."""
+    from peekview.api.rate_limit import limiter
+    # Reset in-memory storage so rate limits don't accumulate across tests
+    if limiter._limiter and limiter._limiter.storage:
+        try:
+            limiter._limiter.storage.reset()
+        except Exception:
+            pass
+
+
 def pytest_configure(config):
     """Configure pytest-asyncio."""
     config.option.asyncio_mode = "auto"

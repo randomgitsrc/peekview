@@ -583,19 +583,151 @@ class TestFilenameSanitization:
                 # Clean up
                 await client.delete(f"/api/v1/entries/{entry_slug}")
 
+    @pytest.mark.asyncio
+    async def test_zip_download_filename_injection_blocked(self, client):
+        """ZIP download Content-Disposition should be sanitized."""
+        malicious_slugs_prefixes = [
+            'test"; injection="true',
+            "test\r\nSet-Cookie: evil=true",
+            "test; extra-header: bad",
+        ]
+        for prefix in malicious_slugs_prefixes:
+            # Create an entry with multiple files to enable ZIP download
+            resp = await client.post("/api/v1/entries", json={
+                "summary": "ZIP injection test",
+                "files": [
+                    {"path": f"{prefix}/file1.txt", "content": "content1"},
+                    {"path": f"{prefix}/file2.txt", "content": "content2"},
+                ],
+            })
+            if resp.status_code == 201:
+                data = resp.json()
+                entry_slug = data["slug"]
+                download_resp = await client.get(
+                    f"/api/v1/entries/{entry_slug}/download"
+                )
+                assert download_resp.status_code == 200
+                if "content-disposition" in download_resp.headers:
+                    disposition = download_resp.headers["content-disposition"]
+                    assert "\r" not in disposition
+                    assert "\n" not in disposition
+                await client.delete(f"/api/v1/entries/{entry_slug}")
+
+
+class TestSecurityHeaders:
+    """Security response headers tests."""
+
+    @pytest.mark.asyncio
+    async def test_api_responses_have_security_headers(self, client):
+        """API responses should include security headers."""
+        resp = await client.get("/api/v1/entries")
+        assert resp.headers.get("x-content-type-options") == "nosniff"
+        assert resp.headers.get("x-frame-options") == "DENY"
+        assert resp.headers.get("cache-control") == "no-store"
+        assert resp.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
+        assert "content-security-policy" in resp.headers
+
+    @pytest.mark.asyncio
+    async def test_health_check_has_security_headers(self, client):
+        """Health check should include security headers."""
+        resp = await client.get("/health")
+        assert resp.headers.get("x-content-type-options") == "nosniff"
+        assert resp.headers.get("x-frame-options") == "DENY"
+        assert resp.headers.get("cache-control") == "no-store"
+
+    @pytest.mark.asyncio
+    async def test_static_file_responses_no_restrictive_headers(self, client):
+        """Static file responses should not have restrictive security headers."""
+        resp = await client.get("/")
+        # API-specific security headers should NOT be on static pages
+        assert resp.headers.get("x-content-type-options") is None
+        assert resp.headers.get("cache-control") is None or "no-store" not in resp.headers.get("cache-control", "")
+
+
+class TestHealthCheck:
+    """Enhanced health check tests."""
+
+    @pytest.mark.asyncio
+    async def test_health_check_ok(self, client):
+        """Healthy system returns status ok."""
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["checks"]["database"] == "ok"
+        assert data["checks"]["storage"] == "ok"
+        assert isinstance(data["checks"]["disk_space_mb"], int)
+
+    @pytest.mark.asyncio
+    async def test_health_check_degraded_on_db_error(self, app):
+        """DB error should return degraded, not 500."""
+        from unittest.mock import MagicMock
+        original_engine = app.state.engine
+        mock_engine = MagicMock()
+        mock_engine.connect.side_effect = Exception("DB unavailable")
+        app.state.engine = mock_engine
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            resp = await c.get("/health")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["status"] == "degraded"
+            assert "database_error" in data["warnings"]
+            assert "error" in data["checks"]["database"]
+
+        app.state.engine = original_engine
+
 
 class TestRateLimiting:
-    """Rate limiting tests (if implemented)."""
+    """Rate limiting tests."""
 
-    @pytest.mark.skip(reason="Rate limiting not yet implemented")
     @pytest.mark.asyncio
-    async def test_excessive_requests_rate_limited(self, client):
-        """Excessive requests from same IP should be rate limited."""
-        # Make many rapid requests
-        for _ in range(100):
-            resp = await client.get("/api/v1/entries")
-            if resp.status_code == 429:
-                break  # Rate limited as expected
+    async def test_login_rate_limited(self, app):
+        """Login endpoint should be rate limited after exceeding the limit."""
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            # Make more than 10 rapid login requests (limit is 10/minute)
+            got_429 = False
+            for _ in range(15):
+                resp = await c.post("/api/v1/auth/login", json={
+                    "username": "nonexistent",
+                    "password": "wrong",
+                })
+                if resp.status_code == 429:
+                    got_429 = True
+                    # Verify error format
+                    data = resp.json()
+                    assert data["error"]["code"] == "RATE_LIMITED"
+                    break
+            assert got_429, "Expected 429 rate limit response"
 
-        # Should eventually be rate limited
-        # (This is a placeholder - actual rate limiting not implemented)
+    @pytest.mark.asyncio
+    async def test_health_exempt_from_rate_limit(self, client):
+        """Health endpoint should not be rate limited."""
+        for _ in range(20):
+            resp = await client.get("/health")
+            assert resp.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_rate_limit_disabled(self):
+        """When rate limiting disabled, no 429 responses."""
+        from peekview.main import create_app
+        from pathlib import Path
+        data_dir = Path(tempfile.mkdtemp())
+        db_path = Path(tempfile.mktemp(suffix=".db"))
+        disabled_app = create_app(
+            data_dir=data_dir,
+            db_path=db_path,
+            rate_limit_enabled=False,
+        )
+        transport = ASGITransport(app=disabled_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            # Make many login requests with rate limiting disabled
+            for _ in range(10):
+                resp = await c.post("/api/v1/auth/login", json={
+                    "username": "nonexistent",
+                    "password": "wrong",
+                })
+                # Should get 401 (bad credentials) not 429 (rate limit)
+                assert resp.status_code in (401, 400), f"Expected 401/400, got {resp.status_code}"

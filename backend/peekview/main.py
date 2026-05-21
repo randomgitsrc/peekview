@@ -1,6 +1,8 @@
 """FastAPI application factory and main entry point."""
 
 import logging
+import os
+import shutil
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,6 +15,9 @@ from peekview import __version__
 from peekview.config import PeekConfig
 from peekview.database import init_db
 from peekview.exceptions import PeekError
+from peekview.api.rate_limit import limiter
+from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ def create_app(
     data_dir: Path | None = None,
     db_path: Path | None = None,
     base_url: str | None = None,
+    rate_limit_enabled: bool | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -72,6 +78,8 @@ def create_app(
         config.storage.db_path = db_path
     if base_url:
         config.server.base_url = base_url
+    if rate_limit_enabled is not None:
+        config.server.rate_limit_enabled = rate_limit_enabled
     app.state.config = config
 
     # Ensure directories exist
@@ -101,6 +109,18 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Security headers middleware (API and health only, not static files)
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api") or request.url.path == "/health":
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        return response
 
     # API key auth middleware (if configured)
     api_key = getattr(config.server, 'api_key', '') or getattr(config, 'api_key', '')
@@ -163,6 +183,22 @@ def create_app(
         )
         return response
 
+    # Configure rate limiter (no default limits — only decorator-based per-route limits)
+    app.state.limiter = limiter
+    limiter.enabled = config.server.rate_limit_enabled
+
+    # Rate limit exception handler
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+        return JSONResponse(
+            status_code=429,
+            content={"error": {"code": "RATE_LIMITED", "message": str(exc.detail), "details": None}},
+        )
+
+    # Add SlowAPIMiddleware for decorator-based rate limiting
+    from slowapi.middleware import SlowAPIMiddleware
+    app.add_middleware(SlowAPIMiddleware)
+
     # Register API routes
     from peekview.api.auth import router as auth_router
     from peekview.api.apikeys import router as apikeys_router
@@ -175,8 +211,44 @@ def create_app(
 
     # Health check (must be before static files to avoid catch-all route)
     @app.get("/health")
-    async def health_check():
-        return {"status": "ok", "version": app.version}
+    async def health_check(request: Request):
+        config = request.app.state.config
+        engine = request.app.state.engine
+        checks = {}
+        warnings = []
+
+        # Database connectivity
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            checks["database"] = "ok"
+        except Exception as e:
+            checks["database"] = f"error: {e}"
+            warnings.append("database_error")
+
+        # Storage directory accessibility
+        data_dir = config.storage.data_dir
+        if data_dir.exists() and os.access(data_dir, os.W_OK):
+            checks["storage"] = "ok"
+        else:
+            checks["storage"] = "error: data_dir not accessible"
+            warnings.append("storage_error")
+
+        # Disk space
+        try:
+            usage = shutil.disk_usage(data_dir)
+            free_mb = usage.free // (1024 * 1024)
+            checks["disk_space_mb"] = free_mb
+            if free_mb < config.storage.health_disk_warning_mb:
+                warnings.append("disk_space_low")
+        except Exception:
+            checks["disk_space_mb"] = "unknown"
+
+        status = "ok" if not warnings else "degraded"
+        result = {"status": status, "version": app.version, "checks": checks}
+        if warnings:
+            result["warnings"] = warnings
+        return result
 
     # Add global exception handler for PeekError
     @app.exception_handler(PeekError)
