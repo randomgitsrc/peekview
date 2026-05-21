@@ -100,14 +100,14 @@ build-backend:
 	find backend -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find backend -type f -name "*.pyc" -delete
 	@echo "→ Building backend wheel..."
-	cd backend cd backend && python3 -m buildcd backend && python3 -m build /usr/bin/python3 -m build --wheel
+	cd backend && /usr/bin/python3 -m build --wheel
 	@echo "✓ Backend wheel built"
 
 # Build backend wheel (fast) - minimal cleanup
 build-backend-fast:
 	@echo "→ Building backend wheel (fast)..."
 	cd backend && rm -rf dist *.egg-info build
-	cd backend cd backend && python3 -m buildcd backend && python3 -m build /usr/bin/python3 -m build --wheel
+	cd backend && /usr/bin/python3 -m build --wheel
 	@echo "✓ Backend wheel built"
 
 # =============================================================================
