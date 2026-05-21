@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.32] - 2026-05-21
+
+### 新增
+
+- CLI `peekview uninstall` 命令 - 一键卸载 PeekView
+  - 支持 `--yes` 跳过确认
+  - 支持 `--keep-data` 保留数据目录
+  - 自动检测 pipx/pip 安装方式
+- CLI `peekview-mcp uninstall` 命令 - 显示卸载说明
+- Agent 部署指南 - 完整的 VPS 部署手册
+
+### 文档
+
+- 添加 `docs/agent-deployment-guide.md` - Agent 部署完整指南
+
+
+
 ## [0.1.31] - 2026-05-21
 
 ### 修复
