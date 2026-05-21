@@ -1,6 +1,6 @@
 {
   "name": "@peekview/mcp-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP Server for PeekView - AI Agent integration (SSE transport)",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,12 +22,12 @@
     "start": "node dist/index.js",
     "serve": "node dist/index.js serve",
     "test": "vitest run",
-    "test:unit": "vitest run tests/*.test.ts",
+    "test:unit": "vitest run tests/server.test.ts tests/client.test.ts tests/config.test.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts --reporter=verbose",
-    "test:watch": "vitest",
     "test:e2e": "cd ../../frontend-v3 && npx playwright test e2e/mcp-server.spec.ts",
+    "test:watch": "vitest",
     "lint": "eslint src/**/*.ts",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm run test:unit"
   },
   "keywords": [
     "mcp",

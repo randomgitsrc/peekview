@@ -1,0 +1,49 @@
+name: Publish MCP Server to npm
+
+on:
+  push:
+    tags: ['mcp-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.2.0)"
+        required: false
+        type: string
+
+jobs:
+  publish:
+    name: Build & Publish to npm
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          cache-dependency-path: packages/mcp-server/package-lock.json
+
+      - name: Install dependencies
+        run: cd packages/mcp-server && npm ci
+
+      - name: Build
+        run: cd packages/mcp-server && npm run build
+
+      - name: Run unit tests
+        run: cd packages/mcp-server && npm run test:unit
+
+      - name: Verify version
+        run: |
+          cd packages/mcp-server
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Publishing @peekview/mcp-server v${PKG_VERSION}"
+
+      - name: Publish to npm
+        run: cd packages/mcp-server && npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -18,7 +18,7 @@
 
 ## 当前活跃任务
 
-> 当前版本 v0.1.29 已发布。  
+> 当前版本 v0.1.29 已发布（Backend/Frontend）。MCP Server v0.2.0 已发布到 npm。
 > 如需新增功能，请在 `docs/plans/` 中规划新任务。
 
 **无进行中任务**
@@ -29,6 +29,7 @@
 
 - **认证规格**：`docs/specs/spec-user-auth.md`
 - **远程 CLI 规格**：`docs/specs/spec-remote-cli.md`
+- **MCP 多用户认证规格**：`docs/specs/spec-mcp-multi-user.md`
 - **Admin 角色计划**：`docs/archived/plans/impl-plan-admin-role.md`（已完成）
 - **项目索引**：`INDEX.md`
 - **发布记录**：`CHANGELOG.md`
@@ -86,6 +87,18 @@
 ---
 
 ## 历史归档（已完成的任务）
+
+### Task MCP: MCP Server v0.2.0 多用户认证
+- **状态**: ✅ 已完成 (MCP v0.2.0)
+- **完成日期**: 2026-05-20
+- **主要内容**:
+  - SSE 传输 + AsyncLocalStorage 多用户 session 隔离
+  - pv_ API Key 透传认证（移除 MCP_TOKEN/PEEKVIEW_API_KEY）
+  - Tools: create_entry, get_entry, list_entries, delete_entry
+  - 中文错误消息、Health check、Docker 支持
+  - npm 发布 (@peekview/mcp-server)
+  - 三轮 gstack 评审全部通过
+- **详情**: 见 CHANGELOG.md [mcp-v0.2.0]
 
 ### Task 27-30: FileTree + 资源注入 + Pack 按钮 + SVG 渲染
 - **状态**: ✅ 已完成 (v0.1.29)

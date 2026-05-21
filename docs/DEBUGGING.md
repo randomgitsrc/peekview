@@ -126,7 +126,7 @@ alias pvdev='cd /home/kity/lab/projects/peekview/backend && source .venv/bin/act
 peekview serve --log-level debug
 
 # 或设置环境变量
-export PEEKVIEW_LOG_LEVEL=debug
+export PEEKVIEW_LOGGING__LEVEL=DEBUG
 peekview serve
 ```
 

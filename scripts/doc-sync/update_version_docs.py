@@ -87,6 +87,13 @@ def make_rules(version: str) -> list[dict]:
                 (r'"version": "\d+\.\d+\.\d+"', f'"version": "{version}"'),
             ],
         },
+        {
+            "file": "packages/mcp-server/package.json",
+            "desc": "MCP Server package.json version",
+            "patterns": [
+                (r'"version": "\d+\.\d+\.\d+"', f'"version": "{version}"'),
+            ],
+        },
     ]
 
 

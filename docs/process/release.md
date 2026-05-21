@@ -140,6 +140,27 @@ git push origin main || (sleep 5 && git push origin main)
 git push origin "v$VERSION" || (sleep 5 && git push origin "v$VERSION")
 ```
 
+### 6.5 发布 MCP Server 到 npm（如有 MCP 变更）
+
+```bash
+# 确认 MCP Server 代码已构建并测试
+make build-mcp && make test-mcp-unit
+
+# 发布到 npm
+make publish-npm
+
+# 或先 dry-run 验证
+make publish-npm-dry
+```
+
+如果 MCP Server 有独立版本变更，推送 `mcp-v*` 标签触发 GitHub Actions 自动发布：
+
+```bash
+MCP_VERSION=$(node -p "require('./packages/mcp-server/package.json').version")
+git tag -a "mcp-v$MCP_VERSION" -m "MCP Server v$MCP_VERSION"
+git push origin "mcp-v$MCP_VERSION"
+```
+
 ## 详细步骤说明
 
 ### 版本号管理

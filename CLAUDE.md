@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI → humans view formatted content in browser.
 
-- **Current State:** Backend and frontend both complete (Tasks 0-30), FileTree + HTML resource injection + Pack download added
-- **Current Version:** v0.1.29
-- **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend
+- **Current State:** Backend, frontend, and MCP Server all complete. MCP Server v0.2.0 published to npm.
+- **Current Version:** v0.1.29 (Backend/Frontend) | MCP Server v0.2.0
+- **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, SSE transport)
 - **Key Docs:** Auth spec in `docs/specs/spec-user-auth.md`, remote CLI spec in `docs/specs/spec-remote-cli.md`
 - **Dev Process:** Standard workflow in `docs/process/workflow.md` - **READ THIS FIRST** before starting any work
 - **Release Process:** See `docs/process/release.md` - **MUST READ when releasing**
@@ -37,10 +37,15 @@ peekview/
 │   └── tests/           # pytest suite with shared conftest.py fixtures
 ├── frontend/            # [DEPRECATED] Old frontend - DO NOT USE
 │   └── ...              # Kept for reference only
-└── frontend-v3/         # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
-    ├── src/             # TypeScript/Vue source files
-    ├── dist/            # Build output (copied to backend/peekview/static/)
-    └── e2e/             # Playwright E2E tests
+├── frontend-v3/         # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
+│   ├── src/             # TypeScript/Vue source files
+│   ├── dist/            # Build output (copied to backend/peekview/static/)
+│   └── e2e/             # Playwright E2E tests
+└── packages/
+    └── mcp-server/      # MCP Server (@peekview/mcp-server on npm)
+        ├── src/         # TypeScript source (server, client, tools, config)
+        ├── dist/        # Compiled output
+        └── tests/       # Unit, integration, e2e tests
 ```
 
 ## Backend Commands
@@ -89,6 +94,35 @@ npm run test:e2e           # Playwright E2E tests
 ```
 
 **IMPORTANT:** The frontend router is in `src/router.ts` (NOT `src/router/index.ts`). Always modify `src/router.ts` when adding routes.
+
+## MCP Server Commands
+
+From project root:
+
+```bash
+# Build
+make build-mcp            # Build MCP Server
+
+# Testing
+make test-mcp-unit        # Run unit tests only (no backend needed)
+make test-mcp             # Run all tests (unit + integration + e2e)
+
+# Publishing
+make publish-npm-dry      # Dry-run npm publish
+make publish-npm          # Publish @peekview/mcp-server to npm
+```
+
+From `packages/mcp-server/` directory:
+
+```bash
+npm run build             # Compile TypeScript
+npm run test              # Run all tests
+npm run test:unit         # Unit tests only (safe for CI/prepublish)
+npm run test:integration  # Integration tests (requires PeekView backend)
+npm run test:e2e          # E2E tests (requires PeekView backend)
+```
+
+**Version correspondence:** MCP Server v0.2.0 requires PeekView Backend v0.1.25+ (pv_ API Key auth). The MCP Server has its own version line; `make bump-version` syncs both.
 
 ## CLI Usage
 
@@ -158,6 +192,16 @@ peekview service status / start / stop / uninstall
 - **Entry filtering**: All/Mine tabs for authenticated users
 - **Styling**: CSS variables for theming, FOUC prevention
 
+### MCP Server Architecture (v0.2.0)
+- **Transport**: SSE (Server-Sent Events) via `@modelcontextprotocol/sdk`
+- **Auth**: Two-layer — pv_ prefix check at SSE connect, then passthrough to PeekView API
+- **Session**: AsyncLocalStorage propagates user context (userToken, userId, username) per SSE session
+- **No key storage**: MCP Server never stores API keys; users provide `pv_` keys via Authorization header
+- **Tools**: create_entry, get_entry, list_entries, delete_entry
+- **Health**: `/health` endpoint returns `{status: "ok", version: "x.y.z"}` or 503 if PeekView unreachable
+- **Docker**: Multi-stage build, EXPOSE 33333
+- **npm**: Published as `@peekview/mcp-server`, CI triggered by `mcp-v*` tags
+
 ### DI Pattern
 Services are accessed via `app.state` (not module-level globals or per-request factories):
 ```python
@@ -183,6 +227,7 @@ entry_service = request.app.state.entry_service
 - **API Key tests:** CRUD, auth, expiration, permissions in `test_apikey.py` (26 tests)
 - **CLI tests:** `test_cli.py` with click.CliRunner (32 tests)
 - **E2E tests:** Playwright (52 tests on chromium + Mobile Chrome, including auth, All/Mine, API Keys)
+- **MCP tests:** 72 tests (38 unit + 12 integration + 13 e2e + 9 config/tools), unit tests don't need PeekView backend
 - All tests use temp directories (never touch real `~/.peekview/`)
 
 ## Configuration (PEEKVIEW_* env vars)
@@ -233,6 +278,14 @@ All core features complete:
 - **Image Viewer:** PNG/JPG/GIF/WebP/SVG with zoom, size warnings
 - **Pack Download:** ZIP download for multi-file entries
 - 55+ E2E tests passing
+
+**MCP Server (v0.2.0):**
+- SSE transport with multi-user API Key passthrough
+- AsyncLocalStorage session isolation
+- Tools: create_entry, get_entry, list_entries, delete_entry
+- Chinese error messages (认证失败, 权限不足)
+- Health check endpoint, Docker support, npm published
+- 72 tests passing (38 unit + 12 integration + 13 e2e + 9 config/tools)
 
 ## Debug Workflow (CRITICAL!)
 

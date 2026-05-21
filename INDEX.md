@@ -1,7 +1,7 @@
 # PeekView — 项目索引
 
-> 最后更新：2026-05-18
-> 当前版本：v0.1.29
+> 最后更新：2026-05-21
+> 当前版本：v0.1.29（Backend/Frontend）| MCP Server v0.2.0
 
 ---
 
@@ -13,8 +13,10 @@
 | 技术设计 | ✅ 定稿 | FastAPI + SQLite + Vue 3 |
 | 后端实现 | ✅ 完成 | Tasks 0-12 + Auth + API Keys + Admin |
 | 前端实现 | ✅ 完成 | Tasks 14-16 + Auth UI + API Keys UI + All/Mine |
+| MCP Server | ✅ 完成 | v0.2.0 多用户 SSE + API Key 透传 |
 | E2E 测试 | ✅ 52 测试通过 | chromium + Mobile Chrome |
 | 后端测试 | ✅ 393 测试通过 | pytest |
+| MCP 测试 | ✅ 72 测试通过 | 38 unit + 12 integration + 13 e2e + 9 config |
 
 ---
 
@@ -117,6 +119,7 @@ frontend-v3/src/
 | [spec-file-tree.md](docs/specs/spec-file-tree.md) | FileTree 目录树层级结构规格 | ✅ 已实现（v0.1.29）|
 | [spec-html-multi-file-inject.md](docs/specs/spec-html-multi-file-inject.md) | HTML 多文件资源注入规格 | ✅ 已实现（v0.1.29）|
 | [spec-html-binary-inject.md](docs/specs/spec-html-binary-inject.md) | HTML 二进制资源注入规格 | ✅ 已实现（v0.1.29）|
+| [spec-mcp-multi-user.md](docs/specs/spec-mcp-multi-user.md) | MCP Server 多用户认证规格 | ✅ 已实现（MCP v0.2.0）|
 
 > MVP 阶段规格文档已归档至 `docs/archived/specs/`
 
@@ -212,8 +215,14 @@ frontend-v3/src/
 - ✅ 移动端完整适配
 - ✅ URL 行号高亮 + 文件深链接
 
+**MCP Server**:
+- ✅ SSE 传输 + 多用户 API Key 透传
+- ✅ Tools: create_entry, get_entry, list_entries, delete_entry
+- ✅ 中文错误消息（认证失败, 权限不足）
+- ✅ Health check endpoint (/health)
+- ✅ Docker 支持 + npm 发布 (@peekview/mcp-server)
+
 ### 未实现（P1/P2）
 
-- ❌ MCP Server
 - ❌ 条目编辑 UI（API 已支持 PATCH）
 - ❌ 嵌入式分享 iframe

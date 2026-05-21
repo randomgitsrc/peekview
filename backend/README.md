@@ -127,7 +127,7 @@ remote:
 ### Health Check
 
 ```
-GET /health → { "status": "ok", "version": "0.1.29" }
+GET /health → { "status": "ok", "version": "0.1.29" }  # version auto-synced from __init__.py
 ```
 
 ### Entry API
@@ -201,6 +201,7 @@ GET /health → { "status": "ok", "version": "0.1.29" }
 - 🔑 **API Key Management** — User-level pv_ keys with expiration
 - 🔒 **Security** — Path traversal protection, allowlist, XSS filtering, iframe sandbox
 - 👤 **Entry Visibility** — Public/private with owner controls
+- 🤖 **MCP Server** — AI Agent integration via SSE transport ([@peekview/mcp-server](https://www.npmjs.com/package/@peekview/mcp-server))
 
 ## Tech Stack
 

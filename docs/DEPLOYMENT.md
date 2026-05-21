@@ -87,7 +87,7 @@ pip install -e .
 peekview --version
 ```
 
-### 方式三：Docker 部署（可选）
+### 方式四：Docker 部署（可选）
 
 ```bash
 # 构建镜像
@@ -97,7 +97,7 @@ docker build -t peek .
 docker run -d -p 8080:8080 -v peek-data:/data peek
 ```
 
-### 方式四：系统服务部署（推荐生产环境）
+### 方式五：系统服务部署（推荐生产环境）
 
 PeekView 0.1.6+ 内置了服务管理命令，支持一键安装为系统服务：
 
@@ -360,6 +360,73 @@ peekview serve
 # 方式2：使用 direnv（自动加载）
 # 安装 direnv，创建 .envrc 文件包含上述内容
 ```
+
+---
+
+## MCP Server 部署
+
+MCP Server 允许 AI Agent（Claude Code、Cursor 等）通过 MCP 协议直接操作 PeekView。
+
+### 方式一：Docker Compose（推荐）
+
+```bash
+# 使用项目自带的 docker-compose.yml
+docker compose up -d
+
+# 包含两个服务：
+# - peekview (端口 8080)：主服务
+# - mcp-server (端口 33333)：MCP Server
+```
+
+### 方式二：npm 全局安装
+
+```bash
+# 安装
+npm install -g @peekview/mcp-server
+
+# 启动（需要先运行 PeekView 后端）
+PEEKVIEW_URL=http://127.0.0.1:8080 \
+PEEKVIEW_PUBLIC_URL=http://127.0.0.1:8080 \
+peekview-mcp serve
+```
+
+### 配置 AI Agent
+
+**Claude Code：**
+
+```bash
+# 添加 MCP Server（使用你的 pv_ API Key）
+claude mcp add peekview -t sse http://localhost:33333/sse \
+  --header "Authorization: Bearer pv_your_api_key_here"
+```
+
+**Cursor / 其他 MCP 客户端：**
+
+在 MCP 配置文件中添加：
+
+```json
+{
+  "peekview": {
+    "url": "http://localhost:33333/sse",
+    "headers": {
+      "Authorization": "Bearer pv_your_api_key_here"
+    }
+  }
+}
+```
+
+### MCP Server 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `PEEKVIEW_URL` | 必填 | PeekView 后端 URL（内部访问） |
+| `PEEKVIEW_PUBLIC_URL` | 必填 | PeekView 公开 URL（用于生成链接） |
+| `MCP_PORT` | `33333` | MCP Server 端口 |
+| `MCP_HOST` | `0.0.0.0` | 绑定地址 |
+| `MCP_CORS_ORIGINS` | `*` | CORS 允许来源 |
+| `LOG_LEVEL` | `info` | 日志级别 |
+
+> **注意：** MCP Server v0.2.0 不再需要 `MCP_TOKEN` 或 `PEEKVIEW_API_KEY` 环境变量。用户通过 `pv_` API Key 认证，每个用户使用自己的 Key。
 
 ---
 

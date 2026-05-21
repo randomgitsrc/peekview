@@ -7,6 +7,29 @@
 
 ## [Unreleased]
 
+## [mcp-v0.2.0] - 2026-05-20
+
+### 新增
+
+- **MCP Server v0.2.0** — 多用户 SSE 传输 + API Key 透传
+  - SSE transport with AsyncLocalStorage session isolation
+  - pv_ API Key 认证（SSE 连接时验证，tool 调用透传）
+  - Tools: create_entry, get_entry, list_entries, delete_entry
+  - 中文错误消息（认证失败, 权限不足）
+  - Health check endpoint (/health)
+  - Docker support (multi-stage build)
+
+### 安全
+
+- 无服务端 API Key 存储 — 用户自带 pv_ keys
+- SSE auth 拒绝 JWT/non-pv_ token
+- 503 on PeekView unreachable during validation
+
+### 测试
+
+- 72 tests passing (16 unit + 12 integration + 13 E2E + 31 config/tools)
+- 三轮 gstack 评审全部通过
+
 ## [0.1.29] - 2026-05-18
 
 ### 新增

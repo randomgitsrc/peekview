@@ -1,6 +1,9 @@
 /**
  * MCP Server with SSE transport and user token passthrough
  */
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import cors from 'cors';
 import express from 'express';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -16,6 +19,9 @@ import type { PeekViewClient } from './client.js';
 import type { ServerConfig, SessionContext, SessionInfo, ToolDefinition } from './types.js';
 import { toSDKResult } from './types.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const { version } = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+
 // Module-level logger (available in tool handlers and Express routes)
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -28,7 +34,7 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
   const server = new Server(
     {
       name: 'peekview-mcp-server',
-      version: '0.2.0',
+      version,
     },
     {
       capabilities: {
@@ -183,13 +189,13 @@ export function createExpressApp(
     if (!isPeekViewHealthy) {
       res.status(503).json({
         status: 'degraded',
-        version: '0.2.0',
+        version,
         peekview: 'unreachable'
       });
       return;
     }
 
-    res.json({ status: 'ok', version: '0.2.0' });
+    res.json({ status: 'ok', version });
   });
 
   return app;

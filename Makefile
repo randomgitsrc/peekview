@@ -1,7 +1,7 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target
 help:
@@ -38,6 +38,13 @@ help:
 	@echo "  make check-doc-sync     - 全面文档一致性检查"
 	@echo "  make update-docs        - 自动生成 FEATURES.md"
 	@echo "  make setup-hooks        - 安装 pre-commit hook"
+	@echo ""
+	@echo "MCP SERVER:"
+	@echo "  make build-mcp          - Build MCP Server"
+	@echo "  make test-mcp-unit      - Run MCP unit tests"
+	@echo "  make test-mcp           - Run all MCP tests"
+	@echo "  make publish-npm-dry    - Dry-run npm publish"
+	@echo "  make publish-npm        - Publish MCP Server to npm"
 	@echo ""
 	@echo "Full docs: docs/process/debug-workflow.md docs/process/release.md"
 
@@ -184,11 +191,16 @@ bump-version:
 	sed -i "s/^version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$(NEW_VERSION)\"/" backend/pyproject.toml
 	@# Update package.json
 	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" frontend-v3/package.json
+	@# Update MCP Server package.json
+	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" packages/mcp-server/package.json
+	@# Rebuild MCP dist with new version
+	cd packages/mcp-server && npm run build
 	@# Verify code files
 	@BACKEND_VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)"); \
 	PYPROJECT_VERSION=$$(grep "^version = " backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
 	PACKAGE_VERSION=$$(grep '"version":' frontend-v3/package.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
-	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ]; then \
+	MCP_VERSION=$$(grep '"version":' packages/mcp-server/package.json | sed 's/.*"version": "\(.*\)".*/\1/'); \
+	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ] && [ "$$MCP_VERSION" = "$(NEW_VERSION)" ]; then \
 		echo "✓ 代码版本文件已更新: v$(NEW_VERSION)"; \
 	else \
 		echo "✗ 版本不一致，请检查"; exit 1; \
@@ -431,6 +443,38 @@ debug-test-remote:
 
 debug-status:
 	@bash scripts/dev-server.sh status || true
+
+# =============================================================================
+# MCP Server Targets
+# =============================================================================
+
+build-mcp:
+	@echo "→ Building MCP Server..."
+	cd packages/mcp-server && npm run build
+	@echo "✓ MCP Server built"
+
+test-mcp-unit:
+	@echo "→ Running MCP Server unit tests..."
+	cd packages/mcp-server && npm run test:unit
+	@echo "✓ MCP unit tests passed"
+
+test-mcp:
+	@echo "→ Running MCP Server tests..."
+	cd packages/mcp-server && npm test
+	@echo "✓ MCP tests passed"
+
+pre-publish-npm: build-mcp test-mcp-unit
+	@echo "✓ MCP Server pre-publish checks passed"
+
+publish-npm-dry:
+	@echo "→ Dry-run npm publish..."
+	cd packages/mcp-server && npm publish --access public --dry-run
+	@echo "✓ Dry-run complete"
+
+publish-npm:
+	@echo "→ Publishing MCP Server to npm..."
+	cd packages/mcp-server && npm publish --access public
+	@echo "✓ Published @peekview/mcp-server"
 
 # =============================================================================
 # Documentation Consistency Checks
