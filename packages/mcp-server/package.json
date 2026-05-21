@@ -1,6 +1,6 @@
 {
   "name": "@peekview/mcp-server",
-  "version": "0.2.2",
+  "version": "0.1.32",
   "description": "MCP Server for PeekView - AI Agent integration (SSE transport)",
   "type": "module",
   "main": "./dist/index.js",
