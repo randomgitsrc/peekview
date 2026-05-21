@@ -1,11 +1,54 @@
 #!/usr/bin/env node
 /**
- * PeekView MCP Server - Entry Point (v0.2.0 multi-user)
+ * PeekView MCP Server - Entry Point (v0.2.1 multi-user)
  */
 import { createMCPServer, createExpressApp } from './server.js';
 import { PeekViewClient } from './client.js';
 import { loadConfig } from './config.js';
 import { createTools } from './tools/index.js';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// Handle CLI flags before loading config
+const args = process.argv.slice(2);
+if (args.includes('--version') || args.includes('-v')) {
+  try {
+    const pkgPath = resolve(import.meta.dirname, '../package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    console.log(pkg.version);
+    process.exit(0);
+  } catch {
+    console.log('0.2.1');
+    process.exit(0);
+  }
+}
+
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(`
+PeekView MCP Server - AI Agent integration
+
+Usage:
+  peekview-mcp [options]
+  peekview-mcp serve [options]
+
+Environment Variables:
+  PEEKVIEW_URL        PeekView API base URL (required)
+  PEEKVIEW_PUBLIC_URL PeekView public URL for links (required)
+  MCP_PORT            Server port (default: 33333)
+  MCP_HOST            Server host (default: 0.0.0.0)
+  LOG_LEVEL           Log level (default: info)
+
+Options:
+  -v, --version       Show version
+  -h, --help          Show help
+
+Example:
+  export PEEKVIEW_URL=https://api.example.com
+  export PEEKVIEW_PUBLIC_URL=https://app.example.com
+  peekview-mcp
+`);
+  process.exit(0);
+}
 
 async function main() {
   const config = loadConfig();
