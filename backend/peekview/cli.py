@@ -120,7 +120,21 @@ def cli() -> None:
     pass
 
 
-@cli.command()
+SERVE_EXAMPLES = """
+\b
+Examples:
+
+    peekview serve                              # Start with default config
+
+    peekview serve -p 3000                      # Start on port 3000
+
+    peekview serve --reload                     # Development mode
+
+    peekview serve --base-url https://example.com
+"""
+
+
+@cli.command(epilog=SERVE_EXAMPLES)
 @click.option("--host", "-h", default=None, help="Server bind address (default: 127.0.0.1)")
 @click.option("--port", "-p", default=None, type=int, help="Server port (default: 8080)")
 @click.option("--base-url", "-b", default=None, help="External base URL (e.g., https://example.com)")
@@ -128,14 +142,7 @@ def cli() -> None:
 @click.option("--workers", "-w", default=1, type=int, help="Number of worker processes")
 @click.pass_context
 def serve(ctx: click.Context, host: str | None, port: int | None, base_url: str | None, reload: bool, workers: int) -> None:
-    """Start the PeekView server.
-
-    Examples:
-        peekview serve                    # Start with default config
-        peekview serve -p 3000           # Start on port 3000
-        peekview serve --reload          # Development mode with auto-reload
-        peekview serve --base-url https://example.com  # Use custom domain
-    """
+    """Start the PeekView server."""
     import uvicorn
 
     config = PeekConfig()
@@ -170,16 +177,32 @@ def serve(ctx: click.Context, host: str | None, port: int | None, base_url: str 
     )
 
 
-@cli.command()
+CREATE_EXAMPLES = """
+\b
+Examples:
+
+    peekview create file.txt -s "My code"
+
+    peekview create src/*.py -s "Project" -t python
+
+    peekview create -s "From stdin" --from-stdin < code.py
+
+    echo "content" | peekview create -s "From pipe" --from-stdin
+
+    peekview create file.txt -s "Remote" --remote-url https://example.com
+"""
+
+
+@cli.command(epilog=CREATE_EXAMPLES)
 @click.argument("paths", nargs=-1, required=False)
 @click.option("--summary", "-s", required=True, help="Entry summary/description")
 @click.option("--slug", help="Custom URL slug (auto-generated if not provided)")
 @click.option("--tag", "-t", multiple=True, help="Tags (can be specified multiple times)")
 @click.option("--expires-in", help="Expiration duration (e.g., '7d', '1h', '30m')")
 @click.option("--from-stdin", is_flag=True, help="Read file content from stdin")
-@click.option("--base-url", "-b", default=None, help="External base URL for generated links (e.g., https://example.com)")
-@click.option("--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)")
-@click.option("--visibility", "-v", type=click.Choice(["public", "private"]), default="public", help="Entry visibility (public or private)")
+@click.option("--base-url", "-b", default=None, help="External base URL for generated links")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.option("--visibility", "-v", type=click.Choice(["public", "private"]), default="public", help="Entry visibility")
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
 def create(
     paths: tuple[str, ...],
@@ -193,15 +216,7 @@ def create(
     visibility: str,
     json_output: bool,
 ) -> None:
-    """Create a new entry.
-
-    Examples:
-        peekview create file.txt -s "My code"
-        peekview create src/*.py -s "Python project" -t python -t cli
-        peekview create -s "From stdin" --from-stdin < code.py
-        echo "content" | peekview create -s "From pipe" --from-stdin
-        peekview create file.txt -s "Remote" --remote-url https://example.com
-    """
+    """Create a new entry."""
     config = PeekConfig()
 
     # Get backend (local EntryService or remote PeekClient)
@@ -680,18 +695,27 @@ def _print_config(config: dict, prefix: str = "") -> None:
             click.echo(f"  {prefix}{key}: {value}")
 
 
-@cli.group(name="service")
-def service_cmd():
-    """Manage PeekView as a system service (systemd/launchd).
+SERVICE_EXAMPLES = """
+\b
+Examples:
 
-    Examples:
-        peekview service install         # Install as system service
-        peekview service install --user  # Install as user service
-        peekview service status          # Check service status
-        peekview service start           # Start the service
-        peekview service stop            # Stop the service
-        peekview service uninstall       # Remove the service
-    """
+    peekview service install              # Install as system service
+
+    peekview service install --user       # Install as user service
+
+    peekview service status               # Check service status
+
+    peekview service start                # Start the service
+
+    peekview service stop                 # Stop the service
+
+    peekview service uninstall            # Remove the service
+"""
+
+
+@cli.group(name="service", epilog=SERVICE_EXAMPLES)
+def service_cmd():
+    """Manage PeekView as a system service (systemd/launchd)."""
     pass
 
 
@@ -1238,17 +1262,25 @@ def login(remote_url: str, username: str | None, password: str | None) -> None:
         sys.exit(1)
 
 
-@cli.group(name="apikey")
-def apikey_cmd():
-    """Manage API keys (remote mode only).
+APIKEY_EXAMPLES = """
+\b
+Examples:
 
-    Examples:
-        peekview apikey create "CI Bot"
-        peekview apikey create "Temp" --expires 30d
-        peekview apikey list
-        peekview apikey revoke 3
-        peekview apikey cleanup
-    """
+    peekview apikey create "CI Bot"
+
+    peekview apikey create "Temp" --expires 30d
+
+    peekview apikey list
+
+    peekview apikey revoke 3
+
+    peekview apikey cleanup
+"""
+
+
+@cli.group(name="apikey", epilog=APIKEY_EXAMPLES)
+def apikey_cmd():
+    """Manage API keys (remote mode only)."""
     pass
 
 
