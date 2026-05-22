@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [0.1.33] - 2026-05-22
+
+### 修复
+
+- 修复 `peekview uninstall` 命令失败问题
+  - 移除 pipx uninstall 命令中不支持的 `-y` 参数
+  - 现在可以正确卸载 PeekView
+
 ## [0.1.32] - 2026-05-21
 
 ### 新增
