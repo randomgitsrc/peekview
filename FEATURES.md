@@ -1,6 +1,6 @@
 # Feature Matrix
 
-*Auto-generated on 2026-05-21*
+*Auto-generated on 2026-05-22*
 
 ## Frontend
 
@@ -14,17 +14,13 @@
 - ✅ ActionBar
 - ✅ CodeViewer
 - ✅ ConfirmDialog
-- ✅ FileTree
-- ✅ HtmlViewer
 - ✅ ImageViewer
 - ✅ LoginDialog
 - ✅ MarkdownViewer
-- ✅ MermaidDiagram
 - ✅ Pagination
 - ✅ ThemeToggle
 - ✅ Toast
 - ✅ TocNav
-- ✅ TreeNodeItem
 
 ### Capabilities
 - ✅ Mermaid Diagrams
@@ -37,6 +33,7 @@
 
 ### API Modules
 - ✅ __init__
+- ✅ rate_limit
 - ✅ auth
 - ✅ apikeys
 - ✅ entries
@@ -46,25 +43,4 @@
 - ✅ Full-Text Search (FTS5)
 
 ## CLI Commands
-
-## MCP Server (v0.2.0)
-
-### Package
-- ✅ @peekview/mcp-server (npm)
-
-### Transport
-- ✅ SSE (Server-Sent Events)
-
-### Auth
-- ✅ pv_ API Key passthrough (multi-user)
-
-### Tools
-- ✅ create_entry
-- ✅ get_entry
-- ✅ list_entries
-- ✅ delete_entry
-
-### Capabilities
-- ✅ Docker support
-- ✅ Health check endpoint (/health)
 

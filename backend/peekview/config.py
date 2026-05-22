@@ -294,13 +294,40 @@ class PeekConfig(BaseSettings):
     auth: PeekAuth = Field(default_factory=PeekAuth)
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize config with file overrides."""
+        """Initialize config with file overrides (env vars have highest priority)."""
         # Load from config file first (lowest priority)
         file_config = load_config_file()
 
-        # Merge file config into kwargs (env vars will override via Pydantic)
+        # Merge file config into kwargs, but skip keys that have env var overrides
+        # for nested sections (e.g., PEEKVIEW_AUTH__ALLOW_REGISTRATION)
+        import os
+
+        env_prefix = self.model_config.get("env_prefix", "")
+        env_delim = self.model_config.get("env_nested_delimiter", "__")
+
+        # Check which file config keys have nested env var overrides
         for key, value in file_config.items():
-            if key not in kwargs:
+            if key in kwargs:
+                continue
+
+            # Check if any nested value has env var override
+            skip_key = False
+            if isinstance(value, dict):
+                for nested_key in value.keys():
+                    env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
+                    if env_var in os.environ:
+                        skip_key = True
+                        break
+
+            if skip_key:
+                # Merge env var overrides into the nested dict
+                merged_value = value.copy()
+                for nested_key in value.keys():
+                    env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
+                    if env_var in os.environ:
+                        merged_value[nested_key] = os.environ[env_var]
+                kwargs[key] = merged_value
+            else:
                 kwargs[key] = value
 
         super().__init__(**kwargs)
