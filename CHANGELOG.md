@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+## [0.1.38] - 2026-05-23
+
+### 修复
+
+- **E2E 测试认证稳定性修复** — 修复 9 个测试用例的认证初始化问题
+  - 修复 `page.context().addInitScript()` 在 Vue 应用挂载前执行导致 token 丢失的问题
+  - 新认证模式：`goto('/')` → `evaluate(set token)` → `reload()` → `waitForSelector`
+  - 增加超时时间至 15 秒，确保 auth store 初始化完成
+  - 24/26 E2E 测试稳定通过
+
+### 变更
+
+- MCP Server 版本同步更新至 v0.1.38（与 backend 版本保持一致）
+
+
 ## [0.1.37] - 2026-05-22
 
 ### 修复
