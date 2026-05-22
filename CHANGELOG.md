@@ -7,6 +7,26 @@
 
 ## [Unreleased]
 
+## [0.1.34] - 2026-05-22
+
+### 新增
+
+- CLI `-h` / `-v` 快捷选项
+  - `peekview -h` 显示帮助（等同于 `--help`）
+  - `peekview -v` 显示版本（等同于 `--version`）
+- 扩展 `peekview config` 支持更多配置键
+  - `server.host`, `server.port`, `server.base_url`
+  - `storage.data_dir`, `storage.db_path`
+  - `auth.secret_key`, `auth.token_expire_days`, `auth.allow_registration`
+- `peekview service install` 自动读取配置文件中的 host/port
+
+### 改进
+
+- 改善所有命令的 `--help` 输出格式
+  - 使用 epilog 显示 Examples，避免内容被挤在一起
+  - 按分类显示 config 支持的配置键（Server/Storage/Auth/Remote）
+
+
 ## [0.1.33] - 2026-05-22
 
 ### 修复
