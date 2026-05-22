@@ -524,30 +524,12 @@ def config_cmd():
 
 CONFIG_KEYS_HELP = """
 \b
-Supported configuration keys:
-
-  Server:
-    server.host              Bind address (default: 127.0.0.1)
-    server.port              Server port (default: 8080)
-    server.base_url          External URL for generated links
-
-  Storage:
-    storage.data_dir         Data directory path
-    storage.db_path          Database file path
-
-  Auth:
-    auth.secret_key          JWT signing key
-    auth.token_expire_days   Token validity in days (default: 7)
-    auth.allow_registration  Allow signups (true/false, default: true)
-
-  Remote CLI:
-    remote.url               Remote server URL
-    remote.api_key           API key for authentication
-    remote.timeout           Request timeout in seconds (default: 30)
-    remote.verify_ssl        Verify SSL certificates (true/false)
-
-  Aliases:
-    base_url                 Same as server.base_url
+Supported keys:
+server.host, server.port, server.base_url,
+storage.data_dir, storage.db_path,
+auth.secret_key, auth.token_expire_days, auth.allow_registration,
+remote.url, remote.api_key, remote.timeout, remote.verify_ssl,
+base_url (alias for server.base_url)
 """
 
 
@@ -641,30 +623,68 @@ def config_get(key: str) -> None:
 
     Example: peekview config get server.port
     """
-    from peekview.config import load_config_file
+    from peekview.config import load_config_file, PeekConfig
 
     config = load_config_file()
+    defaults = PeekConfig()
+
+    # Helper to get default value
+    def get_default(section: str, k: str):
+        if section == "server":
+            return getattr(defaults.server, k, "")
+        elif section == "storage":
+            return getattr(defaults.storage, k, "")
+        elif section == "auth":
+            return getattr(defaults.auth, k, "")
+        elif section == "remote":
+            return getattr(defaults.remote, k, "")
+        return ""
 
     # Handle nested keys
     if key == "base_url":
         value = config.get("server", {}).get("base_url", "")
-        click.echo(value if value else "(not set)")
+        default = defaults.server.base_url
+        click.echo(value if value else f"(not set, default: {default})")
     elif key.startswith("server."):
         server_key = key.split(".", 1)[1]
         value = config.get("server", {}).get(server_key, "")
-        click.echo(value if value != "" else "(not set)")
+        default = get_default("server", server_key)
+        if value != "":
+            click.echo(value)
+        elif default != "":
+            click.echo(f"(not set, default: {default})")
+        else:
+            click.echo("(not set)")
     elif key.startswith("storage."):
         storage_key = key.split(".", 1)[1]
         value = config.get("storage", {}).get(storage_key, "")
-        click.echo(value if value != "" else "(not set)")
+        default = get_default("storage", storage_key)
+        if value != "":
+            click.echo(value)
+        elif default != "":
+            click.echo(f"(not set, default: {default})")
+        else:
+            click.echo("(not set)")
     elif key.startswith("auth."):
         auth_key = key.split(".", 1)[1]
         value = config.get("auth", {}).get(auth_key, "")
-        click.echo(value if value != "" else "(not set)")
+        default = get_default("auth", auth_key)
+        if value != "":
+            click.echo(value)
+        elif default != "":
+            click.echo(f"(not set, default: {default})")
+        else:
+            click.echo("(not set)")
     elif key.startswith("remote."):
         remote_key = key.split(".", 1)[1]
         value = config.get("remote", {}).get(remote_key, "")
-        click.echo(value if value != "" else "(not set)")
+        default = get_default("remote", remote_key)
+        if value != "":
+            click.echo(value)
+        elif default != "":
+            click.echo(f"(not set, default: {default})")
+        else:
+            click.echo("(not set)")
     else:
         click.echo(f"Error: Unknown config key '{key}'", err=True)
         sys.exit(1)
