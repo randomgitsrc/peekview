@@ -1414,8 +1414,9 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
     click.echo("→ Uninstalling PeekView...")
     try:
         if pipx_installed:
+            # pipx uninstall doesn't support -y flag
             result = subprocess.run(
-                ["pipx", "uninstall", "peekview", "-y"],
+                ["pipx", "uninstall", "peekview"],
                 capture_output=True,
                 text=True,
                 check=False
