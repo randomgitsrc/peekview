@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## [0.1.37] - 2026-05-22
+
+### 修复
+
+- **关键配置层级修复**：环境变量现在能正确覆盖嵌套配置文件值
+  - 修复 `PEEKVIEW_AUTH__ALLOW_REGISTRATION=true` 无法覆盖 `config.yaml` 中的 `auth.allow_registration: false`
+  - 修复 `PEEKVIEW_SERVER__PORT` 等嵌套配置项的优先级问题
+  - 配置层级现在严格遵循：CLI > 环境变量 > 配置文件 > 代码默认值
+
+### 变更
+
+- 更新 dev-server.sh 设置 `ALLOW_REGISTRATION=true`，确保 E2E 测试环境可注册
+
+
 ## [0.1.36] - 2026-05-22
 
 ### 重构
