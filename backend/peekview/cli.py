@@ -808,15 +808,13 @@ def _install_systemd_service(user_mode: bool, host: str | None, port: int | None
         sys.exit(1)
 
     # Build environment variables
+    # Note: Only base_url is written to service file because it must match
+    # the reverse proxy configuration. Other settings (host, port, data_dir)
+    # should be managed via config file to allow runtime changes.
     env_vars = []
     if base_url:
         env_vars.append(f"Environment=PEEKVIEW_SERVER__BASE_URL={base_url}")
-    if host:
-        env_vars.append(f"Environment=PEEKVIEW_SERVER__HOST={host}")
-    if port:
-        env_vars.append(f"Environment=PEEKVIEW_SERVER__PORT={port}")
-    if data_dir:
-        env_vars.append(f"Environment=PEEKVIEW_STORAGE__DATA_DIR={data_dir}")
+    # host, port, data_dir are NOT written to service file - use config file instead
 
     # Get current user for service file
     current_user = getpass.getuser()
@@ -882,15 +880,13 @@ def _install_launchd_service(user_mode: bool, host: str | None, port: int | None
         sys.exit(1)
 
     # Build environment variables
+    # Note: Only base_url is written to service file because it must match
+    # the reverse proxy configuration. Other settings (host, port, data_dir)
+    # should be managed via config file to allow runtime changes.
     env_vars = {}
     if base_url:
         env_vars["PEEKVIEW_SERVER__BASE_URL"] = base_url
-    if host:
-        env_vars["PEEKVIEW_SERVER__HOST"] = host
-    if port:
-        env_vars["PEEKVIEW_SERVER__PORT"] = str(port)
-    if data_dir:
-        env_vars["PEEKVIEW_STORAGE__DATA_DIR"] = data_dir
+    # host, port, data_dir are NOT written to service file - use config file instead
 
     # Create plist content
     env_xml = ""
