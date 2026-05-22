@@ -34,6 +34,10 @@ def isolated_fs(runner, monkeypatch, tmp_path):
     # Force local mode (empty string = no remote URL)
     monkeypatch.setenv("PEEKVIEW_REMOTE__URL", "")
     monkeypatch.setenv("PEEKVIEW_REMOTE__API_KEY", "")
+    # Set temporary config directory
+    config_dir = tmp_path / ".peekview"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr("peekview.config.CONFIG_FILE", config_dir / "config.yaml")
     with runner.isolated_filesystem() as fs:
         yield fs
 
@@ -477,22 +481,40 @@ class TestConfigCommand:
         assert result.exit_code == 0
         assert "Set storage.data_dir = /tmp/peekview" in result.output
 
-    def test_config_set_auth_secret_key(self, runner, isolated_fs):
-        """config set auth.secret_key should work."""
-        result = runner.invoke(cli, ["config", "set", "auth.secret_key", "my-secret"])
+    def test_config_set_auth_allow_registration(self, runner, isolated_fs):
+        """config set auth.allow_registration should work with bool conversion."""
+        result = runner.invoke(cli, ["config", "set", "auth.allow_registration", "false"])
         assert result.exit_code == 0
-        assert "Set auth.secret_key = my-secret" in result.output
+        assert "Set auth.allow_registration = False" in result.output
+
+    def test_config_set_limits_max_file_size(self, runner, isolated_fs):
+        """config set limits.max_file_size should work."""
+        result = runner.invoke(cli, ["config", "set", "limits.max_file_size", "20971520"])
+        assert result.exit_code == 0
+        assert "Set limits.max_file_size = 20971520" in result.output
+
+    def test_config_get_shows_default(self, runner, isolated_fs):
+        """config get should show default value when not set."""
+        result = runner.invoke(cli, ["config", "get", "server.port"])
+        assert result.exit_code == 0
+        assert "8080" in result.output  # default value
+
+    def test_config_get_shows_set_value(self, runner, isolated_fs):
+        """config get should show set value."""
+        runner.invoke(cli, ["config", "set", "server.port", "3000"])
+        result = runner.invoke(cli, ["config", "get", "server.port"])
+        assert result.exit_code == 0
+        assert "3000" in result.output
+        assert "(not set" not in result.output
 
     def test_config_list_shows_all(self, runner, isolated_fs):
         """config list should show all configured values."""
-        # Set a few values
         runner.invoke(cli, ["config", "set", "server.port", "3000"])
-        runner.invoke(cli, ["config", "set", "server.host", "0.0.0.0"])
-        # List them
+        runner.invoke(cli, ["config", "set", "auth.allow_registration", "false"])
         result = runner.invoke(cli, ["config", "list"])
         assert result.exit_code == 0
         assert "3000" in result.output
-        assert "0.0.0.0" in result.output
+        assert "False" in result.output
 
 
 class TestCliShortOptions:
@@ -520,19 +542,34 @@ class TestCliShortOptions:
         assert "get" in result.output
 
 
+class TestServiceInstallNoEnvVars:
+    """Tests for service install NOT writing env vars to service file."""
+
+    @patch("peekview.cli._install_systemd_service")
+    def test_service_install_no_host_port_in_env(self, mock_install, runner, isolated_fs):
+        """service install should not pass host/port/data_dir to service file."""
+        with patch("platform.system", return_value="Linux"):
+            result = runner.invoke(cli, ["service", "install", "--user"])
+            assert mock_install.called
+            call_args = mock_install.call_args
+            # Should only pass user_mode and force
+            assert call_args[0][0] is True   # user_mode
+            assert call_args[0][1] is False  # force
+
+
 class TestServiceInstallWithConfig:
-    """Tests for service install reading from config file."""
+    """[DEPRECATED] Tests for service install reading from config file."""
 
     @patch("peekview.cli._install_systemd_service")
     def test_service_install_reads_config_port(self, mock_install, runner, isolated_fs):
-        """service install should read port from config."""
+        """service install should not read port from config for env vars."""
         # Set config port
         runner.invoke(cli, ["config", "set", "server.port", "3000"])
-        # Install service (will fail because we're not on Linux with systemd)
-        # But we can check the mock was called with correct port
+        # Install service
         with patch("platform.system", return_value="Linux"):
             result = runner.invoke(cli, ["service", "install", "--user"])
-            # Should call _install_systemd_service with port=3000
+            # Should call _install_systemd_service with just user_mode and force
             assert mock_install.called
             call_args = mock_install.call_args
-            assert call_args[0][2] == 3000  # port is 3rd positional arg
+            assert call_args[0][0] is True   # user_mode
+            assert call_args[0][1] is False  # force

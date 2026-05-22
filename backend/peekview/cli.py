@@ -550,9 +550,24 @@ def config_set(key: str, value: str) -> None:
     # Validate key
     supported_keys = [
         "base_url",
-        "server.host", "server.port", "server.base_url",
-        "storage.data_dir", "storage.db_path",
+        # Server
+        "server.host", "server.port", "server.base_url", "server.api_key",
+        "server.cors_origins", "server.rate_limit_enabled",
+        "server.rate_limit_per_minute", "server.rate_limit_login_per_minute",
+        # Storage
+        "storage.data_dir", "storage.db_path", "storage.allowed_paths",
+        "storage.health_disk_warning_mb",
+        # Auth
         "auth.secret_key", "auth.token_expire_days", "auth.allow_registration",
+        "auth.allow_anonymous_create",
+        # Limits
+        "limits.max_file_size", "limits.max_entry_files", "limits.max_entry_size",
+        "limits.max_slug_length", "limits.max_summary_length", "limits.max_per_page",
+        # Cleanup
+        "cleanup.check_on_start", "cleanup.interval_seconds",
+        # Logging
+        "logging.level", "logging.log_file",
+        # Remote
         "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
     ]
     if key not in supported_keys:
@@ -560,56 +575,34 @@ def config_set(key: str, value: str) -> None:
         click.echo(f"Supported keys: {', '.join(supported_keys)}", err=True)
         sys.exit(1)
 
-    # Handle nested keys
-    if key == "base_url":
-        if "server" not in config:
-            config["server"] = {}
-        config["server"]["base_url"] = value
-    elif key.startswith("server."):
-        if "server" not in config:
-            config["server"] = {}
-        server_key = key.split(".", 1)[1]
-        # Convert port to int
-        if server_key == "port":
-            try:
-                value = int(value)
-            except ValueError:
-                click.echo("Error: port must be an integer", err=True)
-                sys.exit(1)
-        config["server"][server_key] = value
-    elif key.startswith("storage."):
-        if "storage" not in config:
-            config["storage"] = {}
-        storage_key = key.split(".", 1)[1]
-        config["storage"][storage_key] = value
-    elif key.startswith("auth."):
-        if "auth" not in config:
-            config["auth"] = {}
-        auth_key = key.split(".", 1)[1]
-        # Convert boolean strings
-        if auth_key == "allow_registration":
-            value = value.lower() in ("true", "1", "yes")
-        elif auth_key == "token_expire_days":
-            try:
-                value = int(value)
-            except ValueError:
-                click.echo("Error: token_expire_days must be an integer", err=True)
-                sys.exit(1)
-        config["auth"][auth_key] = value
-    elif key.startswith("remote."):
-        if "remote" not in config:
-            config["remote"] = {}
-        remote_key = key.split(".", 1)[1]
-        # Convert boolean strings
-        if remote_key == "verify_ssl":
-            value = value.lower() in ("true", "1", "yes")
-        elif remote_key == "timeout":
-            try:
-                value = int(value)
-            except ValueError:
-                click.echo("Error: timeout must be an integer", err=True)
-                sys.exit(1)
-        config["remote"][remote_key] = value
+    # Handle nested keys with type conversion
+    section, key_name = key.split(".", 1) if "." in key else ("server", key)
+
+    if section not in config:
+        config[section] = {}
+
+    # Type conversion based on key patterns
+    if key_name in ("port", "token_expire_days", "timeout", "health_disk_warning_mb",
+                    "max_file_size", "max_entry_files", "max_entry_size",
+                    "max_slug_length", "max_summary_length", "max_per_page",
+                    "interval_seconds"):
+        try:
+            value = int(value)
+        except ValueError:
+            click.echo(f"Error: {key} must be an integer", err=True)
+            sys.exit(1)
+    elif key_name in ("allow_registration", "allow_anonymous_create",
+                      "rate_limit_enabled", "check_on_start", "verify_ssl"):
+        value = value.lower() in ("true", "1", "yes", "on")
+    elif key_name == "cors_origins":
+        value = [v.strip() for v in value.split(",")]
+    elif key_name == "allowed_paths":
+        value = [v.strip() for v in value.split(",")]
+    elif key_name in ("data_dir", "db_path", "log_file"):
+        # Path expansion handled by config validator
+        pass
+
+    config[section][key_name] = value
 
     save_config_file(config)
     click.echo(f"✓ Set {key} = {value}")
@@ -636,49 +629,25 @@ def config_get(key: str) -> None:
             return getattr(defaults.storage, k, "")
         elif section == "auth":
             return getattr(defaults.auth, k, "")
+        elif section == "limits":
+            return getattr(defaults.limits, k, "")
+        elif section == "cleanup":
+            return getattr(defaults.cleanup, k, "")
+        elif section == "logging":
+            return getattr(defaults.logging, k, "")
         elif section == "remote":
             return getattr(defaults.remote, k, "")
         return ""
 
-    # Handle nested keys
+    # Handle all keys with defaults
     if key == "base_url":
         value = config.get("server", {}).get("base_url", "")
         default = defaults.server.base_url
         click.echo(value if value else f"(not set, default: {default})")
-    elif key.startswith("server."):
-        server_key = key.split(".", 1)[1]
-        value = config.get("server", {}).get(server_key, "")
-        default = get_default("server", server_key)
-        if value != "":
-            click.echo(value)
-        elif default != "":
-            click.echo(f"(not set, default: {default})")
-        else:
-            click.echo("(not set)")
-    elif key.startswith("storage."):
-        storage_key = key.split(".", 1)[1]
-        value = config.get("storage", {}).get(storage_key, "")
-        default = get_default("storage", storage_key)
-        if value != "":
-            click.echo(value)
-        elif default != "":
-            click.echo(f"(not set, default: {default})")
-        else:
-            click.echo("(not set)")
-    elif key.startswith("auth."):
-        auth_key = key.split(".", 1)[1]
-        value = config.get("auth", {}).get(auth_key, "")
-        default = get_default("auth", auth_key)
-        if value != "":
-            click.echo(value)
-        elif default != "":
-            click.echo(f"(not set, default: {default})")
-        else:
-            click.echo("(not set)")
-    elif key.startswith("remote."):
-        remote_key = key.split(".", 1)[1]
-        value = config.get("remote", {}).get(remote_key, "")
-        default = get_default("remote", remote_key)
+    elif "." in key:
+        section, key_name = key.split(".", 1)
+        value = config.get(section, {}).get(key_name, "")
+        default = get_default(section, key_name)
         if value != "":
             click.echo(value)
         elif default != "":
@@ -741,48 +710,25 @@ def service_cmd():
 
 @service_cmd.command(name="install")
 @click.option("--user", "user_mode", is_flag=True, help="Install as user service (no sudo needed)")
-@click.option("--host", "-h", default=None, help="Server bind address")
-@click.option("--port", "-p", default=None, type=int, help="Server port")
-@click.option("--base-url", "-b", default=None, help="External base URL")
-@click.option("--data-dir", default=None, help="Data directory path")
 @click.option("--force", is_flag=True, help="Overwrite existing service")
-def install_service(user_mode: bool, host: str | None, port: int | None, base_url: str | None, data_dir: str | None, force: bool) -> None:
+def install_service(user_mode: bool, force: bool) -> None:
     """Install PeekView as a system service.
 
-    Reads configuration from ~/.peekview/config.yaml if available.
-    CLI arguments override config file values.
+    Configuration is read from ~/.peekview/config.yaml at runtime.
+    Use `peekview config` command to manage settings.
     """
-    from peekview.config import load_config_file, save_config_file
-
     system = platform.system()
-    file_config = load_config_file()
-
-    # Read from config file if not provided via CLI
-    effective_host = host or file_config.get("server", {}).get("host")
-    effective_port = port or file_config.get("server", {}).get("port")
-    effective_data_dir = data_dir or file_config.get("storage", {}).get("data_dir")
-    effective_base_url = base_url or file_config.get("server", {}).get("base_url")
-
-    # Save base_url to config file if provided via CLI
-    if base_url:
-        config = file_config
-        if "server" not in config:
-            config["server"] = {}
-        config["server"]["base_url"] = base_url
-        save_config_file(config)
-        click.echo(f"✓ Config saved: base_url = {base_url}")
 
     if system == "Linux":
-        _install_systemd_service(user_mode, effective_host, effective_port, effective_base_url, effective_data_dir, force)
+        _install_systemd_service(user_mode, force)
     elif system == "Darwin":
-        _install_launchd_service(user_mode, effective_host, effective_port, effective_base_url, effective_data_dir, force)
+        _install_launchd_service(user_mode, force)
     else:
         click.echo(f"Service installation not supported on {system}", err=True)
         sys.exit(1)
 
 
-def _install_systemd_service(user_mode: bool, host: str | None, port: int | None,
-                              base_url: str | None, data_dir: str | None, force: bool) -> None:
+def _install_systemd_service(user_mode: bool, force: bool) -> None:
     """Install systemd service on Linux."""
     import getpass
 
@@ -807,19 +753,10 @@ def _install_systemd_service(user_mode: bool, host: str | None, port: int | None
         click.echo("Use --force to overwrite")
         sys.exit(1)
 
-    # Build environment variables
-    # Note: Only base_url is written to service file because it must match
-    # the reverse proxy configuration. Other settings (host, port, data_dir)
-    # should be managed via config file to allow runtime changes.
-    env_vars = []
-    if base_url:
-        env_vars.append(f"Environment=PEEKVIEW_SERVER__BASE_URL={base_url}")
-    # host, port, data_dir are NOT written to service file - use config file instead
-
     # Get current user for service file
     current_user = getpass.getuser()
 
-    # Create service file
+    # Create service file - NO environment variables, config is read from file at runtime
     service_content = f"""[Unit]
 Description=PeekView - Code & Document Formatting Service
 After=network.target
@@ -830,7 +767,6 @@ User={current_user}
 ExecStart={peekview_path} serve
 Restart=always
 RestartSec=5
-{chr(10).join(env_vars)}
 
 [Install]
 WantedBy=default.target
@@ -861,9 +797,10 @@ WantedBy=default.target
         sys.exit(1)
 
 
-def _install_launchd_service(user_mode: bool, host: str | None, port: int | None,
-                              base_url: str | None, data_dir: str | None, force: bool) -> None:
+def _install_launchd_service(user_mode: bool, force: bool) -> None:
     """Install launchd service on macOS."""
+    import shutil
+
     plist_name = "com.peekview.plist"
 
     if user_mode:
@@ -879,24 +816,13 @@ def _install_launchd_service(user_mode: bool, host: str | None, port: int | None
         click.echo("Use --force to overwrite")
         sys.exit(1)
 
-    # Build environment variables
-    # Note: Only base_url is written to service file because it must match
-    # the reverse proxy configuration. Other settings (host, port, data_dir)
-    # should be managed via config file to allow runtime changes.
-    env_vars = {}
-    if base_url:
-        env_vars["PEEKVIEW_SERVER__BASE_URL"] = base_url
-    # host, port, data_dir are NOT written to service file - use config file instead
+    # Find peekview executable
+    peekview_path = shutil.which("peekview")
+    if not peekview_path:
+        click.echo("Error: peekview not found in PATH", err=True)
+        sys.exit(1)
 
-    # Create plist content
-    env_xml = ""
-    if env_vars:
-        env_entries = "\n".join([f"        <key>{k}</key>\n        <string>{v}</string>" for k, v in env_vars.items()])
-        env_xml = f"""    <key>EnvironmentVariables</key>
-    <dict>
-{env_entries}
-    </dict>"""
-
+    # Create plist content - NO environment variables, config is read from file at runtime
     plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -905,10 +831,9 @@ def _install_launchd_service(user_mode: bool, host: str | None, port: int | None
     <string>com.peekview</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/peekview</string>
+        <string>{peekview_path}</string>
         <string>serve</string>
     </array>
-{env_xml}
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>

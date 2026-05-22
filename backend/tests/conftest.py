@@ -21,6 +21,17 @@ def reset_rate_limiter():
             pass
 
 
+@pytest.fixture(autouse=True)
+def isolate_config_file(monkeypatch, tmp_path):
+    """Isolate tests from user's config file (~/.peekview/config.yaml).
+
+    This prevents tests from reading or writing the user's real config.
+    """
+    test_config_path = tmp_path / ".peekview" / "config.yaml"
+    test_config_path.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr("peekview.config.CONFIG_FILE", test_config_path)
+
+
 def pytest_configure(config):
     """Configure pytest-asyncio."""
     config.option.asyncio_mode = "auto"
