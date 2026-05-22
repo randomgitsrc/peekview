@@ -507,32 +507,44 @@ def config_cmd():
     pass
 
 
-@config_cmd.command(name="set")
+CONFIG_KEYS_HELP = """
+\b
+Supported configuration keys:
+
+  Server:
+    server.host              Bind address (default: 127.0.0.1)
+    server.port              Server port (default: 8080)
+    server.base_url          External URL for generated links
+
+  Storage:
+    storage.data_dir         Data directory path
+    storage.db_path          Database file path
+
+  Auth:
+    auth.secret_key          JWT signing key
+    auth.token_expire_days   Token validity in days (default: 7)
+    auth.allow_registration  Allow signups (true/false, default: true)
+
+  Remote CLI:
+    remote.url               Remote server URL
+    remote.api_key           API key for authentication
+    remote.timeout           Request timeout in seconds (default: 30)
+    remote.verify_ssl        Verify SSL certificates (true/false)
+
+  Aliases:
+    base_url                 Same as server.base_url
+"""
+
+
+@config_cmd.command(name="set", epilog=CONFIG_KEYS_HELP)
 @click.argument("key")
 @click.argument("value")
 def config_set(key: str, value: str) -> None:
-    """Set a configuration value.
-
-    Supported keys:
-    - server.host: Server bind address (default: 127.0.0.1)
-    - server.port: Server port (default: 8080)
-    - server.base_url: External base URL for generated links
-    - storage.data_dir: Data directory path
-    - storage.db_path: Database file path
-    - auth.secret_key: JWT secret key
-    - auth.token_expire_days: Token expiration in days
-    - auth.allow_registration: Allow new user registration (true/false)
-    - remote.url: Remote server URL
-    - remote.api_key: API key for remote authentication
-    - remote.timeout: Request timeout in seconds
-    - remote.verify_ssl: Verify SSL certificates (true/false)
-    - base_url: Alias for server.base_url (backward compatible)
-
-    Examples:
-        peekview config set server.port 3000
-        peekview config set server.host 0.0.0.0
+    """Set a configuration value.\n
+    Examples:\n
+        peekview config set server.port 3000\n
+        peekview config set server.base_url https://example.com\n
         peekview config set storage.data_dir /var/peekview
-        peekview config set base_url https://example.com
     """
     from peekview.config import load_config_file, save_config_file, CONFIG_FILE
 
@@ -607,22 +619,12 @@ def config_set(key: str, value: str) -> None:
     click.echo(f"  Config file: {CONFIG_FILE}")
 
 
-@config_cmd.command(name="get")
+@config_cmd.command(name="get", epilog=CONFIG_KEYS_HELP)
 @click.argument("key")
 def config_get(key: str) -> None:
     """Get a configuration value.
 
-    Supported keys:
-    - server.host, server.port, server.base_url
-    - storage.data_dir, storage.db_path
-    - auth.secret_key, auth.token_expire_days, auth.allow_registration
-    - remote.url, remote.api_key, remote.timeout, remote.verify_ssl
-    - base_url (alias for server.base_url)
-
-    Examples:
-        peekview config get server.port
-        peekview config get base_url
-        peekview config get remote.url
+    Example: peekview config get server.port
     """
     from peekview.config import load_config_file
 
