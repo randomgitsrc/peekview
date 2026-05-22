@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## [0.1.35] - 2026-05-22
+
+### 修复
+
+- `config get` 未设置时显示默认值
+  - 例如 `peekview config get server.port` 显示 `(not set, default: 8080)`
+
+### 改进
+
+- 简化 `config set/get --help` 的帮助格式
+  - 使用逗号分隔列表，避免换行被错误合并
+
+
 ## [0.1.34] - 2026-05-22
 
 ### 新增
