@@ -445,3 +445,94 @@ class TestIntegrationWorkflow:
         assert get_result.exit_code == 0
         data = json.loads(get_result.output)
         assert data["slug"] == "stdin-workflow"
+
+
+class TestConfigCommand:
+    """Tests for `peekview config` command."""
+
+    def test_config_set_server_port(self, runner, isolated_fs):
+        """config set server.port should work."""
+        result = runner.invoke(cli, ["config", "set", "server.port", "3000"])
+        assert result.exit_code == 0
+        assert "Set server.port = 3000" in result.output
+
+    def test_config_get_server_port(self, runner, isolated_fs):
+        """config get server.port should return value."""
+        # First set the value
+        runner.invoke(cli, ["config", "set", "server.port", "3000"])
+        # Then get it
+        result = runner.invoke(cli, ["config", "get", "server.port"])
+        assert result.exit_code == 0
+        assert "3000" in result.output
+
+    def test_config_set_server_host(self, runner, isolated_fs):
+        """config set server.host should work."""
+        result = runner.invoke(cli, ["config", "set", "server.host", "0.0.0.0"])
+        assert result.exit_code == 0
+        assert "Set server.host = 0.0.0.0" in result.output
+
+    def test_config_set_storage_data_dir(self, runner, isolated_fs):
+        """config set storage.data_dir should work."""
+        result = runner.invoke(cli, ["config", "set", "storage.data_dir", "/tmp/peekview"])
+        assert result.exit_code == 0
+        assert "Set storage.data_dir = /tmp/peekview" in result.output
+
+    def test_config_set_auth_secret_key(self, runner, isolated_fs):
+        """config set auth.secret_key should work."""
+        result = runner.invoke(cli, ["config", "set", "auth.secret_key", "my-secret"])
+        assert result.exit_code == 0
+        assert "Set auth.secret_key = my-secret" in result.output
+
+    def test_config_list_shows_all(self, runner, isolated_fs):
+        """config list should show all configured values."""
+        # Set a few values
+        runner.invoke(cli, ["config", "set", "server.port", "3000"])
+        runner.invoke(cli, ["config", "set", "server.host", "0.0.0.0"])
+        # List them
+        result = runner.invoke(cli, ["config", "list"])
+        assert result.exit_code == 0
+        assert "3000" in result.output
+        assert "0.0.0.0" in result.output
+
+
+class TestCliShortOptions:
+    """Tests for -h and -v short options."""
+
+    def test_cli_version_short(self, runner):
+        """CLI should report version with -v."""
+        result = runner.invoke(cli, ["-v"])
+        assert result.exit_code == 0
+        assert "peekview" in result.output.lower()
+        assert "0.1." in result.output
+
+    def test_cli_help_short(self, runner):
+        """CLI should show help with -h."""
+        result = runner.invoke(cli, ["-h"])
+        assert result.exit_code == 0
+        assert "create" in result.output
+        assert "get" in result.output
+
+    def test_config_help_short(self, runner):
+        """config subcommand should show help with -h."""
+        result = runner.invoke(cli, ["config", "-h"])
+        assert result.exit_code == 0
+        assert "set" in result.output
+        assert "get" in result.output
+
+
+class TestServiceInstallWithConfig:
+    """Tests for service install reading from config file."""
+
+    @patch("peekview.cli._install_systemd_service")
+    def test_service_install_reads_config_port(self, mock_install, runner, isolated_fs):
+        """service install should read port from config."""
+        # Set config port
+        runner.invoke(cli, ["config", "set", "server.port", "3000"])
+        # Install service (will fail because we're not on Linux with systemd)
+        # But we can check the mock was called with correct port
+        with patch("platform.system", return_value="Linux"):
+            result = runner.invoke(cli, ["service", "install", "--user"])
+            # Should call _install_systemd_service with port=3000
+            assert mock_install.called
+            call_args = mock_install.call_args
+            assert call_args[0][2] == 3000  # port is 3rd positional arg

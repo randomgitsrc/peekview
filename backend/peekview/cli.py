@@ -110,8 +110,11 @@ def _scan_directory_local(base_path: Path, ignored_dirs: set[str]) -> list[dict[
     return files_data
 
 
-@click.group()
-@click.version_option(version=__version__, prog_name="peekview")
+@click.group(
+    name="peekview",
+    context_settings={"help_option_names": ["-h", "--help"]}
+)
+@click.version_option(__version__, "-v", "--version", prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
     pass
@@ -511,23 +514,38 @@ def config_set(key: str, value: str) -> None:
     """Set a configuration value.
 
     Supported keys:
-    - base_url: External base URL for generated links
+    - server.host: Server bind address (default: 127.0.0.1)
+    - server.port: Server port (default: 8080)
+    - server.base_url: External base URL for generated links
+    - storage.data_dir: Data directory path
+    - storage.db_path: Database file path
+    - auth.secret_key: JWT secret key
+    - auth.token_expire_days: Token expiration in days
+    - auth.allow_registration: Allow new user registration (true/false)
     - remote.url: Remote server URL
     - remote.api_key: API key for remote authentication
     - remote.timeout: Request timeout in seconds
     - remote.verify_ssl: Verify SSL certificates (true/false)
+    - base_url: Alias for server.base_url (backward compatible)
 
     Examples:
+        peekview config set server.port 3000
+        peekview config set server.host 0.0.0.0
+        peekview config set storage.data_dir /var/peekview
         peekview config set base_url https://example.com
-        peekview config set remote.url https://example.com
-        peekview config set remote.api_key sk-xxx
     """
     from peekview.config import load_config_file, save_config_file, CONFIG_FILE
 
     config = load_config_file()
 
     # Validate key
-    supported_keys = ["base_url", "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl"]
+    supported_keys = [
+        "base_url",
+        "server.host", "server.port", "server.base_url",
+        "storage.data_dir", "storage.db_path",
+        "auth.secret_key", "auth.token_expire_days", "auth.allow_registration",
+        "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
+    ]
     if key not in supported_keys:
         click.echo(f"Error: Unknown config key '{key}'", err=True)
         click.echo(f"Supported keys: {', '.join(supported_keys)}", err=True)
@@ -538,6 +556,37 @@ def config_set(key: str, value: str) -> None:
         if "server" not in config:
             config["server"] = {}
         config["server"]["base_url"] = value
+    elif key.startswith("server."):
+        if "server" not in config:
+            config["server"] = {}
+        server_key = key.split(".", 1)[1]
+        # Convert port to int
+        if server_key == "port":
+            try:
+                value = int(value)
+            except ValueError:
+                click.echo("Error: port must be an integer", err=True)
+                sys.exit(1)
+        config["server"][server_key] = value
+    elif key.startswith("storage."):
+        if "storage" not in config:
+            config["storage"] = {}
+        storage_key = key.split(".", 1)[1]
+        config["storage"][storage_key] = value
+    elif key.startswith("auth."):
+        if "auth" not in config:
+            config["auth"] = {}
+        auth_key = key.split(".", 1)[1]
+        # Convert boolean strings
+        if auth_key == "allow_registration":
+            value = value.lower() in ("true", "1", "yes")
+        elif auth_key == "token_expire_days":
+            try:
+                value = int(value)
+            except ValueError:
+                click.echo("Error: token_expire_days must be an integer", err=True)
+                sys.exit(1)
+        config["auth"][auth_key] = value
     elif key.startswith("remote."):
         if "remote" not in config:
             config["remote"] = {}
@@ -549,7 +598,7 @@ def config_set(key: str, value: str) -> None:
             try:
                 value = int(value)
             except ValueError:
-                click.echo(f"Error: timeout must be an integer", err=True)
+                click.echo("Error: timeout must be an integer", err=True)
                 sys.exit(1)
         config["remote"][remote_key] = value
 
@@ -563,7 +612,15 @@ def config_set(key: str, value: str) -> None:
 def config_get(key: str) -> None:
     """Get a configuration value.
 
+    Supported keys:
+    - server.host, server.port, server.base_url
+    - storage.data_dir, storage.db_path
+    - auth.secret_key, auth.token_expire_days, auth.allow_registration
+    - remote.url, remote.api_key, remote.timeout, remote.verify_ssl
+    - base_url (alias for server.base_url)
+
     Examples:
+        peekview config get server.port
         peekview config get base_url
         peekview config get remote.url
     """
@@ -575,10 +632,22 @@ def config_get(key: str) -> None:
     if key == "base_url":
         value = config.get("server", {}).get("base_url", "")
         click.echo(value if value else "(not set)")
+    elif key.startswith("server."):
+        server_key = key.split(".", 1)[1]
+        value = config.get("server", {}).get(server_key, "")
+        click.echo(value if value != "" else "(not set)")
+    elif key.startswith("storage."):
+        storage_key = key.split(".", 1)[1]
+        value = config.get("storage", {}).get(storage_key, "")
+        click.echo(value if value != "" else "(not set)")
+    elif key.startswith("auth."):
+        auth_key = key.split(".", 1)[1]
+        value = config.get("auth", {}).get(auth_key, "")
+        click.echo(value if value != "" else "(not set)")
     elif key.startswith("remote."):
         remote_key = key.split(".", 1)[1]
         value = config.get("remote", {}).get(remote_key, "")
-        click.echo(value if value else "(not set)")
+        click.echo(value if value != "" else "(not set)")
     else:
         click.echo(f"Error: Unknown config key '{key}'", err=True)
         sys.exit(1)
@@ -632,14 +701,25 @@ def service_cmd():
 @click.option("--data-dir", default=None, help="Data directory path")
 @click.option("--force", is_flag=True, help="Overwrite existing service")
 def install_service(user_mode: bool, host: str | None, port: int | None, base_url: str | None, data_dir: str | None, force: bool) -> None:
-    """Install PeekView as a system service."""
+    """Install PeekView as a system service.
+
+    Reads configuration from ~/.peekview/config.yaml if available.
+    CLI arguments override config file values.
+    """
     from peekview.config import load_config_file, save_config_file
 
     system = platform.system()
+    file_config = load_config_file()
 
-    # Save base_url to config file if provided
+    # Read from config file if not provided via CLI
+    effective_host = host or file_config.get("server", {}).get("host")
+    effective_port = port or file_config.get("server", {}).get("port")
+    effective_data_dir = data_dir or file_config.get("storage", {}).get("data_dir")
+    effective_base_url = base_url or file_config.get("server", {}).get("base_url")
+
+    # Save base_url to config file if provided via CLI
     if base_url:
-        config = load_config_file()
+        config = file_config
         if "server" not in config:
             config["server"] = {}
         config["server"]["base_url"] = base_url
@@ -647,9 +727,9 @@ def install_service(user_mode: bool, host: str | None, port: int | None, base_ur
         click.echo(f"✓ Config saved: base_url = {base_url}")
 
     if system == "Linux":
-        _install_systemd_service(user_mode, host, port, base_url, data_dir, force)
+        _install_systemd_service(user_mode, effective_host, effective_port, effective_base_url, effective_data_dir, force)
     elif system == "Darwin":
-        _install_launchd_service(user_mode, host, port, base_url, data_dir, force)
+        _install_launchd_service(user_mode, effective_host, effective_port, effective_base_url, effective_data_dir, force)
     else:
         click.echo(f"Service installation not supported on {system}", err=True)
         sys.exit(1)
