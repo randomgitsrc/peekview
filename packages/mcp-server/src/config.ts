@@ -1,38 +1,32 @@
 /**
- * Configuration module with validation
+ * Configuration module with file support
+ * Priority: Env > File > Default
  */
-import { z } from 'zod';
-import type { ServerConfig } from './types.js';
+import { loadConfigFromFile } from './config/file.js';
+import { mergeConfig } from './config/merge.js';
 
-const configSchema = z.object({
-  PEEKVIEW_URL: z.string().url().min(1),
-  PEEKVIEW_PUBLIC_URL: z.string().url().min(1),
-  MCP_PORT: z.coerce.number().int().positive().default(33333),
-  MCP_HOST: z.string().default('0.0.0.0'),
-  MCP_CORS_ORIGINS: z.string().default('*'),
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-});
+export interface ServerConfig {
+  peekviewUrl: string;
+  publicUrl: string;
+  apiKey?: string;
+  port: number;
+  host: string;
+  corsOrigins: string[];
+  logLevel: string;
+}
 
 export function loadConfig(): ServerConfig {
-  const result = configSchema.safeParse(process.env);
+  // Load from file (lowest priority)
+  const fileConfig = loadConfigFromFile();
 
-  if (!result.success) {
-    const errors = result.error.errors.map(e => `${e.path}: ${e.message}`).join('\n');
-    throw new Error(`Configuration error:\n${errors}\n\nRequired environment variables:\n- PEEKVIEW_URL: PeekView API base URL (internal)\n- PEEKVIEW_PUBLIC_URL: PeekView public URL (for user-facing links)`);
-  }
-
-  const env = result.data;
-
-  return {
-    peekviewUrl: env.PEEKVIEW_URL.replace(/\/$/, ''),
-    publicUrl: env.PEEKVIEW_PUBLIC_URL.replace(/\/$/, ''),
-    port: env.MCP_PORT,
-    host: env.MCP_HOST,
-    corsOrigins: env.MCP_CORS_ORIGINS.split(','),
-    logLevel: env.LOG_LEVEL,
-  };
+  // Merge with env vars and defaults
+  return mergeConfig(fileConfig, process.env);
 }
 
 export function validateConfig(): void {
   loadConfig(); // Throws if invalid
 }
+
+// Re-export for CLI usage
+export { loadConfigFromFile } from './config/file.js';
+export { mergeConfig, type MergedConfig } from './config/merge.js';

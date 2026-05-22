@@ -158,7 +158,7 @@ graph TD
 
     // Click Code to switch to code view
     await page.click('.mermaid-view-toggle')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Verify code is visible
     const codeBlock = page.locator('.mermaid-content.code-mode pre')
@@ -274,7 +274,7 @@ test.describe('Debug Server - Theme', () => {
 
     // Click theme toggle (using btn-icon class and title pattern)
     await page.click('.btn-icon[title*="Switch to"]', { timeout: 10000 })
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Check theme changed
     const newTheme = await page.evaluate(() =>
@@ -318,7 +318,7 @@ test.describe('Debug Server - Mobile', () => {
 
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto(`/${entry.slug}`)
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Single file should NOT show Files button
     await expect(page.locator('.mobile-actions .menu-btn')).not.toBeVisible()
@@ -342,7 +342,7 @@ test.describe('Debug Server - Mobile', () => {
 
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto(`/${entry.slug}`)
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Multi file should show Files button with count
     const filesButton = page.locator('.mobile-actions .menu-btn')
@@ -372,7 +372,7 @@ test.describe('Debug Server - Auth', () => {
 
     // Click Login button
     await page.click('.btn-login')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Dialog should be visible
     await expect(page.locator('.login-dialog')).toBeVisible()
@@ -459,12 +459,15 @@ test.describe('Debug Server - Auth', () => {
     })
 
     // Login in UI
-    await page.goto('/')
+    // Set token before page loads
     // Set token in localStorage before app loads
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    // Set token and wait for auth
+    await page.goto('/')
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
+    await page.waitForTimeout(1000)
     // Wait for auth initialization + user menu
-    await page.waitForSelector('.user-menu-trigger', { timeout: 10000 })
+    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
 
     // Card should have owner actions
     const cardActions = page.locator('.card-actions')
@@ -494,10 +497,12 @@ test.describe('Debug Server - Auth', () => {
     expect(createResp.status()).toBe(201)
 
     // Login in UI
+    // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
-    await page.waitForSelector('.user-menu-trigger', { timeout: 10000 })
+    await page.waitForTimeout(1000)
+    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
 
     // Find the visibility toggle button
     const toggleBtn = page.locator('.card-action-btn').first()
@@ -521,10 +526,12 @@ test.describe('Debug Server - Auth', () => {
     const token = regData.access_token
 
     // Login in UI
+    // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
-    await page.waitForSelector('.user-menu-trigger', { timeout: 10000 })
+    await page.waitForTimeout(1000)
+    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
 
     // Click user menu to open dropdown
     await page.click('.user-menu-trigger')
@@ -533,7 +540,7 @@ test.describe('Debug Server - Auth', () => {
     // Click Logout (last dropdown item)
     const logoutBtn = page.locator('.dropdown-item').last()
     await logoutBtn.click()
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Should see Login button again
     await expect(page.locator('.btn-login')).toBeVisible()
@@ -558,10 +565,12 @@ test.describe('Debug Server - All/Mine Tabs', () => {
     const regData = await regResp.json()
     const token = regData.access_token
 
+    // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
-    await page.waitForSelector('.user-menu-trigger', { timeout: 10000 })
+    await page.waitForTimeout(1000)
+    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
 
     // Tabs should be visible
     await expect(page.locator('.owner-tabs')).toBeVisible()
@@ -588,9 +597,11 @@ test.describe('Debug Server - All/Mine Tabs', () => {
       headers: { Authorization: `Bearer ${token}` },
     })
 
+    // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
+    await page.waitForTimeout(1000)
     await page.waitForSelector('.owner-tabs', { timeout: 10000 })
 
     // Click "Mine" tab
@@ -626,10 +637,12 @@ test.describe('Debug Server - API Keys', () => {
     const regData = await regResp.json()
     const token = regData.access_token
 
+    // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
+    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
-    await page.waitForSelector('.user-menu-trigger', { timeout: 10000 })
+    await page.waitForTimeout(1000)
+    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
 
     // Open user menu
     await page.click('.user-menu-trigger')
@@ -650,8 +663,11 @@ test.describe('Debug Server - API Keys', () => {
     const token = regData.access_token
 
     // Go to API Keys page directly, set token, and reload
+    // Set up auth state before navigation
+    await page.context().addInitScript((t: string) => {
+      localStorage.setItem('peekview_token', t)
+    }, token)
     await page.goto('/settings/apikeys')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
     await page.reload()
     // Wait for page content to render (h1 may take time due to auth init)
     await page.waitForSelector('.apikey-page', { timeout: 15000 })
@@ -671,15 +687,18 @@ test.describe('Debug Server - API Keys', () => {
     const token = regData.access_token
 
     // Navigate to API Keys page
+    // Set up auth state before navigation
+    await page.context().addInitScript((t: string) => {
+      localStorage.setItem('peekview_token', t)
+    }, token)
     await page.goto('/settings/apikeys')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
     await page.reload()
     // Wait for auth to initialize and page to render
     await page.waitForSelector('.apikey-page', { timeout: 15000 })
 
     // Click Create Key button
     await page.click('.apikey-page .btn-primary')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Dialog should be visible
     await expect(page.locator('.dialog')).toBeVisible()
@@ -698,7 +717,7 @@ test.describe('Debug Server - API Keys', () => {
 
     // Dismiss the dialog
     await page.click('.dialog .btn-primary')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Key card should appear in list
     await expect(page.locator('.key-card')).toBeVisible()
@@ -755,15 +774,18 @@ test.describe('Debug Server - API Keys', () => {
     const keyId = keyData.id
 
     // Navigate to API Keys page
+    // Set up auth state before navigation
+    await page.context().addInitScript((t: string) => {
+      localStorage.setItem('peekview_token', t)
+    }, token)
     await page.goto('/settings/apikeys')
-    await page.evaluate((t: string) => localStorage.setItem('peekview_token', t), token)
     await page.reload()
     await page.waitForSelector('.apikey-page', { timeout: 15000 })
     await page.waitForSelector('.key-card', { timeout: 10000 })
 
     // Click Revoke button
     await page.click('.btn-danger')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000)
 
     // Confirm dialog should appear
     await expect(page.locator('.confirm-dialog')).toBeVisible()

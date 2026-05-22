@@ -1,7 +1,7 @@
 # PeekView — 项目索引
 
 > 最后更新：2026-05-21
-> 当前版本：v0.1.37（Backend/Frontend）| MCP Server v0.2.0
+> 当前版本：v0.1.38（Backend/Frontend）| MCP Server v0.2.0
 
 ---
 

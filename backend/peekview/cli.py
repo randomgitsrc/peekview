@@ -1027,6 +1027,43 @@ def stop_service(user_mode: bool) -> None:
         sys.exit(1)
 
 
+@service_cmd.command(name="restart")
+@click.option("--user", "user_mode", is_flag=True, help="Restart user service")
+def restart_service(user_mode: bool) -> None:
+    """Restart the service."""
+    system = platform.system()
+
+    if system == "Linux":
+        try:
+            if user_mode:
+                subprocess.run(["systemctl", "--user", "restart", "peekview"], check=True)
+            else:
+                subprocess.run(["sudo", "systemctl", "restart", "peekview"], check=True)
+            click.echo("✓ Service restarted")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Error restarting service: {e}", err=True)
+            sys.exit(1)
+    elif system == "Darwin":
+        plist_path = Path.home() / "Library" / "LaunchAgents" / "com.peekview.plist"
+        if not user_mode:
+            plist_path = Path("/Library/LaunchDaemons") / "com.peekview.plist"
+        try:
+            # Darwin doesn't have restart, use stop then start
+            if user_mode:
+                subprocess.run(["launchctl", "unload", str(plist_path)], check=True)
+                subprocess.run(["launchctl", "load", str(plist_path)], check=True)
+            else:
+                subprocess.run(["sudo", "launchctl", "unload", str(plist_path)], check=True)
+                subprocess.run(["sudo", "launchctl", "load", str(plist_path)], check=True)
+            click.echo("✓ Service restarted")
+        except subprocess.CalledProcessError as e:
+            click.echo(f"Error restarting service: {e}", err=True)
+            sys.exit(1)
+    else:
+        click.echo(f"Service restart not supported on {system}", err=True)
+        sys.exit(1)
+
+
 @cli.group(name="user")
 def user_cmd():
     """Manage PeekView users.

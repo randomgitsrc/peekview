@@ -1,61 +1,118 @@
 #!/usr/bin/env node
 /**
- * PeekView MCP Server - Entry Point (v0.2.1 multi-user)
+ * PeekView MCP Server - Entry Point (v0.3.0 with config file support)
  */
+import { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { createMCPServer, createExpressApp } from './server.js';
 import { PeekViewClient } from './client.js';
 import { loadConfig } from './config.js';
 import { createTools } from './tools/index.js';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { configCommand } from './cli/config.js';
+import { serviceCommand } from './cli/service.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Handle CLI flags before loading config
-const args = process.argv.slice(2);
-if (args.includes('--version') || args.includes('-v')) {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Get version from package.json
+function getVersion(): string {
   try {
-    const pkgPath = resolve(import.meta.dirname, '../package.json');
+    const pkgPath = resolve(__dirname, '../package.json');
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    console.log(pkg.version);
-    process.exit(0);
+    return pkg.version;
   } catch {
-    console.log('0.2.1');
-    process.exit(0);
+    return '0.3.0';
   }
 }
 
-if (args.includes('--help') || args.includes('-h')) {
-  console.log(`
-PeekView MCP Server - AI Agent integration
+// Create main CLI program
+const program = new Command();
 
-Usage:
-  peekview-mcp [options]
-  peekview-mcp serve [options]
+program
+  .name('peekview-mcp')
+  .description('PeekView MCP Server - AI Agent integration')
+  .version(getVersion(), '-v, --version');
 
-Environment Variables:
-  PEEKVIEW_URL        PeekView API base URL (required)
-  PEEKVIEW_PUBLIC_URL PeekView public URL for links (required)
-  MCP_PORT            Server port (default: 33333)
-  MCP_HOST            Server host (default: 0.0.0.0)
-  LOG_LEVEL           Log level (default: info)
+// Global help option
+program.helpOption('-h, --help', 'Show help');
 
-Options:
-  -v, --version       Show version
-  -h, --help          Show help
-  uninstall           Show uninstall instructions
+// serve command
+const serveCommand = new Command('serve')
+  .description('Start the MCP Server')
+  .option('--port <port>', 'Server port (overrides config)')
+  .option('--host <host>', 'Server host (overrides config)')
+  .action(async (options: { port?: string; host?: string }) => {
+    try {
+      // Load config (env > file > default)
+      const config = loadConfig();
 
-Example:
-  export PEEKVIEW_URL=https://api.example.com
-  export PEEKVIEW_PUBLIC_URL=https://app.example.com
-  peekview-mcp
+      // Override with CLI options
+      const port = options.port ? parseInt(options.port, 10) : config.port;
+      const host = options.host || config.host;
 
-Uninstall:
-  npm uninstall -g @peekview/mcp-server
+      // Create client and server
+      const client = new PeekViewClient({ peekviewUrl: config.peekviewUrl });
+      const tools = createTools(client, config.publicUrl);
+      const mcpServer = createMCPServer(tools);
+      const app = createExpressApp(mcpServer, {
+        peekviewUrl: config.peekviewUrl,
+        publicUrl: config.publicUrl,
+        port,
+        host,
+        corsOrigins: config.corsOrigins,
+        logLevel: config.logLevel,
+      }, client);
+
+      // Start server
+      await new Promise<void>((resolve, reject) => {
+        const httpServer = app.listen(port, host, () => {
+          console.log(`✓ MCP Server running on http://${host}:${port}`);
+          console.log(`  Public URL: ${config.publicUrl}`);
+          console.log(`  PeekView: ${config.peekviewUrl}`);
+          resolve();
+        });
+
+        httpServer.on('error', (err) => {
+          reject(err);
+        });
+      });
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+// Add serve epilog with examples
+serveCommand.addHelpText('after', `
+Examples:
+  peekview-mcp serve                    # Start with config file
+  peekview-mcp serve --port 33334       # Start with custom port
+  peekview-mcp serve --host 127.0.0.1   # Start on localhost only
+
+Config file: ~/.peekview/mcp-config.yaml
 `);
-  process.exit(0);
-}
 
-if (args.includes('uninstall')) {
-  console.log(`
+// Add subcommands
+program.addCommand(serveCommand);
+program.addCommand(configCommand);
+program.addCommand(serviceCommand);
+
+// version command (alias)
+program
+  .command('version')
+  .description('Show version')
+  .action(() => {
+    console.log(getVersion());
+  });
+
+// uninstall command
+program
+  .command('uninstall')
+  .description('Show uninstall instructions')
+  .action(() => {
+    console.log(`
 === Uninstall PeekView MCP Server ===
 
 To uninstall, run:
@@ -70,40 +127,24 @@ Your data in PeekView server will NOT be affected.
 
 === Optional Cleanup ===
 
+Remove config file:
+  rm ~/.peekview/mcp-config.yaml
+
+Stop systemd service (if configured):
+  peekview-mcp service stop
+  peekview-mcp service uninstall --user
+
 Remove environment variables from ~/.bashrc or ~/.profile:
   - PEEKVIEW_URL
   - PEEKVIEW_PUBLIC_URL
   - PEEKVIEW_API_KEY
-
-Stop systemd service (if configured):
-  sudo systemctl stop peekview-mcp
-  sudo systemctl disable peekview-mcp
 `);
-  process.exit(0);
-}
-
-async function main() {
-  const config = loadConfig();
-
-  console.log(`Starting PeekView MCP Server...`);
-  console.log(`PeekView URL: ${config.peekviewUrl}`);
-  console.log(`Public URL: ${config.publicUrl}`);
-  console.log(`Listening on: ${config.host}:${config.port}`);
-
-  const client = new PeekViewClient({ peekviewUrl: config.peekviewUrl });
-  const tools = createTools(client, config.publicUrl);
-
-  const mcpServer = createMCPServer(tools);
-  const app = createExpressApp(mcpServer, config, client);
-
-  app.listen(config.port, config.host, () => {
-    console.log(`✓ MCP Server ready at http://${config.host}:${config.port}`);
-    console.log(`  SSE endpoint: http://${config.host}:${config.port}/sse`);
-    console.log(`  Health check: http://${config.host}:${config.port}/health`);
   });
+
+// Show help if no command provided
+if (process.argv.length <= 2) {
+  program.help();
 }
 
-main().catch((error) => {
-  console.error('Fatal error:', error.message);
-  process.exit(1);
-});
+// Parse and execute
+program.parse();
