@@ -7,6 +7,27 @@
 
 ## [Unreleased]
 
+## [0.1.36] - 2026-05-22
+
+### 重构
+
+- `peekview service install` 不再向服务文件写入环境变量
+  - 服务文件现在只包含 `ExecStart=peekview serve`
+  - 所有配置从 `~/.peekview/config.yaml` 运行时读取
+  - 支持 systemd 和 launchd (macOS)
+
+### 修复
+
+- 修复测试隔离问题：添加全局 `isolate_config_file` fixture
+  - 防止测试读取用户生产环境的 `~/.peekview/config.yaml`
+  - 修复 14 个因此失败的测试
+
+### 改进
+
+- 配置层级更清晰：CLI 参数 > 环境变量 > config.yaml > 代码默认值
+- `config set/get/list` 支持全部 25+ 个配置参数
+
+
 ## [0.1.35] - 2026-05-22
 
 ### 修复
