@@ -34,6 +34,9 @@ describe('SSE Server', () => {
       return null;
     };
 
+    // Mock ping for health check tests
+    client.ping = async () => true;
+
     const tools = createTools(client, 'http://localhost:8080');
     const server = createMCPServer(tools);
     app = createExpressApp(server, {
