@@ -4,7 +4,7 @@
  */
 import { Command } from 'commander';
 import { spawn, execSync } from 'child_process';
-import { writeFileSync, existsSync, unlinkSync } from 'fs';
+import { writeFileSync, existsSync, unlinkSync, readFileSync } from 'fs';
 import { mkdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -63,6 +63,115 @@ function getServicePath(userMode: boolean): string {
     return join(homedir(), '.config', 'systemd', 'user', serviceName);
   }
   return `/etc/systemd/system/${serviceName}`;
+}
+
+/**
+ * Check if service file uses legacy format (contains Environment variables)
+ */
+function isLegacyServiceFormat(servicePath: string): boolean {
+  if (!existsSync(servicePath)) {
+    return false;
+  }
+  const content = readFileSync(servicePath, 'utf-8');
+  return content.includes('Environment="PEEKVIEW_URL') ||
+         content.includes('Environment="PEEKVIEW_PUBLIC_URL') ||
+         content.includes('Environment="PEEKVIEW_API_KEY');
+}
+
+/**
+ * Wait for process to exit with timeout
+ */
+async function waitForProcessExit(pid: number, timeoutMs: number): Promise<boolean> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      // Check if process exists (kill -0 doesn't actually kill, just checks)
+      process.kill(pid, 0);
+      // Process still running, wait
+      await new Promise(r => setTimeout(r, 100));
+    } catch {
+      // Process doesn't exist (exited)
+      return true;
+    }
+  }
+  return false; // Timeout
+}
+
+/**
+ * Wait for port to be released
+ */
+async function waitForPortRelease(port: number, timeoutMs: number): Promise<boolean> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      const result = execSync(`lsof -i :${port} 2>/dev/null || echo "FREE"`, { encoding: 'utf-8' }).trim();
+      if (result === 'FREE' || !result) {
+        return true;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    } catch {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Clean up old service process before reinstall
+ */
+async function cleanupOldService(userMode: boolean): Promise<void> {
+  const serviceName = getServiceName();
+
+  try {
+    // 1. Stop the service
+    if (userMode) {
+      try {
+        execSync(`systemctl --user stop ${serviceName} 2>/dev/null`);
+      } catch {
+        // Service might not be running
+      }
+    } else {
+      try {
+        execSync(`sudo systemctl stop ${serviceName} 2>/dev/null`);
+      } catch {
+        // Service might not be running
+      }
+    }
+
+    // 2. Find and kill any lingering processes
+    try {
+      const pids = execSync(`pgrep -f "peekview-mcp serve" 2>/dev/null || echo ""`, { encoding: 'utf-8' }).trim();
+      if (pids) {
+        for (const pid of pids.split('\n')) {
+          if (pid) {
+            const pidNum = parseInt(pid, 10);
+            if (!isNaN(pidNum)) {
+              // Try graceful shutdown first
+              try {
+                process.kill(pidNum, 'SIGTERM');
+                const exited = await waitForProcessExit(pidNum, 5000);
+                if (!exited) {
+                  // Force kill
+                  process.kill(pidNum, 'SIGKILL');
+                  await waitForProcessExit(pidNum, 2000);
+                }
+              } catch {
+                // Process might already be gone
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // No processes found
+    }
+
+    // 3. Wait for port to be released
+    await waitForPortRelease(33333, 5000);
+
+  } catch (error) {
+    console.warn('Warning: Cleanup of old service may have incomplete:', error instanceof Error ? error.message : String(error));
+  }
 }
 
 function getExecutablePath(): string {
@@ -133,27 +242,27 @@ serviceCommand
       const apiKey = config.peekview?.api_key || '';
 
       // Check if service exists
-      if (existsSync(servicePath) && !options.force) {
-        console.error(`Error: Service already exists at ${servicePath}`);
-        console.error('Use --force to overwrite');
-        process.exit(1);
+      if (existsSync(servicePath)) {
+        if (!options.force) {
+          console.error(`Error: Service already exists at ${servicePath}`);
+          console.error('Use --force to overwrite');
+          process.exit(1);
+        }
+        // Cleanup old service before reinstall
+        console.log('→ Cleaning up old service...');
+        await cleanupOldService(userMode);
       }
 
-      // Create service content
+      // Create service content - NO Environment variables (read from config file at runtime)
       const homeDir = homedir();
       const userDirective = userMode ? '' : `User=${currentUser}\n`;
-      const apiKeyEnv = apiKey ? `Environment="PEEKVIEW_API_KEY=${apiKey}"\n` : '';
       const serviceContent = `[Unit]
 Description=PeekView MCP Server
 After=network.target
 
 [Service]
 Type=simple
-${userDirective}Environment="HOME=${homeDir}"
-Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/${currentUser}/.nvm/versions/node/current/bin:/home/${currentUser}/.npm-global/bin:/home/${currentUser}/.local/bin"
-Environment="PEEKVIEW_URL=${peekviewUrl}"
-Environment="PEEKVIEW_PUBLIC_URL=${peekviewPublicUrl}"
-${apiKeyEnv}WorkingDirectory=${homeDir}
+${userDirective}WorkingDirectory=${homeDir}
 ExecStart=${nodePath} ${execPath} serve
 Restart=always
 RestartSec=5
@@ -269,6 +378,16 @@ serviceCommand
   .action(async (options: { user?: boolean }) => {
     try {
       const userMode = options.user || false;
+      const servicePath = getServicePath(userMode);
+
+      // Check for legacy format
+      if (existsSync(servicePath) && isLegacyServiceFormat(servicePath)) {
+        console.log('⚠ WARNING: Service uses legacy format (Environment variables detected)');
+        console.log('   This means config changes require "service install --force" to take effect.');
+        console.log('   Run "peekview-mcp service install --force" to migrate to new format.\n');
+      } else if (existsSync(servicePath)) {
+        console.log('✓ Service uses modern format (reads config from file at runtime)\n');
+      }
 
       // Run status and inherit stdio to show output
       const cmd = 'systemctl';

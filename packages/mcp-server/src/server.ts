@@ -186,16 +186,27 @@ export function createExpressApp(
   app.get('/health', async (_req, res) => {
     const isPeekViewHealthy = await client.ping();
 
+    // Build enhanced health response
+    const healthResponse: any = {
+      status: isPeekViewHealthy ? 'ok' : 'degraded',
+      version,
+      peekview: isPeekViewHealthy ? 'ok' : 'unreachable',
+      config: {
+        source: config.configSource || 'default',
+        path: config.configPath || null,
+        peekview_url: config.peekviewUrl || '',
+        public_url: config.publicUrl || '',
+        api_key_configured: !!config.apiKey,
+      }
+    };
+
     if (!isPeekViewHealthy) {
-      res.status(503).json({
-        status: 'degraded',
-        version,
-        peekview: 'unreachable'
-      });
+      healthResponse.peekview_error = `Failed to connect to PeekView at ${config.peekviewUrl}`;
+      res.status(503).json(healthResponse);
       return;
     }
 
-    res.json({ status: 'ok', version });
+    res.json(healthResponse);
   });
 
   return app;

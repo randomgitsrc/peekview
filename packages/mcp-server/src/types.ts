@@ -52,10 +52,13 @@ export interface ListEntriesResponse {
 export interface ServerConfig {
   peekviewUrl: string;
   publicUrl: string;
+  apiKey?: string;
   port: number;
   host: string;
   corsOrigins: string[];
   logLevel: string;
+  configSource?: 'file' | 'env' | 'default';
+  configPath?: string | null;
 }
 
 // Session context for tool handlers (from AsyncLocalStorage)
