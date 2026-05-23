@@ -434,12 +434,13 @@ try: build install
 # Debug Workflow
 # =============================================================================
 
-debug: debug-build debug-start debug-verify-isolation debug-test
+debug: debug-build debug-start debug-verify-isolation debug-test debug-test-mcp
 	@echo ""
 	@echo "=== 调试流程完成 ==="
 	@echo "✓ 服务运行在 http://127.0.0.1:8888"
 	@echo "✓ 数据隔离验证通过"
 	@echo "✓ E2E 测试通过"
+	@echo "✓ MCP Server 集成测试通过"
 	@echo ""
 	@echo "请进行人工验证，确认无误后:"
 	@echo "  make debug-stop     - 停止调试服务"
@@ -517,7 +518,7 @@ debug-restart:
 debug-test:
 	@echo "=== E2E 测试安全启动 ==="
 	@echo "→ Step 1: 运行前置安全检查..."
-	@bash scripts/e2e-safety-check.sh || exit 1
+	@E2E_GUARD_ENABLED=1 bash scripts/e2e-safety-check.sh || exit 1
 	@echo ""
 	@echo "→ Step 2: 启动 E2E 测试 (带数据隔离保护)..."
 	@E2E_GUARD_ENABLED=1 bash scripts/run-e2e-tests.sh
