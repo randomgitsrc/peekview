@@ -3,7 +3,7 @@
  * PeekView MCP Server CLI - Service commands
  */
 import { Command } from 'commander';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { writeFileSync, existsSync, unlinkSync } from 'fs';
 import { mkdirSync } from 'fs';
 import { join } from 'path';
@@ -51,7 +51,6 @@ function getServicePath(userMode: boolean): string {
 function getExecutablePath(): string {
   try {
     // Try to find peekview-mcp in PATH
-    const { execSync } = require('child_process');
     return execSync('which peekview-mcp', { encoding: 'utf-8' }).trim();
   } catch {
     // Fallback to common locations
@@ -108,7 +107,7 @@ serviceCommand
 
       const servicePath = getServicePath(userMode);
       const execPath = getExecutablePath();
-      const currentUser = require('child_process').execSync('whoami', { encoding: 'utf-8' }).trim();
+      const currentUser = execSync('whoami', { encoding: 'utf-8' }).trim();
 
       // Check if service exists
       if (existsSync(servicePath) && !options.force) {
