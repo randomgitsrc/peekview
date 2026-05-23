@@ -108,8 +108,8 @@ peekview-mcp service uninstall --user
 
 | 配置项 | 环境变量 | 默认值 | 说明 |
 |--------|----------|--------|------|
-| `peekview.url` | `PEEKVIEW_URL` | - | **必填**。PeekView API 内部地址，MCP Server 用此地址调用 PeekView API |
-| `peekview.public_url` | `PEEKVIEW_PUBLIC_URL` | - | **必填**。公开访问地址，生成给用户查看条目的链接 |
+| `peekview.url` | `PEEKVIEW_URL` | - | **必填**。MCP Server 调用 PeekView API 的地址（可以是内网或公网） |
+| `peekview.public_url` | `PEEKVIEW_PUBLIC_URL` | - | **必填**。生成给用户查看条目的链接（必须是用户浏览器能访问的地址） |
 | `server.port` | `MCP_PORT` | `33333` | MCP Server 监听端口 |
 | `server.host` | `MCP_HOST` | `0.0.0.0` | 绑定地址，`127.0.0.1` 仅本地，`0.0.0.0` 所有接口 |
 | `server.cors_origins` | `MCP_CORS_ORIGINS` | `*` | CORS 来源，逗号分隔多个域名 |
@@ -130,23 +130,133 @@ peekview-mcp service uninstall --user
 │  │ MCP Server  │ ──────► │  PeekView    │                 │
 │  │  :33333     │  HTTP   │  :8080       │                 │
 │  │             │         │              │                 │
-│  │ 内部通信    │         │ 生成条目     │                 │
+│  │ API 调用    │         │ 生成条目     │                 │
 │  └─────────────┘         └─────────────┘                 │
-│                                  │                         │
-│                                  ▼                         │
-│                           浏览器查看                      │
-│                           （使用 public_url）              │
+│       ▲                          │                         │
+│       │ peekview.url             │                         │
+│       │                          │ peekview.public_url       │
+│       │                          ▼                         │
+│       │                   浏览器查看                      │
+│       │                   （用户点击链接）                  │
+│       │                                                     │
+│   返回 view_url ─────────────────┘                         │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **`peekview.url`**: MCP Server → PeekView 的内部通信地址
-  - 如果同一机器：`http://localhost:8080`
-  - 如果 Docker 内：`http://peekview:8080`
-  
-- **`peekview.public_url`**: 生成给用户查看条目的链接
-  - 外网访问：`https://peek.example.com`
-  - 内网访问：`http://192.168.1.100:8080`
+| 配置项 | 用途 | 谁能访问 | 典型值 |
+|--------|------|---------|--------|
+| **`peekview.url`** | MCP Server 调用 PeekView API | 只有 MCP Server 需要访问 | `http://localhost:8080` / `http://10.0.0.5:8080` |
+| **`peekview.public_url`** | 生成给用户查看条目的链接 | 用户的浏览器需要能访问 | `https://peek.example.com` / `http://192.168.1.100:8080` |
+
+**关键区别**：
+- `peekview.url` 只需要 MCP Server 能访问到 PeekView 即可（可以用内网地址）
+- `peekview.public_url` 必须能被**用户的浏览器**访问（如果用户在外网，必须用公网地址）
+
+### 三种部署场景
+
+#### 场景一：单服务器部署（最简单）
+
+MCP Server 和 PeekView 在同一台机器上。
+
+```
+┌─────────────────────────────────────────┐
+│              服务器 A                    │
+│  ┌─────────────┐    ┌─────────────┐   │
+│  │ MCP Server  │───►│  PeekView   │   │
+│  │  :33333     │    │  :8080      │   │
+│  └─────────────┘    └─────────────┘   │
+│         ▲                    │          │
+│         │                    │          │
+│    用户电脑 (SSE)      浏览器查看        │
+└─────────────────────────────────────────┘
+```
+
+配置：
+```bash
+peekview-mcp config set peekview.url http://localhost:8080
+peekview-mcp config set peekview.public_url http://localhost:8080
+```
+
+**适用**：本地开发、单机部署测试
+
+---
+
+#### 场景二：多服务器 + 内网互通（推荐生产环境）
+
+MCP Server 和 PeekView 在不同服务器，但两台服务器有内网互通。
+
+```
+┌─────────────────┐         内网          ┌─────────────────┐
+│    服务器 A      │◄────────────────────►│    服务器 B      │
+│  ┌───────────┐  │    10.0.0.x 网段    │  ┌───────────┐  │
+│  │MCP Server │  │                     │  │  PeekView  │  │
+│  │  :33333   │  │                     │  │  :8080     │  │
+│  └─────┬─────┘  │                     │  └─────┬─────┘  │
+│        │        │                     │        │        │
+│   公网IP:33333  │                     │  内网IP:8080    │
+└────────┼────────┘                     └────────┼────────┘
+         │                                       │
+         ▼                                       ▼
+    用户电脑 (SSE)                          Nginx 反向代理
+    (外网访问)                              peek.example.com
+```
+
+配置：
+```bash
+# 在服务器A（MCP Server）上配置
+peekview-mcp config set peekview.url http://10.0.0.5:8080      # PeekView内网地址
+peekview-mcp config set peekview.public_url https://peek.example.com  # 用户访问的公网地址
+```
+
+**适用**：
+- 生产环境，MCP Server 和 PeekView 分离部署
+- PeekView 不直接暴露公网，通过 Nginx/Traefik 反向代理
+- MCP Server 通过内网调用 PeekView API（更安全、更低延迟）
+
+---
+
+#### 场景三：多服务器 + 仅公网互通
+
+两台服务器没有内网互通，只能通过公网访问。
+
+```
+┌─────────────────┐         公网           ┌─────────────────┐
+│    服务器 A      │◄────────────────────►│    服务器 B      │
+│  ┌───────────┐  │                      │  ┌───────────┐  │
+│  │MCP Server │  │                      │  │  PeekView  │  │
+│  │  :33333   │  │                      │  │  :8080     │  │
+│  └─────┬─────┘  │                      │  └─────┬─────┘  │
+│        │        │                      │        │        │
+│   公网IP:33333  │                      │  公网IP:8080    │
+└────────┼────────┘                      └────────┼────────┘
+         │                                         │
+         ▼                                         ▼
+    用户电脑 (SSE)                          用户浏览器
+    (外网访问)                              (外网访问)
+```
+
+配置：
+```bash
+# 在服务器A（MCP Server）上配置
+peekview-mcp config set peekview.url https://peek.example.com    # PeekView公网地址
+peekview-mcp config set peekview.public_url https://peek.example.com  # 同上
+```
+
+**适用**：
+- 云服务器分布在不同地域/可用区，无内网互通
+- PeekView 直接暴露公网（或使用反向代理）
+
+---
+
+**如何选择场景？**
+
+| 条件 | 推荐场景 |
+|------|---------|
+| 只有一台服务器 | 场景一（单服务器） |
+| 多台服务器 + 有内网互通 | 场景二（多服务器+内网） |
+| 多台服务器 + 无内网互通 | 场景三（多服务器+公网） |
+| PeekView 不暴露公网 | 场景二（MCP通过内网访问） |
 
 ## 配置文件示例
 

@@ -279,25 +279,106 @@ peekview-mcp serve
 
 ### 问题 4: `peekview.url` 和 `peekview.public_url` 有什么区别？
 
-**区别**:
-- `peekview.url`: MCP Server → PeekView 的内部通信地址
-- `peekview.public_url`: 生成给用户查看条目的公开地址
+**一句话总结**：
+- `peekview.url`: MCP Server 调用 PeekView API 的地址（只需要 MCP Server 能访问即可）
+- `peekview.public_url`: 生成给用户浏览器查看条目的地址（必须能被用户浏览器访问）
 
-**示例场景**（VPS 部署）:
-```bash
-# MCP Server 和 PeekView 在同一台机器
-# PeekView 监听 127.0.0.1:8080（仅本地访问）
-# 外部通过 Nginx 反向代理访问
+**三种典型部署场景**：
 
-peekview-mcp config set peekview.url http://127.0.0.1:8080
-peekview-mcp config set peekview.public_url https://peek.example.com
+#### 场景一：单服务器部署（最简单）
+
+MCP Server 和 PeekView 在同一台机器上：
+
+```
+┌─────────────────────────────────────────┐
+│              服务器                      │
+│  ┌─────────────┐    ┌─────────────┐   │
+│  │ MCP Server  │───►│  PeekView   │   │
+│  │  :33333     │    │  :8080      │   │
+│  └─────────────┘    └─────────────┘   │
+└─────────────────────────────────────────┘
 ```
 
-**示例场景**（本地开发）:
 ```bash
 peekview-mcp config set peekview.url http://localhost:8080
 peekview-mcp config set peekview.public_url http://localhost:8080
 ```
+
+---
+
+#### 场景二：多服务器 + 内网互通（推荐生产环境）
+
+两台服务器有内网互通，PeekView 不直接暴露公网：
+
+```
+┌─────────────────┐         内网          ┌─────────────────┐
+│   MCP Server    │◄────────────────────►│    PeekView      │
+│   (服务器A)      │    10.0.0.x 网段    │    (服务器B)      │
+│   公网:33333    │                     │    内网:8080     │
+└────────┬────────┘                     └────────┬────────┘
+         │                                         │
+         │                                         │
+    用户电脑 (SSE)                            Nginx 反向代理
+    (外网访问)                                peek.example.com
+```
+
+```bash
+# MCP Server 通过内网访问 PeekView
+peekview-mcp config set peekview.url http://10.0.0.5:8080
+
+# 用户通过公网域名查看条目
+peekview-mcp config set peekview.public_url https://peek.example.com
+```
+
+**优势**：
+- MCP Server 通过内网调用 PeekView（更安全、更低延迟）
+- PeekView 不直接暴露公网，通过 Nginx 反向代理
+
+---
+
+#### 场景三：多服务器 + 仅公网互通
+
+两台服务器没有内网互通，只能通过公网访问：
+
+```
+┌─────────────────┐         公网           ┌─────────────────┐
+│   MCP Server    │◄────────────────────►│    PeekView      │
+│   (服务器A)      │                      │    (服务器B)      │
+│   公网:33333    │                      │    公网:8080     │
+└────────┬────────┘                      └────────┬────────┘
+         │                                         │
+         │                                         │
+    用户电脑 (SSE)                            用户浏览器
+    (外网访问)                                (外网访问)
+```
+
+```bash
+# 两台服务器只能通过公网通信
+peekview-mcp config set peekview.url https://peek.example.com
+peekview-mcp config set peekview.public_url https://peek.example.com
+```
+
+**适用场景**：云服务器分布在不同地域/可用区，无内网互通
+
+---
+
+**常见问题**：
+
+Q: 服务器 A 和 B 不在一个内网，`peekview.url` 能访问到吗？  
+A: 如果 B 的 8080 端口在公网可访问（或绑定了公网 IP），可以。此时 `peekview.url` 应该填 B 的公网地址。
+
+Q: PeekView 监听 `0.0.0.0:8080` 时可以设置 `url` 为公网 `example.com` 吗？  
+A: 可以。`0.0.0.0` 表示监听所有接口，包括公网。只要防火墙/安全组允许，就可以用公网域名访问。
+
+---
+
+**配置速查表**：
+
+| 部署方式 | peekview.url | peekview.public_url |
+|---------|-------------|---------------------|
+| 单服务器/本地开发 | `http://localhost:8080` | `http://localhost:8080` |
+| 多服务器+内网 | `http://<内网IP>:8080` | `https://<公网域名>` |
+| 多服务器+仅公网 | `https://<公网域名>` | `https://<公网域名>` |
 
 ### 问题 5: `--version` 也需要配置
 

@@ -11,21 +11,25 @@ export const configCommand = new Command('config')
   .addHelpText('after', `
 Available configuration keys:
 
-  peekview.url          - PeekView API internal URL (required)
-                          Example: http://localhost:8080
+  peekview.url          - MCP Server 调用 PeekView API 的地址（可以是内网或公网，只需要 MCP Server 能访问即可）
+                          示例: http://localhost:8080, http://10.0.0.5:8080, https://peek.example.com
 
-  peekview.public_url     - Public URL for user-facing links (required)
-                          Example: https://peek.example.com
+  peekview.public_url   - 用户浏览器查看条目的公开地址（必须是用户浏览器能访问的地址）
+                          示例: https://peek.example.com, http://192.168.1.100:8080
 
-  server.port           - MCP Server port (default: 33333)
+  server.port           - MCP Server 端口 (default: 33333)
 
-  server.host             - Bind address (default: 0.0.0.0)
+  server.host             - 绑定地址 (default: 0.0.0.0)
 
-  server.cors_origins     - CORS origins (default: *)
+  server.cors_origins     - CORS 来源 (default: *)
 
-  logging.level           - Log level: debug|info|warn|error (default: info)
+  logging.level           - 日志级别: debug|info|warn|error (default: info)
 
 Config file location: ~/.peekview/mcp-config.yaml
+
+注意: peekview.url 和 peekview.public_url 可以是不同的地址：
+  - peekview.url: 只需要 MCP Server 能访问 PeekView 即可（内网地址也可以）
+  - peekview.public_url: 必须能被用户的浏览器访问（如果用户在外网，需要用公网地址）
 `);
 
 // config set <key> <value>
