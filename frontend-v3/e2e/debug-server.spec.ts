@@ -20,6 +20,16 @@ async function waitForAuth(page: any, timeout = 30000) {
   await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout, state: 'visible' })
 }
 
+// Helper: Wait for page to be ready (auth state loaded)
+async function waitForPageReady(page: any, timeout = 30000) {
+  // Wait until auth state is determined (loading completes)
+  await page.waitForFunction(() => {
+    const btnLogin = document.querySelector('.btn-login')
+    const userMenu = document.querySelector('.user-menu-trigger')
+    return btnLogin !== null || userMenu !== null
+  }, { timeout })
+}
+
 // Helper: Wait for API data to load with better mobile support
 async function waitForApiData(page: any, selector: string, timeout = 30000) {
   // Wait for element to be attached to DOM first
@@ -43,7 +53,8 @@ async function setupAuth(page: any, token: string) {
   }, token)
   await page.reload()
   // Wait for auth initialization - longer for Mobile Chrome
-  await page.waitForTimeout(2000)
+  // First wait for page to be ready, then for auth state
+  await waitForPageReady(page, 30000)
   await waitForAuth(page, 30000)
 }
 
@@ -430,15 +441,18 @@ test.describe('Debug Server - Mobile', () => {
 test.describe('Debug Server - Auth', () => {
   test('login button visible when anonymous', async ({ page }) => {
     await page.goto('/')
-    // Wait for auth initialization to complete
-    await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout: 10000 })
+    // Wait for auth initialization to complete (loading state -> anonymous)
+    await waitForPageReady(page, 10000)
+    await page.waitForSelector('.btn-login', { timeout: 10000, state: 'visible' })
     await expect(page.locator('.btn-login')).toBeVisible()
     await page.screenshot({ path: '/tmp/e2e-results/20-login-button.png' })
   })
 
   test('login dialog opens and registers', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('.btn-login', { timeout: 10000 })
+    // Wait for page to be ready first
+    await waitForPageReady(page, 10000)
+    await page.waitForSelector('.btn-login', { timeout: 10000, state: 'visible' })
 
     // Click Login button
     await page.click('.btn-login')
@@ -621,8 +635,12 @@ test.describe('Debug Server - All/Mine Tabs', () => {
     // Set token and wait for auth
     await setupAuth(page, token)
 
+    // Wait for auth state to be fully authenticated
+    await page.waitForFunction(() => {
+      return document.querySelector('.owner-tabs') !== null
+    }, { timeout: 30000 })
+
     // Tabs should be visible
-    await page.waitForSelector('.owner-tabs', { timeout: 30000 })
     await expect(page.locator('.owner-tabs')).toBeVisible()
     await expect(page.locator('.owner-tab').first()).toContainText('All')
     await expect(page.locator('.owner-tab').last()).toContainText('Mine')
