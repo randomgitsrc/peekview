@@ -116,7 +116,7 @@ serviceCommand
         process.exit(1);
       }
 
-      // Create service content - NO environment variables!
+      // Create service content
       const homeDir = homedir();
       const serviceContent = `[Unit]
 Description=PeekView MCP Server
@@ -126,6 +126,8 @@ After=network.target
 Type=simple
 User=${currentUser}
 Environment="HOME=${homeDir}"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/${currentUser}/.nvm/versions/node/current/bin:/home/${currentUser}/.npm-global/bin:/home/${currentUser}/.local/bin"
+WorkingDirectory=${homeDir}
 ExecStart=${execPath} serve
 Restart=always
 RestartSec=5
