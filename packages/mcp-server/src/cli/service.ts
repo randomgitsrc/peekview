@@ -138,7 +138,7 @@ async function cleanupOldService(userMode: boolean): Promise<void> {
       }
     }
 
-    // 2. Find and kill any lingering processes
+    // 2. Find and kill any lingering processes by name
     try {
       const pids = execSync(`pgrep -f "peekview-mcp serve" 2>/dev/null || echo ""`, { encoding: 'utf-8' }).trim();
       if (pids) {
@@ -166,7 +166,34 @@ async function cleanupOldService(userMode: boolean): Promise<void> {
       // No processes found
     }
 
-    // 3. Wait for port to be released
+    // 3. Find and kill any processes using port 33333
+    try {
+      const portPids = execSync(`lsof -t -i :33333 2>/dev/null || echo ""`, { encoding: 'utf-8' }).trim();
+      if (portPids) {
+        for (const pid of portPids.split('\n')) {
+          if (pid) {
+            const pidNum = parseInt(pid, 10);
+            if (!isNaN(pidNum)) {
+              console.log(`  → Stopping process ${pidNum} using port 33333...`);
+              try {
+                process.kill(pidNum, 'SIGTERM');
+                const exited = await waitForProcessExit(pidNum, 5000);
+                if (!exited) {
+                  process.kill(pidNum, 'SIGKILL');
+                  await waitForProcessExit(pidNum, 2000);
+                }
+              } catch {
+                // Process might already be gone
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // No processes found on port
+    }
+
+    // 4. Wait for port to be released
     await waitForPortRelease(33333, 5000);
 
   } catch (error) {
@@ -338,11 +365,22 @@ serviceCommand
   .action(async (options: { user?: boolean }) => {
     try {
       const userMode = options.user || false;
-      if (userMode) {
-        await runCommand('systemctl', ['--user', 'stop', getServiceName()]);
-      } else {
-        await runCommand('sudo', ['systemctl', 'stop', getServiceName()]);
+
+      // 1. Stop systemd service
+      try {
+        if (userMode) {
+          await runCommand('systemctl', ['--user', 'stop', getServiceName()]);
+        } else {
+          await runCommand('sudo', ['systemctl', 'stop', getServiceName()]);
+        }
+      } catch {
+        // Service might not be running via systemd
       }
+
+      // 2. Clean up any orphaned processes
+      console.log('→ Cleaning up orphaned processes...');
+      await cleanupOldService(userMode);
+
       console.log('✓ Service stopped');
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -437,6 +475,10 @@ serviceCommand
       } catch {
         // Service might not be running
       }
+
+      // Clean up orphaned processes
+      console.log('→ Cleaning up orphaned processes...');
+      await cleanupOldService(userMode);
 
       // Remove service file
       if (userMode) {
