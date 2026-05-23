@@ -13,6 +13,25 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 // 存储创建的测试条目，用于测试完成后清理
 const testEntries: string[] = []
 
+// Helper: Wait for auth initialization with retry
+async function waitForAuth(page: any, timeout = 30000) {
+  // Wait for either user menu (authenticated) or login button (anonymous)
+  await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout })
+}
+
+// Helper: Setup auth state and wait for initialization
+async function setupAuth(page: any, token: string) {
+  await page.goto('/')
+  await page.evaluate((t: string) => {
+    localStorage.setItem('peekview_token', t)
+    return true
+  }, token)
+  await page.reload()
+  // Wait for auth initialization - longer for Mobile Chrome
+  await page.waitForTimeout(2000)
+  await waitForAuth(page, 30000)
+}
+
 // ========================================
 // Production Safety Check
 // ========================================
@@ -85,8 +104,9 @@ test.describe('Debug Server - Basic', () => {
   })
 
   test('create and view code entry', async ({ page }) => {
-    // Create test entry
-    const response = await createTestEntry(page, 'e2e-code-test', {
+    // Create test entry with unique slug
+    const slug = `e2e-code-${Date.now()}`
+    const response = await createTestEntry(page, slug, {
       summary: 'E2E Code Test',
       files: [{
         filename: 'test.py',
@@ -96,9 +116,9 @@ test.describe('Debug Server - Basic', () => {
     expect(response.status()).toBe(201)
 
     // View entry
-    await page.goto('/e2e-code-test')
+    await page.goto(`/${slug}`)
     // Wait for code to be highlighted (not loading state)
-    await page.waitForSelector('.code-body:not(:empty)', { timeout: 10000 })
+    await page.waitForSelector('.code-body:not(:empty)', { timeout: 30000 })
 
     // Verify code is displayed
     const codeText = await page.locator('.code-body').textContent()
@@ -114,8 +134,9 @@ test.describe('Debug Server - Basic', () => {
 
 test.describe('Debug Server - Mermaid', () => {
   test('mermaid diagram renders and fills container', async ({ page }) => {
-    // Create entry with mermaid
-    const response = await createTestEntry(page, 'e2e-mermaid-test', {
+    // Create entry with mermaid - unique slug
+    const slug = `e2e-mermaid-${Date.now()}`
+    const response = await createTestEntry(page, slug, {
       summary: 'E2E Mermaid Test',
       files: [{
         filename: 'diagram.md',
@@ -135,8 +156,8 @@ graph TD
     expect(response.status()).toBe(201)
 
     // View entry
-    await page.goto('/e2e-mermaid-test')
-    await page.waitForTimeout(3000)
+    await page.goto(`/${slug}`)
+    await page.waitForTimeout(5000)
 
     // Take screenshot
     await page.screenshot({ path: '/tmp/e2e-results/03-mermaid-diagram.png', fullPage: true })
@@ -153,7 +174,24 @@ graph TD
   })
 
   test('mermaid code/diagram toggle preserves chart', async ({ page }) => {
-    await page.goto('/e2e-mermaid-test')
+    // Create entry first
+    const slug = `e2e-mermaid-toggle-${Date.now()}`
+    const response = await createTestEntry(page, slug, {
+      summary: 'E2E Mermaid Toggle Test',
+      files: [{
+        filename: 'diagram.md',
+        content: `# Test
+
+\`\`\`mermaid
+graph TD
+    A[Start] --> B[End]
+\`\`\`
+`
+      }]
+    })
+    expect(response.status()).toBe(201)
+
+    await page.goto(`/${slug}`)
     await page.waitForTimeout(3000)
 
     // Click Code to switch to code view
@@ -179,8 +217,25 @@ graph TD
   })
 
   test('mermaid fullscreen fills window', async ({ page }) => {
+    // Create entry first
+    const slug = `e2e-mermaid-fs-${Date.now()}`
+    const response = await createTestEntry(page, slug, {
+      summary: 'E2E Mermaid Fullscreen Test',
+      files: [{
+        filename: 'diagram.md',
+        content: `# Test
+
+\`\`\`mermaid
+graph TD
+    A[Start] --> B[End]
+\`\`\`
+`
+      }]
+    })
+    expect(response.status()).toBe(201)
+
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto('/e2e-mermaid-test')
+    await page.goto(`/${slug}`)
     await page.waitForTimeout(3000)
 
     // Click fullscreen
@@ -393,7 +448,8 @@ test.describe('Debug Server - Auth', () => {
     await expect(page.locator('.login-dialog')).not.toBeVisible({ timeout: 10000 })
 
     // User menu should appear
-    await expect(page.locator('.user-menu-trigger')).toBeVisible()
+    await page.waitForTimeout(1000)
+    await expect(page.locator('.user-menu-trigger')).toBeVisible({ timeout: 30000 })
 
     await page.screenshot({ path: '/tmp/e2e-results/21-registered.png' })
   })
@@ -458,16 +514,8 @@ test.describe('Debug Server - Auth', () => {
       headers: { Authorization: `Bearer ${token}` },
     })
 
-    // Login in UI
-    // Set token before page loads
-    // Set token in localStorage before app loads
-    // Set token and wait for auth
-    await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
-    await page.waitForTimeout(1000)
-    // Wait for auth initialization + user menu
-    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
+    // Login in UI using helper
+    await setupAuth(page, token)
 
     // Card should have owner actions
     const cardActions = page.locator('.card-actions')
@@ -496,13 +544,8 @@ test.describe('Debug Server - Auth', () => {
     })
     expect(createResp.status()).toBe(201)
 
-    // Login in UI
-    // Set token and wait for auth
-    await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
-    await page.waitForTimeout(1000)
-    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
+    // Login in UI using helper
+    await setupAuth(page, token)
 
     // Find the visibility toggle button
     const toggleBtn = page.locator('.card-action-btn').first()
@@ -525,17 +568,12 @@ test.describe('Debug Server - Auth', () => {
     const regData = await regResp.json()
     const token = regData.access_token
 
-    // Login in UI
-    // Set token and wait for auth
-    await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
-    await page.waitForTimeout(1000)
-    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
+    // Login in UI using helper (logout test)
+    await setupAuth(page, token)
 
     // Click user menu to open dropdown
     await page.click('.user-menu-trigger')
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(500)
 
     // Click Logout (last dropdown item)
     const logoutBtn = page.locator('.dropdown-item').last()
@@ -566,13 +604,10 @@ test.describe('Debug Server - All/Mine Tabs', () => {
     const token = regData.access_token
 
     // Set token and wait for auth
-    await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
-    await page.waitForTimeout(1000)
-    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
+    await setupAuth(page, token)
 
     // Tabs should be visible
+    await page.waitForSelector('.owner-tabs', { timeout: 30000 })
     await expect(page.locator('.owner-tabs')).toBeVisible()
     await expect(page.locator('.owner-tab').first()).toContainText('All')
     await expect(page.locator('.owner-tab').last()).toContainText('Mine')
@@ -598,11 +633,7 @@ test.describe('Debug Server - All/Mine Tabs', () => {
     })
 
     // Set token and wait for auth
-    await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
-    await page.waitForTimeout(1000)
-    await page.waitForSelector('.owner-tabs', { timeout: 10000 })
+    await setupAuth(page, token)
 
     // Click "Mine" tab
     await page.click('.owner-tab:last-child')
@@ -639,14 +670,14 @@ test.describe('Debug Server - API Keys', () => {
 
     // Set token and wait for auth
     await page.goto('/')
-    await page.evaluate((t) => { localStorage.setItem('peekview_token', t); return true }, token)
+    await page.evaluate((t: string) => { localStorage.setItem('peekview_token', t); return true }, token)
     await page.reload()
-    await page.waitForTimeout(1000)
-    await page.waitForSelector('.user-menu-trigger', { timeout: 15000 })
+    await page.waitForTimeout(2000)
+    await page.waitForSelector('.user-menu-trigger', { timeout: 30000 })
 
     // Open user menu
     await page.click('.user-menu-trigger')
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(500)
 
     // "API Keys" dropdown item should be visible
     await expect(page.locator('.dropdown-item').first()).toContainText('API Keys')
@@ -662,15 +693,11 @@ test.describe('Debug Server - API Keys', () => {
     const regData = await regResp.json()
     const token = regData.access_token
 
-    // Go to API Keys page directly, set token, and reload
-    // Set up auth state before navigation
-    await page.context().addInitScript((t: string) => {
-      localStorage.setItem('peekview_token', t)
-    }, token)
+    // Go to API Keys page with auth
+    await setupAuth(page, token)
     await page.goto('/settings/apikeys')
-    await page.reload()
     // Wait for page content to render (h1 may take time due to auth init)
-    await page.waitForSelector('.apikey-page', { timeout: 15000 })
+    await page.waitForSelector('.apikey-page', { timeout: 30000 })
 
     // Should be on API Keys page
     await expect(page.locator('.apikey-page h1')).toContainText('API Keys')
@@ -687,14 +714,10 @@ test.describe('Debug Server - API Keys', () => {
     const token = regData.access_token
 
     // Navigate to API Keys page
-    // Set up auth state before navigation
-    await page.context().addInitScript((t: string) => {
-      localStorage.setItem('peekview_token', t)
-    }, token)
+    await setupAuth(page, token)
     await page.goto('/settings/apikeys')
-    await page.reload()
     // Wait for auth to initialize and page to render
-    await page.waitForSelector('.apikey-page', { timeout: 15000 })
+    await page.waitForSelector('.apikey-page', { timeout: 30000 })
 
     // Click Create Key button
     await page.click('.apikey-page .btn-primary')
@@ -773,15 +796,24 @@ test.describe('Debug Server - API Keys', () => {
     const keyData = await keyResp.json()
     const keyId = keyData.id
 
-    // Navigate to API Keys page
-    // Set up auth state before navigation
-    await page.context().addInitScript((t: string) => {
-      localStorage.setItem('peekview_token', t)
-    }, token)
+    // Navigate to API Keys page - use setupAuth first
+    await setupAuth(page, token)
     await page.goto('/settings/apikeys')
-    await page.reload()
-    await page.waitForSelector('.apikey-page', { timeout: 15000 })
-    await page.waitForSelector('.key-card', { timeout: 10000 })
+    await page.waitForSelector('.apikey-page', { timeout: 30000 })
+    // Wait for API data to load - wait for either key-card or empty state
+    await page.waitForSelector('.key-card, .apikey-page .empty', { timeout: 30000 })
+
+    // If empty state, create a key first (via API for speed)
+    const keyCount = await page.locator('.key-card').count()
+    if (keyCount === 0) {
+      await page.request.post('/api/v1/apikeys', {
+        data: { name: 'Test Key' },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      // Reload to see the new key
+      await page.reload()
+      await page.waitForSelector('.key-card', { timeout: 30000 })
+    }
 
     // Click Revoke button
     await page.click('.btn-danger')

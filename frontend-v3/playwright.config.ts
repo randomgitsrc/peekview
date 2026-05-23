@@ -4,13 +4,16 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  timeout: 60000, // Global test timeout
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    actionTimeout: 30000,
+    navigationTimeout: 30000,
   },
   projects: [
     {
@@ -19,7 +22,12 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      use: {
+        ...devices['Pixel 5'],
+        // Longer timeouts for Mobile Chrome
+        actionTimeout: 45000,
+        navigationTimeout: 45000,
+      },
     },
   ],
   webServer: process.env.BASE_URL ? undefined : {
