@@ -1,6 +1,11 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
+# Import environment variables from shell
+PYPI_API_TOKEN ?= $(shell echo $$PYPI_API_TOKEN)
+PYPI_TEST_API_TOKEN ?= $(shell echo $$PYPI_TEST_API_TOKEN)
+NPM_TOKEN ?= $(shell echo $$NPM_TOKEN)
+
 .PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target

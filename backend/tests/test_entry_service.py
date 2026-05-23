@@ -44,6 +44,34 @@ class TestCreateEntry:
         assert result.slug == "test"
         assert result.url.endswith("/test")
 
+    def test_create_with_path_and_filename(self, entry_service):
+        """Test that path and filename are handled separately.
+
+        Bug fix: Previously, when both path and filename were provided,
+        the filename was incorrectly extracted from path, ignoring the
+        explicit filename parameter.
+        """
+        result = entry_service.create_entry(
+            summary="Test entry with path and filename",
+            slug="path-filename-test",
+            files_data=[
+                {"path": "docs", "filename": "CLAUDE.md", "content": "# Guide"},
+                {"path": "src", "filename": "main.py", "content": "print('hello')"},
+            ],
+        )
+        entry = entry_service.get_entry("path-filename-test")
+        assert len(entry.files) == 2
+
+        # Find files by their correct filenames
+        filenames = [f.filename for f in entry.files]
+        assert "CLAUDE.md" in filenames
+        assert "main.py" in filenames
+
+        # Verify path is stored correctly
+        file_paths = {f.filename: f.path for f in entry.files}
+        assert file_paths["CLAUDE.md"] == "docs"
+        assert file_paths["main.py"] == "src"
+
     def test_create_auto_slug(self, entry_service):
         result = entry_service.create_entry(summary="Auto slug")
         assert result.slug is not None

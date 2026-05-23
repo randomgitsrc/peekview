@@ -696,7 +696,7 @@ class EntryService:
         from pathlib import Path
 
         path = fd.get("path")
-        filename = Path(path).name if path else fd.get("filename", "untitled")
+        filename = fd.get("filename") or "untitled"
 
         # Content inline
         if "content" in fd and fd["content"] is not None:

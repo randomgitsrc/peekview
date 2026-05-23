@@ -89,7 +89,23 @@ make pre-publish
 
 ### 5. 发布到 PyPI
 
+**⚠️ 前提：需要 PyPI API Token**
+
 ```bash
+# 1. 获取 PyPI API Token（只需执行一次）
+# 访问 https://pypi.org/manage/account/token/
+# 点击 "Add API token"
+# Token name: peekview-release (或自定义)
+# Scope: "Entire account" 或 "Project: peekview"
+# 复制生成的 token (pypi-xxxxxxxx)
+
+# 2. 设置环境变量（临时，当前终端）
+export PYPI_API_TOKEN="pypi-xxxxxxxx"
+
+# 或添加到 ~/.bashrc（永久）
+echo 'export PYPI_API_TOKEN="pypi-xxxxxxxx"' >> ~/.bashrc
+
+# 3. 执行发布
 make publish
 ```
 

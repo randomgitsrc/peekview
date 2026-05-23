@@ -7,9 +7,16 @@
 
 ## [Unreleased]
 
+## [0.1.40] - 2026-05-23
+
 ### 修复
 
-- **E2E 测试数据隔离** — 防止测试数据污染生产数据库
+- **文件创建 path/filename 处理** — 修复当同时提供 path 和 filename 时，filename 被忽略的问题
+  - 修复 `_process_file_input` 函数错误地从 path 提取文件名
+  - 现在 `{"path": "docs", "filename": "CLAUDE.md"}` 正确创建 `docs/CLAUDE.md`
+  - 影响 MCP Server 等客户端的文件上传功能
+
+## [mcp-v0.3.9] - 2026-05-23
   - 新增 `scripts/e2e-safety-check.sh` 前置安全检查脚本
   - `make debug-test` 必须通过安全检查才能运行 E2E 测试
   - 禁止直接运行 `run-e2e-tests.sh`，强制使用 `make debug-test`
