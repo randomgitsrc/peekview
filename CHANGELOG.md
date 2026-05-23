@@ -166,6 +166,23 @@
 - MCP Server 版本独立演进（当前 v0.2.0），`bump-version` 不再覆盖 MCP package.json
 
 
+## [mcp-v0.3.8] - 2026-05-23
+
+### 修复
+
+- **Systemd 服务启动失败** — 修复 shebang PATH 解析问题
+  - `ExecStart` 改为 `${nodePath} ${execPath} serve` 格式
+  - 优先查找 `~/.nvm/versions/node/current/bin/node`（nvm 软链接，升级自动生效）
+  - 回退到 `which node`，找不到时抛出清晰错误
+- **用户服务权限问题** — `--user` 模式不再生成 `User=` 字段
+
+### 测试
+
+- 新增 `tests/cli/service.test.ts`（3 个测试）
+  - `getNodePath()` nvm 路径查找
+  - `getNodePath()` which 回退
+  - `getNodePath()` 错误处理
+
 ## [mcp-v0.2.0] - 2026-05-20
 
 ### 新增

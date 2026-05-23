@@ -36,6 +36,23 @@ Prerequisites:
   2. Systemd must be available (most Linux distributions)
 `);
 
+export function getNodePath(): string {
+  const home = homedir();
+
+  // 1. Try nvm current symlink (upgrades automatically)
+  const nvmCurrent = join(home, '.nvm/versions/node/current/bin/node');
+  if (existsSync(nvmCurrent)) {
+    return nvmCurrent;
+  }
+
+  // 2. Fallback to which node
+  try {
+    return execSync('which node', { encoding: 'utf-8' }).trim();
+  } catch {
+    throw new Error('Node.js not found. Please install Node.js or ensure it is in PATH.');
+  }
+}
+
 function getServiceName(): string {
   return 'peekview-mcp';
 }
@@ -107,6 +124,7 @@ serviceCommand
 
       const servicePath = getServicePath(userMode);
       const execPath = getExecutablePath();
+      const nodePath = getNodePath();
       const currentUser = execSync('whoami', { encoding: 'utf-8' }).trim();
 
       // Check if service exists
@@ -118,17 +136,17 @@ serviceCommand
 
       // Create service content
       const homeDir = homedir();
+      const userDirective = userMode ? '' : `User=${currentUser}\n`;
       const serviceContent = `[Unit]
 Description=PeekView MCP Server
 After=network.target
 
 [Service]
 Type=simple
-User=${currentUser}
-Environment="HOME=${homeDir}"
+${userDirective}Environment="HOME=${homeDir}"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/${currentUser}/.nvm/versions/node/current/bin:/home/${currentUser}/.npm-global/bin:/home/${currentUser}/.local/bin"
 WorkingDirectory=${homeDir}
-ExecStart=${execPath} serve
+ExecStart=${nodePath} ${execPath} serve
 Restart=always
 RestartSec=5
 
