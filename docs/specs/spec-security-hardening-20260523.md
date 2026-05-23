@@ -40,61 +40,109 @@ host: str = Field(
 ### 方案
 使用 `slowapi>=0.1.9`（FastAPI 专用 rate limiting 库）。
 
+#### 设计决策：limit 值通过 create_app 注入，而非装饰器硬编码
+
+`@limiter.limit()` 是编译时装饰器，在模块加载时求值，此时 `config` 对象尚不存在，
+因此**不能**在 `auth.py` 里用 `@limiter.limit(f"{config.server...}")` 的写法。
+
+正确做法：`auth.py` 定义裸路由函数，`create_app()` 里读取 config 后动态绑定 limit。
+这样职责分离——业务路由不关心限速策略，限速策略集中在基础设施层（main.py）管理。
+
 ```python
 # rate_limit.py
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-limiter = Limiter(key_func=get_remote_address)
-
-# main.py
 from slowapi.errors import RateLimitExceeded
-from peekview.api.rate_limit import limiter
 
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request, exc):
-    return JSONResponse(
-        {"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "请求过于频繁，请稍后再试"}},
-        status_code=429
-    )
+limiter = Limiter(key_func=get_remote_address, swallow_errors=True)
+# swallow_errors=True：rate limiter 自身出错时不阻断请求（降级策略）
+# 注意：使用内存存储，进程重启后计数清零
+```
 
-# 在 create_app 中
-limiter.enabled = config.server.rate_limit_enabled
-limiter.default_limits = [f"{config.server.rate_limit_per_minute}/minute"]
-limiter.init_app(app)
-
-# auth.py
-@app.post("/auth/login")
-@limiter.limit(f"{config.server.rate_limit_login_per_minute}/minute")  # 从配置读取
-async def login(...):
+```python
+# auth.py — 路由函数不加 @limiter.limit 装饰器，保持干净
+@router.post("/login")
+async def login(data: UserLogin, request: Request) -> AuthResponse:
     ...
 
-@app.post("/auth/register")
-@limiter.limit(f"{config.server.rate_limit_login_per_minute}/minute")
-async def register(...):
-    ...
-
-# health check 豁免
-@app.get("/health")
-@limiter.exempt
-async def health_check(...):
+@router.post("/register", status_code=201)
+async def register(data: UserRegister, request: Request) -> AuthResponse:
     ...
 ```
+
+```python
+# main.py — create_app() 中统一配置 rate limiting
+from peekview.api.rate_limit import limiter
+from peekview.api.auth import login, register
+
+# include_router 之后再绑定 limit（确保函数已挂载）
+app.include_router(auth_router)
+
+# 从 config 读取 limit 值，动态绑定到具体路由函数
+login_limit = f"{config.server.rate_limit_login_per_minute}/minute"
+limiter.limit(login_limit)(login)
+limiter.limit(login_limit)(register)
+
+# 全局 default limit（非认证端点）
+app.state.limiter = limiter
+limiter.enabled = config.server.rate_limit_enabled
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request, exc):
+    return JSONResponse(
+        {"error": {"code": "RATE_LIMITED", "message": "请求过于频繁，请稍后再试", "details": None}},
+        status_code=429,
+    )
+
+# health check 豁免（在路由定义处或此处均可）
+# slowapi 会自动豁免没有绑定 limit 的路由
+```
+
+#### 为什么这样合理
+
+1. **config 字段真正生效**：`rate_limit_login_per_minute` 改变后，重启服务即生效
+2. **可测试性**：`create_app(rate_limit_login_per_minute=3)` 可在测试中传入任意值
+3. **风格统一**：`limiter.enabled = config.server.rate_limit_enabled` 也在 `create_app` 集中控制
+4. **职责清晰**：auth.py 只管业务，main.py 管基础设施
 
 ### 配置项
 ```python
 # config.py
 rate_limit_enabled: bool = Field(default=True)
-rate_limit_per_minute: int = Field(default=60)
-rate_limit_login_per_minute: int = Field(default=5)
+rate_limit_per_minute: int = Field(default=60)      # 通用端点（当前未启用全局限制）
+rate_limit_login_per_minute: int = Field(default=10) # login/register 专用（更严格）
 ```
+
+### 反向代理注意事项
+
+VPS 部署通常在 Nginx 后面，此时 `get_remote_address` 取到的是 Nginx IP，
+所有用户共用同一个限速计数器，rate limit 等同于对整站生效。
+
+如需在反向代理后正确限速，需信任 `X-Forwarded-For` 头：
+
+```python
+# rate_limit.py（反向代理场景）
+from slowapi.util import get_remote_address
+
+def get_real_ip(request: Request) -> str:
+    """获取真实 IP，支持反向代理。仅在受信任代理后面启用。"""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return get_remote_address(request)
+```
+
+配合配置项 `trust_proxy: bool = Field(default=False)`，在启用时才使用 `get_real_ip`。
+**安全警告**：`X-Forwarded-For` 可被客户端伪造，仅在受信任的反向代理后面启用。
 
 ### 测试
 ```python
-# test_security.py - 移除现有 TestRateLimiting 的 @pytest.mark.skip（第682行附近）
-# 重写测试：
-- 连续 6 次登录请求 → 第 6 次返回 429
-- health 端点不受限制
-- RATE_LIMIT_ENABLED=False 时不限制
+# test_security.py
+# TestRateLimiting 类（@pytest.mark.skip 已移除）：
+- create_app(rate_limit_login_per_minute=3) → 连续 4 次登录 → 第 4 次返回 429
+- 验证 error.code == "RATE_LIMITED"
+- health 端点不受限制（20次请求均返回200）
+- rate_limit_enabled=False 时不限制
 - 验证 X-RateLimit-Limit 和 X-RateLimit-Remaining 响应头
 ```
 
