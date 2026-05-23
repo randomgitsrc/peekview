@@ -15,7 +15,26 @@ import { dirname } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const serviceCommand = new Command('service')
-  .description('Manage MCP Server as a system service');
+  .description('Manage MCP Server as a system service')
+  .addHelpText('after', `
+Systemd service management for Linux.
+
+Quick start:
+  peekview-mcp service install --user   # Install as user service (recommended)
+  peekview-mcp service start            # Start the service
+  peekview-mcp service status           # Check service status
+
+User vs System service:
+  --user    User service (no sudo, runs as current user)
+            Service file: ~/.config/systemd/user/peekview-mcp.service
+
+  (default) System service (requires sudo, runs as root)
+            Service file: /etc/systemd/system/peekview-mcp.service
+
+Prerequisites:
+  1. Create config file: peekview-mcp config set peekview.url ...
+  2. Systemd must be available (most Linux distributions)
+`);
 
 function getServiceName(): string {
   return 'peekview-mcp';

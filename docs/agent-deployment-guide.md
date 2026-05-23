@@ -72,22 +72,35 @@ peekview-mcp --version
 # 输出: 0.2.2
 ```
 
-### Step 5: 配置并启动 MCP Server
+### Step 5: 配置 MCP Server
 
 ```bash
-# 设置环境变量
-export PEEKVIEW_URL=http://127.0.0.1:8080
-export PEEKVIEW_PUBLIC_URL=http://your-vps-ip:8080
-export PEEKVIEW_API_KEY=pv_your_api_key_here
+# 配置 PeekView 地址
+peekview-mcp config set peekview.url http://127.0.0.1:8080
+peekview-mcp config set peekview.public_url http://your-vps-ip:8080
 
-# 启动 MCP Server
-peekview-mcp serve
-
-# 或后台运行
-nohup peekview-mcp serve > mcp.log 2>&1 &
+# 验证配置
+peekview-mcp config list
 ```
 
-### Step 6: 验证部署
+### Step 6: 启动服务（两种方式）
+
+**方式 1：前台启动（测试）**
+```bash
+peekview-mcp serve
+```
+
+**方式 2：安装为系统服务（推荐生产环境）**
+```bash
+# 安装为 systemd 用户服务（无需 sudo）
+peekview-mcp service install --user
+
+# 启动服务
+peekview-mcp service start
+peekview-mcp service status
+```
+
+### Step 7: 验证部署
 
 ```bash
 # 测试 PeekView
@@ -134,6 +147,31 @@ sudo systemctl status peekview
 
 ### MCP Server 服务
 
+**推荐方式：使用 service 命令（自动配置）**
+
+```bash
+# 确保配置已创建
+peekview-mcp config list
+
+# 安装为 systemd 服务
+peekview-mcp service install --user     # 用户级服务（无需 sudo，推荐）
+# 或
+sudo peekview-mcp service install       # 系统级服务（需要 sudo）
+
+# 管理服务
+peekview-mcp service start
+peekview-mcp service status
+peekview-mcp service restart
+peekview-mcp service stop
+
+# 卸载服务
+peekview-mcp service uninstall --user
+```
+
+**备选方式：手动创建服务文件**
+
+如果 `service` 命令无法使用，可以手动创建：
+
 ```bash
 # 创建服务
 sudo tee /etc/systemd/system/peekview-mcp.service << 'EOF'
@@ -144,9 +182,8 @@ After=network.target peekview.service
 [Service]
 Type=simple
 User=$USER
-Environment=PEEKVIEW_URL=http://127.0.0.1:8080
-Environment=PEEKVIEW_PUBLIC_URL=http://127.0.0.1:8080
-Environment=PEEKVIEW_API_KEY=pv_your_api_key_here
+Environment="PEEKVIEW_URL=http://127.0.0.1:8080"
+Environment="PEEKVIEW_PUBLIC_URL=http://127.0.0.1:8080"
 ExecStart=/home/$USER/.npm-global/bin/peekview-mcp serve
 Restart=always
 RestartSec=5
@@ -223,21 +260,46 @@ sudo apt install python3.10 python3.10-pip
 pipx install peekview --python python3.10
 ```
 
-### 问题 3: MCP Server `PEEKVIEW_URL: Required` 错误
+### 问题 3: `PEEKVIEW_URL: Required` 错误
 
-**原因**: 缺少环境变量
+**原因**: 缺少配置
 
 **解决**:
 ```bash
-# 设置必要的环境变量
+# 方法 1：使用 config 命令（推荐）
+peekview-mcp config set peekview.url http://127.0.0.1:8080
+peekview-mcp config set peekview.public_url http://your-vps-ip:8080
+peekview-mcp config list  # 验证
+
+# 方法 2：使用环境变量
 export PEEKVIEW_URL=http://127.0.0.1:8080
 export PEEKVIEW_PUBLIC_URL=http://your-vps-ip:8080
-
-# 然后启动
 peekview-mcp serve
 ```
 
-### 问题 4: `--version` 也需要配置
+### 问题 4: `peekview.url` 和 `peekview.public_url` 有什么区别？
+
+**区别**:
+- `peekview.url`: MCP Server → PeekView 的内部通信地址
+- `peekview.public_url`: 生成给用户查看条目的公开地址
+
+**示例场景**（VPS 部署）:
+```bash
+# MCP Server 和 PeekView 在同一台机器
+# PeekView 监听 127.0.0.1:8080（仅本地访问）
+# 外部通过 Nginx 反向代理访问
+
+peekview-mcp config set peekview.url http://127.0.0.1:8080
+peekview-mcp config set peekview.public_url https://peek.example.com
+```
+
+**示例场景**（本地开发）:
+```bash
+peekview-mcp config set peekview.url http://localhost:8080
+peekview-mcp config set peekview.public_url http://localhost:8080
+```
+
+### 问题 5: `--version` 也需要配置
 
 **已修复**: 升级到 MCP Server >=0.2.2
 
@@ -246,7 +308,7 @@ npm install -g @peekview/mcp-server@latest
 peekview-mcp --version  # 现在不需要配置了
 ```
 
-### 问题 5: npm install 警告 `uuid@9` deprecated
+### 问题 6: npm install 警告 `uuid@9` deprecated
 
 **已修复**: 升级到 MCP Server >=0.2.1
 
@@ -255,16 +317,33 @@ npm cache clean --force
 npm install -g @peekview/mcp-server@latest
 ```
 
-### 问题 6: 端口被占用
+### 问题 7: 端口被占用
 
 ```bash
 # 检查端口占用
 lsof -i :8080
 lsof -i :33333
 
-# 使用其他端口
-peekview serve --port 8081
-peekview-mcp serve  # MCP 默认 33333
+# 修改 MCP Server 端口
+peekview-mcp config set server.port 33334
+peekview-mcp serve  # 现在使用 33334 端口
+
+# 或使用环境变量临时修改
+MCP_PORT=33334 peekview-mcp serve
+```
+
+### 问题 8: service 命令失败
+
+**原因**: 未创建配置文件
+
+**解决**:
+```bash
+# 必须先创建配置才能安装服务
+peekview-mcp config set peekview.url http://localhost:8080
+peekview-mcp config set peekview.public_url http://localhost:8080
+
+# 然后安装服务
+peekview-mcp service install --user
 ```
 
 ### 问题 7: 防火墙阻止访问

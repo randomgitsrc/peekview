@@ -33,7 +33,25 @@ const program = new Command();
 program
   .name('peekview-mcp')
   .description('PeekView MCP Server - AI Agent integration')
-  .version(getVersion(), '-v, --version');
+  .version(getVersion(), '-v, --version')
+  .addHelpText('after', `
+Quick start:
+  1. Configure:  peekview-mcp config set peekview.url http://localhost:8080
+  2. Start:      peekview-mcp serve
+  3. Service:    peekview-mcp service install --user
+
+Commands:
+  config    Manage configuration (set/get/list)
+  serve     Start the MCP Server
+  service   Manage systemd service (install/start/stop/status/uninstall)
+  version   Show version
+  uninstall Show uninstall instructions
+
+For detailed help on a command:
+  peekview-mcp config --help
+  peekview-mcp serve --help
+  peekview-mcp service --help
+`);
 
 // Global help option
 program.helpOption('-h, --help', 'Show help');
@@ -91,7 +109,20 @@ Examples:
   peekview-mcp serve --port 33334       # Start with custom port
   peekview-mcp serve --host 127.0.0.1   # Start on localhost only
 
-Config file: ~/.peekview/mcp-config.yaml
+Configuration priority (highest to lowest):
+  1. CLI options (--port, --host)
+  2. Environment variables (PEEKVIEW_URL, MCP_PORT, etc.)
+  3. Config file (~/.peekview/mcp-config.yaml)
+  4. Default values
+
+Config file example:
+  peekview-mcp config set peekview.url http://localhost:8080
+  peekview-mcp config set peekview.public_url https://peek.example.com
+  peekview-mcp config set server.port 33333
+  peekview-mcp config list
+
+Health check:
+  curl http://localhost:33333/health
 `);
 
 // Add subcommands
