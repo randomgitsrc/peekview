@@ -98,6 +98,7 @@ start_server() {
     PEEKVIEW_CLEANUP__INTERVAL_SECONDS=600 \
     PEEKVIEW_AUTH__ALLOW_ANONYMOUS_CREATE=true \
     PEEKVIEW_AUTH__ALLOW_REGISTRATION=true \
+    PEEKVIEW_SERVER__RATE_LIMIT_ENABLED=false \
     PEEKVIEW_DEBUG_MODE=1 \
         $PYTHON -m uvicorn peekview.main:get_app \
         --host 127.0.0.1 \

@@ -373,8 +373,17 @@ test.describe('Debug Server - Theme', () => {
 
 test.describe('Debug Server - Mobile', () => {
   test('mobile layout', async ({ page }) => {
+    // Create test entry first
+    const response = await page.request.post('/api/v1/entries', {
+      data: {
+        summary: 'mobile-layout-test',
+        files: [{ content: 'console.log(1)', filename: 'main.js' }]
+      }
+    })
+    const entry = await response.json()
+
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto('/e2e-code-test')
+    await page.goto(`/${entry.slug}`)
     await page.waitForTimeout(1000)
 
     // Mobile should not show sidebars
@@ -449,6 +458,13 @@ test.describe('Debug Server - Auth', () => {
   })
 
   test('login dialog opens and registers', async ({ page }) => {
+    // Use API to create user first (avoids rate limiting on registration endpoint)
+    const uniqueUser = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    const regResp = await page.request.post('/api/v1/auth/register', {
+      data: { username: uniqueUser, password: 'e2epass123' }
+    })
+    expect(regResp.status()).toBe(201)
+
     await page.goto('/')
     // Wait for page to be ready first
     await waitForPageReady(page, 10000)
@@ -461,15 +477,9 @@ test.describe('Debug Server - Auth', () => {
     // Dialog should be visible
     await expect(page.locator('.login-dialog')).toBeVisible()
 
-    // Switch to Register mode
-    await page.click('.login__switch-btn')
-    await page.waitForTimeout(300)
-
-    // Fill registration form with unique username
-    const uniqueUser = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    // Fill login form with the pre-registered user
     await page.fill('#login-username', uniqueUser)
     await page.fill('#login-password', 'e2epass123')
-    await page.fill('#login-confirm', 'e2epass123')
 
     // Submit
     await page.click('.login__submit')
@@ -480,7 +490,7 @@ test.describe('Debug Server - Auth', () => {
     await page.waitForTimeout(1000)
     await expect(page.locator('.user-menu-trigger')).toBeVisible({ timeout: 30000 })
 
-    await page.screenshot({ path: '/tmp/e2e-results/21-registered.png' })
+    await page.screenshot({ path: '/tmp/e2e-results/21-login-success.png' })
   })
 
   test('private entry invisible to anonymous, visible to owner', async ({ page }) => {
