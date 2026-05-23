@@ -7,5 +7,7 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
     hookTimeout: 10000,
+    setupFiles: ['./tests/setup.ts'],
+    globalSetup: './tests/teardown.ts',
   },
 });

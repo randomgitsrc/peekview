@@ -6,6 +6,9 @@ describe('Config', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // setup.ts already cleans PORT, but we double-check here for safety
+    delete process.env.PORT;
+    delete process.env.MCP_PORT;
     process.env.PEEKVIEW_URL = 'http://localhost:8080';
     process.env.PEEKVIEW_PUBLIC_URL = 'http://localhost:8080';
   });
