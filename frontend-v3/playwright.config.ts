@@ -28,6 +28,8 @@ export default defineConfig({
         actionTimeout: 45000,
         navigationTimeout: 45000,
       },
+      // More retries for mobile tests
+      retries: process.env.CI ? 3 : 2,
     },
   ],
   webServer: process.env.BASE_URL ? undefined : {

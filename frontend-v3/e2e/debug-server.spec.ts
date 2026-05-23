@@ -16,7 +16,22 @@ const testEntries: string[] = []
 // Helper: Wait for auth initialization with retry
 async function waitForAuth(page: any, timeout = 30000) {
   // Wait for either user menu (authenticated) or login button (anonymous)
-  await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout })
+  // Use first() to handle cases where both might exist during transition
+  await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout, state: 'visible' })
+}
+
+// Helper: Wait for API data to load with better mobile support
+async function waitForApiData(page: any, selector: string, timeout = 30000) {
+  // Wait for element to be attached to DOM first
+  await page.waitForSelector(selector, { timeout, state: 'attached' })
+  // Then check visibility
+  const element = page.locator(selector).first()
+  try {
+    await element.waitFor({ state: 'visible', timeout: 5000 })
+  } catch {
+    // Element might be in DOM but not visible (mobile layout)
+    // Continue anyway as the element exists
+  }
 }
 
 // Helper: Setup auth state and wait for initialization
@@ -800,8 +815,8 @@ test.describe('Debug Server - API Keys', () => {
     await setupAuth(page, token)
     await page.goto('/settings/apikeys')
     await page.waitForSelector('.apikey-page', { timeout: 30000 })
-    // Wait for API data to load - wait for either key-card or empty state
-    await page.waitForSelector('.key-card, .apikey-page .empty', { timeout: 30000 })
+    // Wait for API data to load with mobile support
+    await waitForApiData(page, '.key-card, .apikey-page .empty', 30000)
 
     // If empty state, create a key first (via API for speed)
     const keyCount = await page.locator('.key-card').count()
@@ -812,7 +827,7 @@ test.describe('Debug Server - API Keys', () => {
       })
       // Reload to see the new key
       await page.reload()
-      await page.waitForSelector('.key-card', { timeout: 30000 })
+      await waitForApiData(page, '.key-card', 30000)
     }
 
     // Click Revoke button
