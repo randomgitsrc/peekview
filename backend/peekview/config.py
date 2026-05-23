@@ -130,8 +130,8 @@ class PeekServer(BaseSettings):
     """Server configuration."""
 
     host: str = Field(
-        default="127.0.0.1",
-        description="Server bind address (127.0.0.1 for local only)",
+        default="0.0.0.0",
+        description="Server bind address (0.0.0.0 for all interfaces, 127.0.0.1 for local only)",
     )
     port: int = Field(
         default=8080,

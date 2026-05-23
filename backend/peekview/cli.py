@@ -135,7 +135,7 @@ Examples:
 
 
 @cli.command(epilog=SERVE_EXAMPLES)
-@click.option("--host", "-h", default=None, help="Server bind address (default: 127.0.0.1)")
+@click.option("--host", "-h", default=None, help="Server bind address (default: 0.0.0.0, use 127.0.0.1 for local only)")
 @click.option("--port", "-p", default=None, type=int, help="Server port (default: 8080)")
 @click.option("--base-url", "-b", default=None, help="External base URL (e.g., https://example.com)")
 @click.option("--reload", is_flag=True, help="Enable auto-reload (development)")
