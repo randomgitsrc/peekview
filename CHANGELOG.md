@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **E2E 测试数据隔离** — 防止测试数据污染生产数据库
+  - 新增 `scripts/e2e-safety-check.sh` 前置安全检查脚本
+  - `make debug-test` 必须通过安全检查才能运行 E2E 测试
+  - 禁止直接运行 `run-e2e-tests.sh`，强制使用 `make debug-test`
+  - 检查调试服务是否使用独立数据库 (`/tmp/peekview-debug/`)
+  - 运行前确认生产数据库中的条目数，检测已有测试数据
+
 ## [mcp-v0.3.9] - 2026-05-23
 
 ### 修复

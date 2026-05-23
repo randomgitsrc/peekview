@@ -3,14 +3,27 @@
 # 确保调试服务运行后再执行
 #
 # SAFETY: This script has multiple guards against production access
+# IMPORTANT: Must be run via 'make debug-test' which sets E2E_GUARD_ENABLED
 
 set -e
+
+# Safety Check 0: Verify running through make debug-test
+if [ -z "$E2E_GUARD_ENABLED" ]; then
+    echo "✗ FATAL ERROR: 必须通过 'make debug-test' 运行 E2E 测试"
+    echo "   直接运行此脚本被禁止，以确保数据隔离安全"
+    echo ""
+    echo "正确用法:"
+    echo "  make debug-test"
+    echo ""
+    exit 1
+fi
 
 PORT=8888
 BASE_URL="http://127.0.0.1:$PORT"
 PRODUCTION_PORT=8080
 
 echo "=== PeekView E2E 测试 ==="
+echo "✓ 安全守卫已启用 (E2E_GUARD_ENABLED)"
 
 # Safety Check 1: Verify we're not accidentally targeting production
 echo "→ Safety Check: Verifying target is not production..."

@@ -516,17 +516,11 @@ debug-restart:
 
 debug-test:
 	@echo "=== E2E 测试安全启动 ==="
-	@echo "→ 检查生产服务是否运行..."
-	@if curl -s http://127.0.0.1:8080/health > /dev/null 2>&1; then \
-		echo "⚠  警告: 生产服务正在运行 (端口 8080)"; \
-		PROD_COUNT=$$(curl -s http://127.0.0.1:8080/api/v1/entries 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0"); \
-		echo "   当前生产条目数: $$PROD_COUNT"; \
-		echo "   如果测试数据写入生产，将被检测到"; \
-	else \
-		echo "ℹ  生产服务未运行"; \
-	fi
+	@echo "→ Step 1: 运行前置安全检查..."
+	@bash scripts/e2e-safety-check.sh || exit 1
 	@echo ""
-	@bash scripts/run-e2e-tests.sh
+	@echo "→ Step 2: 启动 E2E 测试 (带数据隔离保护)..."
+	@E2E_GUARD_ENABLED=1 bash scripts/run-e2e-tests.sh
 
 debug-test-mcp:
 	@echo "=== MCP Server 集成测试 ==="
