@@ -239,23 +239,27 @@ serviceCommand
   .action(async (options: { user?: boolean }) => {
     try {
       const userMode = options.user || false;
+
+      // Run status and inherit stdio to show output
+      const cmd = 'systemctl';
       const args = userMode
         ? ['--user', 'status', getServiceName()]
         : ['status', getServiceName()];
-      const cmd = userMode ? 'systemctl' : 'sudo';
 
-      // Run status and inherit stdio to show output
-      const child = spawn(cmd, args, {
-        stdio: 'inherit',
-        shell: false,
-      });
-
-      await new Promise((resolve, reject) => {
-        child.on('close', (code) => {
-          resolve(code);
+      if (userMode) {
+        const child = spawn(cmd, args, { stdio: 'inherit', shell: false });
+        await new Promise((resolve, reject) => {
+          child.on('close', (code) => { resolve(code); });
+          child.on('error', reject);
         });
-        child.on('error', reject);
-      });
+      } else {
+        // System service needs sudo
+        const child = spawn('sudo', [cmd, ...args], { stdio: 'inherit', shell: false });
+        await new Promise((resolve, reject) => {
+          child.on('close', (code) => { resolve(code); });
+          child.on('error', reject);
+        });
+      }
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
