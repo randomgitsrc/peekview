@@ -1,6 +1,6 @@
 {
   "name": "@peekview/mcp-server",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "MCP Server for PeekView - AI Agent integration (SSE transport)",
   "type": "module",
   "main": "./dist/index.js",
@@ -28,6 +28,7 @@
     "test:watch": "vitest",
     "lint": "eslint src/**/*.ts",
     "prepublishOnly": "npm run build && npm run test:unit"
+  },
   "keywords": [
     "mcp",
     "model-context-protocol",

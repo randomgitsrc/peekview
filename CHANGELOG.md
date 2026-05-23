@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [mcp-v0.3.9] - 2026-05-23
+
+### 修复
+
+- **Systemd 服务配置读取问题** — 安装时将配置写入环境变量
+  - `service install` 现在读取 `~/.peekview/mcp-config.yaml` 并写入 `Environment="PEEKVIEW_URL=..."`
+  - 解决 systemd 环境下配置文件读取失败问题
+  - 支持 `PEEKVIEW_PUBLIC_URL` 和 `PEEKVIEW_API_KEY`（可选）
+
 ## [0.1.39] - 2026-05-23
 
 ### 安全

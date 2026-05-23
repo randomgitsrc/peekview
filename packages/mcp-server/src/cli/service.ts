@@ -127,6 +127,11 @@ serviceCommand
       const nodePath = getNodePath();
       const currentUser = execSync('whoami', { encoding: 'utf-8' }).trim();
 
+      // Get config values for environment variables
+      const peekviewUrl = config.peekview?.url || '';
+      const peekviewPublicUrl = config.peekview?.public_url || '';
+      const apiKey = config.peekview?.api_key || '';
+
       // Check if service exists
       if (existsSync(servicePath) && !options.force) {
         console.error(`Error: Service already exists at ${servicePath}`);
@@ -137,6 +142,7 @@ serviceCommand
       // Create service content
       const homeDir = homedir();
       const userDirective = userMode ? '' : `User=${currentUser}\n`;
+      const apiKeyEnv = apiKey ? `Environment="PEEKVIEW_API_KEY=${apiKey}"\n` : '';
       const serviceContent = `[Unit]
 Description=PeekView MCP Server
 After=network.target
@@ -145,7 +151,9 @@ After=network.target
 Type=simple
 ${userDirective}Environment="HOME=${homeDir}"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/${currentUser}/.nvm/versions/node/current/bin:/home/${currentUser}/.npm-global/bin:/home/${currentUser}/.local/bin"
-WorkingDirectory=${homeDir}
+Environment="PEEKVIEW_URL=${peekviewUrl}"
+Environment="PEEKVIEW_PUBLIC_URL=${peekviewPublicUrl}"
+${apiKeyEnv}WorkingDirectory=${homeDir}
 ExecStart=${nodePath} ${execPath} serve
 Restart=always
 RestartSec=5
