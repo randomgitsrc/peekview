@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.39] - 2026-05-23
+
+### 安全
+
+- **P0 安全加固** — 4 项关键安全修复
+  - **Rate Limiting**: 添加基于 slowapi 的速率限制，登录/注册端点限制 10/分钟
+  - **安全头中间件**: API 和 health 端点添加 X-Frame-Options, X-Content-Type-Options, CSP 等安全头
+  - **Health Check 增强**: 检查 DB 连通性、存储目录可写性、磁盘空间（低于 100MB 告警）
+  - **Content-Disposition 修复**: ZIP 下载文件名使用 `_sanitize_filename` 防止头注入
+
+### 变更
+
+- **⚠️ BREAKING CHANGE**: 默认监听地址从 `127.0.0.1` 改为 `0.0.0.0`
+  - VPS 部署开箱即用，无需手动设置环境变量
+  - 如需限制本地访问，请设置 `PEEKVIEW_SERVER__HOST=127.0.0.1`
+  - CLI `--host` 帮助文本同步更新
+
 ## [0.1.38] - 2026-05-23
 
 ### 修复
