@@ -80,6 +80,12 @@ echo ""
 echo "=== ✓ 安全检查通过，可以运行 E2E 测试 ==="
 echo ""
 
+# 非交互模式自动继续（由 Makefile 调用时）
+if [ -n "$CI" ] || [ -n "$NONINTERACTIVE" ]; then
+    echo "→ 非交互模式，自动继续..."
+    exit 0
+fi
+
 # 最终确认
 read -p "确认要继续运行 E2E 测试? [y/N] " confirm
 if [ "$confirm" != "y" ]; then

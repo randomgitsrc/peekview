@@ -518,10 +518,10 @@ debug-restart:
 debug-test:
 	@echo "=== E2E 测试安全启动 ==="
 	@echo "→ Step 1: 运行前置安全检查..."
-	@E2E_GUARD_ENABLED=1 bash scripts/e2e-safety-check.sh || exit 1
+	@E2E_GUARD_ENABLED=1 NONINTERACTIVE=1 bash scripts/e2e-safety-check.sh || exit 1
 	@echo ""
 	@echo "→ Step 2: 启动 E2E 测试 (带数据隔离保护)..."
-	@E2E_GUARD_ENABLED=1 bash scripts/run-e2e-tests.sh
+	@E2E_GUARD_ENABLED=1 NONINTERACTIVE=1 bash scripts/run-e2e-tests.sh
 
 debug-test-mcp:
 	@echo "=== MCP Server 集成测试 ==="
