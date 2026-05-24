@@ -34,11 +34,11 @@
 /peeklink src/main.py docs/README.md
 ```
 
-summary 自动从路径生成，不需要用户输入：
-- 单文件：`main.py`
-- 单目录：`src/`
-- 多路径：`src/main.py + 1 more`
-- 当前目录：项目目录名（`basename $PWD`）
+**路径解析规则：**
+- 自动检测 git 根目录作为项目基准：`$(git rev-parse --show-toplevel)`
+- 未在 git 仓库中时，使用当前工作目录 `$PWD`
+- 相对路径基于检测到的项目根目录解析
+- 绝对路径直接使用
 
 ---
 
@@ -59,7 +59,11 @@ if [ -z "$PATHS" ]; then
   exit 1
 fi
 
-# 生成 summary：取第一个路径的basename，多路径时加计数
+# 检测项目根目录（git 根目录或当前目录）
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$PROJECT_ROOT"
+
+# 生成 summary：取第一个路径的 basename，多路径时加计数
 FIRST=$(echo $PATHS | awk '{print $1}')
 COUNT=$(echo $PATHS | wc -w)
 if [ "$COUNT" -gt 1 ]; then
@@ -70,6 +74,12 @@ fi
 
 peekview create $PATHS --summary "$SUMMARY"
 ```
+
+**说明**：
+- 使用 `git rev-parse --show-toplevel` 自动检测项目根目录
+- 非 git 仓库时回退到 `pwd`
+- 所有相对路径基于此目录解析
+- 安全边界：用户主动操作，安全责任在用户（CLI 本身无 allowlist 限制）
 
 ---
 

@@ -108,9 +108,9 @@ const IGNORED_DIRS = new Set([
   '.next', '.nuxt', 'coverage', '.DS_Store', '.idea', '.vscode',
 ]);
 
-const MAX_SINGLE_FILE_BYTES = 2 * 1024 * 1024;   // 2MB 单文件上限
-const MAX_TOTAL_FILES = 200;                        // 最多200个文件
-const MAX_TOTAL_BYTES = 20 * 1024 * 1024;          // 20MB 总大小上限
+const MAX_SINGLE_FILE_BYTES = 5 * 1024 * 1024;    // 5MB 单文件上限（后端上限 10MB，留余量）
+const MAX_TOTAL_FILES = 50;                          // 最多 50 个文件（对齐后端 max_entry_files）
+const MAX_TOTAL_BYTES = 50 * 1024 * 1024;           // 50MB 总大小上限（后端上限 100MB，留余量）
 
 interface FileData {
   filename: string;
@@ -118,15 +118,21 @@ interface FileData {
   content: string;
 }
 
+interface SkippedFile {
+  path: string;
+  reason: 'binary' | 'too_large' | 'not_found' | 'no_mime_type' | 'permission_denied';
+}
+
 interface ScanResult {
   files: FileData[];
-  skipped: string[];   // 跳过的文件（二进制、过大、超限等）
+  skipped: SkippedFile[];   // 跳过的文件及原因
   warnings: string[];
 }
 
 async function resolvePaths(
   paths: string[],
-  allowedPaths: string[],
+  config: McpConfig,
+  sessionCwd: string,
   includePatterns?: string[],
   excludePatterns?: string[],
 ): Promise<ScanResult> {
@@ -140,22 +146,22 @@ async function resolvePaths(
       continue;
     }
 
-    // 2. allowlist 检查
-    if (!isPathAllowed(p, allowedPaths)) {
-      throw new Error(
-        `路径不在允许的目录中: ${p}\n` +
-        `请在 MCP Server 配置的 allowed_paths 中添加此路径。`
-      );
+    // 2. 路径安全检查和 allowlist 验证
+    try {
+      await validatePath(p, config, sessionCwd);
+    } catch (err: any) {
+      result.warnings.push(`路径被拒绝: ${p} - ${err.message}`);
+      continue;
     }
 
     const stat = await fs.stat(p).catch(() => null);
     if (!stat) {
-      result.warnings.push(`路径不存在: ${p}`);
+      result.skipped.push({ path: p, reason: 'not_found' });
       continue;
     }
 
     if (stat.isDirectory()) {
-      const dirResult = await scanDirectory(p, p, allowedPaths, includePatterns, excludePatterns);
+      const dirResult = await scanDirectory(p, p, sessionCwd, includePatterns, excludePatterns);
       result.files.push(...dirResult.files);
       result.skipped.push(...dirResult.skipped);
       totalBytes += dirResult.files.reduce((s, f) => s + f.content.length, 0);
@@ -164,18 +170,16 @@ async function resolvePaths(
       if (fileResult) {
         result.files.push(fileResult);
         totalBytes += fileResult.content.length;
-      } else {
-        result.skipped.push(p);
       }
     }
 
     // 总大小检查
     if (totalBytes > MAX_TOTAL_BYTES) {
-      result.warnings.push(`总大小超过 20MB，已停止读取`);
+      result.warnings.push(`总大小超过 50MB，已停止读取`);
       break;
     }
     if (result.files.length > MAX_TOTAL_FILES) {
-      result.warnings.push(`文件数超过 200，已停止读取`);
+      result.warnings.push(`文件数超过 50，已停止读取`);
       break;
     }
   }
@@ -186,7 +190,7 @@ async function resolvePaths(
 async function scanDirectory(
   dir: string,
   base: string,
-  allowedPaths: string[],
+  sessionCwd: string,
   includePatterns?: string[],
   excludePatterns?: string[],
 ): Promise<ScanResult> {
@@ -199,7 +203,7 @@ async function scanDirectory(
     const full = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      const sub = await scanDirectory(full, base, allowedPaths, includePatterns, excludePatterns);
+      const sub = await scanDirectory(full, base, sessionCwd, includePatterns, excludePatterns);
       result.files.push(...sub.files);
       result.skipped.push(...sub.skipped);
     } else if (entry.isFile()) {
@@ -208,8 +212,17 @@ async function scanDirectory(
         continue;
       }
       const fileResult = await readSingleFile(full, base);
-      if (fileResult) result.files.push(fileResult);
-      else result.skipped.push(full);
+      if (fileResult) {
+        result.files.push(fileResult);
+      } else {
+        // readSingleFile 返回 null 表示跳过，需要推断原因
+        const stat = await fs.stat(full).catch(() => null);
+        if (stat && stat.size > MAX_SINGLE_FILE_BYTES) {
+          result.skipped.push({ path: full, reason: 'too_large' });
+        } else {
+          result.skipped.push({ path: full, reason: 'binary' });
+        }
+      }
     }
   }
 
@@ -219,7 +232,7 @@ async function scanDirectory(
 async function readSingleFile(filePath: string, base: string): Promise<FileData | null> {
   try {
     const stat = await fs.stat(filePath);
-    if (stat.size > MAX_SINGLE_FILE_BYTES) return null; // 超过 2MB，跳过
+    if (stat.size > MAX_SINGLE_FILE_BYTES) return null; // 超过 5MB，跳过
 
     const content = await fs.readFile(filePath, 'utf-8');
     return {
@@ -231,44 +244,120 @@ async function readSingleFile(filePath: string, base: string): Promise<FileData 
     return null; // 二进制文件或读取失败，跳过
   }
 }
+
+// 敏感路径黑名单（硬编码，始终拒绝）
+const SENSITIVE_PATTERNS = [
+  /\/\.ssh\//, /\/\.gnupg\//, /\/\.aws\//, /\/\.config\/",
+  /.*\.key$/, /.*\.pem$/, /.*\.p12$/, /.*\.pfx$/,
+];
+
+function isSensitivePath(filePath: string): boolean {
+  return SENSITIVE_PATTERNS.some(pattern => pattern.test(filePath));
+}
+
+// 路径安全验证：realpath + 边界检查
+async function validatePath(
+  filePath: string,
+  config: McpConfig,
+  sessionCwd: string,
+): Promise<void> {
+  // 1. 获取真实路径（解析符号链接和 ..）
+  const resolved = await fs.realpath(filePath).catch(() => null);
+  if (!resolved) {
+    throw new Error(`无法解析路径: ${filePath}`);
+  }
+
+  // 2. 第一层：硬编码黑名单
+  if (isSensitivePath(resolved)) {
+    throw new Error('拒绝访问敏感路径');
+  }
+
+  // 3. 第二层：用户配置了 allowedPaths
+  if (config.allowedPaths && config.allowedPaths.length > 0) {
+    const allowed = config.allowedPaths.some(allowedDir => {
+      const resolvedAllowed = path.resolve(allowedDir);
+      return resolved === resolvedAllowed ||
+             resolved.startsWith(resolvedAllowed + path.sep);
+    });
+    if (!allowed) {
+      throw new Error(`路径不在 allowed_paths 配置中`);
+    }
+    return; // 检查通过
+  }
+
+  // 4. 第三层：未配置 allowedPaths，默认只允许 sessionCwd 下的路径
+  const resolvedCwd = await fs.realpath(sessionCwd);
+  const inCwd = resolved === resolvedCwd ||
+                resolved.startsWith(resolvedCwd + path.sep);
+  if (!inCwd) {
+    throw new Error(`路径超出工作目录范围。请在配置中添加 allowed_paths，或提供 cwd 下的路径`);
+  }
+}
 ```
 
-### 3.4 安全边界：allowlist
+### 3.4 安全边界：三层防护模型
+
+**安全优先级（从高到低）：**
+
+1. **硬编码黑名单**（始终拒绝）：敏感路径如 `~/.ssh/`、`*.pem` 等
+2. **用户配置的 allowedPaths**（显式允许）：配置了则严格按配置
+3. **Session CWD 兜底**（默认允许）：未配置 allowedPaths 时，只允许当前工作目录下的路径
 
 **MCP Server 配置文件（`~/.peekview/mcp-config.yaml`）：**
 
 ```yaml
+# 可选：额外限制特定目录
 allowed_paths:
   - /home/alice/projects
-  - /tmp/peekview-staging
+  - /tmp/my-staging
+
+# 注意：未配置时默认只允许 session cwd 下的路径
 ```
 
-**默认行为：空 allowlist = 拒绝所有路径请求。**
-
-用户必须明确配置才能使用 `publish_files`。这与 Anthropic 官方 filesystem MCP server 的设计一致——安全优先，用户主动授权。
-
-如果 `publish_files` 被调用但未配置 allowlist，工具返回清晰的错误提示：
-
-```
-✗ publish_files 需要在 MCP Server 配置文件中设置 allowed_paths。
-
-请编辑 ~/.peekview/mcp-config.yaml，添加：
-  allowed_paths:
-    - /path/to/your/project
-
-然后重启 MCP Server。
-```
+**安全边界实现：**
 
 ```typescript
-function isPathAllowed(filePath: string, allowedPaths: string[]): boolean {
-  if (!allowedPaths || allowedPaths.length === 0) return false; // 未配置 = 拒绝
-  const resolved = path.resolve(filePath);
-  return allowedPaths.some(allowed =>
-    resolved === path.resolve(allowed) ||
-    resolved.startsWith(path.resolve(allowed) + path.sep)
-  );
+const SENSITIVE_PATTERNS = [
+  /\/\.ssh\//, /\/\.gnupg\//, /\/\.aws\//,
+  /.*\.key$/, /.*\.pem$/, /.*\.p12$/,
+];
+
+async function validatePath(filePath: string, config: McpConfig, sessionCwd: string): Promise<void> {
+  // 1. 获取真实路径（解析符号链接和 ..）
+  const resolved = await fs.realpath(filePath).catch(() => null);
+  if (!resolved) throw new Error(`无法解析路径: ${filePath}`);
+
+  // 2. 硬编码黑名单
+  if (isSensitivePath(resolved)) {
+    throw new Error('拒绝访问敏感路径');
+  }
+
+  // 3. 用户配置了 allowedPaths
+  if (config.allowedPaths?.length > 0) {
+    const allowed = config.allowedPaths.some(p => {
+      const resolvedAllowed = path.resolve(p);
+      return resolved === resolvedAllowed ||
+             resolved.startsWith(resolvedAllowed + path.sep);
+    });
+    if (!allowed) throw new Error(`路径不在 allowed_paths 中`);
+    return;
+  }
+
+  // 4. 未配置，默认只允许 session cwd
+  const resolvedCwd = await fs.realpath(sessionCwd);
+  const inCwd = resolved === resolvedCwd ||
+                resolved.startsWith(resolvedCwd + path.sep);
+  if (!inCwd) {
+    throw new Error(`路径超出工作目录。请配置 allowed_paths 或使用 cwd 下的路径`);
+  }
 }
 ```
+
+**关键安全设计：**
+- **符号链接**：`fs.realpath()` 解析到真实路径，防止 symlink 绕过
+- **路径遍历**：`realpath` 已处理 `..`，无需额外检查
+- **边界验证**：解析后的路径必须在允许目录下（startsWith 检查）
+- **默认值安全**：未配置时只允许 cwd，而非允许所有路径
 
 ---
 
