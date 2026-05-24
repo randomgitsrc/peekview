@@ -20,16 +20,25 @@ export const serviceCommand = new Command('service')
 Systemd service management for Linux.
 
 Quick start:
-  peekview-mcp service install --user   # Install as user service (recommended)
-  peekview-mcp service start            # Start the service
-  peekview-mcp service status           # Check service status
+  peekview-mcp service install          # Install as user service (recommended, auto-detected)
+  peekview-mcp service start              # Start the service
+  peekview-mcp service status             # Check service status
+
+Service mode (auto-detected):
+  By default, commands auto-detect which service exists (user or system).
+  If both exist, user service is preferred.
+
+  --user    Force user service mode
+  --system  Force system service mode (requires sudo)
 
 User vs System service:
-  --user    User service (no sudo, runs as current user)
-            Service file: ~/.config/systemd/user/peekview-mcp.service
+  User service (default, no sudo):
+    Service file: ~/.config/systemd/user/peekview-mcp.service
+    Recommended for personal use
 
-  (default) System service (requires sudo, runs as root)
-            Service file: /etc/systemd/system/peekview-mcp.service
+  System service (requires sudo):
+    Service file: /etc/systemd/system/peekview-mcp.service
+    Use only for shared servers
 
 Prerequisites:
   1. Create config file: peekview-mcp config set peekview.url ...
@@ -76,6 +85,45 @@ function isLegacyServiceFormat(servicePath: string): boolean {
   return content.includes('Environment="PEEKVIEW_URL') ||
          content.includes('Environment="PEEKVIEW_PUBLIC_URL') ||
          content.includes('Environment="PEEKVIEW_API_KEY');
+}
+
+/**
+ * Detect which service mode to use
+ * Priority: user service > system service
+ * Returns: { userMode: boolean, warnings: string[] }
+ */
+function detectServiceMode(preferSystem: boolean): { userMode: boolean; warnings: string[] } {
+  const warnings: string[] = [];
+  const userPath = getServicePath(true);
+  const systemPath = getServicePath(false);
+  const hasUser = existsSync(userPath);
+  const hasSystem = existsSync(systemPath);
+
+  if (preferSystem) {
+    if (hasSystem) {
+      return { userMode: false, warnings };
+    }
+    warnings.push('System service not found, falling back to user service');
+    return { userMode: true, warnings };
+  }
+
+  // Default: prefer user service
+  if (hasUser && hasSystem) {
+    warnings.push('Both user and system services exist. Using user service (recommended).');
+    warnings.push('To use system service, add --system flag');
+    return { userMode: true, warnings };
+  }
+
+  if (hasUser) {
+    return { userMode: true, warnings };
+  }
+
+  if (hasSystem) {
+    return { userMode: false, warnings };
+  }
+
+  // Neither exists, default to user service for install
+  return { userMode: true, warnings };
 }
 
 /**
@@ -223,15 +271,40 @@ function getExecutablePath(): string {
   }
 }
 
-// service install [--user] [--force]
+// service install [--user] [--system] [--force]
 serviceCommand
   .command('install')
-  .option('--user', 'Install as user service (no sudo needed)')
+  .option('--user', 'Install as user service (no sudo needed) [default if neither exists]')
+  .option('--system', 'Install as system service (requires sudo)')
   .option('--force', 'Overwrite existing service')
   .description('Install MCP Server as a systemd service')
-  .action(async (options: { user?: boolean; force?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean; force?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode: explicit flags take precedence, otherwise auto-detect
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        // Auto-detect based on existing services
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      // Show warnings
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
+      if (warnings.length > 0) console.log('');
 
       // Check config file exists
       const config = loadConfigFromFile();
@@ -329,7 +402,7 @@ WantedBy=default.target
         console.log(`✓ System service installed: ${servicePath}`);
         console.log('');
         console.log('To start:');
-        console.log(`  peekview-mcp service start`);
+        console.log(`  peekview-mcp service start --system`);
       }
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -341,10 +414,33 @@ WantedBy=default.target
 serviceCommand
   .command('start')
   .option('--user', 'Start user service')
+  .option('--system', 'Start system service')
   .description('Start the MCP Server service')
-  .action(async (options: { user?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
+
       if (userMode) {
         await runCommand('systemctl', ['--user', 'start', getServiceName()]);
       } else {
@@ -361,10 +457,32 @@ serviceCommand
 serviceCommand
   .command('stop')
   .option('--user', 'Stop user service')
+  .option('--system', 'Stop system service')
   .description('Stop the MCP Server service')
-  .action(async (options: { user?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
 
       // 1. Stop systemd service
       try {
@@ -392,10 +510,33 @@ serviceCommand
 serviceCommand
   .command('restart')
   .option('--user', 'Restart user service')
+  .option('--system', 'Restart system service')
   .description('Restart the MCP Server service')
-  .action(async (options: { user?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
+
       if (userMode) {
         await runCommand('systemctl', ['--user', 'restart', getServiceName()]);
       } else {
@@ -412,10 +553,34 @@ serviceCommand
 serviceCommand
   .command('status')
   .option('--user', 'Check user service status')
+  .option('--system', 'Check system service status')
   .description('Check the MCP Server service status')
-  .action(async (options: { user?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
+      if (warnings.length > 0) console.log('');
+
       const servicePath = getServicePath(userMode);
 
       // Check for legacy format
@@ -457,10 +622,33 @@ serviceCommand
 serviceCommand
   .command('uninstall')
   .option('--user', 'Uninstall user service')
+  .option('--system', 'Uninstall system service')
   .description('Remove the MCP Server service')
-  .action(async (options: { user?: boolean }) => {
+  .action(async (options: { user?: boolean; system?: boolean }) => {
     try {
-      const userMode = options.user || false;
+      // Determine mode
+      let userMode: boolean;
+      let warnings: string[] = [];
+
+      if (options.user && options.system) {
+        console.error('Error: Cannot use both --user and --system');
+        process.exit(1);
+      }
+
+      if (options.system) {
+        userMode = false;
+      } else if (options.user) {
+        userMode = true;
+      } else {
+        const detection = detectServiceMode(false);
+        userMode = detection.userMode;
+        warnings = detection.warnings;
+      }
+
+      for (const warning of warnings) {
+        console.log(`⚠ ${warning}`);
+      }
+
       const servicePath = getServicePath(userMode);
 
       // Stop service first

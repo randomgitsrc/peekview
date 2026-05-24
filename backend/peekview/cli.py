@@ -688,18 +688,71 @@ SERVICE_EXAMPLES = """
 \b
 Examples:
 
-    peekview service install              # Install as system service
+    peekview service install              # Install as user service (auto-detected)
 
-    peekview service install --user       # Install as user service
+    peekview service install --system     # Install as system service (requires sudo)
 
-    peekview service status               # Check service status
+    peekview service status               # Check service status (auto-detected)
 
-    peekview service start                # Start the service
+    peekview service start                # Start the service (auto-detected)
 
-    peekview service stop                 # Stop the service
+    peekview service stop                 # Stop the service (auto-detected)
 
-    peekview service uninstall            # Remove the service
+    peekview service restart              # Restart the service (auto-detected)
+
+    peekview service uninstall            # Remove the service (auto-detected)
+
+Service mode (auto-detected):
+    By default, commands auto-detect which service exists (user or system).
+    If both exist, user service is preferred.
+
+    --user    Force user service mode
+    --system  Force system service mode (requires sudo)
 """
+
+
+def _detect_service_mode(prefer_system: bool = False) -> tuple[bool, list[str]]:
+    """Detect which service mode to use. Priority: user service > system service.
+
+    Returns:
+        Tuple of (is_user_mode, warnings)
+    """
+    warnings: list[str] = []
+    system = platform.system()
+
+    if system == "Linux":
+        user_path = Path.home() / ".config" / "systemd" / "user" / "peekview.service"
+        system_path = Path("/etc/systemd/system") / "peekview.service"
+    elif system == "Darwin":
+        user_path = Path.home() / "Library" / "LaunchAgents" / "com.peekview.plist"
+        system_path = Path("/Library") / "LaunchDaemons" / "com.peekview.plist"
+    else:
+        # Unsupported system, default to user mode
+        return True, []
+
+    has_user = user_path.exists()
+    has_system = system_path.exists()
+
+    if prefer_system:
+        if has_system:
+            return False, warnings
+        warnings.append("System service not found, falling back to user service")
+        return True, warnings
+
+    # Default: prefer user service
+    if has_user and has_system:
+        warnings.append("Both user and system services exist. Using user service (recommended).")
+        warnings.append("To use system service, add --system flag")
+        return True, warnings
+
+    if has_user:
+        return True, warnings
+
+    if has_system:
+        return False, warnings
+
+    # Neither exists, default to user mode for install
+    return True, warnings
 
 
 @cli.group(name="service", epilog=SERVICE_EXAMPLES)
@@ -709,20 +762,41 @@ def service_cmd():
 
 
 @service_cmd.command(name="install")
-@click.option("--user", "user_mode", is_flag=True, help="Install as user service (no sudo needed)")
+@click.option("--user", "user_mode", is_flag=True, help="Install as user service (no sudo needed) [default if neither exists]")
+@click.option("--system", "system_mode", is_flag=True, help="Install as system service (requires sudo)")
 @click.option("--force", is_flag=True, help="Overwrite existing service")
-def install_service(user_mode: bool, force: bool) -> None:
+def install_service(user_mode: bool, system_mode: bool, force: bool) -> None:
     """Install PeekView as a system service.
 
     Configuration is read from ~/.peekview/config.yaml at runtime.
     Use `peekview config` command to manage settings.
     """
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    # Show warnings
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+    if warnings:
+        click.echo("")
+
     system = platform.system()
 
     if system == "Linux":
-        _install_systemd_service(user_mode, force)
+        _install_systemd_service(is_user, force)
     elif system == "Darwin":
-        _install_launchd_service(user_mode, force)
+        _install_launchd_service(is_user, force)
     else:
         click.echo(f"Service installation not supported on {system}", err=True)
         sys.exit(1)
@@ -862,14 +936,32 @@ def _install_launchd_service(user_mode: bool, force: bool) -> None:
 
 @service_cmd.command(name="uninstall")
 @click.option("--user", "user_mode", is_flag=True, help="Uninstall user service")
-def uninstall_service(user_mode: bool) -> None:
+@click.option("--system", "system_mode", is_flag=True, help="Uninstall system service")
+def uninstall_service(user_mode: bool, system_mode: bool) -> None:
     """Uninstall the PeekView service."""
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+
     system = platform.system()
 
     if system == "Linux":
-        _uninstall_systemd_service(user_mode)
+        _uninstall_systemd_service(is_user)
     elif system == "Darwin":
-        _uninstall_launchd_service(user_mode)
+        _uninstall_launchd_service(is_user)
     else:
         click.echo(f"Service uninstallation not supported on {system}", err=True)
         sys.exit(1)
@@ -930,13 +1022,33 @@ def _uninstall_launchd_service(user_mode: bool) -> None:
 
 @service_cmd.command(name="status")
 @click.option("--user", "user_mode", is_flag=True, help="Check user service status")
-def service_status(user_mode: bool) -> None:
+@click.option("--system", "system_mode", is_flag=True, help="Check system service status")
+def service_status(user_mode: bool, system_mode: bool) -> None:
     """Check the service status."""
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+    if warnings:
+        click.echo("")
+
     system = platform.system()
 
     if system == "Linux":
         try:
-            if user_mode:
+            if is_user:
                 result = subprocess.run(
                     ["systemctl", "--user", "status", "peekview"],
                     capture_output=True, text=True
@@ -964,13 +1076,31 @@ def service_status(user_mode: bool) -> None:
 
 @service_cmd.command(name="start")
 @click.option("--user", "user_mode", is_flag=True, help="Start user service")
-def start_service(user_mode: bool) -> None:
+@click.option("--system", "system_mode", is_flag=True, help="Start system service")
+def start_service(user_mode: bool, system_mode: bool) -> None:
     """Start the service."""
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+
     system = platform.system()
 
     if system == "Linux":
         try:
-            if user_mode:
+            if is_user:
                 subprocess.run(["systemctl", "--user", "start", "peekview"], check=True)
             else:
                 subprocess.run(["sudo", "systemctl", "start", "peekview"], check=True)
@@ -980,10 +1110,10 @@ def start_service(user_mode: bool) -> None:
             sys.exit(1)
     elif system == "Darwin":
         plist_path = Path.home() / "Library" / "LaunchAgents" / "com.peekview.plist"
-        if not user_mode:
+        if not is_user:
             plist_path = Path("/Library/LaunchDaemons") / "com.peekview.plist"
         try:
-            if user_mode:
+            if is_user:
                 subprocess.run(["launchctl", "load", str(plist_path)], check=True)
             else:
                 subprocess.run(["sudo", "launchctl", "load", str(plist_path)], check=True)
@@ -998,13 +1128,31 @@ def start_service(user_mode: bool) -> None:
 
 @service_cmd.command(name="stop")
 @click.option("--user", "user_mode", is_flag=True, help="Stop user service")
-def stop_service(user_mode: bool) -> None:
+@click.option("--system", "system_mode", is_flag=True, help="Stop system service")
+def stop_service(user_mode: bool, system_mode: bool) -> None:
     """Stop the service."""
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+
     system = platform.system()
 
     if system == "Linux":
         try:
-            if user_mode:
+            if is_user:
                 subprocess.run(["systemctl", "--user", "stop", "peekview"], check=True)
             else:
                 subprocess.run(["sudo", "systemctl", "stop", "peekview"], check=True)
@@ -1014,7 +1162,7 @@ def stop_service(user_mode: bool) -> None:
             sys.exit(1)
     elif system == "Darwin":
         try:
-            if user_mode:
+            if is_user:
                 subprocess.run(["launchctl", "unload", "com.peekview"], check=True)
             else:
                 subprocess.run(["sudo", "launchctl", "unload", "com.peekview"], check=True)
@@ -1029,13 +1177,31 @@ def stop_service(user_mode: bool) -> None:
 
 @service_cmd.command(name="restart")
 @click.option("--user", "user_mode", is_flag=True, help="Restart user service")
-def restart_service(user_mode: bool) -> None:
+@click.option("--system", "system_mode", is_flag=True, help="Restart system service")
+def restart_service(user_mode: bool, system_mode: bool) -> None:
     """Restart the service."""
+    if user_mode and system_mode:
+        click.echo("Error: Cannot use both --user and --system", err=True)
+        sys.exit(1)
+
+    # Determine mode
+    if system_mode:
+        is_user = False
+        warnings: list[str] = []
+    elif user_mode:
+        is_user = True
+        warnings = []
+    else:
+        is_user, warnings = _detect_service_mode(False)
+
+    for warning in warnings:
+        click.echo(f"⚠ {warning}")
+
     system = platform.system()
 
     if system == "Linux":
         try:
-            if user_mode:
+            if is_user:
                 subprocess.run(["systemctl", "--user", "restart", "peekview"], check=True)
             else:
                 subprocess.run(["sudo", "systemctl", "restart", "peekview"], check=True)
@@ -1045,11 +1211,11 @@ def restart_service(user_mode: bool) -> None:
             sys.exit(1)
     elif system == "Darwin":
         plist_path = Path.home() / "Library" / "LaunchAgents" / "com.peekview.plist"
-        if not user_mode:
+        if not is_user:
             plist_path = Path("/Library/LaunchDaemons") / "com.peekview.plist"
         try:
             # Darwin doesn't have restart, use stop then start
-            if user_mode:
+            if is_user:
                 subprocess.run(["launchctl", "unload", str(plist_path)], check=True)
                 subprocess.run(["launchctl", "load", str(plist_path)], check=True)
             else:
