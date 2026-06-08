@@ -19,6 +19,11 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# Backend
+backend/peekview/static/
+backend/dist/
 
 # Virtual environments
 .venv/
@@ -32,6 +37,16 @@ env/
 htmlcov/
 .tox/
 .nox/
+coverage.xml
+*.cover
+
+# Frontend
+frontend-v3/dist/
+frontend-v3/node_modules/
+frontend-v3/.vite/
+frontend-v3/playwright-report/
+frontend-v3/test-results/
+frontend-v3/playwright/.cache/
 
 # IDE
 .idea/
@@ -53,3 +68,16 @@ ffmpeg
 ffmpeg-master-latest-linux64-gpl/
 ffmpeg.tar.xz
 FEATURES.json
+
+# MCP Server
+packages/mcp-server/dist/
+packages/mcp-server/node_modules/
+packages/mcp-server/coverage/
+
+# Opencode (local config, not for repo)
+.opencode/
+
+# Debug / Temp
+/tmp/
+*.log
+.DS_Store
