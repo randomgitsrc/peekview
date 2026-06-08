@@ -1,5 +1,9 @@
 # MCP publish_files 工具设计
 
+> ⚠️ **此文档的工具设计已被 `docs/plans/mcp-dual-mode-final-v0.7.md` 取代。**
+> 本文档的安全模型（黑名单+allowlist）和文件扫描逻辑仍可参考，
+> 但工具策略已改为双模式（local 只暴露 publish_files，remote 只暴露 create_entry）。
+
 > 作者：gstack 专家评审
 > 日期：2026-05-24
 > 背景：解决本地文件发布场景下 Agent 需要先 read_file 再传 content 导致的 ~2 分钟延迟

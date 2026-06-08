@@ -3,6 +3,10 @@
 > 日期：2026-05-24  
 > 背景：架构分析发现 A≠B 时 MCP 无法直接访问 Agent 本地文件，
 >       需要根据部署拓扑提供不同的工具集
+>
+> 📌 **实现以 `docs/plans/mcp-dual-mode-final-v0.7.md` 为权威。**
+> 本规格的工具策略（local 只暴露 publish_files）与最终方案一致；
+> 安全模型以最终方案的三层防护为准（黑名单 → allowed_paths → cwd fallback）。
 
 ---
 
@@ -105,13 +109,12 @@ MCP_ALLOWED_PATHS=/home/alice/projects:/tmp  # 冒号分隔
 ### 启动时校验
 
 ```typescript
-// 本地模式必须配置 allowed_paths，否则拒绝启动
+// 本地模式未配置 allowed_paths 时不拒绝启动，仅 warning + cwd 限制
+// （详见 docs/plans/mcp-dual-mode-final-v0.7.md 三层安全模型）
 if (config.mode === 'local' && config.allowedPaths.length === 0) {
-  throw new Error(
-    'local 模式需要配置 allowed_paths。\n' +
-    '请在 ~/.peekview/mcp-config.yaml 中添加：\n' +
-    '  allowed_paths:\n' +
-    '    - /path/to/your/project'
+  logger.warn(
+    '未配置 allowed_paths，仅允许当前工作目录下的路径。' +
+    '若作为系统服务运行，强烈建议显式配置 allowed_paths。'
   );
 }
 ```

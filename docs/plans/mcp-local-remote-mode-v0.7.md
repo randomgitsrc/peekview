@@ -6,6 +6,10 @@
 > 来源评审: `docs/reviews/expert-review-mcp-local-remote-mode.md`  
 > 关联规格: `docs/specs/spec-mcp-local-remote-mode.md`
 
+> ⚠️ **本文档的工具策略（local 模式保留 create_entry）已被 `docs/plans/mcp-dual-mode-final-v0.7.md` 取代。**
+> 最终决策：local 模式只暴露 publish_files，不暴露 create_entry（选择越少出错越少；Agent 会自然 write_file 落盘）。
+> 本文档的配置设计、安全模型、迁移说明仍然适用。
+
 ---
 
 ## 一、背景与问题
