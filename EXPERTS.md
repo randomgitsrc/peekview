@@ -379,6 +379,12 @@ make sync-version-docs
 git status
 git log --oneline -10
 git tag -l
+
+# GH CLI（网络不稳定时使用）
+gh status
+gh run list --limit 10
+gh release list
+gh api repos/{owner}/{repo}/tags
 ```
 
 ## 你必须阻止的行为
