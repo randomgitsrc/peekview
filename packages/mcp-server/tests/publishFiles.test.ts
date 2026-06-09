@@ -228,13 +228,9 @@ describe('publish_files', () => {
     expect(result.content[0].text).toContain('已发布 1 个文件');
   });
 
-  it('默认白名单：拒绝 HOME 下文件（除非 HOME 恰好是 cwd）', async () => {
-    const homeDir = os.homedir();
-    // 如果 cwd 就是 home，这个测试不适用；跳过
-    if (path.resolve(process.cwd()) === path.resolve(homeDir)) {
-      return;
-    }
-    const file = path.join(homeDir, 'notes.md');
+  it('默认白名单：拒绝 cwd/tmpdir 外文件', async () => {
+    const outsideDir = await fs.mkdtemp('/var/tmp/pv-outside-');
+    const file = path.join(outsideDir, 'notes.md');
     await fs.writeFile(file, '# notes');
 
     try {
@@ -243,7 +239,7 @@ describe('publish_files', () => {
       expect(result.content[0].text).toContain('发布被拒绝');
       expect(result.content[0].text).toContain('超出允许范围');
     } finally {
-      await fs.unlink(file).catch(() => {});
+      await fs.rm(outsideDir, { recursive: true, force: true }).catch(() => {});
     }
   });
 

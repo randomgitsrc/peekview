@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.7.0 dual-mode implementation has been released to npm.
 - **Current Version:** v0.1.42 (Backend/Frontend) | MCP Server v0.7.0
-- **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, SSE transport)
+- **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
 
@@ -154,15 +154,15 @@ entry_service = request.app.state.entry_service
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
 ### MCP Server Architecture (v0.7.0)
-- **Transport**: SSE (Server-Sent Events) via `@modelcontextprotocol/sdk`
-- **Auth**: Two-layer — `pv_` prefix check at SSE connect, then passthrough to PeekView API
-- **Session**: AsyncLocalStorage propagates user context per SSE session
+- **Transport**: Streamable HTTP via `@modelcontextprotocol/sdk`
+- **Auth**: Two-layer — `pv_` prefix check at initialize, then passthrough to PeekView API
+- **Session**: Per-session Server instance with idle timeout cleanup
 - **Modes**:
   - `remote` (default, A→B→C): exposes `create_entry`, `get_entry`, `list_entries`, `delete_entry`
   - `local` (A=B→C): exposes `publish_files`, `get_entry`, `list_entries`, `delete_entry`; does **not** expose `create_entry`
 - **publish_files**: reads files directly from disk, requires absolute paths, uses `server.allowed_paths` or cwd fallback, rejects cwd `/`
 - **Service commands**: Auto-detect user/system service mode (`--user`/`--system` flags, default prefers user service)
-- **Deployment architecture**: Agent(A机器) → SSE → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
+- **Deployment architecture**: Agent(A机器) → HTTP POST → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
 - **Version correspondence:** MCP Server v0.7.0 requires PeekView Backend v0.1.25+
 
 ### Error Response Format

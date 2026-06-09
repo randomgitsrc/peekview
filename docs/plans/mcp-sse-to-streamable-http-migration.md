@@ -68,6 +68,23 @@ PeekView MCP 当前用 SSE，用户的多 Agent 环境（Claude Code / OpenCode 
 
 例外：如果用户反馈有客户端只支持 SSE，再考虑加回兼容端点（SDK 支持同一 server 绑定多 transport）。
 
+⚠️ **Breaking Change**：v0.8.0 升级后，用户现有 Claude Code 配置需要手动更新：
+```bash
+# 旧配置（v0.7.x）
+claude mcp add peekview -t sse http://localhost:33333/sse --header "Authorization: Bearer pv_xxx"
+
+# 新配置（v0.8.0+）
+claude mcp add peekview -t http http://localhost:33333/mcp --header "Authorization: Bearer pv_xxx"
+```
+
+### 2.4 Session 扩展性限制
+
+⚠️ **当前实现仍为单进程内存 session**：
+- `sessions` 是内存 Map，与 SSE 模式相同
+- Streamable HTTP 规范支持 stateless 模式，但当前实现使用 stateful（session-id）
+- 如果用户用 pm2/cluster 启动多个进程，session **不共享**
+- 水平扩展需要后续引入 Redis/共享存储（backlog #future）
+
 ---
 
 ## 三、设计
@@ -213,23 +230,40 @@ setInterval(() => {
 
 **a) 沿用低层 Server，每会话一个 Server 实例**
 
-现有 `createMCPServer(tools)` 用低层 `Server` + `setRequestHandler`（不是高层 McpServer），保持不变。每个会话 initialize 时调一次 `createMCPServer(tools)`——`tools` 是共享引用，Server 实例本身轻量，开销可接受。这样每会话隔离干净，与 per-session ctx 配合自然。
+ 现有 `createMCPServer(tools)` 用低层 `Server` + `setRequestHandler`（不是高层 McpServer），保持不变。每个会话 initialize 时调一次 `createMCPServer(tools)`——`tools` 是共享引用，Server 实例本身轻量，开销可接受。这样每会话隔离干净，与 per-session ctx 配合自然。
 
 **b) stateful 模式，认证一次复用**
 
-`sessionIdGenerator` 设值（stateful）。认证在 initialize 时做一次（pv_ 前缀 + validateToken），userToken 绑定到 session。后续工具调用复用，不重复 validateToken（避免每次调用多一次 PeekView 往返）。这符合"多 Agent 共享、每 Agent 一会话"场景。
+ `sessionIdGenerator` 设值（stateful）。认证在 initialize 时做一次（pv_ 前缀 + validateToken），userToken 绑定到 session。后续工具调用复用，不重复 validateToken（避免每次调用多一次 PeekView 往返）。这符合"多 Agent 共享、每 Agent 一会话"场景。
 
 **c) AsyncLocalStorage 保留**
 
-多用户隔离依然靠 AsyncLocalStorage 传递 ctx。`handleRequest` 包在 `sessionContext.run(ctx, ...)` 里，工具 handler 通过 `getStore()` 拿到正确的用户 token。这个机制不变。
+ 多用户隔离依然靠 AsyncLocalStorage 传递 ctx。`handleRequest` 包在 `sessionContext.run(ctx, ...)` 里，工具 handler 通过 `getStore()` 拿到正确的用户 token。这个机制不变。
 
 **d) express.json() 中间件**
 
-Streamable HTTP 需要解析 JSON body（`req.body`），必须加 `app.use(express.json())`。
+ Streamable HTTP 需要解析 JSON body（`req.body`），必须加 `app.use(express.json())`。
 
 **e) Host/Origin 头校验（安全）**
 
-MCP 2025-11-25 规范 MUST 要求校验 Origin 头防 DNS rebinding。默认放行 localhost / 127.0.0.1 / 配置的 corsOrigins，其他拒绝。复用现有 corsOrigins 配置，不另起一套 origin 逻辑。
+ MCP 2025-11-25 规范 MUST 要求校验 Origin 头防 DNS rebinding。默认放行 localhost / 127.0.0.1 / 配置的 corsOrigins，其他拒绝。复用现有 corsOrigins 配置，不另起一套 origin 逻辑。
+
+**f) HTTPS 必须 + session-id 安全说明** (见 2.3)
+
+### 3.5 Express 中间件顺序
+
+```
+1. CORS (处理 OPTIONS 预检)
+2. express.json() (解析 JSON body)
+3. logger (可选)
+4. 路由 (/mcp, /health)
+```
+
+ ⚠️ **生产环境必须使用 HTTPS**。Streamable HTTP 使用 session-id 识别会话：
+ - session-id 使用 `randomUUID()` 生成，熵足够
+ - 传输层必须 HTTPS，防止 session-id 在传输中被截获
+ - session 默认 30 分钟超时，超时后自动失效
+ - 建议在反向代理层配置 TLS，不要裸 HTTP 暴露公网
 
 ---
 
@@ -247,6 +281,17 @@ make test-mcp-unit   # 现有 SSE 测试必须全过
 如果现有测试在新 SDK 上挂了 → SDK 1.4→1.10+ 有 breaking change（types 导出、Server 构造签名等），**先处理这些兼容问题再继续**。把"SDK 升级"和"传输迁移"两个变更解耦，便于定位问题。
 
 只有现有测试全过，才进入 Step 2。
+
+#### Step 1 失败决策树
+
+如果升级 SDK 后现有测试失败，按以下顺序排查：
+
+1. **types 导出路径变化** → 批量替换 import 语句
+2. **Server 构造签名变化** → 调整 `createMCPServer` 参数
+3. **SSE transport API 变化** → 先修 SSE 兼容再继续迁移（临时保留 SSE）
+4. **breaking change 过大（>1 天工作量）** → 拆分为独立 PR，不阻塞迁移
+
+> 注：本次迁移实测 SDK 1.4→1.29.0 无 breaking change（见 commit dc4390b5），上述决策树作为未来参考。
 
 ### Step 2：重写 server.ts 传输层
 - 移除 `SSEServerTransport` import，加 `StreamableHTTPServerTransport`

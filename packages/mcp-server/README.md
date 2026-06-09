@@ -1,6 +1,6 @@
 # PeekView MCP Server
 
-Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgitsrc/peekview) with SSE transport and multi-user authentication.
+Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgitsrc/peekview) with Streamable HTTP transport and multi-user authentication.
 
 ## Quick Start
 
@@ -65,7 +65,7 @@ peekview apikey create "Claude Code"
 
 # 配置 MCP（在 Claude Code 中）
 claude mcp add peekview \
-  --transport sse http://localhost:33333/sse \
+  --transport http http://localhost:33333/mcp \
   --header "Authorization: Bearer pv_xxxxxxxx..."
 ```
 
@@ -148,7 +148,7 @@ peekview-mcp service uninstall --user
 │                                                             │
 │  Claude Code (用户机器)                                     │
 │       │                                                     │
-│       │ SSE 连接                                            │
+│       │ HTTP 连接                                            │
 │       ▼                                                     │
 │  ┌─────────────┐         ┌─────────────┐                 │
 │  │ MCP Server  │ ──────► │  PeekView    │                 │
@@ -192,7 +192,7 @@ MCP Server 和 PeekView 在同一台机器上。
 │  └─────────────┘    └─────────────┘   │
 │         ▲                    │          │
 │         │                    │          │
-│    用户电脑 (SSE)      浏览器查看        │
+│    用户电脑 (HTTP)      浏览器查看        │
 └─────────────────────────────────────────┘
 ```
 
@@ -222,7 +222,7 @@ MCP Server 和 PeekView 在不同服务器，但两台服务器有内网互通�
 └────────┼────────┘                     └────────┼────────┘
          │                                       │
          ▼                                       ▼
-    用户电脑 (SSE)                          Nginx 反向代理
+     用户电脑 (HTTP)                          Nginx 反向代理
     (外网访问)                              peek.example.com
 ```
 
@@ -256,7 +256,7 @@ peekview-mcp config set peekview.public_url https://peek.example.com  # 用户�
 └────────┼────────┘                      └────────┼────────┘
          │                                         │
          ▼                                         ▼
-    用户电脑 (SSE)                          用户浏览器
+     用户电脑 (HTTP)                          用户浏览器
     (外网访问)                              (外网访问)
 ```
 
@@ -402,7 +402,7 @@ peekview-mcp service start
 
 # 3. 用户配置 Claude Code
 claude mcp add peekview \
-  --transport sse https://peek.example.com:33333/sse \
+  --transport http https://peek.example.com:33333/mcp \
   --header "Authorization: Bearer pv_xxx"
 ```
 
@@ -421,7 +421,11 @@ journalctl --user -u peekview-mcp -f
 
 # 测试连接
 curl http://localhost:33333/health
-curl -H "Authorization: Bearer pv_xxx" http://localhost:33333/sse
+curl -X POST http://localhost:33333/mcp \
+  -H "Authorization: Bearer pv_xxx" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"curl-test","version":"1.0"}}}'
 ```
 
 ## 升级

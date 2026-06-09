@@ -396,7 +396,7 @@ peekview-mcp serve
 
 ```bash
 # 添加 MCP Server（使用你的 pv_ API Key）
-claude mcp add peekview -t sse http://localhost:33333/sse \
+claude mcp add peekview -t http http://localhost:33333/mcp \
   --header "Authorization: Bearer pv_your_api_key_here"
 ```
 
@@ -407,7 +407,7 @@ claude mcp add peekview -t sse http://localhost:33333/sse \
 ```json
 {
   "peekview": {
-    "url": "http://localhost:33333/sse",
+    "url": "http://localhost:33333/mcp",
     "headers": {
       "Authorization": "Bearer pv_your_api_key_here"
     }

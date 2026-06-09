@@ -203,13 +203,13 @@ sudo systemctl status peekview-mcp
 
 ## 🔗 配置到 Claude Code / Cursor
 
-### 使用 SSE 传输
+### 使用 Streamable HTTP 传输
 
 ```bash
 # 添加到 Claude Code
 claude mcp add peekview \
-  -t sse \
-  http://your-vps-ip:33333/sse \
+  -t http \
+  http://your-vps-ip:33333/mcp \
   --header "Authorization: Bearer pv_your_api_key"
 
 # 验证连接
@@ -318,7 +318,7 @@ peekview-mcp config set peekview.public_url http://localhost:8080
 └────────┬────────┘                     └────────┬────────┘
          │                                         │
          │                                         │
-    用户电脑 (SSE)                            Nginx 反向代理
+     用户电脑 (HTTP)                          Nginx 反向代理
     (外网访问)                                peek.example.com
 ```
 
@@ -348,7 +348,7 @@ peekview-mcp config set peekview.public_url https://peek.example.com
 └────────┬────────┘                      └────────┬────────┘
          │                                         │
          │                                         │
-    用户电脑 (SSE)                            用户浏览器
+     用户电脑 (HTTP)                          用户浏览器
     (外网访问)                                (外网访问)
 ```
 
