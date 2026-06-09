@@ -387,15 +387,6 @@ publish:
 	@echo ""
 	@echo "✅ Published to PyPI"
 	@echo "   URL: https://pypi.org/project/peekview/$$(cd backend && python3 -c 'from peekview import __version__; print(__version__)')/"
-	make check-version check-changelog verify-wheel
-	@echo "→ Publishing to PyPI..."
-	@if [ -z "$(PYPI_API_TOKEN)" ]; then \
-		echo "✗ Error: PYPI_API_TOKEN not set"; \
-		exit 1; \
-	fi
-	cd backend && python3 -m twine upload dist/* \
-		-u __token__ -p "$(PYPI_API_TOKEN)" --non-interactive
-	@echo "✓ Published to PyPI"
 
 # Publish to TestPyPI
 publish-test: clean build test check-version

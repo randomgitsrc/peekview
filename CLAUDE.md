@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
 
-- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.7.0 dual-mode implementation is in-tree; npm release/tag still pending.
-- **Current Version:** v0.1.41 (Backend/Frontend) | MCP Server v0.7.0
+- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.7.0 dual-mode implementation has been released to npm.
+- **Current Version:** v0.1.42 (Backend/Frontend) | MCP Server v0.7.0
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, SSE transport)
 
 ## Project Structure

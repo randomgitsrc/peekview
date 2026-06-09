@@ -1,7 +1,7 @@
 # PeekView — 项目索引
 
 > 最后更新：2026-05-21
-> 当前版本：v0.1.41（Backend/Frontend）| MCP Server v0.2.0
+> 当前版本：v0.1.42（Backend/Frontend）| MCP Server v0.7.0
 
 ---
 
@@ -13,10 +13,10 @@
 | 技术设计 | ✅ 定稿 | FastAPI + SQLite + Vue 3 |
 | 后端实现 | ✅ 完成 | Tasks 0-12 + Auth + API Keys + Admin |
 | 前端实现 | ✅ 完成 | Tasks 14-16 + Auth UI + API Keys UI + All/Mine |
-| MCP Server | ✅ 完成 | v0.2.0 多用户 SSE + API Key 透传 |
+| MCP Server | ✅ 完成 | v0.7.0 local/remote 双模式 + publish_files + API Key 透传 |
 | E2E 测试 | ✅ 52 测试通过 | chromium + Mobile Chrome |
-| 后端测试 | ✅ 393 测试通过 | pytest |
-| MCP 测试 | ✅ 72 测试通过 | 38 unit + 12 integration + 13 e2e + 9 config |
+| 后端测试 | ✅ 417 测试通过 | pytest |
+| MCP 测试 | ✅ 145 单元测试通过 | integration/e2e 分离，publish_files local-mode E2E opt-in |
 
 ---
 

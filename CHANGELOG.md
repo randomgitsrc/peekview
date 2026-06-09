@@ -7,6 +7,25 @@
 
 ## [Unreleased]
 
+## [0.1.42] - 2026-06-09
+
+### 新增
+
+- 发布 Backend/Frontend v0.1.42，承接 MCP v0.7.0 收尾后的文档、测试和静态资源同步
+- 新增 `publish_files` local-mode opt-in E2E 测试，强制只指向 `127.0.0.1:8888`
+
+### 修复
+
+- 修复 legacy MCP 前端 E2E 与当前 UI 行为不一致导致的失败
+- 修复文档中 `PEEKVIEW_SERVER__HOST` 默认值与实际配置不一致的问题
+- 修复发布文档/索引/README 中 Backend、Frontend、MCP 版本不同步的问题
+
+### 变更
+
+- 重新生成前端静态资源并纳入 v0.1.42 wheel
+- 明确 MCP 测试与 E2E 必须使用临时 HOME 和 debug backend，避免污染生产数据
+
+
 ## [mcp-v0.7.0] - 2026-06-09
 
 ### 新增

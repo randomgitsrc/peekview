@@ -127,7 +127,7 @@ remote:
 ### Health Check
 
 ```
-GET /health → { "status": "ok", "version": "0.1.41" }  # version auto-synced from __init__.py
+GET /health → { "status": "ok", "version": "0.1.42" }  # version auto-synced from __init__.py
 ```
 
 ### Entry API
