@@ -3,17 +3,21 @@
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { homedir } from 'os';
 import YAML from 'yaml';
 
-export const CONFIG_FILE_PATH = join(homedir(), '.peekview', 'mcp-config.yaml');
+/** Get home directory from env (overridable in tests), not os.homedir() which caches */
+function getHomeDir(): string {
+  return process.env.HOME || process.env.USERPROFILE || '/tmp';
+}
+
+export const CONFIG_FILE_PATH = join(getHomeDir(), '.peekview', 'mcp-config.yaml');
 
 function getConfigFilePath(): string {
-  return join(homedir(), '.peekview', 'mcp-config.yaml');
+  return join(getHomeDir(), '.peekview', 'mcp-config.yaml');
 }
 
 function getConfigDir(): string {
-  return join(homedir(), '.peekview');
+  return join(getHomeDir(), '.peekview');
 }
 
 export interface ConfigFileData {

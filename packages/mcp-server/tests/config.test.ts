@@ -59,57 +59,17 @@ describe('Config', () => {
   });
 
   it('should throw on missing PEEKVIEW_URL', () => {
-    // Ensure no config file exists for this test
-    const fs = require('fs');
-    const path = require('path');
-    const os = require('os');
-    const configPath = path.join(os.homedir(), '.peekview', 'mcp-config.yaml');
+    delete process.env.PEEKVIEW_URL;
+    delete process.env.PEEKVIEW_PUBLIC_URL;
 
-    // Temporarily rename config file if it exists
-    let backupPath: string | null = null;
-    if (fs.existsSync(configPath)) {
-      backupPath = configPath + '.backup.' + Date.now();
-      fs.renameSync(configPath, backupPath);
-    }
-
-    try {
-      delete process.env.PEEKVIEW_URL;
-      delete process.env.PEEKVIEW_PUBLIC_URL;
-
-      expect(() => loadConfig()).toThrow('PEEKVIEW_URL');
-    } finally {
-      // Restore config file
-      if (backupPath && fs.existsSync(backupPath)) {
-        fs.renameSync(backupPath, configPath);
-      }
-    }
+    expect(() => loadConfig()).toThrow('PEEKVIEW_URL');
   });
 
   it('should throw on missing PEEKVIEW_PUBLIC_URL', () => {
-    // Ensure no config file exists for this test
-    const fs = require('fs');
-    const path = require('path');
-    const os = require('os');
-    const configPath = path.join(os.homedir(), '.peekview', 'mcp-config.yaml');
+    delete process.env.PEEKVIEW_PUBLIC_URL;
+    delete process.env.PEEKVIEW_URL;
 
-    // Temporarily rename config file if it exists
-    let backupPath: string | null = null;
-    if (fs.existsSync(configPath)) {
-      backupPath = configPath + '.backup.' + Date.now();
-      fs.renameSync(configPath, backupPath);
-    }
-
-    try {
-      delete process.env.PEEKVIEW_PUBLIC_URL;
-      delete process.env.PEEKVIEW_URL;
-
-      expect(() => loadConfig()).toThrow('PEEKVIEW_PUBLIC_URL');
-    } finally {
-      // Restore config file
-      if (backupPath && fs.existsSync(backupPath)) {
-        fs.renameSync(backupPath, configPath);
-      }
-    }
+    expect(() => loadConfig()).toThrow('PEEKVIEW_PUBLIC_URL');
   });
 
   it('should use custom port', () => {

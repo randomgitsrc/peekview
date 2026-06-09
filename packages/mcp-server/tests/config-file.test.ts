@@ -22,7 +22,9 @@ describe('Config File', () => {
     testHome = mkdtempSync(join(tmpdir(), 'pv-config-file-test-'));
     process.env.HOME = testHome;
     process.env.USERPROFILE = testHome;
-    testConfigDir = `${homedir()}/.peekview`;
+    // Use testHome directly, NOT homedir() - homedir() is cached by Node.js
+    // and may return the real home directory even after env.HOME is changed.
+    testConfigDir = join(testHome, '.peekview');
     testConfigPath = join(testConfigDir, 'mcp-config.yaml');
     // Clean up test config file
     if (existsSync(testConfigPath)) {

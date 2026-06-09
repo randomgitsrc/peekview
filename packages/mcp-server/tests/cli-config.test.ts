@@ -23,7 +23,8 @@ describe('CLI Config Commands', () => {
     testHome = mkdtempSync(join(tmpdir(), 'pv-cli-config-test-'));
     process.env.HOME = testHome;
     process.env.USERPROFILE = testHome;
-    testConfigPath = join(homedir(), '.peekview', 'mcp-config.yaml');
+    // Use testHome directly, NOT homedir() - homedir() is cached by Node.js
+    testConfigPath = join(testHome, '.peekview', 'mcp-config.yaml');
     // Clean up test config in temp dir
     if (existsSync(testConfigPath)) {
       unlinkSync(testConfigPath);
