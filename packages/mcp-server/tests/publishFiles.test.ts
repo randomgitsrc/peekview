@@ -19,7 +19,7 @@ const client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
 
 const ctx: SessionContext = { userToken: 'pv_test', userId: 1, username: 'alice' };
 
-function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): ServerConfig {
+function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = [], trustAllPaths = false): ServerConfig {
   return {
     peekviewUrl: 'http://localhost:8080',
     publicUrl: 'http://localhost:8080',
@@ -29,6 +29,7 @@ function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): Serv
     logLevel: 'info',
     mode,
     allowedPaths,
+    trustAllPaths,
   };
 }
 
@@ -70,7 +71,7 @@ describe('publish_files', () => {
   function mockCreateEntry() {
     mockServer.use(
       http.post('http://localhost:8080/api/v1/entries', async ({ request }) => {
-        const body = (await request.json()) as { files: Array<{ filename: string }> };
+        const body = (await request.json()) as { files: Array<{ filename: string }>; is_public?: boolean };
         return HttpResponse.json({
           id: 1,
           slug: 'pub-test',
@@ -81,7 +82,7 @@ describe('publish_files', () => {
           })),
           created_at: '2026-01-01T00:00:00Z',
           expires_at: null,
-          is_public: true,
+          is_public: body.is_public ?? false,
         });
       })
     );
@@ -155,6 +156,7 @@ describe('publish_files', () => {
     const result = await tool.handler({ summary: 'Key', paths: [keyFile] }, ctx);
 
     expect(result.content[0].text).toContain('发布被拒绝');
+    expect(result.content[0].text).toContain('敏感文件保护规则');
   });
 
   it('安全失败：超出 allowed_paths 拒绝整个请求', async () => {
@@ -215,17 +217,37 @@ describe('publish_files', () => {
     expect(capturedBody!.files[0].language).toBeUndefined();
   });
 
-  it('cwd fallback：未配置 allowed_paths 时只允许 cwd 内路径', async () => {
-    // allowedPaths 为空 → fallback 到 process.cwd()
-    // tmpDir 在 /tmp 下，不在 cwd 内 → 应被拒绝
+  it('默认白名单：允许 cwd + os.tmpdir() 下文件', async () => {
+    // tmpDir 在 os.tmpdir() 下，零配置应允许
     const file = path.join(tmpDir, 'x.py');
     await fs.writeFile(file, 'x');
+    mockCreateEntry();
+
     const tool = publishFilesTool(client, makeConfig('local', []));
     const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
-    expect(result.content[0].text).toContain('发布被拒绝');
+    expect(result.content[0].text).toContain('已发布 1 个文件');
   });
 
-  it('cwd fallback：cwd 为根目录时拒绝使用', async () => {
+  it('默认白名单：拒绝 HOME 下文件（除非 HOME 恰好是 cwd）', async () => {
+    const homeDir = os.homedir();
+    // 如果 cwd 就是 home，这个测试不适用；跳过
+    if (path.resolve(process.cwd()) === path.resolve(homeDir)) {
+      return;
+    }
+    const file = path.join(homeDir, 'notes.md');
+    await fs.writeFile(file, '# notes');
+
+    try {
+      const tool = publishFilesTool(client, makeConfig('local', []));
+      const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
+      expect(result.content[0].text).toContain('发布被拒绝');
+      expect(result.content[0].text).toContain('超出允许范围');
+    } finally {
+      await fs.unlink(file).catch(() => {});
+    }
+  });
+
+  it('cwd 为根目录时拒绝使用', async () => {
     const root = path.parse(process.cwd()).root;
     const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(root);
     try {
@@ -238,5 +260,118 @@ describe('publish_files', () => {
     } finally {
       cwdSpy.mockRestore();
     }
+  });
+
+  it('trust_all_paths: true 允许 cwd 外普通文件', async () => {
+    const otherDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-trust-'));
+    try {
+      const file = path.join(otherDir, 'x.py');
+      await fs.writeFile(file, 'x');
+      mockCreateEntry();
+
+      const tool = publishFilesTool(client, makeConfig('local', [], true));
+      const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
+      expect(result.content[0].text).toContain('已发布 1 个文件');
+    } finally {
+      await fs.rm(otherDir, { recursive: true, force: true });
+    }
+  });
+
+  it('trust_all_paths: true 仍被 denylist 拒绝', async () => {
+    const file = path.join(tmpDir, '.env');
+    await fs.writeFile(file, 'SECRET=123');
+
+    const tool = publishFilesTool(client, makeConfig('local', [], true));
+    const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
+    expect(result.content[0].text).toContain('发布被拒绝');
+    expect(result.content[0].text).toContain('敏感文件保护规则');
+  });
+
+  it('trust_all_paths: true + allowed_paths 同时配置 → trust 优先', async () => {
+    const otherDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-trust2-'));
+    try {
+      const file = path.join(otherDir, 'x.py');
+      await fs.writeFile(file, 'x');
+      mockCreateEntry();
+
+      // allowed_paths 不含 otherDir，但 trust_all_paths=true 生效
+      const tool = publishFilesTool(client, makeConfig('local', [tmpDir], true));
+      const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
+      expect(result.content[0].text).toContain('已发布 1 个文件');
+    } finally {
+      await fs.rm(otherDir, { recursive: true, force: true });
+    }
+  });
+
+  it('denylist: .env / .env.local / secrets.env 始终拒绝', async () => {
+    for (const name of ['.env', '.env.local', 'secrets.env']) {
+      const file = path.join(tmpDir, name);
+      await fs.writeFile(file, 'SECRET=123');
+      const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+      const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
+      expect(result.content[0].text).toContain('发布被拒绝');
+      await fs.unlink(file).catch(() => {});
+    }
+  });
+
+  it('denylist: .npmrc / .pypirc / .git-credentials / .kube/config / .docker/config.json 始终拒绝', async () => {
+    const files = [
+      path.join(tmpDir, '.npmrc'),
+      path.join(tmpDir, '.pypirc'),
+      path.join(tmpDir, '.git-credentials'),
+      path.join(tmpDir, '.kube', 'config'),
+      path.join(tmpDir, '.docker', 'config.json'),
+    ];
+    for (const f of files) {
+      await fs.mkdir(path.dirname(f), { recursive: true });
+      await fs.writeFile(f, 'secret');
+      const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+      const result = await tool.handler({ summary: 'X', paths: [f] }, ctx);
+      expect(result.content[0].text).toContain('发布被拒绝');
+      await fs.rm(path.dirname(f), { recursive: true, force: true }).catch(() => {});
+    }
+  });
+
+  it('denylist: symlink 经 realpath 后仍拒绝', async () => {
+    const target = path.join(tmpDir, 'real.pem');
+    const link = path.join(tmpDir, 'link.pem');
+    await fs.writeFile(target, 'SECRET');
+    await fs.symlink(target, link);
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    const result = await tool.handler({ summary: 'X', paths: [link] }, ctx);
+    expect(result.content[0].text).toContain('发布被拒绝');
+  });
+
+  it('is_public 未传 → 默认 false', async () => {
+    const file = path.join(tmpDir, 'pub.md');
+    await fs.writeFile(file, 'text');
+    let capturedBody: { is_public?: boolean } | null = null;
+    mockServer.use(
+      http.post('http://localhost:8080/api/v1/entries', async ({ request }) => {
+        capturedBody = (await request.json()) as typeof capturedBody;
+        return HttpResponse.json({ id: 1, slug: 't', summary: 'T', tags: [], files: [], created_at: '2026-01-01T00:00:00Z', expires_at: null, is_public: false });
+      })
+    );
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    await tool.handler({ summary: 'T', paths: [file] }, ctx);
+    expect(capturedBody?.is_public).toBe(false);
+  });
+
+  it('is_public: true → 公开', async () => {
+    const file = path.join(tmpDir, 'pub.md');
+    await fs.writeFile(file, 'text');
+    let capturedBody: { is_public?: boolean } | null = null;
+    mockServer.use(
+      http.post('http://localhost:8080/api/v1/entries', async ({ request }) => {
+        capturedBody = (await request.json()) as typeof capturedBody;
+        return HttpResponse.json({ id: 1, slug: 't', summary: 'T', tags: [], files: [], created_at: '2026-01-01T00:00:00Z', expires_at: null, is_public: true });
+      })
+    );
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    await tool.handler({ summary: 'T', paths: [file], is_public: true }, ctx);
+    expect(capturedBody?.is_public).toBe(true);
   });
 });

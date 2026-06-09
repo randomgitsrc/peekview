@@ -28,6 +28,7 @@ export interface ConfigFileData {
     cors_origins?: string;
     mode?: 'local' | 'remote';
     allowed_paths?: string[];
+    trust_all_paths?: boolean;
   };
   logging?: {
     level?: string;

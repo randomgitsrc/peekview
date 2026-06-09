@@ -14,6 +14,7 @@ export interface MergedConfig {
   logLevel: string;
   mode: 'local' | 'remote';
   allowedPaths: string[];
+  trustAllPaths: boolean;
 }
 
 export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.ProcessEnv): MergedConfig {
@@ -68,15 +69,33 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
     allowedPaths = fileConfig.server.allowed_paths;
   }
 
-  // local 模式未配置 allowed_paths：不拒绝启动，仅 warning + cwd fallback
-  // （详见 docs/plans/mcp-dual-mode-final-v0.7.md 三层安全模型）
-  if (mode === 'local' && allowedPaths.length === 0) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[peekview-mcp] local 模式未配置 allowed_paths，仅允许当前工作目录下的路径。\n' +
-      '  若作为系统服务（systemd/launchd）运行，cwd 可能是 / 等过大范围，\n' +
-      '  强烈建议在 ~/.peekview/mcp-config.yaml 的 server.allowed_paths 显式配置。'
-    );
+  // Trust all paths - env > file > default false
+  const trustAllPaths = parseBool(
+    env.MCP_TRUST_ALL_PATHS ?? fileConfig?.server?.trust_all_paths ?? false
+  );
+
+  // local 模式 warning
+  if (mode === 'local') {
+    if (trustAllPaths) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[peekview-mcp] WARNING: server.trust_all_paths=true is enabled.\n' +
+        '  Directory allowlist is disabled; sensitive path filtering is best-effort only.\n' +
+        '  It cannot protect every secret file. Do not use this on multi-user machines,\n' +
+        '  remote MCP servers, untrusted prompts, or environments containing credentials.'
+      );
+      if (allowedPaths.length > 0) {
+        // eslint-disable-next-line no-console
+        console.warn('[peekview-mcp] allowed_paths is configured but will be ignored because trust_all_paths=true.');
+      }
+    } else if (allowedPaths.length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[peekview-mcp] local 模式未配置 allowed_paths，默认仅允许当前工作目录和系统临时目录。\n' +
+        '  若作为系统服务（systemd/launchd）运行，cwd 可能是 / 等过大范围，\n' +
+        '  强烈建议在 ~/.peekview/mcp-config.yaml 的 server.allowed_paths 显式配置。'
+      );
+    }
   }
 
   return {
@@ -88,6 +107,13 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
     logLevel,
     mode,
     allowedPaths,
+    trustAllPaths,
     ...(apiKey ? { apiKey } : {}),
   };
+
+  function parseBool(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') return value === 'true' || value === '1';
+    return false;
+  }
 }

@@ -25,11 +25,19 @@ Available configuration keys:
 
   server.mode             - 部署模式: remote|local (default: remote)
 
-  server.allowed_paths    - local 模式允许访问的路径，冒号分隔
+  server.allowed_paths    - local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+系统临时目录
+  server.trust_all_paths  - 危险选项：local 模式跳过路径白名单，仅 best-effort 敏感路径保护 (default: false)
 
   logging.level           - 日志级别: debug|info|warn|error (default: info)
 
 Config file location: ~/.peekview/mcp-config.yaml
+
+local 模式 publish_files 路径规则：
+  - 默认允许 cwd + 系统临时目录（如 Linux /tmp）
+  - 不默认允许 $HOME
+  - 如需额外目录：peekview-mcp config set server.allowed_paths '/path/a:/path/b'
+  - 完全本机自用：peekview-mcp config set server.trust_all_paths true（危险；denylist 仅 best-effort）
+  - 修改配置后需重启 service：peekview-mcp service restart
 
 注意: peekview.url 和 peekview.public_url 可以是不同的地址：
   - peekview.url: 只需要 MCP Server 能访问 PeekView 即可（内网地址也可以）
@@ -140,7 +148,8 @@ configCommand
       console.log(`  host:         ${config?.server?.host || '0.0.0.0'}  # 绑定地址`);
       console.log(`  cors_origins: ${config?.server?.cors_origins || '*'}  # CORS 来源`);
       console.log(`  mode:         ${config?.server?.mode || 'remote'}  # 部署模式: remote|local`);
-      console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 模式路径白名单`);
+      console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 显式白名单；未设置时默认 cwd+系统临时目录`);
+      console.log(`  trust_all_paths:  ${config?.server?.trust_all_paths === true ? 'true' : 'false'}  # 危险：跳过白名单，仅 best-effort 敏感路径保护`);
       console.log('');
 
       // logging section
@@ -151,7 +160,7 @@ configCommand
       // Show available keys
       console.log('Available config keys:');
       console.log('  peekview.url, peekview.public_url');
-      console.log('  server.port, server.host, server.cors_origins, server.mode, server.allowed_paths');
+      console.log('  server.port, server.host, server.cors_origins, server.mode, server.allowed_paths, server.trust_all_paths');
       console.log('  logging.level');
       console.log('');
       console.log(`Config file: ~/.peekview/mcp-config.yaml`);

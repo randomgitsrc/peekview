@@ -15,6 +15,7 @@ export interface ServerConfig {
   logLevel: string;
   mode: 'local' | 'remote';     // 部署模式，默认 'remote'
   allowedPaths: string[];        // local 模式的路径白名单，默认 []
+  trustAllPaths: boolean;        // 跳过路径白名单，默认 false
 }
 
 export function loadConfig(): ServerConfig {

@@ -172,7 +172,7 @@ describe('Config Merge', () => {
     });
   });
 
-  describe('mode / allowedPaths（双模式）', () => {
+  describe('mode / allowedPaths / trustAllPaths（双模式）', () => {
     beforeEach(() => {
       process.env.PEEKVIEW_URL = 'http://url:8080';
       process.env.PEEKVIEW_PUBLIC_URL = 'http://public:8080';
@@ -182,6 +182,7 @@ describe('Config Merge', () => {
       const result = mergeConfig(null, process.env);
       expect(result.mode).toBe('remote');
       expect(result.allowedPaths).toEqual([]);
+      expect(result.trustAllPaths).toBe(false);
     });
 
     it('从文件读取 mode=local 和 allowed_paths', () => {
@@ -191,6 +192,7 @@ describe('Config Merge', () => {
       const result = mergeConfig(fileConfig, process.env);
       expect(result.mode).toBe('local');
       expect(result.allowedPaths).toEqual(['/home/alice/projects', '/tmp']);
+      expect(result.trustAllPaths).toBe(false);
     });
 
     it('环境变量 MCP_MODE 覆盖文件', () => {
@@ -214,11 +216,43 @@ describe('Config Merge', () => {
       expect(() => mergeConfig(null, process.env)).toThrow(/must be 'local' or 'remote'/);
     });
 
-    it('local 模式无 allowed_paths 不抛错（仅 warning + cwd fallback）', () => {
+    it('local 模式无 allowed_paths 不抛错（默认 cwd + tmpdir）', () => {
       const fileConfig: ConfigFileData = { server: { mode: 'local' } };
       const result = mergeConfig(fileConfig, process.env);
       expect(result.mode).toBe('local');
       expect(result.allowedPaths).toEqual([]);
+      expect(result.trustAllPaths).toBe(false);
+    });
+
+    it('trust_all_paths 默认 false', () => {
+      const result = mergeConfig(null, process.env);
+      expect(result.trustAllPaths).toBe(false);
+    });
+
+    it('trust_all_paths 从文件读取', () => {
+      const fileConfig: ConfigFileData = { server: { trust_all_paths: true } };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.trustAllPaths).toBe(true);
+    });
+
+    it('trust_all_paths 从 env 读取', () => {
+      process.env.MCP_TRUST_ALL_PATHS = 'true';
+      const result = mergeConfig(null, process.env);
+      expect(result.trustAllPaths).toBe(true);
+    });
+
+    it('env MCP_TRUST_ALL_PATHS 优先于文件', () => {
+      process.env.MCP_TRUST_ALL_PATHS = 'true';
+      const fileConfig: ConfigFileData = { server: { trust_all_paths: false } };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.trustAllPaths).toBe(true);
+    });
+
+    it('trust_all_paths false 字符串解析为 false', () => {
+      process.env.MCP_TRUST_ALL_PATHS = 'false';
+      const fileConfig: ConfigFileData = { server: { trust_all_paths: true } };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.trustAllPaths).toBe(false);
     });
   });
 });

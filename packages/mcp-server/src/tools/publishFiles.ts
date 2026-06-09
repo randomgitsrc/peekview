@@ -1,32 +1,67 @@
 import { z } from 'zod';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import type { PeekViewClient } from '../client.js';
 import type { ServerConfig } from '../config.js';
 import type { EntryFile, SessionContext, ToolDefinition, ToolResult } from '../types.js';
 import { translateError } from './utils.js';
 
-// ── 限制（对齐后端，考虑 base64 膨胀，详见 mcp-dual-mode-final-v0.7.md §七）──
-const MAX_SINGLE_FILE_BYTES = 7 * 1024 * 1024;   // 7MB（后端 10MB，扣 base64 33% 余量）
-const MAX_TOTAL_FILES = 50;                        // 对齐后端 max_entry_files
-const MAX_TOTAL_BYTES = 50 * 1024 * 1024;          // 50MB（后端 100MB 的一半）
+// ── 限制（对齐后端，考虑 base64 膨胀）──
+const MAX_SINGLE_FILE_BYTES = 7 * 1024 * 1024;   // 7MB
+const MAX_TOTAL_FILES = 50;
+const MAX_TOTAL_BYTES = 50 * 1024 * 1024;        // 50MB
 
 // ── 目录扫描跳过清单 ──
 const SKIP_DIRS = new Set([
-  '.git', 'node_modules', '__pycache__', '.venv', 'dist', 'build',
-  '.next', '.nuxt', 'coverage', '.DS_Store',
+  '.git', 'node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build',
+  '.next', '.nuxt', 'coverage', '.DS_Store', '.tox',
 ]);
 
-// ── 敏感路径黑名单（优先级最高，始终拒绝）──
+// ── 敏感路径 denylist（始终生效，best-effort）──
 const SENSITIVE_PATTERNS: RegExp[] = [
-  /\/\.ssh\//,
-  /\/\.gnupg\//,
-  /\/\.aws\//,
-  /\/\.config\/gcloud\//,
-  /\.pem$/,
-  /\.key$/,
-  /\.p12$/,
-  /\.pfx$/,
+  // Secret directories
+  /\/\.ssh(?:\/|$)/,
+  /\/\.gnupg(?:\/|$)/,
+  /\/\.aws(?:\/|$)/,
+  /\/\.kube(?:\/|$)/,
+  /\/\.docker(?:\/|$)/,
+  /\/\.config\/gcloud(?:\/|$)/,
+  /\/\.config\/gh(?:\/|$)/,
+
+  // Secret files and environment dumps
+  /(?:^|\/)\.env(?:\.[^/]*)?$/,
+  /\.env$/,
+  /\/\.npmrc$/,
+  /\/\.pypirc$/,
+  /\/\.netrc$/,
+  /\/\.git-credentials$/,
+  /\/\.gitconfig$/,
+  /\/(?:\.bash_history|\.zsh_history|\.fish_history)$/,
+
+  // Cloud / IaC / editor credential stores (best-effort)
+  /\/\.azure\/accessTokens\.json$/,
+  /\/\.config\/sops\/age\/keys\.txt$/,
+  /\/\.terraform\.d\/credentials\.tfrc\.json$/,
+  /\/\.local\/share\/keyrings(?:\/|$)/,
+  /\/\.config\/Code\/User\/settings\.json$/,
+
+  // Key/cert extensions
+  /\.(?:pem|key|p12|pfx)$/i,
+
+  // System pseudo / protected trees (mainly protects trust_all_paths)
+  /^\/proc(?:\/|$)/,
+  /^\/sys(?:\/|$)/,
+  /^\/dev(?:\/|$)/,
+  /^\/run(?:\/|$)/,
+  /^\/root(?:\/|$)/,
+  /^\/etc(?:\/|$)/,
+  /^\/var\/log(?:\/|$)/,
+
+  // Browser profiles/cookies (common secrets)
+  /\/\.mozilla(?:\/|$)/,
+  /\/\.config\/google-chrome(?:\/|$)/,
+  /\/\.config\/chromium(?:\/|$)/,
 ];
 
 interface SkippedFile {
@@ -35,14 +70,24 @@ interface SkippedFile {
 }
 
 interface CollectedFile {
-  absPath: string;     // 真实绝对路径（已 realpath）
-  relPath: string;     // 相对 base 的路径（用作后端 path，含文件名）
-  filename: string;    // 文件名
+  absPath: string;
+  relPath: string;
+  filename: string;
   size: number;
 }
 
+type RejectReason = 'sensitive' | 'out_of_scope' | 'tmp_owner';
+
 /** 安全类失败：拒绝整个请求时抛出 */
-class SecurityRejection extends Error {}
+class SecurityRejection extends Error {
+  constructor(
+    public readonly rejectPath: string,
+    public readonly reason: RejectReason,
+    public readonly detail: string,
+  ) {
+    super(rejectPath);
+  }
+}
 
 const schema = z.object({
   summary: z.string().min(1).max(500),
@@ -55,7 +100,7 @@ const schema = z.object({
   exclude_patterns: z.array(z.string()).optional(),
 });
 
-/** glob → 正则，只支持文件名通配（* 和 *.ext），不支持路径 glob */
+/** glob → 正则，只支持文件名通配（* 和 *.ext） */
 function matchPattern(filename: string, pattern: string): boolean {
   const regex = new RegExp(
     '^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*') + '$'
@@ -67,13 +112,16 @@ function matchesAny(filename: string, patterns: string[]): boolean {
   return patterns.some((p) => matchPattern(filename, p));
 }
 
-/** 黑名单检查 */
+/** denylist 检查（对 realpath 后的路径） */
 function isSensitive(absPath: string): boolean {
   return SENSITIVE_PATTERNS.some((p) => p.test(absPath));
 }
 
-/** allowlist / cwd 边界检查 */
+/** allowlist 边界检查 */
 function isWithinAllowed(absPath: string, allowedBases: string[]): boolean {
+  if (allowedBases.length === 0) {
+    return true; // trust_all_paths 模式
+  }
   return allowedBases.some((base) => {
     const resolvedBase = path.resolve(base);
     return absPath === resolvedBase || absPath.startsWith(resolvedBase + path.sep);
@@ -122,9 +170,14 @@ async function scanDirectory(
       continue;
     }
 
-    // 黑名单 / 边界检查（安全类失败 → 拒绝整个请求）
-    if (isSensitive(realChild)) throw new SecurityRejection(realChild);
-    if (!isWithinAllowed(realChild, allowedBases)) throw new SecurityRejection(realChild);
+    // denylist（安全类 → 拒绝整个请求）
+    if (isSensitive(realChild)) {
+      throw new SecurityRejection(realChild, 'sensitive', '');
+    }
+    // allowlist（安全类 → 拒绝整个请求）
+    if (!isWithinAllowed(realChild, allowedBases)) {
+      throw new SecurityRejection(realChild, 'out_of_scope', '');
+    }
 
     const stat = await fs.stat(realChild);
 
@@ -149,21 +202,78 @@ async function scanDirectory(
   return out;
 }
 
+function formatSecurityError(rejection: SecurityRejection, allowedBases: string[], mode: string): string {
+  if (rejection.reason === 'sensitive') {
+    return (
+      `ERROR: 发布被拒绝：路径 ${rejection.rejectPath} 命中敏感文件保护规则。\n` +
+      `该文件可能包含 token、密码、密钥、历史命令、浏览器 cookie 或系统凭证。\n` +
+      `出于安全考虑，整个请求已取消。`
+    );
+  }
+
+  if (rejection.reason === 'tmp_owner') {
+    return (
+      `ERROR: 发布被拒绝：路径 ${rejection.rejectPath} 不属于当前用户。\n` +
+      `出于安全考虑，整个请求已取消。`
+    );
+  }
+
+  // out_of_scope
+  let detail = '';
+  if (allowedBases.length > 0) {
+    detail = allowedBases.map((b) => `  - ${b}`).join('\n');
+  } else {
+    detail = '  - (trust_all_paths: any path allowed)';
+  }
+
+  let modeLine = '';
+  if (mode === 'trust_all_paths') {
+    modeLine = '当前路径模式：trust_all_paths（跳过目录边界）\n';
+  } else if (mode === 'allowed_paths') {
+    modeLine = '当前路径模式：显式白名单模式（server.allowed_paths 已配置）\n';
+  } else {
+    modeLine = '当前路径模式：默认安全模式（未配置 server.allowed_paths）\n';
+  }
+
+  return (
+    `ERROR: 发布被拒绝：路径 ${rejection.rejectPath} 超出允许范围。\n\n` +
+    modeLine +
+    `当前允许的基准目录：\n${detail}\n\n` +
+    `如需访问其他目录，请选择一种方式：\n` +
+    `  1) 推荐：配置 server.allowed_paths，例如：\n` +
+    `     peekview-mcp config set server.allowed_paths '/home/kity/cclab:/b-dir:/tmp'\n` +
+    `     peekview-mcp service restart\n` +
+    `  2) 临时：把文件复制到上述任一目录后再发布\n` +
+    `  3) 本机自用且完全信任时：设置 server.trust_all_paths=true（危险选项）\n\n` +
+    `出于安全考虑，整个请求已取消。`
+  );
+}
+
 export const publishFilesTool = (client: PeekViewClient, config: ServerConfig): ToolDefinition => ({
   name: 'publish_files',
   description: `Publish local files or directories to PeekView. MCP Server reads files directly.
 
-WARNING: Do NOT call read_file before this tool — pass paths directly.
-Filenames and extensions are inferred from paths automatically.
-Paths must be absolute. Directories are scanned recursively.
+IMPORTANT USAGE:
+- To publish ONE file, pass that file's absolute path.
+- Passing a DIRECTORY publishes files under it recursively. Do this only when you intentionally want to publish a directory tree.
+- For Agent-generated content: first write it to a file (prefer cwd or system temp dir), then publish that file path only.
+- Do NOT pass the project root unless you intend to publish multiple project files.
+
+PATH RULES:
+- Paths must be absolute.
+- Default allowed bases: process.cwd() and os.tmpdir() only.
+- $HOME is NOT allowed by default; configure server.allowed_paths for extra directories.
+- server.trust_all_paths=true disables the allowlist, but sensitive paths are still blocked (best-effort; NOT a complete security boundary).
+- Sensitive files such as .env, *.env, .npmrc, .pypirc, .git-credentials, ~/.ssh, ~/.aws, ~/.kube, *.pem/*.key are always blocked.
+
+VISIBILITY:
+- publish_files defaults to private (is_public=false). Set is_public=true to publish a public link.
 
 Examples:
-- File:      { "summary": "Fix", "paths": ["/project/fix.py"] }
-- Directory: { "summary": "Src", "paths": ["/project/src/"] }
-- Mixed:     { "summary": "v1", "paths": ["/project/src/", "/project/README.md"] }
-- Filtered:  { "summary": "Py", "paths": ["/project/"], "include_patterns": ["*.py"] }
+- Single file:   { "summary": "Fix", "paths": ["/project/fix.py"] }
+- Generated doc: write_file("/tmp/intro.md") then { "summary": "Intro", "paths": ["/tmp/intro.md"] }
+- Directory:     { "summary": "Docs", "paths": ["/project/docs/"], "include_patterns": ["*.md"] }
 
-For Agent-generated content: write it to a file first (write_file), then publish the path.
 Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
   inputSchema: {
     type: 'object',
@@ -176,7 +286,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
       },
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
-      is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
+      is_public: { type: 'boolean', description: 'Whether entry is public (default: false)' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h")' },
       include_patterns: {
         type: 'array', items: { type: 'string' },
@@ -193,9 +303,8 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
     try {
       const params = schema.parse(args);
 
-      // 边界基准：配置了 allowedPaths 用之，否则 fallback 到 cwd。
-      // 安全约束：cwd 为 / 时不能 fallback，否则等价于允许全盘读取。
-      if (config.allowedPaths.length === 0 && path.resolve(process.cwd()) === path.parse(process.cwd()).root) {
+      const cwd = process.cwd();
+      if (path.resolve(cwd) === path.parse(cwd).root) {
         return {
           content: [{
             type: 'text',
@@ -203,9 +312,21 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
           }],
         };
       }
-      const allowedBases = config.allowedPaths.length > 0
-        ? config.allowedPaths.map((p) => path.resolve(p))
-        : [process.cwd()];
+
+      // 解析路径策略
+      const tmpDir = os.tmpdir();
+      let allowedBases: string[];
+      let pathMode: string;
+      if (config.trustAllPaths) {
+        allowedBases = []; // trust 模式下 isWithinAllowed 总返回 true
+        pathMode = 'trust_all_paths';
+      } else if (config.allowedPaths.length > 0) {
+        allowedBases = config.allowedPaths.map((p) => path.resolve(p));
+        pathMode = 'allowed_paths';
+      } else {
+        allowedBases = Array.from(new Set([cwd, tmpDir].map((p) => path.resolve(p))));
+        pathMode = 'default';
+      }
 
       const skipped: SkippedFile[] = [];
       const collected: CollectedFile[] = [];
@@ -219,7 +340,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
             continue;
           }
 
-          // 2. stat 检查存在性（先于 realpath，避免 ENOENT）
+          // 2. stat 检查存在性（先于 realpath）
           let stat: import('fs').Stats;
           try {
             stat = await fs.stat(inputPath);
@@ -231,14 +352,17 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
           // 3. realpath 解析符号链接
           const realPath = await fs.realpath(inputPath);
 
-          // 4. 黑名单（安全类 → 拒绝整个请求）
-          if (isSensitive(realPath)) throw new SecurityRejection(realPath);
+          // 4. denylist（安全类 → 拒绝整个请求）—— 对 realpath 后的路径
+          if (isSensitive(realPath)) {
+            throw new SecurityRejection(realPath, 'sensitive', '');
+          }
 
-          // 5. 边界检查（安全类 → 拒绝整个请求）
-          if (!isWithinAllowed(realPath, allowedBases)) throw new SecurityRejection(realPath);
+          // 5. allowlist 边界检查（安全类 → 拒绝整个请求）
+          if (!isWithinAllowed(realPath, allowedBases)) {
+            throw new SecurityRejection(realPath, 'out_of_scope', '');
+          }
 
           if (stat.isDirectory()) {
-            // base 使用目录自身，后端 path 才是 src/main.py 而不是 root-dir/src/main.py
             visited.add(realPath);
             const baseForRel = realPath;
             const files = await scanDirectory(
@@ -247,6 +371,18 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
             );
             collected.push(...files);
           } else if (stat.isFile()) {
+            // /tmp 下 owner 检查（best-effort，TOCTOU 已知限制）
+            if (realPath.startsWith(path.resolve(tmpDir) + path.sep)) {
+              try {
+                const st = await fs.stat(realPath);
+                if (typeof process.getuid === 'function' && st.uid !== process.getuid()) {
+                  throw new SecurityRejection(realPath, 'tmp_owner', '');
+                }
+              } catch {
+                // 如果平台不支持 uid 检查，跳过
+              }
+            }
+
             const filename = path.basename(realPath);
             if (params.include_patterns?.length && !matchesAny(filename, params.include_patterns)) continue;
             if (params.exclude_patterns?.length && matchesAny(filename, params.exclude_patterns)) continue;
@@ -262,7 +398,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
           return {
             content: [{
               type: 'text',
-              text: `ERROR: 发布被拒绝：路径 ${e.message} 命中敏感文件黑名单或超出允许范围。\n出于安全考虑，整个请求已取消。`,
+              text: formatSecurityError(e, allowedBases, pathMode),
             }],
           };
         }
@@ -299,7 +435,6 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
             content: [{ type: 'text', text: `ERROR: 总大小超过 ${MAX_TOTAL_BYTES / 1024 / 1024}MB 限制。` }],
           };
         }
-        // 不传 language，后端 detect_language 自动推断（消除后缀填错问题）
         files.push({
           filename: cf.filename,
           content: buf.toString('utf-8'),
@@ -309,17 +444,20 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
 
       if (files.length === 0) {
         return {
-          content: [{ type: 'text', text: `ERROR: 所有文件都被跳过。\n${formatSkipped(skipped)}` }],
+          content: [{
+            type: 'text',
+            text: `ERROR: 所有文件都被跳过。\n${formatSkipped(skipped)}`,
+          }],
         };
       }
 
-      // 发布（复用 create_entry 后端接口）
+      // 发布——默认 is_public=false
       const entry = await client.createEntry({
         summary: params.summary,
         files,
         slug: params.slug,
         tags: params.tags,
-        is_public: params.is_public,
+        is_public: params.is_public ?? false,
         expires_in: params.expires_in,
       }, ctx.userToken);
 

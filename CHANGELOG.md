@@ -7,6 +7,24 @@
 
 ## [Unreleased]
 
+## [mcp-v0.7.1] - 2026-06-09
+
+### 改进
+
+- `publish_files`: 零配置默认允许 cwd + 系统临时目录，解决 `/tmp` 中 agent 生成文件无法发布的问题
+- `publish_files`: 新增 `server.trust_all_paths` 危险选项，适合完全本机自用场景（denylist 仅 best-effort）
+- `publish_files`: 错误信息区分敏感路径命中与超出白名单，并给出配置修复命令
+- `publish_files`: 工具描述强化“传文件 vs 传目录”语义，避免误发布整个项目目录
+- CLI: `config help/list` 增加 `allowed_paths`、`trust_all_paths`、本地模式路径规则说明
+
+### 安全
+
+- `publish_files`: 默认不允许整个 `$HOME`，避免 `.env`/`.npmrc`/`.pypirc`/`.kube` 等泄露
+- `publish_files`: 扩展敏感路径 denylist，覆盖常见 token/credential/history/system 路径及云/IaC/editor 凭证存储
+- `publish_files`: local 模式默认 `is_public=false`，公开发布需显式指定
+- `publish_files`: cwd 为 `/` 仍拒绝；`trust_all_paths` 仍受 denylist 保护（best-effort）
+- `publish_files`: `/tmp` 下可选 owner 检查（当前用户文件）；TOCTOU 记录为已知限制
+
 ## [0.1.42] - 2026-06-09
 
 ### 新增

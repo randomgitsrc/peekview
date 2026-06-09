@@ -3,6 +3,8 @@
 > ⚠️ **此文档的工具设计已被 `docs/plans/mcp-dual-mode-final-v0.7.md` 取代。**
 > 本文档的安全模型（黑名单+allowlist）和文件扫描逻辑仍可参考，
 > 但工具策略已改为双模式（local 只暴露 publish_files，remote 只暴露 create_entry）。
+>
+> **v0.7.1 更新**：默认白名单从 cwd 单一目录扩展为 `cwd + os.tmpdir()`；新增 `server.trust_all_paths`；denylist 大幅扩展；默认 `is_public=false`。
 
 > 作者：gstack 专家评审
 > 日期：2026-05-24

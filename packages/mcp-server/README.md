@@ -13,7 +13,13 @@ MCP Server 根据部署拓扑提供不同工具集：
 | `remote`（默认） | Agent → MCP Server → PeekView | `create_entry`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 不能读取 Agent 本地文件，只发布 Agent 生成内容 |
 | `local` | Agent + MCP Server → PeekView | `publish_files`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 与文件同机，直接读取本地文件/目录 |
 
-local 模式不暴露 `create_entry`。如果 Agent 生成内容需要发布，请先用 Agent 的 write_file 能力落盘，再调用 `publish_files`。
+local 模式不暴露 `create_entry`。如果 Agent 生成内容需要发布，请先用 Agent 的 write_file 能力落盘（建议写到 cwd 或系统临时目录），再调用 `publish_files`。
+
+**local 模式路径规则（v0.7.1+）：**
+- 默认允许发布 `cwd` 和系统临时目录（如 Linux `/tmp`）下的文件
+- 不默认允许整个 `$HOME`
+- 如需发布 `$HOME` 或其他目录，需显式配置 `server.allowed_paths`
+- 完全本机自用时可设置 `server.trust_all_paths=true`（危险：跳过目录边界，denylist 仅 best-effort）
 
 ### 1. 配置 MCP Server
 
@@ -129,7 +135,8 @@ peekview-mcp service uninstall --user
 | `server.host` | `MCP_HOST` | `0.0.0.0` | 绑定地址，`127.0.0.1` 仅本地，`0.0.0.0` 所有接口 |
 | `server.cors_origins` | `MCP_CORS_ORIGINS` | `*` | CORS 来源，逗号分隔多个域名 |
 | `server.mode` | `MCP_MODE` | `remote` | 部署模式：`remote`（默认）或 `local` |
-| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式下允许访问的路径列表，冒号分隔 |
+| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+系统临时目录 |
+| `server.trust_all_paths` | `MCP_TRUST_ALL_PATHS` | `false` | 危险选项：跳过路径白名单，仅 best-effort 敏感路径保护 |
 | `logging.level` | `MCP_LOG_LEVEL` | `info` | 日志级别：`debug`, `info`, `warn`, `error` |
 
 ### peekview.url vs peekview.public_url 的区别
@@ -302,9 +309,12 @@ peekview:
 
 server:
   mode: local
+  # 默认已允许 cwd + 系统临时目录；如需额外目录：
   allowed_paths:
     - /home/alice/projects
-    - /tmp/peekview-staging
+    - /home/alice/notes
+  # 完全本机自用（危险）：
+  # trust_all_paths: true
 ```
 
 ## 环境变量
@@ -322,6 +332,7 @@ export MCP_HOST=0.0.0.0
 export MCP_CORS_ORIGINS="*"
 export MCP_MODE=local
 export MCP_ALLOWED_PATHS=/home/alice/projects:/tmp/staging
+export MCP_TRUST_ALL_PATHS=false
 export MCP_LOG_LEVEL=info
 
 # 启动
