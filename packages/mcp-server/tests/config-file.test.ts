@@ -1,19 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { loadConfigFromFile, saveConfigToFile, CONFIG_FILE_PATH } from '../src/config/file.js';
-import { loadConfig } from '../src/config.js';
-import { existsSync, unlinkSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { existsSync, unlinkSync, mkdtempSync, rmSync } from 'fs';
+import { homedir, tmpdir } from 'os';
+import { join } from 'path';
 
 describe('Config File', () => {
-  const originalEnv = process.env;
-  const testConfigDir = `${process.env.HOME}/.peekview`;
-  const testConfigPath = `${testConfigDir}/mcp-config.yaml`;
+  const originalEnv = { ...process.env };
+  // Each test gets an isolated HOME so config files cannot leak across files/workers.
+  let testHome: string;
+  let testConfigDir: string;
+  let testConfigPath: string;
+
+  function restoreEnv() {
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key];
+    }
+    Object.assign(process.env, originalEnv);
+  }
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
+    testHome = mkdtempSync(join(tmpdir(), 'pv-config-file-test-'));
+    process.env.HOME = testHome;
+    process.env.USERPROFILE = testHome;
+    testConfigDir = `${homedir()}/.peekview`;
+    testConfigPath = join(testConfigDir, 'mcp-config.yaml');
     // Clean up test config file
     if (existsSync(testConfigPath)) {
       unlinkSync(testConfigPath);
@@ -21,11 +31,8 @@ describe('Config File', () => {
   });
 
   afterEach(() => {
-    process.env = originalEnv;
-    // Clean up test config file
-    if (existsSync(testConfigPath)) {
-      unlinkSync(testConfigPath);
-    }
+    restoreEnv();
+    rmSync(testHome, { recursive: true, force: true });
   });
 
   describe('loadConfigFromFile', () => {

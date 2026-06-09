@@ -47,7 +47,7 @@ help:
 	@echo "MCP SERVER:"
 	@echo "  make build-mcp          - Build MCP Server"
 	@echo "  make test-mcp-unit      - Run MCP unit tests"
-	@echo "  make test-mcp           - Run all MCP tests"
+	@echo "  make test-mcp           - Run MCP unit tests (integration/e2e separated)"
 	@echo "  make publish-npm-dry    - Dry-run npm publish"
 	@echo "  make publish-npm        - Publish MCP Server to npm"
 	@echo "  make bump-mcp-version NEW_MCP_VERSION=x.y.z - Bump MCP version independently"
@@ -577,9 +577,9 @@ test-mcp-unit:
 	@echo "✓ MCP unit tests passed"
 
 test-mcp:
-	@echo "→ Running MCP Server tests..."
+	@echo "→ Running MCP Server unit tests (integration/e2e separated)..."
 	cd packages/mcp-server && npm test
-	@echo "✓ MCP tests passed"
+	@echo "✓ MCP unit tests passed"
 
 pre-publish-npm: test-mcp-unit
 	@echo "→ Dry-run npm publish..."

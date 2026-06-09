@@ -153,7 +153,7 @@ export const publishFilesTool = (client: PeekViewClient, config: ServerConfig): 
   name: 'publish_files',
   description: `Publish local files or directories to PeekView. MCP Server reads files directly.
 
-⚠️ Do NOT call read_file before this tool — pass paths directly.
+WARNING: Do NOT call read_file before this tool — pass paths directly.
 Filenames and extensions are inferred from paths automatically.
 Paths must be absolute. Directories are scanned recursively.
 
@@ -193,7 +193,16 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
     try {
       const params = schema.parse(args);
 
-      // 边界基准：配置了 allowedPaths 用之，否则 fallback 到 cwd
+      // 边界基准：配置了 allowedPaths 用之，否则 fallback 到 cwd。
+      // 安全约束：cwd 为 / 时不能 fallback，否则等价于允许全盘读取。
+      if (config.allowedPaths.length === 0 && path.resolve(process.cwd()) === path.parse(process.cwd()).root) {
+        return {
+          content: [{
+            type: 'text',
+            text: 'ERROR: local 模式未配置 allowed_paths，且当前工作目录为文件系统根目录。请显式配置 server.allowed_paths 后再使用 publish_files。',
+          }],
+        };
+      }
       const allowedBases = config.allowedPaths.length > 0
         ? config.allowedPaths.map((p) => path.resolve(p))
         : [process.cwd()];
@@ -229,9 +238,9 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
           if (!isWithinAllowed(realPath, allowedBases)) throw new SecurityRejection(realPath);
 
           if (stat.isDirectory()) {
-            // base 用该目录的父目录，relPath 才能含目录名
+            // base 使用目录自身，后端 path 才是 src/main.py 而不是 root-dir/src/main.py
             visited.add(realPath);
-            const baseForRel = path.dirname(realPath);
+            const baseForRel = realPath;
             const files = await scanDirectory(
               realPath, baseForRel, allowedBases, visited, skipped,
               params.include_patterns, params.exclude_patterns,
@@ -253,7 +262,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
           return {
             content: [{
               type: 'text',
-              text: `✗ 发布被拒绝：路径 ${e.message} 命中敏感文件黑名单或超出允许范围。\n出于安全考虑，整个请求已取消。`,
+              text: `ERROR: 发布被拒绝：路径 ${e.message} 命中敏感文件黑名单或超出允许范围。\n出于安全考虑，整个请求已取消。`,
             }],
           };
         }
@@ -265,13 +274,13 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
         return {
           content: [{
             type: 'text',
-            text: `✗ 没有可发布的文件。\n${skipped.length > 0 ? formatSkipped(skipped) : '请检查路径是否正确。'}`,
+            text: `ERROR: 没有可发布的文件。\n${skipped.length > 0 ? formatSkipped(skipped) : '请检查路径是否正确。'}`,
           }],
         };
       }
       if (collected.length > MAX_TOTAL_FILES) {
         return {
-          content: [{ type: 'text', text: `✗ 文件数 ${collected.length} 超过上限 ${MAX_TOTAL_FILES}。` }],
+          content: [{ type: 'text', text: `ERROR: 文件数 ${collected.length} 超过上限 ${MAX_TOTAL_FILES}。` }],
         };
       }
 
@@ -287,7 +296,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
         totalBytes += buf.length;
         if (totalBytes > MAX_TOTAL_BYTES) {
           return {
-            content: [{ type: 'text', text: `✗ 总大小超过 ${MAX_TOTAL_BYTES / 1024 / 1024}MB 限制。` }],
+            content: [{ type: 'text', text: `ERROR: 总大小超过 ${MAX_TOTAL_BYTES / 1024 / 1024}MB 限制。` }],
           };
         }
         // 不传 language，后端 detect_language 自动推断（消除后缀填错问题）
@@ -300,7 +309,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
 
       if (files.length === 0) {
         return {
-          content: [{ type: 'text', text: `✗ 所有文件都被跳过。\n${formatSkipped(skipped)}` }],
+          content: [{ type: 'text', text: `ERROR: 所有文件都被跳过。\n${formatSkipped(skipped)}` }],
         };
       }
 
@@ -315,14 +324,14 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
       }, ctx.userToken);
 
       // 构造结果
-      let text = `✓ 已发布 ${files.length} 个文件\n`;
+      let text = `OK: 已发布 ${files.length} 个文件\n`;
       for (const f of files) {
         text += `  ${f.path} (${formatSize(Buffer.byteLength(f.content, 'utf-8'))})\n`;
       }
       if (skipped.length > 0) {
         text += formatSkipped(skipped);
       }
-      text += `🔗 ${config.publicUrl}/${entry.slug}`;
+      text += `Link: ${config.publicUrl}/${entry.slug}`;
 
       return { content: [{ type: 'text', text }] };
     } catch (error) {
@@ -344,7 +353,7 @@ function formatSkipped(skipped: SkippedFile[]): string {
     not_allowed: '路径无效或不允许',
     not_found: '文件不存在',
   };
-  let s = `⚠ 跳过 ${skipped.length} 个：\n`;
+  let s = `Skipped ${skipped.length} 个：\n`;
   for (const sk of skipped) {
     s += `  ${path.basename(sk.path)} — ${reasonText[sk.reason]}\n`;
   }

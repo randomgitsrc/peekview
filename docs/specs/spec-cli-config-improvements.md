@@ -19,7 +19,7 @@
 
 | 配置键 | 对应环境变量 | 默认值 | 说明 |
 |--------|------------|--------|------|
-| `server.host` | `PEEKVIEW_SERVER__HOST` | `127.0.0.1` | 服务器绑定地址 |
+| `server.host` | `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | 服务器绑定地址 |
 | `server.port` | `PEEKVIEW_SERVER__PORT` | `8080` | 服务器端口 |
 | `server.base_url` | `PEEKVIEW_SERVER__BASE_URL` | `""` | 外部访问URL |
 | `storage.data_dir` | `PEEKVIEW_STORAGE__DATA_DIR` | `~/.peekview/data` | 数据目录 |

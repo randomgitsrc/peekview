@@ -67,7 +67,8 @@ npm install -g @peekview/mcp-server
 # 配置到 Claude Code（使用你的 pv_ API Key）
 claude mcp add peekview -t sse http://localhost:33333/sse --header "Authorization: Bearer pv_your_api_key"
 
-# Agent 现在可以直接调用 create_entry / get_entry / list_entries / delete_entry
+# remote 模式：Agent 可调用 create_entry / get_entry / list_entries / delete_entry
+# local 模式：Agent 可调用 publish_files / get_entry / list_entries / delete_entry
 # 无需手动调用 CLI，Agent 自动通过 MCP 协议操作 PeekView
 ```
 
@@ -128,7 +129,7 @@ peekview serve --host 0.0.0.0 --port 8080
 - 📱 **移动端适配** - 响应式设计，底部工具栏
 - 🔗 **URL 友好** - 支持 slug、文件参数、行号高亮
 - 🔒 **安全防护** - 路径遍历防护、API 认证、XSS 过滤、iframe 沙盒隔离
-- 🤖 **MCP Server** - AI Agent 直接集成（SSE 传输、多用户 API Key 透传、npm 安装）
+- 🤖 **MCP Server** - AI Agent 直接集成（SSE 传输、多用户 API Key 透传、local/remote 双模式、npm 安装）
 
 ---
 
@@ -238,7 +239,7 @@ peekview create file.txt -s "My code" --remote-url https://peek.example.com
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `PEEKVIEW_SERVER__HOST` | `127.0.0.1` | 服务绑定地址 |
+| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | 服务绑定地址（如需仅本机访问设为 `127.0.0.1`） |
 | `PEEKVIEW_SERVER__PORT` | `8080` | 服务端口 |
 | `PEEKVIEW_SERVER__BASE_URL` | `""` | 外部 URL（空=自动检测） |
 | `PEEKVIEW_SERVER__API_KEY` | `""` | 全局 API 认证密钥（空=无认证） |

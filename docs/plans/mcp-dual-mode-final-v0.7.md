@@ -109,7 +109,7 @@ Agent 生成内容 → write_file("/tmp/x.md", content) → publish_files({paths
 ### cwd fallback 的明确说明
 
 - 本地模式下 MCP Server 与 Agent 同机，启动 cwd 通常是用户的项目目录
-- **警告**：若 MCP Server 作为 systemd/launchd 服务运行，cwd 可能是服务工作目录（如 `/`），此时 cwd fallback 会允许过大范围。文档必须提示：**作为系统服务运行时，必须显式配置 `allowed_paths`**
+- **安全约束**：若 MCP Server 作为 systemd/launchd 服务运行，cwd 可能是服务工作目录（如 `/`）。当 cwd 为 `/` 且未配置 `allowed_paths` 时，`publish_files` 必须拒绝 fallback；作为系统服务运行时必须显式配置 `allowed_paths`。
 - 启动校验：
   ```typescript
   if (config.mode === 'local' && config.allowedPaths.length === 0) {
@@ -229,6 +229,16 @@ function matchPattern(filename: string, pattern: string): boolean {
 }
 ```
 
+### 后端 path 语义
+
+publish_files 传给后端的 `path` 是**含文件名的完整相对路径**，例如 `src/utils/helper.py`。
+
+- 发布单文件 `/project/main.py` → `path: "main.py"`
+- 发布目录 `/project/src` 内的 `/project/src/main.py` → `path: "main.py"`
+- 发布目录 `/project` 内的 `/project/src/main.py` → `path: "src/main.py"`
+
+目录扫描时相对路径基准使用被扫描目录自身，避免把临时目录或根目录 basename 带入 entry 文件树。
+
 ### 语言检测：交给后端
 
 publish_files 传给后端的 files_data **只含 `path`（相对路径）和 `content`，不传 `language`**。
@@ -268,14 +278,14 @@ interface SkippedFile {
 
 返回示例：
 ```
-✓ 已发布 3 个文件
+OK: 已发布 3 个文件
   src/main.py (2.1 KB)
   src/utils.py (0.8 KB)
   README.md (1.2 KB)
-⚠ 跳过 2 个：
+Skipped 2 个：
   logo.png — 二进制文件
   dump.log — 超过 7MB
-🔗 https://peek.example.com/abc123
+Link: https://peek.example.com/abc123
 ```
 
 ### 工具描述
@@ -283,7 +293,7 @@ interface SkippedFile {
 ```
 Publish local files or directories to PeekView. MCP Server reads files directly.
 
-⚠️ Do NOT call read_file before this tool — pass paths directly.
+WARNING: Do NOT call read_file before this tool — pass paths directly.
 Filenames and extensions are inferred from paths automatically.
 Paths must be absolute. Directories are scanned recursively.
 
@@ -328,9 +338,9 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build
   }
   ```
 - **调用方同步更新**（签名变更影响面）：
-  - `src/server.ts`：调用 `createTools(client, ...)` 处改为传 `config`
+  - `src/index.ts`：调用 `createTools(client, ...)` 处改为传 `config`
   - `createEntryTool` 仍从 `config.publicUrl` 取 publicUrl
-  - 检查其他引用 `createTools` 的位置（测试文件等）一并更新
+  - 检查测试文件等其他引用 `createTools` 的位置一并更新
 
 ### Step 5：测试
 | 测试文件 | 覆盖 |
@@ -369,7 +379,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build
 | 风险 | 等级 | 缓解 |
 |------|------|------|
 | prompt injection 诱导发布敏感文件 | 高 | 黑名单优先 + realpath + allowlist/cwd 边界 + 系统服务必须配 allowed_paths |
-| 系统服务下 cwd fallback 范围过大 | 中 | 文档强提示 + 启动 warning |
+| 系统服务下 cwd fallback 范围过大 | 中 | 未配置 allowed_paths 且 cwd 为 `/` 时拒绝 fallback；文档强提示系统服务必须配置 allowed_paths |
 | 大目录扫描内存/时间过高 | 中 | 文件数/单文件/总大小限制 + 跳过构建目录 |
 | Agent 不落盘直接想发内容 | 低 | 工具描述引导 write_file；本地部署该场景无实际意义 |
 

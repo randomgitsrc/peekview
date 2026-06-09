@@ -7,20 +7,53 @@
 
 ## [Unreleased]
 
+## [mcp-v0.7.0] - 2026-06-09
+
+### 新增
+
+- **MCP Server 本地/远程双模式**
+  - `remote` 模式（默认）：暴露 `create_entry`, `get_entry`, `list_entries`, `delete_entry`
+  - `local` 模式：暴露 `publish_files`, `get_entry`, `list_entries`, `delete_entry`，不暴露 `create_entry`
+  - 新增 `server.mode` / `MCP_MODE` 配置，支持 `local` 与 `remote`
+  - 新增 `server.allowed_paths` / `MCP_ALLOWED_PATHS` 配置，用于 local 模式文件读取边界
+- **MCP `publish_files` 工具**
+  - 支持绝对路径文件与目录递归发布
+  - 支持 `include_patterns` / `exclude_patterns` 文件名过滤
+  - 从路径自动推断文件名和后缀，不向后端传 `language`
+  - 返回 skipped 文件及原因
+
+### 安全
+
+- `publish_files` 使用三层安全模型：敏感路径黑名单 → `allowed_paths` → cwd fallback
+- 使用 `fs.realpath()` 解析符号链接后做边界检查，目录扫描记录 visited realpath 防环
+- local 模式未配置 `allowed_paths` 且 cwd 为 `/` 时拒绝 fallback，避免系统服务场景全盘可读
+- MCP 测试环境改为临时 HOME，不再读写或 rename 用户真实 `~/.peekview/mcp-config.yaml`
+
+### 修复
+
+- 修复 `publish_files` 目录扫描时后端 `path` 带入被扫描目录 basename 的问题；现在目录内文件使用干净相对路径（如 `src/main.py`）
+- 修复 MCP 测试因真实环境变量或真实配置文件导致的不稳定和污染风险
+
+### 变更
+
+- MCP Server `npm test` 改为纯单元测试；integration/e2e 测试通过独立命令运行
+- MCP Server package 版本更新为 `0.7.0`
+
 ## [0.1.41] - 2026-05-24
 
 ### 新增
 
--
+- **MCP create_entry 文件扩展名建议** — 改善 Agent 生成条目时的文件名/后缀提示，降低渲染语言识别错误概率
+- MCP dual-mode 设计、计划和专家评审文档，明确 local/remote 部署拓扑与工具边界
 
 ### 修复
 
--
+- **文件上传 path/filename 处理** — 修复同时提供 `path` 和 `filename` 时 filename 被忽略的问题
+- **MCP 测试环境隔离** — 清理测试环境变量，避免本机 `PORT` 等变量污染测试结果
 
 ### 变更
 
--
-
+- MCP Server 设计进入独立版本线，v0.7.0 起支持本地/远程双模式
 
 ## [0.1.40] - 2026-05-23
 
@@ -32,13 +65,14 @@
   - 影响 MCP Server 等客户端的文件上传功能
 
 ## [mcp-v0.3.9] - 2026-05-23
-  - 新增 `scripts/e2e-safety-check.sh` 前置安全检查脚本
+
+### 新增
+
+- **E2E 安全检查脚本** — 新增 `scripts/e2e-safety-check.sh` 前置安全检查脚本
   - `make debug-test` 必须通过安全检查才能运行 E2E 测试
   - 禁止直接运行 `run-e2e-tests.sh`，强制使用 `make debug-test`
   - 检查调试服务是否使用独立数据库 (`/tmp/peekview-debug/`)
   - 运行前确认生产数据库中的条目数，检测已有测试数据
-
-## [mcp-v0.3.9] - 2026-05-23
 
 ### 修复
 

@@ -4,6 +4,17 @@ Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgits
 
 ## Quick Start
 
+## v0.7.0 双模式
+
+MCP Server 根据部署拓扑提供不同工具集：
+
+| 模式 | 拓扑 | 暴露工具 | 适用场景 |
+|------|------|----------|----------|
+| `remote`（默认） | Agent → MCP Server → PeekView | `create_entry`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 不能读取 Agent 本地文件，只发布 Agent 生成内容 |
+| `local` | Agent + MCP Server → PeekView | `publish_files`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 与文件同机，直接读取本地文件/目录 |
+
+local 模式不暴露 `create_entry`。如果 Agent 生成内容需要发布，请先用 Agent 的 write_file 能力落盘，再调用 `publish_files`。
+
 ### 1. 配置 MCP Server
 
 ```bash
@@ -15,6 +26,10 @@ peekview-mcp config set peekview.public_url https://peek.example.com
 
 # （可选）修改服务端口（默认 33333）
 peekview-mcp config set server.port 33334
+
+# （可选）设置部署模式（默认 remote；本地文件发布使用 local）
+peekview-mcp config set server.mode local
+peekview-mcp config set server.allowed_paths /home/alice/projects
 
 # （可选）设置日志级别（debug/info/warn/error）
 peekview-mcp config set logging.level info
@@ -113,7 +128,9 @@ peekview-mcp service uninstall --user
 | `server.port` | `MCP_PORT` | `33333` | MCP Server 监听端口 |
 | `server.host` | `MCP_HOST` | `0.0.0.0` | 绑定地址，`127.0.0.1` 仅本地，`0.0.0.0` 所有接口 |
 | `server.cors_origins` | `MCP_CORS_ORIGINS` | `*` | CORS 来源，逗号分隔多个域名 |
-| `logging.level` | `LOG_LEVEL` | `info` | 日志级别：`debug`, `info`, `warn`, `error` |
+| `server.mode` | `MCP_MODE` | `remote` | 部署模式：`remote`（默认）或 `local` |
+| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式下允许访问的路径列表，冒号分隔 |
+| `logging.level` | `MCP_LOG_LEVEL` | `info` | 日志级别：`debug`, `info`, `warn`, `error` |
 
 ### peekview.url vs peekview.public_url 的区别
 
@@ -276,6 +293,20 @@ logging:
   level: info
 ```
 
+local 模式示例：
+
+```yaml
+peekview:
+  url: https://peek.example.com
+  public_url: https://peek.example.com
+
+server:
+  mode: local
+  allowed_paths:
+    - /home/alice/projects
+    - /tmp/peekview-staging
+```
+
 ## 环境变量
 
 所有配置都支持环境变量，优先级：**CLI 选项 > 环境变量 > 配置文件**
@@ -289,7 +320,9 @@ export PEEKVIEW_PUBLIC_URL=https://peek.example.com
 export MCP_PORT=33333
 export MCP_HOST=0.0.0.0
 export MCP_CORS_ORIGINS="*"
-export LOG_LEVEL=info
+export MCP_MODE=local
+export MCP_ALLOWED_PATHS=/home/alice/projects:/tmp/staging
+export MCP_LOG_LEVEL=info
 
 # 启动
 peekview-mcp serve
@@ -370,7 +403,7 @@ peekview-mcp config list
 
 # 前台启动查看日志
 peekview-mcp serve
-LOG_LEVEL=debug peekview-mcp serve
+MCP_LOG_LEVEL=debug peekview-mcp serve
 
 # 查看服务日志
 journalctl --user -u peekview-mcp -f
@@ -413,7 +446,8 @@ rm ~/.peekview/mcp-config.yaml
 cd packages/mcp-server
 npm install
 npm run build
-npm test
+npm test                 # pure unit tests, isolated temp HOME
+npm run test:integration # requires debug backend + API key
 npm start
 ```
 

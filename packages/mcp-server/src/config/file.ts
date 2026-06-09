@@ -8,6 +8,14 @@ import YAML from 'yaml';
 
 export const CONFIG_FILE_PATH = join(homedir(), '.peekview', 'mcp-config.yaml');
 
+function getConfigFilePath(): string {
+  return join(homedir(), '.peekview', 'mcp-config.yaml');
+}
+
+function getConfigDir(): string {
+  return join(homedir(), '.peekview');
+}
+
 export interface ConfigFileData {
   peekview?: {
     url?: string;
@@ -32,11 +40,12 @@ export interface ConfigFileData {
  * Returns null if file doesn't exist
  */
 export function loadConfigFromFile(): ConfigFileData | null {
-  if (!existsSync(CONFIG_FILE_PATH)) {
+  const configPath = getConfigFilePath();
+  if (!existsSync(configPath)) {
     return null;
   }
 
-  const content = readFileSync(CONFIG_FILE_PATH, 'utf-8');
+  const content = readFileSync(configPath, 'utf-8');
   return YAML.parse(content) as ConfigFileData;
 }
 
@@ -45,11 +54,11 @@ export function loadConfigFromFile(): ConfigFileData | null {
  * Creates parent directory if needed
  */
 export function saveConfigToFile(config: ConfigFileData): void {
-  const dir = join(homedir(), '.peekview');
+  const dir = getConfigDir();
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
 
   const yamlContent = YAML.stringify(config);
-  writeFileSync(CONFIG_FILE_PATH, yamlContent, 'utf-8');
+  writeFileSync(getConfigFilePath(), yamlContent, 'utf-8');
 }

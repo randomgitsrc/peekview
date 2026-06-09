@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { promises as fs } from 'fs';
@@ -223,5 +223,20 @@ describe('publish_files', () => {
     const tool = publishFilesTool(client, makeConfig('local', []));
     const result = await tool.handler({ summary: 'X', paths: [file] }, ctx);
     expect(result.content[0].text).toContain('发布被拒绝');
+  });
+
+  it('cwd fallback：cwd 为根目录时拒绝使用', async () => {
+    const root = path.parse(process.cwd()).root;
+    const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(root);
+    try {
+      const file = path.join(tmpDir, 'x.py');
+      await fs.writeFile(file, 'x');
+      const tool = publishFilesTool(client, makeConfig('local', []));
+      const result = await tool.handler({ summary: 'Root', paths: [file] }, ctx);
+      expect(result.content[0].text).toContain('未配置 allowed_paths');
+      expect(result.content[0].text).toContain('根目录');
+    } finally {
+      cwdSpy.mockRestore();
+    }
   });
 });

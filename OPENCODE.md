@@ -25,7 +25,7 @@
 | `make debug-start` / `make debug-stop` | 启停调试服务 |
 | `make test` (from `backend/`) | 后端 pytest |
 | `npm run build` (from `frontend-v3/`) | 前端构建并复制到 static |
-| `make test-mcp-unit` | MCP 单元测试（无需后端） |
+| `make test-mcp-unit` | MCP 单元测试（临时 HOME，无需后端） |
 
 ## 关键文档
 

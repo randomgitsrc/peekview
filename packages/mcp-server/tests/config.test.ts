@@ -1,20 +1,36 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { loadConfig } from '../src/config.js';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 describe('Config', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
+  let testHome: string;
+
+  function restoreEnv() {
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key];
+    }
+    Object.assign(process.env, originalEnv);
+  }
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    // setup.ts already cleans PORT, but we double-check here for safety
-    delete process.env.PORT;
-    delete process.env.MCP_PORT;
-    process.env.PEEKVIEW_URL = 'http://localhost:8080';
-    process.env.PEEKVIEW_PUBLIC_URL = 'http://localhost:8080';
+    testHome = mkdtempSync(join(tmpdir(), 'pv-config-test-'));
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key];
+    }
+    Object.assign(process.env, {
+      PEEKVIEW_URL: 'http://localhost:8080',
+      PEEKVIEW_PUBLIC_URL: 'http://localhost:8080',
+      HOME: testHome,
+      USERPROFILE: testHome,
+    });
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    restoreEnv();
+    rmSync(testHome, { recursive: true, force: true });
   });
 
   it('should load valid config without MCP_TOKEN and PEEKVIEW_API_KEY', () => {

@@ -1,23 +1,22 @@
 /**
  * Vitest global teardown - runs after all tests
- * Restores backed up config file
+ * Cleans up temporary test HOME directories.
+ * Does NOT touch the user's real ~/.peekview/ configuration.
  */
 
-import { existsSync, renameSync } from 'fs';
-import { homedir } from 'os';
+import { readdirSync, rmSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 
-// This function runs after all tests
-export default async function() {
-  // Return teardown function
-  return async function() {
-    const configPath = join(homedir(), '.peekview', 'mcp-config.yaml');
-    const backupPath = join(homedir(), '.peekview', 'mcp-config.yaml.test-backup');
-
-    // Restore config file if backed up
-    if (existsSync(backupPath)) {
-      renameSync(backupPath, configPath);
-      console.log('[Test Teardown] Config file restored:', configPath);
+export default async function () {
+  return async function () {
+    const prefix = 'peekview-mcp-test-home-';
+    for (const entry of readdirSync(tmpdir())) {
+      if (entry.startsWith(prefix)) {
+        const testHome = join(tmpdir(), entry);
+        rmSync(testHome, { recursive: true, force: true });
+        console.log('[Test Teardown] Cleaned up temp HOME:', testHome);
+      }
     }
   };
 }

@@ -73,7 +73,7 @@ peekview service status / start / stop / uninstall
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PEEKVIEW_SERVER__HOST` | `127.0.0.1` | Server bind address |
+| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | Server bind address (`127.0.0.1` for local-only) |
 | `PEEKVIEW_SERVER__PORT` | `8080` | Server port |
 | `PEEKVIEW_SERVER__BASE_URL` | `""` | External URL (for reverse proxy) |
 | `PEEKVIEW_SERVER__API_KEY` | `""` | Global API key for service-level auth |

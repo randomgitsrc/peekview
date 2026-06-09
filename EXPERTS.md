@@ -317,7 +317,7 @@ ROI = (业务价值 - 开发成本) / 开发成本 × 100%
 ### 三、Git 版本控制
 1. 提交规范： Conventional Commits 格式
 2. 分支策略：main（稳定）, develop（开发）, feature/*, fix/*
-3. Tag 规范：v0.1.0（release）, mcp-v0.6.0（MCP Server）
+3. Tag 规范：v0.1.0（release）, mcp-v0.7.0（MCP Server）
 4. Commit Message：类型(scope): 描述
 
 ### 四、自动化检查

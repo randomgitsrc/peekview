@@ -24,7 +24,7 @@ Agent(A) → SSE → MCP Server(B) → HTTP → PeekView Backend(C)
 
 此前规格 `spec-mcp-local-remote-mode.md` 提出本地/远程双模式，但存在三个需要修订的关键问题：
 
-1. 本地模式只暴露 `publish_files`，会阻断 Agent 发布自己生成内容的路径
+1. 本地模式是否需要 `create_entry` 曾有分歧，最终决策为不暴露，Agent 生成内容先 write_file 落盘再 publish_files
 2. 新旧 spec 的安全模型不一致，需统一为可落地模型
 3. 远程模式不应暴露 `publish_files`，否则路径语义会混淆
 
@@ -37,15 +37,15 @@ Agent(A) → SSE → MCP Server(B) → HTTP → PeekView Backend(C)
 | 模式 | 拓扑 | 暴露工具 | 说明 |
 |------|------|----------|------|
 | `remote` 默认 | A→B→C | `create_entry`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 不能读取 Agent 本地文件，只适合 Agent 生成内容 |
-| `local` | A=B→C | `create_entry`, `publish_files`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 与 Agent 同机，既能直接读本地文件，也能发布 Agent 生成内容 |
+| `local` | A=B→C | `publish_files`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 与 Agent 同机，统一通过路径发布；Agent 生成内容先 write_file 落盘 |
 
 ### 2.2 关键原则
 
 1. **不让远程模式暴露 `publish_files`**  
    远程模式下 Agent 传入的是 A 机器路径，MCP Server 运行在 B 机器，路径语义不成立。
 
-2. **本地模式保留 `create_entry`**  
-   `publish_files` 解决的是“已有文件读取”问题，不应替代 Agent 生成内容发布。
+2. **本地模式不保留 `create_entry`**
+   local 模式统一使用 `publish_files`。Agent 生成内容如需发布，先 `write_file` 落盘，再发布路径。
 
 3. **通过工具描述引导 Agent 选择**  
    - `create_entry`: Agent-generated content only
@@ -68,7 +68,7 @@ Agent(A) → SSE → MCP Server(B) → HTTP → PeekView Backend(C)
 
 - [ ] AC1: MCP Server 支持 `mode: remote | local`，默认值为 `remote`
 - [ ] AC2: remote 模式暴露 `create_entry/get_entry/list_entries/delete_entry`，不暴露 `publish_files`
-- [ ] AC3: local 模式暴露 `create_entry/publish_files/get_entry/list_entries/delete_entry`
+- [ ] AC3: local 模式暴露 `publish_files/get_entry/list_entries/delete_entry`，不暴露 `create_entry`
 - [ ] AC4: `publish_files` 支持绝对路径文件和目录递归扫描
 - [ ] AC5: `publish_files` 明确不要求 Agent 先 `read_file`
 - [ ] AC6: `publish_files` 实现敏感路径黑名单，黑名单优先级最高
@@ -203,7 +203,7 @@ Paths must be absolute.
 
 修改：`docs/specs/spec-mcp-local-remote-mode.md`
 
-- local 工具集改为 `create_entry + publish_files + get/list/delete`
+- local 工具集最终改为 `publish_files + get/list/delete`（不暴露 `create_entry`）
 - remote 工具集保持 `create_entry + get/list/delete`
 - 安全模型改为三层：黑名单 → allowed_paths → cwd fallback
 - 启动校验从“拒绝启动”改为 warning + cwd 限制

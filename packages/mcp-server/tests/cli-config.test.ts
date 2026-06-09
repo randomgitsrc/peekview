@@ -1,15 +1,30 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Command } from 'commander';
 import { saveConfigToFile, loadConfigFromFile } from '../src/config/file.js';
-import { existsSync, unlinkSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, unlinkSync, mkdtempSync, rmSync } from 'fs';
+import { homedir, tmpdir } from 'os';
 import { join } from 'path';
 
-const testConfigPath = join(homedir(), '.peekview', 'mcp-config.yaml');
+// Each test gets an isolated HOME so CLI config tests never touch ~/.peekview.
 
 describe('CLI Config Commands', () => {
+  const originalEnv = { ...process.env };
+  let testHome: string;
+  let testConfigPath: string;
+
+  function restoreEnv() {
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key];
+    }
+    Object.assign(process.env, originalEnv);
+  }
+
   beforeEach(() => {
-    // Clean up test config
+    testHome = mkdtempSync(join(tmpdir(), 'pv-cli-config-test-'));
+    process.env.HOME = testHome;
+    process.env.USERPROFILE = testHome;
+    testConfigPath = join(homedir(), '.peekview', 'mcp-config.yaml');
+    // Clean up test config in temp dir
     if (existsSync(testConfigPath)) {
       unlinkSync(testConfigPath);
     }
@@ -17,10 +32,8 @@ describe('CLI Config Commands', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    // Clean up test config
-    if (existsSync(testConfigPath)) {
-      unlinkSync(testConfigPath);
-    }
+    restoreEnv();
+    rmSync(testHome, { recursive: true, force: true });
   });
 
   describe('config set', () => {
@@ -45,6 +58,19 @@ describe('CLI Config Commands', () => {
       const config = loadConfigFromFile();
       expect(config?.server?.port).toBe(44444);
       expect(typeof config?.server?.port).toBe('number');
+    });
+
+    it('should preserve server.allowed_paths as array', () => {
+      saveConfigToFile({
+        server: {
+          mode: 'local',
+          allowed_paths: ['/tmp/project', '/tmp/staging'],
+        },
+      });
+
+      const config = loadConfigFromFile();
+      expect(config?.server?.mode).toBe('local');
+      expect(config?.server?.allowed_paths).toEqual(['/tmp/project', '/tmp/staging']);
     });
 
     it('should update existing config preserving other values', () => {

@@ -23,6 +23,10 @@ Available configuration keys:
 
   server.cors_origins     - CORS 来源 (default: *)
 
+  server.mode             - 部署模式: remote|local (default: remote)
+
+  server.allowed_paths    - local 模式允许访问的路径，冒号分隔
+
   logging.level           - 日志级别: debug|info|warn|error (default: info)
 
 Config file location: ~/.peekview/mcp-config.yaml
@@ -54,8 +58,10 @@ configCommand
       const [section, prop] = parts;
 
       // Type conversion
-      let typedValue: string | number | boolean = value;
-      if (value === 'true') typedValue = true;
+      let typedValue: string | number | boolean | string[] = value;
+      if (section === 'server' && prop === 'allowed_paths') {
+        typedValue = value.split(':').filter((p) => p.length > 0);
+      } else if (value === 'true') typedValue = true;
       else if (value === 'false') typedValue = false;
       else if (/^\d+$/.test(value)) typedValue = parseInt(value, 10);
 
@@ -133,6 +139,8 @@ configCommand
       console.log(`  port:         ${config?.server?.port || 33333}  # MCP 服务端口`);
       console.log(`  host:         ${config?.server?.host || '0.0.0.0'}  # 绑定地址`);
       console.log(`  cors_origins: ${config?.server?.cors_origins || '*'}  # CORS 来源`);
+      console.log(`  mode:         ${config?.server?.mode || 'remote'}  # 部署模式: remote|local`);
+      console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 模式路径白名单`);
       console.log('');
 
       // logging section
@@ -143,7 +151,7 @@ configCommand
       // Show available keys
       console.log('Available config keys:');
       console.log('  peekview.url, peekview.public_url');
-      console.log('  server.port, server.host, server.cors_origins');
+      console.log('  server.port, server.host, server.cors_origins, server.mode, server.allowed_paths');
       console.log('  logging.level');
       console.log('');
       console.log(`Config file: ~/.peekview/mcp-config.yaml`);

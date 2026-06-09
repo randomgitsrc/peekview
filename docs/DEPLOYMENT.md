@@ -269,7 +269,7 @@ server {
 
 | 变量 | 默认值 | 说明 | 示例 |
 |------|--------|------|------|
-| `PEEKVIEW_SERVER__HOST` | `127.0.0.1` | 服务绑定地址 | `0.0.0.0` |
+| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | 服务绑定地址（仅本机访问设为 `127.0.0.1`） | `127.0.0.1` |
 | `PEEKVIEW_SERVER__PORT` | `8080` | 服务端口 | `80` |
 | `PEEKVIEW_SERVER__BASE_URL` | - | 外部访问 URL（用于反向代理） | `https://example.com` |
 | `PEEKVIEW_SERVER__API_KEY` | - | 全局 API 认证密钥（创建 ownerless 条目） | `your-secret-key` |

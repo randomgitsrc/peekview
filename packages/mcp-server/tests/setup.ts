@@ -3,9 +3,9 @@
  * Ensures clean environment for tests
  */
 
-import { existsSync, renameSync } from 'fs';
-import { homedir } from 'os';
+import { mkdirSync, mkdtempSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 
 // Clean environment variables that might affect tests
 const envVarsToClean = [
@@ -21,17 +21,13 @@ envVarsToClean.forEach((key) => {
   }
 });
 
-// Backup config file during tests to prevent interference
-const configPath = join(homedir(), '.peekview', 'mcp-config.yaml');
-const backupPath = join(homedir(), '.peekview', 'mcp-config.yaml.test-backup');
+// Isolate config file access during tests.
+// IMPORTANT: never rename or modify the user's real ~/.peekview/mcp-config.yaml.
+const testHome = mkdtempSync(join(tmpdir(), 'peekview-mcp-test-home-'));
+mkdirSync(join(testHome, '.peekview'), { recursive: true });
+process.env.PEEKVIEW_MCP_TEST_HOME = testHome;
+process.env.HOME = testHome;
+process.env.USERPROFILE = testHome;
 
-// Only backup if not already backed up (setup may run multiple times)
-if (existsSync(configPath) && !existsSync(backupPath)) {
-  renameSync(configPath, backupPath);
-  console.log('[Test Setup] Config file backed up:', configPath);
-} else if (!existsSync(configPath) && !existsSync(backupPath)) {
-  // Config file doesn't exist, which is fine for tests
-  console.log('[Test Setup] No config file to backup');
-}
-
+console.log('[Test Setup] HOME isolated:', testHome);
 console.log('[Test Setup] Environment cleaned:', envVarsToClean);
