@@ -1,6 +1,6 @@
 # MCP publish_files 默认白名单优化（v0.7.1）
 
-**状态**: 已根据 `docs/reviews/gstack-review-default-allowed-paths.md` 修订，待实施
+**状态**: 已根据 `docs/reviews/gstack-review-default-allowed-paths.md` 与 `docs/reviews/gstack-review-default-allowed-paths-v2.md` 修订，待实施
 **作者**: kity
 **日期**: 2026-06-09
 **目标版本**: MCP Server v0.7.1（patch bump）
@@ -16,8 +16,8 @@ gstack review 认为 v0.7.0 的可用性问题真实存在：`publish_files` 未
 因此本修订版采用：
 
 1. **默认白名单 = `cwd + os.tmpdir()`**，不默认包含 `$HOME`。
-2. **新增 `server.trust_all_paths: true`**，仅本机自用时显式打开；打开后跳过 allowlist，但仍走更严格的敏感路径 denylist。
-3. **加强敏感路径 denylist**，覆盖常见 token / credential / history / system path。
+2. **新增 `server.trust_all_paths: true`**，仅本机自用时显式打开；打开后跳过 allowlist，但仍走 best-effort 敏感路径 denylist。
+3. **加强敏感路径 denylist**，覆盖常见 token / credential / history / system path，但明确不承诺完整保护 `trust_all_paths`。
 4. **local 模式 `publish_files` 默认 `is_public=false`**，避免误发即公网暴露。
 5. **改进工具描述、错误信息、CLI help、README/spec/config 文档**，让 agent 和用户知道目录递归语义、默认白名单、如何授权其他目录。
 
@@ -67,10 +67,13 @@ allowedBases = config.allowedPaths.length > 0
 1. 先解析 realpath
    - 所有输入路径必须是绝对路径
    - 对 symlink / .. 做 realpath 后再检查
+   - ⚠️ **denylist 必须匹配 realpath 后的路径**，不是原始输入路径
+   - 如果先匹配原始路径再 realpath，symlink 绕过：`~/link → ~/.ssh/id_rsa` 中 `~/link` 不在黑名单，但 realpath 后 `~/.ssh/id_rsa` 在
 
-2. 先检查敏感路径 denylist
+2. 再检查敏感路径 denylist
    - 命中 denylist 直接拒绝整个请求
    - denylist 优先级高于 allowlist 和 trust_all_paths
+   - 匹配对象是 realpath 后的解析结果
 
 3. 如果 server.trust_all_paths = true
    - 跳过 allowlist 检查
@@ -127,8 +130,10 @@ server:
 
 - 跳过 allowlist 边界检查。
 - 仍然检查敏感路径 denylist。
+- denylist 是 **best-effort**：它会覆盖常见密钥、token、credential、系统路径，但不可能完整识别所有敏感文件。
 - 仅推荐个人本机、单用户、可信 prompt 场景。
-- 多用户机器、远程 MCP Server、不可信 agent 场景严禁开启。
+- 多用户机器、远程 MCP Server、不可信 agent、含大量密钥/凭证的环境严禁开启。
+- 文档和启动 warning 必须明确：`trust_all_paths` 跳过目录边界，不提供完整敏感文件保护。
 
 优先级：
 
@@ -140,10 +145,13 @@ trust_all_paths=true > allowed_paths > default(cwd+tmp)
 
 - `trust_all_paths` 生效。
 - 启动 warning：`allowed_paths ignored because trust_all_paths=true`。
+- 启动 warning 还必须包含：`trust_all_paths skips directory boundaries; sensitive path filtering is best-effort only and cannot protect every secret file.`
 
 ### 3.4 敏感路径 denylist（始终生效）
 
 v0.7.1 要从 v0.7.0 的少量黑名单扩展为“高敏感路径 denylist”。
+
+**注意：** denylist 是兜底与 best-effort 保护，不应被描述成完整安全边界。默认安全依赖 allowlist；`trust_all_paths` 是用户主动放宽目录边界，剩余风险由用户承担。
 
 建议初始列表：
 
@@ -158,14 +166,22 @@ const SENSITIVE_PATTERNS: RegExp[] = [
   /\/\.config\/gcloud(?:\/|$)/,
   /\/\.config\/gh(?:\/|$)/,
 
-  // Secret files
-  /\/(?:\.env|\.env\..*)$/,
+  // Secret files and environment dumps
+  /(?:^|\/)\.env(?:\.[^/]*)?$/,
+  /\.env$/,
   /\/\.npmrc$/,
   /\/\.pypirc$/,
   /\/\.netrc$/,
   /\/\.git-credentials$/,
   /\/\.gitconfig$/,
   /\/(?:\.bash_history|\.zsh_history|\.fish_history)$/,
+
+  // Cloud / IaC / editor credential stores (best-effort)
+  /\/\.azure\/accessTokens\.json$/,
+  /\/\.config\/sops\/age\/keys\.txt$/,
+  /\/\.terraform\.d\/credentials\.tfrc\.json$/,
+  /\/\.local\/share\/keyrings(?:\/|$)/,
+  /\/\.config\/Code\/User\/settings\.json$/,
 
   // Key/cert extensions
   /\.(?:pem|key|p12|pfx)$/i,
@@ -189,22 +205,24 @@ const SENSITIVE_PATTERNS: RegExp[] = [
 说明：
 
 - 不默认拦截所有 dotfile/dotdir，因为项目内 `.claude/settings.json`、`.vscode/settings.json` 等可能是用户确实想发布的上下文。
-- 但 `.env*`、credential 文件、shell history、云/包管理器 token 必须拒绝。
+- 但 `.env*`、`*.env`、credential 文件、shell history、云/包管理器 token 必须拒绝。
+- `*.env` 会误伤 `test.env` / `environment.env` 等合法文件；这是安全优先的取舍，需在错误信息中说明命中敏感规则。
 - `trust_all_paths` 也不允许 `/etc`、`/proc`、`/sys`、`/root`、浏览器 profile 等。
+- 仍需明确：denylist 不可能完整，例如新的云厂商凭证路径可能漏网；`trust_all_paths` 只适合完全信任环境。
 
-### 3.5 `/tmp` 风险处理
+### 3.5 系统临时目录风险处理
 
-`os.tmpdir()` 默认允许，但 `/tmp` 是全局可写目录。
+`os.tmpdir()` 默认允许（Linux 通常 `/tmp`，macOS 通常 `/var/folders/...`）。临时目录是全局可写的（sticky bit），存在以下风险：
 
 实施要求：
 
-- 文档标注：多用户共享机器上建议显式配置 `allowed_paths`，不要依赖默认 `/tmp`。
-- 可选增强（v0.7.1 尽量实现）：对 `os.tmpdir()` 下的文件检查 owner：
+- **文档标注：** 多用户共享机器上建议显式配置 `allowed_paths`，不要依赖默认临时目录。
+- **可选增强（v0.7.1 尽量实现）：** 对 `os.tmpdir()` 下的文件检查 owner：
   ```typescript
   stat.uid === process.getuid?.()
   ```
-  非当前用户文件拒绝。
-- 如果 Node/平台不支持 uid（Windows），跳过 owner 检查。
+  非当前用户文件拒绝；若平台不支持 uid（如 Windows），跳过 owner 检查。
+- **已知限制（TOCTOU）：** `stat` 检查与后续 `readFile` 之间存在 time-of-check-time-of-use 窗口。攻击者可在检查通过后、读取前替换文件或 symlink。这是临时目录安全的固有限制，不在 v0.7.1 强制修复；如需完全修复，应改为 open fd 后 fstat 再读取。
 
 ### 3.6 `is_public` 默认值
 
@@ -256,7 +274,8 @@ ERROR: 发布被拒绝：路径 /b-dir/file.md 超出允许范围。
 
 ```text
 ERROR: 发布被拒绝：路径 /etc/passwd 命中敏感文件保护规则。
-当前 server.trust_all_paths=true，但敏感路径 denylist 始终生效。
+当前 server.trust_all_paths=true；该模式跳过目录边界，但敏感路径 denylist 仍以 best-effort 方式生效。
+注意：denylist 不保证覆盖所有敏感文件。请勿在含密钥/凭证的环境或多用户机器启用 trust_all_paths。
 出于安全考虑，整个请求已取消。
 ```
 
@@ -279,8 +298,8 @@ PATH RULES:
 - Paths must be absolute.
 - Default allowed bases: process.cwd() and os.tmpdir() only.
 - $HOME is NOT allowed by default; configure server.allowed_paths for extra directories.
-- server.trust_all_paths=true disables the allowlist, but sensitive paths are still blocked.
-- Sensitive files such as .env, .npmrc, .pypirc, .git-credentials, ~/.ssh, ~/.aws, ~/.kube, *.pem/*.key are always blocked.
+- server.trust_all_paths=true disables the allowlist, but sensitive paths are still blocked (best-effort; NOT a complete security boundary).
+- Sensitive files such as .env, *.env, .npmrc, .pypirc, .git-credentials, ~/.ssh, ~/.aws, ~/.kube, *.pem/*.key are always blocked.
 
 VISIBILITY:
 - publish_files defaults to private (is_public=false). Set is_public=true to publish a public link.
@@ -303,7 +322,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build
 
 ```text
 server.allowed_paths    - local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+tmpdir
-server.trust_all_paths  - 危险选项：local 模式跳过路径白名单，仅保留敏感路径保护 (default: false)
+server.trust_all_paths  - 危险选项：local 模式跳过路径白名单，仅 best-effort 敏感路径保护 (default: false)
 ```
 
 同时在 help 末尾增加 local 模式说明：
@@ -313,7 +332,8 @@ local 模式 publish_files 路径规则：
   - 默认允许 cwd + 系统临时目录（如 /tmp）
   - 不默认允许 $HOME
   - 如需额外目录：peekview-mcp config set server.allowed_paths '/path/a:/path/b'
-  - 完全本机自用：peekview-mcp config set server.trust_all_paths true（危险）
+  - 完全本机自用：peekview-mcp config set server.trust_all_paths true（危险；denylist 仅 best-effort）
+  - trust_all_paths 不应在含密钥/凭证的环境、多用户机器或不可信 prompt 场景启用
   - 修改配置后需重启 service：peekview-mcp service restart
 ```
 
@@ -324,7 +344,7 @@ local 模式 publish_files 路径规则：
 ```text
 server:
   allowed_paths:    (not set)  # local 显式白名单；未设置时默认 cwd+tmpdir
-  trust_all_paths:  false      # 危险：跳过白名单，仅保留敏感路径保护
+  trust_all_paths:  false      # 危险：跳过白名单，仅 best-effort 敏感路径保护
 ```
 
 `Available config keys` 增加 `server.trust_all_paths`。
@@ -396,8 +416,17 @@ const trustAllPaths = parseBool(
 warning 更新：
 
 - local + no allowed_paths + no trust_all_paths：提示默认 `cwd + tmpdir`
-- local + trust_all_paths：打印危险 warning
+- local + trust_all_paths：打印危险 warning，明确 denylist 是 best-effort
 - trust_all_paths + allowed_paths：提示 allowed_paths 被忽略
+
+推荐 warning 文案：
+
+```text
+[peekview-mcp] WARNING: server.trust_all_paths=true is enabled.
+  Directory allowlist is disabled; sensitive path filtering is best-effort only.
+  It cannot protect every secret file. Do not use this on multi-user machines,
+  remote MCP servers, untrusted prompts, or environments containing credentials.
+```
 
 ### 7.4 `packages/mcp-server/src/tools/publishFiles.ts`
 
@@ -470,7 +499,7 @@ allowed_paths_count: config.allowedPaths.length,
 - [ ] `trust_all_paths: true` + 普通 cwd 外文件 → 允许
 - [ ] `trust_all_paths: true` + `/etc/passwd` → denylist 拒绝
 - [ ] `trust_all_paths: true` + `allowed_paths` 同时配置 → trust 优先
-- [ ] `.env` / `.npmrc` / `.pypirc` / `.git-credentials` / `.kube/config` / `.docker/config.json` → 始终拒绝
+- [ ] `.env` / `.env.local` / `secrets.env` / `.npmrc` / `.pypirc` / `.git-credentials` / `.kube/config` / `.docker/config.json` → 始终拒绝
 - [ ] `*.pem` / `*.key` 大小写扩展 → 始终拒绝
 - [ ] `~/.ssh/id_rsa` symlink 经 realpath 后仍拒绝
 - [ ] cwd 为 `/` → 拒绝 publish_files
@@ -492,7 +521,8 @@ allowed_paths_count: config.allowedPaths.length,
 - [ ] local 模式从 HOME 普通文件发布默认失败，并提示配置 allowed_paths
 - [ ] local 模式显式 allowed_paths 后 HOME 子目录发布成功
 - [ ] local 模式 trust_all_paths 发布 cwd 外普通文件成功
-- [ ] trust_all_paths 下敏感文件仍拒绝
+- [ ] trust_all_paths 下已列入 denylist 的敏感文件仍拒绝
+- [ ] trust_all_paths warning/README 明确 denylist 是 best-effort，不承诺覆盖全部敏感文件
 - [ ] Claude Code 场景：agent 生成文档写 `/tmp/foo.md` 后 publish_files 成功
 
 ### 8.4 回归
@@ -514,7 +544,7 @@ allowed_paths_count: config.allowedPaths.length,
 
 ### 改进
 - publish_files: 零配置默认允许 cwd + 系统临时目录，解决 /tmp 中 agent 生成文件无法发布的问题
-- publish_files: 新增 server.trust_all_paths 危险选项，适合完全本机自用场景
+- publish_files: 新增 server.trust_all_paths 危险选项，适合完全本机自用场景（denylist 仅 best-effort）
 - publish_files: 错误信息区分敏感路径与超出白名单，并给出配置修复命令
 - publish_files: 工具描述强化“文件 vs 目录”语义，避免误发布整个项目目录
 - CLI: config help/list 增加 allowed_paths、trust_all_paths、本地模式路径规则说明
@@ -541,7 +571,7 @@ allowed_paths_count: config.allowedPaths.length,
 - local mode `publish_files` 何时读本地文件
 - 默认允许 cwd + tmpdir，不允许 HOME
 - 如何配置 `server.allowed_paths`
-- 如何启用 `server.trust_all_paths` 及风险
+- 如何启用 `server.trust_all_paths`、为什么它危险、以及 denylist 仅 best-effort
 - `publish_files` 默认 private
 - 修改 config 后需要重启 service
 
@@ -578,8 +608,8 @@ allowed_paths_count: config.allowedPaths.length,
 | 风险 | 等级 | 缓解 |
 |---|---|---|
 | 默认允许 `/tmp`，多用户机器有预置文件风险 | 中 | 文档警示 + 可选 owner 检查 |
-| denylist 仍可能漏新型 secret 文件 | 中 | 不默认允许 HOME；常见 secrets 补齐；用户可显式收紧 |
-| `trust_all_paths` 被误用 | 中 | help/README/启动 warning 标为危险；denylist 仍生效 |
+| denylist 仍可能漏新型 secret 文件 | 中 | 默认 allowlist 保护下不依赖 denylist 完整性；trust_all_paths 已标注 best-effort，用户承担风险 |
+| `trust_all_paths` 被误用 | 中 | help/README/启动 warning 标为危险+best-effort；denylist 仍生效但不承诺完整 |
 | `is_public=false` 改变用户预期 | 低 | 仅 local `publish_files`；公开可显式传 true；CHANGELOG 明确 |
 | 错误信息泄露 cwd/tmpdir | 低 | 可用性优先；只在已认证 MCP session 内返回 |
 | 显式 `allowed_paths` 覆盖默认导致 `/tmp` 又被拒 | 低 | 这是可预期严格模式；错误信息提示当前模式 |
@@ -590,7 +620,9 @@ allowed_paths_count: config.allowedPaths.length,
 
 - [ ] 默认 allowlist = cwd + os.tmpdir，不含 HOME
 - [ ] `server.trust_all_paths` config/env/CLI/help/list 全链路支持
-- [ ] 敏感路径 denylist 扩展并始终优先生效
+- [ ] 敏感路径 denylist 扩展并始终优先生效，但标注 best-effort，不承诺完整覆盖
+- [ ] denylist 必须匹配 realpath 后的路径（不是原始输入）
+- [ ] trust_all_paths 启动 warning 诚实说明 denylist 是 best-effort
 - [ ] `publish_files` 默认 `is_public=false`
 - [ ] 错误信息 agent-friendly 且可操作
 - [ ] 工具 description 明确：传文件 vs 传目录
