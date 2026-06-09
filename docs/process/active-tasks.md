@@ -92,7 +92,7 @@
 - **状态**: ✅ 已完成 (MCP v0.2.0)
 - **完成日期**: 2026-05-20
 - **主要内容**:
-  - SSE 传输 + AsyncLocalStorage 多用户 session 隔离
+  - Streamable HTTP 传输 + AsyncLocalStorage 多用户 session 隔离
   - pv_ API Key 透传认证（移除 MCP_TOKEN/PEEKVIEW_API_KEY）
   - Tools: create_entry, get_entry, list_entries, delete_entry
   - 中文错误消息、Health check、Docker 支持

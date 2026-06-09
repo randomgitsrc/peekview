@@ -74,12 +74,9 @@ const serveCommand = new Command('serve')
       const client = new PeekViewClient({ peekviewUrl: config.peekviewUrl });
       const tools = createTools(client, config);
       const app = createExpressApp(tools, {
-        peekviewUrl: config.peekviewUrl,
-        publicUrl: config.publicUrl,
+        ...config,
         port,
         host,
-        corsOrigins: config.corsOrigins,
-        logLevel: config.logLevel,
       }, client);
 
       // Start server

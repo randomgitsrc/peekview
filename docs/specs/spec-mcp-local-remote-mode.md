@@ -287,8 +287,8 @@ Claude Code 配置：
 {
   "mcpServers": {
     "peekview": {
-      "type": "sse",
-      "url": "https://mcp.example.com/sse"
+      "type": "http",
+      "url": "https://mcp.example.com/mcp"
     }
   }
 }
@@ -321,8 +321,8 @@ Claude Code 配置（本地连接）：
 {
   "mcpServers": {
     "peekview": {
-      "type": "sse",
-      "url": "http://localhost:33333/sse"
+      "type": "http",
+      "url": "http://localhost:33333/mcp"
     }
   }
 }

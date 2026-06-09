@@ -234,26 +234,14 @@ export function createExpressApp(
       const server = createMCPServer(tools);
       await server.connect(transport);
 
-      // Register session after onsessioninitialized equivalent
-      // StreamableHTTPServerTransport sets sessionId during handleRequest for initialize
-      // We need to capture it after the first handleRequest
-      const originalSessionId = transport.sessionId;
-      if (originalSessionId) {
-        sessions.set(originalSessionId, {
-          transport,
-          server,
-          ...ctx,
-          lastActivity: Date.now(),
-        });
-      }
-
       // Handle the initialize request within context
+      // StreamableHTTPServerTransport sets sessionId during handleRequest for initialize
       await sessionContext.run(ctx, () =>
         transport.handleRequest(req, res, req.body)
       );
 
-      // After handleRequest, sessionId should be set
-      if (transport.sessionId && !sessions.has(transport.sessionId)) {
+      // Register session after handleRequest (sessionId is set by SDK during initialize processing)
+      if (transport.sessionId) {
         sessions.set(transport.sessionId, {
           transport,
           server,
@@ -269,10 +257,10 @@ export function createExpressApp(
     res.status(400).json({ error: 'No valid session or not an initialize request' });
   });
 
-  // GET /mcp — SSE stream for server-initiated notifications (not used in initial implementation)
-  // Will be enabled when progress notifications are added
+  // GET /mcp — Server-initiated notifications not supported
+  // This endpoint is intentionally not implemented; all requests use POST /mcp with enableJsonResponse
   app.get('/mcp', async (_req, res) => {
-    res.status(405).json({ error: 'SSE streaming not yet implemented. Use POST /mcp with enableJsonResponse.' });
+    res.status(405).json({ error: 'Server-initiated notifications not supported. Use POST /mcp for all client requests.' });
   });
 
   // DELETE /mcp — session termination

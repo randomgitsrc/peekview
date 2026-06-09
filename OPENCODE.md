@@ -8,7 +8,7 @@
 |------|------|----|
 | Backend | `backend/peekview/` | FastAPI + SQLite (WAL+FTS5) |
 | Frontend | `frontend-v3/` | Vue 3 + Vite + TypeScript + Shiki |
-| MCP Server | `packages/mcp-server/` | Node.js/TS + SSE |
+| MCP Server | `packages/mcp-server/` | Node.js/TS + Streamable HTTP |
 
 ## 核心规则（新会话必读）
 

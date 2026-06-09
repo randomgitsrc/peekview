@@ -2,7 +2,7 @@
 
 > 创建：2026-06-09
 > 用途：汇总评审发现的待改进事项，按优先级跟踪
-> 当前版本：Backend v0.1.42 / MCP Server v0.7.3
+> 当前版本：Backend v0.1.42 / MCP Server v0.8.0
 
 ---
 
@@ -10,7 +10,7 @@
 
 | # | 事项 | 类别 | 优先级 | 状态 |
 |---|------|------|--------|------|
-| 1 | SSE → Streamable HTTP 迁移 | 技术债/传输 | 🔴 立即 | 进行中 |
+| 1 | SSE → Streamable HTTP 迁移 | 技术债/传输 | 🔴 立即 | ✅ 完成 (v0.8.0) |
 | 2 | rate limiting 配置化真正落地 | 技术债 | 🟠 近期 | 待办 |
 | 3 | MCP/CLI 定位写进用户文档 | 产品/文档 | 🟠 近期 | 待办 |
 | 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | 待办 |
@@ -27,15 +27,11 @@
 
 ## 详细说明
 
-### 🔴 1. SSE → Streamable HTTP 迁移（立即，有时限）
+### 🔴 1. SSE → Streamable HTTP 迁移（✅ 已完成 v0.8.0）
 
-**问题**：PeekView MCP 当前用 HTTP+SSE 传输，该传输在 MCP 规范 2025-03-26 中已被废弃，Streamable HTTP 取代。SSE 客户端支持持续退化（多个平台 2026 年中移除 SSE），新 Agent 客户端可能只认 Streamable HTTP。
+**问题**：PeekView MCP 用 HTTP+SSE 传输，该传输在 MCP 规范 2025-03-26 中已被废弃。
 
-**影响**：用户的多 Agent（Claude Code/OpenCode/Codex 等）中越新的越可能无法连接 SSE。
-
-**SSE 的固有缺陷**：双端点、长连接脆弱（代理超时断连）、sessionId 手工管理（历次评审踩过的 P0）、无法无状态扩展。
-
-**方案**：见 `docs/plans/mcp-sse-to-streamable-http-migration.md`
+**已完成**：MCP Server v0.8.0 已迁移至 Streamable HTTP，端点从 `/sse` + `/messages` 改为 `/mcp`，SDK 升级至 1.29.0。详见已归档的 `docs/archived/plans/sse-migration/mcp-sse-to-streamable-http-migration.md`。
 
 ---
 

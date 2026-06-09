@@ -121,7 +121,7 @@ const emit = defineEmits<{ (e: 'update', value: string): void }>()
 1. 模块边界：api/ vs services/ vs storage/ 分层是否清晰
 2. 依赖管理：新增依赖是否必要
 3. 性能：N+1 查询、文件流式读取、数据库索引
-4. 部署拓扑：Agent → SSE → MCP Server → HTTP → PeekView Backend
+4. 部署拓扑：Agent → Streamable HTTP → MCP Server → HTTP → PeekView Backend
 
 ## 禁止
 - ❌ api/ 层直接操作数据库
@@ -317,7 +317,7 @@ ROI = (业务价值 - 开发成本) / 开发成本 × 100%
 ### 三、Git 版本控制
 1. 提交规范： Conventional Commits 格式
 2. 分支策略：main（稳定）, develop（开发）, feature/*, fix/*
-3. Tag 规范：v0.1.0（release）, mcp-v0.7.0（MCP Server）
+3. Tag 规范：v0.1.0（release）, mcp-v0.8.0（MCP Server）
 4. Commit Message：类型(scope): 描述
 
 ### 四、自动化检查

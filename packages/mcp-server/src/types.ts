@@ -55,6 +55,9 @@ export interface ServerConfig {
   host: string;
   corsOrigins: string[];
   logLevel: string;
+  mode: 'local' | 'remote';
+  allowedPaths: string[];
+  trustAllPaths: boolean;
   configSource?: 'file' | 'env' | 'default';
   configPath?: string | null;
 }

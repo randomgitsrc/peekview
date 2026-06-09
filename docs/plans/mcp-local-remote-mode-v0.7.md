@@ -345,8 +345,8 @@ allowed_paths:
 {
   "mcpServers": {
     "peekview": {
-      "type": "sse",
-      "url": "http://localhost:33333/sse"
+      "type": "http",
+      "url": "http://localhost:33333/mcp"
     }
   }
 }

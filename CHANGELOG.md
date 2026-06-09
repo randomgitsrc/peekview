@@ -7,6 +7,45 @@
 
 ## [Unreleased]
 
+## [mcp-v0.8.0] - 2026-06-10
+
+### ⚠️ Breaking Change
+
+- **传输协议迁移**：SSE → Streamable HTTP。客户端配置需同步更新：
+  - 旧：`claude mcp add peekview -t sse http://localhost:33333/sse`
+  - 新：`claude mcp add peekview -t http http://localhost:33333/mcp`
+- 端点变更：`/sse` + `/messages` → `/mcp`（POST/GET/DELETE）
+- 认证时机变更：从 SSE 连接时验证改为 initialize 请求时验证
+
+### 新增
+
+- Streamable HTTP 传输，符合 MCP 规范最新要求
+- Per-session Server 实例（SDK `Server.connect()` 不支持多 transport）
+- `enableJsonResponse: true` 模式（请求-响应式，无需 SSE 流）
+- `isValidOrigin()` DNS rebinding 防护
+- Session idle timeout 自动清理（30 分钟）
+- `mcp-session-id` header 自动管理
+
+### 变更
+
+- SDK 升级：`@modelcontextprotocol/sdk` 1.4.0 → 1.29.0
+- 认证从 SSE 连接时移至 initialize 请求时
+- AsyncLocalStorage session 传播机制保留不变
+- 工具逻辑零改动（create_entry/get_entry/list_entries/delete_entry/publish_files）
+
+## [mcp-v0.7.3] - 2026-06-09
+
+### 修复
+
+- 修复 MCP 单元测试意外删除真实 `~/.peekview/mcp-config.yaml` 的问题
+- 测试环境改用 mkdtemp 唯一 HOME，完全隔离
+
+## [mcp-v0.7.2] - 2026-06-09
+
+### 新增
+
+- CLI `config allowed_paths add/remove/list` 子命令，管理 local 模式文件读取边界
+
 ## [mcp-v0.7.1] - 2026-06-09
 
 ### 改进

@@ -1,7 +1,7 @@
 # PeekView — 项目索引
 
 > 最后更新：2026-05-21
-> 当前版本：v0.1.42（Backend/Frontend）| MCP Server v0.7.0
+> 当前版本：v0.1.42（Backend/Frontend）| MCP Server v0.8.0
 
 ---
 
@@ -13,10 +13,10 @@
 | 技术设计 | ✅ 定稿 | FastAPI + SQLite + Vue 3 |
 | 后端实现 | ✅ 完成 | Tasks 0-12 + Auth + API Keys + Admin |
 | 前端实现 | ✅ 完成 | Tasks 14-16 + Auth UI + API Keys UI + All/Mine |
-| MCP Server | ✅ 完成 | v0.7.0 local/remote 双模式 + publish_files + API Key 透传 |
+| MCP Server | ✅ 完成 | v0.8.0 Streamable HTTP + local/remote 双模式 + publish_files + API Key 透传 |
 | E2E 测试 | ✅ 52 测试通过 | chromium + Mobile Chrome |
 | 后端测试 | ✅ 417 测试通过 | pytest |
-| MCP 测试 | ✅ 145 单元测试通过 | integration/e2e 分离，publish_files local-mode E2E opt-in |
+| MCP 测试 | ✅ 166 单元测试通过 | Streamable HTTP transport, integration/e2e 分离, publish_files local-mode E2E opt-in |
 
 ---
 
@@ -216,7 +216,7 @@ frontend-v3/src/
 - ✅ URL 行号高亮 + 文件深链接
 
 **MCP Server**:
-- ✅ SSE 传输 + 多用户 API Key 透传
+- ✅ Streamable HTTP 传输 + 多用户 API Key 透传
 - ✅ Tools: create_entry, get_entry, list_entries, delete_entry
 - ✅ 中文错误消息（认证失败, 权限不足）
 - ✅ Health check endpoint (/health)
