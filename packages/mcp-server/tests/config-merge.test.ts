@@ -171,4 +171,54 @@ describe('Config Merge', () => {
       expect(result.logLevel).toBe('error');
     });
   });
+
+  describe('mode / allowedPaths（双模式）', () => {
+    beforeEach(() => {
+      process.env.PEEKVIEW_URL = 'http://url:8080';
+      process.env.PEEKVIEW_PUBLIC_URL = 'http://public:8080';
+    });
+
+    it('默认 mode 为 remote', () => {
+      const result = mergeConfig(null, process.env);
+      expect(result.mode).toBe('remote');
+      expect(result.allowedPaths).toEqual([]);
+    });
+
+    it('从文件读取 mode=local 和 allowed_paths', () => {
+      const fileConfig: ConfigFileData = {
+        server: { mode: 'local', allowed_paths: ['/home/alice/projects', '/tmp'] },
+      };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.mode).toBe('local');
+      expect(result.allowedPaths).toEqual(['/home/alice/projects', '/tmp']);
+    });
+
+    it('环境变量 MCP_MODE 覆盖文件', () => {
+      process.env.MCP_MODE = 'local';
+      const fileConfig: ConfigFileData = { server: { mode: 'remote' } };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.mode).toBe('local');
+    });
+
+    it('环境变量 MCP_ALLOWED_PATHS 冒号分隔覆盖文件', () => {
+      process.env.MCP_ALLOWED_PATHS = '/a:/b:/c';
+      const fileConfig: ConfigFileData = {
+        server: { allowed_paths: ['/should-be-overridden'] },
+      };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.allowedPaths).toEqual(['/a', '/b', '/c']);
+    });
+
+    it('非法 mode 值抛错', () => {
+      process.env.MCP_MODE = 'invalid';
+      expect(() => mergeConfig(null, process.env)).toThrow(/must be 'local' or 'remote'/);
+    });
+
+    it('local 模式无 allowed_paths 不抛错（仅 warning + cwd fallback）', () => {
+      const fileConfig: ConfigFileData = { server: { mode: 'local' } };
+      const result = mergeConfig(fileConfig, process.env);
+      expect(result.mode).toBe('local');
+      expect(result.allowedPaths).toEqual([]);
+    });
+  });
 });

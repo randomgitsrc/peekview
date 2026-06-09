@@ -10,6 +10,22 @@ import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
 import type { SessionContext } from '../src/types.js';
 
+import type { ServerConfig } from '../src/config.js';
+
+function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): ServerConfig {
+  return {
+    peekviewUrl: 'http://localhost:8080',
+    publicUrl: 'http://localhost:8080',
+    port: 33333,
+    host: '0.0.0.0',
+    corsOrigins: ['*'],
+    logLevel: 'info',
+    mode,
+    allowedPaths,
+  };
+}
+
+
 const mockServer = setupServer();
 
 beforeAll(() => mockServer.listen());
@@ -37,7 +53,7 @@ describe('SSE Server', () => {
     // Mock ping for health check tests
     client.ping = async () => true;
 
-    const tools = createTools(client, 'http://localhost:8080');
+    const tools = createTools(client, makeConfig('remote'));
     const server = createMCPServer(tools);
     app = createExpressApp(server, {
       peekviewUrl: 'http://localhost:8080',
@@ -193,7 +209,7 @@ describe('SSE Server', () => {
         })
       );
 
-      const tools = createTools(client, 'http://localhost:8080');
+      const tools = createTools(client, makeConfig('remote'));
       const createEntry = tools.find(t => t.name === 'create_entry');
       const result = await createEntry!.handler(
         { summary: 'Test', files: [{ filename: 't.txt', content: 'x' }] },
@@ -213,7 +229,7 @@ describe('SSE Server', () => {
         })
       );
 
-      const tools = createTools(client, 'http://localhost:8080');
+      const tools = createTools(client, makeConfig('remote'));
       const deleteEntry = tools.find(t => t.name === 'delete_entry');
       const result = await deleteEntry!.handler(
         { slug: 'some-entry', confirm: true },

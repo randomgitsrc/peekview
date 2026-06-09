@@ -18,6 +18,8 @@ export interface ConfigFileData {
     host?: string;
     port?: number;
     cors_origins?: string;
+    mode?: 'local' | 'remote';
+    allowed_paths?: string[];
   };
   logging?: {
     level?: string;

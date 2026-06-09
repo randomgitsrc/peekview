@@ -80,21 +80,21 @@ Agent 生成内容 → write_file("/tmp/x.md", content) → publish_files({paths
 
 ## 四、验收标准
 
-- [ ] AC1: MCP Server 支持 `mode: remote | local`，默认 `remote`
-- [ ] AC2: remote 模式暴露 `create_entry/get_entry/list_entries/delete_entry`，**不暴露** `publish_files`
-- [ ] AC3: local 模式暴露 `publish_files/get_entry/list_entries/delete_entry`，**不暴露** `create_entry`
-- [ ] AC4: `publish_files` 支持绝对路径文件和目录递归扫描
-- [ ] AC5: `publish_files` 工具描述明确"不要先 read_file"
-- [ ] AC6: `publish_files` 实现敏感路径黑名单，优先级最高
-- [ ] AC7: `publish_files` 支持 `allowed_paths` 显式 allowlist
-- [ ] AC8: local 模式未配置 `allowed_paths` 时不拒绝启动，仅允许 cwd 范围内路径并输出 warning
-- [ ] AC9: `publish_files` 从文件路径自动推断文件名和后缀（不要求 Agent 填写）
-- [ ] AC10: `publish_files` 返回 skipped files 及 reason
-- [ ] AC11: 文件数/单文件/总大小限制与后端对齐并留余量
-- [ ] AC12: `publish_files` 使用 `fs.realpath` 解析符号链接后再做边界检查
-- [ ] AC13: `spec-mcp-publish-files.md` 顶部声明已被双模式 spec 取代
-- [ ] AC14: 单元测试覆盖 local/remote 工具列表、路径安全、目录扫描、跳过原因、文件名推断
-- [ ] AC15: 旧 `mcp-local-remote-mode-v0.7.md` 标注工具策略已被本文取代
+- [x] AC1: MCP Server 支持 `mode: remote | local`，默认 `remote`
+- [x] AC2: remote 模式暴露 `create_entry/get_entry/list_entries/delete_entry`，**不暴露** `publish_files`
+- [x] AC3: local 模式暴露 `publish_files/get_entry/list_entries/delete_entry`，**不暴露** `create_entry`
+- [x] AC4: `publish_files` 支持绝对路径文件和目录递归扫描
+- [x] AC5: `publish_files` 工具描述明确"不要先 read_file"
+- [x] AC6: `publish_files` 实现敏感路径黑名单，优先级最高
+- [x] AC7: `publish_files` 支持 `allowed_paths` 显式 allowlist
+- [x] AC8: local 模式未配置 `allowed_paths` 时不拒绝启动，仅允许 cwd 范围内路径并输出 warning
+- [x] AC9: `publish_files` 从文件路径自动推断文件名和后缀（不要求 Agent 填写）
+- [x] AC10: `publish_files` 返回 skipped files 及 reason
+- [x] AC11: 文件数/单文件/总大小限制与后端对齐并留余量
+- [x] AC12: `publish_files` 使用 `fs.realpath` 解析符号链接后再做边界检查
+- [x] AC13: `spec-mcp-publish-files.md` 顶部声明已被双模式 spec 取代
+- [x] AC14: 单元测试覆盖 local/remote 工具列表、路径安全、目录扫描、跳过原因、文件名推断
+- [x] AC15: 旧 `mcp-local-remote-mode-v0.7.md` 标注工具策略已被本文取代
 
 ---
 
