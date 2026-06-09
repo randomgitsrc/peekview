@@ -2,14 +2,16 @@
  * PeekView MCP Server Type Definitions
  */
 
-// File object for entry creation
+import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
 export interface EntryFile {
   filename: string;
   content: string;
   path?: string;
 }
 
-// Entry creation request - matches backend CreateEntryRequest
 export interface CreateEntryRequest {
   slug?: string;
   summary: string;
@@ -19,7 +21,6 @@ export interface CreateEntryRequest {
   is_public?: boolean;
 }
 
-// Entry file in response
 export interface EntryFileResponse {
   id: number;
   filename: string;
@@ -28,7 +29,6 @@ export interface EntryFileResponse {
   size: number;
 }
 
-// Entry response from API
 export interface EntryResponse {
   id: number;
   slug: string;
@@ -40,7 +40,6 @@ export interface EntryResponse {
   is_public: boolean;
 }
 
-// List entries response
 export interface ListEntriesResponse {
   items: EntryResponse[];
   total: number;
@@ -48,7 +47,6 @@ export interface ListEntriesResponse {
   per_page: number;
 }
 
-// Server configuration (no apiKey/mcpToken - users bring their own pv_ keys)
 export interface ServerConfig {
   peekviewUrl: string;
   publicUrl: string;
@@ -61,25 +59,23 @@ export interface ServerConfig {
   configPath?: string | null;
 }
 
-// Session context for tool handlers (from AsyncLocalStorage)
 export interface SessionContext {
-  userToken: string;   // pv_xxx API Key
-  userId: number;      // PeekView user ID
-  username: string;    // PeekView username
-}
-
-// Session info stored in memory
-export interface SessionInfo {
-  transport: SSEServerTransport;
   userToken: string;
   userId: number;
   username: string;
 }
 
-// Tool handler type - receives args + session context
+export interface SessionInfo {
+  transport: StreamableHTTPServerTransport;
+  server: Server;
+  userToken: string;
+  userId: number;
+  username: string;
+  lastActivity: number;
+}
+
 export type ToolHandler = (args: unknown, context: SessionContext) => Promise<ToolResult>;
 
-// Tool definition
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -87,7 +83,6 @@ export interface ToolDefinition {
   handler: ToolHandler;
 }
 
-// Tool result — compatible with SDK CallToolResult
 export interface ToolResult {
   content: Array<{
     type: 'text' | 'image' | 'resource';
@@ -98,15 +93,10 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-// Explicit conversion from ToolResult to SDK CallToolResult
-// Makes type mismatch intentional and catchable on SDK upgrades
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-
 export function toSDKResult(result: ToolResult): CallToolResult {
   return result as CallToolResult;
 }
 
-// PeekView API error
 export class PeekViewApiError extends Error {
   status: number;
 
@@ -115,6 +105,3 @@ export class PeekViewApiError extends Error {
     this.status = status;
   }
 }
-
-// SSEServerTransport type reference (imported from SDK)
-import type { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';

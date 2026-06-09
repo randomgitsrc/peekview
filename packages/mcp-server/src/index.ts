@@ -73,8 +73,7 @@ const serveCommand = new Command('serve')
       // Create client and server
       const client = new PeekViewClient({ peekviewUrl: config.peekviewUrl });
       const tools = createTools(client, config);
-      const mcpServer = createMCPServer(tools);
-      const app = createExpressApp(mcpServer, {
+      const app = createExpressApp(tools, {
         peekviewUrl: config.peekviewUrl,
         publicUrl: config.publicUrl,
         port,

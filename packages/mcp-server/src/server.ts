@@ -1,5 +1,5 @@
 /**
- * MCP Server with SSE transport and user token passthrough
+ * MCP Server with Streamable HTTP transport and user token passthrough
  */
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -7,10 +7,11 @@ import { dirname, join } from 'path';
 import cors from 'cors';
 import express from 'express';
 import { AsyncLocalStorage } from 'async_hooks';
-import { validate as validateUUID } from 'uuid';
+import { randomUUID } from 'crypto';
 import { pino } from 'pino';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -22,7 +23,6 @@ import { toSDKResult } from './types.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { version } = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
-// Module-level logger (available in tool handlers and Express routes)
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   transport: process.env.NODE_ENV === 'development'
@@ -90,103 +90,213 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
   return server;
 }
 
-// AsyncLocalStorage for session context propagation
 const sessionContext = new AsyncLocalStorage<SessionContext>();
 
-// Session store
 const sessions = new Map<string, SessionInfo>();
 
+const SESSION_IDLE_TIMEOUT = 30 * 60 * 1000;
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+let cleanupStarted = false;
+
+function startSessionCleanup() {
+  if (cleanupStarted) return;
+  cleanupStarted = true;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [id, entry] of sessions) {
+      if (now - entry.lastActivity > SESSION_IDLE_TIMEOUT) {
+        entry.transport.close?.();
+        sessions.delete(id);
+        logger.info({ sessionId: id }, 'Session idle timeout, cleaned up');
+      }
+    }
+  }, CLEANUP_INTERVAL);
+}
+
+async function authenticate(
+  req: express.Request,
+  client: PeekViewClient
+): Promise<
+  { ok: true; userId: number; username: string; userToken: string }
+  | { ok: false; status: number; error: string }
+> {
+  const authHeader = req.headers.authorization?.replace('Bearer ', '') ?? '';
+
+  if (!authHeader.startsWith('pv_')) {
+    return { ok: false, status: 401, error: 'Only PeekView API Key (pv_ prefix) is supported' };
+  }
+
+  try {
+    const userInfo = await client.validateToken(authHeader);
+    if (!userInfo) {
+      return { ok: false, status: 401, error: 'Invalid or expired API Key' };
+    }
+    return { ok: true, userId: userInfo.id, username: userInfo.username, userToken: authHeader };
+  } catch {
+    logger.warn('PeekView unreachable during auth');
+    return { ok: false, status: 503, error: 'PeekView unreachable, please try again later' };
+  }
+}
+
+function isValidOrigin(origin: string | undefined, allowedOrigins: string[]): boolean {
+  if (!origin) return true;
+
+  const alwaysAllowed = [
+    'http://localhost',
+    'http://127.0.0.1',
+    'https://localhost',
+    'https://127.0.0.1',
+  ];
+
+  if (alwaysAllowed.some(allowed => origin.startsWith(allowed))) {
+    return true;
+  }
+
+  // DNS rebinding protection: even with CORS *, validate explicit origins
+  // Only allow origins that are explicitly listed (not wildcard)
+  return allowedOrigins.some(allowed => {
+    if (allowed === '*') return false;
+    return origin === allowed || origin.startsWith(allowed);
+  });
+}
+
 export function createExpressApp(
-  server: Server,
+  tools: ToolDefinition[],
   config: ServerConfig,
   client: PeekViewClient
 ): express.Application {
   const app = express();
 
+  startSessionCleanup();
+
   const corsOrigins = process.env.MCP_CORS_ORIGINS?.split(',') || config.corsOrigins;
   app.use(cors({
     origin: corsOrigins,
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'mcp-session-id'],
+    exposedHeaders: ['mcp-session-id'],
   }));
+
+  app.use(express.json());
 
   app.use((req, res, next) => {
     logger.info({ method: req.method, path: req.path }, 'request');
     next();
   });
 
-  // SSE endpoint - pv_ prefix check + validateToken
-  app.get('/sse', async (req, res) => {
-    const authHeader = req.headers.authorization?.replace('Bearer ', '') ?? '';
-
-    // Must be pv_ prefix (reject JWT)
-    if (!authHeader.startsWith('pv_')) {
-      res.status(401).json({ error: 'Only PeekView API Key (pv_ prefix) is supported' });
+  app.post('/mcp', async (req, res) => {
+    // Origin check (DNS rebinding protection)
+    const origin = req.headers.origin;
+    if (!isValidOrigin(origin, corsOrigins)) {
+      res.status(403).json({ error: 'Invalid Origin header' });
       return;
     }
 
-    // Validate token with PeekView
-    let userInfo: { id: number; username: string } | null;
-    try {
-      userInfo = await client.validateToken(authHeader);
-      if (!userInfo) {
-        res.status(401).json({ error: 'Invalid or expired API Key' });
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+
+    // Existing session: reuse transport
+    if (sessionId && sessions.has(sessionId)) {
+      const entry = sessions.get(sessionId)!;
+      entry.lastActivity = Date.now();
+      return sessionContext.run(
+        { userToken: entry.userToken, userId: entry.userId, username: entry.username },
+        () => entry.transport.handleRequest(req, res, req.body)
+      );
+    }
+
+    // New session: must be initialize request
+    if (!sessionId && isInitializeRequest(req.body)) {
+      const auth = await authenticate(req, client);
+      if (!auth.ok) {
+        res.status(auth.status).json({ error: auth.error });
         return;
       }
-    } catch (e) {
-      // Timeout or connection error → 503, not 401
-      logger.warn({ error: e }, 'PeekView unreachable during SSE auth');
-      res.status(503).json({ error: 'PeekView unreachable, please try again later' });
+
+      const ctx: SessionContext = {
+        userToken: auth.userToken,
+        userId: auth.userId,
+        username: auth.username,
+      };
+
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        enableJsonResponse: true,
+      });
+
+      transport.onclose = () => {
+        if (transport.sessionId) {
+          sessions.delete(transport.sessionId);
+          logger.info({ sessionId: transport.sessionId }, 'Session closed');
+        }
+      };
+
+      const server = createMCPServer(tools);
+      await server.connect(transport);
+
+      // Register session after onsessioninitialized equivalent
+      // StreamableHTTPServerTransport sets sessionId during handleRequest for initialize
+      // We need to capture it after the first handleRequest
+      const originalSessionId = transport.sessionId;
+      if (originalSessionId) {
+        sessions.set(originalSessionId, {
+          transport,
+          server,
+          ...ctx,
+          lastActivity: Date.now(),
+        });
+      }
+
+      // Handle the initialize request within context
+      await sessionContext.run(ctx, () =>
+        transport.handleRequest(req, res, req.body)
+      );
+
+      // After handleRequest, sessionId should be set
+      if (transport.sessionId && !sessions.has(transport.sessionId)) {
+        sessions.set(transport.sessionId, {
+          transport,
+          server,
+          ...ctx,
+          lastActivity: Date.now(),
+        });
+      }
+
       return;
     }
 
-    // SDK auto-generates sessionId and appends ?sessionId= to the endpoint event.
-    // Passing just '/messages' (not '/messages?sessionId=...') avoids double sessionId.
-    // Verified: SSEServerTransport.sessionId is a getter returning SDK-generated UUID.
-    const transport = new SSEServerTransport('/messages', res);
-    const sessionId = transport.sessionId;
-
-    sessions.set(sessionId, {
-      transport,
-      userToken: authHeader,
-      userId: userInfo!.id,
-      username: userInfo!.username,
-    });
-
-    res.on('close', () => {
-      sessions.delete(sessionId);
-    });
-
-    await server.connect(transport);
+    // No valid session and not an initialize request
+    res.status(400).json({ error: 'No valid session or not an initialize request' });
   });
 
-  // Message endpoint - session-based auth (no Authorization header from client)
-  app.post('/messages', async (req, res) => {
-    const sessionId = req.query.sessionId as string;
+  // GET /mcp — SSE stream for server-initiated notifications (not used in initial implementation)
+  // Will be enabled when progress notifications are added
+  app.get('/mcp', async (_req, res) => {
+    res.status(405).json({ error: 'SSE streaming not yet implemented. Use POST /mcp with enableJsonResponse.' });
+  });
 
-    if (!sessionId || !validateUUID(sessionId)) {
-      res.status(400).json({ error: 'Invalid sessionId format' });
-      return;
-    }
-
-    const sessionInfo = sessions.get(sessionId);
-    if (!sessionInfo) {
+  // DELETE /mcp — session termination
+  app.delete('/mcp', async (req, res) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    if (sessionId && sessions.has(sessionId)) {
+      const entry = sessions.get(sessionId)!;
+      try {
+        await entry.transport.close();
+      } catch (e) {
+        logger.warn({ sessionId, error: e }, 'Error closing transport during DELETE');
+      }
+      sessions.delete(sessionId);
+      logger.info({ sessionId }, 'Session terminated via DELETE');
+      res.status(200).json({ ok: true });
+    } else {
       res.status(404).json({ error: 'Session not found' });
-      return;
     }
-
-    // Run in AsyncLocalStorage context for tool handlers
-    sessionContext.run(
-      { userToken: sessionInfo.userToken, userId: sessionInfo.userId, username: sessionInfo.username },
-      () => sessionInfo.transport.handlePostMessage(req, res)
-    );
   });
 
   // Health check
   app.get('/health', async (_req, res) => {
     const isPeekViewHealthy = await client.ping();
 
-    // Build enhanced health response
     const healthResponse: any = {
       status: isPeekViewHealthy ? 'ok' : 'degraded',
       version,
@@ -211,3 +321,5 @@ export function createExpressApp(
 
   return app;
 }
+
+export { sessionContext, sessions, logger };

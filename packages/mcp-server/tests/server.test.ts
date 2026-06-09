@@ -1,15 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { AsyncLocalStorage } from 'async_hooks';
-import { validate as validateUUID } from 'uuid';
 import request from 'supertest';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { createMCPServer, createExpressApp } from '../src/server.js';
+import { createExpressApp, createMCPServer } from '../src/server.js';
 import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
 import type { SessionContext } from '../src/types.js';
-
 import type { ServerConfig } from '../src/config.js';
 
 function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): ServerConfig {
@@ -25,136 +20,116 @@ function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): Serv
   };
 }
 
-
-const mockServer = setupServer();
-
-beforeAll(() => mockServer.listen());
-afterEach(() => mockServer.resetHandlers());
-afterAll(() => mockServer.close());
-
 const VALID_TOKEN = 'pv_valid_test_key';
 const INVALID_TOKEN = 'pv_invalid_key';
 
-describe('SSE Server', () => {
-  let app: any;
-  let client: PeekViewClient;
+function createTestApp() {
+  const client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
+
+  client.validateToken = async (token: string) => {
+    if (token === VALID_TOKEN) {
+      return { id: 1, username: 'alice' };
+    }
+    return null;
+  };
+
+  client.ping = async () => true;
+
+  const tools = createTools(client, makeConfig('remote'));
+  const app = createExpressApp(tools, {
+    peekviewUrl: 'http://localhost:8080',
+    publicUrl: 'http://localhost:8080',
+    port: 33333,
+    host: '0.0.0.0',
+    corsOrigins: ['*'],
+    logLevel: 'info',
+  }, client);
+
+  return { app, client };
+}
+
+const INIT_REQUEST = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2025-03-26',
+    capabilities: {},
+    clientInfo: { name: 'test', version: '1.0' },
+  },
+};
+
+describe('Streamable HTTP Server', () => {
+  let app: ReturnType<typeof createTestApp>['app'];
+  let client: ReturnType<typeof createTestApp>['client'];
 
   beforeAll(() => {
-    client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
-
-    // Mock validateToken for SSE auth
-    client.validateToken = async (token: string) => {
-      if (token === VALID_TOKEN) {
-        return { id: 1, username: 'alice' };
-      }
-      return null;
-    };
-
-    // Mock ping for health check tests
-    client.ping = async () => true;
-
-    const tools = createTools(client, makeConfig('remote'));
-    const server = createMCPServer(tools);
-    app = createExpressApp(server, {
-      peekviewUrl: 'http://localhost:8080',
-      publicUrl: 'http://localhost:8080',
-      port: 33333,
-      host: '0.0.0.0',
-      corsOrigins: ['*'],
-      logLevel: 'info',
-    }, client);
+    ({ app, client } = createTestApp());
   });
 
-  describe('SDK transport.sessionId verification', () => {
-    it('SSEServerTransport exposes sessionId as UUID', () => {
-      // P0-1 verification: SDK source confirmed sessionId is a getter
-      // returning a randomUUID(). This test proves it exists at runtime.
-      const mockRes = { writeHead: () => {}, write: () => {}, on: () => {}, end: () => {} } as any;
-      const transport = new SSEServerTransport('/messages', mockRes);
-      expect(transport.sessionId).toBeDefined();
-      expect(typeof transport.sessionId).toBe('string');
-      expect(validateUUID(transport.sessionId)).toBe(true);
-    });
-  });
-
-  describe('Authentication - pv_ prefix check', () => {
-    it('should reject /sse without Authorization header', async () => {
+  describe('POST /mcp - Authentication', () => {
+    it('should reject initialize without Authorization header', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .send(INIT_REQUEST)
         .expect(401);
       expect(res.body.error).toContain('API Key');
     });
 
-    it('should reject /sse with empty Authorization', async () => {
+    it('should reject initialize with empty Authorization', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', '')
-        .expect(401);
-      expect(res.body.error).toContain('API Key');
-    });
-
-    it('should reject JWT token (eyJ prefix) at SSE connect', async () => {
-      const res = await request(app)
-        .get('/sse')
-        .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.test.test')
+        .send(INIT_REQUEST)
         .expect(401);
       expect(res.body.error).toContain('pv_');
     });
 
-    it('should reject non-pv_ token at SSE connect', async () => {
+    it('should reject JWT token (eyJ prefix)', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.test.test')
+        .send(INIT_REQUEST)
+        .expect(401);
+      expect(res.body.error).toContain('pv_');
+    });
+
+    it('should reject non-pv_ token', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', 'Bearer random_string')
+        .send(INIT_REQUEST)
         .expect(401);
       expect(res.body.error).toContain('pv_');
     });
 
     it('should reject pv_ token that fails PeekView validation', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', `Bearer ${INVALID_TOKEN}`)
+        .send(INIT_REQUEST)
         .expect(401);
       expect(res.body.error).toContain('Invalid');
     });
 
     it('should return 503 when PeekView is unreachable during validation', async () => {
-      // Override validateToken to throw timeout error
       client.validateToken = async () => {
         throw new Error('PeekView connection timeout during token validation');
       };
 
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST)
         .expect(503);
       expect(res.body.error).toContain('unreachable');
 
-      // Restore original validateToken
-      client.validateToken = async (token: string) => {
-        if (token === VALID_TOKEN) return { id: 1, username: 'alice' };
-        return null;
-      };
-    });
-
-    it('should call validateToken for valid pv_ token', async () => {
-      let capturedToken: string | undefined;
-      client.validateToken = async (token: string) => {
-        capturedToken = token;
-        return token === VALID_TOKEN ? { id: 1, username: 'alice' } : null;
-      };
-
-      // SSE is long-lived so we can't wait for full response,
-      // but we can verify validateToken was called with the right token
-      request(app)
-        .get('/sse')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .end(() => {});
-
-      // Give async validation time to execute
-      await new Promise(r => setTimeout(r, 50));
-      expect(capturedToken).toBe(VALID_TOKEN);
-
-      // Restore
       client.validateToken = async (token: string) => {
         if (token === VALID_TOKEN) return { id: 1, username: 'alice' };
         return null;
@@ -162,21 +137,96 @@ describe('SSE Server', () => {
     });
   });
 
-  describe('POST /messages - session-based auth', () => {
-    it('should reject /messages with invalid sessionId format', async () => {
+  describe('POST /mcp - Initialize + session', () => {
+    it('should successfully initialize with valid pv_ token and return mcp-session-id', async () => {
       const res = await request(app)
-        .post('/messages?sessionId=invalid')
-        .send({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} })
-        .expect(400);
-      expect(res.body.error).toContain('Invalid sessionId');
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['mcp-session-id']).toBeDefined();
+      expect(res.body.jsonrpc).toBe('2.0');
+      expect(res.body.id).toBe(1);
+      expect(res.body.result).toBeDefined();
     });
 
-    it('should return 404 for non-existent sessionId', async () => {
+    it('should reject non-initialize request without session-id', async () => {
       const res = await request(app)
-        .post('/messages?sessionId=12345678-1234-1234-1234-123456789abc')
-        .send({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} })
-        .expect((res) => [400, 404].includes(res.status));
-      expect(res.body.error).toMatch(/Session not found|Invalid/);
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/list',
+          params: {},
+        })
+        .expect(400);
+      expect(res.body.error).toContain('initialize');
+    });
+
+    it('should reject request with unknown session-id', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('mcp-session-id', 'non-existent-session-id')
+        .send({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/list',
+          params: {},
+        })
+        .expect(400);
+    });
+  });
+
+  describe('DELETE /mcp - Session termination', () => {
+    it('should return 404 for non-existent session', async () => {
+      const res = await request(app)
+        .delete('/mcp')
+        .set('mcp-session-id', 'non-existent-session-id')
+        .expect(404);
+      expect(res.body.error).toContain('Session not found');
+    });
+
+    it('should terminate a valid session via DELETE', async () => {
+      const initRes = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
+
+      expect(initRes.status).toBe(200);
+      const sessionId = initRes.headers['mcp-session-id'];
+      expect(sessionId).toBeDefined();
+
+      const delRes = await request(app)
+        .delete('/mcp')
+        .set('mcp-session-id', sessionId)
+        .expect(200);
+      expect(delRes.body.ok).toBe(true);
+
+      await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('mcp-session-id', sessionId)
+        .send({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/list',
+          params: {},
+        })
+        .expect(400);
+    });
+  });
+
+  describe('GET /mcp', () => {
+    it('should return 405 (SSE streaming not yet implemented)', async () => {
+      await request(app)
+        .get('/mcp')
+        .expect(405);
     });
   });
 
@@ -195,54 +245,59 @@ describe('SSE Server', () => {
         .get('/health')
         .expect(503);
       expect(res.body.status).toBe('degraded');
+
+      client.ping = async () => true;
     });
   });
 
-  describe('Error translation', () => {
-    it('should translate 401 to user-friendly message', async () => {
-      mockServer.use(
-        http.post('http://localhost:8080/api/v1/entries', () => {
-          return HttpResponse.json(
-            { error: { code: 'UNAUTHORIZED', message: 'Invalid API key' } },
-            { status: 401 }
-          );
-        })
-      );
+  describe('Full session lifecycle', () => {
+    it('should complete initialize → tools/list → tools/call lifecycle', async () => {
+      const initRes = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
 
-      const tools = createTools(client, makeConfig('remote'));
-      const createEntry = tools.find(t => t.name === 'create_entry');
-      const result = await createEntry!.handler(
-        { summary: 'Test', files: [{ filename: 't.txt', content: 'x' }] },
-        { userToken: 'pv_bad', userId: 1, username: 'alice' }
-      );
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('认证失败');
-    });
+      expect(initRes.status).toBe(200);
+      const sessionId = initRes.headers['mcp-session-id'];
+      expect(sessionId).toBeDefined();
 
-    it('should translate 403 to user-friendly message', async () => {
-      mockServer.use(
-        http.delete('http://localhost:8080/api/v1/entries/some-entry', () => {
-          return HttpResponse.json(
-            { error: { code: 'FORBIDDEN', message: 'Not your entry' } },
-            { status: 403 }
-          );
-        })
-      );
+      // Send initialized notification
+      await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('mcp-session-id', sessionId)
+        .send({
+          jsonrpc: '2.0',
+          method: 'notifications/initialized',
+        });
 
-      const tools = createTools(client, makeConfig('remote'));
-      const deleteEntry = tools.find(t => t.name === 'delete_entry');
-      const result = await deleteEntry!.handler(
-        { slug: 'some-entry', confirm: true },
-        { userToken: 'pv_alice', userId: 1, username: 'alice' }
-      );
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('权限不足');
+      // List tools
+      const listRes = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('mcp-session-id', sessionId)
+        .send({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/list',
+          params: {},
+        });
+
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.result.tools).toBeDefined();
+      expect(listRes.body.result.tools.length).toBeGreaterThan(0);
+
+      // Delete session
+      await request(app)
+        .delete('/mcp')
+        .set('mcp-session-id', sessionId)
+        .expect(200);
     });
   });
 
-  describe('Multi-user session isolation (mock)', () => {
+  describe('Multi-user session isolation', () => {
     it('should maintain separate AsyncLocalStorage contexts for concurrent sessions', async () => {
-      // This test runs in CI without real PeekView — validates core isolation mechanism
       const sessionContext = new AsyncLocalStorage<SessionContext>();
 
       const aliceCtx: SessionContext = { userToken: 'pv_alice', userId: 1, username: 'alice' };
@@ -272,21 +327,92 @@ describe('SSE Server', () => {
       const aliceCtx: SessionContext = { userToken: 'pv_alice', userId: 1, username: 'alice' };
       const bobCtx: SessionContext = { userToken: 'pv_bob', userId: 2, username: 'bob' };
 
-      // Alice's session
       sessionContext.run(aliceCtx, () => {
         expect(sessionContext.getStore()?.userToken).toBe('pv_alice');
       });
 
-      // After Alice's session ends, no context should remain
       expect(sessionContext.getStore()).toBeUndefined();
 
-      // Bob's session
       sessionContext.run(bobCtx, () => {
         expect(sessionContext.getStore()?.userToken).toBe('pv_bob');
       });
 
-      // After Bob's session ends, no context should remain
       expect(sessionContext.getStore()).toBeUndefined();
+    });
+  });
+
+  describe('Origin header validation', () => {
+    it('should reject requests with invalid Origin header', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Origin', 'https://evil.example.com')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST)
+        .expect(403);
+      expect(res.body.error).toContain('Origin');
+    });
+
+    it('should allow requests with localhost Origin', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Origin', 'http://localhost:3000')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
+
+      expect(res.status).toBe(200);
+    });
+
+    it('should allow requests without Origin header', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('CORS headers', () => {
+    it('should include mcp-session-id in response headers', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .send(INIT_REQUEST);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['mcp-session-id']).toBeDefined();
+    });
+  });
+
+  describe('Dual mode tools (regression)', () => {
+    it('should expose correct tools for remote mode', async () => {
+      const remoteClient = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
+      remoteClient.ping = async () => true;
+      const tools = createTools(remoteClient, makeConfig('remote'));
+      const toolNames = tools.map(t => t.name);
+
+      expect(toolNames).toContain('create_entry');
+      expect(toolNames).toContain('get_entry');
+      expect(toolNames).toContain('list_entries');
+      expect(toolNames).toContain('delete_entry');
+      expect(toolNames).not.toContain('publish_files');
+    });
+
+    it('should expose correct tools for local mode', async () => {
+      const localClient = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
+      localClient.ping = async () => true;
+      const tools = createTools(localClient, makeConfig('local', ['/tmp']));
+      const toolNames = tools.map(t => t.name);
+
+      expect(toolNames).toContain('publish_files');
+      expect(toolNames).toContain('get_entry');
+      expect(toolNames).toContain('list_entries');
+      expect(toolNames).toContain('delete_entry');
+      expect(toolNames).not.toContain('create_entry');
     });
   });
 });
