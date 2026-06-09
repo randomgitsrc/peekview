@@ -1,7 +1,7 @@
 {
   "name": "@peekview/mcp-server",
   "version": "0.7.3",
-  "description": "MCP Server for PeekView - AI Agent integration (SSE transport)",
+  "description": "MCP Server for PeekView - AI Agent integration (Streamable HTTP transport)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -37,7 +37,7 @@
     "ai",
     "agent",
     "claude",
-    "sse"
+    "streamable-http"
   ],
   "author": "PeekView Team",
   "license": "MIT",

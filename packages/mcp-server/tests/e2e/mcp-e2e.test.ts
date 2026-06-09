@@ -1,13 +1,13 @@
 /**
- * MCP Server E2E Tests (v0.2.0 multi-user)
+ * MCP Server E2E Tests (v0.8.0 Streamable HTTP)
  *
- * Tests the full SSE flow: connect → session → tool invocation → response
+ * Tests the full Streamable HTTP flow: initialize → session → tool invocation → response
  * Requires real PeekView backend running
  *
- * Run with: PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=pv_xxx npm run test:e2e
+ * Run with: PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=pv_xxx npm run test:e2e:node
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createMCPServer, createExpressApp } from '../../src/server.js';
+import { createExpressApp } from '../../src/server.js';
 import { PeekViewClient } from '../../src/client.js';
 import { createTools } from '../../src/tools/index.js';
 import request from 'supertest';
@@ -19,10 +19,20 @@ const PEEKVIEW_API_KEY = process.env.PEEKVIEW_API_KEY || '';
 let backendAvailable = false;
 let userInfo: { id: number; username: string } | null = null;
 
-// Shared client/tools/server/app — created once in beforeAll
 let client: PeekViewClient;
 let tools: ReturnType<typeof createTools>;
 let app: ReturnType<typeof createExpressApp>;
+
+const INIT_REQUEST = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2025-03-26',
+    capabilities: {},
+    clientInfo: { name: 'e2e-test', version: '1.0' },
+  },
+};
 
 beforeAll(async () => {
   try {
@@ -35,11 +45,18 @@ beforeAll(async () => {
     userInfo = await client.validateToken(PEEKVIEW_API_KEY);
   }
 
-  // Build shared app once (no key/token needed for server creation)
   client = client ?? new PeekViewClient({ peekviewUrl: PEEKVIEW_URL });
-  tools = createTools(client, PEEKVIEW_PUBLIC_URL);
-  const server = createMCPServer(tools);
-  app = createExpressApp(server, {
+  tools = createTools(client, {
+    peekviewUrl: PEEKVIEW_URL,
+    publicUrl: PEEKVIEW_PUBLIC_URL,
+    port: 33333,
+    host: '0.0.0.0',
+    corsOrigins: ['*'],
+    logLevel: 'info',
+    mode: 'remote',
+    allowedPaths: [],
+  });
+  app = createExpressApp(tools, {
     peekviewUrl: PEEKVIEW_URL,
     publicUrl: PEEKVIEW_PUBLIC_URL,
     port: 33333,
@@ -59,20 +76,24 @@ const itIfReady = (name: string, fn: () => Promise<void>) => {
   });
 };
 
-describe('E2E: SSE Server + PeekView Backend', () => {
-  describe('SSE auth with real backend', () => {
-    itIfReady('should reject SSE with invalid pv_ key (validated against real backend)', async () => {
+describe('E2E: Streamable HTTP Server + PeekView Backend', () => {
+  describe('Streamable HTTP auth with real backend', () => {
+    itIfReady('should reject /mcp initialize with invalid pv_ key', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', 'Bearer pv_totally_fake_invalid_key')
+        .send(INIT_REQUEST)
         .expect(401);
 
       expect(res.body.error).toContain('Invalid');
     });
 
-    it('should reject SSE without any auth header', async () => {
+    it('should reject /mcp initialize without any auth header', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .send(INIT_REQUEST)
         .expect(401);
 
       expect(res.body.error).toContain('pv_');
@@ -80,8 +101,10 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
     it('should reject JWT token even if valid format', async () => {
       const res = await request(app)
-        .get('/sse')
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig')
+        .send(INIT_REQUEST)
         .expect(401);
 
       expect(res.body.error).toContain('pv_');
@@ -95,16 +118,20 @@ describe('E2E: SSE Server + PeekView Backend', () => {
         .expect(200);
 
       expect(res.body.status).toBe('ok');
-      expect(res.body.version).toBe('0.2.0');
     });
   });
 
-  describe('Full SSE → tool invocation flow', () => {
-    itIfReady('should establish SSE session and get valid sessionId', async () => {
-      // SSE is long-lived, supertest can't fully handle SSE stream.
-      // Auth gate is verified by rejection tests above; full SSE flow
-      // tested via curl integration.
-      expect(true).toBe(true);
+  describe('Full Streamable HTTP → tool invocation flow', () => {
+    itIfReady('should initialize session and return mcp-session-id', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${PEEKVIEW_API_KEY}`)
+        .send(INIT_REQUEST)
+        .expect(200);
+
+      expect(res.headers['mcp-session-id']).toBeDefined();
+      expect(res.body.result).toBeDefined();
     });
 
     itIfReady('should call create_entry via tool handler with real backend', async () => {
@@ -125,7 +152,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
       expect(result.content[0].text).toContain('Entry created successfully');
       expect(result.content[0].text).toContain(slug);
 
-      // Verify in PeekView backend
       const verifyRes = await fetch(`${PEEKVIEW_URL}/api/v1/entries/${slug}`, {
         headers: { Authorization: `Bearer ${PEEKVIEW_API_KEY}` },
       });
@@ -133,7 +159,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
       const entry = await verifyRes.json();
       expect(entry.owner_id).toBe(userInfo!.id);
 
-      // Cleanup
       await fetch(`${PEEKVIEW_URL}/api/v1/entries/${slug}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${PEEKVIEW_API_KEY}` },
@@ -168,7 +193,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
       const createEntry = tools.find(t => t.name === 'create_entry');
       const deleteEntry = tools.find(t => t.name === 'delete_entry');
 
-      // Create entry to delete
       const slug = `e2e-delete-${Date.now()}`;
       await createEntry!.handler({
         slug,
@@ -180,7 +204,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
         username: userInfo!.username,
       });
 
-      // Delete it
       const result = await deleteEntry!.handler({ slug, confirm: true }, {
         userToken: PEEKVIEW_API_KEY,
         userId: userInfo!.id,
@@ -189,7 +212,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
 
       expect(result.content[0].text).toContain('deleted successfully');
 
-      // Verify it's gone
       const verifyRes = await fetch(`${PEEKVIEW_URL}/api/v1/entries/${slug}`, {
         headers: { Authorization: `Bearer ${PEEKVIEW_API_KEY}` },
       });
@@ -212,7 +234,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
         username: userInfo!.username,
       });
 
-      // Verify ownership via backend
       const res = await fetch(`${PEEKVIEW_URL}/api/v1/entries/${slug}`, {
         headers: { Authorization: `Bearer ${PEEKVIEW_API_KEY}` },
       });
@@ -220,7 +241,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
       expect(entry.owner_id).toBe(userInfo!.id);
       expect(entry.username).toBe(userInfo!.username);
 
-      // Cleanup
       await fetch(`${PEEKVIEW_URL}/api/v1/entries/${slug}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${PEEKVIEW_API_KEY}` },
@@ -241,9 +261,6 @@ describe('E2E: SSE Server + PeekView Backend', () => {
         username: 'nobody',
       });
 
-      // Behavior depends on ALLOW_ANONYMOUS_CREATE config
-      // Either: isError=true + 认证失败 (strict mode)
-      // Or: creates entry with owner_id=null (anonymous mode)
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toBeTruthy();
     });
@@ -264,11 +281,10 @@ describe('E2E: SSE Server + PeekView Backend', () => {
   describe('CORS configuration', () => {
     it('should include Authorization in allowed headers', async () => {
       const res = await request(app)
-        .options('/sse')
+        .options('/mcp')
         .set('Origin', 'http://localhost:5173')
-        .set('Access-Control-Request-Headers', 'Authorization, Content-Type');
+        .set('Access-Control-Request-Headers', 'Authorization, Content-Type, mcp-session-id');
 
-      // CORS should allow Authorization header
       const allowHeaders = res.headers['access-control-allow-headers'];
       expect(allowHeaders).toContain('Authorization');
     });
