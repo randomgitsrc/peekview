@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.43] - 2026-06-09
+
+### 新增
+
+- **Cap captcha 集成**（登录/注册）：
+  - 自托管 captcha [Cap](https://github.com/tiagozip/cap)，无第三方追踪，GDPR 友好
+  - 新增 `peekview.auth.captcha.*` 配置段：`enabled` / `site_key` / `secret_key` / `verify_url` / `exempt_first_user`
+  - `/api/v1/auth/register` 和 `/api/v1/auth/login` 在 captcha 启用时验证 `cap-token`
+  - 公开端点 `GET /api/v1/config/captcha` 返回 `site_key` / `endpoint` / `enabled`（不含 `secret_key`）
+  - 第一个用户（admin）可豁免 captcha，方便初始化（`exempt_first_user=True`）
+  - 失败错误码：`CAPTCHA_REQUIRED`（401）、`CAPTCHA_INVALID`（401）、`CAPTCHA_CONFIG_ERROR`（500）
+
+### 测试
+
+- 新增 `tests/test_captcha.py`：15 个测试覆盖 `verify_captcha`、register/login 集成、exempt 场景、公开端点
+- 全部 432 后端测试通过
+
 ## [mcp-v0.8.1] - 2026-06-10
 
 ### 修复

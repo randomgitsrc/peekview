@@ -447,6 +447,7 @@ class UserRegister(SQLModel):
     username: str = Field(..., min_length=3, max_length=32)
     password: str = Field(..., min_length=8, max_length=72)
     display_name: str | None = Field(default=None, max_length=64)
+    captcha_token: str | None = Field(default=None, description="Cap captcha token (required when captcha enabled)")
 
     @field_validator("username")
     @classmethod
@@ -463,6 +464,7 @@ class UserLogin(SQLModel):
 
     username: str
     password: str
+    captcha_token: str | None = Field(default=None, description="Cap captcha token (required when captcha enabled)")
 
 
 class UserResponse(SQLModel):

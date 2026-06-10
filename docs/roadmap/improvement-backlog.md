@@ -22,6 +22,7 @@
 | 10 | SQLite 并发写边界文档化 | 架构/文档 | 🔵 长期 | 待办 |
 | 11 | publish_files 大目录扫描进度反馈 | 体验 | 🔵 长期 | 待办 |
 | 12 | health check 503 vs 200 决策复审 | 运维 | 🔵 长期 | 待办 |
+| 13 | 登录/注册 Cap captcha 集成 | 安全 | 🟠 近期 | ✅ 完成 (v0.1.43) |
 
 ---
 
@@ -128,6 +129,22 @@
 历次 gstack 评审盯实现细节（sessionId、认证、安全边界），但从未质疑**技术选型的时效性**——SSE 在 2025-03 已废弃，评审中无人发现。
 
 **新增评审清单第一项：选型时效性检查。** 涉及协议/框架/库/传输方式时，先查证"当前时间点是否仍是推荐做法"，再审实现细节。AI/Agent 领域标准演进以季度计，训练数据里的常识可能几个月就过时。
+
+---
+
+### 🟠 13. 登录/注册 Cap captcha 集成（✅ 已完成 v0.1.43）
+
+**问题**：自托管 PeekView 缺乏登录/注册的人机验证层，易被脚本刷账号。
+
+**已完成方案**：
+- 集成 [Cap](https://github.com/tiagozip/cap)（Apache 2.0 自托管 captcha）
+- 新增 `peekview.auth.captcha.*` 配置段（`enabled` / `site_key` / `secret_key` / `verify_url` / `exempt_first_user`）
+- `register` / `login` 在 captcha 启用时验证 `cap-token`
+- 公开端点 `GET /api/v1/config/captcha` 返回公开字段
+- 第一个用户（admin）可豁免
+- 15 个新测试覆盖 verify_captcha 单元、register/login 集成、exempt 场景、公开端点
+
+**部署**：用户需自行启动 Cap standalone（Docker），详见 `docs/plans/captcha-integration.md`。
 
 ---
 

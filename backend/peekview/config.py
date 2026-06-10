@@ -258,6 +258,27 @@ class PeekAuth(BaseSettings):
         default=True,
         description="Allow anonymous (unauthenticated) entry creation",
     )
+    # Cap captcha integration (self-hosted, no third-party tracking)
+    captcha_enabled: bool = Field(
+        default=False,
+        description="Enable Cap captcha verification on /auth/register and /auth/login",
+    )
+    captcha_site_key: str = Field(
+        default="",
+        description="Cap site key (public, exposed to frontend via /api/v1/config/captcha)",
+    )
+    captcha_secret_key: str = Field(
+        default="",
+        description="Cap secret key (server-side, never exposed to frontend)",
+    )
+    captcha_verify_url: str = Field(
+        default="http://localhost:3000",
+        description="Cap standalone server URL for /siteverify",
+    )
+    captcha_exempt_first_user: bool = Field(
+        default=True,
+        description="First user (admin) bypasses captcha to enable initial setup",
+    )
 
     @field_validator("token_expire_days")
     @classmethod

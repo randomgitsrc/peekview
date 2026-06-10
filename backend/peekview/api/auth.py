@@ -15,6 +15,7 @@ from peekview.auth import (
     hash_password,
     require_auth,
 )
+from peekview.api.captcha import enforce_captcha
 from peekview.api.rate_limit import limiter, login_rate_limit
 from peekview.database import get_engine
 from peekview.exceptions import InvalidCredentialsError, RegistrationError
@@ -57,6 +58,13 @@ async def register(data: UserRegister, request: Request) -> AuthResponse:
                 error_code = "REGISTRATION_DISABLED"
 
             raise RegistrationDisabledError("Registration is disabled")
+
+    # Captcha verification (skipped for first user if exempt_first_user=True)
+    await enforce_captcha(
+        token=data.captcha_token,
+        auth_config=config.auth,
+        is_first_user=is_first_user,
+    )
 
     # Validate reserved usernames
     if data.username.lower() in RESERVED_USERNAMES:
@@ -110,6 +118,13 @@ async def login(data: UserLogin, request: Request) -> AuthResponse:
     """
     engine = request.app.state.engine
     config = request.app.state.config
+
+    # Captcha verification (required when enabled; no first-user exempt for login)
+    await enforce_captcha(
+        token=data.captcha_token,
+        auth_config=config.auth,
+        is_first_user=False,  # login never exempts
+    )
 
     with Session(engine) as session:
         user = session.exec(

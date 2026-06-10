@@ -48,6 +48,7 @@ def create_app(
     db_path: Path | None = None,
     base_url: str | None = None,
     rate_limit_enabled: bool | None = None,
+    config: PeekConfig | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -59,6 +60,8 @@ def create_app(
         data_dir: Optional data directory override
         db_path: Optional database path override
         base_url: Optional external base URL override
+        rate_limit_enabled: Optional rate limit override
+        config: Optional pre-built PeekConfig (skips file/env loading)
 
     Returns:
         Configured FastAPI application
@@ -71,16 +74,22 @@ def create_app(
     )
 
     # Load configuration
-    config = PeekConfig()
+    if config is not None:
+        loaded_config = config
+    else:
+        loaded_config = PeekConfig()
     if data_dir:
-        config.storage.data_dir = data_dir
+        loaded_config.storage.data_dir = data_dir
     if db_path:
-        config.storage.db_path = db_path
+        loaded_config.storage.db_path = db_path
     if base_url:
-        config.server.base_url = base_url
+        loaded_config.server.base_url = base_url
     if rate_limit_enabled is not None:
-        config.server.rate_limit_enabled = rate_limit_enabled
-    app.state.config = config
+        loaded_config.server.rate_limit_enabled = rate_limit_enabled
+    app.state.config = loaded_config
+
+    # Maintain backward-compatible local variable
+    config = loaded_config
 
     # Ensure directories exist
     config.data_dir.mkdir(parents=True, exist_ok=True)
@@ -209,10 +218,12 @@ def create_app(
     from peekview.api.apikeys import router as apikeys_router
     from peekview.api.entries import router as entries_router
     from peekview.api.files import router as files_router
+    from peekview.api.config_router import router as config_router
     app.include_router(auth_router)
     app.include_router(apikeys_router)
     app.include_router(entries_router)
     app.include_router(files_router)
+    app.include_router(config_router)
 
     # Health check (must be before static files to avoid catch-all route)
     @app.get("/health")

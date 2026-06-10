@@ -137,6 +137,36 @@ class InvalidCredentialsError(PeekError):
     error_code = "INVALID_CREDENTIALS"
 
 
+class CaptchaInvalidError(PeekError):
+    """Captcha token failed verification.
+
+    Raised when the captcha token is rejected by the captcha service.
+    """
+
+    status_code = 401
+    error_code = "CAPTCHA_INVALID"
+
+
+class CaptchaRequiredError(PeekError):
+    """Captcha token is required but missing.
+
+    Raised when captcha is enabled but no captcha_token was supplied.
+    """
+
+    status_code = 401
+    error_code = "CAPTCHA_REQUIRED"
+
+
+class CaptchaConfigError(PeekError):
+    """Captcha service is misconfigured.
+
+    Raised when captcha_enabled=true but site_key/secret_key/verify_url are missing.
+    """
+
+    status_code = 500
+    error_code = "CAPTCHA_CONFIG_ERROR"
+
+
 class ForbiddenError(PeekError):
     """Operation not permitted.
 
