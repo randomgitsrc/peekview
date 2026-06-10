@@ -102,7 +102,7 @@ let cleanupStarted = false;
 function startSessionCleanup() {
   if (cleanupStarted) return;
   cleanupStarted = true;
-  setInterval(() => {
+  const timer = setInterval(() => {
     const now = Date.now();
     for (const [id, entry] of sessions) {
       if (now - entry.lastActivity > SESSION_IDLE_TIMEOUT) {
@@ -112,6 +112,7 @@ function startSessionCleanup() {
       }
     }
   }, CLEANUP_INTERVAL);
+  timer.unref();
 }
 
 async function authenticate(
@@ -248,6 +249,8 @@ export function createExpressApp(
           ...ctx,
           lastActivity: Date.now(),
         });
+      } else {
+        logger.error('Session not registered: transport.sessionId is empty after initialize');
       }
 
       return;
@@ -285,13 +288,25 @@ export function createExpressApp(
   app.get('/health', async (_req, res) => {
     const isPeekViewHealthy = await client.ping();
 
-    const healthResponse: any = {
+    const healthResponse: {
+      status: string;
+      version: string;
+      peekview: string;
+      config: {
+        source: string;
+        path: string | null;
+        peekview_url: string;
+        public_url: string;
+        api_key_configured: boolean;
+      };
+      peekview_error?: string;
+    } = {
       status: isPeekViewHealthy ? 'ok' : 'degraded',
       version,
       peekview: isPeekViewHealthy ? 'ok' : 'unreachable',
       config: {
-        source: config.configSource || 'default',
-        path: config.configPath || null,
+        source: config.configSource,
+        path: config.configPath,
         peekview_url: config.peekviewUrl || '',
         public_url: config.publicUrl || '',
         api_key_configured: !!config.apiKey,

@@ -5,6 +5,9 @@
 import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { MergedConfig } from './config/merge.js';
+
+export type { MergedConfig as ServerConfig } from './config/merge.js';
 
 export interface EntryFile {
   filename: string;
@@ -45,21 +48,6 @@ export interface ListEntriesResponse {
   total: number;
   page: number;
   per_page: number;
-}
-
-export interface ServerConfig {
-  peekviewUrl: string;
-  publicUrl: string;
-  apiKey?: string;
-  port: number;
-  host: string;
-  corsOrigins: string[];
-  logLevel: string;
-  mode: 'local' | 'remote';
-  allowedPaths: string[];
-  trustAllPaths: boolean;
-  configSource?: 'file' | 'env' | 'default';
-  configPath?: string | null;
 }
 
 export interface SessionContext {

@@ -15,9 +15,11 @@ export interface MergedConfig {
   mode: 'local' | 'remote';
   allowedPaths: string[];
   trustAllPaths: boolean;
+  configSource: 'file' | 'env' | 'default';
+  configPath: string | null;
 }
 
-export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.ProcessEnv): MergedConfig {
+export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.ProcessEnv, configFilePath?: string): MergedConfig {
   // Required fields
   const peekviewUrl = env.PEEKVIEW_URL ?? fileConfig?.peekview?.url;
   const publicUrl = env.PEEKVIEW_PUBLIC_URL ?? fileConfig?.peekview?.public_url;
@@ -98,8 +100,14 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
     }
   }
 
+  let configSource: 'file' | 'env' | 'default' = 'default';
+  if (fileConfig) configSource = 'file';
+  if (env.PEEKVIEW_URL || env.MCP_PORT || env.MCP_MODE) configSource = 'env';
+
+  const configPath = fileConfig ? (process.env.HOME || process.env.USERPROFILE || '/tmp') + '/.peekview/mcp-config.yaml' : null;
+
   return {
-    peekviewUrl: peekviewUrl.replace(/\/$/, ''), // remove trailing slash
+    peekviewUrl: peekviewUrl.replace(/\/$/, ''),
     publicUrl: publicUrl.replace(/\/$/, ''),
     port,
     host,
@@ -108,6 +116,8 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
     mode,
     allowedPaths,
     trustAllPaths,
+    configSource,
+    configPath,
     ...(apiKey ? { apiKey } : {}),
   };
 

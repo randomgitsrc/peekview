@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## [mcp-v0.8.1] - 2026-06-10
+
+### 修复
+
+- 修复 health endpoint `config.source`/`config.path` 永远返回默认值的 bug（`MergedConfig` 未填充这两个字段）
+- 统一 `ServerConfig` 类型定义：消除 `config.ts`/`types.ts`/`merge.ts` 三处重复，`MergedConfig` 为唯一真相源
+- 会话注册加防御性错误日志：`transport.sessionId` 为空时记录 error（而非静默跳过）
+- `setInterval` 添加 `.unref()` 防止进程挂起
+
+### 变更
+
+- `ServerConfig` 现在是 `MergedConfig` 的类型别名（re-export）
+- `MergedConfig` 新增 `configSource` 和 `configPath` 必填字段
+
 ## [mcp-v0.8.0] - 2026-06-10
 
 ### ⚠️ Breaking Change
