@@ -9,6 +9,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@cap.js/widget": "^0.1.56",
     "@vue/test-utils": "^2.4.10",
     "axios": "^1.7.0",
     "github-markdown-css": "^5.9.0",
