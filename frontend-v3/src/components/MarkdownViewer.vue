@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, h, render as vueRender, onMounted, onBeforeUnmount } from 'vue'
 import mermaid from 'mermaid'
-import { useMarkdown } from '@/composables/useMarkdown'
+import { useMarkdown, type MarkdownRenderResult } from '@/composables/useMarkdown'
 import { useMermaid } from '@/composables/useMermaid'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
@@ -28,6 +28,7 @@ const headings = ref<TocHeading[]>([])
 const renderedHtml = ref('')
 const isLoading = ref(false)
 const mermaidCache = new Map<string, string>()
+let mermaidSourcesMap: Map<number, string> = new Map()
 
 // Store mermaid component instances for external access
 const mermaidInstances = new Map<string, any>()
@@ -51,10 +52,9 @@ async function copyCodeBlock(btn: HTMLButtonElement) {
 }
 
 async function copyMermaidCode(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-  const source = block.querySelector('.mermaid-source')
-  const code = source ? source.textContent || '' : ''
+  const index = parseInt(blockId.replace('mermaid-block-', ''))
+  const code = mermaidSourcesMap.get(index) || ''
+  if (!code) return
   try {
     await navigator.clipboard.writeText(code)
     // Show feedback
@@ -79,8 +79,8 @@ async function downloadMermaidPng(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
 
-  const source = block.querySelector('.mermaid-source')
-  const code = source ? source.textContent || '' : ''
+  const index = parseInt(block.getAttribute('data-index') || '0')
+  const code = mermaidSourcesMap.get(index) || ''
   if (!code) {
     console.error('No mermaid code found')
     return
@@ -363,9 +363,10 @@ async function renderContent() {
   isLoading.value = true
   try {
     const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
-    const result = await render(props.content, themeName)
+    const result: MarkdownRenderResult = await render(props.content, themeName)
     headings.value = result.headings
     renderedHtml.value = result.html
+    mermaidSourcesMap = result.mermaidSources
     emit('headings', result.headings)
     await nextTick()
 
@@ -396,11 +397,9 @@ async function renderMermaidDiagrams() {
     const mountPoint = block.querySelector('.mermaid-viewer-mount')
     if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
 
-    const source = block.querySelector('.mermaid-source')
-    const code = source ? source.textContent || '' : ''
+    const index = parseInt(block.getAttribute('data-index') || '0')
+    const code = mermaidSourcesMap.get(index) || ''
     if (!code) continue
-
-    const index = block.getAttribute('data-index') || '0'
     const cacheKey = `${theme.value}-${code}`
 
     try {
@@ -408,7 +407,7 @@ async function renderMermaidDiagrams() {
       if (mermaidCache.has(cacheKey)) {
         svg = mermaidCache.get(cacheKey)!
       } else {
-        svg = await renderMermaid(index, code, theme.value)
+        svg = await renderMermaid(String(index), code, theme.value)
         mermaidCache.set(cacheKey, svg)
       }
 

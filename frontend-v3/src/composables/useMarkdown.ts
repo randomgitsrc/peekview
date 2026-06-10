@@ -3,6 +3,12 @@ import DOMPurify from 'dompurify'
 import type { TocHeading } from '@/types'
 import { useShiki } from './useShiki'
 
+export interface MarkdownRenderResult {
+  html: string
+  headings: TocHeading[]
+  mermaidSources: Map<number, string>
+}
+
 export function useMarkdown() {
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true })
   const { highlightCode } = useShiki()
@@ -55,9 +61,10 @@ export function useMarkdown() {
     code: string
   }
 
-  async function render(content: string, theme: 'github-dark' | 'github-light'): Promise<{ html: string; headings: TocHeading[] }> {
+  async function render(content: string, theme: 'github-dark' | 'github-light'): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
+    const mermaidSources = new Map<number, string>()
 
     // Extract front matter before processing
     let frontMatterHtml = ''
@@ -223,10 +230,8 @@ export function useMarkdown() {
         // Skip mermaid blocks - they will be rendered by Mermaid.js with toggle support
         if (block.lang === 'mermaid') {
           const mermaidBlockId = `mermaid-block-${block.index}`
-          // Flattened structure: 2 layers instead of 4
-          // Icons: ⧉ fullscreen, ⬇ download, ⧉ copy, ⋯ menu
+          mermaidSources.set(block.index, block.code)
           const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-index="${block.index}">
-            <code class="mermaid-source" style="display:none">${escapeHtml(block.code)}</code>
             <div class="mermaid-header">
               <span class="mermaid-label">MERMAID</span>
               <div class="mermaid-header-actions">
@@ -293,7 +298,7 @@ export function useMarkdown() {
       ADD_TAGS: ['button'],
     })
 
-    return { html, headings }
+    return { html, headings, mermaidSources }
   }
 
   return { render }
