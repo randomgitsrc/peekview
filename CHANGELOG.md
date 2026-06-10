@@ -53,6 +53,21 @@
 - 新增 `tests/test_captcha.py`：15 个测试覆盖 `verify_captcha`、register/login 集成、exempt 场景、公开端点
 - 全部 432 后端测试通过
 
+## [mcp-v0.8.2] - 2026-06-10
+
+### 新增
+
+- **publish_files 二进制文件支持**：
+  - 二进制文件不再跳过，改为 base64 编码上传（`content_base64` 字段）
+  - 大小检查考虑 base64 膨胀（×1.34 估算）
+  - `EntryFile` 类型增加 `content_base64?` 字段
+  - 二进制文件上限 20MB，文本文件 7MB，总大小上限 100MB
+
+### 变更
+
+- `publishFiles.ts` 重构：按文件类型分别检查大小（文本/二进制）
+- `bump-mcp-version` 现在自动同步 `package-lock.json` 版本并验证一致性
+
 ## [mcp-v0.8.1] - 2026-06-10
 
 ### 修复
