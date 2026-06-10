@@ -46,15 +46,16 @@ async function waitForApiData(page: any, selector: string, timeout = 30000) {
 
 // Helper: Setup auth state and wait for initialization
 async function setupAuth(page: any, token: string) {
+  const url = new URL(BASE_URL)
   await page.context().addCookies([{
     name: 'peekview_token',
     value: token,
-    domain: 'localhost',
+    domain: url.hostname,
     path: '/',
     httpOnly: true,
     sameSite: 'Lax' as const,
   }])
-  await page.goto('/')
+  await page.goto(BASE_URL)
   await waitForPageReady(page, 30000)
   await waitForAuth(page, 30000)
 }
@@ -88,6 +89,10 @@ test.beforeAll(async ({ request }) => {
       `Run 'make debug-start' first.`
     )
   }
+})
+
+test.beforeEach(async ({ context }) => {
+  await context.clearCookies()
 })
 
 async function createTestEntry(page: any, slug: string, data: any) {
@@ -466,6 +471,9 @@ test.describe('Debug Server - Auth', () => {
     })
     expect(regResp.status()).toBe(201)
 
+    // Registration sets a cookie — clear it so we can test login flow
+    await page.context().clearCookies()
+
     await page.goto('/')
     // Wait for page to be ready first
     await waitForPageReady(page, 10000)
@@ -515,6 +523,9 @@ test.describe('Debug Server - Auth', () => {
     expect(createResp.status()).toBe(201)
     const entry = await createResp.json()
 
+    // Registration set a cookie — clear it for anonymous checks
+    await page.context().clearCookies()
+
     // Anonymous: entry should NOT appear in list
     const anonList = await page.request.get('/api/v1/entries')
     const anonData = await anonList.json()
@@ -525,7 +536,7 @@ test.describe('Debug Server - Auth', () => {
     const anonDetail = await page.request.get(`/api/v1/entries/${entry.slug}`)
     expect(anonDetail.status()).toBe(404)
 
-    // Owner: entry SHOULD appear in list
+    // Owner: entry SHOULD appear in list (using explicit JWT header)
     const ownerList = await page.request.get('/api/v1/entries', {
       headers: { Authorization: `Bearer ${token}` },
     })
