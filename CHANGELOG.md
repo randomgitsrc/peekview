@@ -7,6 +7,35 @@
 
 ## [Unreleased]
 
+## [0.1.44] - 2026-06-10
+
+### 新增
+
+- **内置 Cap 兼容验证码引擎**（零外部依赖）：
+  - 纯 Python 标准库实现 Cap 的 challenge/redeem/siteverify 协议
+  - fnv1a + xorshift32 PRNG + HS256 JWT PoW，算法与 Cap JS 交叉验证（504 向量 100% 匹配）
+  - `PEEKVIEW_AUTH__CAPTCHA_VERIFY_URL` 为空或默认值时自动切换到内置引擎
+  - `/api/v1/captcha/{challenge,redeem,siteverify}` 端点，含速率限制
+  - 独立 JWT 签名密钥（`captcha_secret_key`），与认证 JWT 密钥隔离
+- **前端 captcha 集成**：
+  - `LoginDialog.vue` 集成 `@cap.js/widget`，验证码未解决时禁用提交按钮
+  - 支持 `CAPTCHA_REQUIRED` / `CAPTCHA_INVALID` 错误处理
+- **MCP Server publish_files 二进制文件支持**：
+  - 二进制文件不再跳过，改为 base64 编码上传（`content_base64` 字段）
+  - 大小检查考虑 base64 膨胀（×1.34 估算）
+  - `EntryFile` 类型增加 `content_base64?` 字段
+- **MCP Server package-lock.json 版本同步验证**
+
+### 修复
+
+- `dev-server.sh` 使用 `PYTHONPATH=$(pwd)` 替代 pipx 安装路径，避免加载旧版本
+- 内置模式下 `_config_to_dataclass` 跳过 `verify_url` 检查
+
+### 变更
+
+- `config_router.py` 返回 `mode` 字段（`builtin`/`external`）供前端判断
+
+
 ## [0.1.43] - 2026-06-09
 
 ### 新增
