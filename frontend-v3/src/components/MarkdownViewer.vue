@@ -53,8 +53,8 @@ async function copyCodeBlock(btn: HTMLButtonElement) {
 async function copyMermaidCode(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
-  const code = block.getAttribute('data-mermaid-code')
-  if (!code) return
+  const source = block.querySelector('.mermaid-source')
+  const code = source ? source.textContent || '' : ''
   try {
     await navigator.clipboard.writeText(code)
     // Show feedback
@@ -79,7 +79,8 @@ async function downloadMermaidPng(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
 
-  const code = block.getAttribute('data-mermaid-code')
+  const source = block.querySelector('.mermaid-source')
+  const code = source ? source.textContent || '' : ''
   if (!code) {
     console.error('No mermaid code found')
     return
@@ -395,7 +396,8 @@ async function renderMermaidDiagrams() {
     const mountPoint = block.querySelector('.mermaid-viewer-mount')
     if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
 
-    const code = block.getAttribute('data-mermaid-code') || ''
+    const source = block.querySelector('.mermaid-source')
+    const code = source ? source.textContent || '' : ''
     if (!code) continue
 
     const index = block.getAttribute('data-index') || '0'

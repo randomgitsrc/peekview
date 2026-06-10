@@ -225,7 +225,8 @@ export function useMarkdown() {
           const mermaidBlockId = `mermaid-block-${block.index}`
           // Flattened structure: 2 layers instead of 4
           // Icons: ⧉ fullscreen, ⬇ download, ⧉ copy, ⋯ menu
-          const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-mermaid-code="${escapeHtmlAttribute(block.code)}" data-index="${block.index}">
+          const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-index="${block.index}">
+            <code class="mermaid-source" style="display:none">${escapeHtml(block.code)}</code>
             <div class="mermaid-header">
               <span class="mermaid-label">MERMAID</span>
               <div class="mermaid-header-actions">
@@ -288,7 +289,7 @@ export function useMarkdown() {
     }
 
     html = DOMPurify.sanitize(html, {
-      ADD_ATTR: ['data-action', 'data-code', 'data-line', 'target', 'rel'],
+      ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
       ADD_TAGS: ['button'],
     })
 
