@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response, Response
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -35,7 +35,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 @router.post("/register", status_code=201)
 @limiter.limit(login_rate_limit)
-async def register(data: UserRegister, request: Request) -> AuthResponse:
+async def register(data: UserRegister, request: Request, response: Response) -> AuthResponse:
     """Register a new user.
 
     First user can always register (even if allow_registration=False).
@@ -96,6 +96,16 @@ async def register(data: UserRegister, request: Request) -> AuthResponse:
     secret_key = _load_or_generate_secret_key(config.auth.secret_key)
     token = create_access_token(user.id, secret_key, config.auth.token_expire_days)
 
+    response.set_cookie(
+        key="peekview_token",
+        value=token,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+        max_age=config.auth.token_expire_days * 86400,
+        path="/",
+    )
+
     return AuthResponse(
         access_token=token,
         user=UserResponse(
@@ -111,7 +121,7 @@ async def register(data: UserRegister, request: Request) -> AuthResponse:
 
 @router.post("/login")
 @limiter.limit(login_rate_limit)
-async def login(data: UserLogin, request: Request) -> AuthResponse:
+async def login(data: UserLogin, request: Request, response: Response) -> AuthResponse:
     """Login with username and password.
 
     Returns INVALID_CREDENTIALS (401) on failure (generic, prevents enumeration).
@@ -146,6 +156,16 @@ async def login(data: UserLogin, request: Request) -> AuthResponse:
     secret_key = _load_or_generate_secret_key(config.auth.secret_key)
     token = create_access_token(user.id, secret_key, config.auth.token_expire_days)
 
+    response.set_cookie(
+        key="peekview_token",
+        value=token,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+        max_age=config.auth.token_expire_days * 86400,
+        path="/",
+    )
+
     return AuthResponse(
         access_token=token,
         user=UserResponse(
@@ -160,9 +180,8 @@ async def login(data: UserLogin, request: Request) -> AuthResponse:
 
 
 @router.post("/logout", status_code=204)
-async def logout():
-    """Logout (no server-side action — client clears token)."""
-    return None
+async def logout(response: Response):
+    response.delete_cookie(key="peekview_token", path="/")
 
 
 @router.get("/me")

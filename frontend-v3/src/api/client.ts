@@ -3,7 +3,6 @@ import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, A
 import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse } from './types'
 
 const API_BASE = '/api/v1'
-const TOKEN_KEY = 'peekview_token'
 
 class PeekAPI {
   private client: AxiosInstance
@@ -11,32 +10,18 @@ class PeekAPI {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE,
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
     })
 
-    // Request interceptor: inject JWT token
-    this.client.interceptors.request.use((config) => {
-      const token = localStorage.getItem(TOKEN_KEY)
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    })
-
-    // Response interceptor: handle 401 (session expired)
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          const token = localStorage.getItem(TOKEN_KEY)
-          if (token) {
-            // Mid-session 401: clear token and notify
-            localStorage.removeItem(TOKEN_KEY)
-            // Dispatch a custom event for the auth store to handle
-            window.dispatchEvent(new CustomEvent('peekview:auth-expired'))
-          }
+          this.client.post('/auth/logout').catch(() => {})
+          window.dispatchEvent(new CustomEvent('peekview:auth-expired'))
         }
         return Promise.reject(error)
       }
@@ -169,7 +154,6 @@ class PeekAPI {
       captcha_token: captchaToken || null,
     })
     const data = response.data
-    localStorage.setItem(TOKEN_KEY, data.access_token)
     return {
       accessToken: data.access_token,
       tokenType: data.token_type,
@@ -185,7 +169,6 @@ class PeekAPI {
       captcha_token: captchaToken || null,
     })
     const data = response.data
-    localStorage.setItem(TOKEN_KEY, data.access_token)
     return {
       accessToken: data.access_token,
       tokenType: data.token_type,
@@ -199,11 +182,7 @@ class PeekAPI {
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY)
-    // POST to /auth/logout (204, no body needed)
-    this.client.post('/auth/logout').catch(() => {
-      // Ignore errors on logout — server doesn't require it
-    })
+    this.client.post('/auth/logout').catch(() => {})
   }
 
   // --- API Key management --- //

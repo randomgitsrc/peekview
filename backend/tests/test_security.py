@@ -637,10 +637,11 @@ class TestSecurityHeaders:
 
     @pytest.mark.asyncio
     async def test_static_file_responses_no_restrictive_headers(self, client):
-        """Static file responses should not have restrictive security headers."""
+        """Static file responses should have SPA-appropriate security headers."""
         resp = await client.get("/")
-        # API-specific security headers should NOT be on static pages
-        assert resp.headers.get("x-content-type-options") is None
+        assert resp.headers.get("x-content-type-options") == "nosniff"
+        assert resp.headers.get("content-security-policy") is not None
+        assert "script-src 'self'" in resp.headers.get("content-security-policy", "")
         assert resp.headers.get("cache-control") is None or "no-store" not in resp.headers.get("cache-control", "")
 
 

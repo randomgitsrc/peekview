@@ -66,6 +66,7 @@
         v-if="blobUrl"
         :src="blobUrl"
         sandbox="allow-scripts"
+        csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' blob: data:; img-src blob: data:; media-src blob: data:; font-src blob: data:; connect-src 'none'; frame-src 'none'; form-action 'none';"
         referrerpolicy="no-referrer"
         class="html-frame"
         @load="onIframeLoad"

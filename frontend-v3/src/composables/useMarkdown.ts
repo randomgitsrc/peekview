@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it'
+import DOMPurify from 'dompurify'
 import type { TocHeading } from '@/types'
 import { useShiki } from './useShiki'
 
@@ -228,23 +229,23 @@ export function useMarkdown() {
             <div class="mermaid-header">
               <span class="mermaid-label">MERMAID</span>
               <div class="mermaid-header-actions">
-                <button class="mermaid-view-toggle" onclick="toggleMermaidView('${mermaidBlockId}')" title="Toggle Diagram/Code">
+                <button class="mermaid-view-toggle" data-action="toggle-mermaid-view" data-block-id="${mermaidBlockId}" title="Toggle Diagram/Code">
                   <span class="toggle-icon">◫</span>
                   <span class="toggle-text">Diagram</span>
                 </button>
-                <button class="mermaid-action-btn fullscreen-btn" onclick="openMermaidFullscreen('${mermaidBlockId}')" title="Fullscreen">⧉</button>
+                <button class="mermaid-action-btn fullscreen-btn" data-action="open-mermaid-fullscreen" data-block-id="${mermaidBlockId}" title="Fullscreen">⧉</button>
                 <div class="mermaid-dropdown">
-                  <button class="mermaid-action-btn menu-btn" onclick="toggleMermaidMenu('${mermaidBlockId}')" title="More actions">⋯</button>
+                  <button class="mermaid-action-btn menu-btn" data-action="toggle-mermaid-menu" data-block-id="${mermaidBlockId}" title="More actions">⋯</button>
                   <div class="mermaid-dropdown-menu" id="menu-${mermaidBlockId}">
-                    <button onclick="downloadMermaidPng('${mermaidBlockId}')">⬇ Download PNG</button>
-                    <button onclick="copyMermaidCode('${mermaidBlockId}')">⧉ Copy Code</button>
+                    <button data-action="download-mermaid-png" data-block-id="${mermaidBlockId}">⬇ Download PNG</button>
+                    <button data-action="copy-mermaid-code" data-block-id="${mermaidBlockId}">⧉ Copy Code</button>
                   </div>
                 </div>
               </div>
             </div>
             <div class="mermaid-content diagram-mode is-active" data-mode="diagram">
               <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
-              <div class="mermaid-resize-handle" onmousedown="startResize('${mermaidBlockId}', event)"></div>
+              <div class="mermaid-resize-handle" data-action="start-resize" data-block-id="${mermaidBlockId}"></div>
             </div>
             <div class="mermaid-content code-mode" data-mode="code">
               <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
@@ -259,7 +260,7 @@ export function useMarkdown() {
         const wrappedCode = `<div class="code-block-wrapper">
           <div class="code-block-header">
             <span class="code-lang">${block.lang.toUpperCase()}</span>
-            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="copyCodeBlock(this)">Copy</button>
+            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" data-action="copy-code-block">Copy</button>
           </div>
           ${highlighted}
         </div>`
@@ -273,7 +274,7 @@ export function useMarkdown() {
         const fallbackCode = `<div class="code-block-wrapper">
           <div class="code-block-header">
             <span class="code-lang">${block.lang.toUpperCase()}</span>
-            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" onclick="copyCodeBlock(this)">Copy</button>
+            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" data-action="copy-code-block">Copy</button>
           </div>
           <pre><code class="language-${block.lang}">${escapedCode}</code></pre>
         </div>`
@@ -285,6 +286,11 @@ export function useMarkdown() {
     if (frontMatterHtml) {
       html = frontMatterHtml + html
     }
+
+    html = DOMPurify.sanitize(html, {
+      ADD_ATTR: ['data-action', 'data-code', 'data-line', 'target', 'rel'],
+      ADD_TAGS: ['button'],
+    })
 
     return { html, headings }
   }

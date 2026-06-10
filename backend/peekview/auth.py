@@ -139,33 +139,45 @@ def get_current_user(request: Request) -> User | None:
     """Extract current user from JWT or user-level API key, or None for anonymous.
 
     Priority:
-    1. JWT (Authorization: Bearer eyJ...)
-    2. User-level API key (X-API-Key: pv_... or Authorization: Bearer pv_...)
-    3. None (anonymous, or global API key which has no user binding)
+    1. JWT from Authorization header (Bearer eyJ...)
+    2. JWT from httpOnly cookie (peekview_token)
+    3. User-level API key (X-API-Key: pv_... or Authorization: Bearer pv_...)
+    4. None (anonymous, or global API key which has no user binding)
     """
     auth_header = request.headers.get("Authorization", "")
     x_api_key = request.headers.get("X-API-Key", "")
 
-    # 1. JWT authentication (highest priority)
+    # 1. JWT from Authorization header (highest priority)
+    jwt_token = None
     if auth_header.startswith("Bearer "):
         token = auth_header[7:]
         if _looks_like_jwt(token):
-            config = request.app.state.config
-            secret_key = _load_or_generate_secret_key(config.auth.secret_key)
-            payload = decode_access_token(token, secret_key)
-            if payload is not None:
-                try:
-                    user_id = int(payload["sub"])
-                except (ValueError, KeyError):
-                    pass
-                else:
-                    engine = request.app.state.engine
-                    with Session(engine) as session:
-                        user = session.exec(select(User).where(User.id == user_id)).first()
-                        if user is not None and user.is_active:
-                            return user
+            jwt_token = token
 
-    # 2. User-level API key (pv_ prefix)
+    # 2. JWT from httpOnly cookie (if no header JWT)
+    if jwt_token is None:
+        cookie_token = request.cookies.get("peekview_token")
+        if cookie_token:
+            jwt_token = cookie_token
+
+    # Validate JWT (from header or cookie)
+    if jwt_token is not None:
+        config = request.app.state.config
+        secret_key = _load_or_generate_secret_key(config.auth.secret_key)
+        payload = decode_access_token(jwt_token, secret_key)
+        if payload is not None:
+            try:
+                user_id = int(payload["sub"])
+            except (ValueError, KeyError):
+                pass
+            else:
+                engine = request.app.state.engine
+                with Session(engine) as session:
+                    user = session.exec(select(User).where(User.id == user_id)).first()
+                    if user is not None and user.is_active:
+                        return user
+
+    # 3. User-level API key (pv_ prefix)
     key_value = x_api_key or (auth_header[7:] if auth_header.startswith("Bearer ") else "")
     if key_value and key_value.startswith(API_KEY_PREFIX):
         from peekview.services.apikey_service import ApiKeyService

@@ -13,10 +13,10 @@
 | 1 | SSE → Streamable HTTP 迁移 | 技术债/传输 | 🔴 立即 | ✅ 完成 (v0.8.0) |
 | 2 | rate limiting 配置化真正落地 | 技术债 | 🟠 近期 | 待办 |
 | 3 | MCP/CLI 定位写进用户文档 | 产品/文档 | 🟠 近期 | 待办 |
-| 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | 待办 |
-| 5 | 前端页面 CSP | 安全 | 🟡 中期 | 待办 |
-| 6 | publish_files 二进制文件 base64 支持 | 功能 | 🟡 中期 | 待办 |
-| 7 | package-lock.json 版本元数据同步 | 技术债 | 🟡 中期 | 待办 |
+| 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | ✅ 完成 (v0.1.44) |
+| 5 | 前端页面 CSP | 安全 | 🟡 中期 | ✅ 完成 (v0.1.44) |
+| 6 | publish_files 二进制文件 base64 支持 | 功能 | 🟡 中期 | ✅ 完成 (v0.1.44) |
+| 7 | package-lock.json 版本元数据同步 | 技术债 | 🟡 中期 | ✅ 完成 (v0.1.44) |
 | 8 | StorageBackend 接口抽象 | 架构 | 🔵 长期 | 待办 |
 | 9 | 嵌入式 iframe 分享 (/embed/{slug}) | 产品 | 🔵 长期 | 待办 |
 | 10 | SQLite 并发写边界文档化 | 架构/文档 | 🔵 长期 | 待办 |
@@ -52,35 +52,41 @@
 
 ---
 
-### 🟡 4. JWT → httpOnly Cookie
+### 🟡 4. JWT → httpOnly Cookie（✅ 已完成 v0.1.44）
 
 **问题**：前端 JWT 存在 `localStorage['peekview_token']`，Markdown 渲染若有 XSS 绕过可直接窃取 token。
 
-**方案**：迁移到 httpOnly Cookie（浏览器 JS 无法读取），需后端 `/auth/login` 改为 Set-Cookie。
+**已完成方案**：迁移到 httpOnly Cookie（浏览器 JS 无法读取）。后端 `/auth/login` `/auth/register` 改为 Set-Cookie，前端 client.ts 移除 localStorage 改用 withCredentials，auth.ts 重构为 user ref 模式。Cookie 优先级：Authorization header JWT > Cookie JWT > API key。
 
 ---
 
-### 🟡 5. 前端页面 CSP
+### 🟡 5. 前端页面 CSP（✅ 已完成 v0.1.44）
 
 **问题**：后端 CSP 头只加在 `/api/*` 和 `/health`（`default-src 'none'`），前端页面没有 CSP。Markdown 渲染、HTML iframe 是 XSS 主要攻击面，缺纵深防御。
 
-**方案**：为前端页面设计专用 CSP（需允许 Shiki inline、HtmlViewer blob:）。
+**已完成方案**：
+- 后端：SPA 页面添加 CSP 头（`script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src blob:; frame-ancestors 'none'; form-action 'none'`）
+- 前端：移除 index.html 内联脚本（theme-init.ts 替代）
+- 前端：useMarkdown.ts 8 个内联 onclick/onmousedown → data-action 属性 + 事件委托
+- 前端：MarkdownViewer.vue 移除 7 个 window.* 全局函数，改为事件委托处理
+- 前端：DOMPurify 集成，清理 markdown 渲染输出
+- 前端：HtmlViewer iframe 添加 csp 属性限制 blob 内容的 CSP
 
 ---
 
-### 🟡 6. publish_files 二进制文件 base64 支持
+### 🟡 6. publish_files 二进制文件 base64 支持（✅ 已完成 v0.1.44）
 
 **问题**：图片、PDF 被直接跳过。后端已支持 base64 上传，能力未利用。发布含截图的项目时图片全丢。
 
-**方案**：publish_files 对二进制文件用 content_base64 上传。
+**已完成方案**：publish_files 对二进制文件用 content_base64 上传。后端 MAX_FILE_SIZE 10MB→20MB，MCP 分离 MAX_TEXT_FILE_BYTES (7MB) / MAX_BINARY_FILE_BYTES (20MB)，types.ts 添加 content_base64 字段。
 
 ---
 
-### 🟡 7. package-lock.json 版本元数据同步
+### 🟡 7. package-lock.json 版本元数据同步（✅ 已完成 v0.1.44）
 
 **问题**：MCP Server package-lock.json 顶层 version 字段长期落后于 package.json。bump-mcp-version 只改 package.json 不跑 npm install。
 
-**方案**：bump-mcp-version 加 `npm install --package-lock-only`。
+**已完成方案**：bump-mcp-version 加 `npm install --package-lock-only`，Makefile 添加 lockfile 版本验证。
 
 ---
 

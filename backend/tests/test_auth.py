@@ -107,6 +107,7 @@ async def auth_client(tmp_path):
     app = create_app(data_dir=data_dir, db_path=db_path)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        ac.cookies.clear()
         yield ac
 
 
@@ -291,6 +292,7 @@ async def visibility_client(tmp_path):
     app = create_app(data_dir=data_dir, db_path=db_path)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        ac.cookies.clear()
         yield ac
 
 
@@ -318,7 +320,8 @@ class TestEntryVisibility:
             "is_public": False,
         }, headers={"Authorization": f"Bearer {token}"})
 
-        # List as anonymous
+        # List as anonymous (clear cookie jar to ensure no auth)
+        visibility_client.cookies.clear()
         resp = await visibility_client.get("/api/v1/entries")
         data = resp.json()
         assert data["total"] == 1
@@ -715,7 +718,8 @@ class TestAdminRole:
         })
         user_token = user_resp.json()["access_token"]
 
-        # Create anonymous entry
+        # Create anonymous entry (clear cookie jar first)
+        auth_client.cookies.clear()
         create_resp = await auth_client.post("/api/v1/entries", json={
             "summary": "Anonymous entry 6",
             "files": [{"filename": "b.py", "content": "b=6"}],
@@ -756,3 +760,131 @@ class TestAdminRole:
         })
         assert resp.status_code == 200
         assert resp.json()["is_admin"] is True
+
+
+# --- Cookie authentication tests --- #
+
+class TestCookieAuth:
+    """Test httpOnly Cookie-based JWT authentication."""
+
+    @pytest.mark.asyncio
+    async def test_login_sets_cookie(self, auth_client: AsyncClient):
+        reg = await auth_client.post("/api/v1/auth/register", json={
+            "username": "cookieuser", "password": "pw123456",
+        })
+        assert reg.status_code == 201
+
+        resp = await auth_client.post("/api/v1/auth/login", json={
+            "username": "cookieuser", "password": "pw123456",
+        })
+        assert resp.status_code == 200
+        set_cookie = resp.headers.get("set-cookie", "")
+        assert "peekview_token=" in set_cookie
+        assert "httponly" in set_cookie.lower()
+        assert "samesite=lax" in set_cookie.lower()
+        assert "path=/" in set_cookie.lower()
+
+    @pytest.mark.asyncio
+    async def test_register_sets_cookie(self, auth_client: AsyncClient):
+        resp = await auth_client.post("/api/v1/auth/register", json={
+            "username": "regcookie", "password": "pw123456",
+        })
+        assert resp.status_code == 201
+        set_cookie = resp.headers.get("set-cookie", "")
+        assert "peekview_token=" in set_cookie
+
+    @pytest.mark.asyncio
+    async def test_logout_clears_cookie(self, auth_client: AsyncClient):
+        reg = await auth_client.post("/api/v1/auth/register", json={
+            "username": "logoutcookie", "password": "pw123456",
+        })
+        token = reg.json()["access_token"]
+
+        resp = await auth_client.post("/api/v1/auth/logout", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert resp.status_code == 204
+        set_cookie_headers = resp.headers.get_list("set-cookie")
+        assert any("peekview_token" in h and ('Max-Age=0' in h or 'max-age=0' in h) for h in set_cookie_headers)
+
+    @pytest.mark.asyncio
+    async def test_cookie_authenticates_request(self, auth_client: AsyncClient):
+        reg = await auth_client.post("/api/v1/auth/register", json={
+            "username": "cookieauth", "password": "pw123456",
+        })
+        token = reg.json()["access_token"]
+
+        resp = await auth_client.get("/api/v1/auth/me", cookies={
+            "peekview_token": token,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["username"] == "cookieauth"
+
+    @pytest.mark.asyncio
+    async def test_header_jwt_takes_priority_over_cookie(self, auth_client: AsyncClient):
+        reg_a = await auth_client.post("/api/v1/auth/register", json={
+            "username": "userA", "password": "pw123456",
+        })
+        token_a = reg_a.json()["access_token"]
+
+        reg_b = await auth_client.post("/api/v1/auth/register", json={
+            "username": "userB", "password": "pw123456",
+        })
+        token_b = reg_b.json()["access_token"]
+
+        resp = await auth_client.get("/api/v1/auth/me", headers={
+            "Authorization": f"Bearer {token_a}",
+        }, cookies={
+            "peekview_token": token_b,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["username"] == "userA"
+
+    @pytest.mark.asyncio
+    async def test_expired_cookie_returns_anonymous(self, auth_client: AsyncClient):
+        config = auth_client._transport.app.state.config
+        secret_key = _load_or_generate_secret_key(config.auth.secret_key)
+        expired_token = create_access_token(user_id=9999, secret_key=secret_key, expire_days=-1)
+
+        resp = await auth_client.get("/api/v1/auth/me", cookies={
+            "peekview_token": expired_token,
+        })
+        assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_invalid_cookie_returns_anonymous(self, auth_client: AsyncClient):
+        resp = await auth_client.get("/api/v1/auth/me", cookies={
+            "peekview_token": "invalid.jwt.token",
+        })
+        assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_cookie_max_age_matches_config(self, auth_client: AsyncClient):
+        await auth_client.post("/api/v1/auth/register", json={
+            "username": "maxageuser", "password": "pw123456",
+        })
+        resp = await auth_client.post("/api/v1/auth/login", json={
+            "username": "maxageuser", "password": "pw123456",
+        })
+        config = auth_client._transport.app.state.config
+        expected_max_age = config.auth.token_expire_days * 86400
+        set_cookie = resp.headers.get("set-cookie", "")
+        assert f"max-age={expected_max_age}" in set_cookie.lower()
+
+    @pytest.mark.asyncio
+    async def test_user_a_cookie_not_valid_for_user_b(self, auth_client: AsyncClient):
+        reg = await auth_client.post("/api/v1/auth/register", json={
+            "username": "userA2", "password": "pw123456",
+        })
+        token = reg.json()["access_token"]
+
+        resp = await auth_client.get("/api/v1/auth/me", cookies={
+            "peekview_token": token,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["username"] == "userA2"
+
+        resp2 = await auth_client.get("/api/v1/auth/me", cookies={
+            "peekview_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5OTk5In0.aaaa",
+        })
+        assert resp2.status_code == 401

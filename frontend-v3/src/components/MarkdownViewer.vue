@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, render as vueRender } from 'vue'
+import { ref, watch, nextTick, h, render as vueRender, onMounted, onBeforeUnmount } from 'vue'
 import mermaid from 'mermaid'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { useMermaid } from '@/composables/useMermaid'
@@ -32,8 +32,7 @@ const mermaidCache = new Map<string, string>()
 // Store mermaid component instances for external access
 const mermaidInstances = new Map<string, any>()
 
-// Global copy function for code blocks
-;(window as any).copyCodeBlock = async (btn: HTMLButtonElement) => {
+async function copyCodeBlock(btn: HTMLButtonElement) {
   const code = btn.getAttribute('data-code')
   if (code) {
     try {
@@ -51,8 +50,7 @@ const mermaidInstances = new Map<string, any>()
   }
 }
 
-// Copy mermaid code
-;(window as any).copyMermaidCode = async (blockId: string) => {
+async function copyMermaidCode(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
   const code = block.getAttribute('data-mermaid-code')
@@ -77,7 +75,7 @@ const mermaidInstances = new Map<string, any>()
 }
 
 // Global download function for mermaid PNG - re-renders mermaid code to clean SVG
-;(window as any).downloadMermaidPng = async (blockId: string) => {
+async function downloadMermaidPng(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
 
@@ -215,7 +213,7 @@ const mermaidInstances = new Map<string, any>()
 }
 
 // Global toggle function for mermaid view - toggle mode
-;(window as any).toggleMermaidView = (blockId: string) => {
+function toggleMermaidView(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
 
@@ -250,7 +248,7 @@ const mermaidInstances = new Map<string, any>()
 }
 
 // Open mermaid fullscreen
-;(window as any).openMermaidFullscreen = (blockId: string) => {
+function openMermaidFullscreen(blockId: string) {
   const instance = mermaidInstances.get(blockId)
   if (instance && instance.toggleFullscreen) {
     instance.toggleFullscreen()
@@ -258,7 +256,7 @@ const mermaidInstances = new Map<string, any>()
 }
 
 // Toggle mermaid dropdown menu
-;(window as any).toggleMermaidMenu = (blockId: string) => {
+function toggleMermaidMenu(blockId: string) {
   const menu = document.getElementById(`menu-${blockId}`)
   if (!menu) return
 
@@ -290,7 +288,7 @@ let resizingBlock: HTMLElement | null = null
 let startY = 0
 let startHeight = 0
 
-;(window as any).startResize = (blockId: string, e: MouseEvent) => {
+function startResize(blockId: string, e: MouseEvent) {
   e.preventDefault()
   const block = document.getElementById(blockId)
   if (!block) return
@@ -329,7 +327,37 @@ function onResizeEnd() {
   document.body.style.cursor = ''
 }
 
-// Async render markdown with syntax highlighting
+function handleDelegatedAction(e: MouseEvent) {
+  const target = (e.target as Element).closest('[data-action]') as HTMLElement | null
+  if (!target) return
+  const action = target.dataset.action
+  const blockId = target.dataset.blockId
+  switch (action) {
+    case 'toggle-mermaid-view': toggleMermaidView(blockId!); break
+    case 'open-mermaid-fullscreen': openMermaidFullscreen(blockId!); break
+    case 'toggle-mermaid-menu': toggleMermaidMenu(blockId!); break
+    case 'download-mermaid-png': downloadMermaidPng(blockId!); break
+    case 'copy-mermaid-code': copyMermaidCode(blockId!); break
+    case 'copy-code-block': copyCodeBlock(target as HTMLButtonElement); break
+  }
+}
+
+function handleDelegatedResize(e: MouseEvent) {
+  const target = (e.target as Element).closest('[data-action="start-resize"]') as HTMLElement | null
+  if (!target) return
+  startResize(target.dataset.blockId!, e)
+}
+
+onMounted(() => {
+  contentRef.value?.addEventListener('click', handleDelegatedAction)
+  contentRef.value?.addEventListener('mousedown', handleDelegatedResize)
+})
+
+onBeforeUnmount(() => {
+  contentRef.value?.removeEventListener('click', handleDelegatedAction)
+  contentRef.value?.removeEventListener('mousedown', handleDelegatedResize)
+})
+
 async function renderContent() {
   isLoading.value = true
   try {

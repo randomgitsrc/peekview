@@ -119,16 +119,34 @@ def create_app(
         allow_headers=["*"],
     )
 
-    # Security headers middleware (API and health only, not static files)
+    # Security headers middleware
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/api") or request.url.path == "/health":
+        path = request.url.path
+        if path.startswith("/api") or path == "/health":
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"
             response.headers["Cache-Control"] = "no-store"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        elif path == "/" or path.startswith("/assets") or (not path.startswith("/api") and not path.startswith("/health")):
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' blob: data:; "
+                "media-src 'self' blob: data:; "
+                "font-src 'self'; "
+                "connect-src 'self'; "
+                "frame-src blob:; "
+                "frame-ancestors 'none'; "
+                "form-action 'none'; "
+                "base-uri 'self'"
+            )
         return response
 
     # API key auth middleware (if configured)

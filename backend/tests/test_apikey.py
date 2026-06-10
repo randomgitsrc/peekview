@@ -26,6 +26,8 @@ async def client_and_app():
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
+            c.cookies.clear()
+            yield c, app
             yield c, app
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -226,6 +228,7 @@ class TestExpiredApiKey:
     async def test_expired_key_cannot_auth(self, client_and_app):
         client, app = client_and_app
         auth = await _register(client)
+        client.cookies.clear()
         create_resp = await client.post("/api/v1/apikeys", json={"name": "Temp", "expires_in": "1m"}, headers=_auth(auth["access_token"]))
         api_key = create_resp.json()["key"]
         # Expire it in DB

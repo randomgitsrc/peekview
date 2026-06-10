@@ -46,14 +46,15 @@ async function waitForApiData(page: any, selector: string, timeout = 30000) {
 
 // Helper: Setup auth state and wait for initialization
 async function setupAuth(page: any, token: string) {
+  await page.context().addCookies([{
+    name: 'peekview_token',
+    value: token,
+    domain: 'localhost',
+    path: '/',
+    httpOnly: true,
+    sameSite: 'Lax' as const,
+  }])
   await page.goto('/')
-  await page.evaluate((t: string) => {
-    localStorage.setItem('peekview_token', t)
-    return true
-  }, token)
-  await page.reload()
-  // Wait for auth initialization - longer for Mobile Chrome
-  // First wait for page to be ready, then for auth state
   await waitForPageReady(page, 30000)
   await waitForAuth(page, 30000)
 }
@@ -621,9 +622,10 @@ test.describe('Debug Server - Auth', () => {
 
     // Should see Login button again
     await expect(page.locator('.btn-login')).toBeVisible()
-    // Token should be cleared
-    const savedToken = await page.evaluate(() => localStorage.getItem('peekview_token'))
-    expect(savedToken).toBeNull()
+    // Cookie should be cleared
+    const cookies = await page.context().cookies()
+    const authCookie = cookies.find(c => c.name === 'peekview_token')
+    expect(authCookie).toBeUndefined()
 
     await page.screenshot({ path: '/tmp/e2e-results/25-logout.png' })
   })
@@ -711,10 +713,16 @@ test.describe('Debug Server - API Keys', () => {
     const regData = await regResp.json()
     const token = regData.access_token
 
-    // Set token and wait for auth
+    // Set cookie and wait for auth
+    await page.context().addCookies([{
+      name: 'peekview_token',
+      value: token,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax' as const,
+    }])
     await page.goto('/')
-    await page.evaluate((t: string) => { localStorage.setItem('peekview_token', t); return true }, token)
-    await page.reload()
     await page.waitForTimeout(2000)
     await page.waitForSelector('.user-menu-trigger', { timeout: 30000 })
 
