@@ -126,6 +126,22 @@ claude mcp add peekview \
 
 ---
 
+## CLI vs MCP: When to Use Which
+
+PeekView offers two ways to create entries — CLI and MCP. They serve different purposes:
+
+| Scenario | Use | Why |
+|----------|-----|-----|
+| You explicitly want to share files | **CLI** (`peekview create`) | Fast, zero config, files don't go through LLM context |
+| Agent decides on its own to publish | **MCP** (`publish_files` / `create_entry`) | No human needed — agent acts autonomously |
+| Agent publishes local files | **MCP local mode** (`publish_files`) | MCP reads files directly, agent only passes paths |
+| CI/CD pipeline automation | **MCP** | Unattended, runs in headless environments |
+| Agent-to-agent content sharing | **MCP** | Agents use PeekView as a shared content hub |
+
+**Key difference:** CLI is for when *you* tell the agent what to do. MCP is for when the *agent* decides on its own. CLI is faster (files go directly to API), MCP is autonomous (no human in the loop).
+
+---
+
 ## CLI Usage
 
 ```bash

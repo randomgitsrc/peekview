@@ -199,6 +199,11 @@ def create_app(
     from slowapi.middleware import SlowAPIMiddleware
     app.add_middleware(SlowAPIMiddleware)
 
+    # Configure rate limits from config
+    from peekview.api.rate_limit import set_login_rate_limit
+    login_limit = f"{config.server.rate_limit_login_per_minute}/minute"
+    set_login_rate_limit(login_limit)
+
     # Register API routes
     from peekview.api.auth import router as auth_router
     from peekview.api.apikeys import router as apikeys_router

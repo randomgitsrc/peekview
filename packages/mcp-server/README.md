@@ -2,9 +2,23 @@
 
 Model Context Protocol (MCP) server for [PeekView](https://github.com/randomgitsrc/peekview) with Streamable HTTP transport and multi-user authentication.
 
+## When to Use MCP vs CLI
+
+PeekView offers two ways for AI agents to create entries. Choose based on your scenario:
+
+| Scenario | Recommended | Why |
+|----------|-------------|-----|
+| User asks agent to publish specific files | CLI (`peekview create`) | Instant, zero config, file content doesn't go through LLM context |
+| Agent autonomously decides to publish | MCP (`publish_files` or `create_entry`) | No user intervention needed |
+| CI/CD automation pipelines | MCP | Unattended execution |
+| Agent publishes local files (same machine) | MCP local mode (`publish_files`) | MCP reads files directly, agent only passes paths |
+| Agent generates content and publishes remotely | MCP remote mode (`create_entry`) | Content goes through LLM context — keep it small |
+
+**Key insight:** CLI is for user-driven actions. MCP is for agent-driven actions. They complement, not replace, each other.
+
 ## Quick Start
 
-## v0.7.0 双模式
+## Dual Mode (local / remote)
 
 MCP Server 根据部署拓扑提供不同工具集：
 
