@@ -38,7 +38,7 @@ class PeekLimits(BaseSettings):
     """Resource limits configuration."""
 
     max_file_size: int = Field(
-        default=10_485_760,  # 10MB
+        default=20_971_520,  # 20MB
         description="Maximum size for a single file (bytes)",
     )
     max_content_length: int = Field(
@@ -278,6 +278,31 @@ class PeekAuth(BaseSettings):
     captcha_exempt_first_user: bool = Field(
         default=True,
         description="First user (admin) bypasses captcha to enable initial setup",
+    )
+    # ─── Builtin captcha engine params (v0.1.44+) ─────────────────────
+    captcha_secret_key: str = Field(
+        default="",
+        description="Secret key for captcha JWT signing (builtin mode). Auto-generated if empty.",
+    )
+    captcha_builtin_difficulty: int = Field(
+        default=4,
+        description="PoW difficulty (hex prefix length to match)",
+    )
+    captcha_builtin_challenge_count: int = Field(
+        default=50,
+        description="Number of PoW challenges per verification",
+    )
+    captcha_builtin_challenge_size: int = Field(
+        default=32,
+        description="Salt size (bytes) for each challenge",
+    )
+    captcha_builtin_challenge_ttl_ms: int = Field(
+        default=600_000,  # 10 min
+        description="Challenge JWT TTL in milliseconds",
+    )
+    captcha_builtin_token_ttl_ms: int = Field(
+        default=1_200_000,  # 20 min
+        description="Redeem token TTL in milliseconds",
     )
 
     @field_validator("token_expire_days")

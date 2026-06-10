@@ -219,11 +219,13 @@ def create_app(
     from peekview.api.entries import router as entries_router
     from peekview.api.files import router as files_router
     from peekview.api.config_router import router as config_router
+    from peekview.api.captcha_router import router as captcha_router
     app.include_router(auth_router)
     app.include_router(apikeys_router)
     app.include_router(entries_router)
     app.include_router(files_router)
     app.include_router(config_router)
+    app.include_router(captcha_router)
 
     # Health check (must be before static files to avoid catch-all route)
     @app.get("/health")

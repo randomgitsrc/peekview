@@ -257,9 +257,15 @@ bump-mcp-version:
 	@# Verify
 	@MCP_VERSION=$$(grep '\"version\":' packages/mcp-server/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
 	if [ "$$MCP_VERSION" = "$(NEW_MCP_VERSION)" ]; then \
-		echo "✓ MCP Server 版本已更新: v$(NEW_MCP_VERSION)"; \
+		echo "✓ package.json version: v$(NEW_MCP_VERSION)"; \
 	else \
-		echo "✗ MCP 版本不一致，请检查"; exit 1; \
+		echo "✗ package.json version mismatch"; exit 1; \
+	fi
+	@LOCK_VERSION=$$(grep -m1 '\"version\":' packages/mcp-server/package-lock.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
+	if [ "$$LOCK_VERSION" = "$(NEW_MCP_VERSION)" ]; then \
+		echo "✓ package-lock.json version: v$(NEW_MCP_VERSION)"; \
+	else \
+		echo "✗ package-lock.json version mismatch ($$LOCK_VERSION) — run: cd packages/mcp-server && npm install --package-lock-only"; exit 1; \
 	fi
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

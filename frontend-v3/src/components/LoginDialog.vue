@@ -72,12 +72,20 @@
               />
             </div>
 
+            <div v-if="captchaEnabled" class="login__captcha">
+              <cap-widget
+                :data-cap-api-endpoint="captchaEndpoint"
+                @solve="onCaptchaSolve"
+                @error="onCaptchaError"
+              />
+            </div>
+
             <div v-if="error" class="login__error">{{ error }}</div>
 
             <button
               type="submit"
               class="login__submit"
-              :disabled="loading || !formValid"
+              :disabled="loading || !formValid || (captchaEnabled && !captchaToken)"
             >
               {{ loading ? 'Please wait...' : (mode === 'login' ? 'Login' : 'Register') }}
             </button>
@@ -105,6 +113,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import '@cap.js/widget'
 
 defineProps<{
   allowRegistration?: boolean
@@ -124,6 +133,35 @@ const error = ref<string | null>(null)
 const loading = ref(false)
 const firstInput = ref<HTMLInputElement | null>(null)
 
+// Captcha state
+const captchaEnabled = ref(false)
+const captchaEndpoint = ref('')
+const captchaToken = ref<string | null>(null)
+
+async function loadCaptchaConfig() {
+  try {
+    const resp = await fetch('/api/v1/config/captcha')
+    if (resp.ok) {
+      const cfg = await resp.json()
+      captchaEnabled.value = cfg.enabled
+      let ep = cfg.endpoint || '/api/v1/captcha'
+      if (!ep.endsWith('/')) ep += '/'
+      captchaEndpoint.value = ep
+    }
+  } catch {
+    captchaEnabled.value = false
+  }
+}
+
+function onCaptchaSolve(e: CustomEvent) {
+  captchaToken.value = e.detail.token
+}
+
+function onCaptchaError(e: CustomEvent) {
+  console.error('Captcha error:', e.detail)
+  error.value = 'Captcha verification failed. Please try again.'
+}
+
 const formValid = computed(() => {
   if (username.value.length < 3 || username.value.length > 32) return false
   if (password.value.length < 8) return false
@@ -138,7 +176,9 @@ watch(visible, async (v) => {
     password.value = ''
     confirmPassword.value = ''
     displayName.value = ''
+    captchaToken.value = null
     mode.value = 'login'
+    await loadCaptchaConfig()
     await nextTick()
     firstInput.value?.focus()
   }
@@ -151,16 +191,24 @@ async function submit() {
 
   try {
     if (mode.value === 'login') {
-      await authStore.login(username.value, password.value)
+      await authStore.login(username.value, password.value, captchaToken.value || undefined)
       toast.show('Logged in successfully', 'success')
     } else {
-      await authStore.register(username.value, password.value, displayName.value)
+      await authStore.register(username.value, password.value, displayName.value, captchaToken.value || undefined)
       toast.show('Account created', 'success')
     }
     visible.value = false
   } catch (err: any) {
+    const code = err?.response?.data?.error?.code
     const msg = err?.response?.data?.error?.message || err?.message || 'Operation failed'
-    error.value = msg
+    if (code === 'CAPTCHA_REQUIRED') {
+      error.value = 'Please complete the captcha verification.'
+    } else if (code === 'CAPTCHA_INVALID') {
+      error.value = 'Captcha verification failed. Please try again.'
+    } else {
+      error.value = msg
+    }
+    captchaToken.value = null
   } finally {
     loading.value = false
   }
@@ -301,4 +349,8 @@ function close() {
 .dialog-leave-active { transition: opacity 0.2s ease; }
 .dialog-enter-from { opacity: 0; }
 .dialog-leave-to { opacity: 0; }
+
+.login__captcha {
+  margin: 8px 0;
+}
 </style>

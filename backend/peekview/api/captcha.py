@@ -64,7 +64,9 @@ def _config_to_dataclass(auth_config) -> CaptchaConfig:
             missing.append("captcha_site_key")
         if not secret_key:
             missing.append("captcha_secret_key")
-        if not verify_url:
+        # verify_url only required for external mode; builtin mode uses empty verify_url
+        is_external = verify_url and verify_url.strip() and verify_url != "http://localhost:3000"
+        if is_external and not verify_url:
             missing.append("captcha_verify_url")
         if missing:
             raise CaptchaConfigError(
@@ -87,25 +89,34 @@ async def verify_captcha_token(
     verify_url: str,
     timeout: float = 5.0,
 ) -> bool:
-    """Verify a Cap captcha token against the Cap standalone server.
+    """Verify a Cap captcha token (builtin or external mode).
 
     Args:
         token: The cap-token from the frontend widget
-        site_key: The Cap site key (used in verify URL)
-        secret_key: The Cap secret key (used in POST body)
-        verify_url: The Cap standalone base URL
-        timeout: HTTP timeout in seconds
+        site_key: The Cap site key
+        secret_key: The Cap secret key
+        verify_url: The Cap standalone base URL (empty = builtin mode)
+        timeout: HTTP timeout in seconds (external mode only)
 
     Returns:
-        True if Cap says success, False otherwise
+        True if captcha valid, False otherwise
 
     Raises:
         CaptchaRequiredError: If token is empty/None
-        Any other exception: Network errors etc. (caller may want to handle)
+        CaptchaInvalidError: If token rejected
     """
     if not token:
         raise CaptchaRequiredError("Captcha token is required")
 
+    # ─── Builtin mode ─────────────────────────────────────────────────────
+    if not verify_url or verify_url.strip() == "":
+        from peekview.captcha_engine import siteverify_token
+        ok = siteverify_token(secret_key, site_key, token)
+        if ok:
+            return True
+        raise CaptchaInvalidError("Captcha verification failed")
+
+    # ─── External mode (v0.1.43 existing logic) ───────────────────────────
     verify_endpoint = f"{verify_url}/{site_key}/siteverify"
     logger.debug("Verifying captcha token at %s", verify_endpoint)
 

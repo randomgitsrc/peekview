@@ -162,10 +162,11 @@ class PeekAPI {
 
   // --- Auth API --- //
 
-  async login(username: string, password: string): Promise<AuthResponse> {
+  async login(username: string, password: string, captchaToken?: string): Promise<AuthResponse> {
     const response = await this.client.post<AuthApiResponse>('/auth/login', {
       username,
       password,
+      captcha_token: captchaToken || null,
     })
     const data = response.data
     localStorage.setItem(TOKEN_KEY, data.access_token)
@@ -176,11 +177,12 @@ class PeekAPI {
     }
   }
 
-  async register(username: string, password: string, displayName?: string): Promise<AuthResponse> {
+  async register(username: string, password: string, displayName?: string, captchaToken?: string): Promise<AuthResponse> {
     const response = await this.client.post<AuthApiResponse>('/auth/register', {
       username,
       password,
       display_name: displayName || null,
+      captcha_token: captchaToken || null,
     })
     const data = response.data
     localStorage.setItem(TOKEN_KEY, data.access_token)

@@ -11,7 +11,8 @@ export type { MergedConfig as ServerConfig } from './config/merge.js';
 
 export interface EntryFile {
   filename: string;
-  content: string;
+  content?: string;
+  content_base64?: string;
   path?: string;
 }
 

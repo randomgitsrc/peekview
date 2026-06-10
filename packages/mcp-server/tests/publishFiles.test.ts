@@ -181,16 +181,83 @@ describe('publish_files', () => {
     expect(result.content[0].text).toContain('没有可发布的文件');
   });
 
-  it('二进制文件被跳过', async () => {
+  it('二进制文件用 base64 上传', async () => {
     await fs.writeFile(path.join(tmpDir, 'data.bin'), Buffer.from([0, 1, 2, 0, 3]));
     await fs.writeFile(path.join(tmpDir, 'ok.txt'), 'text');
-    mockCreateEntry();
+    let capturedBody: { files: Array<{ filename: string; content?: string; content_base64?: string }> } | null = null;
+    mockServer.use(
+      http.post('http://localhost:8080/api/v1/entries', async ({ request }) => {
+        capturedBody = (await request.json()) as typeof capturedBody;
+        return HttpResponse.json({
+          id: 1, slug: 'bin-test', summary: 'Bin', tags: [],
+          files: [
+            { id: 1, filename: 'ok.txt', path: null, language: 'text', size: 4 },
+            { id: 2, filename: 'data.bin', path: null, language: null, size: 5 },
+          ],
+          created_at: '2026-01-01T00:00:00Z', expires_at: null, is_public: false,
+        });
+      })
+    );
 
     const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
     const result = await tool.handler({ summary: 'Bin', paths: [tmpDir] }, ctx);
 
+    expect(result.content[0].text).toContain('已发布 2 个文件');
+    expect(capturedBody).not.toBeNull();
+    const textFile = capturedBody!.files.find(f => f.filename === 'ok.txt');
+    const binFile = capturedBody!.files.find(f => f.filename === 'data.bin');
+    expect(textFile?.content).toBe('text');
+    expect(textFile?.content_base64).toBeUndefined();
+    expect(binFile?.content).toBeUndefined();
+    expect(binFile?.content_base64).toBeDefined();
+    const decoded = Buffer.from(binFile!.content_base64!, 'base64');
+    expect(decoded).toEqual(Buffer.from([0, 1, 2, 0, 3]));
+  });
+
+  it('超大二进制文件跳过（too_large）', async () => {
+    const bigFile = path.join(tmpDir, 'big.bin');
+    const bigBuf = Buffer.alloc(21 * 1024 * 1024, 0);
+    await fs.writeFile(bigFile, bigBuf);
+    await fs.writeFile(path.join(tmpDir, 'small.txt'), 'ok');
+    mockCreateEntry();
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    const result = await tool.handler({ summary: 'Big', paths: [tmpDir] }, ctx);
+
     expect(result.content[0].text).toContain('已发布 1 个文件');
-    expect(result.content[0].text).toContain('二进制文件');
+    expect(result.content[0].text).toContain('超过 20MB');
+  });
+
+  it('混合文本+二进制：文本走 content，二进制走 content_base64', async () => {
+    await fs.writeFile(path.join(tmpDir, 'code.py'), 'print("hi")');
+    const pngBuf = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47]), Buffer.alloc(100, 0)]);
+    await fs.writeFile(path.join(tmpDir, 'img.png'), pngBuf);
+    let capturedBody: { files: Array<{ filename: string; content?: string; content_base64?: string }> } | null = null;
+    mockServer.use(
+      http.post('http://localhost:8080/api/v1/entries', async ({ request }) => {
+        capturedBody = (await request.json()) as typeof capturedBody;
+        return HttpResponse.json({
+          id: 1, slug: 'mix-test', summary: 'Mix', tags: [],
+          files: [
+            { id: 1, filename: 'code.py', path: null, language: 'python', size: 12 },
+            { id: 2, filename: 'img.png', path: null, language: null, size: 104 },
+          ],
+          created_at: '2026-01-01T00:00:00Z', expires_at: null, is_public: false,
+        });
+      })
+    );
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    const result = await tool.handler({ summary: 'Mix', paths: [tmpDir] }, ctx);
+
+    expect(result.content[0].text).toContain('已发布 2 个文件');
+    expect(capturedBody).not.toBeNull();
+    const pyFile = capturedBody!.files.find(f => f.filename === 'code.py');
+    const pngFile = capturedBody!.files.find(f => f.filename === 'img.png');
+    expect(pyFile?.content).toBe('print("hi")');
+    expect(pyFile?.content_base64).toBeUndefined();
+    expect(pngFile?.content).toBeUndefined();
+    expect(pngFile?.content_base64).toBeDefined();
   });
 
   it('文件名/后缀从路径自动推断，不要求传 language', async () => {

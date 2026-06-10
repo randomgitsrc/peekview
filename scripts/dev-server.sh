@@ -74,24 +74,25 @@ start_server() {
     echo "  数据库: $DB_PATH"
     echo "  数据目录: $DATA_DIR/data"
     echo "  自动过期: 3600秒 (1小时)"
-    # Detect Python with peekview installed (need 3.12+)
-    PYTHON=""
-    for cmd in python3.12 python3.13 python3; do
-        if command -v "$cmd" &>/dev/null; then
-            if "$cmd" -c "import peekview" 2>/dev/null; then
-                PYTHON="$cmd"
-                break
-            fi
-        fi
-    done
-    if [ -z "$PYTHON" ]; then
-        echo "✗ 错误: 找不到安装了 peekview 的 Python 3.12+"
-        echo "   请运行: cd backend && pip install -e '.[test]'"
-        exit 1
+    # Use local backend with PYTHONPATH (ensure we use dev code, not pipx install)
+    PYTHON="python3.12"
+    if ! command -v "$PYTHON" &>/dev/null; then
+        PYTHON="python3"
     fi
-    echo "✓ Python: $($PYTHON --version)"
+    echo "✓ Python: $($PYTHON --version) (local backend)"
 
     cd backend
+    # Optional: enable captcha via env vars (for E2E captcha-enabled tests)
+    if [ "${PEEKVIEW_AUTH__CAPTCHA_ENABLED:-false}" = "true" ]; then
+        echo "  Captcha: ENABLED (builtin mode)"
+        export PEEKVIEW_AUTH__CAPTCHA_ENABLED=true
+        export PEEKVIEW_AUTH__CAPTCHA_SITE_KEY="${PEEKVIEW_AUTH__CAPTCHA_SITE_KEY:-test-site-key}"
+        export PEEKVIEW_AUTH__CAPTCHA_SECRET_KEY="${PEEKVIEW_AUTH__CAPTCHA_SECRET_KEY:-test-secret-key-32bytes-long!!}"
+        export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_DIFFICULTY="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_DIFFICULTY:-1}"
+        export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_COUNT="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_COUNT:-3}"
+        export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_SIZE="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_SIZE:-8}"
+    fi
+
     PEEKVIEW_STORAGE__DATA_DIR="$DATA_DIR/data" \
     PEEKVIEW_STORAGE__DB_PATH="$DB_PATH" \
     PEEKVIEW_PORT=$PORT \
@@ -100,6 +101,7 @@ start_server() {
     PEEKVIEW_AUTH__ALLOW_REGISTRATION=true \
     PEEKVIEW_SERVER__RATE_LIMIT_ENABLED=false \
     PEEKVIEW_DEBUG_MODE=1 \
+    PYTHONPATH="$(pwd):${PYTHONPATH:-}" \
         $PYTHON -m uvicorn peekview.main:get_app \
         --host 127.0.0.1 \
         --port $PORT \

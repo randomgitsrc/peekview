@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@cap.js/wasm": "^0.0.7",
+    "@playwright/test": "^1.60.0"
+  }
+}

@@ -30,10 +30,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
-  async function login(username: string, password: string): Promise<void> {
+  async function login(username: string, password: string, captchaToken?: string): Promise<void> {
     authLoading.value = true
     try {
-      const result = await api.login(username, password)
+      const result = await api.login(username, password, captchaToken)
       token.value = result.accessToken
       user.value = result.user
     } finally {
@@ -41,10 +41,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(username: string, password: string, displayName?: string): Promise<void> {
+  async function register(username: string, password: string, displayName?: string, captchaToken?: string): Promise<void> {
     authLoading.value = true
     try {
-      const result = await api.register(username, password, displayName)
+      const result = await api.register(username, password, displayName, captchaToken)
       token.value = result.accessToken
       user.value = result.user
     } finally {

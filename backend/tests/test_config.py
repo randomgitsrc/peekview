@@ -14,7 +14,7 @@ class TestPeekLimits:
     def test_default_limits(self):
         """Default limits are reasonable."""
         limits = PeekLimits()
-        assert limits.max_file_size == 10_485_760  # 10MB
+        assert limits.max_file_size == 20_971_520  # 20MB
         assert limits.max_content_length == 1_048_576  # 1MB
         assert limits.max_entry_files == 50
         assert limits.max_entry_size == 104_857_600  # 100MB

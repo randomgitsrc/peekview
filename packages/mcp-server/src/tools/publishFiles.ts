@@ -8,9 +8,10 @@ import type { EntryFile, SessionContext, ToolDefinition, ToolResult } from '../t
 import { translateError } from './utils.js';
 
 // ── 限制（对齐后端，考虑 base64 膨胀）──
-const MAX_SINGLE_FILE_BYTES = 7 * 1024 * 1024;   // 7MB
+const MAX_TEXT_FILE_BYTES = 7 * 1024 * 1024;       // 7MB
+const MAX_BINARY_FILE_BYTES = 20 * 1024 * 1024;   // 20MB
 const MAX_TOTAL_FILES = 50;
-const MAX_TOTAL_BYTES = 50 * 1024 * 1024;        // 50MB
+const MAX_TOTAL_BYTES = 100 * 1024 * 1024;        // 100MB
 
 // ── 目录扫描跳过清单 ──
 const SKIP_DIRS = new Set([
@@ -191,7 +192,7 @@ async function scanDirectory(
       if (include && include.length > 0 && !matchesAny(filename, include)) continue;
       if (exclude && exclude.length > 0 && matchesAny(filename, exclude)) continue;
 
-      if (stat.size > MAX_SINGLE_FILE_BYTES) {
+      if (stat.size > MAX_BINARY_FILE_BYTES) {
         skipped.push({ path: childPath, reason: 'too_large' });
         continue;
       }
@@ -386,7 +387,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
             const filename = path.basename(realPath);
             if (params.include_patterns?.length && !matchesAny(filename, params.include_patterns)) continue;
             if (params.exclude_patterns?.length && matchesAny(filename, params.exclude_patterns)) continue;
-            if (stat.size > MAX_SINGLE_FILE_BYTES) {
+            if (stat.size > MAX_BINARY_FILE_BYTES) {
               skipped.push({ path: inputPath, reason: 'too_large' });
               continue;
             }
@@ -420,13 +421,27 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
         };
       }
 
-      // 读取内容 + 二进制/总大小检查
+      // 读取内容 + 文本/二进制分类 + 总大小检查
       const files: EntryFile[] = [];
       let totalBytes = 0;
       for (const cf of collected) {
         const buf = await fs.readFile(cf.absPath);
         if (looksBinary(buf)) {
-          skipped.push({ path: cf.absPath, reason: 'binary' });
+          if (buf.length > MAX_BINARY_FILE_BYTES) {
+            skipped.push({ path: cf.absPath, reason: 'too_large' });
+            continue;
+          }
+          totalBytes += buf.length;
+          if (totalBytes > MAX_TOTAL_BYTES) {
+            return {
+              content: [{ type: 'text', text: `ERROR: 总大小超过 ${MAX_TOTAL_BYTES / 1024 / 1024}MB 限制。` }],
+            };
+          }
+          files.push({
+            filename: cf.filename,
+            content_base64: buf.toString('base64'),
+            path: cf.relPath,
+          });
           continue;
         }
         totalBytes += buf.length;
@@ -464,7 +479,12 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
       // 构造结果
       let text = `OK: 已发布 ${files.length} 个文件\n`;
       for (const f of files) {
-        text += `  ${f.path} (${formatSize(Buffer.byteLength(f.content, 'utf-8'))})\n`;
+        const size = f.content
+          ? Buffer.byteLength(f.content, 'utf-8')
+          : f.content_base64
+            ? Math.floor(f.content_base64.length * 3 / 4)
+            : 0;
+        text += `  ${f.path} (${formatSize(size)})\n`;
       }
       if (skipped.length > 0) {
         text += formatSkipped(skipped);
@@ -487,7 +507,7 @@ function formatSize(bytes: number): string {
 function formatSkipped(skipped: SkippedFile[]): string {
   const reasonText: Record<SkippedFile['reason'], string> = {
     binary: '二进制文件',
-    too_large: `超过 ${MAX_SINGLE_FILE_BYTES / 1024 / 1024}MB`,
+    too_large: `超过 ${MAX_BINARY_FILE_BYTES / 1024 / 1024}MB`,
     not_allowed: '路径无效或不允许',
     not_found: '文件不存在',
   };
