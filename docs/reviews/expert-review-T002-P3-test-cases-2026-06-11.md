@@ -421,13 +421,13 @@ __all__ = ["init_db", "check_schema", "SchemaMismatchError", ...]
 ## 待办
 
 ### 阻塞项（P4 实现前必须修）
-- [ ] **发现 1**：补全 TC09 `test_independent_commits` 测试方法
-- [ ] **发现 2**：`test_query_after_migration` 插入测试用户后再验证 `is_admin` 可访问
-- [ ] **发现 7**：`SchemaMismatchError` 导入路径统一（测试 + 设计文档用同一模块）
+- [x] **发现 1**：补全 TC09 `test_independent_commits` 测试方法
+- [x] **发现 2**：`test_query_after_migration` 插入测试用户后再验证 `is_admin` 可访问
+- [x] **发现 7**：`SchemaMismatchError` 导入路径统一 — 测试已改为 `from peekview.exceptions import`，实际定义待 P4 在 `exceptions.py` 中添加
 
 ### 建议项
-- [ ] **发现 3**：提取 `_create_users_without_is_admin()` / `_create_entries_without_owner_id()` 辅助函数，消除 4 处重复
+- [x] **发现 3**：提取 `_create_users_without_is_admin()` / `_create_entries_without_owner_id()` 辅助函数，消除 4 处重复
 - [ ] **发现 4**：确定 `_run_migrations` 可见性（保留私有 vs 升为 public），更新测试调用方式
-- [ ] **发现 5**：P3-test-cases.md 移除硬编码测试总数，或更新为 473
-- [ ] **发现 6**：补充 `check_schema()` 对空 SQLite 文件（无表）的测试
-- [ ] **发现 9**：TC05 方法名 `test_default_is_no_migrations` → `test_no_migrations_when_false`（或反过来）
+- [x] **发现 5**：P3-test-cases.md 移除硬编码测试总数，或更新为 473
+- [x] **发现 6**：补充 `check_schema()` 对空 SQLite 文件（无表）的测试
+- [x] **发现 9**：TC05 方法名 `test_default_is_no_migrations` → `test_no_migrations_when_false`（或反过来）

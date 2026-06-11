@@ -107,7 +107,7 @@ parent: T002/P2-design.md
 
 **测试步骤**：
 1. 运行完整测试套件
-2. 确认所有 429 现有测试通过
+2. 确认所有现有测试通过
 
 **验证命令**：`python3 -m pytest backend/tests/ -x --ignore=backend/tests/test_apikey.py --ignore=backend/tests/test_cli_remote.py`
 

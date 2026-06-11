@@ -15,9 +15,59 @@ import pytest
 from sqlalchemy import text
 from sqlmodel import Session, SQLModel, select
 
-from peekview.database import _run_migrations, check_schema, init_db, SchemaMismatchError
-from peekview.exceptions import PeekError
+from peekview.database import _run_migrations, check_schema, init_db
+from peekview.exceptions import PeekError, SchemaMismatchError
 from peekview.models import User
+
+
+def _create_users_without_is_admin(engine):
+    """Create users table without is_admin column (simulate pre-v0.1.26 schema)."""
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE users RENAME TO users_old"))
+        conn.execute(
+            text(
+                "CREATE TABLE users ("
+                "  id INTEGER PRIMARY KEY,"
+                "  username TEXT NOT NULL,"
+                "  password_hash TEXT NOT NULL,"
+                "  display_name TEXT,"
+                "  is_active BOOLEAN DEFAULT 1,"
+                "  created_at TEXT,"
+                "  updated_at TEXT"
+                ")"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO users SELECT id, username, password_hash,"
+                "  display_name, is_active, created_at, updated_at FROM users_old"
+            )
+        )
+        conn.execute(text("DROP TABLE users_old"))
+        conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users(username)"))
+        conn.commit()
+
+
+def _create_entries_without_owner_id(engine):
+    """Create entries table without owner_id column."""
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS entries"))
+        conn.execute(
+            text(
+                "CREATE TABLE entries ("
+                "  id INTEGER PRIMARY KEY,"
+                "  slug TEXT NOT NULL UNIQUE,"
+                "  summary TEXT,"
+                "  status TEXT DEFAULT 'active',"
+                "  tags TEXT,"
+                "  is_public BOOLEAN DEFAULT 1,"
+                "  created_at TEXT,"
+                "  updated_at TEXT,"
+                "  expires_at TEXT"
+                ")"
+            )
+        )
+        conn.commit()
 
 
 class TestCheckSchema:
@@ -34,33 +84,7 @@ class TestCheckSchema:
         db_path = tmp_path / "test.db"
         engine = init_db(db_path)
 
-        # Manually remove is_admin column to simulate old schema
-        with engine.connect() as conn:
-            # SQLite doesn't support DROP COLUMN easily, so create a new table
-            conn.execute(text("DROP TABLE IF EXISTS users_old"))
-            conn.execute(text("ALTER TABLE users RENAME TO users_old"))
-            conn.execute(
-                text(
-                    "CREATE TABLE users ("
-                    "  id INTEGER PRIMARY KEY,"
-                    "  username TEXT NOT NULL,"
-                    "  password_hash TEXT NOT NULL,"
-                    "  display_name TEXT,"
-                    "  is_active BOOLEAN DEFAULT 1,"
-                    "  created_at TEXT,"
-                    "  updated_at TEXT"
-                    ")"
-                )
-            )
-            conn.execute(
-                text(
-                    "INSERT INTO users SELECT id, username, password_hash,"
-                    "  display_name, is_active, created_at, updated_at FROM users_old"
-                )
-            )
-            conn.execute(text("DROP TABLE users_old"))
-            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users(username)"))
-            conn.commit()
+        _create_users_without_is_admin(engine)
 
         with pytest.raises(SchemaMismatchError) as exc_info:
             check_schema(engine)
@@ -79,11 +103,19 @@ class TestCheckSchema:
         err = SchemaMismatchError({"users": ["is_admin"]})
         assert "peekview service restart" in str(err)
 
+    def test_empty_db_no_tables(self, tmp_path: Path):
+        """Raw SQLite file with no tables should not raise."""
+        from sqlalchemy import create_engine
+
+        db_path = tmp_path / "empty.db"
+        engine = create_engine(f"sqlite:///{db_path}")
+        check_schema(engine)
+
 
 class TestInitDb:
     """init_db() — parameterized migration control."""
 
-    def test_default_is_no_migrations(self, tmp_path: Path):
+    def test_no_migrations_when_false(self, tmp_path: Path):
         """init_db() default should NOT run migrations."""
         db_path = tmp_path / "test.db"
         with patch("peekview.database._run_migrations") as mock_migrate:
@@ -108,37 +140,10 @@ class TestRunMigrations:
         db_path = tmp_path / "test.db"
         engine = init_db(db_path)
 
-        # Remove is_admin column to simulate pre-migration state
-        with engine.connect() as conn:
-            conn.execute(text("DROP TABLE IF EXISTS users_old"))
-            conn.execute(text("ALTER TABLE users RENAME TO users_old"))
-            conn.execute(
-                text(
-                    "CREATE TABLE users ("
-                    "  id INTEGER PRIMARY KEY,"
-                    "  username TEXT NOT NULL,"
-                    "  password_hash TEXT NOT NULL,"
-                    "  display_name TEXT,"
-                    "  is_active BOOLEAN DEFAULT 1,"
-                    "  created_at TEXT,"
-                    "  updated_at TEXT"
-                    ")"
-                )
-            )
-            conn.execute(
-                text(
-                    "INSERT INTO users SELECT id, username, password_hash,"
-                    "  display_name, is_active, created_at, updated_at FROM users_old"
-                )
-            )
-            conn.execute(text("DROP TABLE users_old"))
-            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users(username)"))
-            conn.commit()
+        _create_users_without_is_admin(engine)
 
-        # Run migrations
         _run_migrations(engine)
 
-        # Verify is_admin was added
         with engine.connect() as conn:
             columns = {
                 row[1] for row in conn.execute(text("PRAGMA table_info(users)"))
@@ -148,44 +153,31 @@ class TestRunMigrations:
         engine.dispose()
 
     def test_query_after_migration(self, tmp_path: Path):
-        """select(User) should work after migration on old schema."""
+        """select(User) should work after migration on old schema with existing data."""
+        from peekview.auth import hash_password
+
         db_path = tmp_path / "test.db"
         engine = init_db(db_path)
 
-        # Remove is_admin column
-        with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE users RENAME TO users_old"))
-            conn.execute(
-                text(
-                    "CREATE TABLE users ("
-                    "  id INTEGER PRIMARY KEY,"
-                    "  username TEXT NOT NULL,"
-                    "  password_hash TEXT NOT NULL,"
-                    "  display_name TEXT,"
-                    "  is_active BOOLEAN DEFAULT 1,"
-                    "  created_at TEXT,"
-                    "  updated_at TEXT"
-                    ")"
-                )
+        with Session(engine) as session:
+            user = User(
+                username="testuser",
+                password_hash=hash_password("testpass123"),
+                is_admin=False,
             )
-            conn.execute(
-                text(
-                    "INSERT INTO users SELECT id, username, password_hash,"
-                    "  display_name, is_active, created_at, updated_at FROM users_old"
-                )
-            )
-            conn.execute(text("DROP TABLE users_old"))
-            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users(username)"))
-            conn.commit()
+            session.add(user)
+            session.commit()
 
-        # Migrate
+        _create_users_without_is_admin(engine)
+
         _run_migrations(engine)
 
-        # Query should work without KeyError
         with Session(engine) as session:
             users = session.exec(select(User)).all()
+            assert len(users) >= 1, "Expected at least one user after migration"
             for u in users:
-                _ = u.is_admin  # must not raise
+                _ = u.is_admin
+                _ = u.username
 
         engine.dispose()
 
@@ -194,25 +186,7 @@ class TestRunMigrations:
         db_path = tmp_path / "test.db"
         engine = init_db(db_path)
 
-        with engine.connect() as conn:
-            # Drop entries to recreate without is_public/owner_id
-            conn.execute(text("DROP TABLE IF EXISTS entries"))
-            conn.execute(
-                text(
-                    "CREATE TABLE entries ("
-                    "  id INTEGER PRIMARY KEY,"
-                    "  slug TEXT NOT NULL UNIQUE,"
-                    "  summary TEXT,"
-                    "  status TEXT DEFAULT 'active',"
-                    "  tags TEXT,"
-                    "  is_public BOOLEAN DEFAULT 1,"
-                    "  created_at TEXT,"
-                    "  updated_at TEXT,"
-                    "  expires_at TEXT"
-                    ")"
-                )
-            )
-            conn.commit()
+        _create_entries_without_owner_id(engine)
 
         _run_migrations(engine)
 
@@ -222,6 +196,23 @@ class TestRunMigrations:
             }
             assert "is_public" in columns
             assert "owner_id" in columns
+
+        engine.dispose()
+
+    def test_independent_commits(self, tmp_path: Path):
+        """Each DDL should have independent commit; partial failure shouldn't cascade."""
+        db_path = tmp_path / "test.db"
+        engine = init_db(db_path)
+
+        _create_users_without_is_admin(engine)
+
+        engine.dispose()
+
+        _run_migrations(engine)
+
+        with engine.connect() as conn:
+            columns = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
+            assert "is_admin" in columns
 
         engine.dispose()
 
