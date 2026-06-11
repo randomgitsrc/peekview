@@ -7,20 +7,11 @@
 
 ## [Unreleased]
 
-## [0.1.47] - 2026-06-11
-
-### 新增
-
--
+## [0.1.48] - 2026-06-11
 
 ### 修复
 
--
-
-### 变更
-
--
-
+- **httpx 缺失**：`captcha.py` 运行时依赖 `httpx`，但之前写在 `[optional-dependencies]` 的 `test` 组里，`pipx install` 不会安装。已将 `httpx` 移至主 `dependencies`。
 
 ## [0.1.47] - 2026-06-11
 
