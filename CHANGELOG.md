@@ -7,6 +7,32 @@
 
 ## [Unreleased]
 
+## [0.1.49] - 2026-06-11
+
+### 新增
+
+-
+
+### 修复
+
+-
+
+### 变更
+
+-
+
+
+## [0.1.49] - 2026-06-11
+
+### 新增
+
+- **Captcha WASM 本地离线化**：通过 `window.CAP_CUSTOM_WASM_URL` 覆盖，cap.js 优先使用本地 WASM
+- **Captcha E2E 测试**：4 个独立测试（config/challenge/siteverify/注册拦截），需要 `PEEKVIEW_AUTH__CAPTCHA_ENABLED=true`
+
+### 修复
+
+- **CSP**：移除 CDN `connect-src`，新增 `worker-src blob:`（captcha Web Worker 必需）
+
 ## [0.1.48] - 2026-06-11
 
 ### 修复
