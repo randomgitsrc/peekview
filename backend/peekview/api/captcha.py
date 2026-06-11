@@ -58,6 +58,13 @@ def _config_to_dataclass(auth_config) -> CaptchaConfig:
     verify_url = getattr(auth_config, "captcha_verify_url", "")
     exempt = getattr(auth_config, "captcha_exempt_first_user", True)
 
+    # Auto-generated secret fallback (from builtin engine)
+    if not secret_key:
+        from pathlib import Path
+        secret_path = Path.home() / ".peekview" / ".captcha_secret"
+        if secret_path.exists():
+            secret_key = secret_path.read_text().strip()
+
     if enabled:
         missing = []
         if not site_key:

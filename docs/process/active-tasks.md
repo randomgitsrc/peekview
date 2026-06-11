@@ -18,7 +18,7 @@
 
 ## 当前活跃任务
 
-> 当前版本 v0.1.50 已发布（Backend/Frontend）。MCP Server v0.2.0 已发布到 npm。
+> 当前版本 v0.1.51 已发布（Backend/Frontend）。MCP Server v0.2.0 已发布到 npm。
 > 如需新增功能，请在 `docs/plans/` 中规划新任务。
 
 **无进行中任务**
