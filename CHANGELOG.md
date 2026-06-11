@@ -7,6 +7,32 @@
 
 ## [Unreleased]
 
+## [0.1.46] - 2026-06-11
+
+### 新增
+
+- **CLI config list 全量展示**：对齐 MCP 风格，显示所有配置项（含未设置的默认值）、中文注释、按 section 分组
+- **captcha 配置 CLI 支持**：`config set auth.captcha_enabled true/false` 开关验证码
+- **config set 重启提示**：设置成功后提示 `peekview service restart`
+
+### 修复
+
+- **config.py**：合并重复 `captcha_secret_key` 字段
+- **cli.py**：`config set` 类型转换补充 captcha 键（bool/int）
+
+### 变更
+
+- **cli.py**：`supported_keys` 提取为模块级常量（`tuple`）
+- **cli.py**：`config --help` 引导用户使用 `config list` 发现配置
+
+## [mcp-v0.8.3] - 2026-06-11
+
+### 变更
+
+- **config get**：支持默认值回退（对齐 peekview），无配置文件时不报错
+- **config set**：成功后提示重启 + 显示配置文件路径（对齐 peekview）
+- **config.ts**：提取 `DEFAULT_CONFIG` 常量（`config list` 和 `config get` 共享）
+
 ## [0.1.45] - 2026-06-11
 
 ### 新增
