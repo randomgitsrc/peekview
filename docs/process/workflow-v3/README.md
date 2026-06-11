@@ -33,6 +33,7 @@ docs/process/workflow-v3/
 ├── role-system.md               # 双层角色体系说明（解决问题 2）
 ├── loop-orchestration.md        # /loop 自动编排设计
 ├── state-machine.md             # 状态机落盘设计
+├── git-integration.md           # 状态落盘的 git 持久化（多 agent 协作）
 └── assets/
     ├── review-roles/            # 评审角色库（从 gstack 提取）
     │   ├── review.md            # /review 偏执 Staff Engineer
@@ -95,6 +96,8 @@ docs/process/workflow-v3/
 ### 原则 3：状态在文件里，不在记忆里
 
 任务的当前状态（在哪个阶段、哪些门槛过了）落盘到 `docs/tasks/Txxx/` 和 active-tasks.md。即使会话被压缩、中断、重启，主 Agent 重新读文件就能接着干。
+
+**状态落盘必须配合 git 持久化**（见 git-integration.md）：每阶段门槛通过后主 Agent commit 一次，让状态真正持久、可恢复、可多 agent 共享。只写本地文件不 commit，崩溃就丢。
 
 ### 原则 4：门槛必须机器可判定
 
