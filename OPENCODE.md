@@ -2,7 +2,7 @@
 
 轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
 
-版本：Backend v0.1.45 | MCP Server v0.8.2
+版本：Backend v0.1.52 | MCP Server v0.8.3
 
 ## 架构
 
@@ -41,6 +41,7 @@ make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 - **DOMPurify**：清理 markdown 输出。Mermaid 源码不走 DOM（用 `Map` 传递）。含 `-->` 的属性会被 DOMPurify 删除
 - **Rate limit**：captcha 端点用 `rate_limit_per_minute`，login/register 用 `rate_limit_login_per_minute`。`default_limits` 兜底其他 API 端点
 - **MCP 版本独立**：由 `bump-mcp-version` 管理，主线 `bump-version` 不会碰。doc-sync 脚本已移除了 MCP package.json 同步条目
+- **MCP 双模式**：`remote`（A→B→C，暴露 create_entry/get/list/delete）| `local`（A=B→C，暴露 publish_files/get/list/delete）
 
 ## 发布注意事项
 

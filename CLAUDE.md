@@ -232,6 +232,6 @@ entry_service = request.app.state.entry_service
 - **Dev Process:** `docs/process/workflow.md` - P0-P4 checkpoint-driven development
 - **Debug Workflow:** `docs/process/debug-workflow.md` - CRITICAL for pre-release verification
 - **Release Process:** `docs/process/release.md` - MUST READ when releasing
-- **Auth Spec:** `docs/specs/spec-user-auth.md`
-- **Remote CLI Spec:** `docs/specs/spec-remote-cli.md`
-- **MCP Dual Mode Plan:** `docs/plans/mcp-dual-mode-final-v0.7.md`
+- **Auth Spec:** `docs/archived/specs/spec-user-auth.md`
+- **Remote CLI Spec:** `docs/archived/specs/spec-remote-cli.md`
+- **MCP Dual Mode Plan:** `docs/archived/plans/mcp-dual-mode-final-v0.7.md`

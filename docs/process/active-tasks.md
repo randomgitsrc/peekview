@@ -18,7 +18,7 @@
 
 ## 当前活跃任务
 
-> 当前版本 v0.1.52 已发布（Backend/Frontend）。MCP Server v0.2.0 已发布到 npm。
+> 当前版本 v0.1.52（Backend/Frontend）。MCP Server v0.8.3 已发布到 npm。
 > 如需新增功能，请在 `docs/plans/` 中规划新任务。
 
 **无进行中任务**
@@ -27,10 +27,10 @@
 
 ## 快速入口
 
-- **认证规格**：`docs/specs/spec-user-auth.md`
-- **远程 CLI 规格**：`docs/specs/spec-remote-cli.md`
-- **MCP 多用户认证规格**：`docs/specs/spec-mcp-multi-user.md`
-- **Admin 角色计划**：`docs/archived/plans/impl-plan-admin-role.md`（已完成）
+- **认证规格**：`docs/archived/specs/spec-user-auth.md`
+- **远程 CLI 规格**：`docs/archived/specs/spec-remote-cli.md`
+- **改进待办**：`docs/roadmap/improvement-backlog.md`
+- **活跃计划**：`docs/plans/`
 - **项目索引**：`INDEX.md`
 - **发布记录**：`CHANGELOG.md`
 - **开发流程**：`docs/process/workflow.md`

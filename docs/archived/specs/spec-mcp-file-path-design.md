@@ -114,7 +114,7 @@ async function scanDirectory(dirPath: string): Promise<FileData[]> {
 
 ### `cwd` 如何获取
 
-MCP Server 在 SSE 连接建立时，从 Claude Code 的环境中获取工作目录。有两种方式：
+MCP Server 在 Streamable HTTP 连接的 initialize 请求时，从 Claude Code 的环境中获取工作目录。有两种方式：
 
 **方式 A（推荐）**：工具接受可选的 `cwd` 参数，Claude 自己告知：
 ```json
@@ -268,7 +268,7 @@ Ignored automatically: .git, node_modules, __pycache__, .venv, dist, build`
 
 此改动是 **Breaking Change**：现有使用 `content` 参数的调用将失败。
 
-- 版本号：MCP Server `v0.6.0`
+- 版本号：MCP Server `v0.7.0`（文件路径设计已纳入双模式实现）
 - 迁移：将 `files[].content` 替换为 `paths[]`（先用 write_file 写文件）
 - CHANGELOG 需要明确标注
 

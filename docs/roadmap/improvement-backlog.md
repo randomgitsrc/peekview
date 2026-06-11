@@ -2,7 +2,7 @@
 
 > 创建：2026-06-09
 > 用途：汇总评审发现的待改进事项，按优先级跟踪
-> 当前版本：Backend v0.1.42 / MCP Server v0.8.1
+> 当前版本：Backend v0.1.52 / MCP Server v0.8.3
 
 ---
 
@@ -11,10 +11,10 @@
 | # | 事项 | 类别 | 优先级 | 状态 |
 |---|------|------|--------|------|
 | 1 | SSE → Streamable HTTP 迁移 | 技术债/传输 | 🔴 立即 | ✅ 完成 (v0.8.0) |
-| 2 | rate limiting 配置化真正落地 | 技术债 | 🟠 近期 | ✅ 完成 (v0.1.44) |
-| 3 | MCP/CLI 定位写进用户文档 | 产品/文档 | 🟠 近期 | ✅ 完成 (已存在) |
-| 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | ✅ 完成 (v0.1.44) |
-| 5 | 前端页面 CSP | 安全 | 🟡 中期 | ✅ 完成 (v0.1.44) |
+| 2 | rate limiting 配置化真正落地 | 技术债 | 🟠 近期 | ✅ 完成 (v0.1.45) |
+| 3 | MCP/CLI 定位写进用户文档 | 产品/文档 | 🟠 近期 | ✅ 完成 |
+| 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | ✅ 完成 (v0.1.45) |
+| 5 | 前端页面 CSP | 安全 | 🟡 中期 | ✅ 完成 (v0.1.45) |
 | 6 | publish_files 二进制文件 base64 支持 | 功能 | 🟡 中期 | ✅ 完成 (v0.1.44) |
 | 7 | package-lock.json 版本元数据同步 | 技术债 | 🟡 中期 | ✅ 完成 (v0.1.44) |
 | 8 | StorageBackend 接口抽象 | 架构 | 🔵 长期 | 待办 |
@@ -22,7 +22,7 @@
 | 10 | SQLite 并发写边界文档化 | 架构/文档 | 🔵 长期 | 待办 |
 | 11 | publish_files 大目录扫描进度反馈 | 体验 | 🔵 长期 | 待办 |
 | 12 | health check 503 vs 200 决策复审 | 运维 | 🔵 长期 | ✅ 决策完成 (保持200) |
-| 13 | 登录/注册 Cap captcha 集成 | 安全 | 🟠 近期 | ✅ 完成 (v0.1.43) |
+| 13 | 登录/注册 Cap captcha 集成 | 安全 | 🟠 近期 | ✅ 完成 (v0.1.49) |
 
 ---
 
@@ -36,11 +36,11 @@
 
 ---
 
-### 🟠 2. rate limiting 配置化真正落地
+### 🟠 2. rate limiting 配置化真正落地（✅ 已完成 v0.1.45）
 
 **问题**：`@limiter.limit()` 是编译时装饰器，无法从 config 读值。当前实现硬编码 `"10/minute"`，但 config 里的 `rate_limit_login_per_minute` 字段形同虚设——用户配了不生效。
 
-**方案**：Spec 已更新（`spec-security-hardening-20260523.md`）——auth.py 去掉装饰器，在 create_app 里用 config 值动态 `limiter.limit()(login)` 绑定。实现待跟进。
+**已完成方案**：`create_app()` 新增 `rate_limit_login_per_minute` / `rate_limit_per_minute` 参数，captcha 端点限速从硬编码改为可配置，`limiter.default_limits` 兜底保护所有 API 端点。
 
 ---
 
@@ -150,7 +150,7 @@
 - 第一个用户（admin）可豁免
 - 15 个新测试覆盖 verify_captcha 单元、register/login 集成、exempt 场景、公开端点
 
-**部署**：用户需自行启动 Cap standalone（Docker），详见 `docs/plans/captcha-integration.md`。
+**部署**：用户需自行启动 Cap standalone（Docker），详见 `docs/archived/plans/captcha-integration.md`。
 
 ---
 

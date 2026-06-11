@@ -109,23 +109,26 @@ frontend-v3/src/
 
 ## 文档清单
 
-### 📋 规格文档 (`docs/specs/`)
+### 📋 规格文档（已归档至 `docs/archived/specs/`）
 
 | 文件 | 说明 | 状态 |
 |------|------|------|
-| [spec-user-auth.md](docs/specs/spec-user-auth.md) | 用户认证规格 — JWT + 可见性 + API Key | ✅ 已实现（v0.1.25）|
-| [spec-remote-cli.md](docs/specs/spec-remote-cli.md) | 远程 CLI 规格 | ✅ 已实现（v0.1.25）|
-| [spec-html-render.md](docs/specs/spec-html-render.md) | HTML 网页渲染规格 — iframe 沙盒渲染 | ✅ 已实现（v0.1.28）|
-| [spec-file-tree.md](docs/specs/spec-file-tree.md) | FileTree 目录树层级结构规格 | ✅ 已实现（v0.1.29）|
-| [spec-html-multi-file-inject.md](docs/specs/spec-html-multi-file-inject.md) | HTML 多文件资源注入规格 | ✅ 已实现（v0.1.29）|
-| [spec-html-binary-inject.md](docs/specs/spec-html-binary-inject.md) | HTML 二进制资源注入规格 | ✅ 已实现（v0.1.29）|
-| [spec-mcp-multi-user.md](docs/specs/spec-mcp-multi-user.md) | MCP Server 多用户认证规格 | ✅ 已实现（MCP v0.2.0）|
+| [spec-user-auth.md](docs/archived/specs/spec-user-auth.md) | 用户认证规格 — JWT + 可见性 + API Key | ✅ 已实现（v0.1.25）|
+| [spec-remote-cli.md](docs/archived/specs/spec-remote-cli.md) | 远程 CLI 规格 | ✅ 已实现（v0.1.25）|
+| [spec-html-render.md](docs/archived/specs/spec-html-render.md) | HTML 网页渲染规格 — iframe 沙盒渲染 | ✅ 已实现（v0.1.28）|
+| [spec-file-tree.md](docs/archived/specs/spec-file-tree.md) | FileTree 目录树层级结构规格 | ✅ 已实现（v0.1.29）|
+| [spec-html-multi-file-inject.md](docs/archived/specs/spec-html-multi-file-inject.md) | HTML 多文件资源注入规格 | ✅ 已实现（v0.1.29）|
+| [spec-html-binary-inject.md](docs/archived/specs/spec-html-binary-inject.md) | HTML 二进制资源注入规格 | ✅ 已实现（v0.1.29）|
+| [spec-mcp-local-remote-mode.md](docs/archived/specs/spec-mcp-local-remote-mode.md) | MCP 双模式设计 | ✅ 已实现（MCP v0.7.0）|
 
-> MVP 阶段规格文档已归档至 `docs/archived/specs/`
+### 📝 实现计划
 
-### 📝 实现计划 (`docs/plans/`)
+| 文件 | 说明 | 状态 |
+|------|------|------|
+| [gole-cli-config-alignment.md](docs/plans/gole-cli-config-alignment.md) | CLI 配置体验对齐 + Captcha 配置支持 | 🔄 进行中 |
+| [mcp-path-namespace-mapping.md](docs/plans/mcp-path-namespace-mapping.md) | MCP Path Namespace 映射（Docker 路径空间错位） | ⬜ 待开始 |
 
-> 当前无活跃实现计划。已完成的计划均已归档至 `docs/archived/plans/`
+> 已完成的计划均已归档至 `docs/archived/plans/`
 
 ### 🔍 评审 (`docs/reviews/`)
 
@@ -217,7 +220,10 @@ frontend-v3/src/
 
 **MCP Server**:
 - ✅ Streamable HTTP 传输 + 多用户 API Key 透传
+- ✅ 本地/远程双模式（local: publish_files + get/list/delete, remote: create_entry + get/list/delete）
+- ✅ publish_files 工具：绝对路径文件/目录递归发布、黑白名单、二层安全（黑名单+allowed_paths）
 - ✅ Tools: create_entry, get_entry, list_entries, delete_entry
+- ✅ 二进制文件 base64 编码上传支持
 - ✅ 中文错误消息（认证失败, 权限不足）
 - ✅ Health check endpoint (/health)
 - ✅ Docker 支持 + npm 发布 (@peekview/mcp-server)
