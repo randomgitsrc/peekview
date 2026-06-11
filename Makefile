@@ -384,12 +384,25 @@ publish:
 	@echo "→ Step 3/4: 运行最终检查..."
 	@make check-version check-changelog verify-wheel
 	@echo "→ Step 4/4: 发布到 PyPI..."
-	@if [ -z "$(PYPI_API_TOKEN)" ]; then \
+	@TOKEN="$(PYPI_API_TOKEN)"; \
+	if [ -z "$$TOKEN" ]; then \
+		for f in "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
+			if [ -f "$$f" ]; then \
+				TOKEN=$$(source "$$f" 2>/dev/null && echo $$PYPI_API_TOKEN); \
+				[ -n "$$TOKEN" ] && break; \
+			fi; \
+		done; \
+	fi; \
+	if [ -z "$$TOKEN" ]; then \
 		echo "✗ Error: PYPI_API_TOKEN not set"; \
+		echo ""; \
+		echo "  获取方式：https://pypi.org/manage/account/token/"; \
+		echo "  配置方式：echo 'export PYPI_API_TOKEN=\"pypi-...\"' >> ~/.bash_env"; \
+		echo ""; \
 		exit 1; \
-	fi
+	fi; \
 	cd backend && pipx run twine upload dist/* \
-		-u __token__ -p "$(PYPI_API_TOKEN)" --non-interactive
+		-u __token__ -p "$$TOKEN" --non-interactive
 	@echo ""
 	@echo "✅ Published to PyPI"
 	@echo "   URL: https://pypi.org/project/peekview/$$(cd backend && python3 -c 'from peekview import __version__; print(__version__)')/"
@@ -398,11 +411,17 @@ publish:
 publish-test: clean build test check-version
 	@echo "→ Publishing to TestPyPI..."
 	@if [ -z "$(PYPI_TEST_API_TOKEN)" ]; then \
-		echo "✗ Error: PYPI_TEST_API_TOKEN not set"; \
-		exit 1; \
+		if [ -f ~/.bashrc ]; then \
+			PYPI_TEST_API_TOKEN=$$(bash -c 'source ~/.bashrc && echo $$PYPI_TEST_API_TOKEN' 2>/dev/null); \
+		fi; \
+		if [ -z "$$PYPI_TEST_API_TOKEN" ]; then \
+			echo "✗ Error: PYPI_TEST_API_TOKEN not set"; \
+			exit 1; \
+		fi; \
+		export PYPI_TEST_API_TOKEN; \
 	fi
 	cd backend && python3 -m twine upload dist/* \
-		-u __token__ -p "$(PYPI_TEST_API_TOKEN)" \
+		-u __token__ -p "$${PYPI_TEST_API_TOKEN:-$(PYPI_TEST_API_TOKEN)}" \
 		--repository testpypi --non-interactive
 	@echo "✓ Published to TestPyPI"
 

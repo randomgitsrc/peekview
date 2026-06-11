@@ -99,15 +99,21 @@ make pre-publish
 # Scope: "Entire account" 或 "Project: peekview"
 # 复制生成的 token (pypi-xxxxxxxx)
 
-# 2. 设置环境变量（临时，当前终端）
+# 2. 配置 token（三选一）
+# 方式 A：环境变量（临时，当前终端）
 export PYPI_API_TOKEN="pypi-xxxxxxxx"
 
-# 或添加到 ~/.bashrc（永久）
+# 方式 B：写入 ~/.bash_env（推荐，永久，非交互式 shell 也能读取）
+echo 'export PYPI_API_TOKEN="pypi-xxxxxxxx"' >> ~/.bash_env
+
+# 方式 C：写入 ~/.bashrc（需交互式 shell，Makefile 非交互式环境取不到）
 echo 'export PYPI_API_TOKEN="pypi-xxxxxxxx"' >> ~/.bashrc
 
 # 3. 执行发布
 make publish
 ```
+
+> **注意**：Makefile 的 `publish` target 会自动从 `~/.bash_env` 或 `~/.peekview/.release-env` 读取 token 作为 fallback，无需每次手动 export。推荐使用方式 B。
 
 ### 5.5 升级并重启生产服务
 
