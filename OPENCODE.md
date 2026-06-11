@@ -1,8 +1,10 @@
-# PeekView — opencode 项目概要
+# PeekView — 新会话速览
 
-轻量级代码/文档格式化服务：Agent/CLI 创建条目 → 浏览器查看。
+轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
 
-## 三组件速览
+版本：Backend v0.1.45 | MCP Server v0.8.2
+
+## 架构
 
 | 组件 | 路径 | 栈 |
 |------|------|----|
@@ -10,26 +12,47 @@
 | Frontend | `frontend-v3/` | Vue 3 + Vite + TypeScript + Shiki |
 | MCP Server | `packages/mcp-server/` | Node.js/TS + Streamable HTTP |
 
-## 核心规则（新会话必读）
+## 铁律（违反必出事）
 
-- **严禁** `uvicorn` 直接启动 — 用 `make debug`（port 8888，独立数据目录 `/tmp/peekview-debug/`）
-- **严禁** 停止用户的 pipx 正式服务（port 8080）
-- 前端路由在 `src/router.ts`（不是 `src/router/index.ts`）
-- DI 模式：`request.app.state.entry_service`（无模块级全局变量）
+1. **严禁** `uvicorn` 直接启动。用 `make debug`（`127.0.0.1:8888`，独立数据目录 `/tmp/peekview-debug/`）
+2. **严禁** 停止/触碰用户的 pipx 正式服务（`:8080`）
+3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
+4. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
+5. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
 
 ## 常用命令
 
-| 命令 | 用途 |
-|------|------|
-| `make debug` | 一键构建+启动+E2E 测试 |
-| `make debug-start` / `make debug-stop` | 启停调试服务 |
-| `make test` (from `backend/`) | 后端 pytest |
-| `npm run build` (from `frontend-v3/`) | 前端构建并复制到 static |
-| `make test-mcp-unit` | MCP 单元测试（临时 HOME，无需后端） |
+```bash
+make debug                # 构建+启动+E2E（完整调试流程）
+make debug-start          # 仅启动调试服务
+make debug-stop           # 停止调试服务
 
-## 关键文档
+cd backend && make test   # 后端测试
+cd frontend-v3 && npm run build   # 前端构建（自动复制到 static/）
+make test-mcp-unit        # MCP 单元测试
+make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
+```
 
-- 开发流程：`docs/process/workflow.md`（P0-P5 检查点驱动）
+## 技术要点
+
+- **DI 模式**：`request.app.state.entry_service`（非模块级全局变量）
+- **认证**：JWT httpOnly Cookie（`peekview_token`）替代了 localStorage。优先级：`Authorization` header > Cookie > API key
+- **CSP**：`script-src 'self' 'unsafe-eval'`（`unsafe-eval` 为 Mermaid/d3 的 `new Function()` 必需）
+- **DOMPurify**：清理 markdown 输出。Mermaid 源码不走 DOM（用 `Map` 传递）。含 `-->` 的属性会被 DOMPurify 删除
+- **Rate limit**：captcha 端点用 `rate_limit_per_minute`，login/register 用 `rate_limit_login_per_minute`。`default_limits` 兜底其他 API 端点
+- **MCP 版本独立**：由 `bump-mcp-version` 管理，主线 `bump-version` 不会碰。doc-sync 脚本已移除了 MCP package.json 同步条目
+
+## 发布注意事项
+
+- `~/.bash_env` 存 `PYPI_API_TOKEN`，`make publish` 自动读取
+- npm token 在 `~/.npmrc`，`make publish-npm` 直接用
+- **peekview 和 peekview-mcp 版本独立**：`bump-version` vs `bump-mcp-version`
+- 发布完别忘了检查 CHANGELOG.md 是否正确
+
+## 详细参考
+
+- 完整配置和规范：`CLAUDE.md`
+- 开发流程：`docs/process/workflow.md`
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
-- 完整配置：`CLAUDE.md` 见 PEEKVIEW_* 环境变量表
+- 改善清单：`docs/roadmap/improvement-backlog.md`
