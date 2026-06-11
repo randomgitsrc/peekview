@@ -472,7 +472,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
         files,
         slug: params.slug,
         tags: params.tags,
-        is_public: params.is_public ?? false,
+        is_public: params.is_public ?? true,
         expires_in: params.expires_in,
       }, ctx.userToken);
 
