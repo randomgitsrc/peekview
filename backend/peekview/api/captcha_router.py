@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request
 
-from peekview.api.rate_limit import limiter
+from peekview.api.rate_limit import limiter, captcha_rate_limit
 from peekview.captcha_engine import generate_challenge, validate_challenge, siteverify_token
 
 router = APIRouter(prefix="/api/v1/captcha", tags=["captcha"])
@@ -26,7 +26,7 @@ def _get_captcha_secret(config):
 
 
 @router.post("/challenge")
-@limiter.limit("30/minute")
+@limiter.limit(captcha_rate_limit)
 async def challenge(request: Request):
     """Generate a Cap-compatible PoW challenge."""
     config = request.app.state.config
@@ -42,7 +42,7 @@ async def challenge(request: Request):
 
 
 @router.post("/redeem")
-@limiter.limit("30/minute")
+@limiter.limit(captcha_rate_limit)
 async def redeem(request: Request):
     """Validate PoW solutions and return a redeem token."""
     config = request.app.state.config
@@ -56,7 +56,7 @@ async def redeem(request: Request):
 
 
 @router.post("/siteverify")
-@limiter.limit("60/minute")
+@limiter.limit(captcha_rate_limit)
 async def siteverify(request: Request):
     """Verify a redeem token."""
     config = request.app.state.config

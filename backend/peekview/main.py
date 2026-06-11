@@ -48,6 +48,8 @@ def create_app(
     db_path: Path | None = None,
     base_url: str | None = None,
     rate_limit_enabled: bool | None = None,
+    rate_limit_login_per_minute: int | None = None,
+    rate_limit_per_minute: int | None = None,
     config: PeekConfig | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
@@ -86,6 +88,10 @@ def create_app(
         loaded_config.server.base_url = base_url
     if rate_limit_enabled is not None:
         loaded_config.server.rate_limit_enabled = rate_limit_enabled
+    if rate_limit_login_per_minute is not None:
+        loaded_config.server.rate_limit_login_per_minute = rate_limit_login_per_minute
+    if rate_limit_per_minute is not None:
+        loaded_config.server.rate_limit_per_minute = rate_limit_per_minute
     app.state.config = loaded_config
 
     # Maintain backward-compatible local variable
@@ -210,7 +216,7 @@ def create_app(
         )
         return response
 
-    # Configure rate limiter (no default limits — only decorator-based per-route limits)
+    # Configure rate limiter
     app.state.limiter = limiter
     limiter.enabled = config.server.rate_limit_enabled
 
@@ -222,14 +228,9 @@ def create_app(
             content={"error": {"code": "RATE_LIMITED", "message": str(exc.detail), "details": None}},
         )
 
-    # Add SlowAPIMiddleware for decorator-based rate limiting
+    # Add SlowAPIMiddleware for rate limiting
     from slowapi.middleware import SlowAPIMiddleware
     app.add_middleware(SlowAPIMiddleware)
-
-    # Configure rate limits from config
-    from peekview.api.rate_limit import set_login_rate_limit
-    login_limit = f"{config.server.rate_limit_login_per_minute}/minute"
-    set_login_rate_limit(login_limit)
 
     # Register API routes
     from peekview.api.auth import router as auth_router
@@ -244,6 +245,21 @@ def create_app(
     app.include_router(files_router)
     app.include_router(config_router)
     app.include_router(captcha_router)
+
+    # --- Rate limit binding (dynamic, respects config values) ---
+    from peekview.api.rate_limit import (
+        set_login_rate_limit,
+        set_captcha_rate_limit,
+    )
+
+    login_limit = f"{config.server.rate_limit_login_per_minute}/minute"
+    set_login_rate_limit(login_limit)
+
+    captcha_limit = f"{config.server.rate_limit_per_minute}/minute"
+    set_captcha_rate_limit(captcha_limit)
+
+    # Global default limit for other API endpoints
+    limiter.default_limits = [captcha_limit]
 
     # Health check (must be before static files to avoid catch-all route)
     @app.get("/health")

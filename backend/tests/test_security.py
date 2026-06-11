@@ -732,3 +732,53 @@ class TestRateLimiting:
                 })
                 # Should get 401 (bad credentials) not 429 (rate limit)
                 assert resp.status_code in (401, 400), f"Expected 401/400, got {resp.status_code}"
+
+    @pytest.mark.asyncio
+    async def test_login_rate_limit_respects_config_value(self):
+        """login limit should respect the config value passed to create_app."""
+        from peekview.main import create_app
+        from pathlib import Path
+        data_dir = Path(tempfile.mkdtemp())
+        db_path = Path(tempfile.mktemp(suffix=".db"))
+        app = create_app(
+            data_dir=data_dir,
+            db_path=db_path,
+            rate_limit_login_per_minute=3,
+        )
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            got_429 = False
+            for _ in range(5):
+                resp = await c.post("/api/v1/auth/login", json={
+                    "username": "nobody",
+                    "password": "wrong",
+                })
+                if resp.status_code == 429:
+                    got_429 = True
+                    assert resp.json()["error"]["code"] == "RATE_LIMITED"
+                    break
+            assert got_429, "Expected 429 after exceeding rate_limit_login_per_minute=3"
+
+    @pytest.mark.asyncio
+    async def test_captcha_challenge_rate_limited(self):
+        """Captcha challenge endpoint should be rate limited."""
+        from peekview.main import create_app
+        from pathlib import Path
+        data_dir = Path(tempfile.mkdtemp())
+        db_path = Path(tempfile.mktemp(suffix=".db"))
+        app = create_app(
+            data_dir=data_dir,
+            db_path=db_path,
+            rate_limit_per_minute=3,
+        )
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            got_429 = False
+            for _ in range(5):
+                resp = await c.post("/api/v1/captcha/challenge", json={
+                    "site_key": "test",
+                })
+                if resp.status_code == 429:
+                    got_429 = True
+                    break
+            assert got_429, "Expected 429 for captcha challenge after exceeding rate_limit_per_minute=3"
