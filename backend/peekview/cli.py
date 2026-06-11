@@ -515,19 +515,52 @@ def config_cmd():
     """Manage PeekView configuration.
 
     Examples:
-        peekview config set base_url https://example.com
-        peekview config get base_url
+        peekview config set server.port 13001
+        peekview config get server.port
         peekview config list
+
+    Run 'peekview config list' to see all available configuration keys.
+    Run 'peekview config set --help' for the key list.
     """
     pass
 
 
+SUPPORTED_CONFIG_KEYS = (
+    "base_url",
+    # Server
+    "server.host", "server.port", "server.base_url", "server.api_key",
+    "server.cors_origins", "server.rate_limit_enabled",
+    "server.rate_limit_per_minute", "server.rate_limit_login_per_minute",
+    # Storage
+    "storage.data_dir", "storage.db_path", "storage.allowed_paths",
+    "storage.health_disk_warning_mb",
+    # Auth
+    "auth.secret_key", "auth.token_expire_days", "auth.allow_registration",
+    "auth.allow_anonymous_create",
+    "auth.captcha_enabled", "auth.captcha_site_key",
+    # Limits
+    "limits.max_file_size", "limits.max_entry_files", "limits.max_entry_size",
+    "limits.max_slug_length", "limits.max_summary_length", "limits.max_per_page",
+    # Cleanup
+    "cleanup.check_on_start", "cleanup.interval_seconds",
+    # Logging
+    "logging.level", "logging.log_file",
+    # Remote
+    "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
+)
+
 CONFIG_KEYS_HELP = """
 \b
 Supported keys:
-server.host, server.port, server.base_url,
-storage.data_dir, storage.db_path,
-auth.secret_key, auth.token_expire_days, auth.allow_registration,
+server.host, server.port, server.base_url, server.api_key, server.cors_origins,
+server.rate_limit_enabled, server.rate_limit_per_minute, server.rate_limit_login_per_minute,
+storage.data_dir, storage.db_path, storage.allowed_paths, storage.health_disk_warning_mb,
+auth.secret_key, auth.token_expire_days, auth.allow_registration, auth.allow_anonymous_create,
+auth.captcha_enabled, auth.captcha_site_key,
+limits.max_file_size, limits.max_entry_files, limits.max_entry_size, limits.max_slug_length,
+limits.max_summary_length, limits.max_per_page,
+cleanup.check_on_start, cleanup.interval_seconds,
+logging.level, logging.log_file,
 remote.url, remote.api_key, remote.timeout, remote.verify_ssl,
 base_url (alias for server.base_url)
 """
@@ -548,31 +581,9 @@ def config_set(key: str, value: str) -> None:
     config = load_config_file()
 
     # Validate key
-    supported_keys = [
-        "base_url",
-        # Server
-        "server.host", "server.port", "server.base_url", "server.api_key",
-        "server.cors_origins", "server.rate_limit_enabled",
-        "server.rate_limit_per_minute", "server.rate_limit_login_per_minute",
-        # Storage
-        "storage.data_dir", "storage.db_path", "storage.allowed_paths",
-        "storage.health_disk_warning_mb",
-        # Auth
-        "auth.secret_key", "auth.token_expire_days", "auth.allow_registration",
-        "auth.allow_anonymous_create",
-        # Limits
-        "limits.max_file_size", "limits.max_entry_files", "limits.max_entry_size",
-        "limits.max_slug_length", "limits.max_summary_length", "limits.max_per_page",
-        # Cleanup
-        "cleanup.check_on_start", "cleanup.interval_seconds",
-        # Logging
-        "logging.level", "logging.log_file",
-        # Remote
-        "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
-    ]
-    if key not in supported_keys:
+    if key not in SUPPORTED_CONFIG_KEYS:
         click.echo(f"Error: Unknown config key '{key}'", err=True)
-        click.echo(f"Supported keys: {', '.join(supported_keys)}", err=True)
+        click.echo(f"Supported keys: {', '.join(SUPPORTED_CONFIG_KEYS)}", err=True)
         sys.exit(1)
 
     # Handle nested keys with type conversion
@@ -585,14 +596,18 @@ def config_set(key: str, value: str) -> None:
     if key_name in ("port", "token_expire_days", "timeout", "health_disk_warning_mb",
                     "max_file_size", "max_entry_files", "max_entry_size",
                     "max_slug_length", "max_summary_length", "max_per_page",
-                    "interval_seconds"):
+                    "interval_seconds",
+                    "captcha_builtin_difficulty", "captcha_builtin_challenge_count",
+                    "captcha_builtin_challenge_size", "captcha_builtin_challenge_ttl_ms",
+                    "captcha_builtin_token_ttl_ms"):
         try:
             value = int(value)
         except ValueError:
             click.echo(f"Error: {key} must be an integer", err=True)
             sys.exit(1)
     elif key_name in ("allow_registration", "allow_anonymous_create",
-                      "rate_limit_enabled", "check_on_start", "verify_ssl"):
+                      "rate_limit_enabled", "check_on_start", "verify_ssl",
+                      "captcha_enabled", "captcha_exempt_first_user"):
         value = value.lower() in ("true", "1", "yes", "on")
     elif key_name == "cors_origins":
         value = [v.strip() for v in value.split(",")]
@@ -607,6 +622,7 @@ def config_set(key: str, value: str) -> None:
     save_config_file(config)
     click.echo(f"✓ Set {key} = {value}")
     click.echo(f"  Config file: {CONFIG_FILE}")
+    click.echo(f"  ⚠  Restart service to apply: peekview service restart")
 
 
 @config_cmd.command(name="get", epilog=CONFIG_KEYS_HELP)
@@ -662,26 +678,116 @@ def config_get(key: str) -> None:
 @config_cmd.command(name="list")
 def config_list() -> None:
     """List all configuration values."""
-    from peekview.config import load_config_file, CONFIG_FILE
+    from peekview.config import load_config_file, CONFIG_FILE, PeekConfig
 
     config = load_config_file()
+    defaults = PeekConfig()
 
-    if not config:
-        click.echo(f"No configuration set. Config file: {CONFIG_FILE}")
-        return
+    def _get_default(section: str, k: str):
+        """Get default value from PeekConfig."""
+        try:
+            if section == "server":
+                return getattr(defaults.server, k)
+            elif section == "storage":
+                return getattr(defaults.storage, k)
+            elif section == "auth":
+                return getattr(defaults.auth, k)
+            elif section == "limits":
+                return getattr(defaults.limits, k)
+            elif section == "cleanup":
+                return getattr(defaults.cleanup, k)
+            elif section == "logging":
+                return getattr(defaults.logging, k)
+            elif section == "remote":
+                return getattr(defaults.remote, k)
+        except AttributeError:
+            pass
+        return ""
 
-    click.echo(f"Configuration ({CONFIG_FILE}):")
-    _print_config(config)
-
-
-def _print_config(config: dict, prefix: str = "") -> None:
-    """Helper to print nested config."""
-    for key, value in config.items():
-        if isinstance(value, dict):
-            click.echo(f"{prefix}{key}:")
-            _print_config(value, prefix + "  ")
+    # Build display list: (section, key, file_value, default_value) with dedup
+    seen = set()
+    items = []
+    for raw_key in SUPPORTED_CONFIG_KEYS:
+        if "." in raw_key:
+            section, key_name = raw_key.split(".", 1)
         else:
-            click.echo(f"  {prefix}{key}: {value}")
+            section, key_name = "server", raw_key
+        dedup_key = (section, key_name)
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+        file_val = config.get(section, {}).get(key_name, "")
+        default_val = _get_default(section, key_name)
+        items.append((section, key_name, file_val, default_val))
+
+    # Descriptions (hardcoded, keyed by (section, key_name))
+    _DESC: dict[tuple[str, str], str] = {
+        ("server", "host"): "# 绑定地址 (0.0.0.0 为所有接口)",
+        ("server", "port"): "# 服务端口",
+        ("server", "base_url"): "# 公开访问地址（为空时自动检测）",
+        ("server", "api_key"): "# 全局 API Key（为空时不验证）",
+        ("server", "cors_origins"): "# CORS 允许的来源",
+        ("server", "rate_limit_enabled"): "# 是否启用速率限制",
+        ("server", "rate_limit_per_minute"): "# 通用限速（次/分钟/IP）",
+        ("server", "rate_limit_login_per_minute"): "# 登录限速（次/分钟/IP）",
+        ("storage", "data_dir"): "# 文件存储目录",
+        ("storage", "db_path"): "# 数据库路径",
+        ("storage", "allowed_paths"): "# local_path 白名单",
+        ("storage", "health_disk_warning_mb"): "# 磁盘告警阈值 (MB)",
+        ("auth", "secret_key"): "# JWT 签名密钥（为空时自动生成）",
+        ("auth", "token_expire_days"): "# JWT 过期天数",
+        ("auth", "allow_registration"): "# 允许新用户注册",
+        ("auth", "allow_anonymous_create"): "# 允许匿名创建条目",
+        ("auth", "captcha_enabled"): "# 验证码开关（开启后登录/注册需验证）",
+        ("auth", "captcha_site_key"): "# 验证码 Site Key（内置模式可留空）",
+        ("limits", "max_file_size"): "# 单文件最大字节数",
+        ("limits", "max_entry_files"): "# 单条目最大文件数",
+        ("limits", "max_entry_size"): "# 单条目最大总字节数",
+        ("limits", "max_slug_length"): "# slug 最大长度",
+        ("limits", "max_summary_length"): "# summary 最大长度",
+        ("limits", "max_per_page"): "# 分页每页最大条数",
+        ("cleanup", "check_on_start"): "# 启动时检查过期条目",
+        ("cleanup", "interval_seconds"): "# 清理间隔秒数 (0=禁用)",
+        ("logging", "level"): "# 日志级别 (debug/info/warn/error)",
+        ("logging", "log_file"): "# 日志文件路径（为空时只输出 stderr）",
+        ("remote", "url"): "# 远程服务器地址",
+        ("remote", "api_key"): "# 远程 API Key",
+        ("remote", "timeout"): "# 远程请求超时秒数",
+        ("remote", "verify_ssl"): "# 验证 SSL 证书",
+    }
+
+    # Section order
+    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote"]
+
+    click.echo("Configuration:")
+    click.echo("")
+    for section in _SECTION_ORDER:
+        section_items = [(k, fv, dv) for s, k, fv, dv in items if s == section]
+        if not section_items:
+            continue
+        click.echo(f"{section}:")
+        for key_name, file_val, default_val in section_items:
+            if file_val != "":
+                val = file_val
+            elif default_val != "":
+                val = default_val
+            else:
+                val = "(not set)"
+            if isinstance(val, list):
+                val = ", ".join(str(v) for v in val)
+            elif isinstance(val, bool):
+                val = "true" if val else "false"
+            desc = _DESC.get((section, key_name), "")
+            click.echo(f"  {key_name}: {val}  {desc}")
+        click.echo("")
+
+    click.echo("Available config keys:")
+    for section in _SECTION_ORDER:
+        keys = [k for s, k, _, _ in items if s == section]
+        if keys:
+            click.echo(f"  {section}.{', '.join(keys)}")
+    click.echo("")
+    click.echo(f"Config file: {CONFIG_FILE}")
 
 
 SERVICE_EXAMPLES = """

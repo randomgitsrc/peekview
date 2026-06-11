@@ -514,7 +514,7 @@ class TestConfigCommand:
         result = runner.invoke(cli, ["config", "list"])
         assert result.exit_code == 0
         assert "3000" in result.output
-        assert "False" in result.output
+        assert "false" in result.output
 
 
 class TestCliShortOptions:

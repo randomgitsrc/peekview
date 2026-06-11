@@ -269,7 +269,7 @@ class PeekAuth(BaseSettings):
     )
     captcha_secret_key: str = Field(
         default="",
-        description="Cap secret key (server-side, never exposed to frontend)",
+        description="Secret key for captcha JWT signing (builtin mode) and external Cap verification. Auto-generated if empty.",
     )
     captcha_verify_url: str = Field(
         default="http://localhost:3000",
@@ -280,10 +280,6 @@ class PeekAuth(BaseSettings):
         description="First user (admin) bypasses captcha to enable initial setup",
     )
     # ─── Builtin captcha engine params (v0.1.44+) ─────────────────────
-    captcha_secret_key: str = Field(
-        default="",
-        description="Secret key for captcha JWT signing (builtin mode). Auto-generated if empty.",
-    )
     captcha_builtin_difficulty: int = Field(
         default=4,
         description="PoW difficulty (hex prefix length to match)",

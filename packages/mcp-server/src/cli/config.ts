@@ -6,6 +6,11 @@ import { Command } from 'commander';
 import { saveConfigToFile, loadConfigFromFile } from '../config/file.js';
 import type { ConfigFileData } from '../config/file.js';
 
+const DEFAULT_CONFIG = {
+  server: { port: 33333, host: '0.0.0.0', cors_origins: '*', mode: 'remote' },
+  logging: { level: 'info' },
+} as const;
+
 export const configCommand = new Command('config')
   .description('Manage MCP Server configuration')
   .addHelpText('after', `
@@ -77,6 +82,8 @@ configCommand
 
       saveConfigToFile(config);
       console.log(`✓ Set ${key} = ${value}`);
+      console.log(`  Config file: ~/.peekview/mcp-config.yaml`);
+      console.log(`  ⚠ Restart service to apply: peekview-mcp service restart`);
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
@@ -91,23 +98,24 @@ configCommand
   .action((key: string) => {
     try {
       const config = loadConfigFromFile();
-
-      if (!config) {
-        console.error('Error: No configuration file found. Run "peekview-mcp config set" first.');
-        process.exit(1);
-      }
-
       const parts = key.split('.');
+
       if (parts.length !== 2) {
         console.error(`Error: Invalid key format '${key}'. Use 'section.key' format.`);
         process.exit(1);
       }
 
       const [section, prop] = parts;
-      const value = config[section]?.[prop as keyof typeof config[typeof section]];
+      const value = config?.[section]?.[prop as keyof typeof config[typeof section]];
 
-      if (value === undefined) {
-        console.log(`(not set)`);
+      if (value === undefined || value === null) {
+        const defaults = DEFAULT_CONFIG as Record<string, Record<string, unknown>>;
+        const defaultVal = defaults[section]?.[prop];
+        if (defaultVal !== undefined) {
+          console.log(`${defaultVal} (default)`);
+        } else {
+          console.log('(not set)');
+        }
       } else {
         console.log(value);
       }
@@ -134,10 +142,10 @@ configCommand
       console.log('');
 
       console.log('server:');
-      console.log(`  port:         ${config?.server?.port || 33333}  # MCP 服务端口`);
-      console.log(`  host:         ${config?.server?.host || '0.0.0.0'}  # 绑定地址`);
-      console.log(`  cors_origins: ${config?.server?.cors_origins || '*'}  # CORS 来源`);
-      console.log(`  mode:         ${config?.server?.mode || 'remote'}  # 部署模式: remote|local`);
+      console.log(`  port:         ${config?.server?.port ?? DEFAULT_CONFIG.server.port}  # MCP 服务端口`);
+      console.log(`  host:         ${config?.server?.host ?? DEFAULT_CONFIG.server.host}  # 绑定地址`);
+      console.log(`  cors_origins: ${config?.server?.cors_origins ?? DEFAULT_CONFIG.server.cors_origins}  # CORS 来源`);
+      console.log(`  mode:         ${config?.server?.mode ?? DEFAULT_CONFIG.server.mode}  # 部署模式: remote|local`);
       console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 显式白名单；未设置时默认 cwd+系统临时目录`);
       console.log(`  trust_all_paths:  ${config?.server?.trust_all_paths === true ? 'true' : 'false'}  # 危险：跳过白名单，仅 best-effort 敏感路径保护`);
       console.log('');
