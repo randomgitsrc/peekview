@@ -7,20 +7,12 @@
 
 ## [Unreleased]
 
-## [0.1.49] - 2026-06-11
-
-### 新增
-
--
+## [0.1.50] - 2026-06-11
 
 ### 修复
 
--
-
-### 变更
-
--
-
+- **Captcha PoW 性能**：difficulty 4→2, count 50→10（~2560 hash, ~1-2s）
+- **Captcha site_key 默认值**：`""` → `"peekview-default"`（前端不再报 missing config）
 
 ## [0.1.49] - 2026-06-11
 
