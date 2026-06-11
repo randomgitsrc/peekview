@@ -6,6 +6,8 @@
     <title>PeekView</title>
     <!-- Theme initialization - prevent FOUC (sync script, runs before render) -->
     <script src="/js/theme-init.js"></script>
+    <!-- Captcha WASM local path (must be set before Vue loads) -->
+    <script>window.CAP_CUSTOM_WASM_URL = '/wasm/cap_wasm_bg.wasm'</script>
     <!-- GitHub Markdown CSS (local) -->
     <link rel="stylesheet" href="/css/github-markdown.css">
     <!-- Fonts (local) -->

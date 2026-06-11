@@ -149,6 +149,7 @@ def create_app(
                 "font-src 'self'; "
                 "connect-src 'self'; "
                 "frame-src blob:; "
+                "worker-src blob:; "
                 "frame-ancestors 'none'; "
                 "form-action 'none'; "
                 "base-uri 'self'"
