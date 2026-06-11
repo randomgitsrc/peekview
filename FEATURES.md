@@ -1,6 +1,6 @@
 # Feature Matrix
 
-*Auto-generated on 2026-06-10*
+*Auto-generated on 2026-06-11*
 
 ## Frontend
 
@@ -33,7 +33,10 @@
 
 ### API Modules
 - ✅ __init__
+- ✅ captcha
+- ✅ config_router
 - ✅ rate_limit
+- ✅ captcha_router
 - ✅ auth
 - ✅ apikeys
 - ✅ entries
