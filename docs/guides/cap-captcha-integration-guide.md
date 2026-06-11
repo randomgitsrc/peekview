@@ -8,20 +8,27 @@
 
 ## 1. 架构概览
 
-```
-用户浏览器                   PeekView 后端
-┌──────────────┐            ┌─────────────────────┐
-│ LoginDialog  │──GET /api/v1/config/captcha──→  │ 返回 enabled/site_key/endpoint/mode
-│              │                                  │
-│  cap-widget  │──POST /api/v1/captcha/challenge→ │ captcha_engine.py
-│  (PoW计算)   │←── {challenge, token} ────────── │   generate_challenge()
-│              │                                  │
-│  cap-widget  │──POST /api/v1/captcha/redeem───→ │   validate_challenge()
-│  (提交答案)   │←── {result: "token"} ─────────── │
-│              │                                  │
-│  Login/Reg   │──POST /api/v1/auth/login────────→ │ captcha.py
-│  (带cap-token)│       {captcha_token}             │   siteverify_token()
-└──────────────┘            └─────────────────────┘
+```mermaid
+sequenceDiagram
+    participant Browser as 用户浏览器
+    participant Backend as PeekView 后端
+
+    Browser->>Backend: GET /api/v1/config/captcha
+    Backend-->>Browser: enabled/site_key/endpoint/mode
+
+    Browser->>Backend: POST /api/v1/captcha/challenge
+    Note over Backend: captcha_engine.generate_challenge()
+    Backend-->>Browser: {challenge, token}
+
+    Note over Browser: cap-widget PoW 计算
+
+    Browser->>Backend: POST /api/v1/captcha/redeem
+    Note over Backend: captcha_engine.validate_challenge()
+    Backend-->>Browser: {result: "token"}
+
+    Browser->>Backend: POST /api/v1/auth/register {captcha_token}
+    Note over Backend: captcha.siteverify_token()
+    Backend-->>Browser: 注册成功 / 失败
 ```
 
 **两种模式**：
