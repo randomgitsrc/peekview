@@ -7,6 +7,36 @@
 
 ## [Unreleased]
 
+## [0.1.45] - 2026-06-11
+
+### 新增
+
+- **Rate limiting 配置化真正落地** (#2)：
+  - captcha 端点限速从硬编码改为可配置（`rate_limit_per_minute`）
+  - `limiter.default_limits` 兜底保护所有 API 端点
+  - `create_app()` 新增 `rate_limit_login_per_minute` / `rate_limit_per_minute` 参数
+
+### 变更
+
+- **JWT → httpOnly Cookie** (#4)：
+  - login/register 返回 `Set-Cookie` 替代 `localStorage` 存 token
+  - Cookie 优先级：Authorization header > Cookie > API key
+  - SameSite=Lax, Max-Age 从 config 读取
+- **前端 CSP 强化** (#5)：
+  - SPA 页面添加 `script-src 'self' 'unsafe-eval'` CSP 头
+  - `unsafe-eval` 为 Mermaid/d3 的 `new Function()` 所需
+  - theme-init 脚本外部化到 `js/theme-init.js`
+  - DOMPurify 集成，清理 markdown 渲染输出
+  - `MarkdownViewer.vue` 内联 onclick → data-action 事件委托
+  - `HtmlViewer` iframe 添加 `csp` 属性限制 blob 内容
+
+### 修复
+
+- **Mermaid DOMPurify 兼容**：源码从 `data-mermaid-code` 属性改为 `Map` 传递，绕过 DOMPurify 换行符清理
+- **E2E 测试 Cookie 隔离**：`beforeEach` 清除 Cookie，`setupAuth` 域从 `BASE_URL` 派生
+- **健康检查 503 vs 200 决策**：保持 200，单实例服务无需负载均衡切换
+
+
 ## [0.1.44] - 2026-06-10
 
 ### 新增
