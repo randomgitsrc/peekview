@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.52] - 2026-06-11
+
+### 新增
+
+-
+
+### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
+-
+
+### 变更
+
+-
+
+
 ## [0.1.51] - 2026-06-11
 
 ### 新增
@@ -14,6 +31,8 @@
 -
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -27,6 +46,8 @@
 ## [0.1.50] - 2026-06-11
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -42,6 +63,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **CSP**：移除 CDN `connect-src`，新增 `worker-src blob:`（captcha Web Worker 必需）
@@ -50,6 +73,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **httpx 缺失**：`captcha.py` 运行时依赖 `httpx`，但之前写在 `[optional-dependencies]` 的 `test` 组里，`pipx install` 不会安装。已将 `httpx` 移至主 `dependencies`。
@@ -57,6 +82,8 @@
 ## [0.1.47] - 2026-06-11
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -71,6 +98,8 @@
 - **config set 重启提示**：设置成功后提示 `peekview service restart`
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -115,6 +144,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **Mermaid DOMPurify 兼容**：源码从 `data-mermaid-code` 属性改为 `Map` 传递，绕过 DOMPurify 换行符清理
@@ -142,6 +173,8 @@
 - **MCP Server package-lock.json 版本同步验证**
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -189,6 +222,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 health endpoint `config.source`/`config.path` 永远返回默认值的 bug（`MergedConfig` 未填充这两个字段）
@@ -231,6 +266,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 MCP 单元测试意外删除真实 `~/.peekview/mcp-config.yaml` 的问题
@@ -269,6 +306,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 legacy MCP 前端 E2E 与当前 UI 行为不一致导致的失败
@@ -305,6 +344,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 `publish_files` 目录扫描时后端 `path` 带入被扫描目录 basename 的问题；现在目录内文件使用干净相对路径（如 `src/main.py`）
@@ -324,6 +365,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **文件上传 path/filename 处理** — 修复同时提供 `path` 和 `filename` 时 filename 被忽略的问题
@@ -336,6 +379,8 @@
 ## [0.1.40] - 2026-05-23
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -355,6 +400,8 @@
   - 运行前确认生产数据库中的条目数，检测已有测试数据
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -384,6 +431,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **E2E 测试认证稳定性修复** — 修复 9 个测试用例的认证初始化问题
@@ -400,6 +449,8 @@
 ## [0.1.37] - 2026-05-22
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -424,6 +475,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复测试隔离问题：添加全局 `isolate_config_file` fixture
@@ -439,6 +492,8 @@
 ## [0.1.35] - 2026-05-22
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -475,6 +530,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 `peekview uninstall` 命令失败问题
@@ -502,6 +559,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 降低 Python 版本要求从 >=3.12 到 >=3.10，提升兼容性
@@ -525,6 +584,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - Makefile `debug-verify-isolation` shell 语法错误（多行 Python 转单行）
@@ -539,6 +600,8 @@
 ## [mcp-v0.3.8] - 2026-05-23
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -603,6 +666,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **Pack 按钮功能** — 实现多文件打包下载
@@ -645,6 +710,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **前端兼容性**：`isPublic` 字段缺失时默认为 `true`（升级自 v0.1.24 时所有条目被错误标为私有）
@@ -653,6 +720,8 @@
 ## [0.1.27] - 2026-05-17
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -741,6 +810,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **移动端底部栏布局**
@@ -759,6 +830,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **数据污染防护**
@@ -769,6 +842,8 @@
 ## [0.1.22] - 2026-05-08
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -793,6 +868,8 @@
   - 紧凑设计，key对齐，暗色主题适配
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -830,6 +907,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **静态文件打包修复**
@@ -839,6 +918,8 @@
 ## [0.1.18] - 2026-05-06
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -864,6 +945,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **Mermaid 图表显示问题**
@@ -883,6 +966,8 @@
 ## [0.1.15] - 2026-05-06
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -940,6 +1025,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - **版本号一致性**
@@ -947,6 +1034,8 @@
   - 所有模块统一从 `__init__.py` 导入版本号
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -977,6 +1066,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 解决了服务端配置 base_url 后，CLI create 仍返回 127.0.0.1:8080 的问题
@@ -984,6 +1075,8 @@
 ## [0.1.8] - 2026-04-28
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -994,6 +1087,8 @@
 ## [0.1.7] - 2026-04-28
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
@@ -1027,6 +1122,8 @@
 
 ### 修复
 
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
+
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 
 - 修复 CLI 创建的条目 URL 格式错误（`http://host/view/slug` → `http://host/slug`）
@@ -1052,6 +1149,8 @@
 ## [0.1.2] - 2026-04-24
 
 ### 修复
+
+- **Captcha 完整修复**：secret_key 回退自动生成、verify_url 默认值内置模式、PoW 复杂度降低
 
 - **Captcha secret_key**：`_config_to_dataclass` 空 secret 时回退到 `~/.peekview/.captcha_secret` 自动生成的密钥
 

@@ -65,6 +65,10 @@ def _config_to_dataclass(auth_config) -> CaptchaConfig:
         if secret_path.exists():
             secret_key = secret_path.read_text().strip()
 
+    # Default verify_url means builtin mode (not external)
+    if verify_url == "http://localhost:3000":
+        verify_url = ""
+
     if enabled:
         missing = []
         if not site_key:
