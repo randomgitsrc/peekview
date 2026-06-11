@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
 
-- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.8.1 (Streamable HTTP transport) has been released to npm.
-- **Current Version:** v0.1.45 (Backend/Frontend) | MCP Server v0.8.1
+- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.8.2 (Streamable HTTP transport) has been released to npm.
+- **Current Version:** v0.1.45 (Backend/Frontend) | MCP Server v0.8.2
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
@@ -26,7 +26,7 @@ peekview/
 │   │   ├── models.py    # SQLModel Entry/File/User/ApiKey + Pydantic schemas
 │   │   ├── config.py    # Pydantic Settings (PEEKVIEW_* env vars)
 │   │   ├── database.py  # SQLite init with WAL + FTS5
-│   │   ├── auth.py      # JWT auth, bcrypt hashing, API key verification
+│   │   ├── auth.py      # JWT auth (Bearer header + httpOnly cookie), bcrypt hashing, API key verification
 │   │   ├── storage.py   # Filesystem operations (atomic writes)
 │   │   ├── cli.py       # Click CLI (serve/create/get/list/delete/user/login/apikey)
 │   │   ├── api/         # FastAPI routes (entries, files, auth, apikeys)
@@ -144,16 +144,17 @@ entry_service = request.app.state.entry_service
 3. **Path traversal on `files.path`**: Verify resolved path starts with `base.resolve()`
 4. **Global API Key auth**: `PEEKVIEW_SERVER__API_KEY` for service-level auth
 5. **User-level API Key auth**: `pv_` prefix keys, HMAC-SHA256 hashed, bound to user
-6. **JWT user auth**: `Authorization: Bearer <jwt>` for user-level authentication
+6. **JWT user auth**: `Authorization: Bearer <jwt>` header OR httpOnly cookie (`peekview_token`) — cookie set on login/register, cleared on logout
 7. **Entry visibility**: Anonymous users see only public entries; authenticated users see public + own private entries
 8. **MCP local publish_files**: realpath + sensitive blacklist + allowed_paths/cwd boundary; cwd fallback must reject `/`
+9. **CSP**: Frontend pages have Content-Security-Policy (script-src includes unsafe-eval for Mermaid/d3); externalized inline scripts
 
 ### File Upload Modes
 1. **Content inline:** `files[].content` with optional `path`
 2. **Local path:** `files[].local_path` - reads from server filesystem (allowlist check)
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
-### MCP Server Architecture (v0.8.1)
+### MCP Server Architecture (v0.8.2)
 - **Transport**: Streamable HTTP via `@modelcontextprotocol/sdk`
 - **Auth**: Two-layer — `pv_` prefix check at initialize, then passthrough to PeekView API
 - **Session**: Per-session Server instance with idle timeout cleanup
@@ -163,7 +164,7 @@ entry_service = request.app.state.entry_service
 - **publish_files**: reads files directly from disk, requires absolute paths, uses `server.allowed_paths` or cwd+tmpdir fallback, `trust_all_paths` option, rejects cwd `/`
 - **Service commands**: Auto-detect user/system service mode (`--user`/`--system` flags, default prefers user service)
 - **Deployment architecture**: Agent(A机器) → HTTP POST → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
-- **Version correspondence:** MCP Server v0.8.1 requires PeekView Backend v0.1.25+
+- **Version correspondence:** MCP Server v0.8.2 requires PeekView Backend v0.1.25+
 
 ### Error Response Format
 ```json
