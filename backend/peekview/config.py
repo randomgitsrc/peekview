@@ -347,6 +347,9 @@ class PeekConfig(BaseSettings):
         env_prefix = self.model_config.get("env_prefix", "")
         env_delim = self.model_config.get("env_nested_delimiter", "__")
 
+        # Filter out None values (empty YAML sections like "auth:" with no content)
+        file_config = {k: v for k, v in file_config.items() if v is not None}
+
         # Check which file config keys have nested env var overrides
         for key, value in file_config.items():
             if key in kwargs:
