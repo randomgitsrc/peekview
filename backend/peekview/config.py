@@ -264,7 +264,7 @@ class PeekAuth(BaseSettings):
         description="Enable Cap captcha verification on /auth/register and /auth/login",
     )
     captcha_site_key: str = Field(
-        default="",
+        default="peekview-default",
         description="Cap site key (public, exposed to frontend via /api/v1/config/captcha)",
     )
     captcha_secret_key: str = Field(
@@ -281,11 +281,11 @@ class PeekAuth(BaseSettings):
     )
     # ─── Builtin captcha engine params (v0.1.44+) ─────────────────────
     captcha_builtin_difficulty: int = Field(
-        default=4,
+        default=2,
         description="PoW difficulty (hex prefix length to match)",
     )
     captcha_builtin_challenge_count: int = Field(
-        default=50,
+        default=10,
         description="Number of PoW challenges per verification",
     )
     captcha_builtin_challenge_size: int = Field(
