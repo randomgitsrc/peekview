@@ -51,9 +51,9 @@ status: approved        # ← 门槛判定字段
 ## 状态机定义
 
 ```
-状态集合：{ P1, P2, P3, P4, P5, P6, P7, DONE, PAUSED }
+状态集合：{ P1, P2, P3, P4, P5, P6, P7, READY, DONE, PAUSED }
 
-转移规则（读文件判定，不靠记忆）：
+转移规则（主 Agent 亲自跑命令验证，不靠读 subagent 产出文件字段）：
 注意：所有"文件存在"判定 = 文件存在 AND 含合法 Header AND 有实质内容
      （不能只看文件存在——subagent 可能写一半崩了，留下空/半截文件）
 
@@ -61,20 +61,79 @@ P1 --[P1-problems.md 有效 AND 至少定义一个问题]--> P2
 P2 --[P2-review.md 有效 AND status==approved]--> P3
 P2 --[P2-review.md status==rejected && retry<MAX]--> P2 (retry+1)
 P2 --[retry>=MAX]--> PAUSED
-P3 --[测试代码存在 AND 因断言不满足而失败(真红灯)]--> P4
-P4 --[实现文件存在 AND 非空]--> P5
-P5 --[unit.md 有效 AND failed==0]--> P6
+
+P3 --[scripts/check-tdd-red.sh exit 0 AND assertion_failures>0 AND collection_errors==0]--> P4
+    （TDD 红灯：测试正确但因实现未写而断言失败。collection/import error 视为测试本身错误）
+P3 --[retry>=MAX]--> PAUSED
+
+P4 --[P4-implementation/ 下文件非空 AND git log --oneline -1 包含 P4 commit]--> P5
+    （不能用 git diff，因为 P4 完成时会 commit，git diff 永远是空）
+P4 --[retry>=MAX]--> PAUSED
+
+P5 --[pytest -q exit 0 AND failed==0]--> P6
+    （主 Agent 亲手跑 pytest 捕获 exit code，不信 unit.md 里的数字）
 P5 --[failed>0 && retry<MAX]--> P4 (retry+1)
 P5 --[retry>=MAX]--> PAUSED
-P6 --[P6-consistency.md 有效 AND 无 BLOCKER]--> P7
-P7 --[P7-release.md 存在]--> DONE
+
+P6 --[grep -L 'BLOCKER' P6-consistency.md 有输出]--> P7
+    （已知限制：P6 定性分析不可全自动验证。主 Agent 可抽查 1-2 条一致性声明，
+     完整性由 P5 回归测试兜底）
+P6 --[retry>=MAX]--> PAUSED
+
+P7 --[项目发布检查命令 exit 0 + git diff 确认 version bump + CHANGELOG]--> READY
+    （默认命令 make pre-publish，纯后端任务可配 make test && make lint）
+
+特殊转移：
+READY --[人手动触发 make publish]--> DONE
 ```
 
 每次转移后，把新状态写回 active-tasks.md。
 
 **"有效"的定义**：文件存在 + 含合法 Header（phase/task_id/parent/trace_id）+ 有实质内容（非空、非半截）。只看"文件存在"会被 subagent 写一半崩溃留下的垃圾文件误导。
 
-**P3 红灯的特别说明**：TDD 要求测试先失败，但"失败"有两种——(1) 正确的红灯：测试逻辑对，因实现未写而断言不满足；(2) 错误的红灯：测试本身有语法/import/collection 错误，根本跑不起来。门槛只接受**第一种**（assertion failure）。如果是 collection error / import error，说明测试本身写错了，门槛不通过，打回 test-designer 重写。test-designer 产出时必须附"失败原因分类"（assertion failure ✓ / error ✗）。
+**P3 红灯的特别说明**：TDD 要求测试先失败，但"失败"有两种——(1) 正确的红灯：测试逻辑对，因实现未写而断言不满足；(2) 错误的红灯：测试本身有语法/import/collection 错误，根本跑不起来。门槛只接受**第一种**（assertion failure）。
+
+**判定方式**：主 Agent 跑 `scripts/check-tdd-red.sh`（见下），不自行解析 pytest 输出。脚本输出 `assertion_failures=N, collection_errors=M` 格式，gate 判定为 `assertion_failures > 0 AND collection_errors == 0`。
+
+**`scripts/check-tdd-red.sh` 设计**：
+
+```bash
+#!/bin/bash
+# 检查 TDD 红灯：只允许 assertion failure，拒绝 collection/import error
+# 退出 0 = 正确的红灯（assertion failure > 0, collection error == 0）
+# 退出 1 = 错误（有 collection/import error）
+# 退出 2 = 测试全绿（说明实现先于测试写完，违反 TDD）
+
+RESULT=$(pytest -q 2>&1)
+EXIT=$?
+
+FAILED=$(echo "$RESULT" | grep -oP '\d+ failed' | grep -oP '\d+')
+ERRORS=$(echo "$RESULT" | grep -oP '\d+ error' | grep -oP '\d+')
+
+echo "assertion_failures=${FAILED:-0}, collection_errors=${ERRORS:-0}"
+
+if [ "$EXIT" -eq 0 ]; then
+    echo "TDD_CHECK: tests pass, no red-light — implementation may be ahead of tests"
+    exit 2
+fi
+
+if [ "${ERRORS:-0}" -gt 0 ]; then
+    echo "TDD_CHECK: collection/import errors detected — test code has bugs, fix before proceeding"
+    exit 1
+fi
+
+# exit code > 0 (pytest has failures) but not due to errors = assertion failures
+exit 0
+```
+
+**P7 与 READY 的说明**：
+
+P7 不再是「发布」，而是**「发布准备」**。P7 gate 通过后进入 READY 状态——表示版本 bump、CHANGELOG 更新、测试全通过，**已准备好发布**。实际的 `make publish`（上传到 PyPI）由人手动触发。
+
+| 概念 | 含义 | 谁执行 |
+|------|------|--------|
+| 发布准备 (READY) | version bump + CHANGELOG + lint + test 全通过 | Subagent + 主 Agent 验证 |
+| 发布 (DONE) | 上传到 PyPI | 人手动触发 |
 
 ---
 
@@ -84,19 +143,67 @@ P7 --[P7-release.md 存在]--> DONE
 
 ```
 function 执行一步(task_id):
-    1. 读 active-tasks.md → 得到 (当前阶段, 重试计数)
+    1. 读 .state.yaml 或 active-tasks.md → 得到 (当前阶段, 重试计数)
     2. 读 docs/tasks/{task_id}/ → 确认当前阶段输入就绪
     3. 派发当前阶段的 subagent（见 dispatch-protocol.md）
-    4. subagent 返回摘要
-    5. 读产出文件 Header → 判定门槛
+    4. subagent 返回摘要（路径 + 一句话）
+    5. 主 Agent 亲自跑 gate 命令验证门槛（A1 原则：跑命令不信文件）：
+       - P3: scripts/check-tdd-red.sh exit 0
+       - P4: git log --oneline -1 确认 P4 commit
+       - P5: pytest -q exit 0 && failed==0
+       - P6: grep 无 [BLOCKER] 标记
+       - P7: 项目发布检查命令 exit 0
     6. 计算下一状态（按转移规则）
-    7. 写回 active-tasks.md（新阶段 / 重试计数 / PAUSED）
+    7. 写回 .state.yaml（新阶段 / 重试计数 / PAUSED）
     8. 返回：下一状态是什么
 ```
 
-"一步"就是一次完整的派发 + 判定 + 状态更新。要推进整个任务，就是反复调用"执行一步"，直到 DONE 或 PAUSED。
+"一步"就是一次完整的派发 + 跑命令验证 + 状态更新。gate 判定由主 Agent 亲笔完成，不信任 subagent 产出的文件字段。
 
 谁来反复调用？三种方式（见 loop-orchestration.md）：人工逐步、半自动、全自动 /loop。
+
+---
+
+## 重试上限
+
+| 阶段 | MAX_RETRY | 说明 |
+|------|-----------|------|
+| P1 | 3 | 涉及需求定义 |
+| P2 | 3 | 涉及方案设计 |
+| P3 | 2 | TDD 红灯，少轮次 |
+| P4 | 3 | 实现复杂度高 |
+| P5 | 2 | pytest 全绿，少轮次 |
+| P6 | 2 | 一致性检查，少轮次 |
+| P7 | 2 | 发布准备，少轮次 |
+
+重试计数按阶段独立存储于 `.state.yaml`，不因进入新阶段而清零。
+
+---
+
+## 每任务独立状态文件
+
+除 active-tasks.md 宏观看板外，每任务有独立状态文件：
+
+位置：`docs/tasks/{Txxx}/.state.yaml`
+
+```yaml
+task_id: T002
+phase: P4
+status: in_progress
+retry_count: { P2: 0, P4: 0, P5: 0 }
+review_scores:
+  P2:
+    - round: 1
+      reviewer: plan-eng-review
+      score: 7.5
+      status: rejected
+      feedback: "API 限流策略未考虑并发边界"
+updated: 2026-06-12
+```
+
+**commit 时机**：与 gate commit 同步——一次 commit 包含 stage output + `.state.yaml` 更新，避免文件与实际阶段不一致。
+
+**active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 在 push 前重建（扫描所有 `.state.yaml`），消除多 Agent 并发冲突。
 
 ---
 
@@ -153,9 +260,68 @@ P3 发现 P2 设计有问题，回退到 P2 → retry 又从 0 开始 → P2 可
 
 ## 一致性要求
 
-- active-tasks.md 的"阶段"列必须和任务目录里实际存在的文件一致
-- 如果两者冲突（看板说 P4，但目录里没有 P3 产出），以**文件为准**，修正看板
+- .state.yaml 的 phase 字段和 active-tasks.md 的"阶段"列必须一致
+- 如果两者冲突，以 **.state.yaml 为准**，修正 active-tasks.md
 - 主 Agent 每轮开始先做这个一致性检查，避免状态漂移
+
+---
+
+## 评审迭代机制
+
+### L1：阶段内再评审循环
+
+```
+阶段内循环：
+  阶段执行者产出文件
+       ↓
+  主 Agent 跑 gate 命令（A1 原则）
+       ↓
+  通过？ ──是──→ 进入下一阶段
+       ↓ 否
+  派发评审角色读产出
+       ↓
+  评审角色产出 Pn-review.md (status: approved/rejected)
+       ↓
+  approved? ──是──→ 进入下一阶段
+       ↓ 否
+  retry_count[Pn] += 1
+       ↓
+  retry_count[Pn] > MAX_RETRY?
+       ↓ 是
+  触发 L2 上溯（见下）
+       ↓ 否
+  执行者重写产出（带回评审反馈）
+       ↓
+  回到"主 Agent 跑 gate 命令"步骤
+```
+
+### L2：单规则跨阶段上溯
+
+**确定性单规则**：任何阶段失败 MAX_RETRY 轮 → 上溯到紧邻的上游阶段，上游标记为 `needs-review`。
+
+| 失败阶段 | 上溯到 | 动作 |
+|----------|--------|------|
+| P1 | 用户 | PAUSED，报告用户需求可能不合理 |
+| P2 | P1 | P1 标记 needs-review，office-hours 复审 AC |
+| P3 | P2 | P2 标记 needs-review，architect 重新设计 |
+| P4 | P2 | P2 标记 needs-review，质疑设计方案 |
+| P5 | P4 | P4 标记 needs-review，重新实现 |
+| P6 | P2 | P2 标记 needs-review，质疑 AC（僵尸需求）|
+| P7 | P6 | P6 标记 needs-review，重新检查一致性 |
+
+**不区分原因、不判断分支**：主 Agent 只需确定 `retry_count[Pn] > MAX_RETRY` → 执行固定上溯动作，无需推理多变量决策。
+
+### 用户介入边界
+
+| 情况 | 动作 |
+|------|------|
+| P1 失败 3 轮 | PAUSED，报告用户需求可能不合理 |
+| 涉及业务方向决策 | PAUSED，询问"这个功能要不要做" |
+| 涉及外部资源/权限 | PAUSED，需 API key / 授权 |
+| 涉及安全/合规 | PAUSED，需要人判断 |
+| retry 超限且上溯仍失败 | PAUSED，兜底机制 |
+
+PAUSED 报告使用占位符模板（见 dispatch-protocol.md）。
 
 ---
 

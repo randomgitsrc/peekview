@@ -95,13 +95,14 @@ v3 的派发机制有固定开销——每次派发约需写 25 行派发 prompt
 
 | 阶段 | 名称 | 执行角色 | 评审角色 | 门槛（进入下一阶段的条件）|
 |------|------|----------|----------|--------------------------|
-| P1 | 问题定义 | analyst | — | P1-problems.md + P1-test-strategy.md 存在 |
+| P1 | 问题定义 | analyst | office-hours（大任务时按需）| P1-problems.md + P1-test-strategy.md 存在 |
 | P2 | 方案设计 | architect | plan-eng-review / plan-ceo-review | P2-review.md 的 status == approved |
-| P3 | 测试设计 | test-designer | — | 测试代码存在且**当前失败**（TDD）|
-| P4 | 代码实现 | implementer | review / cso | 实现文件存在 |
-| P5 | 逐项验证 | verifier | qa | 所有测试通过，failed == 0 |
-| P6 | 一致性检查 | architect | — | P6-consistency.md 存在 |
-| P7 | 发布 | implementer | — | P7-release.md 存在 |
+| P3 | 测试设计 | test-designer | gate 自检（TDD 红灯）| `scripts/check-tdd-red.sh` exit 0 |
+| P4 | 代码实现 | implementer | review / cso（按需）| `git log --oneline -1` 含 P4 commit |
+| P5 | 逐项验证 | verifier | gate 自检（pytest 全绿）| `pytest -q` exit 0 AND failed==0 |
+| P6 | 一致性检查 | architect | gate 自检（grep BLOCKER）| 无 `[BLOCKER]` 标记 |
+| P7 | 发布准备 | implementer | gate 自检（发布检查命令）| 发布检查命令 exit 0 + git diff 确认 version bump + CHANGELOG |
+| READY | 待发布 | — | — | 人手动 `make publish` → DONE |
 
 详细派发方式见 `dispatch-protocol.md`，角色定义见 `assets/`。
 

@@ -50,20 +50,23 @@ subagent 可能崩溃、超时、不产出文件、或不遵守"只返回摘要"
 ```
 subagent 返回后，主 Agent 校验：
   1. 约定的产出文件是否真的存在？
-     不存在 → 派发失败，计入重试，带"未产出文件"原因重派
+      不存在 → 派发失败，计入重试，带"未产出文件"原因重派
   2. 返回是否是"路径+摘要"格式？
-     返回了文件全文 → 直接判失败重试，要求 subagent 重新只返回摘要
-     （不要主 Agent 自己读全文补救——那会污染主 Agent 上下文，
-      违背"主 Agent 永不碰文件全文"的核心原则。惩罚违规 subagent 而非替它擦屁股）
+      返回了文件全文 → 直接判失败重试，要求 subagent 重新只返回摘要
   3. 产出文件是否含合法 Header（phase/task_id/parent/trace_id）？
-     没有或不完整 → 门槛不通过，计入重试
+      没有或不完整 → 门槛不通过，计入重试
   4. 产出文件内容是否非空且有实质内容？
-     空文件或半截内容（写一半崩了）→ 视为失败，重试
+      空文件或半截内容（写一半崩了）→ 视为失败，重试
+  5. 独立验证 subagent 的声明：
+      主 Agent 必须亲自执行 gate 命令验证门槛，不能仅凭 subagent
+      返回的摘要或产出文件中的声明判定通过。
+      例：P5 subagent 说 "failed=0" → 主 Agent 跑 pytest -q
+          确认 exit 0 且 failed 行确实为 0，才算通过。
 
 任一校验失败 → 计入重试计数，超限则 PAUSED。
 ```
 
-**关键：主 Agent 永远不信任 subagent 的口头返回，以文件的实际存在和有效性为准。**
+**关键：主 Agent 永远不信任 subagent 的口头返回，以自己执行的命令结果为准。**
 
 ---
 
@@ -141,23 +144,25 @@ subagent 返回后，主 Agent 校验：
 
 ## 可判定门槛规范
 
-门槛必须是**从文件里能读出的明确值**，不能是模糊判断。
+门槛必须是**主 Agent 亲自跑命令可验证的明确值**，不能是模糊判断或仅依赖 subagent 产出文件字段。
 
-| 阶段 | 门槛 | 怎么判定 |
-|------|------|----------|
-| P1→P2 | 问题已定义 | P1-problems.md 和 P1-test-strategy.md 都存在且有 Header |
+| 阶段 | 门槛 | 怎么判定（主 Agent 亲自执行）|
+|------|------|--------------------------|
+| P1→P2 | 问题已定义 | P1-problems.md 和 P1-test-strategy.md 存在且有 Header |
 | P2→P3 | 方案已批准 | P2-review.md 的 Header `status: approved` |
-| P3→P4 | TDD 真红灯（assertion failure，非 error）| 运行测试，无 collection/import error，所有失败均为断言不满足（详见 state-machine.md）|
-| P4→P5 | 实现完成 | P4-implementation/ 下有代码文件 |
-| P5→P6 | 全部通过 | P5-test-results/unit.md 里 `failed: 0` |
-| P6→P7 | 一致性通过 | P6-consistency.md 存在且无 `[BLOCKER]` 标记 |
+| P3→P4 | TDD 真红灯 | `scripts/check-tdd-red.sh` exit 0（assertion failure > 0, collection error == 0）|
+| P4→P5 | 实现完成 | P4-implementation/ 下文件非空 + `git log --oneline -1` 确认 P4 commit |
+| P5→P6 | 全部通过 | `pytest -q` exit 0 AND failed==0（亲手跑）|
+| P6→P7 | 一致性通过 | `grep` 无 `[BLOCKER]`（已知限制：定性分析，P5 回归测试兜底）|
+| P7→READY | 发布准备完成 | 项目发布检查命令 exit 0 + `git diff` 确认 version bump + CHANGELOG |
 
 **反例（禁止用作门槛）：**
-- ❌ "方案足够好"
-- ❌ "代码看起来对"
+- ❌ "unit.md 里 failed: 0"（信 subagent 写的数字）
+- ❌ "P7-release.md 存在"（文件存在不等于已发布）
+- ❌ "方案足够好" / "代码看起来对"
 - ❌ "测试差不多了"
 
-这些 LLM 无法稳定判定，必须换成可读取的明确值。
+**A1 原则**：gate 判定是主 Agent 运行命令得到的客观事实，不是 subagent 文件里的声明。
 
 ---
 
@@ -166,16 +171,45 @@ subagent 返回后，主 Agent 校验：
 ```
 门槛失败时：
   retry_count += 1
-  if retry_count <= MAX_RETRY (默认 3):
+  if retry_count <= MAX_RETRY (见 state-machine.md 重试上限表):
       带着失败原因重新派发同阶段 subagent
       （prompt 里加上"上次失败原因：xxx，请修正"）
   else:
-      停止自动流程
-      在 active-tasks.md 标记任务为 ⏸️ 暂停
-      向人汇报：哪个阶段、失败了几次、失败原因
+      触发 L2 上溯（见 state-machine.md 评审迭代机制）
+      上溯后重新开始该阶段
 ```
 
-重试计数也落盘（写进 active-tasks.md 或任务目录），避免主 Agent 忘记重试了几次。
+重试计数也落盘（写进 `.state.yaml`），避免主 Agent 忘记重试了几次。
+
+---
+
+## Subagent 安全
+
+### 硬超时保护
+
+1. **硬超时**：`task` 工具设 generous timeout（默认 10 分钟），防止无限等待
+2. **进展标记**：派发 prompt 中要求 subagent 每隔若干关键操作输出进度标记
+   `[progress] N/M files processed` 到 stdout，让平台日志可追溯
+3. **存活检查**：真正的存活监控（心跳、文件增长检测）需平台原生支持并发后补，当前为已知限制
+
+### 升级机制（[UPGRADE] 标记）
+
+subagent 可在产出文件中标注 `[UPGRADE]` 并附建议：
+
+```
+> [UPGRADE] 建议拆分为 Txxx-a / Txxx-b，原因：需求范围过大，单任务不可行
+```
+
+主 Agent 看到 `[UPGRADE]` → 停止自动流程 → PAUSED 交人工决策。
+
+### P1 范围把关
+
+P1 完成后可选评审（触发条件：任务优先级 P0/P1、架构变更、跨越 3+ 模块）：
+
+派发 `office-hours`（YC 合伙人）评审 P1 产出：
+- 问题定义是否准确
+- 范围是否合理
+- AC 是否可验证
 
 ---
 
@@ -243,6 +277,51 @@ rejected 时，主 Agent 的重试派发 prompt 里加一行：
 - architect 角色定义的"输入"在重试时额外包含上一轮的 review 文件
 
 这样评审→执行的反馈闭环真正打通，重试不再是空转。
+
+---
+
+## 任务完成小结
+
+DONE 后主 Agent 输出固定格式（从各阶段 gate check 输出拼出，不读文件全文）：
+
+```
+[{task_id}] DONE — {task_name} {version}
+
+改动：{files_summary from git diff --stat}
+验证：{test_results from gate checks}
+说明：{one-line design summary}
+```
+
+示例：
+```
+[T002] DONE — 数据库迁移机制修复 v0.1.53
+
+改动：exceptions.py +18 / database.py +51 / cli.py +7 / main.py +2
+验证：14/14 migration tests + 486 regression tests
+说明：Server 独���迁移，CLI schema 兼容检查
+```
+
+---
+
+## PAUSED 报告模板
+
+```markdown
+[PAUSED] {task_id} 需用户介入
+
+任务背景：{task_name}
+当前阶段：{phase}
+失败原因：连续 {retry_count} 轮 {phase} 评审发现 {issue_summary}
+
+已尝试的解决方案：
+  {attempted_solutions}
+
+需要用户决策：
+  - [ ] {option_1}
+  - [ ] {option_2}
+  - [ ] {option_3}
+
+请回复选项或直接说明。
+```
 
 ---
 
