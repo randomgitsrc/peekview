@@ -40,6 +40,8 @@ P5 门槛通过（failed==0）→ 主 Agent commit
 
 commit message 格式：`wf({task_id}-{phase}): {一句话进度}`，可追溯。
 
+> 注：`wf()` 前缀是 v3 工作流进度提交的专用约定，与项目现有的 Conventional Commits（`feat:`/`fix:`/`docs:` 等）**并行使用，不冲突**。`wf()` 用于任务阶段进度，其他前缀用于常规变更（功能、修复、文档）。
+
 ### 规则 3：push 分档位，且 push 前必须 pull --rebase
 
 push 涉及和远端同步，多 agent 并发 push 会频繁冲突。不该每个 commit 都立即 push。

@@ -147,7 +147,7 @@ subagent 返回后，主 Agent 校验：
 |------|------|----------|
 | P1→P2 | 问题已定义 | P1-problems.md 和 P1-test-strategy.md 都存在且有 Header |
 | P2→P3 | 方案已批准 | P2-review.md 的 Header `status: approved` |
-| P3→P4 | 测试先失败（TDD）| 运行测试，确认 failed > 0（红灯）|
+| P3→P4 | TDD 真红灯（assertion failure，非 error）| 运行测试，无 collection/import error，所有失败均为断言不满足（详见 state-machine.md）|
 | P4→P5 | 实现完成 | P4-implementation/ 下有代码文件 |
 | P5→P6 | 全部通过 | P5-test-results/unit.md 里 `failed: 0` |
 | P6→P7 | 一致性通过 | P6-consistency.md 存在且无 `[BLOCKER]` 标记 |
