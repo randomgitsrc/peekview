@@ -173,7 +173,7 @@ v3 的派发机制有固定开销——每次派发约需写 25 行派发 prompt
 
 不同 Agent 平台的 subagent 机制不同，派发协议的具体调用方式见 `dispatch-protocol.md` 的平台适配章节。已覆盖：
 
-- **OpenCode**：`task` 工具 + markdown 文件定义自定义角色（注意 issue #29616：jsonc 定义的 subagent 可能调不起来，优先用 markdown 文件方式）
+- **OpenCode**：`task` 工具派发。**经 validation-report 验证：自定义 subagent（方法 A）因 issue #29616 不可用，统一用 general subagent + prompt 注入角色文件（方法 B）**。custom-role.md 模板走方法 B 路径。
 - **Claude Code**：Agent Teams（2026-02 起）+ Task 工具
 - **Codex**：spawn_agent / wait / close_agent 工具套件
 
