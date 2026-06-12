@@ -154,7 +154,7 @@ subagent 返回后，主 Agent 校验：
 | P4→P5 | 实现完成 | P4-implementation/ 下文件非空 + `git log --oneline -1` 确认 P4 commit |
 | P5→P6 | 技术验证通过 | `pytest -q` exit 0 AND failed==0（亲手跑）+ 若 ui_affected：Playwright/E2E 实跑通过 |
 | P6→P7 | BDD 验收通过 | P6-acceptance.md 中 P1 每条 BDD 都有实跑结果 + 无未决 `[NEED_CONFIRM]`（UI 条件须截图）|
-| P7→P8 | 一致性通过 | `grep` 无 `[BLOCKER]`（已知限制：定性分析，P5 回归测试兜底）|
+| P7→P8 | 一致性通过 | `! grep -qF '[BLOCKER]' P7-consistency.md`（已知限制：定性分析，P5 回归测试兜底）|
 | P8→READY | 发布准备完成 | **每个** P2 声明的 package 的发布检查命令 exit 0 + `git diff` 确认各包 version bump + CHANGELOG |
 
 **反例（禁止用作门槛）：**
@@ -290,7 +290,7 @@ rejected 时，主 Agent 的重试派发 prompt 里加一行：
 
 ## 任务完成小结
 
-**触发时机：P7 gate 通过、状态进入 READY 时。强制输出，不可跳过。**
+**触发时机：P8 gate 通过、状态进入 READY 时。强制输出，不可跳过。**
 （T002 教训：主 Agent 完成任务后未向 PM 汇报，PM 需自己翻 git log 才能知道发生了什么）
 
 主 Agent 从各阶段 gate check 的命令输出拼出小结，不读文件全文：

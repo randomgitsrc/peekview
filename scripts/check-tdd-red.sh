@@ -9,13 +9,25 @@
 
 set -euo pipefail
 
+# 禁用 pytest ANSI 颜色码，避免干扰 grep 匹配
+export FORCE_COLOR=0
+export NO_COLOR=1
+export PY_COLORS=0
+
 # 运行 pytest，捕获输出和退出码
 RESULT=$(pytest -q "$@" 2>&1) || true
 EXIT=$?
 
+# 哨兵：pytest 崩溃无输出（segfault/OOM）
+if [ -z "$RESULT" ]; then
+    echo "TDD_CHECK: pytest produced no output (possible crash) — cannot determine test state"
+    exit 1
+fi
+
 # 提取失败和错误数量（兼容 pytest 6/7/8 输出格式）
-FAILED=$(echo "$RESULT" | grep -oP '\d+ failed' | grep -oP '\d+' || echo "0")
-ERRORS=$(echo "$RESULT" | grep -oP '\d+ error' | grep -oP '\d+' || echo "0")
+# 使用 -oE 替代 -oP 以兼容 macOS BSD grep
+FAILED=$(echo "$RESULT" | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+' || echo "0")
+ERRORS=$(echo "$RESULT" | grep -oE '[0-9]+ error' | grep -oE '[0-9]+' || echo "0")
 
 echo "assertion_failures=${FAILED}, collection_errors=${ERRORS}"
 
