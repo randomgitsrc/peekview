@@ -15,11 +15,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 peekview/
 ├── docs/
-│   ├── specs/           # Requirements and design specs (auth, remote CLI, MCP)
-│   ├── plans/           # Active implementation plans only
-│   ├── reviews/         # Active reviews (CEO, Design, DX, expert reviews)
-│   ├── archived/        # Completed plans, specs, reviews, incidents
-│   └── process/         # Development workflow (workflow.md, release.md, debug-*.md)
+│   ├── guides/          # Deployment, debugging, agent deployment guides
+│   ├── notes/           # Lessons learned (frontend/backend/mcp)
+│   ├── plans/           # Active plans (mcp-path-namespace, gole-cli-config)
+│   ├── reviews/         # Active reviews (workflow-v3, T002 postmortem)
+│   ├── decisions/       # Architecture Decision Records
+│   ├── process/         # Dev workflow (workflow-v3/, release, gstack-review-guide)
+│   ├── tasks/           # Task board (active-tasks.md) + task dirs
+│   ├── roadmap/         # improvement-backlog.md
+│   └── archived/        # Completed plans, specs, reviews, old workflows
 ├── backend/             # FastAPI backend
 │   ├── peekview/        # Main package (note: package is "peekview", not "peek")
 │   │   ├── main.py      # FastAPI app factory with DI via app.state
@@ -229,12 +233,10 @@ entry_service = request.app.state.entry_service
 
 ## Essential Documentation
 
-- **Dev Process (current):** `docs/process/workflow-v3/README.md` - 子 Agent 编排工作流（P1-P7），当前主流程
-- **Active Tasks:** `docs/tasks/active-tasks.md` - 当前任务看板，开始工作前必读
-- **gstack Review Roles:** `docs/process/gstack-review-guide.md` - /review /plan-eng-review /cso 等评审角色
-- **Debug Workflow:** `docs/process/debug-workflow.md` - CRITICAL for pre-release verification
-- **Release Process:** `docs/process/release.md` - MUST READ when releasing
-- **Auth Spec:** `docs/archived/specs/spec-user-auth.md`
-- **Remote CLI Spec:** `docs/archived/specs/spec-remote-cli.md`
-- **MCP Dual Mode Plan:** `docs/archived/plans/mcp-dual-mode-final-v0.7.md`
-- **Dev Process (legacy):** `docs/process/workflow.md` - P0-P4，已退役，仅供历史参考
+- **Active Tasks:** `docs/tasks/active-tasks.md` — 开始任何工作前必读
+- **Dev Workflow:** `docs/process/workflow-v3/README.md` — 当前主流程（P1-P7 子 Agent 编排）
+- **gstack Review Roles:** `docs/process/gstack-review-guide.md` — /review /cso /plan-eng-review 等
+- **Release Process:** `docs/process/release.md` — 发布前必读
+- **Debug Workflow:** `docs/process/debug-workflow.md` — 调试验证
+- **Deployment:** `docs/guides/DEPLOYMENT.md`
+- **Project Index:** `INDEX.md` — 导航入口
