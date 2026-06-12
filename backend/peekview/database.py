@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Engine, event, text
 from sqlmodel import Session, SQLModel, create_engine
 
+from peekview.exceptions import SchemaMismatchError
 from peekview.models import ApiKey, Entry, File, User
 
 if TYPE_CHECKING:
@@ -45,6 +46,7 @@ def _run_migrations(engine: Engine) -> None:
 
         if "is_public" not in columns:
             conn.execute(text("ALTER TABLE entries ADD COLUMN is_public BOOLEAN DEFAULT 1"))
+            conn.commit()
             logger.info("Migration: added is_public column to entries")
 
         if "owner_id" not in columns:
@@ -54,6 +56,7 @@ def _run_migrations(engine: Engine) -> None:
                     "REFERENCES users(id) ON DELETE CASCADE"
                 )
             )
+            conn.commit()
             logger.info("Migration: added owner_id column to entries")
 
         # Check existing columns in users table
@@ -61,6 +64,7 @@ def _run_migrations(engine: Engine) -> None:
 
         if "is_admin" not in user_columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+            conn.commit()
             logger.info("Migration: added is_admin column to users")
 
             # Bootstrap: if no admin exists, make the first user admin
@@ -71,6 +75,7 @@ def _run_migrations(engine: Engine) -> None:
                 conn.execute(
                     text("UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users)")
                 )
+                conn.commit()
                 logger.info("Migration: promoted first user to admin")
 
         # Check existing indexes
@@ -83,6 +88,7 @@ def _run_migrations(engine: Engine) -> None:
 
         if "idx_entries_is_public" not in indexes:
             conn.execute(text("CREATE INDEX idx_entries_is_public ON entries(is_public)"))
+            conn.commit()
             logger.info("Migration: added idx_entries_is_public index")
 
         if "idx_entries_is_public_status_created" not in indexes:
@@ -92,12 +98,49 @@ def _run_migrations(engine: Engine) -> None:
                     "ON entries(is_public, status, created_at DESC)"
                 )
             )
+            conn.commit()
             logger.info("Migration: added idx_entries_is_public_status_created index")
 
-        conn.commit()
+
+def check_schema(engine: Engine) -> None:
+    """Compare actual DB columns against SQLModel metadata expectations.
+
+    Raises SchemaMismatchError if any expected columns are missing.
+
+    Implementation notes:
+    - Queries sqlite_master first to get existing table names
+    - Skips tables not yet created (handled by create_all)
+    - Skips virtual/FTS tables (not in SQLModel.metadata)
+    - For each existing table: PRAGMA table_info vs model columns
+    """
+    missing_columns: dict[str, list[str]] = {}
+
+    with engine.connect() as conn:
+        existing_tables = {
+            row[0]
+            for row in conn.execute(
+                text("SELECT name FROM sqlite_master WHERE type='table'")
+            )
+        }
+
+        for table_name, table in SQLModel.metadata.tables.items():
+            if table_name not in existing_tables:
+                continue
+
+            actual_columns = {
+                row[1]
+                for row in conn.execute(text(f"PRAGMA table_info({table_name})"))
+            }
+            expected_columns = set(table.columns.keys())
+            missing = sorted(col for col in expected_columns if col not in actual_columns)
+            if missing:
+                missing_columns[table_name] = missing
+
+    if missing_columns:
+        raise SchemaMismatchError(missing_columns)
 
 
-def init_db(db_path: Path | str) -> Engine:
+def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
     """Initialize the database with proper settings.
 
     Creates tables if they don't exist and sets up FTS5 virtual table
@@ -105,6 +148,7 @@ def init_db(db_path: Path | str) -> Engine:
 
     Args:
         db_path: Path to SQLite database file
+        run_migrations: If True, run schema migrations (Server startup only)
 
     Returns:
         Configured SQLAlchemy Engine
@@ -134,7 +178,8 @@ def init_db(db_path: Path | str) -> Engine:
     SQLModel.metadata.create_all(engine)
 
     # Run migrations (must be after create_all so users table exists)
-    _run_migrations(engine)
+    if run_migrations:
+        _run_migrations(engine)
 
     # Setup FTS5
     setup_fts5(engine)

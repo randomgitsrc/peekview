@@ -101,7 +101,7 @@ def create_app(
     config.data_dir.mkdir(parents=True, exist_ok=True)
 
     # Initialize database and services
-    engine = init_db(config.db_path)
+    engine = init_db(config.db_path, run_migrations=True)
     app.state.engine = engine
 
     from peekview.storage import StorageManager

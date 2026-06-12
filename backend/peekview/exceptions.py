@@ -195,3 +195,21 @@ class DatabaseError(PeekError):
 
     status_code = 500
     error_code = "DATABASE_ERROR"
+
+
+class SchemaMismatchError(PeekError):
+    """Database schema is out of date — missing expected columns."""
+
+    status_code = 500
+    error_code = "SCHEMA_MISMATCH"
+
+    def __init__(self, missing_columns: dict[str, list[str]]):
+        self.missing_columns = missing_columns
+        parts = [f"  {table}: {', '.join(cols)}" for table, cols in missing_columns.items()]
+        message = (
+            "Database schema is out of date. Missing columns:\n"
+            + "\n".join(parts)
+            + "\n\nRun: peekview service restart\n"
+            + "  (or restart peekview serve if not installed as a service)"
+        )
+        super().__init__(message)

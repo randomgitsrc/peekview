@@ -27,7 +27,7 @@ from sqlmodel import Session
 from peekview import __version__
 from peekview.client import PeekClient
 from peekview.config import PeekConfig
-from peekview.database import init_db
+from peekview.database import check_schema, init_db
 from peekview.main import create_app
 from peekview.models import CreateEntryRequest, EntryCreate, User
 from peekview.services.entry_service import EntryService
@@ -71,6 +71,7 @@ def _get_backend(
 
     # Local mode
     engine = init_db(config.db_path)
+    check_schema(engine)
     storage = StorageManager(config=config)
     return EntryService(engine=engine, storage=storage, config=config)
 
@@ -159,7 +160,7 @@ def serve(ctx: click.Context, host: str | None, port: int | None, base_url: str 
     config.ensure_directories()
 
     # Initialize database
-    init_db(config.db_path)
+    init_db(config.db_path, run_migrations=True)
 
     click.echo(f"Starting Peek server on http://{bind_host}:{bind_port}")
     click.echo(f"Data directory: {config.data_dir}")
@@ -1386,6 +1387,7 @@ def user_create(username: str, password: str | None, admin: bool) -> None:
     config = PeekConfig()
     config.ensure_directories()
     engine = init_db(config.db_path)
+    check_schema(engine)
 
     password_hash = hash_password(password)
     # First user is automatically admin
@@ -1412,6 +1414,7 @@ def user_list() -> None:
     """List all users (local database only)."""
     config = PeekConfig()
     engine = init_db(config.db_path)
+    check_schema(engine)
 
     with Session(engine) as session:
         users = session.exec(select(User)).all()
@@ -1437,6 +1440,7 @@ def user_promote(username: str) -> None:
     """Promote user to admin."""
     config = PeekConfig()
     engine = init_db(config.db_path)
+    check_schema(engine)
 
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == username)).first()
@@ -1458,6 +1462,7 @@ def user_demote(username: str) -> None:
     """Demote user from admin."""
     config = PeekConfig()
     engine = init_db(config.db_path)
+    check_schema(engine)
 
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == username)).first()
