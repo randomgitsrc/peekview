@@ -28,7 +28,6 @@ async def client_and_app():
         async with AsyncClient(transport=transport, base_url="http://test") as c:
             c.cookies.clear()
             yield c, app
-            yield c, app
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
