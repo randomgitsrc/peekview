@@ -145,7 +145,6 @@ frontend-v3/src/
 | 文件 | 说明 | 状态 |
 |------|------|------|
 | [workflow-v3/](docs/process/workflow-v3/) | 开发工作流程 v3（子 Agent 编排 P1-P7）| 🔄 当前主流程 |
-| [workflow.md](docs/process/workflow.md) | 开发工作流程 v1 (P0-P4) | ⚠️ 已退役，仅历史参考 |
 | [release.md](docs/process/release.md) | 发布流程 | ✅ 定稿 |
 | [debug-workflow.md](docs/process/debug-workflow.md) | 调试工作流程 | ✅ 定稿 |
 | [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 定稿 |

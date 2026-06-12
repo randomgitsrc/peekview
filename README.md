@@ -258,9 +258,9 @@ Full list: see [CLAUDE.md](CLAUDE.md) Configuration section (33 variables).
 
 ## Documentation
 
-- [Deployment Guide](docs/DEPLOYMENT.md) — Install, configure, deploy
-- [Agent Deployment Guide](docs/agent-deployment-guide.md) — VPS deployment for AI agents
-- [Debug Guide](docs/DEBUGGING.md) — Local development
+- [Deployment Guide](docs/guides/DEPLOYMENT.md) — Install, configure, deploy
+- [Agent Deployment Guide](docs/guides/agent-deployment-guide.md) — VPS deployment for AI agents
+- [Debug Guide](docs/guides/DEBUGGING.md) — Local development
 - [Changelog](CHANGELOG.md) — Version history
 - [Project Index](INDEX.md) — Implementation progress & doc inventory
 

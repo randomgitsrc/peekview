@@ -686,7 +686,7 @@ sudo systemctl start peekview-mcp
 
 - [PeekView README](https://github.com/randomgitsrc/peekview/blob/main/README.md)
 - [MCP Server README](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md)
-- [完整部署指南](https://github.com/randomgitsrc/peekview/blob/main/docs/DEPLOYMENT.md)
+- [完整部署指南](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md)
 
 ---
 

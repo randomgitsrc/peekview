@@ -25,10 +25,10 @@ make bump-version NEW_VERSION=x.y.z  # bump 版本并自动同步所有文档
 | 变更类型 | 触发文件 | 必须更新的文档 |
 |---------|---------|-------------|
 | 版本号 | `pyproject.toml` / `__init__.py` / `package.json` | README / CLAUDE.md / INDEX.md / CHANGELOG / active-tasks.md |
-| API 端点 | `backend/peekview/api/*.py` | backend/README.md / FEATURES.md / CHANGELOG |
+| API 端点 | `backend/peekview/api/*.py` | backend/README.md / CHANGELOG |
 | CLI 命令 | `backend/peekview/cli.py` | README / CLAUDE.md / backend/README.md |
 | 配置/环境变量 | `backend/peekview/config.py` | README / DEPLOYMENT.md / DEBUGGING.md |
-| 前端功能 | `frontend-v3/src/**` | FEATURES.md / CHANGELOG |
+| 前端功能 | `frontend-v3/src/**` | CHANGELOG |
 | 依赖 | `pyproject.toml` / `package.json` | DEPLOYMENT.md |
 | 认证/安全 | `backend/peekview/auth.py` | DEPLOYMENT.md / CHANGELOG |
 | 发布流程 | `Makefile` / `scripts/` | docs/process/release.md |
@@ -44,7 +44,7 @@ pyproject.toml (权威)
   ├── README.md                    (badge)
   ├── CLAUDE.md                    (Current Version)
   ├── INDEX.md                     (当前版本)
-  ├── docs/process/active-tasks.md (发布状态)
+  ├── docs/tasks/active-tasks.md (发布状态)
   ├── backend/README.md            (health 示例)
   └── CHANGELOG.md                 (版本记录)
 ```
