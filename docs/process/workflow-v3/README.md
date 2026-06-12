@@ -34,6 +34,7 @@ docs/process/workflow-v3/
 ├── loop-orchestration.md        # /loop 自动编排设计
 ├── state-machine.md             # 状态机落盘设计
 ├── git-integration.md           # 状态落盘的 git 持久化（多 agent 协作）
+├── validation-plan.md           # 落地验证方案（投入真实任务前先跑这个）
 └── assets/
     ├── review-roles/            # 评审角色库（从 gstack 提取）
     │   ├── review.md            # /review 偏执 Staff Engineer
