@@ -4,7 +4,8 @@ task: T002
 date: 2026-06-12
 author: 主 Agent (T002 编排者)
 trigger: T002 P7 完成后 PM 发现 5 个问题，深入分析后扩展为 16 项改进
-status: final
+status: reviewed
+review: docs/reviews/expert-review-workflow-v3-postmortem-T002-2026-06-12.md (9.2/10)
 ---
 
 # Workflow-v3 复盘：T002 暴露的机制缺陷与改进建议
@@ -84,16 +85,19 @@ P7 gate = `make pre-publish` exit 0 + `git diff` 确认 version bump + CHANGELOG
 
 ## B. Subagent 安全（影响可靠性）— 2 项
 
-### B4. Subagent 存活监控（非简单超时杀死） 🔴
+### B4. Subagent 硬超时保护 🟡
 
-**问题**：subagent 可能无限等待（陷入循环、上下文压缩后胡言乱语、网络超时）。但简单设 timeout 不合理——部分任务天然需要长时间执行。
+**问题**：subagent 可能无限等待（陷入循环、上下文压缩后胡言乱语、网络超时）。
 
-**修复**：分两层：
+**⚠️ 评审修正**：初版方案（「主 Agent 检查产出文件进展」）在 OpenCode 的 `task` 工具阻塞模型下不可行——主 Agent 在 subagent 运行期间被阻塞，无法并发检查文件。降为 🟡，方案简化为：
 
-1. **硬超时**：task 工具设 generous timeout（如 10 分钟），防止无限等待
-2. **存活检查**：subagent 在执行过程中向产出文件写入中间产物（阶段性 checkpoint）。主 Agent 检查文件是否有进展（文件增长、新文件出现）。如果一段时间无任何进展 → 判定卡死 → 终止 + 计入重试
+**修复（修正后）**：
 
-**不是**「超过 N 秒就杀死」，而是「超过 N 秒无进展才杀死」。
+1. **硬超时**：`task` 工具设 generous timeout（默认 10 分钟），防止无限等待
+2. **进展标记**：在派发 prompt 中要求 subagent 每隔若干关键操作输出进展标记（如 `[progress] N/M files processed`），让平台日志可追溯
+3. **存活检查推迟**：真正的存活监控（心跳、文件增长检测）需平台原生支持并发后补。当前仅记录为已知限制
+
+**非**「简单超时杀死」——timeout 设为 generous，长时间正常运行不会被误杀。仅防止真正卡死（死循环、无限重试）。
 
 ### B5. Subagent 可请求任务升级/拆分 + P1 范围把关 🟡
 
@@ -170,21 +174,23 @@ P4 后评审同理（review + cso + design-review 并行）。
 | 项目目录结构 | 不知道文件在哪，放错位置 |
 | 命名/代码规范 | 代码风格不一致 |
 | 技术选型 | 引入不兼容的库/模式 |
-| 踩坑教训 | 重复已知错误（如 opencode.jsonc 自定义 agent 调不起来） |
+| 踩坑教训 | 重复已知错误 |
+
+**⚠️ 通用性约束**：v3 规范文件不应与特定项目绑定。固定段中的文件名、路径、命令必须使用 `{placeholder}`，由各项目在配置文件中定义映射。
 
 **修复**：派发 prompt 模板增加固定段，所有 subagent 派发时自动注入：
 
 ```
 ## 项目上下文（必读，每个 subagent 都需要）
-- CLAUDE.md（项目约定、命名规范、目录结构）
-- INDEX.md（项目总览）
+- {project_conventions_file}（项目约定、命名规范、目录结构）
+- {project_index_file}（项目总览）
 - docs/process/workflow-v3/README.md（流程规范）
 
-本项目关键约定（从 CLAUDE.md 摘要，不替代读原文）：
-- 后端包名 peekview（不是 peek）
-- DI 通过 app.state（不是 module globals）
-- 测试用 tmp_path fixture（不碰真实 ~/.peekview/）
+本项目关键约定（从项目配置摘要，不替代读原文）：
+{project_summary}
 ```
+
+PeekView 示例映射：`{project_conventions_file}` = `CLAUDE.md`，`{project_index_file}` = `INDEX.md`。其他项目可能用 `COPILOT.md`、`README.md` 等不同文件名。
 
 主 Agent 派发任何 subagent 时自动插入这一段。
 
@@ -194,11 +200,13 @@ P4 后评审同理（review + cso + design-review 并行）。
 
 **修复**：P4 dispatch prompt 加一句：「如对 P2 方案有疑问，在产出文件中标注 `[CLARIFY: xxx]`，主 Agent 会转交给 architect 解答」。P4 产出含 `[CLARIFY]` → 暂停 → 派发 architect 解答 → 回到 P4 继续。
 
-### D11. 测试/代码文件路径显式声明 🟢
+### D11. 测试/代码文件路径显式声明，模板用占位符 🟢
 
-**问题**：v3 模板约定测试代码在 `docs/tasks/Txxx/P3-test-code/`，但实际项目测试在 `backend/tests/`。路径分散导致 subagent 找不到输入文件。
+**问题**：v3 模板 `task-files.md` 写死了 `P3-test-code/` 和 `P4-implementation/` 目录。实际不同项目测试代码放在不同位置（本项目在 `backend/tests/`），模板路径与项目实际路径不一致。
 
-**修复**：`P3-test-cases.md` 和 `P4-implementation/implementation.md` 中必须显式声明实际文件路径，不在模板中推断。派发 prompt 引用这些声明而非固定路径。
+**⚠️ 通用性约束**：v3 模板不应硬编码任何项目特定的路径。所有路径应使用 `{placeholder}`。
+
+**修复**：`task-files.md` 中 `P3-test-code/` 和 `P4-implementation/` 改为占位符 `{test_code_dir}` 和 `{implementation_dir}`。`P3-test-cases.md` 和 `P4-implementation/implementation.md` 中必须显式声明实际路径。派发 prompt 引用这些声明而非固定路径。
 
 ---
 
@@ -240,9 +248,11 @@ updated: 2026-06-12
 
 ### F14. P7 沉淀 Lessons Learned → 项目知识库 🟢
 
-**问题**：T002 学到的关键教训（不在生产 DB 上 ALTER TABLE、P1 要仔细定义 AC）散落在复盘文件里，下一个类似任务不会自动获得这些知识。
+**问题**：T002 学到的关键教训散落在复盘文件里，下一个类似任务不会自动获得。
 
-**修复**：P7 产出文件增加「Lessons Learned」节（2-3 条关键教训）。主 Agent 将这些汇入项目级 `docs/process/lessons.md`（按任务索引，标注日期和来源）。后续 subagent 通过「项目上下文」固定段自动读取。
+**修复**：P7 产出文件增加「Lessons Learned」节（2-3 条关键教训）。主 Agent 将这些汇入项目级 `docs/process/lessons.md`。
+
+**组织方式（评审建议）**：按**类别**组织（安全/架构/流程/测试），而非时间序。方便后续 subagent 按问题领域检索。每条教训标注来源任务和日期。
 
 ### F15. 任务依赖管理 🟢
 
@@ -282,17 +292,17 @@ updated: 2026-06-12
 | A1 | Gate | Gate 判定必须跑命令，不只读文件 | `dispatch-protocol.md` | 🔴 高 |
 | A2 | Gate | 主 Agent 校验增加第 5 条「独立验证 subagent 声明」 | `dispatch-protocol.md` | 🔴 高 |
 | A3 | Gate | P7 重定义为「发布准备」；发布由人手动触发 | `dispatch-protocol.md`, `state-machine.md` | 🔴 高 |
-| B4 | 安全 | Subagent 存活监控（硬超时 + 进展检查，非简单杀死） | `dispatch-protocol.md` | 🔴 高 |
+| B4 | 安全 | Subagent 硬超时保护（进展标记，存活检查推迟） | `dispatch-protocol.md` | 🟡 中 |
 | B5 | 安全 | Subagent 可请求升级拆分 + P1 范围把关 | `dispatch-protocol.md`, `state-machine.md` | 🟡 中 |
 | C6 | 评审 | 专家组并行评审 + 组长汇总 | `dispatch-protocol.md`, `role-system.md` | 🟡 中 |
 | C7 | 评审 | P1 问题定义增加可选评审 | `dispatch-protocol.md` | 🟡 中 |
 | C8 | 评审 | P6 增加双向一致性检查 | `assets/execution-roles/architect.md` | 🟡 中 |
-| D9 | 上下文 | 派发 prompt 模板增加「项目上下文」固定段 | `assets/templates/dispatch-prompt.md` | 🟡 中 |
+| D9 | 上下文 | 派发 prompt 模板增加「项目上下文」固定段（{placeholder}） | `assets/templates/dispatch-prompt.md` | 🟡 中 |
 | D10 | 上下文 | P2→P4 方案答疑闭环 | `dispatch-protocol.md` | 🟢 低 |
-| D11 | 上下文 | 测试/代码文件路径显式声明 | `assets/templates/task-files.md` | 🟢 低 |
+| D11 | 上下文 | 模板路径改为占位符，产出文件显式声明实际路径 | `assets/templates/task-files.md` | 🟢 低 |
 | E12 | 状态 | 每任务独立 .state.yaml，active-tasks.md 降级为汇总 | `state-machine.md`, `active-tasks.md` | 🟡 中 |
 | F13 | UX | /loop 每阶段输出进度 | `loop-orchestration.md` | 🟡 中 |
-| F14 | 知识 | P7 沉淀 Lessons Learned → 项目知识库 | `assets/execution-roles/implementer.md` | 🟢 低 |
+| F14 | 知识 | P7 沉淀 Lessons Learned → 项目知识库（按类别组织） | `assets/execution-roles/implementer.md` | 🟢 低 |
 | F15 | UX | 任务依赖管理 | `active-tasks.md` | 🟢 低 |
 | F16 | UX | 主 Agent 任务完成后输出结构化小结 | `dispatch-protocol.md` | 🟡 中 |
 
@@ -310,10 +320,44 @@ updated: 2026-06-12
 
 ---
 
+## 通用性约束（PM 提醒）
+
+v3 规范文件中**不得硬编码任何特定项目的路径、文件名、命令**。以下为 PeekView 当前映射示例，不得写入规范文件：
+
+| 规范占位符 | PeekView 映射 | 说明 |
+|-----------|---------------|------|
+| `{project_conventions_file}` | `CLAUDE.md` | 项目约定文件（其他项目可能用 COPILOT.md 等） |
+| `{project_index_file}` | `INDEX.md` | 项目索引文件 |
+| `{test_code_dir}` | `backend/tests/` | 测试代码目录 |
+| `{source_dir}` | `backend/peekview/` | 源码目录 |
+| `{build_command}` | `make pre-publish` | 构建验证命令 |
+| `{lint_command}` | `make lint` | 代码检查命令 |
+
+各项目在项目约定文件中定义这些映射。v3 规范中所有模板、示例、派发 prompt 均使用占位符。
+
+---
+
+## 评审结果
+
+`docs/reviews/expert-review-workflow-v3-postmortem-T002-2026-06-12.md` — **9.2/10**
+
+| 项目 | 结果 |
+|------|------|
+| 16 项中 15 项可行性确认 | ✅ |
+| B4 存活检查推迟（OpenCode 阻塞模型限制） | ⚠️ 降为 🟡 |
+| D9/D11 占位符化防止项目绑定 | ⚠️ 已修正 |
+| F14 按类别组织 | ⚠️ 已修正 |
+| 不变项 5/5 确认正确 | ✅ |
+| T003 首批范围建议：A1+A2+A3 | — |
+
+---
+
 ## 是否创建 T003
 
-以上 16 项改进建议作为一个任务跟踪。候选名：
+建议首批 3 项高优（A1-A3）：
 
-**`T003-fix-workflow-v3-mechanisms`**
+`T003-fix-workflow-v3-gates`
 
-建议首批实现 A1-A3 + B4（4 个高优先），其余在后续迭代中按优先级推进。
+包含：gate 命令化 + 主 Agent 独立验证 + P7 概念修正
+
+其余 13 项在后续迭代中按优先级推进。
