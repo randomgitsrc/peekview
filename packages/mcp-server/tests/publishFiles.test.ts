@@ -406,7 +406,7 @@ describe('publish_files', () => {
     expect(result.content[0].text).toContain('发布被拒绝');
   });
 
-  it('is_public 未传 → 默认 false', async () => {
+  it('is_public 未传 → 默认 true', async () => {
     const file = path.join(tmpDir, 'pub.md');
     await fs.writeFile(file, 'text');
     let capturedBody: { is_public?: boolean } | null = null;
@@ -419,7 +419,7 @@ describe('publish_files', () => {
 
     const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
     await tool.handler({ summary: 'T', paths: [file] }, ctx);
-    expect(capturedBody?.is_public).toBe(false);
+    expect(capturedBody?.is_public).toBe(true);
   });
 
   it('is_public: true → 公开', async () => {
