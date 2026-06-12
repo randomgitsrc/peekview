@@ -203,7 +203,7 @@ updated: 2026-06-12
 
 **commit 时机**：与 gate commit 同步——一次 commit 包含 stage output + `.state.yaml` 更新，避免文件与实际阶段不一致。
 
-**active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 在 push 前重建（扫描所有 `.state.yaml`），消除多 Agent 并发冲突。
+**active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 维护。更新规则：**owner agent 只重写自己任务那一行**（从该任务 .state.yaml 派生），不碰其他任务的行，不做全表覆写。这样多 Agent 并发时各写各的行，冲突面最小。（与 git-integration.md 策略2 一致，.state.yaml 是唯一真相源）
 
 ---
 

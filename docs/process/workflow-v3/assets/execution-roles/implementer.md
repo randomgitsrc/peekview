@@ -29,7 +29,7 @@ phases: [P4, P7]
 
 **P7 沉淀 Lessons Learned**：
 
-P7 产出文件中增加「Lessons Learned」节（2-3 条关键教训）。主 Agent 将这些汇入项目级 `docs/process/lessons.md`。
+P7 产出文件中增加「Lessons Learned」节（2-3 条关键教训）。主 Agent 将这些汇入项目级 `docs/process/lessons.md`（文件不存在则创建，含表头：类别/教训/来源任务/日期）。
 
 **组织方式**：按类别（安全/架构/流程/测试），方便后续检索。每条标注来源任务和日期。
 

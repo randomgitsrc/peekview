@@ -74,8 +74,8 @@ push 失败（远端有新提交）→ pull --rebase → 重新 push，最多重
 **策略 1：任务目录隔离**
 每个任务的产出在自己的 `docs/tasks/Txxx/` 目录，不同任务的 agent 改不同目录，文件级冲突少。
 
-**策略 2：active-tasks.md 用追加而非重写**
-看板更新尽量只改自己任务那一行，不整体重写，减少冲突面。
+**策略 2：active-tasks.md 只改自己任务那一行**
+看板更新：owner agent 从该任务 `.state.yaml` 派生，**只重写自己负责的那一行**，不整体重写，不碰其他任务的行。`.state.yaml` 是唯一真相源，active-tasks.md 是派生视图。（与 state-machine.md 一致）
 
 **策略 3：push 串行化（推荐）**
 多 agent 环境下，push 操作天然串行（git 远端是单点）。每个 agent push 前 pull --rebase，失败就重试。这是 git 的标准并发模型，能 work，只是偶尔要重试（本项目开发过程中已多次验证：rebase 后重推即可）。
