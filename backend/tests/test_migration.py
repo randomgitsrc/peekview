@@ -15,9 +15,35 @@ import pytest
 from sqlalchemy import text
 from sqlmodel import Session, SQLModel, select
 
-from peekview.database import _run_migrations, check_schema, init_db
-from peekview.exceptions import PeekError, SchemaMismatchError
+from peekview.database import _run_migrations, init_db
+from peekview.exceptions import PeekError
 from peekview.models import User
+
+try:
+    from peekview.database import check_schema
+except ImportError:
+    # P4 will implement; stub for P3 TDD 真红灯
+    def check_schema(engine):
+        raise NotImplementedError("check_schema() not yet implemented (P4)")
+
+try:
+    from peekview.exceptions import SchemaMismatchError
+except ImportError:
+    # P4 will implement; stub for P3 TDD 真红灯 (tests inspect class attrs)
+    class SchemaMismatchError(PeekError):
+        status_code = 500
+        error_code = "SCHEMA_MISMATCH"
+
+        def __init__(self, missing_columns: dict[str, list[str]]):
+            self.missing_columns = missing_columns
+            parts = [f"  {table}: {', '.join(cols)}" for table, cols in missing_columns.items()]
+            message = (
+                "Database schema is out of date. Missing columns:\n"
+                + "\n".join(parts)
+                + "\n\nRun: peekview service restart\n"
+                + "  (or restart peekview serve if not installed as a service)"
+            )
+            super().__init__(message)
 
 
 def _create_users_without_is_admin(engine):

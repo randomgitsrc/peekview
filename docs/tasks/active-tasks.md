@@ -1,7 +1,7 @@
 # 任务看板 (Task Board)
 
 > PeekView 项目任务管理主文件
-> **核心原则**：所有任务必须走 workflow-v2 流程，每个阶段有文件产出
+> **核心原则**：所有任务必须走 workflow-v3 流程，每个阶段有文件产出
 > **位置**：`docs/tasks/` 目录下每个任务一个子目录
 
 ---
@@ -13,7 +13,7 @@
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|----------|----------|
 | T001 | mcp-namespace-map | 🔄 进行中 | P2 | P1 | 2026-06-10 | 2026-06-11 |
-| T002 | fix-db-migration | 🔄 进行中 | P3 | P0 | 2026-06-11 | 2026-06-11 |
+| T002 | fix-db-migration | 🔄 进行中 | P3 | P0 | 2026-06-11 | 2026-06-12 |
 
 ### 待处理的任务
 
@@ -42,7 +42,7 @@
 |------|------|------|----------|
 | P1 | 问题定义 | 无 | `P1-problems.md`, `P1-test-strategy.md` |
 | P2 | 方案设计+评审 | review.status=approved | `P2-design.md`, `P2-review.md` |
-| P3 | 测试设计（TDD）| 单元测试当前失败 | `P3-test-cases.md`, `P3-test-code/` |
+| P3 | 测试设计（TDD）| 真红灯（assertion failure，非import error）| `P3-test-cases.md`, `P3-test-code/` |
 | P4 | 代码实现 | 无 | `P4-implementation/` |
 | P5 | 逐项验证 | 所有测试通过 | `P5-test-results/unit.md`, `P5-test-results/manual.md` |
 | P6 | 一致性检查 | 无 | `P6-consistency.md` |
@@ -58,6 +58,16 @@
 | P1 | 🟠 | 近期需要完成，影响功能发布 |
 | P2 | 🟡 | 中期规划，可以安排在当前迭代 |
 | P3 | 🟢 | 长期改进，可以后续处理 |
+
+---
+
+## 重试追踪
+
+> workflow-v3 要求：每阶段独立计数，落盘防丢失
+
+| 任务 | 阶段 | 重试次数 | 上限 | 最后失败原因 |
+|------|------|----------|------|-------------|
+| T002 | P3 | 0 | 3 | — |
 
 ---
 
@@ -164,7 +174,7 @@ parent: (外部需求或 Bug 报告来源)
 
 ## 快速入口
 
-- **流程规范**: `docs/process/workflow-v2.md`
+- **流程规范**: `docs/process/workflow-v3/README.md`
 - **任务目录**: `docs/tasks/Txxx-xxx/`
 - **评审记录**: `docs/reviews/`
 - **项目索引**: `INDEX.md`

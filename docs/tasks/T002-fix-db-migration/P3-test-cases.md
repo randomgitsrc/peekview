@@ -5,7 +5,7 @@ task_name: fix-db-migration
 type: test-cases
 trace_id: T002-P3-20250611
 created: 2026-06-11
-status: draft
+status: ready
 parent: T002/P2-design.md
 ---
 
@@ -121,3 +121,22 @@ parent: T002/P2-design.md
 3. 验证每次 DDL 后有 `conn.commit()` 调用
 
 **测试文件**：`backend/tests/test_migration.py::TestRunMigrations::test_independent_commits`
+
+---
+
+## v3 门槛验证（真红灯确认）
+
+**测试文件**：`backend/tests/test_migration.py`（14 个测试）
+
+**验证命令**：`python3 -m pytest backend/tests/test_migration.py -v`
+
+**验证结果（2026-06-12）**：
+- 可收集：14/14 ✅（无 import error / collection error）
+- 真红灯：5 失败（全部因 P4 实现缺失导致）✅
+  - 3× `check_schema` → `NotImplementedError`（P4 未实现）
+  - `test_no_migrations_when_false` → `AssertionError`（`init_db` 未加 `run_migrations` 参数）
+  - `test_run_migrations_true_calls_migrate` → `TypeError`（同上）
+- 通过：9/14（`SchemaMismatchError` stub 类测试 + 现有 `_run_migrations` 功能）
+- 无 import error / collection error / 语法错误 ✅
+
+**结论**：P3→P4 门槛满足（真红灯）。
