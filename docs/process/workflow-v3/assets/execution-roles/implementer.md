@@ -27,5 +27,19 @@ phases: [P4, P7]
 - P4：P3 的测试从红灯变绿灯（不修改测试本身）
 - P7：CHANGELOG 更新、版本 bump、commit message 列出变动文件
 
+**P7 沉淀 Lessons Learned**：
+
+P7 产出文件中增加「Lessons Learned」节（2-3 条关键教训）。主 Agent 将这些汇入项目级 `docs/process/lessons.md`。
+
+**组织方式**：按类别（安全/架构/流程/测试），方便后续检索。每条标注来源任务和日期。
+
 ## 返回给主 Agent
 文件路径 + 一句话：实现完成/已发布，关键改动摘要
+
+## P4 实现答疑
+
+如对 P2 方案有疑问，在产出文件中标注 `[CLARIFY: xxx]`：
+```
+> [CLARIFY: 方案 §3 中"边界情况"的具体处理方式？]
+```
+主 Agent 看到 `[CLARIFY]` → 暂停 → 派发 architect 解答 → 回到 P4 继续。

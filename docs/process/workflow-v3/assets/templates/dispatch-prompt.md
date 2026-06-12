@@ -9,6 +9,11 @@
 读取并严格遵循：
 docs/process/workflow-v3/assets/{execution-roles|review-roles}/{role}.md
 
+## 项目上下文（必读，每个 subagent 都需要）
+- {project_conventions_file}（项目约定、命名规范、目录结构）
+- {project_index_file}（项目总览）
+- docs/process/workflow-v3/README.md（流程规范）
+
 ## 输入（自己读取，不要等我提供内容）
 - docs/tasks/{Txxx}/{上一阶段产出文件}
 - docs/process/workflow-v3/README.md
@@ -38,6 +43,19 @@ trace_id: {Txxx}-{Pn}-{YYYYMMDD}
   2. 一句话摘要（不超过 30 字）
 绝对不要返回文件全文——我只需要路径和摘要。
 ```
+
+## 项目占位符映射
+
+> 以下为 PeekView 当前映射示例，各项目在项目约定文件中定义
+
+| 占位符 | PeekView 映射 | 说明 |
+|--------|---------------|------|
+| {project_conventions_file} | `CLAUDE.md` | 项目约定 |
+| {project_index_file} | `INDEX.md` | 项目总览 |
+| {test_code_dir} | `backend/tests/` | 测试代码目录 |
+| {implementation_dir} | `backend/peekview/` | 源码目录 |
+| {build_command} | `make pre-publish` | 构建验证命令 |
+| {lint_command} | `make lint` | 代码检查命令 |
 
 ## 关键提醒
 - prompt 里只写文件**路径**，绝不复制文件内容

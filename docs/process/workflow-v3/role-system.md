@@ -165,6 +165,32 @@ P4 实现后：
 
 主 Agent 根据任务内容判断需要哪些评审角色，可以串联多个。
 
+### 专家组并行评审 + 组长汇总
+
+P2 评审可同时派发多个评审角色（并行）：
+
+```
+主 Agent 同时派发 N 个评审（多个 task 调用）：
+├── plan-eng-review   → P2-review-eng.md
+├── plan-ceo-review   → P2-review-ceo.md
+├── plan-design-review（前端任务时）→ P2-review-design.md
+└── cso（涉安全时）   → P2-review-cso.md
+```
+
+所有评审返回后，派发组长汇总：
+- 角色：review 角色 + 指定为「专家组组长」
+- 输入：所有评审文件路径
+- 任务：汇总、去重、归类（BLOCKER/建议/可忽略）、标注分歧
+- 输出：P2-review.md（统一 status: approved/rejected）
+
+**组长规则**：
+- 组长不发表新意见，只汇总
+- 任何专家标 BLOCKER → status: rejected
+- 多位专家分歧 → 标「专家组分歧」交人工
+- 全票无 BLOCKER → status: approved
+
+P4 后评审同理（review + cso + design-review 并行）。
+
 ---
 
 ## 与 gstack 的关系
