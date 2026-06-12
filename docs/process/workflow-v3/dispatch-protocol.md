@@ -282,7 +282,10 @@ rejected 时，主 Agent 的重试派发 prompt 里加一行：
 
 ## 任务完成小结
 
-DONE 后主 Agent 输出固定格式（从各阶段 gate check 输出拼出，不读文件全文）：
+**触发时机：P7 gate 通过、状态进入 READY 时。强制输出，不可跳过。**
+（T002 教训：主 Agent 完成任务后未向 PM 汇报，PM 需自己翻 git log 才能知道发生了什么）
+
+主 Agent 从各阶段 gate check 的命令输出拼出小结，不读文件全文：
 
 ```
 [{task_id}] DONE — {task_name} {version}

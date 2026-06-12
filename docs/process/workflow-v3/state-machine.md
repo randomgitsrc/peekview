@@ -85,6 +85,17 @@ P7 --[项目发布检查命令 exit 0 + git diff 确认 version bump + CHANGELOG
 
 特殊转移：
 READY --[人手动触发 make publish]--> DONE
+
+进入 READY 时（P7 gate 通过后，写状态前）：
+主 Agent 必须立即输出交付小结（强制，不可跳过）：
+  格式见 dispatch-protocol.md「任务完成小结」模板：
+    [{task_id}] READY — {task_name} {version}
+    改动：{git diff --stat 提取}
+    验证：{各阶段 gate check 结果}
+    说明：{一句话设计摘要}
+    下一步：make publish（人工触发）
+  这是主 Agent 对 PM 的正式交付，是任务编排层的职责。
+  T002 教训：小结缺失导致 PM 无法感知任务完成情况。
 ```
 
 每次转移后，把新状态写回 active-tasks.md。
@@ -154,7 +165,11 @@ function 执行一步(task_id):
        - P6: grep 无 [BLOCKER] 标记
        - P7: 项目发布检查命令 exit 0
     6. 计算下一状态（按转移规则）
-    7. 写回 .state.yaml（新阶段 / 重试计数 / PAUSED）
+    7. if 下一状态 == READY:
+          输出交付小结（强制）：见「进入 READY 时」的格式要求
+          再写回 .state.yaml
+       else:
+          写回 .state.yaml（新阶段 / 重试计数 / PAUSED）
     8. 返回：下一状态是什么
 ```
 

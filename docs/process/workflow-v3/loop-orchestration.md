@@ -92,7 +92,7 @@
 
 LOOP:
     1. 读 active-tasks.md → 当前状态
-    2. if 状态 == DONE: 报告完成，退出
+    2. if 状态 == DONE: 输出交付小结（格式见 dispatch-protocol.md「任务完成小结」），退出
     3. if 状态 == PAUSED: 报告暂停原因，退出
     4. if 当前阶段 == --until 指定的停止点: 报告，退出
     5. if 触发硬中断点: 无条件停下问人（--auto-approve 不能跳过）
