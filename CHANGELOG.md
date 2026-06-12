@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## [0.1.53] - 2026-06-12
+
+### 修复
+
+- **数据库迁移机制修复**：Server 独占迁移执行权，消除 CLI 与 Server 的迁移锁竞争
+  - `init_db` 新增 `run_migrations` 参数（默认 `False`），Server 启动时显式传 `True`
+  - CLI 新增 `check_schema()` 兼容检查，schema 过期时输出清晰升级指引
+  - 新增 `SchemaMismatchError` 异常（继承 `PeekError`），含 `peekview service restart` 提示
+  - 每个 DDL 后独立 `conn.commit()`，防御性编程
+
 ## [0.1.52] - 2026-06-11
 
 ### 新增
