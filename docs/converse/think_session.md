@@ -56,6 +56,18 @@
 2. **严禁** 停止/触碰用户的 pipx 正式服务（:8080）
 3. **严禁** 测试碰真实 `~/.peekview/`；MCP 测试用临时 HOME
 
+## 调试辅助
+
+分析问题时可按需使用以下命令验证假设（不改代码）：
+
+```bash
+make debug-start       # 启动独立调试服务（:8888）
+make debug-test        # 运行 E2E 测试
+cd backend && make test  # 后端测试
+cd backend && make lint   # 代码检查
+make check-version     # 版本一致性
+```
+
 ---
 
 ## 思考产出格式
