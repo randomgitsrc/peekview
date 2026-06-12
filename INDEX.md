@@ -1,7 +1,7 @@
 # PeekView — 项目索引
 
 > 最后更新：2026-05-21
-> 当前版本：v0.1.52（Backend/Frontend）| MCP Server v0.8.1
+> 当前版本：v0.1.53（Backend/Frontend）| MCP Server v0.8.3
 
 ---
 
@@ -144,14 +144,15 @@ frontend-v3/src/
 
 | 文件 | 说明 | 状态 |
 |------|------|------|
-| [workflow.md](docs/process/workflow.md) | 开发工作流程 (P0-P4) | ✅ 定稿 |
+| [workflow-v3/](docs/process/workflow-v3/) | 开发工作流程 v3（子 Agent 编排 P1-P7）| 🔄 当前主流程 |
+| [workflow.md](docs/process/workflow.md) | 开发工作流程 v1 (P0-P4) | ⚠️ 已退役，仅历史参考 |
 | [release.md](docs/process/release.md) | 发布流程 | ✅ 定稿 |
 | [debug-workflow.md](docs/process/debug-workflow.md) | 调试工作流程 | ✅ 定稿 |
 | [debug-lessons.md](docs/process/debug-lessons.md) | 调试经验总结 | ✅ 定稿 |
 | [doc-sync-guide.md](docs/process/doc-sync-guide.md) | 文档同步指南 | ✅ 定稿 |
 | [doc-sync-pipeline.md](docs/process/doc-sync-pipeline.md) | 文档同步流水线 | ✅ 定稿 |
 | [multi-device-guide.md](docs/process/multi-device-guide.md) | 多设备开发指南 | ✅ 定稿 |
-| [active-tasks.md](docs/process/active-tasks.md) | 活跃任务看板 | 🔄 使用中 |
+| [active-tasks.md](docs/tasks/active-tasks.md) | 活跃任务看板 | 🔄 使用中 |
 
 ### 📦 归档文档 (`docs/archived/`)
 

@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
 
-- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.8.2 (Streamable HTTP transport) has been released to npm.
-- **Current Version:** v0.1.52 (Backend/Frontend) | MCP Server v0.8.2
+- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.8.3 (Streamable HTTP transport) has been released to npm.
+- **Current Version:** v0.1.53 (Backend/Frontend) | MCP Server v0.8.3
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
@@ -154,7 +154,7 @@ entry_service = request.app.state.entry_service
 2. **Local path:** `files[].local_path` - reads from server filesystem (allowlist check)
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
-### MCP Server Architecture (v0.8.2)
+### MCP Server Architecture (v0.8.3)
 - **Transport**: Streamable HTTP via `@modelcontextprotocol/sdk`
 - **Auth**: Two-layer — `pv_` prefix check at initialize, then passthrough to PeekView API
 - **Session**: Per-session Server instance with idle timeout cleanup
@@ -164,7 +164,7 @@ entry_service = request.app.state.entry_service
 - **publish_files**: reads files directly from disk, requires absolute paths, uses `server.allowed_paths` or cwd+tmpdir fallback, `trust_all_paths` option, rejects cwd `/`
 - **Service commands**: Auto-detect user/system service mode (`--user`/`--system` flags, default prefers user service)
 - **Deployment architecture**: Agent(A机器) → HTTP POST → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
-- **Version correspondence:** MCP Server v0.8.2 requires PeekView Backend v0.1.25+
+- **Version correspondence:** MCP Server v0.8.3 requires PeekView Backend v0.1.25+
 
 ### Error Response Format
 ```json
@@ -229,9 +229,12 @@ entry_service = request.app.state.entry_service
 
 ## Essential Documentation
 
-- **Dev Process:** `docs/process/workflow.md` - P0-P4 checkpoint-driven development
+- **Dev Process (current):** `docs/process/workflow-v3/README.md` - 子 Agent 编排工作流（P1-P7），当前主流程
+- **Active Tasks:** `docs/tasks/active-tasks.md` - 当前任务看板，开始工作前必读
+- **gstack Review Roles:** `docs/process/gstack-review-guide.md` - /review /plan-eng-review /cso 等评审角色
 - **Debug Workflow:** `docs/process/debug-workflow.md` - CRITICAL for pre-release verification
 - **Release Process:** `docs/process/release.md` - MUST READ when releasing
 - **Auth Spec:** `docs/archived/specs/spec-user-auth.md`
 - **Remote CLI Spec:** `docs/archived/specs/spec-remote-cli.md`
 - **MCP Dual Mode Plan:** `docs/archived/plans/mcp-dual-mode-final-v0.7.md`
+- **Dev Process (legacy):** `docs/process/workflow.md` - P0-P4，已退役，仅供历史参考
