@@ -41,9 +41,20 @@
 
 ---
 
-## 当前项目背景
+## 当前项目上下文
 
-读取 `CLAUDE.md` 或 `OPENCODE.md` 获取最新项目状态。核心信息：PeekView 是轻量级代码/文档格式化服务，Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。当前流程使用 `docs/process/workflow-v3/`（P1-P7 子 Agent 编排）。
+每次新会话主动读取以下文件获取最新状态：
+- `CLAUDE.md` — 项目约定、架构、命令
+- `OPENCODE.md` — 新会话速览
+- `INDEX.md` — 实现进度 & 文档清单
+- `README.md` — 用户面向文档
+- `docs/tasks/active-tasks.md` — 当前任务看板
+
+## 铁律
+
+1. **严禁** `uvicorn` 直接启动。用 `make debug-start`（port 8888，独立数据 `/tmp/peekview-debug/`）
+2. **严禁** 停止/触碰用户的 pipx 正式服务（:8080）
+3. **严禁** 测试碰真实 `~/.peekview/`；MCP 测试用临时 HOME
 
 ---
 
