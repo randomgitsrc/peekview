@@ -31,6 +31,12 @@
         <span v-if="entryStore.currentEntry?.createdAt" class="entry-time desktop-only">
           {{ formatRelativeTime(entryStore.currentEntry.createdAt) }}
         </span>
+        <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires desktop-only">
+          Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
+        </span>
+        <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never desktop-only">
+          Never expires
+        </span>
 
         <div class="actions desktop-only" v-if="entryStore.currentEntry">
           <button
@@ -278,6 +284,7 @@ import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import type { SiblingFile } from '@/components/HtmlViewer.vue'
 import { guessMimeType } from '@/utils/mime'
+import { formatExpiresIn } from '@/utils/expires'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -638,6 +645,15 @@ watch(() => props.slug, (newSlug) => {
 .entry-time {
   font-size: var(--font-xs);
   color: var(--text-secondary);
+}
+
+.entry-expires {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.entry-expires-never {
+  color: var(--text-tertiary);
 }
 </style>
 

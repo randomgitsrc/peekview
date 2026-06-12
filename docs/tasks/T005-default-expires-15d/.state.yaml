@@ -1,0 +1,5 @@
+task_id: T005-default-expires-15d
+phase: P7
+status: in_progress
+retry_count: {}
+updated: 2026-06-12

@@ -11,6 +11,7 @@ export interface EntryListItemResponse {
   is_public: boolean
   owner_id: number | null
   username: string | null
+  expires_at: string | null
   created_at: string
   updated_at: string
 }

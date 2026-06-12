@@ -52,6 +52,7 @@ class PeekAPI {
       isPublic: entry.is_public ?? true,
       ownerId: entry.owner_id ?? null,
       username: entry.username,
+      expiresAt: entry.expires_at,
       createdAt: entry.created_at,
     }
   }
@@ -67,6 +68,7 @@ class PeekAPI {
       isPublic: entry.is_public ?? true,
       ownerId: entry.owner_id ?? null,
       username: entry.username,
+      expiresAt: entry.expires_at,
       createdAt: entry.created_at,
     }
   }

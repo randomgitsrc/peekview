@@ -288,7 +288,7 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
       is_public: { type: 'boolean', description: 'Whether entry is public (default: false)' },
-      expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h")' },
+      expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
       include_patterns: {
         type: 'array', items: { type: 'string' },
         description: 'Filename globs to include (e.g., ["*.py", "*.md"])',
@@ -490,6 +490,12 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
         text += formatSkipped(skipped);
       }
       text += `Link: ${config.publicUrl}/${entry.slug}`;
+      if (entry.expires_at) {
+        const expiresDate = new Date(entry.expires_at);
+        text += `\nExpires: ${expiresDate.toISOString().slice(0, 10)}`;
+      } else {
+        text += `\nExpires: never`;
+      }
 
       return { content: [{ type: 'text', text }] };
     } catch (error) {

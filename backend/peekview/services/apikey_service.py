@@ -64,7 +64,8 @@ class ApiKeyService:
         expires_at = None
         if expires_in:
             delta = parse_expires_in(expires_in)
-            expires_at = datetime.now(timezone.utc) + delta
+            if delta is not None:
+                expires_at = datetime.now(timezone.utc) + delta
 
         # Generate key: pv_ + 32 bytes random
         raw_key = API_KEY_PREFIX + secrets.token_urlsafe(24)

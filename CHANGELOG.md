@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## [0.1.55] - 2026-06-12
+
+### 新增
+
+- **默认 15 天过期策略**：未传 `expires_in` 时自动设置 15 天后过期，避免条目无限堆积
+  - `parse_expires_in("0")` / `"0d"` / `"0h"` / `"0m"` → `None`（永不过期）
+  - 新增 `PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN` 配置项（默认 `"15d"`），支持 `999999d` 等超大值
+  - `CreateEntryResponse` / `EntryListItem` 新增 `expires_at` 字段
+  - 新增 `GET /api/v1/config/limits` 端点，返回 `default_expires_in`
+  - CLI `config list` 支持 `limits.default_expires_in`；`create --help` 说明默认行为
+  - MCP `create_entry` / `publish_files` 工具 description 更新，响应含 `expires_at`
+  - 前端详情页展示过期倒计时 / "Never expires"；列表卡片展示过期标签
+
 ## [0.1.54] - 2026-06-12
 
 ### 修复

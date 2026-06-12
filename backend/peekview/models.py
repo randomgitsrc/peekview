@@ -301,7 +301,7 @@ class EntryCreate(SQLModel):
     tags: list[str] = Field(default_factory=list)
     expires_in: str | None = Field(
         default=None,
-        description="Duration like '7d', '1h', '30m'",
+        description="Duration like '7d', '1h', '30m'. Default: server-configured (see /api/v1/config/limits). Use '0' for no expiration.",
     )
 
 
@@ -398,6 +398,7 @@ class EntryListItem(SQLModel):
     is_public: bool
     owner_id: int | None
     username: str | None
+    expires_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -418,7 +419,10 @@ class CreateEntryRequest(SQLModel):
     slug: str | None = Field(default=None, max_length=64)
     tags: list[str] = Field(default_factory=list)
     is_public: bool = Field(default=True)
-    expires_in: str | None = Field(default=None)
+    expires_in: str | None = Field(
+        default=None,
+        description="Duration like '7d', '1h', '30m'. Default: server-configured (see /api/v1/config/limits). Use '0' for no expiration.",
+    )
     files: list[FileCreate] = Field(default_factory=list)
     dirs: list[DirCreate] = Field(default_factory=list)
 
@@ -431,6 +435,7 @@ class CreateEntryResponse(SQLModel):
     url: str
     is_public: bool
     owner_id: int | None
+    expires_at: datetime | None
     created_at: datetime
     files: list[FileResponse]
 

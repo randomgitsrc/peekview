@@ -174,14 +174,22 @@ def test_expires_in_invalid():
 
 
 def test_expires_in_zero():
-    with pytest.raises(ValueError, match="at least 1 minute"):
-        parse_expires_in("0d")
+    """parse_expires_in('0') returns None (never expire)."""
+    assert parse_expires_in("0") is None
+
+
+def test_expires_in_zero_unit():
+    """parse_expires_in('0d'/'0h'/'0m') return None (never expire)."""
+    assert parse_expires_in("0d") is None
+    assert parse_expires_in("0h") is None
+    assert parse_expires_in("0m") is None
 
 
 def test_expires_in_minimum_1_minute():
-    """expires_in below 1 minute is rejected."""
-    with pytest.raises(ValueError, match="at least 1 minute"):
-        parse_expires_in("0m")
+    """Minimum expiry is 1 minute (zero now means no expiration)."""
+    delta = parse_expires_in("1m")
+    assert delta is not None
+    assert delta.total_seconds() == 60
 
 
 def test_expires_in_maximum_365_days():

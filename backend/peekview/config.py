@@ -65,6 +65,26 @@ class PeekLimits(BaseSettings):
         default=50,
         description="Maximum items per page for list endpoints",
     )
+    default_expires_in: str = Field(
+        default="15d",
+        description="Default expiration duration for new entries (e.g., '15d', '7d', '1h'). Use '0' for no expiration (defaults to never).",
+    )
+
+    @field_validator("default_expires_in", mode="after")
+    @classmethod
+    def validate_default_expires_in(cls, v: str) -> str:
+        from peekview.services.file_service import parse_expires_in
+        import logging
+        _config_logger = logging.getLogger("peekview.config")
+        try:
+            parse_expires_in(v)
+        except ValueError as exc:
+            _config_logger.warning(
+                "Invalid PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN=%r: %s. Falling back to '15d'.",
+                v, exc,
+            )
+            return "15d"
+        return v
 
     @field_validator("max_file_size", "max_content_length", "max_entry_size")
     @classmethod

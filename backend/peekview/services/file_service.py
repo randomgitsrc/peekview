@@ -168,10 +168,11 @@ def scan_directory(
     return files
 
 
-def parse_expires_in(expires_in: str) -> timedelta:
+def parse_expires_in(expires_in: str) -> timedelta | None:
     """Parse expires_in string to timedelta with bounds checking.
 
     Supported formats: "1h" (hours), "30m" (minutes), "7d" (days).
+    Special: "0", "0h", "0m", "0d" → None (never expire).
 
     Bounds:
     - Minimum: 1 minute
@@ -181,15 +182,18 @@ def parse_expires_in(expires_in: str) -> timedelta:
         expires_in: Duration string.
 
     Returns:
-        timedelta object.
+        timedelta object, or None for "never expire".
 
     Raises:
-        ValueError: Invalid format, zero/negative duration, or out of bounds.
+        ValueError: Invalid format or out of bounds.
     """
+    if expires_in == "0":
+        return None
+
     match = re.match(r"^(\d+)([hmd])$", expires_in)
     if not match:
         raise ValueError(
-            f"Invalid expires_in format: {expires_in!r}. Use e.g. '1h', '30m', '7d'"
+            f"Invalid expires_in format: {expires_in!r}. Use e.g. '1h', '30m', '7d', '0' for no expiration"
         )
 
     value = int(match.group(1))
@@ -204,7 +208,9 @@ def parse_expires_in(expires_in: str) -> timedelta:
     else:
         raise ValueError(f"Unknown time unit: {unit}")
 
-    # Bounds checking (also catches value <= 0 since _MIN_EXPIRES is 1 minute)
+    if value == 0:
+        return None
+
     if delta < _MIN_EXPIRES:
         raise ValueError(f"expires_in must be at least 1 minute, got: {expires_in!r}")
     if delta > _MAX_EXPIRES:

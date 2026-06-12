@@ -81,6 +81,10 @@
                 <span v-if="entry.username" class="meta-item meta-creator">@{{ entry.username }}</span>
                 <span class="meta-item meta-time">{{ formatRelativeTime(entry.createdAt) }}</span>
                 <span v-if="!entry.isPublic" class="meta-item meta-private">private</span>
+                <span v-if="entry.expiresAt" class="meta-item meta-expires"
+                      :class="{ 'meta-expires-soon': isExpiringSoon(entry.expiresAt) }">
+                  {{ formatExpiresIn(entry.expiresAt) }}
+                </span>
                 <span v-if="entry.tags.length" class="meta-tags">
                   {{ entry.tags.join(', ') }}
                 </span>
@@ -157,6 +161,7 @@ import Pagination from '@/components/Pagination.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { Entry } from '@/types'
+import { formatExpiresIn, isExpiringSoon } from '@/utils/expires'
 
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
@@ -512,6 +517,8 @@ function formatRelativeTime(dateStr: string): string {
 .meta-creator { color: var(--accent-color); }
 .meta-private { color: var(--warning-color); font-weight: 500; }
 .meta-tags { color: var(--accent-color); }
+.meta-expires { color: var(--text-secondary); }
+.meta-expires-soon { color: var(--warning-color); font-weight: 500; }
 
 /* Footer */
 .list-footer {

@@ -44,3 +44,33 @@ async def get_captcha_config(request: Request) -> PublicCaptchaConfig:
         endpoint="/api/v1/captcha" if mode == "builtin" else verify_url,
         mode=mode,
     )
+
+
+class PublicLimitsConfig(BaseModel):
+    """Public limits config — safe to expose (no secrets)."""
+
+    default_expires_in: str
+    max_file_size: int
+    max_entry_files: int
+    max_entry_size: int
+    max_slug_length: int
+    max_summary_length: int
+
+
+@router.get("/limits", response_model=PublicLimitsConfig)
+async def get_limits_config(request: Request) -> PublicLimitsConfig:
+    """Return public limits configuration for frontend/MCP consumption.
+
+    These values are safe to expose. No authentication required.
+    Frontend uses this to pre-fill creation forms.
+    MCP can read this to generate accurate tool descriptions.
+    """
+    limits = request.app.state.config.limits
+    return PublicLimitsConfig(
+        default_expires_in=limits.default_expires_in,
+        max_file_size=limits.max_file_size,
+        max_entry_files=limits.max_entry_files,
+        max_entry_size=limits.max_entry_size,
+        max_slug_length=limits.max_slug_length,
+        max_summary_length=limits.max_summary_length,
+    )

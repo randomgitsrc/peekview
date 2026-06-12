@@ -133,9 +133,15 @@ class EntryService:
 
         # Parse expiry
         expires_at = None
-        if expires_in:
+        if expires_in and expires_in.strip():
             delta = parse_expires_in(expires_in)
-            expires_at = datetime.now(timezone.utc) + delta
+            if delta is not None:
+                expires_at = datetime.now(timezone.utc) + delta
+        else:
+            default_expires = self.config.limits.default_expires_in
+            delta = parse_expires_in(default_expires)
+            if delta is not None:
+                expires_at = datetime.now(timezone.utc) + delta
 
         # Collect all files
         files_info = self._collect_files(files_data or [], dirs_data or [])
@@ -249,6 +255,7 @@ class EntryService:
             url=self.config.build_view_url(entry_slug),
             is_public=entry_is_public,
             owner_id=entry_owner_id,
+            expires_at=expires_at,
             created_at=entry_created_at,
             files=file_responses,
         )
@@ -395,6 +402,7 @@ class EntryService:
                         is_public=e.is_public,
                         owner_id=e.owner_id,
                         username=username,
+                        expires_at=e.expires_at,
                         created_at=e.created_at,
                         updated_at=e.updated_at,
                     )

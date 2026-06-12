@@ -10,6 +10,7 @@ export interface Entry {
   isPublic: boolean
   ownerId: number | null
   username: string | null
+  expiresAt: string | null
   createdAt: string
 }
 

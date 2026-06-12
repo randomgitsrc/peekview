@@ -36,7 +36,10 @@ Examples:
 - Create code snippet: {"summary": "Fix for bug #123", "files": [{"filename": "fix.py", "content": "def fix():..."}]}
 - Create private entry: {"summary": "Internal notes", "files": [...], "is_public": false}
 - Multi-file with paths: {"summary": "Project", "files": [{"filename": "main.py", "path": "src", "content": "..."}, {"filename": "README.md", "content": "..."}]}
-- With expiration: {"summary": "Temp report", "files": [...], "expires_in": "7d"}`,
+- With expiration: {"summary": "Temp report", "files": [...], "expires_in": "7d"}
+- No expiration: {"summary": "Permanent", "files": [...], "expires_in": "0"}
+
+Default: If expires_in is omitted, the server's default expiration applies. Check /api/v1/config/limits for current setting.`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -63,7 +66,7 @@ Examples:
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
       is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
-      expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h")' },
+      expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
     },
     required: ['summary', 'files'],
   },
@@ -101,6 +104,13 @@ Slug: ${entry.slug}
 Files: ${entry.files.length}
 Visibility: ${entry.is_public ? 'public' : 'private'}
 Created: ${entry.created_at}`;
+
+      if (entry.expires_at) {
+        const expiresDate = new Date(entry.expires_at);
+        responseText += `\nExpires: ${expiresDate.toISOString().slice(0, 10)}`;
+      } else {
+        responseText += `\nExpires: never`;
+      }
 
       if (suggestions.length > 0) {
         responseText += `\n\n💡 Tip: Consider adding extensions for better rendering:\n${suggestions.join('\n')}`;

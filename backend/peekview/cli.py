@@ -198,7 +198,7 @@ Examples:
 @click.option("--summary", "-s", required=True, help="Entry summary/description")
 @click.option("--slug", help="Custom URL slug (auto-generated if not provided)")
 @click.option("--tag", "-t", multiple=True, help="Tags (can be specified multiple times)")
-@click.option("--expires-in", help="Expiration duration (e.g., '7d', '1h', '30m')")
+@click.option("--expires-in", help="Expiration duration (e.g., '7d', '1h', '30m'). Default: configured via limits.default_expires_in. Use '0' for no expiration.")
 @click.option("--from-stdin", is_flag=True, help="Read file content from stdin")
 @click.option("--base-url", "-b", default=None, help="External base URL for generated links")
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
@@ -541,6 +541,7 @@ SUPPORTED_CONFIG_KEYS = (
     # Limits
     "limits.max_file_size", "limits.max_entry_files", "limits.max_entry_size",
     "limits.max_slug_length", "limits.max_summary_length", "limits.max_per_page",
+    "limits.default_expires_in",
     # Cleanup
     "cleanup.check_on_start", "cleanup.interval_seconds",
     # Logging
@@ -558,7 +559,7 @@ storage.data_dir, storage.db_path, storage.allowed_paths, storage.health_disk_wa
 auth.secret_key, auth.token_expire_days, auth.allow_registration, auth.allow_anonymous_create,
 auth.captcha_enabled, auth.captcha_site_key,
 limits.max_file_size, limits.max_entry_files, limits.max_entry_size, limits.max_slug_length,
-limits.max_summary_length, limits.max_per_page,
+limits.max_summary_length, limits.max_per_page, limits.default_expires_in,
 cleanup.check_on_start, cleanup.interval_seconds,
 logging.level, logging.log_file,
 remote.url, remote.api_key, remote.timeout, remote.verify_ssl,
@@ -599,7 +600,8 @@ def config_set(key: str, value: str) -> None:
                     "interval_seconds",
                     "captcha_builtin_difficulty", "captcha_builtin_challenge_count",
                     "captcha_builtin_challenge_size", "captcha_builtin_challenge_ttl_ms",
-                    "captcha_builtin_token_ttl_ms"):
+                    "captcha_builtin_token_ttl_ms", "rate_limit_per_minute",
+                    "rate_limit_login_per_minute"):
         try:
             value = int(value)
         except ValueError:
@@ -746,6 +748,7 @@ def config_list() -> None:
         ("limits", "max_slug_length"): "# slug 最大长度",
         ("limits", "max_summary_length"): "# summary 最大长度",
         ("limits", "max_per_page"): "# 分页每页最大条数",
+        ("limits", "default_expires_in"): "# 默认过期时长（如 15d、7d、1h，'0' 为永不过期）",
         ("cleanup", "check_on_start"): "# 启动时检查过期条目",
         ("cleanup", "interval_seconds"): "# 清理间隔秒数 (0=禁用)",
         ("logging", "level"): "# 日志级别 (debug/info/warn/error)",
