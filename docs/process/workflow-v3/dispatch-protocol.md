@@ -223,8 +223,26 @@ subagent 返回后，主 Agent 校验：
 6. 派发评审 subagent（plan-eng-review 角色）→ 产出 P2-review.md
 7. 读 P2-review.md 的 Header status
    - approved → 更新 active-tasks.md，T002 进入 P3
-   - rejected → 重试 architect（retry_count=1），带上评审意见
+   - rejected → 重试 architect（retry_count=1），通过文件路径回流评审意见（见下）
 ```
+
+### 评审打回后的意见回流（重要）
+
+rejected 重试时，architect 必须知道"上次为什么被打回"，否则会产出同样的东西再次被打回，空转到 retry 耗尽。
+
+**评审意见通过文件路径回流（不是主 Agent 读全文塞 prompt）：**
+
+```
+rejected 时，主 Agent 的重试派发 prompt 里加一行：
+  "上一轮方案被评审打回。评审意见见 docs/tasks/Txxx/P2-review.md，
+   请先读取该文件了解被打回的具体原因，再修正方案。"
+```
+
+- architect 自己读 P2-review.md（评审意见在文件里，符合"只传路径"原则）
+- 主 Agent 不碰评审全文，上下文不被污染
+- architect 角色定义的"输入"在重试时额外包含上一轮的 review 文件
+
+这样评审→执行的反馈闭环真正打通，重试不再是空转。
 
 ---
 
