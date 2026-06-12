@@ -336,4 +336,4 @@ rejected 时，主 Agent 的重试派发 prompt 里加一行：
 
 ---
 
-*派发协议是 v3 解决上下文爆炸的核心，配合 state-machine.md 和 loop-orchestration.md 使用*
+*派发协议是 v4 解决上下文爆炸的核心，配合 state-machine.md 和 loop-orchestration.md 使用*
