@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [0.1.54] - 2026-06-12
+
+### 修复
+
+- **`peekview user list` 崩溃修复**：`from sqlalchemy import select` 改为 `from sqlmodel import select`
+  - `sqlalchemy.select` 返回 `Row` 对象，Cython `BaseRow` 无法映射 ORM 字段
+  - `sqlmodel.select` 返回正确的 `User` ORM 实体
+  - 影响所有 `select(User)` 查询（`user list/create/promote/demote`）
+
 ## [0.1.53] - 2026-06-12
 
 ### 修复
