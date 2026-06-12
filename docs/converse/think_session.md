@@ -43,10 +43,7 @@
 
 ## 当前项目背景
 
-- **PeekView**：轻量级代码/文档格式化服务
-- Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容
-- Backend: FastAPI + SQLite (WAL+FTS5) | Frontend: Vue 3 + Shiki | MCP: Node.js + Streamable HTTP
-- 版本：Backend v0.1.45 | MCP v0.8.2
+读取 `CLAUDE.md` 或 `OPENCODE.md` 获取最新项目状态。核心信息：PeekView 是轻量级代码/文档格式化服务，Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。当前流程使用 `docs/process/workflow-v3/`（P1-P7 子 Agent 编排）。
 
 ---
 

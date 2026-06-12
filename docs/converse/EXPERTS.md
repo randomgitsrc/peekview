@@ -1,5 +1,7 @@
 # PeekView 专家角色提示词
 
+> ⚠️ **已迁移**：执行角色已整合到 `docs/process/workflow-v3/assets/execution-roles/`（analyst/architect/test-designer/implementer/verifier），评审角色已整合到 `docs/process/workflow-v3/assets/review-roles/`（review/cso/qa 等）。**以下为历史参考，新会话请用 v3 角色体系。**
+> 
 > 复制需要的角色提示词到会话中使用
 
 ---
