@@ -2,7 +2,7 @@
 
 > 创建：2026-06-09
 > 用途：汇总评审发现的待改进事项，按优先级跟踪
-> 当前版本：Backend v0.1.52 / MCP Server v0.8.3
+> 当前版本：Backend v0.1.55 / MCP Server v0.8.4
 
 ---
 
@@ -36,7 +36,7 @@
 
 **问题**：PeekView MCP 用 HTTP+SSE 传输，该传输在 MCP 规范 2025-03-26 中已被废弃。
 
-**已完成**：MCP Server v0.8.0 已迁移至 Streamable HTTP，端点从 `/sse` + `/messages` 改为 `/mcp`，SDK 升级至 1.29.0。详见已归档的 `docs/archived/plans/sse-migration/mcp-sse-to-streamable-http-migration.md`。
+**已完成**：MCP Server v0.8.4 已迁移至 Streamable HTTP，端点从 `/sse` + `/messages` 改为 `/mcp`，SDK 升级至 1.29.0。详见已归档的 `docs/archived/plans/sse-migration/mcp-sse-to-streamable-http-migration.md`。
 
 ---
 

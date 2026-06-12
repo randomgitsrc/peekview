@@ -158,21 +158,25 @@ verify-local: build-fast test-quick check-version check-changelog
 	@echo "  make debug          - Run full debug with E2E tests"
 	@echo "  make pre-publish    - Full pre-publish check"
 
-# Version consistency check
+# Version consistency check: verify all source+doc files match VERSIONS.json
 check-version:
 	@echo "→ Checking version consistency..."
-	cd backend && python3 scripts/check_version.py
+	@python3 scripts/sync_versions.py --check
 
 # Check changelog is updated
 check-changelog:
 	@echo "→ Checking CHANGELOG..."
-	@VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)") && \
-	if ! grep -q "## \[$$VERSION\]" CHANGELOG.md; then \
-		echo "✗ Error: Version $$VERSION not found in CHANGELOG.md"; \
-		echo "   Please update CHANGELOG.md before releasing"; \
+	@PEEKVIEW_VER=$$(python3 -c "import json; print(json.load(open('VERSIONS.json'))['peekview'])"); \
+	MCP_VER=$$(python3 -c "import json; print(json.load(open('VERSIONS.json'))['mcp_server'])"); \
+	if ! grep -q "## \[$$PEEKVIEW_VER\]" CHANGELOG.md; then \
+		echo "✗ Error: Version $$PEEKVIEW_VER not found in CHANGELOG.md"; \
 		exit 1; \
-	fi && \
-	echo "✓ CHANGELOG.md contains version $$VERSION"
+	fi; \
+	if ! grep -q "## \[mcp-v$$MCP_VER\]" CHANGELOG.md; then \
+		echo "✗ Error: MCP Version $$MCP_VER not found in CHANGELOG.md"; \
+		exit 1; \
+	fi; \
+	echo "✓ CHANGELOG.md contains peekview v$$PEEKVIEW_VER and mcp v$$MCP_VER"
 
 # Verify wheel contains correct static files
 verify-wheel:
@@ -183,39 +187,25 @@ verify-wheel:
 # Release Targets
 # =============================================================================
 
-# Bump version across all files (improved with auto-build and commit)
+# Bump version: edit VERSIONS.json → sync all files → commit + tag
 bump-version:
 	@if [ -z "$(NEW_VERSION)" ]; then \
 		echo "Usage: make bump-version NEW_VERSION=x.y.z"; \
-		echo "Example: make bump-version NEW_VERSION=0.1.29"; \
+		echo "Example: make bump-version NEW_VERSION=0.1.56"; \
 		exit 1; \
 	fi
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "→ Step 1/6: 更新版本号到 $(NEW_VERSION)..."
-	@# Update backend/__init__.py
-	sed -i "s/__version__ = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/__version__ = \"$(NEW_VERSION)\"/" backend/peekview/__init__.py
-	@# Update pyproject.toml
-	sed -i "s/^version = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/version = \"$(NEW_VERSION)\"/" backend/pyproject.toml
-	@# Update package.json (frontend only, NOT MCP Server)
-	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_VERSION)\"/" frontend-v3/package.json
-	@echo "→ Step 2/6: 验证版本一致性..."
-	@BACKEND_VERSION=$$(cd backend && python3 -c "from peekview import __version__; print(__version__)"); \
-	PYPROJECT_VERSION=$$(grep "^version = " backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
-	PACKAGE_VERSION=$$(grep '\"version\":' frontend-v3/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
-	if [ "$$BACKEND_VERSION" = "$(NEW_VERSION)" ] && [ "$$PYPROJECT_VERSION" = "$(NEW_VERSION)" ] && [ "$$PACKAGE_VERSION" = "$(NEW_VERSION)" ]; then \
-		echo "  ✓ 版本文件已更新: v$(NEW_VERSION)"; \
-	else \
-		echo "  ✗ 版本不一致，请检查"; exit 1; \
-	fi
-	@echo "→ Step 3/6: 自动同步文档版本引用..."
-	@python3 scripts/doc-sync/update_version_docs.py 2>/dev/null || echo "  ⚠️ 文档同步脚本未找到，跳过"
-	@echo "→ Step 4/6: 构建前端并更新静态文件..."
+	@echo "→ Step 1/5: Bump peekview → VERSIONS.json + 同步所有源码和文档..."
+	@python3 scripts/sync_versions.py --bump-peekview $(NEW_VERSION)
+	@echo "→ Step 2/5: 验证同步结果..."
+	@python3 scripts/sync_versions.py --check || (echo "  ✗ 同步验证失败"; exit 1)
+	@echo "→ Step 3/5: 构建前端并更新静态文件..."
 	@make build-frontend-fast > /tmp/build.log 2>&1 && echo "  ✓ 前端构建成功" || (echo "  ✗ 前端构建失败，查看 /tmp/build.log"; exit 1)
-	@echo "→ Step 5/6: 提交版本和静态文件..."
+	@echo "→ Step 4/5: 提交版本和静态文件..."
 	@git add -A
 	@git commit -m "chore(release): bump to v$(NEW_VERSION)" --quiet
 	@echo "  ✓ 已提交版本和静态文件"
-	@echo "→ Step 6/6: 创建 tag v$(NEW_VERSION)..."
+	@echo "→ Step 5/5: 创建 tag v$(NEW_VERSION)..."
 	@git tag "v$(NEW_VERSION)"
 	@echo "  ✓ 已创建 tag"
 	@echo ""
@@ -241,41 +231,40 @@ bump-version:
 	@echo "     make bump-mcp-version NEW_MCP_VERSION=x.y.z"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Bump MCP Server version independently
+# Bump MCP Server version: edit VERSIONS.json → sync all files → rebuild → commit + tag
 bump-mcp-version:
 	@if [ -z "$(NEW_MCP_VERSION)" ]; then \
 		echo "Usage: make bump-mcp-version NEW_MCP_VERSION=x.y.z"; \
-		echo "Example: make bump-mcp-version NEW_MCP_VERSION=0.3.0"; \
+		echo "Example: make bump-mcp-version NEW_MCP_VERSION=0.8.5"; \
 		exit 1; \
 	fi
-	@echo "→ Bumping MCP Server version to $(NEW_MCP_VERSION)..."
-	sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$(NEW_MCP_VERSION)\"/" packages/mcp-server/package.json
-	@# Sync lock file version metadata (no dependency resolution)
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "→ Step 1/6: Bump mcp_server → VERSIONS.json + 同步所有源码和文档..."
+	@python3 scripts/sync_versions.py --bump-mcp $(NEW_MCP_VERSION)
+	@echo "→ Step 2/6: 验证同步结果..."
+	@python3 scripts/sync_versions.py --check || (echo "  ✗ 同步验证失败"; exit 1)
+	@echo "→ Step 3/6: 同步 lock file 版本元数据..."
 	cd packages/mcp-server && npm install --package-lock-only
-	@# Rebuild MCP dist with new version
+	@echo "→ Step 4/6: 构建 MCP dist..."
 	cd packages/mcp-server && npm run build
-	@# Verify
-	@MCP_VERSION=$$(grep '\"version\":' packages/mcp-server/package.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
+	@echo "→ Step 5/6: 验证 package.json 版本..."
+	@MCP_VERSION=$$(grep '"version":' packages/mcp-server/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/'); \
 	if [ "$$MCP_VERSION" = "$(NEW_MCP_VERSION)" ]; then \
-		echo "✓ package.json version: v$(NEW_MCP_VERSION)"; \
+		echo "  ✓ package.json: v$(NEW_MCP_VERSION)"; \
 	else \
-		echo "✗ package.json version mismatch"; exit 1; \
+		echo "  ✗ package.json version mismatch: $$MCP_VERSION"; exit 1; \
 	fi
-	@LOCK_VERSION=$$(grep -m1 '\"version\":' packages/mcp-server/package-lock.json | sed 's/.*\"version\": \"\(.*\)\".*/\1/'); \
-	if [ "$$LOCK_VERSION" = "$(NEW_MCP_VERSION)" ]; then \
-		echo "✓ package-lock.json version: v$(NEW_MCP_VERSION)"; \
-	else \
-		echo "✗ package-lock.json version mismatch ($$LOCK_VERSION) — run: cd packages/mcp-server && npm install --package-lock-only"; exit 1; \
-	fi
+	@echo "→ Step 6/6: 提交..."
+	git add -A && git commit -m "chore(mcp): bump to v$(NEW_MCP_VERSION)" --quiet && echo "  ✓ 已提交"
+	git tag "mcp-v$(NEW_MCP_VERSION)" && echo "  ✓ 已创建 tag mcp-v$(NEW_MCP_VERSION)"
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@# Note: No auto doc sync here (MCP version refs are few, manual update sufficient)
 	@echo "✅ bump-mcp-version 完成: v$(NEW_MCP_VERSION)"
 	@echo ""
 	@echo "还需手动完成："
 	@echo "  1. 编辑 CHANGELOG.md，填写 [mcp-v$(NEW_MCP_VERSION)] 变更内容"
-	@echo "  2. git add -A && git commit -m \"chore(mcp): bump to v$(NEW_MCP_VERSION)\""
-	@echo "  3. git tag mcp-v$(NEW_MCP_VERSION) && git push origin mcp-v$(NEW_MCP_VERSION)"
+	@echo "  2. git add CHANGELOG.md && git commit --amend --no-edit"
+	@echo "  3. git push && git push origin mcp-v$(NEW_MCP_VERSION)"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 一键发布（包含完整流程，需设置 CHANGELOG）
@@ -327,11 +316,11 @@ release:
 
 # 单独同步文档版本（不 bump，用于修复漏掉的文档同步）
 sync-version-docs:
-	@echo "→ 同步文档版本引用..."
-	@python3 scripts/doc-sync/update_version_docs.py
+	@echo "→ 同步所有版本引用..."
+	@python3 scripts/sync_versions.py
 	@echo ""
 	@echo "提示：如需将更改加入暂存区："
-	@echo "  git add README.md CLAUDE.md INDEX.md CHANGELOG.md docs/process/active-tasks.md backend/README.md"
+	@echo "  git add README.md CLAUDE.md OPENCODE.md INDEX.md CHANGELOG.md docs/roadmap/improvement-backlog.md"
 
 # 查看当前变更需要更新哪些文档
 doc-checklist:
@@ -643,7 +632,7 @@ check-doc-sync:
 	@echo "→ 检查功能特性文档..."
 	@python3 scripts/doc-sync/check_feature_sync.py || true
 	@echo "→ 检查版本同步..."
-	@python3 scripts/doc-sync/check_version_sync.py || true
+	@python3 scripts/sync_versions.py --check || true
 	@echo "→ 检查 API 文档..."
 	@python3 scripts/doc-sync/check_api_docs.py || true
 	@echo "→ 生成功能矩阵..."
