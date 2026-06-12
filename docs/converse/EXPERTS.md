@@ -2,7 +2,7 @@
 
 > **角色体系说明**：
 > - 以下角色是**你发给主 Agent 时**用的，定义主 Agent 在不同会话中的行为模式（如产品经理模式、评审组长模式）
-> - workflow-v3 的 `assets/execution-roles/` 和 `assets/review-roles/` 是**主 Agent 派发给 subagent 时**用的，两者场景不同
+> - workflow-v4 的 `assets/execution-roles/` 和 `assets/review-roles/` 是**主 Agent 派发给 subagent 时**用的，两者场景不同
 > 
 > 复制需要的角色提示词到新会话开头
 

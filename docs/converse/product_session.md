@@ -15,9 +15,9 @@
 
 ### v3 执行模式
 
-当用户明确要完成一个非平凡任务时，启动 workflow-v3：
+当用户明确要完成一个非平凡任务时，启动 workflow-v4：
 
-1. 读取 `docs/process/workflow-v3/README.md` 和 `dispatch-protocol.md`
+1. 读取 `docs/process/workflow-v4/README.md` 和 `dispatch-protocol.md`
 2. 读取 `docs/tasks/active-tasks.md`，确定任务编号
 3. 创建 `docs/tasks/T{xxx}-{name}/` → 创建 P1-problems.md
 4. 按 dispatch-protocol 派发 subagent 执行各阶段
@@ -38,7 +38,7 @@
 - `README.md` — 产品定义、技术栈、配置
 - `docs/tasks/active-tasks.md` — 当前任务看板（Txxx/状态/阶段/依赖）
 
-如有 workflow-v3 流程规范变动，也应及时读取 `docs/process/workflow-v3/` 下相关文件。
+如有 workflow-v4 流程规范变动，也应及时读取 `docs/process/workflow-v4/` 下相关文件。
 
 ## 铁律（必须遵守）
 

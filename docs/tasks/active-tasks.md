@@ -1,7 +1,7 @@
 # 任务看板 (Task Board)
 
 > PeekView 项目任务管理主文件
-> **核心原则**：所有任务必须走 workflow-v3 流程，每个阶段有文件产出
+> **核心原则**：所有任务必须走 workflow-v4 流程，每个阶段有文件产出
 > **位置**：`docs/tasks/` 目录下每个任务一个子目录
 
 ---
@@ -66,7 +66,7 @@
 
 ## 重试追踪
 
-> workflow-v3 要求：每阶段独立计数，落盘防丢失
+> workflow-v4 要求：每阶段独立计数，落盘防丢失
 
 | 任务 | 阶段 | 重试次数 | 上限 | 最后失败原因 |
 |------|------|----------|------|-------------|
@@ -177,7 +177,7 @@ parent: (外部需求或 Bug 报告来源)
 
 ## 快速入口
 
-- **流程规范**: `docs/process/workflow-v3/README.md`
+- **流程规范**: `docs/process/workflow-v4/README.md`
 - **任务目录**: `docs/tasks/Txxx-xxx/`
 - **评审记录**: `docs/reviews/`
 - **项目索引**: `INDEX.md`

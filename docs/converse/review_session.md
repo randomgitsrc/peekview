@@ -22,7 +22,7 @@
 
 ## 评审专家选择
 
-使用 workflow-v3 的评审角色（`docs/process/workflow-v3/assets/review-roles/`）：
+使用 workflow-v4 的评审角色（`docs/process/workflow-v4/assets/review-roles/`）：
 
 | 场景 | 派发专家 | 审什么 |
 |------|----------|--------|
@@ -33,7 +33,7 @@
 | 功能实现 | qa | 功能跑通、找 bug |
 | 大任务 / 方向质疑 | office-hours | AC 审查、范围把关 |
 
-并行评审时，遵循 `docs/process/workflow-v3/role-system.md`「专家组并行评审 + 组长汇总」。
+并行评审时，遵循 `docs/process/workflow-v4/role-system.md`「专家组并行评审 + 组长汇总」。
 
 ## 意见汇总规则
 

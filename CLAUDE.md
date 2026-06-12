@@ -18,9 +18,9 @@ peekview/
 │   ├── guides/          # Deployment, debugging, agent deployment guides
 │   ├── notes/           # Lessons learned (frontend/backend/mcp)
 │   ├── plans/           # Active plans (mcp-path-namespace, gole-cli-config)
-│   ├── reviews/         # Active reviews (workflow-v3, T002 postmortem)
+│   ├── reviews/         # Active reviews (workflow-v4, T002 postmortem)
 │   ├── decisions/       # Architecture Decision Records
-│   ├── process/         # Dev workflow (workflow-v3/, release, gstack-review-guide)
+│   ├── process/         # Dev workflow (workflow-v4/, release, gstack-review-guide)
 │   ├── tasks/           # Task board (active-tasks.md) + task dirs
 │   ├── roadmap/         # improvement-backlog.md
 │   └── archived/        # Completed plans, specs, reviews, old workflows
@@ -234,7 +234,7 @@ entry_service = request.app.state.entry_service
 ## Essential Documentation
 
 - **Active Tasks:** `docs/tasks/active-tasks.md` — 开始任何工作前必读
-- **Dev Workflow:** `docs/process/workflow-v3/README.md` — 当前主流程（P1-P7 子 Agent 编排）
+- **Dev Workflow:** `docs/process/workflow-v4/README.md` — 当前主流程（P1-P8 子 Agent 编排）
 - **gstack Review Roles:** `docs/process/gstack-review-guide.md` — /review /cso /plan-eng-review 等
 - **Release Process:** `docs/process/release.md` — 发布前必读
 - **Debug Workflow:** `docs/process/debug-workflow.md` — 调试验证
