@@ -20,9 +20,8 @@ from pathlib import Path
 from typing import Any
 
 import click
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from peekview import __version__
 from peekview.client import PeekClient
