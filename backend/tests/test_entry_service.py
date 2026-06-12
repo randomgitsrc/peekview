@@ -103,6 +103,84 @@ class TestCreateEntry:
         entry = entry_service.get_entry("expire")
         assert entry.expires_at is not None
 
+    def test_create_without_expires_uses_default_15d(self, entry_service):
+        """Without expires_in, expires_at should be ~15 days from now."""
+        import datetime
+        before = datetime.datetime.now(datetime.timezone.utc)
+        result = entry_service.create_entry(summary="Default expiry")
+        after = datetime.datetime.now(datetime.timezone.utc)
+        assert result.expires_at is not None
+        expected = before + datetime.timedelta(days=15)
+        tolerance = datetime.timedelta(seconds=5)
+        assert abs((result.expires_at - expected).total_seconds()) < tolerance.total_seconds()
+
+    def test_create_expires_zero_means_never(self, entry_service):
+        """expires_in='0' means never expire — expires_at is None."""
+        result = entry_service.create_entry(
+            summary="Permanent", slug="perm", expires_in="0"
+        )
+        assert result.expires_at is None
+
+    def test_create_response_has_expires_at_field(self, entry_service):
+        """CreateEntryResponse directly exposes expires_at."""
+        result = entry_service.create_entry(summary="Response check", slug="resp-check")
+        assert hasattr(result, "expires_at")
+        assert result.expires_at is not None
+
+    def test_create_expires_empty_string_uses_default(self, entry_service):
+        """expires_in='' should behave like None → use default 15d."""
+        import datetime
+        before = datetime.datetime.now(datetime.timezone.utc)
+        result = entry_service.create_entry(
+            summary="Empty expires_in", slug="empty-exp", expires_in=""
+        )
+        assert result.expires_at is not None
+        expected = before + datetime.timedelta(days=15)
+        tolerance = datetime.timedelta(seconds=5)
+        assert abs((result.expires_at - expected).total_seconds()) < tolerance.total_seconds()
+
+    def test_create_expires_whitespace_uses_default(self, entry_service):
+        """expires_in='   ' should behave like None → use default 15d."""
+        import datetime
+        before = datetime.datetime.now(datetime.timezone.utc)
+        result = entry_service.create_entry(
+            summary="Whitespace expires_in", slug="ws-exp", expires_in="   "
+        )
+        assert result.expires_at is not None
+        expected = before + datetime.timedelta(days=15)
+        tolerance = datetime.timedelta(seconds=5)
+        assert abs((result.expires_at - expected).total_seconds()) < tolerance.total_seconds()
+
+    def test_create_with_custom_default_expires_in(self, entry_service, tmp_path):
+        """When limits.default_expires_in is changed, it takes effect."""
+        import datetime
+        from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
+        from peekview.database import init_db
+        db_path = tmp_path / "test_custom.db"
+        data_dir = tmp_path / "data_custom"
+        data_dir.mkdir()
+        engine = init_db(db_path)
+
+        config = PeekConfig(
+            storage=PeekStorage(data_dir=data_dir),
+            limits=PeekLimits(
+                max_file_size=1024 * 1024,
+                max_entry_files=50,
+                max_entry_size=10 * 1024 * 1024,
+                default_expires_in="30d",
+            ),
+            server=PeekServer(base_url="http://localhost:8080"),
+        )
+        storage = StorageManager(config=config)
+        svc = EntryService(engine=engine, storage=storage, config=config)
+
+        before = datetime.datetime.now(datetime.timezone.utc)
+        result = svc.create_entry(summary="Custom default")
+        assert result.expires_at is not None
+        expected = before + datetime.timedelta(days=30)
+        tolerance = datetime.timedelta(seconds=5)
+        assert abs((result.expires_at - expected).total_seconds()) < tolerance.total_seconds()
+
     def test_create_empty_files(self, entry_service):
         result = entry_service.create_entry(summary="No files", slug="empty")
         entry = entry_service.get_entry("empty")
@@ -155,6 +233,25 @@ class TestListEntries:
         result = entry_service.list_entries(q="python")
         # Note: FTS might not work in tests, so just verify structure
         assert isinstance(result.items, list)
+
+    def test_list_items_have_expires_at(self, entry_service):
+        """EntryListItem should include expires_at field."""
+        entry_service.create_entry(summary="With expiry", slug="list-exp")
+        result = entry_service.list_entries(page=1, per_page=10)
+        assert len(result.items) >= 1
+        item = result.items[0]
+        assert hasattr(item, "expires_at")
+        assert item.expires_at is not None
+
+    def test_list_items_expires_at_null_for_permanent(self, entry_service):
+        """EntryListItem with expires_in='0' should have expires_at=None."""
+        entry_service.create_entry(
+            summary="Permanent entry", slug="perm-list", expires_in="0"
+        )
+        result = entry_service.list_entries(page=1, per_page=10)
+        items = [i for i in result.items if i.slug == "perm-list"]
+        assert len(items) == 1
+        assert items[0].expires_at is None
 
 
 class TestUpdateEntry:

@@ -42,6 +42,36 @@ class TestPeekLimits:
         with pytest.raises(ValueError):
             PeekLimits(max_entry_files=0)
 
+    def test_default_expires_in_default(self):
+        """default_expires_in defaults to '15d'."""
+        limits = PeekLimits()
+        assert limits.default_expires_in == "15d"
+
+    def test_default_expires_in_custom(self):
+        """default_expires_in can be set to a custom value."""
+        limits = PeekLimits(default_expires_in="30d")
+        assert limits.default_expires_in == "30d"
+
+    def test_default_expires_in_zero_is_valid(self):
+        """default_expires_in='0' is valid (means never expire by default)."""
+        limits = PeekLimits(default_expires_in="0")
+        assert limits.default_expires_in == "0"
+
+    def test_default_expires_in_invalid_falls_back(self, caplog):
+        """Invalid default_expires_in triggers WARNING and falls back to '15d'."""
+        import logging
+        caplog.set_level(logging.WARNING, logger="peekview.config")
+        limits = PeekLimits(default_expires_in="999999d")
+        assert limits.default_expires_in == "15d"
+        assert "Invalid PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN" in caplog.text
+        assert "Falling back to '15d'" in caplog.text
+
+    def test_default_expires_in_env_var(self, monkeypatch):
+        """PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN env var flows through PeekConfig."""
+        monkeypatch.setenv("PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN", "7d")
+        config = PeekConfig()
+        assert config.limits.default_expires_in == "7d"
+
 
 class TestPeekStorage:
     """Test PeekStorage configuration."""
@@ -211,3 +241,41 @@ class TestLocalPathAllowlist:
         # Note: is_local_path_allowed resolves the path
         # so symlinks pointing to allowed paths are allowed
         assert config.is_local_path_allowed(link)
+
+
+class TestConfigLimitsEndpoint:
+    """Test GET /api/v1/config/limits endpoint."""
+
+    async def test_config_limits_returns_200(self, client):
+        """GET /api/v1/config/limits returns 200 with expected fields."""
+        resp = await client.get("/api/v1/config/limits")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "default_expires_in" in data
+        assert data["default_expires_in"] == "15d"
+        assert "max_file_size" in data
+        assert "max_entry_files" in data
+        assert "max_entry_size" in data
+        assert "max_slug_length" in data
+        assert "max_summary_length" in data
+
+    async def test_config_limits_no_auth_required(self, client):
+        """GET /api/v1/config/limits does not require authentication."""
+        resp = await client.get("/api/v1/config/limits")
+        assert resp.status_code == 200
+
+    async def test_config_limits_respects_env_var(self, monkeypatch, temp_data_dir, temp_db_path):
+        """GET /api/v1/config/limits reflects PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN."""
+        from peekview.main import create_app
+        monkeypatch.setenv("PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN", "7d")
+
+        # Use create_app with special env that doesn't read config file
+        app = create_app(data_dir=temp_data_dir, db_path=temp_db_path)
+
+        from httpx import ASGITransport, AsyncClient
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            resp = await ac.get("/api/v1/config/limits")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["default_expires_in"] == "7d"

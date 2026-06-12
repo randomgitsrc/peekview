@@ -210,6 +210,24 @@ def test_expires_in_1_minute_ok():
     assert delta.total_seconds() == 60
 
 
+def test_expires_in_invalid_unit_s():
+    """'s' is not a supported unit — raises ValueError."""
+    with pytest.raises(ValueError, match="Invalid expires_in format"):
+        parse_expires_in("7s")
+
+
+def test_expires_in_empty_string():
+    """Empty string does not match regex — raises ValueError."""
+    with pytest.raises(ValueError, match="Invalid expires_in format"):
+        parse_expires_in("")
+
+
+def test_expires_in_leading_whitespace():
+    """Leading whitespace does not match regex — raises ValueError."""
+    with pytest.raises(ValueError, match="Invalid expires_in format"):
+        parse_expires_in(" 7d")
+
+
 # --- decode_base64_content ---
 
 
