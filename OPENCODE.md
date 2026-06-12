@@ -50,10 +50,21 @@ make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 - **peekview 和 peekview-mcp 版本独立**：`bump-version` vs `bump-mcp-version`
 - 发布完别忘了检查 CHANGELOG.md 是否正确
 
+## 走 workflow-v4（非平凡任务）
+
+非平凡任务必走 v4（`docs/process/workflow-v4/`），主 Agent 派发 subagent，自己只读状态/派发/验门槛/更新状态：
+
+- **P1 需求基线**：先质疑需求、识别隐含依赖、用 BDD（Given/When/Then）写验收条件。需求明确就自走，拿不准方向才标 `[NEED_CONFIRM]` 问人
+- **P2 设计**必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 会导致多包发布漏 bump）
+- **任何阶段发现新隐含需求** → 标 `[SCOPE+]` → 增补 P1 基线 + 定向回补（不全重跑）
+- **P6 验收**：BDD 条件逐条实跑，翻译成人话。UI 必须 Playwright 实跑+截图，不接受"代码看起来对"
+- **微/小任务可裁剪**阶段，但裁剪要写理由，且 P1 需求基线（哪怕一句话）不能跳
+- 开始前必读 `docs/tasks/active-tasks.md`
+
 ## 详细参考
 
 - 完整配置和规范：`CLAUDE.md`
-- 开发流程：`docs/process/workflow.md`
+- 开发流程：`docs/process/workflow-v4/README.md`（P1-P8，需求基线+验收闭环）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
 - 改善清单：`docs/roadmap/improvement-backlog.md`

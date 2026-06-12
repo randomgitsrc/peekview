@@ -231,6 +231,20 @@ entry_service = request.app.state.entry_service
 
 **Note:** Use `__` as separator for nested config (e.g., `storage.data_dir` → `PEEKVIEW_STORAGE__DATA_DIR`).
 
+## Development Workflow (workflow-v4)
+
+非平凡任务走 workflow-v4（`docs/process/workflow-v4/`）。主 Agent 派发 subagent 到独立上下文，自己只读状态/派发/验门槛/更新状态，不亲自写产出。
+
+**阶段链 P1-P8**：P1 需求基线 → P2 设计 → P3 测试 → P4 实现 → P5 技术验证 → P6 验收 → P7 一致性 → P8 发布准备 → READY（人工 make publish）。
+
+**关键约束**：
+- **P1** 用 BDD（Given/When/Then）建立需求基线，先质疑需求、识别隐含依赖；需求明确则自走，拿不准方向才标 `[NEED_CONFIRM]` 问人
+- **P2** 必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 导致多包发布漏 bump）
+- **`[SCOPE+]`**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补（不全重跑）
+- **P6 验收**：BDD 条件逐条实跑、翻译成人话；UI 必须 Playwright 实跑+截图，不接受"代码看起来对"
+- **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告（`[SCOPE_GAP]`/✅ 仅供参考）
+- 微/小任务可裁剪阶段，但裁剪需写理由，P1 需求基线不可跳
+
 ## Essential Documentation
 
 - **Active Tasks:** `docs/tasks/active-tasks.md` — 开始任何工作前必读
