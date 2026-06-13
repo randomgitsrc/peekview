@@ -127,6 +127,17 @@
             <path d="M12.026 0L6.018 3.5v3.5h11.976V3.5L12.026 0zM18.034 7H6.018v10l6.008 3.5L18.034 17V7z"/>
           </svg>
         </a>
+        <a
+          href="https://www.npmjs.com/package/@peekview/mcp-server"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="footer-link"
+          title="npm"
+        >
+          <svg class="footer-icon npm-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 0v24h24V0H0zm20 20h-4v-8h-3v8H4V4h16v16z"/>
+          </svg>
+        </a>
       </div>
       <div class="footer-info">
         <span class="version">v{{ appVersion }}</span>
