@@ -57,8 +57,9 @@ status: approved        # ← 门槛判定字段
 注意：所有"文件存在"判定 = 文件存在 AND 含合法 Header AND 有实质内容
      （不能只看文件存在——subagent 可能写一半崩了，留下空/半截文件）
 
-P1 --[P1-requirements.md 有效 AND 含至少一条 BDD 验收条件 AND 无未决 NEED_CONFIRM]--> P2
+P1 --[P1-requirements.md 有效 AND 含至少一条 BDD 验收条件 AND 无未决 NEED_CONFIRM AND 无 CAPABILITY_GAP]--> P2
 P1 --[存在未决 NEED_CONFIRM]--> PAUSED（等人确认方向）
+P1 --[存在 CAPABILITY_GAP]--> PAUSED（等人补充能力/确认降级方案）
 
 P2 --[P2-review.md 有效 AND status==approved AND P2-design.md 声明 packages/domains]--> P3
 P2 --[P2-review.md status==rejected && retry<MAX]--> P2 (retry+1)
@@ -397,6 +398,7 @@ P3 发现 P2 设计有问题，回退到 P2 → retry 又从 0 开始 → P2 可
 | P1 失败 3 轮 | PAUSED，报告用户需求可能不合理 |
 | 涉及业务方向决策 | PAUSED，询问"这个功能要不要做" |
 | 涉及外部资源/权限 | PAUSED，需 API key / 授权 |
+| P1 检测到 CAPABILITY_GAP | PAUSED，等人补充能力路径或确认降级方案 |
 | 涉及安全/合规 | PAUSED，需要人判断 |
 | retry 超限且上溯仍失败 | PAUSED，兜底机制 |
 

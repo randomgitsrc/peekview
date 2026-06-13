@@ -20,7 +20,7 @@ created: {YYYY-MM-DD}
 | 阶段 | 文件 | 关键 Header 字段 |
 |------|------|-----------------|
 | P1 | P1-requirements.md | 含 BDD 验收条件 + `packages:` `domains:` 初判 + 裁剪说明；无未决 `[NEED_CONFIRM]`（门槛）|
-| P2 | P2-design.md | **必须声明 `packages:` `domains:` `ui_affected:`** |
+| P2 | P2-design.md | **必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`** |
 | P2 | P2-review.md | **status: approved/rejected**（门槛）|
 | P3 | P3-test-cases.md | 声明 `test_code_dir: {实际路径}`；每用例对应一条 BDD；UI 任务含 E2E 用例 |
 | P3 | {test_code_dir}/ | 测试代码目录（项目自定义，如 `backend/tests/`）|
@@ -79,9 +79,30 @@ phases: [P1,P2,P4,P5,P6,P8]
 packages: [peekview]
 domains: [backend, frontend]
 
+## 7. 能力需求声明
+capability_requirements:
+  - need: browser-vision
+    why: P6 验收需截图验证 UI 交互
+    available:
+      - playwright-vision skill（已注入）
+    status: available          # available / supplementable / GAP
+
+  - need: external-network
+    why: 验证 CDN 加载
+    available: []
+    status: GAP
+    [CAPABILITY_GAP: external-network] — 建议降级为 mock 验证
+
 ## SCOPE+ 增补区（后续阶段回写）
 - [SCOPE+ from P2] 新需求 + 对应 BDD
 ```
+
+**能力三态说明**：
+- `available`：环境中已有（Agent 自身 / 已注入 skill / 可调用外部 agent）→ 自走
+- `supplementable`：当前没有但有已知补充路径 → 在 prompt 里指引，不阻塞
+- `GAP`：无任何补充路径 → 标 `[CAPABILITY_GAP]`，主 Agent 暂停问人
+
+判断 status 时**先看环境**（已注入的 skills、可调用的 agent），不只看主力模型自身能力。
 
 ## P6-acceptance.md 结构（验收报告）
 

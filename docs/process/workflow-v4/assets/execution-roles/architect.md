@@ -26,6 +26,16 @@ phases: [P2, P7]
   - `packages: [peekview, mcp-server]` — 本任务改动涉及哪些独立版本的包（供 P8 多包发布消费）
   - `domains: [backend, frontend, mcp, security]` — 涉及领域（供主 Agent 机械映射评审角色）
   - `ui_affected: true/false` — 是否有显示/交互变化。若 true，列出需 E2E 覆盖的交互点（供 P3/P5/P6 落实 UI 实测）
+  - `gate_commands:` — **P5/P6 的 gate 命令集，在 P2 固化，后续阶段不得修改**：
+    ```yaml
+    gate_commands:
+      P5: "pytest -q --tb=short"
+      P5_e2e: "playwright test tests/e2e/"   # ui_affected 时必填
+      P6: "pytest -q tests/acceptance/"       # 或 playwright test + 截图
+    ```
+    主 Agent 派发 P5/P6 时**必须从此字段读取命令**，不得自行定义或在 prompt 中修改。
+    subagent 要求跳过 / 降级命令 → 视为 `[SCOPE_GAP]`，该阶段不通过。
+    命令不存在或跑不通 → 标 `[CAPABILITY_GAP]` 交人决策，不得降级为目测。
 - P7：docs/tasks/{Txxx}/P7-consistency.md（实现 vs 设计的一致性检查）
 - 含 Header（parent 指向上一阶段文件）
 

@@ -33,6 +33,32 @@ mode: 需求质疑（requirements interrogation）
 5. **裁剪说明**：判定任务复杂度，声明走哪些阶段（如 `phases: [P1,P4,P5,P6,P8]`），**每个跳过的阶段写明理由**
 6. **范围声明**：初步判断涉及的 `packages:`（peekview/mcp-server）和 `domains:`（backend/frontend/mcp/security），供后续阶段消费
 
+7. **能力需求声明**：识别任务需要的特殊能力，评估当前运行环境能否满足
+
+```yaml
+capability_requirements:
+  - need: browser-vision       # 需要什么能力
+    why: P6 验收需要截图验证交互行为
+    available:                 # 当前环境中可用的来源（skills/外部agent/工具）
+      - playwright-vision skill（若已注入）
+      - @vision-helper（若可调用）
+    status: available          # available=已具备 / supplementable=可补充 / GAP=真缺失
+
+  - need: external-network
+    why: 验证 CDN 资源加载
+    available: []
+    status: GAP
+    gap_note: "本地环境无外网，建议降级为 mock 验证或跳过该验收条件"
+```
+
+**三态判断规则**：
+- `available`：Agent 自身或环境中已有可用来源 → 不阻塞，流程自走
+- `supplementable`：当前不具备但有已知补充方式（skill/外部 agent）→ 在 prompt 里告知如何获取，不阻塞
+- `GAP`：需要能力但环境中无任何补充路径 → 标 `[CAPABILITY_GAP: xxx]`，主 Agent 暂停问人
+
+**仅 `status: GAP` 触发 `[CAPABILITY_GAP]`**，`available` 和 `supplementable` 不打断流程。
+不要因为主力模型自身不具备某能力就标 GAP——先看环境里有没有补充方式。
+
 文件含 Header（phase=P1, task_id, trace_id, parent=外部需求来源）
 
 ## 这是"活基线"——后续会被增补
