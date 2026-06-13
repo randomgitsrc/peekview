@@ -23,6 +23,11 @@ phases: [P3]
 - docs/tasks/{Txxx}/P3-test-cases.md — 测试用例清单（编号、对应的 BDD 条件、预期）
 - docs/tasks/{Txxx}/P3-test-code/ — 实际测试代码
 - 若 ui_affected：P3-test-code/ 须含 Playwright/E2E 用例覆盖每个交互点
+- **Playwright viewport 配置（B3 规范）**：UI 任务必须配置多 viewport，截图文件名固定：
+  - `desktop_1280x800.png`（1280×800，标准桌面）
+  - `mobile_390x844.png`（390×844，iPhone 14 尺寸）
+  - 截图存入 `docs/tasks/{Txxx}/evidences/`，供 vision-analyst 消费
+  - playwright.config.ts 中声明两个 project：`{ name: "desktop", viewport: {width:1280,height:800} }` 和 `{ name: "mobile", viewport: {width:390,height:844} }`
 
 ## 质量门槛
 - 测试代码能运行，且**当前全部失败**（红灯，因为还没实现）

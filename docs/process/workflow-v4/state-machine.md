@@ -220,11 +220,12 @@ function 执行一步(task_id):
         - [SCOPE_GAP]：prompt 漏了 P2 已声明的改动 → 暂停修正 prompt 重派
         （subagent 的自我检查结果仅供参考，不作为 gate 判定依据——gate 以主 Agent 跑命令为准）
     5. 主 Agent 亲自跑 gate 命令验证门槛（A1 原则：跑命令不信文件）：
-       - P1: P1-requirements.md 有 BDD 条件 && 无未决 NEED_CONFIRM
+       - P1: P1-requirements.md 有 BDD 条件 && 无未决 NEED_CONFIRM && 无 CAPABILITY_GAP
+       - P2: P2-review.md status==approved && P2-design.md 含 packages/domains/ui_affected/gate_commands 四字段
        - P3: scripts/check-tdd-red.sh exit 0（UI 任务额外查 Playwright 用例存在）
        - P4: git log --oneline -1 确认 P4 commit
        - P5: pytest -q exit 0 && failed==0（UI 任务额外实跑 Playwright/E2E）
-       - P6: P1 每条 BDD 都有实跑结果 && 无未决 NEED_CONFIRM（UI 条件须截图佐证）
+       - P6: P1 每条 BDD 都有实跑结果 && UI 条件 vision-analyst YAML summary.blocker_count==0 && 无未决 NEED_CONFIRM
        - P7: ! grep -qF '[BLOCKER]' P7-consistency.md
        - P8: 每个 package 的发布检查命令 exit 0
     6. 计算下一状态（按转移规则）

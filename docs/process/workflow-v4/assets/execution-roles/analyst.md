@@ -39,10 +39,10 @@ mode: 需求质疑（requirements interrogation）
 capability_requirements:
   - need: browser-vision       # 需要什么能力
     why: P6 验收需要截图验证交互行为
-    available:                 # 当前环境中可用的来源（skills/外部agent/工具）
-      - vision-analyst role（workflow-v4 内置，assets/execution-roles/vision-analyst.md）
-      - playwright-vision skill（若已注入）
-      - @vision-helper（若可调用）
+    available:                 # 当前环境中可用的来源（先检查内置角色，再看外部 skill/agent）
+      - vision-analyst（workflow-v4 内置执行角色，首选）
+      - playwright-vision skill（若已注入，作为补充）
+      - @vision-helper（若可调用，作为补充）
     status: available          # available=已具备 / supplementable=可补充 / GAP=真缺失
 
   - need: external-network
@@ -65,6 +65,17 @@ capability_requirements:
 ## 这是"活基线"——后续会被增补
 
 P1-requirements.md 不是一次写死。后续阶段若发现新隐含需求（标 `[SCOPE+]`），主 Agent 会回写到这个文件，标记 `[SCOPE+ from Pn]`。它永远是需求的唯一真相源。
+
+## 小任务降级模式
+
+小任务（明确 bug 修复、单字段改动）P1 可简化，声明 `P1_simplified: true`：
+- **需求复述**：一句话即可
+- **隐含需求**：逐维度快速过（数据/前端/多端/边界/兼容），没有的写「无」——不可省略这步，这里最常漏
+- **BDD 验收条件**：至少 1 条，Given/When/Then 结构
+- **裁剪说明**：声明 `phases:` 列表，每个跳过阶段写一句理由
+- **能力需求**：快速过，无特殊需求写 `capability_requirements: []`
+
+小任务 P1 不需要六节完整结构，但**需求质疑和 BDD 条件不可跳过**——这两步的价值不随任务规模缩小。
 
 ## 质量门槛
 

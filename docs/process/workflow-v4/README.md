@@ -49,12 +49,13 @@ docs/process/workflow-v4/
     │   ├── investigate.md       # /investigate 调试专家
     │   ├── office-hours.md      # /office-hours YC 合伙人
     │   └── cso.md               # /cso 安全官
-    ├── execution-roles/         # 执行角色库（v3 新增）
-    │   ├── analyst.md           # P1 问题分析师
-    │   ├── architect.md         # P2 方案设计师
-    │   ├── test-designer.md     # P3 测试设计师
-    │   ├── implementer.md       # P4 实现工程师
-    │   └── verifier.md          # P5 验证工程师
+    ├── execution-roles/         # 执行角色库
+    │   ├── analyst.md           # P1 需求分析师（需求质疑 + BDD 基线 + 能力预检）
+    │   ├── architect.md         # P2 方案设计师（设计 + P7 一致性检查）
+    │   ├── test-designer.md     # P3 测试设计师（TDD + E2E）
+    │   ├── implementer.md       # P4 实现工程师（实现 + P8 多包发布）
+    │   ├── verifier.md          # P5 技术验证 / P6 验收（BDD 实跑）
+    │   └── vision-analyst.md    # UI 视觉结构分析（被 P6 verifier 按需派发）
     └── templates/
         ├── custom-role.md       # 自定义角色模板
         ├── dispatch-prompt.md   # 派发 prompt 模板
@@ -80,7 +81,7 @@ v4 的派发机制有固定开销——每次派发约需写 25 行派发 prompt
 | 任务类型 | 建议 |
 |----------|------|
 | 微任务（typo、文案、单行配置、debug 后的精确修复）| 直接做，不走 v4 |
-| 小任务（明确的 bug 修复、加一个字段）| 裁剪流程：P1 + P4 + P5，跳过 P2/P3/P6/P7 |
+| 小任务（明确的 bug 修复、加一个字段）| 裁剪流程：P1 + P4 + P5（+ P6 若有 BDD 验收条件），跳过 P2/P3/P7 |
 | 中任务（新功能）| 完整 P1-P8 |
 | 大任务（跨模块重构）| P1 拆成多个子任务，各自走 P1-P8 |
 
@@ -99,11 +100,11 @@ v4 的派发机制有固定开销——每次派发约需写 25 行派发 prompt
 | 阶段 | 名称 | 执行角色 | 评审角色 | 门槛（进入下一阶段的条件）|
 |------|------|----------|----------|--------------------------|
 | P1 | 需求基线 | analyst（需求质疑模式）| office-hours（大任务时按需）| P1-requirements.md 存在，含 BDD 验收条件；无未决 `[NEED_CONFIRM]` |
-| P2 | 方案设计 | architect | plan-eng-review / plan-ceo-review | P2-review.md 的 status == approved；P2 声明 `packages:` `domains:` |
+| P2 | 方案设计 | architect | plan-eng-review / plan-ceo-review | P2-review.md 的 status == approved；P2 声明 `packages:` `domains:` `ui_affected:` `gate_commands:` |
 | P3 | 测试设计 | test-designer | gate 自检（TDD 红灯）| `scripts/check-tdd-red.sh` exit 0 |
 | P4 | 代码实现 | implementer | review / cso（按需）| `git log --oneline -1` 含 P4 commit |
 | P5 | 技术验证 | verifier | gate 自检（pytest 全绿）| `pytest -q` exit 0 AND failed==0 |
-| P6 | 验收 | verifier（验收模式）| — | P6-acceptance.md 存在，BDD 条件逐条有结果；无未决 `[NEED_CONFIRM]` |
+| P6 | 验收 | verifier（验收模式）| — | P6-acceptance.md 存在，BDD 条件逐条有实跑结果；UI 条件须 vision-analyst YAML `summary.blocker_count==0`；无未决 `[NEED_CONFIRM]` |
 | P7 | 一致性检查 | architect | gate 自检（grep BLOCKER）| 无 `[BLOCKER]` 标记 |
 | P8 | 发布准备 | implementer | gate 自检（发布检查命令）| 各 `package` 的发布检查命令 exit 0 + git diff 确认 version bump + CHANGELOG |
 | READY | 待发布 | — | — | 人手动 `make publish` → DONE |

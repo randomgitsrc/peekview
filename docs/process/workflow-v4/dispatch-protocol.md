@@ -256,6 +256,18 @@ P1 产出的 `capability_requirements` 中，`status: GAP` 的条目触发此协
 - `supplementable`：当前没有但有已知补充路径 → 在后续 prompt 中指引获取，不触发
 - `GAP`：主力模型 + 环境均无补充路径 → 触发 `[CAPABILITY_GAP]`
 
+**supplementable 能力的传递规则（A3 修复）**：
+P1 产出 `capability_requirements` 后，主 Agent 在派发后续阶段时必须：
+1. 读 P1-requirements.md 的 `capability_requirements`，提取 `status: supplementable` 的条目
+2. 在该阶段的派发 prompt 里注入能力获取指引，例如：
+   ```
+   ## 能力补充说明
+   本任务 P6 验收需要 browser-vision 能力。
+   可用方式：派发 vision-analyst（docs/process/workflow-v4/assets/execution-roles/vision-analyst.md）
+   ```
+3. 若能力在 P3/P4 阶段就需要（如 Playwright viewport 配置），提前在对应阶段 prompt 里注入
+如未注入，subagent 不知道补充方式，supplementable 等效退化为 GAP。
+
 **注意**：`supplementable` 不是 `GAP`。
 T004 教训 B8：P6 需要 vision，主力模型没有，但环境里有 playwright-vision skill 可注入。
 如果 P1 就识别出这是 `supplementable` 并提示「需要注入 playwright-vision skill」，
