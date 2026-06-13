@@ -6,6 +6,12 @@ import { useAuthStore } from './stores/auth'
 import './styles/variables.css'
 import './styles/base.css'
 
+// CAP_CUSTOM_WASM_URL must be set before @cap.js/widget is loaded.
+// cap.js reads this at module-evaluation time to determine WASM fetch URL.
+// This works because @cap.js/widget is only imported inside LoginDialog.vue,
+// which is lazy-loaded via router — so cap.js loads AFTER main.ts executes.
+window.CAP_CUSTOM_WASM_URL = '/wasm/cap_wasm_bg.wasm'
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)

@@ -1,0 +1,23 @@
+---
+phase: P4
+task_id: T004
+trace_id: T004-P4-20260612
+created: 2026-06-12
+---
+
+# P4 Implementation: index.html Change
+
+## Change
+
+Removed the CAP_CUSTOM_WASM_URL inline script and its comment from `frontend-v3/index.html`.
+
+The variable assignment is now handled in `frontend-v3/src/main.ts` (see main.ts.patch).
+
+## Diff
+
+```diff
+     <script src="/js/theme-init.js"></script>
+-    <!-- Captcha WASM local path (must be set before Vue loads) -->
+-    <script>window.CAP_CUSTOM_WASM_URL = '/wasm/cap_wasm_bg.wasm'</script>
+     <!-- GitHub Markdown CSS (local) -->
+```

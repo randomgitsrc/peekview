@@ -1,0 +1,78 @@
+---
+phase: P4
+task_id: T004
+trace_id: T004-P4-20260612
+created: 2026-06-12
+---
+
+# P4 Implementation: CAP_CUSTOM_WASM_URL 时序竞态治本
+
+## Changed Files
+
+### 1. frontend-v3/src/main.ts
+
+**Change**: Added `window.CAP_CUSTOM_WASM_URL` assignment after imports, before `createApp`.
+
+**Diff**:
+```diff
+ import './styles/base.css'
+ 
++// CAP_CUSTOM_WASM_URL must be set before @cap.js/widget is loaded.
++// cap.js reads this at module-evaluation time to determine WASM fetch URL.
++// This works because @cap.js/widget is only imported inside LoginDialog.vue,
++// which is lazy-loaded via router — so cap.js loads AFTER main.ts executes.
++window.CAP_CUSTOM_WASM_URL = '/wasm/cap_wasm_bg.wasm'
++
+ const app = createApp(App)
+```
+
+**Rationale**: Moves the WASM URL assignment from index.html inline script into the JS module graph. Since `@cap.js/widget` is only reachable via lazy-loaded route chunks, main.ts's module body executes before cap.js is ever loaded.
+
+### 2. frontend-v3/index.html
+
+**Change**: Removed CAP_CUSTOM_WASM_URL inline script and its comment.
+
+**Diff**:
+```diff
+     <script src="/js/theme-init.js"></script>
+-    <!-- Captcha WASM local path (must be set before Vue loads) -->
+-    <script>window.CAP_CUSTOM_WASM_URL = '/wasm/cap_wasm_bg.wasm'</script>
+     <!-- GitHub Markdown CSS (local) -->
+```
+
+**Rationale**: Single source of truth — the variable is now only set in main.ts, eliminating the risk of maintaining two locations for the same setting.
+
+### 3. frontend-v3/src/vite-env.d.ts (NEW)
+
+**Change**: Created Vite environment type declaration file with Window extension for `CAP_CUSTOM_WASM_URL`.
+
+**Content**:
+```typescript
+/// <reference types="vite/client" />
+
+declare global {
+  interface Window {
+    CAP_CUSTOM_WASM_URL?: string
+  }
+}
+
+export {}
+```
+
+**Rationale**: Moving the `window.CAP_CUSTOM_WASM_URL` assignment from plain JS (index.html) to TypeScript (main.ts) requires a type declaration. This is the standard Vite project convention.
+
+## P2 Design Traceability
+
+| P2 §2.2 Change | Status | Notes |
+|---|---|---|
+| main.ts: add `window.CAP_CUSTOM_WASM_URL` after imports | Done | Line 13 |
+| index.html: remove inline script + comment | Done | Lines 9-10 removed |
+| vite-env.d.ts: Window type extension | Done | [SCOPE+] New file — implied by TS migration |
+
+## Implementation Checklist (from P2 §4)
+
+- [x] `frontend-v3/src/main.ts` sets `window.CAP_CUSTOM_WASM_URL` after imports, before `createApp`
+- [x] `frontend-v3/index.html` has no `CAP_CUSTOM_WASM_URL` inline script
+- [ ] Production build: no `cap wasm load failed` in console (P5 verification)
+- [ ] Network panel: WASM request targets `/wasm/cap_wasm_bg.wasm` not CDN (P5 verification)
+- [ ] Dev mode (Vite :5173): no WASM load errors (P5 verification)
