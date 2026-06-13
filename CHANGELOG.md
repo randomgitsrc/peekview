@@ -22,6 +22,14 @@
 
 - **文件下载端点管理员权限缺失**：`api/files.py` 的文件下载/内容端点复用 `EntryService.get_entry()` 做可见性检查，管理员和全局 API Key 现在可以正确访问私有 entry 的文件
 - **MCP Server session 失效返回 400**：改为返回 404（符合 MCP Streamable HTTP 规范），客户端可自动重新 initialize
+- **Debug 服务器 captcha 配置泄漏**：`scripts/dev-server.sh` 未显式设置 `PEEKVIEW_AUTH__CAPTCHA_ENABLED=false`，导致 debug 服务器读取生产 `~/.peekview/config.yaml` 的 `captcha_enabled: true`，E2E 测试 register 返回 401
+
+
+## [mcp-v0.8.5] - 2026-06-14
+
+### 修复
+
+- **Session 失效返回 404**：过期/无效 session 改为返回 404（符合 MCP Streamable HTTP 规范），客户端收到 404 后可自动重新 initialize；此前返回 400 导致客户端无法区分"需要重新初始化"和"请求格式错误"
 
 
 ## [mcp-v0.8.4] - 2026-06-12

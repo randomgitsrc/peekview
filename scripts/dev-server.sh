@@ -82,7 +82,7 @@ start_server() {
     echo "✓ Python: $($PYTHON --version) (local backend)"
 
     cd backend
-    # Optional: enable captcha via env vars (for E2E captcha-enabled tests)
+    # Captcha: disabled by default for debug; enable via PEEKVIEW_AUTH__CAPTCHA_ENABLED=true
     if [ "${PEEKVIEW_AUTH__CAPTCHA_ENABLED:-false}" = "true" ]; then
         echo "  Captcha: ENABLED (builtin mode)"
         export PEEKVIEW_AUTH__CAPTCHA_ENABLED=true
@@ -91,6 +91,8 @@ start_server() {
         export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_DIFFICULTY="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_DIFFICULTY:-1}"
         export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_COUNT="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_COUNT:-3}"
         export PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_SIZE="${PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_SIZE:-8}"
+    else
+        export PEEKVIEW_AUTH__CAPTCHA_ENABLED=false
     fi
 
     PEEKVIEW_STORAGE__DATA_DIR="$DATA_DIR/data" \
