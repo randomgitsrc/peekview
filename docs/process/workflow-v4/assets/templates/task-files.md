@@ -59,26 +59,27 @@ P3/P4 的代码路径由产出文件显式声明，不使用固定目录名：
 P0-brief 是主 Agent 作为 PM 在派发任何 subagent 之前写的判断文件。
 不是 subagent 的产出，是主 Agent 的职责——把产品需求翻译为工程视角、注入风险判断。
 
+**核心原则：开发全程在测试环境进行。** 生产环境不在 workflow-v4 的编排范围内——
+生产部署属于发布步骤（`make publish` 之后的运维范畴），不属于 P1-P8。
+
 ```yaml
 ## P0-brief.md
 task: "一句话描述任务（工程视角，不是产品语言）"
 
 known_risks:
-  - "涉及数据删除操作（不可逆）"
+  - "涉及数据 schema 变更（需要在测试环境充分验证迁移逻辑）"
   - "跨越 3 个改动端（API+CLI+客户端）"
   - "修改权限/认证逻辑（安全敏感）"
 
 env_constraints:
-  debug_env: "项目的调试环境命令或路径（从项目约定读取，如 CLAUDE.md）"
-  prod_env: "项目的生产环境路径（严禁直接操作）"
-  isolation_check: "如何验证生产环境未被污染（项目特定，如检查文件 mtime）"
+  debug_env: "项目的测试/调试环境命令或路径（从项目约定读取，如 CLAUDE.md）"
+  # 注意：不写 prod_env。生产环境不在开发流程范围内。
+  # 若 subagent 接触了生产环境（[PROD_TOUCHED]），说明它走错路了，立即停止。
 
-pruning_tendency: "保守 — 涉及数据删除，建议走完整 P1-P8"
+pruning_tendency: "保守 — 涉及 schema 变更，建议走完整 P1-P8"
 # 或："激进 — 单文件 typo 修复，直接做"
 
 phase_hint: [P1, P2, P4, P5, P6, P8]  # 主 Agent 预判（P1 analyst 可建议调整，但主 Agent 最终确认）
-
-irreversible: true   # 任务是否涉及不可逆操作（true → 触发不可逆操作保护协议）
 ```
 
 **P0-brief 的核心价值**：每个 subagent 都在独立上下文里启动，不知道项目约定和环境约束。

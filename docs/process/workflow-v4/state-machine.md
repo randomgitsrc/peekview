@@ -78,12 +78,11 @@ P4 --[P4-implementation/ 下文件非空 AND git log --oneline -1 包含 P4 comm
     （不能用 git diff，因为 P4 完成时会 commit，git diff 永远是空）
 P4 --[retry>=MAX]--> PAUSED
 
-P5 --[pytest -q exit 0 AND failed==0 AND 生产环境未被污染 AND (若 ui_affected: E2E/Playwright 实跑通过)]--> P6
+P5 --[pytest -q exit 0 AND failed==0 AND 测试环境隔离正常（无 PROD_TOUCHED）AND (若 ui_affected: E2E/Playwright 实跑通过)]--> P6
     （主 Agent 亲手跑 pytest 捕获 exit code，不信 unit.md 里的数字）
     （UI 任务：P5 必须实际运行 Playwright，不能跳过、不能靠"代码看起来对"判断）
-    （「生产环境未被污染」判定：检查 P0-brief.md 的 prod_env 路径，
-      确认测试前后生产环境状态未变；具体检查方式由项目约定，v4 不硬编码路径。
-      若有 [PROD_TOUCHED] 标记 → 先处置再跑 gate，不能跳过。）
+    （「测试环境隔离正常」判定：确认整个 P5 过程在 debug_env 中进行，
+      无 [PROD_TOUCHED] 标记；具体隔离检查方式由项目约定，v4 不硬编码路径。）
     （若 P5 过程中出现任何 [PROD_TOUCHED] 标记 → 立即 PAUSED，不允许进入 P6）
 P5 --[failed>0 && retry<MAX]--> P4 (retry+1)
 P5 --[有 PROD_TOUCHED]--> PAUSED（生产环境被触碰，需人工处置后才能继续）
@@ -233,7 +232,7 @@ function 执行一步(task_id):
        - P3: scripts/check-tdd-red.sh exit 0（UI 任务额外查 Playwright 用例存在）
        - P4: git log --oneline -1 确认 P4 commit
        - P5: pytest -q exit 0 && failed==0 && 无 [PROD_TOUCHED]（UI 任务额外实跑 Playwright/E2E）
-             检查生产环境状态（与 P0-brief prod_env 对比）确认未被污染
+             确认整个过程在 debug_env 中进行，无 [PROD_TOUCHED] 标记
        - P6: P1 每条 BDD 都有实跑结果 && UI 条件 vision-analyst YAML summary.blocker_count==0 && 无未决 NEED_CONFIRM
        - P7: ! grep -qF '[BLOCKER]' P7-consistency.md
        - P8: 每个 package 的发布检查命令 exit 0
@@ -410,7 +409,7 @@ P3 发现 P2 设计有问题，回退到 P2 → retry 又从 0 开始 → P2 可
 | 涉及外部资源/权限 | PAUSED，需 API key / 授权 |
 | P1 检测到 CAPABILITY_GAP | PAUSED，等人补充能力路径或确认降级方案 |
 | 任意阶段出现 [PROD_TOUCHED] | 立即 PAUSED，人工处置生产环境后才能继续 |
-| 涉及不可逆操作（删除/迁移/生产写入）| [NEED_CONFIRM] → PAUSED，备份+确认后才可执行 |
+| 涉及批量删除或 schema 迁移（测试环境内）| [NEED_CONFIRM] → PAUSED，确认范围后才可执行 |
 | 涉及安全/合规 | PAUSED，需要人判断 |
 | retry 超限且上溯仍失败 | PAUSED，兜底机制 |
 
