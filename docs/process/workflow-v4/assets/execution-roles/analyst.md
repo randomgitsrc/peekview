@@ -40,6 +40,7 @@ capability_requirements:
   - need: browser-vision       # 需要什么能力
     why: P6 验收需要截图验证交互行为
     available:                 # 当前环境中可用的来源（skills/外部agent/工具）
+      - vision-analyst role（workflow-v4 内置，assets/execution-roles/vision-analyst.md）
       - playwright-vision skill（若已注入）
       - @vision-helper（若可调用）
     status: available          # available=已具备 / supplementable=可补充 / GAP=真缺失

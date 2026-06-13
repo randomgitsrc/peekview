@@ -67,14 +67,16 @@ modes:
 - 运行环境（debug backend / 临时 HOME，严禁碰正式服务）
 
 ### 输出
-- docs/tasks/{Txxx}/P6-acceptance.md — 验收报告，每条 BDD 一个结果块：
-  ```
-  需求：entry 不指定过期时间默认 15 天
-    ✅ 创建 entry 不填过期 → 实测 15 天后过期（截图 evidences/p6-default.png）
-    ✅ MCP publish_files 不传 expires → 实测同样生效
-    ✅ 已有 entry 不受影响 → 实测过期时间未变
-  ```
-- evidences/ — UI 条件的截图（必须）
+- docs/tasks/{Txxx}/P6-acceptance.md — 验收报告，每条 BDD 一个结果块
+- evidences/ — Playwright 截图（desktop + mobile，若 ui_affected）
+- docs/tasks/{Txxx}/P6-vision-{timestamp}.yaml — UI 条件的结构化视觉分析（由 vision-analyst 产出）
+
+**UI 条件的处理流程**：
+1. Playwright 跑完，截图存入 evidences/（desktop_1280x800.png + mobile_390x844.png）
+2. 派发 vision-analyst，传入截图路径 + 需验证的 BDD 条件列表
+3. vision-analyst 产出结构化 YAML，含 bdd_results 和 anomalies
+4. verifier 读取 YAML 的 summary 和 bdd_results，填入 P6-acceptance.md
+5. blocker anomaly → BDD 条件标 ❌ → P6 不通过 → 回 P4
 
 ### 质量门槛
 - P1 的**每条** BDD 条件都有实跑结果（✅/❌），无遗漏
