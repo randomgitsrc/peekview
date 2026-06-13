@@ -14,7 +14,8 @@ capability_required: vision
 **调用方式**：不单独占一个阶段，而是被其他角色按需派发：
 - P6 verifier 验收 UI 类 BDD 条件时 → 派发 vision-analyst 分析截图
 - design-review 对比设计稿与实现时 → 派发 vision-analyst 逐维度描述
-- P7 architect 做一致性检查时 → 派发 vision-analyst 确认视觉偏差
+- P7 architect 做一致性检查时 → 派发 vision-analyst，purpose=consistency-check，
+  对比当前截图与 P2 设计稿或 P6 截图，找视觉回归
 
 ---
 
@@ -41,7 +42,7 @@ capability_required: vision
 ```yaml
 vision_analysis:
   screenshots: ["evidences/desktop_1280x800.png", "evidences/mobile_390x844.png"]
-  purpose: "acceptance"          # acceptance | design-review | regression
+  purpose: "acceptance"          # acceptance | design-review | regression | consistency-check
   reference: "docs/design/mockup-v2.png"   # null 表示无参照
   analyzed_at: "2026-06-13T10:00:00"
 

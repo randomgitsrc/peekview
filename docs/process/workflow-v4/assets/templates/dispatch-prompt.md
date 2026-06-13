@@ -15,6 +15,7 @@ docs/process/workflow-v4/assets/{execution-roles|review-roles}/{role}.md
 - docs/process/workflow-v4/README.md（流程规范）
 
 ## 输入（自己读取，不要等我提供内容）
+- docs/tasks/{Txxx}/P0-brief.md（主 Agent 任务简报：环境约束、已知风险、裁剪倾向）
 - docs/tasks/{Txxx}/{上一阶段产出文件}
 - docs/process/workflow-v4/README.md
 {按角色定义补充其他需要读的文件}
@@ -50,16 +51,16 @@ trace_id: {Txxx}-{Pn}-{YYYYMMDD}
 
 ## 项目占位符映射
 
-> 以下为 PeekView 当前映射示例，各项目在项目约定文件中定义
+> 占位符说明：各项目在自己的约定文件（如 CLAUDE.md）中定义具体映射。以下给出示例值供参考，不是 v4 本身的约定。
 
-| 占位符 | PeekView 映射 | 说明 |
-|--------|---------------|------|
-| {project_conventions_file} | `CLAUDE.md` | 项目约定 |
-| {project_index_file} | `INDEX.md` | 项目总览 |
-| {test_code_dir} | `backend/tests/` | 测试代码目录 |
-| {implementation_dir} | （项目实际源码路径，如 `src/` 或 `app/`）| 源码目录 |
-| {build_command} | （从 P2 gate_commands 字段读取）| 构建验证命令 |
-| {lint_command} | `make lint` | 代码检查命令 |
+| 占位符 | 说明 | 示例值 |
+|--------|------|--------|
+| {project_conventions_file} | 项目约定文件 | `CLAUDE.md` / `CONTRIBUTING.md` |
+| {project_index_file} | 项目总览文件 | `INDEX.md` / `README.md` |
+| {test_code_dir} | 测试代码目录 | `tests/` / `backend/tests/` |
+| {implementation_dir} | 源码目录 | `src/` / `app/` / `backend/pkg/` |
+| {build_command} | 构建验证命令（从 P2 gate_commands 读取）| 项目自定义 |
+| {lint_command} | 代码检查命令（从项目约定读取）| 项目自定义 |
 
 ## 关键提醒
 - prompt 里只写文件**路径**，绝不复制文件内容

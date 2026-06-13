@@ -18,7 +18,8 @@ mode: 需求质疑（requirements interrogation）
 
 ## 输入（自己读取）
 
-- 原始需求 / Bug 报告（主 Agent 在 prompt 里给路径或描述）
+- docs/tasks/{Txxx}/P0-brief.md（主 Agent 任务简报：环境约束、已知风险、裁剪倾向——**P1 的主要输入**）
+- 原始需求 / Bug 报告（主 Agent 在 prompt 里给路径或描述，或从 P0-brief 的 task 字段理解）
 - docs/process/workflow-v4/README.md（尤其"需求与验收机制"一节）
 - 相关现有代码/文档（理解现状，判断隐含依赖）
 

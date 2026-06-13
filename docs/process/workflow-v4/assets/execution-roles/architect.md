@@ -17,6 +17,7 @@ phases: [P2, P7]
 - **P7 时的特别要求**：以批判的第三方视角检查，假设 P2 设计**可能有错**。不要因为"这是我们当初设计的方案"就宽容。逐项找实现与设计的偏差，偏差优先归类为问题而非"可接受的调整"。
 
 ## 输入（自己读取）
+- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险、裁剪倾向）
 - P2 时：docs/tasks/{Txxx}/P1-requirements.md（需求基线 + BDD 条件 + 范围声明）
 - P7 时：docs/tasks/{Txxx}/P2-design.md + P5-test-results/ + P6-acceptance.md
 - 相关现有代码（自己 grep/read）

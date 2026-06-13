@@ -93,6 +93,13 @@ subagent 返回后，主 Agent 校验：
    phase_hint: [P1, P2, ..., P8]  # 主 Agent 预判，P1 analyst 可调整，但须经主 Agent 确认
    ```
 
+   P0-brief 完成后，主 Agent 自查四个必填字段是否有实质内容：
+   - task：是否是工程视角的一句话描述（不是产品语言的模糊表述）
+   - known_risks：至少列出一条，没有风险也要写「无已知风险」而不是留空
+   - env_constraints.debug_env：是否从项目约定（CLAUDE.md）读取了具体路径/命令
+   - pruning_tendency：是否有明确的「保守/激进 + 理由」，不是占位符
+   任一字段为空占位符状态 → 补完再继续。
+
    P0-brief 完成后，第一步输出只允许两种内容之一：
    a) 派发 P1 analyst（传入 P0-brief.md 路径作为主要输入）
    b) 判断为微/小任务并声明「直接执行」的理由

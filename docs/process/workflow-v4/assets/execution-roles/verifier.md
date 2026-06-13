@@ -26,6 +26,7 @@ modes:
 - **UI 任务：必须实际运行，不能靠"代码看起来对"判断**
 
 ### 输入（自己读取）
+- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险、裁剪倾向）
 - docs/tasks/{Txxx}/P1-requirements.md（BDD 条件、范围声明）
 - docs/tasks/{Txxx}/P2-design.md（是否 ui_affected）
 - docs/tasks/{Txxx}/P3-test-code/（测试）
