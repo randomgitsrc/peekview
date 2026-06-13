@@ -51,7 +51,8 @@ status: approved        # ← 门槛判定字段
 ## 状态机定义
 
 ```
-状态集合：{ P1, P2, P3, P4, P5, P6, P7, P8, READY, DONE, PAUSED }
+状态集合：{ P0, P1, P2, P3, P4, P5, P6, P7, P8, READY, DONE, PAUSED }
+（P0 是主 Agent 亲自执行的简报阶段，不派发 subagent，完成后直接进入 P1）
 
 转移规则（主 Agent 亲自跑命令验证，不靠读 subagent 产出文件字段）：
 注意：所有"文件存在"判定 = 文件存在 AND 含合法 Header AND 有实质内容

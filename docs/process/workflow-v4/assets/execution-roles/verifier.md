@@ -63,6 +63,7 @@ modes:
 - 结果用人话写，不用技术黑话——给非技术的人也能判断"对/不对"
 
 ### 输入（自己读取）
+- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险、裁剪倾向）
 - docs/tasks/{Txxx}/P1-requirements.md（**所有** BDD 条件，含 SCOPE+ 增补）
 - docs/tasks/{Txxx}/P5-test-results/（技术验证结果，可复用）
 - 运行环境（debug backend / 临时 HOME，严禁碰正式服务）

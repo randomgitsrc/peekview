@@ -201,8 +201,8 @@ subagent 返回后，主 Agent 校验：
 
 | 阶段 | 门槛 | 怎么判定（主 Agent 亲自执行）|
 |------|------|--------------------------|
-| P1→P2 | 需求基线建立 | P1-requirements.md 存在 + 有 Header + 含 ≥1 条 BDD 条件 + 无未决 `[NEED_CONFIRM]` |
-| P2→P3 | 方案已批准 | P2-review.md 的 Header `status: approved` + P2-design.md 声明 packages/domains/ui_affected |
+| P1→P2 | 需求基线建立 | P1-requirements.md 存在 + 有 Header + 含 ≥1 条 BDD 条件 + 无未决 `[NEED_CONFIRM]` + 无 `[CAPABILITY_GAP]` |
+| P2→P3 | 方案已批准 | P2-review.md `status: approved` + P2-design.md 含 packages/domains/ui_affected/gate_commands 四字段 |
 | P3→P4 | TDD 真红灯 | `scripts/check-tdd-red.sh` exit 0（UI 任务额外确认 Playwright 用例存在）|
 | P4→P5 | 实现完成 | P4-implementation/ 下文件非空 + `git log --oneline -1` 确认 P4 commit |
 | P5→P6 | 技术验证通过 | `pytest -q` exit 0 AND failed==0（亲手跑）+ 若 ui_affected：Playwright/E2E 实跑通过 |
