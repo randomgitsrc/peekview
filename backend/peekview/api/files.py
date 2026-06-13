@@ -11,7 +11,8 @@ from sqlmodel import Session, select
 from peekview.auth import get_current_user
 from peekview.database import get_engine
 from peekview.exceptions import NotFoundError
-from peekview.models import Entry, File, User
+from peekview.models import API_KEY_PREFIX, Entry, File, User
+from peekview.services.entry_service import EntryService, get_entry_service
 from peekview.storage import StorageManager
 
 router = APIRouter(prefix="/api/v1/entries", tags=["files"])
@@ -22,9 +23,7 @@ def _sanitize_filename(filename: str) -> str:
 
     Removes quotes, semicolons, and newlines that could break the header.
     """
-    # Remove characters that could inject additional headers
     sanitized = re.sub(r'[";\r\n]', "", filename)
-    # Limit length
     if len(sanitized) > 200:
         sanitized = sanitized[:200]
     return sanitized
@@ -55,6 +54,68 @@ def _language_to_content_type(language: str | None) -> str:
     return "text/plain; charset=utf-8"
 
 
+def _looks_like_jwt(token: str) -> bool:
+    """Heuristic: JWTs have 3 base64url-encoded segments separated by dots."""
+    return len(token.split(".")) == 3
+
+
+def _is_global_api_key_auth(request: Request, current_user: User | None) -> bool:
+    """Check if request is authenticated via global master API key (no user binding).
+
+    Only returns True for global master key — it bypasses ownership checks.
+    User-level API keys (pv_ prefix) have current_user set, treated like JWT.
+    """
+    if current_user is not None:
+        return False
+
+    x_key = request.headers.get("X-API-Key", "")
+    if x_key and not x_key.startswith(API_KEY_PREFIX):
+        return True
+
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+        if not _looks_like_jwt(token) and not token.startswith(API_KEY_PREFIX):
+            return True
+
+    return False
+
+
+def _get_service(request: Request) -> EntryService:
+    """Get EntryService from app state."""
+    return get_entry_service(request.app)
+
+
+def _resolve_entry(request: Request, slug: str, current_user: User | None) -> int:
+    """Resolve entry with visibility check via EntryService.
+
+    Returns the entry ID on success. Raises NotFoundError if entry
+    not found or not visible to the current user.
+
+    Uses EntryService.get_entry() for non-global-API-key requests,
+    which centralizes visibility logic (owner, admin, public).
+    For global API key auth, fetches entry directly (bypasses visibility).
+    """
+    config = request.app.state.config
+    engine = get_engine(config)
+    service = _get_service(request)
+    global_key_auth = _is_global_api_key_auth(request, current_user)
+
+    if global_key_auth:
+        with Session(engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+            return entry.id
+    else:
+        current_user_id = current_user.id if current_user else None
+        is_admin = current_user.is_admin if current_user else False
+        entry_response = service.get_entry(
+            slug, current_user_id=current_user_id, is_admin=is_admin
+        )
+        return entry_response.id
+
+
 @router.get("/{slug}/files/{file_id}")
 async def download_file(
     slug: str,
@@ -66,24 +127,17 @@ async def download_file(
     config = request.app.state.config
     engine = get_engine(config)
     storage = StorageManager(config=config)
-    current_user_id = current_user.id if current_user else None
+
+    entry_id = _resolve_entry(request, slug, current_user)
 
     with Session(engine) as session:
-        entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
-        if not entry:
-            raise NotFoundError(f"Entry not found: {slug}")
-
-        # Visibility check: private entries only visible to owner
-        if not entry.is_public and entry.owner_id != current_user_id:
-            raise NotFoundError(f"Entry not found: {slug}")
-
         file_record = session.exec(
-            select(File).where(File.id == file_id, File.entry_id == entry.id)
+            select(File).where(File.id == file_id, File.entry_id == entry_id)
         ).first()
         if not file_record:
             raise NotFoundError(f"File not found: {file_id}")
 
-        content = storage.read_file(entry.id, file_record.filename, file_record.path)
+        content = storage.read_file(entry_id, file_record.filename, file_record.path)
         safe_name = _sanitize_filename(file_record.filename)
         return Response(
             content=content,
@@ -107,29 +161,20 @@ async def get_file_content(
     config = request.app.state.config
     engine = get_engine(config)
     storage = StorageManager(config=config)
-    current_user_id = current_user.id if current_user else None
+
+    entry_id = _resolve_entry(request, slug, current_user)
 
     with Session(engine) as session:
-        entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
-        if not entry:
-            raise NotFoundError(f"Entry not found: {slug}")
-
-        # Visibility check: private entries only visible to owner
-        if not entry.is_public and entry.owner_id != current_user_id:
-            raise NotFoundError(f"Entry not found: {slug}")
-
         file_record = session.exec(
-            select(File).where(File.id == file_id, File.entry_id == entry.id)
+            select(File).where(File.id == file_id, File.entry_id == entry_id)
         ).first()
         if not file_record:
             raise NotFoundError(f"File not found: {file_id}")
 
-    content = storage.read_file(entry.id, file_record.filename, file_record.path)
+    content = storage.read_file(entry_id, file_record.filename, file_record.path)
 
-    # Determine Content-Type from language
     content_type = _language_to_content_type(file_record.language)
     return Response(
         content=content,
         media_type=content_type,
-        # No Content-Disposition — inline display
     )

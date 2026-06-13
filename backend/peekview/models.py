@@ -538,3 +538,38 @@ class ApiKeyCreateResponse(SQLModel):
     key_prefix: str
     expires_at: datetime | None
     created_at: datetime
+
+
+# Admin schemas
+
+
+class EntryStats(SQLModel):
+    total: int
+    public: int
+    private: int
+    expired: int
+    active: int
+    latest_created_at: datetime | None
+
+
+class ApiKeyStats(SQLModel):
+    total: int
+    expired: int
+
+
+class StorageStats(SQLModel):
+    data_dir_mb: float
+    db_mb: float
+
+
+class AdminStatsResponse(SQLModel):
+    users: int
+    entries: EntryStats
+    api_keys: ApiKeyStats
+    storage: StorageStats
+
+
+class AdminCleanupResponse(SQLModel):
+    deleted_count: int
+    deleted_slugs: list[str]
+    freed_mb: float

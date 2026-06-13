@@ -298,3 +298,31 @@ class PeekClient:
             self._handle_error(resp)
 
         return resp.json()
+
+    def admin_stats(self) -> dict[str, Any]:
+        """GET /api/v1/admin/stats — Get system statistics."""
+        resp = requests.get(
+            f"{self.base_url}/api/v1/admin/stats",
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code != 200:
+            self._handle_error(resp)
+
+        return resp.json()
+
+    def admin_cleanup(self) -> dict[str, Any]:
+        """POST /api/v1/admin/cleanup — Cleanup expired entries."""
+        resp = requests.post(
+            f"{self.base_url}/api/v1/admin/cleanup",
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code != 200:
+            self._handle_error(resp)
+
+        return resp.json()

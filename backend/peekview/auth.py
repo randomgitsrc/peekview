@@ -206,3 +206,20 @@ def require_auth(user: User | None = Depends(get_current_user)) -> User:
 
         raise AuthenticationError("Authentication required")
     return user
+
+
+def require_admin(user: User = Depends(require_auth)) -> User:
+    """FastAPI dependency that requires authenticated admin user.
+
+    require_admin = "must be logged in AND must be admin".
+    This is distinct from get_current_user + is_admin passed to service methods:
+    - require_admin: for admin-only endpoints (e.g. GET /api/v1/admin/stats),
+      non-admin gets 403 FORBIDDEN.
+    - get_current_user + is_admin in service: for visibility filtering,
+      non-admin sees filtered results (not 403).
+    """
+    if not user.is_admin:
+        from peekview.exceptions import ForbiddenError
+
+        raise ForbiddenError("Admin access required")
+    return user

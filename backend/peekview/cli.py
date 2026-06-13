@@ -28,7 +28,8 @@ from peekview.client import PeekClient
 from peekview.config import PeekConfig
 from peekview.database import check_schema, init_db
 from peekview.main import create_app
-from peekview.models import CreateEntryRequest, EntryCreate, User
+from peekview.models import AdminCleanupResponse, AdminStatsResponse, CreateEntryRequest, EntryCreate, User
+from peekview.services.admin_service import AdminService
 from peekview.services.entry_service import EntryService
 from peekview.services.file_service import scan_directory
 from peekview.storage import StorageManager
@@ -1651,6 +1652,174 @@ def apikey_cleanup(remote_url: str | None) -> None:
     try:
         result = backend.cleanup_expired_keys()
         click.echo(f"✓ Cleaned up {result['deleted']} expired key(s)")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+def _get_admin_service(
+    config: PeekConfig, cli_remote_url: str | None = None
+) -> AdminService | PeekClient:
+    if cli_remote_url is not None:
+        remote_url = cli_remote_url
+    elif "PEEKVIEW_REMOTE__URL" in os.environ:
+        remote_url = os.environ["PEEKVIEW_REMOTE__URL"]
+    else:
+        remote_url = config.remote.url
+
+    if remote_url:
+        return PeekClient(
+            base_url=remote_url,
+            api_key=config.remote.api_key,
+            token=config.remote.token,
+            timeout=config.remote.timeout,
+            verify_ssl=config.remote.verify_ssl,
+        )
+
+    engine = init_db(config.db_path)
+    check_schema(engine)
+    storage = StorageManager(config=config)
+    return AdminService(engine=engine, storage=storage, config=config)
+
+
+@cli.group(name="admin")
+def admin_cmd():
+    """Admin operations (requires admin privileges)."""
+    pass
+
+
+@admin_cmd.command(name="stats")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
+def admin_stats(remote_url: str | None, json_output: bool) -> None:
+    """Show system statistics."""
+    config = PeekConfig()
+    backend = _get_admin_service(config, cli_remote_url=remote_url)
+    is_remote = isinstance(backend, PeekClient)
+
+    if is_remote and not json_output:
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+
+    try:
+        if is_remote:
+            result = backend.admin_stats()
+        else:
+            result = backend.get_stats()
+
+        if json_output:
+            if isinstance(result, AdminStatsResponse):
+                data = {
+                    "users": result.users,
+                    "entries": {
+                        "total": result.entries.total,
+                        "public": result.entries.public,
+                        "private": result.entries.private,
+                        "expired": result.entries.expired,
+                        "active": result.entries.active,
+                        "latest_created_at": result.entries.latest_created_at.isoformat() if result.entries.latest_created_at else None,
+                    },
+                    "api_keys": {
+                        "total": result.api_keys.total,
+                        "expired": result.api_keys.expired,
+                    },
+                    "storage": {
+                        "data_dir_mb": result.storage.data_dir_mb,
+                        "db_mb": result.storage.db_mb,
+                    },
+                }
+            else:
+                data = result
+            click.echo(json.dumps(data, indent=2, default=str))
+        else:
+            if isinstance(result, AdminStatsResponse):
+                entries = result.entries
+                api_keys = result.api_keys
+                storage = result.storage
+                click.echo("PeekView Admin Stats")
+                click.echo("─" * 30)
+                click.echo(f"Users:        {result.users}")
+                click.echo("Entries:")
+                click.echo(f"  Total:      {entries.total}")
+                click.echo(f"  Public:     {entries.public}")
+                click.echo(f"  Private:    {entries.private}")
+                click.echo(f"  Expired:    {entries.expired}")
+                click.echo(f"  Active:     {entries.active}")
+                if entries.latest_created_at:
+                    click.echo(f"  Latest:     {entries.latest_created_at.isoformat()}")
+                click.echo("API Keys:")
+                click.echo(f"  Total:      {api_keys.total}")
+                click.echo(f"  Expired:    {api_keys.expired}")
+                click.echo("Storage:")
+                click.echo(f"  Data Dir:   {storage.data_dir_mb} MB")
+                click.echo(f"  Database:   {storage.db_mb} MB")
+            else:
+                entries = result.get("entries", {})
+                api_keys = result.get("api_keys", {})
+                storage = result.get("storage", {})
+                click.echo("PeekView Admin Stats")
+                click.echo("─" * 30)
+                click.echo(f"Users:        {result.get('users', 0)}")
+                click.echo("Entries:")
+                click.echo(f"  Total:      {entries.get('total', 0)}")
+                click.echo(f"  Public:     {entries.get('public', 0)}")
+                click.echo(f"  Private:    {entries.get('private', 0)}")
+                click.echo(f"  Expired:    {entries.get('expired', 0)}")
+                click.echo(f"  Active:     {entries.get('active', 0)}")
+                click.echo("API Keys:")
+                click.echo(f"  Total:      {api_keys.get('total', 0)}")
+                click.echo(f"  Expired:    {api_keys.get('expired', 0)}")
+                click.echo("Storage:")
+                click.echo(f"  Data Dir:   {storage.get('data_dir_mb', 0)} MB")
+                click.echo(f"  Database:   {storage.get('db_mb', 0)} MB")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@admin_cmd.command(name="cleanup")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
+def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
+    """Cleanup expired entries."""
+    config = PeekConfig()
+    backend = _get_admin_service(config, cli_remote_url=remote_url)
+    is_remote = isinstance(backend, PeekClient)
+
+    if is_remote and not json_output:
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+
+    try:
+        if is_remote:
+            result = backend.admin_cleanup()
+        else:
+            result = backend.cleanup_expired()
+
+        if json_output:
+            if isinstance(result, AdminCleanupResponse):
+                data = {
+                    "deleted_count": result.deleted_count,
+                    "deleted_slugs": result.deleted_slugs,
+                    "freed_mb": result.freed_mb,
+                }
+            else:
+                data = result
+            click.echo(json.dumps(data, indent=2))
+        else:
+            if isinstance(result, AdminCleanupResponse):
+                click.echo(
+                    f"Cleaned up {result.deleted_count} expired entry(ies), freed {result.freed_mb} MB"
+                )
+                if result.deleted_slugs:
+                    click.echo(f"  Deleted: {', '.join(result.deleted_slugs)}")
+            else:
+                count = result.get("deleted_count", 0)
+                freed = result.get("freed_mb", 0)
+                slugs = result.get("deleted_slugs", [])
+                click.echo(f"Cleaned up {count} expired entry(ies), freed {freed} MB")
+                if slugs:
+                    click.echo(f"  Deleted: {', '.join(slugs)}")
+
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)

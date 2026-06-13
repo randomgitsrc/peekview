@@ -107,11 +107,14 @@ def create_app(
     from peekview.storage import StorageManager
     from peekview.services.entry_service import EntryService
     from peekview.services.apikey_service import ApiKeyService
+    from peekview.services.admin_service import AdminService
     storage = StorageManager(config=config)
     entry_service = EntryService(engine=engine, storage=storage, config=config)
     apikey_service = ApiKeyService(engine=engine)
+    admin_service = AdminService(engine=engine, storage=storage, config=config)
     app.state.entry_service = entry_service
     app.state.apikey_service = apikey_service
+    app.state.admin_service = admin_service
 
     # Setup CORS - use config or default
     cors_origins = getattr(config, 'cors_origins', ["http://localhost:5173"])
@@ -240,12 +243,14 @@ def create_app(
     from peekview.api.files import router as files_router
     from peekview.api.config_router import router as config_router
     from peekview.api.captcha_router import router as captcha_router
+    from peekview.api.admin import router as admin_router
     app.include_router(auth_router)
     app.include_router(apikeys_router)
     app.include_router(entries_router)
     app.include_router(files_router)
     app.include_router(config_router)
     app.include_router(captcha_router)
+    app.include_router(admin_router)
 
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (
