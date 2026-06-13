@@ -19,13 +19,14 @@ created: {YYYY-MM-DD}
 
 | 阶段 | 文件 | 关键 Header 字段 |
 |------|------|-----------------|
+| P0 | P0-brief.md | 主 Agent 亲自填写（非 subagent 产出）：task/known_risks/env_constraints/pruning_tendency/irreversible |
 | P1 | P1-requirements.md | 含 BDD 验收条件 + `packages:` `domains:` 初判 + 裁剪说明；无未决 `[NEED_CONFIRM]`（门槛）|
-| P2 | P2-design.md | **必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`** |
+| P2 | P2-design.md | **必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`；确认/细化 P0-brief 的 `env_constraints`** |
 | P2 | P2-review.md | **status: approved/rejected**（门槛）|
 | P3 | P3-test-cases.md | 声明 `test_code_dir: {实际路径}`；每用例对应一条 BDD；UI 任务含 E2E 用例 |
 | P3 | {test_code_dir}/ | 测试代码目录（项目自定义，如 `backend/tests/`）|
 | P4 | P4-implementation.md | 声明 `implementation_dir: {实际路径}` |
-| P4 | {implementation_dir}/ | 代码目录（项目自定义，如 `backend/peekview/`）|
+| P4 | {implementation_dir}/ | 代码目录（项目自定义，如 `src/` 或 `backend/app/`）|
 | P5 | P5-test-results/unit.md | 标注 `failed: N`（仅供参考，gate 以主 Agent 跑 pytest 为准）|
 | P5 | P5-test-results/e2e.md | UI 任务必须：Playwright 实跑结果 + 截图路径 |
 | P6 | P6-acceptance.md | P1 每条 BDD 有实跑结果；UI 条件含截图；无未决 `[NEED_CONFIRM]`（门槛）|
@@ -37,7 +38,7 @@ created: {YYYY-MM-DD}
 P3/P4 的代码路径由产出文件显式声明，不使用固定目录名：
 
 - P3-test-cases.md 必须声明：`test_code_dir: backend/tests/`
-- P4-implementation.md 必须声明：`implementation_dir: backend/peekview/`
+- P4-implementation.md 必须声明：`implementation_dir: {项目实际源码路径}`
 
 派发 prompt 引用这些声明而非固定路径，避免模板硬编码项目特定路径。
 
@@ -52,6 +53,36 @@ P3/P4 的代码路径由产出文件显式声明，不使用固定目录名：
 - P6 → 主 Agent 确认 P1 每条 BDD 有实跑结果 + 无未决 `[NEED_CONFIRM]`
 - P7 → 主 Agent grep `[BLOCKER]` 验证
 - P8 → 主 Agent 为每个 package 跑发布检查命令验证
+
+## P0-brief.md 结构（主 Agent 任务简报，亲自填写）
+
+P0-brief 是主 Agent 作为 PM 在派发任何 subagent 之前写的判断文件。
+不是 subagent 的产出，是主 Agent 的职责——把产品需求翻译为工程视角、注入风险判断。
+
+```yaml
+## P0-brief.md
+task: "一句话描述任务（工程视角，不是产品语言）"
+
+known_risks:
+  - "涉及数据删除操作（不可逆）"
+  - "跨越 3 个改动端（API+CLI+客户端）"
+  - "修改权限/认证逻辑（安全敏感）"
+
+env_constraints:
+  debug_env: "项目的调试环境命令或路径（从项目约定读取，如 CLAUDE.md）"
+  prod_env: "项目的生产环境路径（严禁直接操作）"
+  isolation_check: "如何验证生产环境未被污染（项目特定，如检查文件 mtime）"
+
+pruning_tendency: "保守 — 涉及数据删除，建议走完整 P1-P8"
+# 或："激进 — 单文件 typo 修复，直接做"
+
+phase_hint: [P1, P2, P4, P5, P6, P8]  # 主 Agent 预判（P1 analyst 可建议调整，但主 Agent 最终确认）
+
+irreversible: true   # 任务是否涉及不可逆操作（true → 触发不可逆操作保护协议）
+```
+
+**P0-brief 的核心价值**：每个 subagent 都在独立上下文里启动，不知道项目约定和环境约束。
+P0-brief 是把这些约束注入每次派发的桥梁——所有 subagent 的 prompt 都要包含 P0-brief.md 路径。
 
 ## P1-requirements.md 结构（需求基线）
 
@@ -76,7 +107,7 @@ phases: [P1,P2,P4,P5,P6,P8]
 - 跳过 P7 理由：...
 
 ## 6. 范围声明
-packages: [peekview]
+packages: [pkg-a]
 domains: [backend, frontend]
 
 ## 7. 能力需求声明

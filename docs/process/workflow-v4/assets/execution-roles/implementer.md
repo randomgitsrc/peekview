@@ -30,10 +30,10 @@ phases: [P4, P8]
 ## P8 多包发布（T005 教训：漏 bump MCP 版本）
 
 P8 不假设"一个任务一个包"。读 P2 的 `packages:` 声明，**逐个**处理：
-- 单包（如 `[peekview]`）：bump peekview 版本 + CHANGELOG + make pre-publish
-- 多包（如 `[peekview, mcp-server]`）：
-  - peekview：bump 版本 + 主 CHANGELOG
-  - mcp-server：`make bump-mcp-version` + packages/mcp-server 的 CHANGELOG + 跑 MCP 测试
+- 单包（如 `[pkg-a]`）：按项目约定 bump 版本 + CHANGELOG + 跑发布检查命令
+- 多包（如 `[pkg-a, pkg-b]`）：
+  - 每个包独立 bump 版本 + 更新各自 CHANGELOG
+  - 各包跑各自的发布检查命令（从 P2 的 `packages:` 和 `gate_commands:` 读取）
 - P8-release.md 为每个包列出：包名 / 旧版本 → 新版本 / 验证命令 / 结果
 
 漏掉 P2 声明的任一包 = P8 门槛不通过。

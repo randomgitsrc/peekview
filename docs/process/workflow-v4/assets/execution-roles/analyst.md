@@ -31,7 +31,7 @@ mode: 需求质疑（requirements interrogation）
 3. **BDD 验收条件**：用 Given/When/Then 写出每条可验证行为（这是 P6 验收的依据）
 4. **待确认清单**：把隐含需求中拿不准的、需要人定方向的，标 `[NEED_CONFIRM]` 列出
 5. **裁剪说明**：判定任务复杂度，声明走哪些阶段（如 `phases: [P1,P4,P5,P6,P8]`），**每个跳过的阶段写明理由**
-6. **范围声明**：初步判断涉及的 `packages:`（peekview/mcp-server）和 `domains:`（backend/frontend/mcp/security），供后续阶段消费
+6. **范围声明**：初步判断涉及的 `packages:`（各项目自定义包名）和 `domains:`（backend/frontend/api/cli/security 等），供后续阶段消费
 
 7. **能力需求声明**：识别任务需要的特殊能力，评估当前运行环境能否满足
 

@@ -50,6 +50,8 @@
 **硬中断点（--auto-approve 也不能跳过）：**
 - 未决的 `[NEED_CONFIRM]`（P1 需求方向 / P6 验收判断拿不准，必须人确认）
 - `[CAPABILITY_GAP]`（任务需要某能力，环境中无任何补充路径，需人决策）
+- `[PROD_TOUCHED]`（任何阶段意外接触了生产环境，必须立即暂停人工处置）
+- 不可逆操作 `[NEED_CONFIRM]`（数据删除/迁移/生产写入，备份+确认后才可继续）
 - 业务方向决策（Agent 无权决定「功能要不要做」）
 - P8 发布（不可逆操作）
 - 安全策略决策
@@ -81,7 +83,7 @@
 [T002] P5 done (failed=0, UI E2E 2/2) → P6
 [T002] P6 done (BDD 验收 5/5) → P7
 [T002] P7 done (无 BLOCKER) → P8
-[T002] P8 done (peekview+mcp 发布检查通过) → READY
+[T002] P8 done (所有包发布检查通过) → READY
 ```
 
 ---
@@ -99,7 +101,7 @@ LOOP:
     3. if 状态 == PAUSED: 报告暂停原因，退出
     4. if 当前阶段 == --until 指定的停止点: 报告，退出
     5. if 触发硬中断点: 无条件停下问人（--auto-approve 不能跳过）
-       硬中断点 = 未决 NEED_CONFIRM / CAPABILITY_GAP / 业务方向决策 / P8 发布 / 安全决策 / 涉及外部资源权限
+       硬中断点 = 未决 NEED_CONFIRM / CAPABILITY_GAP / PROD_TOUCHED / 不可逆操作待确认 / 业务方向决策 / P8 发布 / 安全决策 / 涉及外部资源权限
        （对应 state-machine.md「用户介入边界」表的后四类情况）
     6. if 当前阶段需要软确认 && !auto-approve: 停下问人
        软确认 = 阶段内门槛通过确认（如 P2 设计评审 approved）

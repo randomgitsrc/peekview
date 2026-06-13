@@ -57,8 +57,8 @@ trace_id: {Txxx}-{Pn}-{YYYYMMDD}
 | {project_conventions_file} | `CLAUDE.md` | 项目约定 |
 | {project_index_file} | `INDEX.md` | 项目总览 |
 | {test_code_dir} | `backend/tests/` | 测试代码目录 |
-| {implementation_dir} | `backend/peekview/` | 源码目录 |
-| {build_command} | `make pre-publish` | 构建验证命令 |
+| {implementation_dir} | （项目实际源码路径，如 `src/` 或 `app/`）| 源码目录 |
+| {build_command} | （从 P2 gate_commands 字段读取）| 构建验证命令 |
 | {lint_command} | `make lint` | 代码检查命令 |
 
 ## 关键提醒
