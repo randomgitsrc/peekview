@@ -167,7 +167,7 @@ describe('Streamable HTTP Server', () => {
       expect(res.body.error).toContain('initialize');
     });
 
-    it('should reject request with unknown session-id', async () => {
+    it('should return 404 for request with unknown session-id', async () => {
       const res = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
@@ -178,7 +178,8 @@ describe('Streamable HTTP Server', () => {
           method: 'tools/list',
           params: {},
         })
-        .expect(400);
+        .expect(404);
+      expect(res.body.error).toContain('Session not found');
     });
   });
 
@@ -218,7 +219,7 @@ describe('Streamable HTTP Server', () => {
           method: 'tools/list',
           params: {},
         })
-        .expect(400);
+        .expect(404);
     });
   });
 

@@ -256,8 +256,19 @@ export function createExpressApp(
       return;
     }
 
-    // No valid session and not an initialize request
-    res.status(400).json({ error: 'No valid session or not an initialize request' });
+    // Session ID provided but session not found — expired or server restarted
+    // Per MCP spec: server MUST respond with 404 when session is terminated,
+    // client MUST re-initialize upon receiving 404.
+    if (sessionId && !sessions.has(sessionId)) {
+      res.status(404).json({ error: 'Session not found or expired. Client must re-initialize.' });
+      return;
+    }
+
+    // No session ID and not an initialize request — protocol error
+    if (!sessionId && !isInitializeRequest(req.body)) {
+      res.status(400).json({ error: 'No valid session or not an initialize request' });
+      return;
+    }
   });
 
   // GET /mcp — Server-initiated notifications not supported
