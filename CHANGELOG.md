@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.56] - 2026-06-13
+
+### 新增
+
+- **`require_admin` FastAPI 依赖**：统一管理员端点权限守卫，链式调用 `require_auth` + `is_admin` 检查
+- **`GET /api/v1/admin/stats`**：系统统计端点（用户数、entry 数、API key 数、磁盘占用）
+- **`POST /api/v1/admin/cleanup`**：手动清理过期 entry 端点（返回删除数量、slug 列表、释放空间）
+- **`peekview admin stats`** CLI 命令：系统统计，支持本地/远程模式和 `--json-output`
+- **`peekview admin cleanup`** CLI 命令：手动清理过期 entry，支持本地/远程模式和 `--json-output`
+- **`PeekClient.admin_stats()` / `admin_cleanup()`**：远程客户端新增方法
+
+### 修复
+
+- **文件下载端点管理员权限缺失**：`api/files.py` 的文件下载/内容端点复用 `EntryService.get_entry()` 做可见性检查，管理员和全局 API Key 现在可以正确访问私有 entry 的文件
+- **MCP Server session 失效返回 400**：改为返回 404（符合 MCP Streamable HTTP 规范），客户端可自动重新 initialize
+
+
 ## [mcp-v0.8.4] - 2026-06-12
 
 ### 变更
