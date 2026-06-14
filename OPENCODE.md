@@ -2,7 +2,7 @@
 
 轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
 
-版本：Backend v0.1.57 | MCP Server v0.8.5
+版本：Backend v0.1.58 | MCP Server v0.8.5
 
 ## 架构
 

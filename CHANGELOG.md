@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.1.58] - 2026-06-14
+
+### 变更
+
+- **移除生产路径警告**：`PeekConfig()` 不再对指向 `~/.peekview/` 的裸调用打印 WARNING。该警告对正常 CLI 用户（`peekview list`、`peekview user list` 等）产生噪音，而实际防护价值极低——pytest 有 L1 强制隔离（conftest），debug mode 有 L2 自动隔离，不依赖人看到警告
+
+
 ## [0.1.57] - 2026-06-14
 
 ### 新增
