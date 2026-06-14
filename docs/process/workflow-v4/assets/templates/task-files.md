@@ -19,7 +19,7 @@ created: {YYYY-MM-DD}
 
 | 阶段 | 文件 | 关键 Header 字段 |
 |------|------|-----------------|
-| P0 | P0-brief.md | 主 Agent 亲自填写（非 subagent 产出）：task/known_risks/env_constraints/pruning_tendency/irreversible |
+| P0 | P0-brief.md | 主 Agent 亲自填写（非 subagent 产出）：task/known_risks/env_constraints/pruning_tendency |
 | P1 | P1-requirements.md | 含 BDD 验收条件 + `packages:` `domains:` 初判 + 裁剪说明；无未决 `[NEED_CONFIRM]`（门槛）|
 | P2 | P2-design.md | **必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`；确认/细化 P0-brief 的 `env_constraints`** |
 | P2 | P2-review.md | **status: approved/rejected**（门槛）|
@@ -79,7 +79,7 @@ env_constraints:
 pruning_tendency: "保守 — 涉及 schema 变更，建议走完整 P1-P8"
 # 或："激进 — 单文件 typo 修复，直接做"
 
-phase_hint: [P1, P2, P4, P5, P6, P8]  # 主 Agent 预判（P1 analyst 可建议调整，但主 Agent 最终确认）
+phase_hint: [P1, P2, P3, P4, P5, P6, P8]  # 主 Agent 预判；P3 默认保留，跳过须有理由
 ```
 
 **P0-brief 的核心价值**：每个 subagent 都在独立上下文里启动，不知道项目约定和环境约束。

@@ -383,7 +383,9 @@ T004 教训 B8：P6 需要 vision，主力模型没有，但环境里有 playwri
    prompt:
      你是 P2 阶段的 architect 子 Agent。
      角色定义：读取 docs/process/workflow-v4/assets/execution-roles/architect.md
-     输入：读取 docs/tasks/T002/P1-requirements.md 和 P1-requirements.md
+     项目约定（必读）：CLAUDE.md
+     P0-brief（必读）：docs/tasks/T002/P0-brief.md（环境约束和风险声明）
+     输入：读取 docs/tasks/T002/P1-requirements.md
      任务：为数据库迁移问题设计方案
      输出：docs/tasks/T002/P2-design.md（含 Header）
      门槛：方案覆盖 P1 列出的所有问题

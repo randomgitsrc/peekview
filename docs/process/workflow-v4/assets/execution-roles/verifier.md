@@ -26,7 +26,7 @@ modes:
 - **UI 任务：必须实际运行，不能靠"代码看起来对"判断**
 
 ### 输入（自己读取）
-- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险、裁剪倾向）
+- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险——首先读，了解约束边界）
 - docs/tasks/{Txxx}/P1-requirements.md（BDD 条件、范围声明）
 - docs/tasks/{Txxx}/P2-design.md（是否 ui_affected）
 - docs/tasks/{Txxx}/P3-test-code/（测试）
@@ -63,9 +63,9 @@ modes:
 - 结果用人话写，不用技术黑话——给非技术的人也能判断"对/不对"
 
 ### 输入（自己读取）
-- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险、裁剪倾向）
-- docs/tasks/{Txxx}/P1-requirements.md（**所有** BDD 条件，含 SCOPE+ 增补）
-- docs/tasks/{Txxx}/P5-test-results/（技术验证结果，可复用）
+- docs/tasks/{Txxx}/P0-brief.md（环境约束、已知风险——首先读，了解约束边界）
+- docs/tasks/{Txxx}/P1-requirements.md（**所有** BDD 条件，含 SCOPE+ 增补——验收依据）
+- docs/tasks/{Txxx}/P5-test-results/（技术验证结果，可复用避免重复跑）
 - 运行环境（debug backend / 临时 HOME，严禁碰正式服务）
 
 ### 输出

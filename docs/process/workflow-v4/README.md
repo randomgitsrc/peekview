@@ -141,7 +141,7 @@ P5 gate 要求「测试环境隔离正常（无 [PROD_TOUCHED]）」，是流程
 | 阶段 | 名称 | 执行角色 | 评审角色 | 门槛（进入下一阶段的条件）|
 |------|------|----------|----------|--------------------------|
 | P0 | 任务简报 | **主 Agent 亲自写**（非 subagent）| — | P0-brief.md 完成，含 debug_env + known_risks + pruning_tendency |
-| P1 | 需求基线 | analyst（需求质疑模式）| office-hours（大任务时按需）| P1-requirements.md 存在，含 BDD 验收条件；无未决 `[NEED_CONFIRM]` |
+| P1 | 需求基线 | analyst（需求质疑模式）| office-hours（大任务时按需）| P1-requirements.md 存在，含 BDD 验收条件；无未决 `[NEED_CONFIRM]`；无 `[CAPABILITY_GAP]` |
 | P2 | 方案设计 | architect | plan-eng-review / plan-ceo-review | P2-review.md 的 status == approved；P2 声明 `packages:` `domains:` `ui_affected:` `gate_commands:` |
 | P3 | 测试设计 | test-designer | gate 自检（TDD 红灯）| `scripts/check-tdd-red.sh` exit 0 |
 | P4 | 代码实现 | implementer | review / cso（按需）| `git log --oneline -1` 含 P4 commit |

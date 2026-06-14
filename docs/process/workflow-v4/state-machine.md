@@ -58,6 +58,7 @@ status: approved        # ← 门槛判定字段
 注意：所有"文件存在"判定 = 文件存在 AND 含合法 Header AND 有实质内容
      （不能只看文件存在——subagent 可能写一半崩了，留下空/半截文件）
 
+P0 --[P0-brief.md 完成，四字段自查通过（task/known_risks/env_constraints/pruning_tendency）]--> P1
 P1 --[P1-requirements.md 有效 AND 含至少一条 BDD 验收条件 AND 无未决 NEED_CONFIRM AND 无 CAPABILITY_GAP]--> P2
 P1 --[存在未决 NEED_CONFIRM]--> PAUSED（等人确认方向）
 P1 --[存在 CAPABILITY_GAP]--> PAUSED（等人补充能力/确认降级方案）
@@ -227,7 +228,8 @@ P8 是**「发布准备」**，不是「发布」。P8 gate 通过后进入 READ
 ```
 function 执行一步(task_id):
     1. 读 .state.yaml 或 active-tasks.md → 得到 (当前阶段, 重试计数)
-    2. 确认 docs/tasks/{task_id}/P0-brief.md 存在（必填字段：task/known_risks/env_constraints/pruning_tendency）
+    2. 若当前阶段 == P0：主 Agent 亲自写 P0-brief.md（见 dispatch-protocol.md 步骤0），完成后继续
+       否则：确认 docs/tasks/{task_id}/P0-brief.md 已存在（必填字段：task/known_risks/env_constraints/pruning_tendency）
        读 docs/tasks/{task_id}/ → 确认当前阶段输入文件就绪
     3. 派发当前阶段的 subagent（见 dispatch-protocol.md）
     4. subagent 返回摘要（路径 + 一句话）
