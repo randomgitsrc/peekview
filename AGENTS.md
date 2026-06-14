@@ -28,7 +28,7 @@
 
 - **`PEEKVIEW_DEBUG_MODE=1`**：所有 `PeekConfig()` 无参调用自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。pytest 通过 conftest fixture 自动设置。
 - **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` fixture 自动设置 `PEEKVIEW_STORAGE__*` env vars，所有 `PeekConfig()` 无参调用在测试中自动指向 tmp_path。
-- **不再有生产路径警告**（v0.1.58 移除）：CLI 命令操作生产数据是正常行为，不需要警告。隔离靠代码强制（conftest + debug mode），不靠人看到警告。
+- **CLI 操作生产数据是正常行为**：`peekview list`、`peekview admin stats` 等命令就是在管理生产库，不需要警告。隔离靠代码强制（conftest + debug mode），不靠人看到警告。
 
 ## 常用命令
 
@@ -53,8 +53,6 @@ make publish-npm          # 发布 MCP Server 到 npm
 
 ## 运行时注意
 
-- **Python 命令是 `python3`**，不是 `python`（本机无 `python`）
-- **测试用 `python3 -m pytest`**，不要用 `pip install` 装全局 pytest
 - **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
 - **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
 
