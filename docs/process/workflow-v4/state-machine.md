@@ -82,8 +82,12 @@ P4 --[retry>=MAX]--> PAUSED
 P5 --[pytest -q exit 0 AND failed==0 AND 测试环境隔离正常（无 PROD_TOUCHED）AND (若 ui_affected: E2E/Playwright 实跑通过)]--> P6
     （主 Agent 亲手跑 pytest 捕获 exit code，不信 unit.md 里的数字）
     （UI 任务：P5 必须实际运行 Playwright，不能跳过、不能靠"代码看起来对"判断）
-    （「测试环境隔离正常」判定：确认整个 P5 过程在 debug_env 中进行，
-      无 [PROD_TOUCHED] 标记；具体隔离检查方式由项目约定，v4 不硬编码路径。）
+    （「测试环境隔离正常」判定：
+      ① 无 [PROD_TOUCHED] 标记（被动检测）
+      ② 若项目有生产数据状态检查机制：对比测试前后生产库状态（记录数/checksum），
+         差值 > 0 说明测试写入了生产环境 → P5 失败。
+         具体检查方式由项目约定（如 conftest snapshot），v4 不硬编码路径。
+      ③ 以上均为最低要求，项目应在代码层面实现强制隔离（见 README 隔离原则）。）
     （若 P5 过程中出现任何 [PROD_TOUCHED] 标记 → 立即 PAUSED，不允许进入 P6）
 P5 --[failed>0 && retry<MAX]--> P4 (retry+1)
 P5 --[有 PROD_TOUCHED]--> PAUSED（生产环境被触碰，需人工处置后才能继续）
