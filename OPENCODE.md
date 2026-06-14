@@ -2,7 +2,7 @@
 
 轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
 
-版本：Backend v0.1.56 | MCP Server v0.8.5
+版本：Backend v0.1.57 | MCP Server v0.8.5
 
 ## 架构
 
@@ -19,6 +19,12 @@
 3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
 4. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
 5. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+
+## 环境隔离机制（代码层面保障）
+
+- **`PEEKVIEW_DEBUG_MODE=1`**：所有 `PeekConfig()` 无参调用自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。pytest 通过 conftest fixture 自动设置。
+- **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` fixture 自动设置 `PEEKVIEW_STORAGE__*` env vars，所有 `PeekConfig()` 无参调用在测试中自动指向 tmp_path。
+- **生产库写保护**：`PeekConfig()` 无参调用且指向 `~/.peekview/` 且不是 `peekview serve` 进程时，会打印醒目警告。读到警告 → 立即设 `PEEKVIEW_DEBUG_MODE=1` 或显式传 `data_dir`/`db_path`。
 
 ## 常用命令
 

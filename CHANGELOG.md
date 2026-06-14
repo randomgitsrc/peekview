@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## [0.1.57] - 2026-06-14
+
+### 新增
+
+- **`PEEKVIEW_DEBUG_MODE` 自动隔离**：`PeekConfig()` 无参调用在 `PEEKVIEW_DEBUG_MODE=1` 时自动隔离 `data_dir`/`db_path` 到 `/tmp/peekview-debug/` 并禁用 captcha。显式 env var 或 kwargs 仍然优先生效
+- **生产库写保护警告**：`PeekConfig()` 无参调用指向 `~/.peekview/` 且不是 `peekview serve` 进程时打印 WARNING 提醒，agent 读到警告应立即设 `PEEKVIEW_DEBUG_MODE=1`
+- **pytest 全局存储隔离**：`conftest.py` `isolate_config_file` fixture 自动设置 `PEEKVIEW_STORAGE__DATA_DIR`/`PEEKVIEW_STORAGE__DB_PATH` 环境变量，所有 `PeekConfig()` 无参调用在测试中自动指向 tmp_path
+
+### 修复
+
+- **Debug 服务器 captcha 配置泄漏**：`scripts/dev-server.sh` 未显式设置 `PEEKVIEW_AUTH__CAPTCHA_ENABLED=false`，导致 debug 服务器读取生产 `~/.peekview/config.yaml` 的 `captcha_enabled: true`，E2E 测试 register 返回 401
+
+
 ## [0.1.56] - 2026-06-13
 
 ### 新增

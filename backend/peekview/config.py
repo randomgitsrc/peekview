@@ -329,6 +329,20 @@ class PeekAuth(BaseSettings):
         return v
 
 
+DEBUG_DATA_DIR = Path("/tmp/peekview-debug/data")
+DEBUG_DB_PATH = Path("/tmp/peekview-debug/peekview.db")
+
+
+def _is_serve_process() -> bool:
+    """Check if the current process is a 'peekview serve' production server."""
+    import sys
+    try:
+        cmdline = " ".join(sys.argv)
+        return "peekview serve" in cmdline or "uvicorn peekview.main" in cmdline
+    except Exception:
+        return False
+
+
 class PeekConfig(BaseSettings):
     """Main configuration class.
 
@@ -337,6 +351,10 @@ class PeekConfig(BaseSettings):
     2. Constructor arguments
     3. Config file (~/.peekview/config.yaml)
     4. Default values - lowest priority
+
+    Debug mode: When PEEKVIEW_DEBUG_MODE=1 is set, storage defaults are automatically
+    redirected to /tmp/peekview-debug/ to prevent accidental writes to production data.
+    This affects only the default values — explicit env vars or constructor args still win.
 
     Note: Use __ separator for nested config (e.g., storage.data_dir -> PEEKVIEW_STORAGE__DATA_DIR)
     """
@@ -354,48 +372,94 @@ class PeekConfig(BaseSettings):
     logging: PeekLogging = Field(default_factory=PeekLogging)
     remote: PeekRemote = Field(default_factory=PeekRemote)
     auth: PeekAuth = Field(default_factory=PeekAuth)
+    debug_mode: bool = Field(
+        default=False,
+        description="Debug mode: isolates storage to /tmp/peekview-debug/ to protect production data",
+    )
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize config with file overrides (env vars have highest priority)."""
-        # Load from config file first (lowest priority)
-        file_config = load_config_file()
+        import os as _os
+        import logging as _logging
 
-        # Merge file config into kwargs, but skip keys that have env var overrides
-        # for nested sections (e.g., PEEKVIEW_AUTH__ALLOW_REGISTRATION)
-        import os
+        is_debug = _os.environ.get("PEEKVIEW_DEBUG_MODE", "").strip() in ("1", "true", "yes")
+
+        if is_debug and "debug_mode" not in kwargs:
+            kwargs["debug_mode"] = True
+
+        if kwargs.get("debug_mode") and "storage" not in kwargs:
+            has_storage_env = (
+                "PEEKVIEW_STORAGE__DATA_DIR" in _os.environ
+                or "PEEKVIEW_STORAGE__DB_PATH" in _os.environ
+            )
+            if not has_storage_env:
+                kwargs["storage"] = PeekStorage(
+                    data_dir=DEBUG_DATA_DIR,
+                    db_path=DEBUG_DB_PATH,
+                )
+
+        if kwargs.get("debug_mode") and "auth" not in kwargs:
+            has_auth_env = any(
+                v.startswith("PEEKVIEW_AUTH__")
+                for v in _os.environ
+            )
+            if not has_auth_env:
+                kwargs["auth"] = PeekAuth(captcha_enabled=False)
+
+        _warn_user_kwarg = ("storage" in kwargs or "db_path" in kwargs or "data_dir" in kwargs)
+        _bare_call = not _warn_user_kwarg
+
+        file_config = load_config_file()
 
         env_prefix = self.model_config.get("env_prefix", "")
         env_delim = self.model_config.get("env_nested_delimiter", "__")
 
-        # Filter out None values (empty YAML sections like "auth:" with no content)
         file_config = {k: v for k, v in file_config.items() if v is not None}
 
-        # Check which file config keys have nested env var overrides
         for key, value in file_config.items():
             if key in kwargs:
                 continue
 
-            # Check if any nested value has env var override
             skip_key = False
             if isinstance(value, dict):
                 for nested_key in value.keys():
                     env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
-                    if env_var in os.environ:
+                    if env_var in _os.environ:
                         skip_key = True
                         break
 
             if skip_key:
-                # Merge env var overrides into the nested dict
                 merged_value = value.copy()
                 for nested_key in value.keys():
                     env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
-                    if env_var in os.environ:
-                        merged_value[nested_key] = os.environ[env_var]
+                    if env_var in _os.environ:
+                        merged_value[nested_key] = _os.environ[env_var]
                 kwargs[key] = merged_value
             else:
                 kwargs[key] = value
 
         super().__init__(**kwargs)
+
+        if not self.debug_mode and _bare_call:
+            prod_home = Path.home() / ".peekview"
+            try:
+                is_prod_path = (
+                    self.storage.data_dir.resolve().is_relative_to(prod_home.resolve())
+                    or self.storage.db_path.resolve().is_relative_to(prod_home.resolve())
+                )
+            except (ValueError, OSError):
+                is_prod_path = False
+
+            if is_prod_path and not _is_serve_process():
+                _cfg_log = _logging.getLogger("peekview.config")
+                _cfg_log.warning(
+                    "⚠ PeekConfig() points to PRODUCTION paths "
+                    "(data_dir=%s, db_path=%s). "
+                    "If this is a test/debug operation, set PEEKVIEW_DEBUG_MODE=1. "
+                    "If intentional, ignore this warning.",
+                    self.storage.data_dir,
+                    self.storage.db_path,
+                )
 
     @property
     def data_dir(self) -> Path:

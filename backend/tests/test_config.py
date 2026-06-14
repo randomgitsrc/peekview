@@ -76,8 +76,10 @@ class TestPeekLimits:
 class TestPeekStorage:
     """Test PeekStorage configuration."""
 
-    def test_default_paths(self):
+    def test_default_paths(self, monkeypatch):
         """Default paths use home directory."""
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
         storage = PeekStorage()
         assert storage.data_dir == Path.home() / ".peekview" / "data"
         assert storage.db_path == Path.home() / ".peekview" / "peekview.db"
@@ -88,8 +90,10 @@ class TestPeekStorage:
         assert storage.data_dir == Path.home() / "custom" / "data"
         assert storage.db_path == Path.home() / "custom" / "peekview.db"
 
-    def test_ignored_dirs(self):
+    def test_ignored_dirs(self, monkeypatch):
         """Default ignored directories."""
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
         storage = PeekStorage()
         assert ".git" in storage.ignored_dirs
         assert "__pycache__" in storage.ignored_dirs
@@ -188,8 +192,10 @@ class TestEnvironmentVariables:
 class TestLocalPathAllowlist:
     """Test local_path allowlist functionality."""
 
-    def test_no_allowlist_denies_all(self):
+    def test_no_allowlist_denies_all(self, monkeypatch):
         """Empty allowlist denies all local paths."""
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
         config = PeekConfig()
         assert not config.is_local_path_allowed(Path("/tmp/test.py"))
 
@@ -279,3 +285,38 @@ class TestConfigLimitsEndpoint:
             assert resp.status_code == 200
             data = resp.json()
             assert data["default_expires_in"] == "7d"
+
+
+class TestProductionPathWarning:
+    """Test that bare PeekConfig() calls warn when pointing at production paths."""
+
+    def test_bare_call_warns_for_production(self, monkeypatch, caplog):
+        """Bare PeekConfig() pointing at ~/.peekview/ should log a warning."""
+        monkeypatch.delenv("PEEKVIEW_DEBUG_MODE", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
+        import logging
+        with caplog.at_level(logging.WARNING, logger="peekview.config"):
+            PeekConfig()
+        assert any("PRODUCTION paths" in r.message for r in caplog.records)
+
+    def test_debug_mode_no_warning(self, monkeypatch, caplog):
+        """PEEKVIEW_DEBUG_MODE=1 should suppress the warning and isolate paths."""
+        monkeypatch.setenv("PEEKVIEW_DEBUG_MODE", "1")
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
+        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
+        import logging
+        with caplog.at_level(logging.WARNING, logger="peekview.config"):
+            config = PeekConfig()
+        assert not any("PRODUCTION paths" in r.message for r in caplog.records)
+        assert str(config.data_dir).startswith("/tmp/peekview-debug")
+
+    def test_explicit_storage_no_warning(self, monkeypatch, caplog, tmp_path):
+        """Explicit storage kwargs should not trigger the warning."""
+        monkeypatch.delenv("PEEKVIEW_DEBUG_MODE", raising=False)
+        import logging
+        data_dir = tmp_path / "data"
+        db_path = tmp_path / "test.db"
+        with caplog.at_level(logging.WARNING, logger="peekview.config"):
+            PeekConfig(storage=PeekStorage(data_dir=data_dir, db_path=db_path))
+        assert not any("PRODUCTION paths" in r.message for r in caplog.records)

@@ -26,10 +26,16 @@ def isolate_config_file(monkeypatch, tmp_path):
     """Isolate tests from user's config file (~/.peekview/config.yaml).
 
     This prevents tests from reading or writing the user's real config.
+    Also isolates storage paths to prevent accidental writes to production data.
     """
     test_config_path = tmp_path / ".peekview" / "config.yaml"
     test_config_path.parent.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr("peekview.config.CONFIG_FILE", test_config_path)
+
+    test_data_dir = tmp_path / "data"
+    test_db_path = tmp_path / "test.db"
+    monkeypatch.setenv("PEEKVIEW_STORAGE__DATA_DIR", str(test_data_dir))
+    monkeypatch.setenv("PEEKVIEW_STORAGE__DB_PATH", str(test_db_path))
 
 
 def pytest_configure(config):
