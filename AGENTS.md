@@ -103,15 +103,27 @@ make publish-npm          # 发布 MCP Server 到 npm
 
 ## 走 workflow-v4（非平凡任务）
 
-非平凡任务必走 v4（`docs/process/workflow-v4/`），主 Agent 派发 subagent，自己只读状态/派发/验门槛/更新状态：
+**开始前必读 `docs/tasks/active-tasks.md`**，无进行中任务再启动新任务。
 
-- **P1 需求基线**：先质疑需求、识别隐含依赖、用 BDD（Given/When/Then）写验收条件。需求明确就自走，拿不准方向才标 `[NEED_CONFIRM]` 问人
-- **P2 设计**必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 会导致多包发布漏 bump）
-- **任何阶段发现新隐含需求** → 标 `[SCOPE+]` → 增补 P1 基线 + 定向回补（不全重跑）
-- **P6 验收**：BDD 条件逐条实跑，翻译成人话。UI 必须 Playwright 实跑+截图，不接受"代码看起来对"
-- **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告
-- **微/小任务可裁剪**阶段，但裁剪要写理由，且 P1 需求基线（哪怕一句话）不能跳
-- 开始前必读 `docs/tasks/active-tasks.md`
+非平凡任务走 v4（`docs/process/workflow-v4/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。
+
+**阶段链 P0-P8（默认全走，裁剪须有理由）**：
+- **P0** 主 Agent 亲自写 `P0-brief.md`：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向
+- **P1** 需求基线：质疑需求、识别隐含依赖、BDD 验收条件（Given/When/Then）
+- **P2** 方案设计：必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`（**方案明确才可跳 P2，不是方案不明确才做**）
+- **P3** TDD 测试：**默认保留**，仅纯文档/配置或 ≤3 行且有现成覆盖时才跳
+- **P4** 代码实现
+- **P5** 技术验证：pytest 全绿 + 测试环境隔离正常
+- **P6** 验收：**默认保留**，BDD 逐条实跑，翻译成人话；UI 必须 Playwright 实跑+截图
+- **P7** 一致性检查（多文件改动时）
+- **P8** 发布准备：每个声明的 package 各自 bump + CHANGELOG
+
+**关键约束**：
+- **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告（`[SCOPE_GAP]`/✅ 仅供参考）
+- **[SCOPE+]**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补（不全重跑）
+- **[NEED_CONFIRM]**：需求明确就自走；拿不准方向才停下问人
+- **[CAPABILITY_GAP]**：P1 检测能力缺口，三态（available/supplementable/GAP），仅 GAP 才停
+- **裁剪风险**：涉及 schema 变更/安全/多端 → P6 不可跳；「任务简单」不是合法裁剪理由
 
 ## 详细参考
 
