@@ -63,6 +63,16 @@
           >
             Download
           </button>
+          <a
+            v-if="entryStore.currentEntry"
+            class="btn btn-sm"
+            :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Raw content — for Agent/API access"
+          >
+            Raw
+          </a>
           <button
             v-if="entryStore.canPack && entryStore.currentEntry"
             class="btn btn-sm"
@@ -214,6 +224,16 @@
       >
         Download
       </button>
+      <a
+        v-if="entryStore.currentEntry"
+        class="btn btn-sm"
+        :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Raw content — for Agent/API access"
+      >
+        Raw
+      </a>
       <button
         v-if="entryStore.canPack && entryStore.currentEntry"
         class="btn btn-sm"
@@ -577,6 +597,19 @@ onMounted(() => {
 watch(() => props.slug, (newSlug) => {
   entryStore.loadEntry(newSlug)
 })
+
+// Inject <link rel="alternate"> for machine-readable raw access
+watch(() => entryStore.currentEntry, (entry) => {
+  document.querySelectorAll('link[data-peekview-raw]').forEach(el => el.remove())
+  if (entry) {
+    const link = document.createElement('link')
+    link.rel = 'alternate'
+    link.type = 'application/json'
+    link.href = `/api/v1/entries/${entry.slug}/raw`
+    link.setAttribute('data-peekview-raw', '1')
+    document.head.appendChild(link)
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>

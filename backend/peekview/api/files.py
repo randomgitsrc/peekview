@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from peekview.auth import get_current_user
 from peekview.database import get_engine
 from peekview.exceptions import NotFoundError
-from peekview.models import API_KEY_PREFIX, Entry, File, User
+from peekview.models import API_KEY_PREFIX, Entry, EntryRawResponse, File, RawFileItem, User
 from peekview.services.entry_service import EntryService, get_entry_service
 from peekview.storage import StorageManager
 
@@ -177,4 +177,109 @@ async def get_file_content(
     return Response(
         content=content,
         media_type=content_type,
+    )
+
+
+@router.get("/{slug}/raw", response_class=Response)
+async def get_entry_raw(
+    slug: str,
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+):
+    """Get entry raw content as structured JSON.
+
+    Returns all file contents in a single response.
+    Text files: content field contains UTF-8 string.
+    Binary files: content=null, file_url points to /files/{id}/content.
+
+    Public entries require no auth. Private entries require API Key.
+    """
+    import json as _json
+
+    config = request.app.state.config
+    engine = get_engine(config)
+    storage = StorageManager(config=config)
+    service = _get_service(request)
+
+    # Auth + visibility — reuse existing logic (returns 404 for private/missing)
+    global_key_auth = _is_global_api_key_auth(request, current_user)
+    if global_key_auth:
+        with Session(engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+            entry_id = entry.id
+            entry_slug = entry.slug
+            entry_summary = entry.summary
+            entry_tags = entry.tags or []
+            entry_created_at = entry.created_at
+    else:
+        current_user_id = current_user.id if current_user else None
+        is_admin = current_user.is_admin if current_user else False
+        entry_resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+        entry_id = entry_resp.id
+        entry_slug = entry_resp.slug
+        entry_summary = entry_resp.summary
+        entry_tags = entry_resp.tags
+        entry_created_at = entry_resp.created_at
+
+    # Build base URL for file_url and raw_url
+    base = str(request.base_url).rstrip("/")
+    raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
+
+    # Read all files
+    with Session(engine) as session:
+        db_files = session.exec(
+            select(File).where(File.entry_id == entry_id)
+        ).all()
+
+    raw_files: list[RawFileItem] = []
+    for f in db_files:
+        if f.is_binary:
+            raw_files.append(RawFileItem(
+                id=f.id,
+                filename=f.filename,
+                path=f.path,
+                language=f.language,
+                is_binary=True,
+                size=f.size,
+                content=None,
+                content_encoding=None,
+                file_url=f"{base}/api/v1/entries/{entry_slug}/files/{f.id}/content",
+            ))
+        else:
+            raw_bytes = storage.read_file(entry_id, f.filename, f.path)
+            # Decode with replace to avoid crashing on edge-case byte sequences
+            content_str = raw_bytes.decode("utf-8", errors="replace")
+            raw_files.append(RawFileItem(
+                id=f.id,
+                filename=f.filename,
+                path=f.path,
+                language=f.language,
+                is_binary=False,
+                size=f.size,
+                content=content_str,
+                content_encoding="utf-8",
+                file_url=None,
+            ))
+
+    result = EntryRawResponse(
+        slug=entry_slug,
+        summary=entry_summary,
+        tags=entry_tags,
+        created_at=entry_created_at,
+        files=raw_files,
+        raw_url=raw_url,
+    )
+
+    # Serialize with </script> defense to prevent XSS if response is ever embedded in HTML
+    serialized = _json.dumps(
+        result.model_dump(mode="json"),
+        ensure_ascii=False,
+        default=str,
+    ).replace("</", "<\\/")
+
+    return Response(
+        content=serialized,
+        media_type="application/json; charset=utf-8",
     )

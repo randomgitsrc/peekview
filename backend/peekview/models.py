@@ -403,6 +403,29 @@ class EntryListItem(SQLModel):
     updated_at: datetime
 
 
+class RawFileItem(SQLModel):
+    """Single file raw content for /raw endpoint."""
+    id: int
+    filename: str
+    path: str | None = None
+    language: str | None = None
+    is_binary: bool
+    size: int
+    content: str | None = None
+    content_encoding: str | None = None
+    file_url: str | None = None
+
+
+class EntryRawResponse(SQLModel):
+    """Response for GET /api/v1/entries/{slug}/raw."""
+    slug: str
+    summary: str
+    tags: list[str]
+    created_at: datetime
+    files: list[RawFileItem]
+    raw_url: str
+
+
 class EntryListResponse(SQLModel):
     """Schema for paginated entry list."""
 
