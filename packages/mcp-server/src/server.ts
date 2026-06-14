@@ -7,17 +7,15 @@ import { dirname, join } from 'path';
 import cors from 'cors';
 import express from 'express';
 import { AsyncLocalStorage } from 'async_hooks';
-import { randomUUID } from 'crypto';
 import { pino } from 'pino';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { PeekViewClient } from './client.js';
-import type { ServerConfig, SessionContext, SessionInfo, ToolDefinition } from './types.js';
+import type { ServerConfig, SessionContext, ToolDefinition } from './types.js';
 import { toSDKResult } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -92,28 +90,7 @@ export function createMCPServer(tools: ToolDefinition[]): Server {
 
 const sessionContext = new AsyncLocalStorage<SessionContext>();
 
-const sessions = new Map<string, SessionInfo>();
 
-const SESSION_IDLE_TIMEOUT = 30 * 60 * 1000;
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
-
-let cleanupStarted = false;
-
-function startSessionCleanup() {
-  if (cleanupStarted) return;
-  cleanupStarted = true;
-  const timer = setInterval(() => {
-    const now = Date.now();
-    for (const [id, entry] of sessions) {
-      if (now - entry.lastActivity > SESSION_IDLE_TIMEOUT) {
-        entry.transport.close?.();
-        sessions.delete(id);
-        logger.info({ sessionId: id }, 'Session idle timeout, cleaned up');
-      }
-    }
-  }, CLEANUP_INTERVAL);
-  timer.unref();
-}
 
 async function authenticate(
   req: express.Request,
@@ -169,8 +146,6 @@ export function createExpressApp(
 ): express.Application {
   const app = express();
 
-  startSessionCleanup();
-
   const corsOrigins = process.env.MCP_CORS_ORIGINS?.split(',') || config.corsOrigins;
   app.use(cors({
     origin: corsOrigins,
@@ -194,81 +169,34 @@ export function createExpressApp(
       return;
     }
 
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-
-    // Existing session: reuse transport
-    if (sessionId && sessions.has(sessionId)) {
-      const entry = sessions.get(sessionId)!;
-      entry.lastActivity = Date.now();
-      return sessionContext.run(
-        { userToken: entry.userToken, userId: entry.userId, username: entry.username },
-        () => entry.transport.handleRequest(req, res, req.body)
-      );
-    }
-
-    // New session: must be initialize request
-    if (!sessionId && isInitializeRequest(req.body)) {
-      const auth = await authenticate(req, client);
-      if (!auth.ok) {
-        res.status(auth.status).json({ error: auth.error });
-        return;
-      }
-
-      const ctx: SessionContext = {
-        userToken: auth.userToken,
-        userId: auth.userId,
-        username: auth.username,
-      };
-
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        enableJsonResponse: true,
-      });
-
-      transport.onclose = () => {
-        if (transport.sessionId) {
-          sessions.delete(transport.sessionId);
-          logger.info({ sessionId: transport.sessionId }, 'Session closed');
-        }
-      };
-
-      const server = createMCPServer(tools);
-      await server.connect(transport);
-
-      // Handle the initialize request within context
-      // StreamableHTTPServerTransport sets sessionId during handleRequest for initialize
-      await sessionContext.run(ctx, () =>
-        transport.handleRequest(req, res, req.body)
-      );
-
-      // Register session after handleRequest (sessionId is set by SDK during initialize processing)
-      if (transport.sessionId) {
-        sessions.set(transport.sessionId, {
-          transport,
-          server,
-          ...ctx,
-          lastActivity: Date.now(),
-        });
-      } else {
-        logger.error('Session not registered: transport.sessionId is empty after initialize');
-      }
-
+    // Stateless mode: authenticate on every request
+    const auth = await authenticate(req, client);
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
       return;
     }
 
-    // Session ID provided but session not found — expired or server restarted
-    // Per MCP spec: server MUST respond with 404 when session is terminated,
-    // client MUST re-initialize upon receiving 404.
-    if (sessionId && !sessions.has(sessionId)) {
-      res.status(404).json({ error: 'Session not found or expired. Client must re-initialize.' });
-      return;
-    }
+    const ctx: SessionContext = {
+      userToken: auth.userToken,
+      userId: auth.userId,
+      username: auth.username,
+    };
 
-    // No session ID and not an initialize request — protocol error
-    if (!sessionId && !isInitializeRequest(req.body)) {
-      res.status(400).json({ error: 'No valid session or not an initialize request' });
-      return;
-    }
+    // Create a fresh transport per request — no session ID assigned
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+
+    const server = createMCPServer(tools);
+    await server.connect(transport);
+
+    await sessionContext.run(ctx, () =>
+      transport.handleRequest(req, res, req.body)
+    );
+
+    // Explicit cleanup (transport is ephemeral in stateless mode)
+    try { await transport.close(); } catch { /* already closed */ }
   });
 
   // GET /mcp — Server-initiated notifications not supported
@@ -277,22 +205,9 @@ export function createExpressApp(
     res.status(405).json({ error: 'Server-initiated notifications not supported. Use POST /mcp for all client requests.' });
   });
 
-  // DELETE /mcp — session termination
-  app.delete('/mcp', async (req, res) => {
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    if (sessionId && sessions.has(sessionId)) {
-      const entry = sessions.get(sessionId)!;
-      try {
-        await entry.transport.close();
-      } catch (e) {
-        logger.warn({ sessionId, error: e }, 'Error closing transport during DELETE');
-      }
-      sessions.delete(sessionId);
-      logger.info({ sessionId }, 'Session terminated via DELETE');
-      res.status(200).json({ ok: true });
-    } else {
-      res.status(404).json({ error: 'Session not found' });
-    }
+  // DELETE /mcp — stateless: no session to terminate, acknowledge gracefully
+  app.delete('/mcp', async (_req, res) => {
+    res.status(200).json({ ok: true });
   });
 
   // Health check
@@ -336,4 +251,4 @@ export function createExpressApp(
   return app;
 }
 
-export { sessionContext, sessions, logger };
+export { sessionContext, logger };

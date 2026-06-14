@@ -137,8 +137,8 @@ describe('Streamable HTTP Server', () => {
     });
   });
 
-  describe('POST /mcp - Initialize + session', () => {
-    it('should successfully initialize with valid pv_ token and return mcp-session-id', async () => {
+  describe('POST /mcp - Stateless mode', () => {
+    it('should successfully initialize and NOT return mcp-session-id (stateless)', async () => {
       const res = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
@@ -146,13 +146,12 @@ describe('Streamable HTTP Server', () => {
         .send(INIT_REQUEST);
 
       expect(res.status).toBe(200);
-      expect(res.headers['mcp-session-id']).toBeDefined();
+      expect(res.headers['mcp-session-id']).toBeUndefined();
       expect(res.body.jsonrpc).toBe('2.0');
-      expect(res.body.id).toBe(1);
       expect(res.body.result).toBeDefined();
     });
 
-    it('should reject non-initialize request without session-id', async () => {
+    it('should handle tools/list without prior initialize (stateless)', async () => {
       const res = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
@@ -162,64 +161,55 @@ describe('Streamable HTTP Server', () => {
           id: 2,
           method: 'tools/list',
           params: {},
-        })
-        .expect(400);
-      expect(res.body.error).toContain('initialize');
+        });
+      // Stateless: each request is independent, tools/list should work
+      expect(res.status).toBe(200);
     });
 
-    it('should return 404 for request with unknown session-id', async () => {
-      const res = await request(app)
-        .post('/mcp')
-        .set('Accept', 'application/json, text/event-stream')
-        .set('mcp-session-id', 'non-existent-session-id')
-        .send({
-          jsonrpc: '2.0',
-          id: 2,
-          method: 'tools/list',
-          params: {},
-        })
-        .expect(404);
-      expect(res.body.error).toContain('Session not found');
-    });
-  });
-
-  describe('DELETE /mcp - Session termination', () => {
-    it('should return 404 for non-existent session', async () => {
-      const res = await request(app)
-        .delete('/mcp')
-        .set('mcp-session-id', 'non-existent-session-id')
-        .expect(404);
-      expect(res.body.error).toContain('Session not found');
-    });
-
-    it('should terminate a valid session via DELETE', async () => {
-      const initRes = await request(app)
+    it('should authenticate on every request independently', async () => {
+      // First request - valid
+      const res1 = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
         .set('Authorization', `Bearer ${VALID_TOKEN}`)
         .send(INIT_REQUEST);
+      expect(res1.status).toBe(200);
 
-      expect(initRes.status).toBe(200);
-      const sessionId = initRes.headers['mcp-session-id'];
-      expect(sessionId).toBeDefined();
-
-      const delRes = await request(app)
-        .delete('/mcp')
-        .set('mcp-session-id', sessionId)
-        .expect(200);
-      expect(delRes.body.ok).toBe(true);
-
-      await request(app)
+      // Second request - invalid key (no session to reuse)
+      const res2 = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
-        .set('mcp-session-id', sessionId)
-        .send({
-          jsonrpc: '2.0',
-          id: 2,
-          method: 'tools/list',
-          params: {},
-        })
-        .expect(404);
+        .set('Authorization', `Bearer ${INVALID_TOKEN}`)
+        .send(INIT_REQUEST);
+      expect(res2.status).toBe(401);
+    });
+
+    it('should ignore stale mcp-session-id header (stateless)', async () => {
+      const res = await request(app)
+        .post('/mcp')
+        .set('Accept', 'application/json, text/event-stream')
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
+        .set('mcp-session-id', 'stale-session-id-from-previous-server-instance')
+        .send(INIT_REQUEST);
+      // Stateless: session-id header is ignored, request succeeds
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('DELETE /mcp - Stateless acknowledgement', () => {
+    it('should return 200 regardless of session-id (stateless)', async () => {
+      const res = await request(app)
+        .delete('/mcp')
+        .set('mcp-session-id', 'any-session-id')
+        .expect(200);
+      expect(res.body.ok).toBe(true);
+    });
+
+    it('should return 200 for DELETE without session-id header', async () => {
+      const res = await request(app)
+        .delete('/mcp')
+        .expect(200);
+      expect(res.body.ok).toBe(true);
     });
   });
 

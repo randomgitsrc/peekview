@@ -57,14 +57,6 @@ export interface SessionContext {
   username: string;
 }
 
-export interface SessionInfo {
-  transport: StreamableHTTPServerTransport;
-  server: Server;
-  userToken: string;
-  userId: number;
-  username: string;
-  lastActivity: number;
-}
 
 export type ToolHandler = (args: unknown, context: SessionContext) => Promise<ToolResult>;
 
