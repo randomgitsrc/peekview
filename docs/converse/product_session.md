@@ -34,8 +34,8 @@
 
 每次新会话主动读取以下文件，防止信息不对称：
 
-- `CLAUDE.md` — 项目约定、架构、DI 模式、安全规则
-- `OPENCODE.md` — 铁律、常用命令速览
+- `AGENTS.md` — 铁律、常用命令速览、项目结构
+- `CLAUDE.md` — 项目约定、架构、DI 模式、安全规则、完整配置
 - `INDEX.md` — 功能实现进度、文档清单
 - `README.md` — 产品定义、技术栈、配置
 - `docs/tasks/active-tasks.md` — 当前任务看板（Txxx/状态/阶段/依赖）
@@ -44,12 +44,15 @@
 
 ## 铁律（必须遵守）
 
-1. **严禁** `uvicorn` 直接启动。用 `make debug-start`（port 8888，独立数据 `/tmp/peekview-debug/`）
-2. **严禁** 停止/触碰用户的 pipx 正式服务（:8080）
-3. **严禁** 测试碰真实 `~/.peekview/`；MCP 测试用临时 HOME
-4. 前端路由在 `src/router.ts`（不是 `src/router/index.ts`）
-5. 发布前必读 `docs/process/release.md`
-6. **严禁未经用户确认直接操作生产数据** — 任何对生产 DB / 生产文件系统的写操作（包括清理、删除、修改），必须先备份、列出影响范围、让用户确认后才可执行。绝不可自行判断"这些数据不需要"就动手删
+1. **严禁** `uvicorn` 直接启动。用 `make debug`（`127.0.0.1:8888`，独立数据目录 `/tmp/peekview-debug/`）
+2. **严禁** 停止/触碰用户的 pipx 正式服务（`:8080`）
+3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
+4. **严禁** 开发/测试/发布流程中写生产数据库（`~/.peekview/peekview.db`）；测试必须用临时目录或 debug 模式
+5. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
+6. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+7. 改代码前先读周围上下文，理解代码风格和现有库选择
+8. 不加注释（除非被要求）
+9. 完成任务后必须跑 lint/typecheck
 
 ## 环境隔离铁律（T005/T006 教训，2026-06-13 增补）
 

@@ -55,9 +55,6 @@ DOC_SLOTS: list[Slot] = [
     ("CLAUDE.md", rf"\*\*Current Version:\*\* v{SEMVER}", "peekview", 0),
     ("CLAUDE.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),
     ("CLAUDE.md", rf"Architecture \(v{SEMVER}\)", "mcp_server", 0),
-    # OPENCODE.md
-    ("OPENCODE.md", rf"Backend v{SEMVER}", "peekview", 0),
-    ("OPENCODE.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),
     # INDEX.md
     ("INDEX.md", rf"Backend/Frontend v{SEMVER}", "peekview", 0),
     ("INDEX.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),

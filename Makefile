@@ -318,7 +318,7 @@ sync-version-docs:
 	@python3 scripts/sync_versions.py
 	@echo ""
 	@echo "提示：如需将更改加入暂存区："
-	@echo "  git add README.md CLAUDE.md OPENCODE.md INDEX.md CHANGELOG.md docs/roadmap/improvement-backlog.md"
+	@echo "  git add README.md CLAUDE.md AGENTS.md INDEX.md CHANGELOG.md docs/roadmap/improvement-backlog.md"
 
 # 查看当前变更需要更新哪些文档
 doc-checklist:

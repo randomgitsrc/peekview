@@ -44,18 +44,18 @@
 ## 当前项目上下文
 
 每次新会话主动读取以下文件获取最新状态：
-- `CLAUDE.md` — 项目约定、架构、命令
-- `OPENCODE.md` — 新会话速览
+- `AGENTS.md` — 铁律、常用命令速览、项目结构
+- `CLAUDE.md` — 项目约定、架构、命令、完整配置
 - `INDEX.md` — 实现进度 & 文档清单
 - `README.md` — 用户面向文档
 - `docs/tasks/active-tasks.md` — 当前任务看板
 
 ## 铁律
 
-1. **严禁** `uvicorn` 直接启动。用 `make debug-start`（port 8888，独立数据 `/tmp/peekview-debug/`）
-2. **严禁** 停止/触碰用户的 pipx 正式服务（:8080）
-3. **严禁** 测试碰真实 `~/.peekview/`；MCP 测试用临时 HOME
-4. **严禁未经用户确认直接操作生产数据** — 任何对生产 DB / 生产文件系统的写操作（包括清理、删除、修改），必须先备份、列出影响范围、让用户确认后才可执行
+1. **严禁** `uvicorn` 直接启动。用 `make debug`（`127.0.0.1:8888`，独立数据目录 `/tmp/peekview-debug/`）
+2. **严禁** 停止/触碰用户的 pipx 正式服务（`:8080`）
+3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
+4. **严禁** 开发/测试/发布流程中写生产数据库（`~/.peekview/peekview.db`）；测试必须用临时目录或 debug 模式
 
 ## 调试辅助
 
