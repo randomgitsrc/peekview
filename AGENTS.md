@@ -2,8 +2,6 @@
 
 轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
 
-版本：Backend v0.1.58 | MCP Server v0.8.5
-
 ## 架构
 
 | 组件 | 路径 | 栈 |
@@ -12,12 +10,36 @@
 | Frontend | `frontend-v3/` | Vue 3 + Vite + TypeScript + Shiki |
 | MCP Server | `packages/mcp-server/` | Node.js/TS + Streamable HTTP |
 
+```
+backend/peekview/
+├── main.py           # App factory, DI via app.state
+├── models.py         # SQLModel Entry/File/User/ApiKey + Pydantic schemas
+├── config.py         # Pydantic Settings (PEEKVIEW_* env vars)
+├── database.py       # SQLite init, WAL, FTS5, migrations
+├── auth.py           # JWT + bcrypt + API key verification
+├── storage.py        # Filesystem operations (atomic writes)
+├── cli.py            # Click CLI (serve/create/get/list/delete/user/login/apikey/admin)
+├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config
+└── services/         # Business logic: entry_service, file_service, apikey_service, admin_service
+
+frontend-v3/src/
+├── router.ts         # 路由（不是 src/router/index.ts）
+├── views/            # EntryListView, EntryDetailView, ApiKeyListView
+└── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
+
+packages/mcp-server/src/
+├── server.ts         # MCP Server setup, Streamable HTTP transport
+├── client.ts         # PeekView API client
+├── tools/            # create_entry, publish_files, get/list/delete_entry
+└── config/           # Env > file > default, merge logic
+```
+
 ## 铁律（违反必出事）
 
 1. **严禁** `uvicorn` 直接启动。用 `make debug`（`127.0.0.1:8888`，独立数据目录 `/tmp/peekview-debug/`）
 2. **严禁** 停止/触碰用户的 pipx 正式服务（`:8080`）
 3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
-4. **严禁** 对生产数据库做任何写操作（包括 DELETE、UPDATE）除非用户明确要求，且必须先备份再操作
+4. **严禁** 开发/测试/发布流程中写生产数据库（`~/.peekview/peekview.db`）；测试必须用临时目录或 debug 模式
 5. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
 6. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
 7. 改代码前先读周围上下文，理解代码风格和现有库选择
@@ -28,7 +50,8 @@
 
 - **`PEEKVIEW_DEBUG_MODE=1`**：所有 `PeekConfig()` 无参调用自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。pytest 通过 conftest fixture 自动设置。
 - **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` fixture 自动设置 `PEEKVIEW_STORAGE__*` env vars，所有 `PeekConfig()` 无参调用在测试中自动指向 tmp_path。
-- **CLI 操作生产数据是正常行为**：`peekview list`、`peekview admin stats` 等命令就是在管理生产库，不需要警告。隔离靠代码强制（conftest + debug mode），不靠人看到警告。
+- **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
+- **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
 
 ## 常用命令
 
@@ -50,11 +73,6 @@ make build-mcp            # MCP 构建
 make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 make publish-npm          # 发布 MCP Server 到 npm
 ```
-
-## 运行时注意
-
-- **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
-- **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
 
 ## 技术要点
 
@@ -101,5 +119,4 @@ make publish-npm          # 发布 MCP Server 到 npm
 - 开发流程：`docs/process/workflow-v4/README.md`（P1-P8，需求基线+验收闭环）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
-- 管理能力计划：`docs/plans/admin-capability-improvements.md`
 - 改善清单：`docs/roadmap/improvement-backlog.md`
