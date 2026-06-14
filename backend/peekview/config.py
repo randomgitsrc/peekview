@@ -333,16 +333,6 @@ DEBUG_DATA_DIR = Path("/tmp/peekview-debug/data")
 DEBUG_DB_PATH = Path("/tmp/peekview-debug/peekview.db")
 
 
-def _is_serve_process() -> bool:
-    """Check if the current process is a 'peekview serve' production server."""
-    import sys
-    try:
-        cmdline = " ".join(sys.argv)
-        return "peekview serve" in cmdline or "uvicorn peekview.main" in cmdline
-    except Exception:
-        return False
-
-
 class PeekConfig(BaseSettings):
     """Main configuration class.
 
@@ -380,7 +370,6 @@ class PeekConfig(BaseSettings):
     def __init__(self, **kwargs: Any) -> None:
         """Initialize config with file overrides (env vars have highest priority)."""
         import os as _os
-        import logging as _logging
 
         is_debug = _os.environ.get("PEEKVIEW_DEBUG_MODE", "").strip() in ("1", "true", "yes")
 
@@ -405,9 +394,6 @@ class PeekConfig(BaseSettings):
             )
             if not has_auth_env:
                 kwargs["auth"] = PeekAuth(captcha_enabled=False)
-
-        _warn_user_kwarg = ("storage" in kwargs or "db_path" in kwargs or "data_dir" in kwargs)
-        _bare_call = not _warn_user_kwarg
 
         file_config = load_config_file()
 
@@ -439,27 +425,6 @@ class PeekConfig(BaseSettings):
                 kwargs[key] = value
 
         super().__init__(**kwargs)
-
-        if not self.debug_mode and _bare_call:
-            prod_home = Path.home() / ".peekview"
-            try:
-                is_prod_path = (
-                    self.storage.data_dir.resolve().is_relative_to(prod_home.resolve())
-                    or self.storage.db_path.resolve().is_relative_to(prod_home.resolve())
-                )
-            except (ValueError, OSError):
-                is_prod_path = False
-
-            if is_prod_path and not _is_serve_process():
-                _cfg_log = _logging.getLogger("peekview.config")
-                _cfg_log.warning(
-                    "⚠ PeekConfig() points to PRODUCTION paths "
-                    "(data_dir=%s, db_path=%s). "
-                    "If this is a test/debug operation, set PEEKVIEW_DEBUG_MODE=1. "
-                    "If intentional, ignore this warning.",
-                    self.storage.data_dir,
-                    self.storage.db_path,
-                )
 
     @property
     def data_dir(self) -> Path:

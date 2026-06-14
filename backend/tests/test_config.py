@@ -287,36 +287,3 @@ class TestConfigLimitsEndpoint:
             assert data["default_expires_in"] == "7d"
 
 
-class TestProductionPathWarning:
-    """Test that bare PeekConfig() calls warn when pointing at production paths."""
-
-    def test_bare_call_warns_for_production(self, monkeypatch, caplog):
-        """Bare PeekConfig() pointing at ~/.peekview/ should log a warning."""
-        monkeypatch.delenv("PEEKVIEW_DEBUG_MODE", raising=False)
-        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
-        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
-        import logging
-        with caplog.at_level(logging.WARNING, logger="peekview.config"):
-            PeekConfig()
-        assert any("PRODUCTION paths" in r.message for r in caplog.records)
-
-    def test_debug_mode_no_warning(self, monkeypatch, caplog):
-        """PEEKVIEW_DEBUG_MODE=1 should suppress the warning and isolate paths."""
-        monkeypatch.setenv("PEEKVIEW_DEBUG_MODE", "1")
-        monkeypatch.delenv("PEEKVIEW_STORAGE__DATA_DIR", raising=False)
-        monkeypatch.delenv("PEEKVIEW_STORAGE__DB_PATH", raising=False)
-        import logging
-        with caplog.at_level(logging.WARNING, logger="peekview.config"):
-            config = PeekConfig()
-        assert not any("PRODUCTION paths" in r.message for r in caplog.records)
-        assert str(config.data_dir).startswith("/tmp/peekview-debug")
-
-    def test_explicit_storage_no_warning(self, monkeypatch, caplog, tmp_path):
-        """Explicit storage kwargs should not trigger the warning."""
-        monkeypatch.delenv("PEEKVIEW_DEBUG_MODE", raising=False)
-        import logging
-        data_dir = tmp_path / "data"
-        db_path = tmp_path / "test.db"
-        with caplog.at_level(logging.WARNING, logger="peekview.config"):
-            PeekConfig(storage=PeekStorage(data_dir=data_dir, db_path=db_path))
-        assert not any("PRODUCTION paths" in r.message for r in caplog.records)

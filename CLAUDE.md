@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
 
 - **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.8.5 (Streamable HTTP transport) has been released to npm.
-- **Current Version:** v0.1.57 (Backend/Frontend) | MCP Server v0.8.5
+- **Current Version:** v0.1.58 (Backend/Frontend) | MCP Server v0.8.5
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
@@ -82,7 +82,6 @@ Code-level protection against accidental writes to production data:
 
 - **`PEEKVIEW_DEBUG_MODE=1`**: All bare `PeekConfig()` calls auto-isolate to `/tmp/peekview-debug/` and disable captcha. Set this env var before running CLI commands or scripts that touch the database.
 - **pytest global isolation**: `conftest.py` `isolate_config_file` fixture auto-sets `PEEKVIEW_STORAGE__*` env vars, so all `PeekConfig()` calls in tests point to `tmp_path`.
-- **Production path warning**: Bare `PeekConfig()` pointing at `~/.peekview/` (and not running `peekview serve`) logs a `WARNING`. If you see it, set `PEEKVIEW_DEBUG_MODE=1` or pass explicit `data_dir`/`db_path`.
 
 ### Backend Commands (from `backend/`)
 
