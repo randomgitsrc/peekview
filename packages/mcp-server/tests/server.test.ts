@@ -241,8 +241,8 @@ describe('Streamable HTTP Server', () => {
     });
   });
 
-  describe('Full session lifecycle', () => {
-    it('should complete initialize → tools/list → tools/call lifecycle', async () => {
+  describe('Full request lifecycle (stateless)', () => {
+    it('should complete initialize → tools/list lifecycle without session', async () => {
       const initRes = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
@@ -250,24 +250,13 @@ describe('Streamable HTTP Server', () => {
         .send(INIT_REQUEST);
 
       expect(initRes.status).toBe(200);
-      const sessionId = initRes.headers['mcp-session-id'];
-      expect(sessionId).toBeDefined();
+      expect(initRes.headers['mcp-session-id']).toBeUndefined();
 
-      // Send initialized notification
-      await request(app)
-        .post('/mcp')
-        .set('Accept', 'application/json, text/event-stream')
-        .set('mcp-session-id', sessionId)
-        .send({
-          jsonrpc: '2.0',
-          method: 'notifications/initialized',
-        });
-
-      // List tools
+      // List tools — each request is independent, no session needed
       const listRes = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
-        .set('mcp-session-id', sessionId)
+        .set('Authorization', `Bearer ${VALID_TOKEN}`)
         .send({
           jsonrpc: '2.0',
           id: 2,
@@ -279,10 +268,9 @@ describe('Streamable HTTP Server', () => {
       expect(listRes.body.result.tools).toBeDefined();
       expect(listRes.body.result.tools.length).toBeGreaterThan(0);
 
-      // Delete session
+      // DELETE acknowledges gracefully (no session to terminate)
       await request(app)
         .delete('/mcp')
-        .set('mcp-session-id', sessionId)
         .expect(200);
     });
   });
@@ -367,7 +355,7 @@ describe('Streamable HTTP Server', () => {
   });
 
   describe('CORS headers', () => {
-    it('should include mcp-session-id in response headers', async () => {
+    it('should not return mcp-session-id in stateless mode', async () => {
       const res = await request(app)
         .post('/mcp')
         .set('Accept', 'application/json, text/event-stream')
@@ -375,7 +363,7 @@ describe('Streamable HTTP Server', () => {
         .send(INIT_REQUEST);
 
       expect(res.status).toBe(200);
-      expect(res.headers['mcp-session-id']).toBeDefined();
+      expect(res.headers['mcp-session-id']).toBeUndefined();
     });
   });
 

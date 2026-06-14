@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [mcp-v0.8.6] - 2026-06-14
+
+### 变更
+
+- **改为无状态 Streamable HTTP 模式**：彻底消除 session 过期导致 opencode 需要重启的问题
+- 每次请求独立认证，无 session 概念，服务端重启对客户端透明
+- DELETE /mcp 无状态下直接返回 200（无 session 可终止）
+
+
 ## [0.1.58] - 2026-06-14
 
 ### 变更
