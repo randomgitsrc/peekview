@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.1.59] - 2026-06-14
+
+### 新增
+
+- **GET /api/v1/entries/{slug}/raw**：Agent 原始内容接口，返回 entry 全部文件的原始文本内容（base64 URL 用于二进制文件），支持 API Key 认证访问私有条目
+
+
 ## [mcp-v0.8.6] - 2026-06-14
 
 ### 变更
