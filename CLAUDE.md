@@ -33,8 +33,8 @@ peekview/
 │   │   ├── auth.py      # JWT auth (Bearer header + httpOnly cookie), bcrypt hashing, API key verification
 │   │   ├── storage.py   # Filesystem operations (atomic writes)
 │   │   ├── cli.py       # Click CLI (serve/create/get/list/delete/user/login/apikey)
-│   │   ├── api/         # FastAPI routes (entries, files, auth, apikeys)
-│   │   └── services/    # Business logic (entry_service, file_service, apikey_service)
+│   │   ├── api/         # FastAPI routes (entries, files, auth, apikeys, admin, captcha, config)
+│   │   └── services/    # Business logic (entry_service, file_service, apikey_service, admin_service)
 │   └── tests/           # pytest suite with shared conftest.py fixtures
 ├── frontend-v3/         # Vue 3 + Vite + TypeScript + Shiki SPA (v3 - CURRENT)
 │   ├── src/             # TypeScript/Vue source files
@@ -144,8 +144,8 @@ entry_service = request.app.state.entry_service
 ### Data Model
 - `entries`: `id`, `slug` (UNIQUE), `summary`, `status`, `tags` (JSON), `expires_at`, `is_public`, `owner_id`
 - `files`: `entry_id`, `path`, `filename`, `language`, `is_binary`, `size`, `sha256`
-- `users`: `id`, `username` (UNIQUE), `password_hash`, `is_admin`
-- `api_keys`: `id`, `user_id`, `name`, `key_prefix`, `key_hash`, `expires_at`
+- `users`: `id`, `username` (UNIQUE), `password_hash`, `display_name`, `is_active`, `is_admin`
+- `api_keys`: `id`, `user_id`, `name`, `key_prefix`, `key_hash` (UNIQUE), `expires_at`, `last_used_at`
 - FTS5 virtual table `entries_fts` for full-text search
 - Files stored in `~/.peekview/data/default/{entry_id}/`
 
@@ -156,7 +156,7 @@ entry_service = request.app.state.entry_service
 4. **Global API Key auth**: `PEEKVIEW_SERVER__API_KEY` for service-level auth
 5. **User-level API Key auth**: `pv_` prefix keys, HMAC-SHA256 hashed, bound to user
 6. **JWT user auth**: `Authorization: Bearer <jwt>` header OR httpOnly cookie (`peekview_token`) — cookie set on login/register, cleared on logout
-7. **Entry visibility**: Anonymous users see only public entries; authenticated users see public + own private entries
+7. **Entry visibility**: Anonymous users see only public entries; authenticated users see public + own private entries; admin sees all
 8. **MCP local publish_files**: realpath + sensitive blacklist + allowed_paths/cwd boundary; cwd fallback must reject `/`
 9. **CSP**: Frontend pages have Content-Security-Policy (script-src includes unsafe-eval for Mermaid/d3); externalized inline scripts
 
@@ -219,13 +219,24 @@ entry_service = request.app.state.entry_service
 | `PEEKVIEW_AUTH__TOKEN_EXPIRE_DAYS` | `7` | JWT token validity days |
 | `PEEKVIEW_AUTH__ALLOW_REGISTRATION` | `true` | Allow new user registration |
 | `PEEKVIEW_AUTH__ALLOW_ANONYMOUS_CREATE` | `true` | Allow anonymous entry creation |
-| `PEEKVIEW_LIMITS__MAX_FILE_SIZE` | `10485760` | Max single file size (10MB) |
+| `PEEKVIEW_AUTH__CAPTCHA_ENABLED` | `false` | Enable captcha on register/login |
+| `PEEKVIEW_AUTH__CAPTCHA_SITE_KEY` | `"peekview-default"` | Cap site key (public, exposed to frontend) |
+| `PEEKVIEW_AUTH__CAPTCHA_SECRET_KEY` | `""` | Captcha JWT signing key (auto-generated if empty) |
+| `PEEKVIEW_AUTH__CAPTCHA_VERIFY_URL` | `"http://localhost:3000"` | Cap standalone server URL |
+| `PEEKVIEW_AUTH__CAPTCHA_EXEMPT_FIRST_USER` | `true` | First user (admin) bypasses captcha |
+| `PEEKVIEW_AUTH__CAPTCHA_BUILTIN_DIFFICULTY` | `2` | PoW difficulty (hex prefix length) |
+| `PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_COUNT` | `10` | Number of PoW challenges per verification |
+| `PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_SIZE` | `32` | Salt size (bytes) per challenge |
+| `PEEKVIEW_AUTH__CAPTCHA_BUILTIN_CHALLENGE_TTL_MS` | `600000` | Challenge JWT TTL (ms, 10 min) |
+| `PEEKVIEW_AUTH__CAPTCHA_BUILTIN_TOKEN_TTL_MS` | `1200000` | Redeem token TTL (ms, 20 min) |
+| `PEEKVIEW_LIMITS__MAX_FILE_SIZE` | `20971520` | Max single file size (20MB) |
 | `PEEKVIEW_LIMITS__MAX_CONTENT_LENGTH` | `1048576` | Max inline content length (1MB) |
 | `PEEKVIEW_LIMITS__MAX_ENTRY_FILES` | `50` | Max files per entry |
 | `PEEKVIEW_LIMITS__MAX_ENTRY_SIZE` | `104857600` | Max total entry size (100MB) |
 | `PEEKVIEW_LIMITS__MAX_SLUG_LENGTH` | `64` | Max custom slug length |
 | `PEEKVIEW_LIMITS__MAX_SUMMARY_LENGTH` | `500` | Max summary length |
 | `PEEKVIEW_LIMITS__MAX_PER_PAGE` | `50` | Max items per page |
+| `PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN` | `"15d"` | Default expiration for new entries |
 | `PEEKVIEW_CLEANUP__CHECK_ON_START` | `true` | Check expired entries on startup |
 | `PEEKVIEW_CLEANUP__INTERVAL_SECONDS` | `3600` | Cleanup interval seconds (0 = disabled) |
 | `PEEKVIEW_LOGGING__LEVEL` | `INFO` | Log level |
