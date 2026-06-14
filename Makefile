@@ -1,10 +1,8 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
-# Import environment variables from shell
-PYPI_API_TOKEN ?= $(shell echo $$PYPI_API_TOKEN)
-PYPI_TEST_API_TOKEN ?= $(shell echo $$PYPI_TEST_API_TOKEN)
-NPM_TOKEN ?= $(shell echo $$NPM_TOKEN)
+# Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
+# Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
 .PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
@@ -373,11 +371,11 @@ publish:
 	@echo "→ Step 3/4: 运行最终检查..."
 	@make check-version check-changelog verify-wheel
 	@echo "→ Step 4/4: 发布到 PyPI..."
-	@TOKEN="$(PYPI_API_TOKEN)"; \
+	@TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
-				TOKEN=$$(source "$$f" 2>/dev/null && echo $$PYPI_API_TOKEN); \
+				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
 			fi; \
 		done; \
@@ -399,19 +397,21 @@ publish:
 # Publish to TestPyPI
 publish-test: clean build test check-version
 	@echo "→ Publishing to TestPyPI..."
-	@if [ -z "$(PYPI_TEST_API_TOKEN)" ]; then \
-		if [ -f ~/.bashrc ]; then \
-			PYPI_TEST_API_TOKEN=$$(bash -c 'source ~/.bashrc && echo $$PYPI_TEST_API_TOKEN' 2>/dev/null); \
-		fi; \
-		if [ -z "$$PYPI_TEST_API_TOKEN" ]; then \
-			echo "✗ Error: PYPI_TEST_API_TOKEN not set"; \
-			exit 1; \
-		fi; \
-		export PYPI_TEST_API_TOKEN; \
-	fi
-	cd backend && python3 -m twine upload dist/* \
-		-u __token__ -p "$${PYPI_TEST_API_TOKEN:-$(PYPI_TEST_API_TOKEN)}" \
-		--repository testpypi --non-interactive
+	@TOKEN="$$PYPI_TEST_API_TOKEN"; \
+	if [ -z "$$TOKEN" ]; then \
+		for f in "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
+			if [ -f "$$f" ]; then \
+				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_TEST_API_TOKEN' _ "$$f"); \
+				[ -n "$$TOKEN" ] && break; \
+			fi; \
+		done; \
+	fi; \
+	if [ -z "$$TOKEN" ]; then \
+		echo "✗ Error: PYPI_TEST_API_TOKEN not set"; \
+		exit 1; \
+	fi; \
+	cd backend && pipx run twine upload dist/* \
+		-u __token__ -p "$$TOKEN" --non-interactive
 	@echo "✓ Published to TestPyPI"
 
 # =============================================================================
