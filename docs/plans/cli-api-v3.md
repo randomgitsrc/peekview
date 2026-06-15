@@ -295,7 +295,8 @@ peekview user delete alice --remote-url https://...
 |------|------|
 | MCP `list_entries` 过滤参数 | 伪需求——Agent 协作是 URL 直传，不需要「发现」 |
 | `peekview register` CLI | 低频，Web UI 可注册 |
-| `peekview download` CLI | local 模式文件在磁盘，remote 低频；移 backlog |
+| `peekview user list` remote 模式 | `GET /admin/users` API 存在但 CLI 暂不加，非痛点 |
+| `peekview logout` CLI | 手动清 config.remote.token 即可，价值低 |
 | user promote/demote/disable/enable 的 remote 化 | 无痛点，local 直连 DB 可解决 |
 
 ### 移入 backlog
