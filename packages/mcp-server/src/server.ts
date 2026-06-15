@@ -150,7 +150,7 @@ export function createExpressApp(
   app.use(cors({
     origin: corsOrigins,
     methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'mcp-session-id'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'mcp-session-id', 'X-Peekview-Namespace'],
     exposedHeaders: ['mcp-session-id'],
   }));
 
@@ -176,10 +176,22 @@ export function createExpressApp(
       return;
     }
 
+    const rawNamespace = req.headers['x-peekview-namespace'] as string | undefined;
+    const namespace = rawNamespace?.trim() || undefined;
+
+    if (namespace && !config.pathNamespaces[namespace]) {
+      res.status(400).json({
+        error: `Unknown path namespace: "${namespace}". Configured namespaces: ${Object.keys(config.pathNamespaces).join(', ') || '(none)'}`,
+      });
+      return;
+    }
+
     const ctx: SessionContext = {
       userToken: auth.userToken,
       userId: auth.userId,
       username: auth.username,
+      namespace,
+      pathNamespaces: config.pathNamespaces,
     };
 
     // Create a fresh transport per request — no session ID assigned
