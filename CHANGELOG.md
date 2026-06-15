@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [mcp-v0.9.2] - 2026-06-16
+
+### 新增
+
+- T015: `peekview-mcp config verify` — 验证配置连通性和认证（5 步检查：文件存在→url 必填→格式校验→/health 连通→api_key 认证）
+- T015: `peekview-mcp config unset <key>` — 删除配置项（空 section 自动清理，不残留 `section: {}`）
+
+
 ## [mcp-v0.9.1] - 2026-06-16
 
 ### 新增
