@@ -30,6 +30,7 @@ from peekview.database import check_schema, init_db
 from peekview.main import create_app
 from peekview.models import AdminCleanupResponse, AdminStatsResponse, CreateEntryRequest, EntryCreate, User
 from peekview.services.admin_service import AdminService
+from peekview.services.apikey_service import ApiKeyService
 from peekview.services.entry_service import EntryService
 from peekview.services.file_service import scan_directory
 from peekview.storage import StorageManager
@@ -1538,7 +1539,7 @@ Examples:
 
 @cli.group(name="apikey", epilog=APIKEY_EXAMPLES)
 def apikey_cmd():
-    """Manage API keys (remote mode only)."""
+    """Manage API keys."""
     pass
 
 
@@ -1546,7 +1547,8 @@ def apikey_cmd():
 @click.argument("name")
 @click.option("--expires", "-e", default=None, help="Expiration (e.g., '7d', '30d', '90d')")
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
-def apikey_create(name: str, expires: str | None, remote_url: str | None) -> None:
+@click.option("--user", "-u", default=None, help="Username (required in local mode)")
+def apikey_create(name: str, expires: str | None, remote_url: str | None, user: str | None) -> None:
     """Create a new API key.
 
     The full key is shown only once — save it securely.
@@ -1554,108 +1556,172 @@ def apikey_create(name: str, expires: str | None, remote_url: str | None) -> Non
     config = PeekConfig()
     backend = _get_backend(config, cli_remote_url=remote_url)
 
-    if not _is_remote_mode(backend):
-        click.echo("Error: API key management requires remote mode. Use --remote-url or configure remote.url", err=True)
-        sys.exit(1)
-
-    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
-
-    try:
-        result = backend.create_api_key(name=name, expires_in=expires)
-        click.echo(f"✓ Created API key: {name}")
-        click.echo(f"  Key: {result['key']}")
-        click.echo(f"  Prefix: {result['key_prefix']}")
-        if result.get("expires_at"):
-            click.echo(f"  Expires: {result['expires_at']}")
-        else:
-            click.echo(f"  Expires: Never")
-        click.echo()
-        click.echo("  ⚠ Save this key now — it won't be shown again!")
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
+    if _is_remote_mode(backend):
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            result = backend.create_api_key(name=name, expires_in=expires)
+            click.echo(f"✓ Created API key: {name}")
+            click.echo(f"  Key: {result['key']}")
+            click.echo(f"  Prefix: {result['key_prefix']}")
+            click.echo(f"  Expires: {result['expires_at'] or 'Never'}")
+            click.echo()
+            click.echo("  ⚠ Save this key now — it won't be shown again!")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        if not user:
+            click.echo("Error: --user <username> is required in local mode", err=True)
+            sys.exit(1)
+        db_user = _resolve_user_local(config, user)
+        svc = _get_apikey_service_local(config)
+        try:
+            result = svc.create_api_key(user_id=db_user.id, name=name, expires_in=expires)
+            click.echo(f"✓ Created API key: {name}")
+            click.echo(f"  Key: {result.key}")
+            click.echo(f"  Prefix: {result.key_prefix}")
+            click.echo(f"  Expires: {result.expires_at or 'Never'}")
+            click.echo()
+            click.echo("  ⚠ Save this key now — it won't be shown again!")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
 
 @apikey_cmd.command(name="list")
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
-def apikey_list(remote_url: str | None) -> None:
-    """List your API keys."""
+@click.option("--user", "-u", default=None, help="Username (required in local mode)")
+def apikey_list(remote_url: str | None, user: str | None) -> None:
+    """List API keys."""
     config = PeekConfig()
     backend = _get_backend(config, cli_remote_url=remote_url)
 
-    if not _is_remote_mode(backend):
-        click.echo("Error: API key management requires remote mode. Use --remote-url or configure remote.url", err=True)
-        sys.exit(1)
-
-    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
-
-    try:
-        result = backend.list_api_keys()
-        items = result.get("items", [])
-
-        if not items:
-            click.echo("No API keys found")
-            return
-
-        click.echo(f"API Keys ({len(items)}):")
-        click.echo()
-        for k in items:
-            expires = k.get("expires_at", "Never") or "Never"
-            last_used = k.get("last_used_at", "Never") or "Never"
-            click.echo(f"  [{k['id']}] {k['name']}")
-            click.echo(f"      Prefix: {k['key_prefix']}")
-            click.echo(f"      Expires: {expires}")
-            click.echo(f"      Last used: {last_used}")
-            click.echo(f"      Created: {k['created_at']}")
+    if _is_remote_mode(backend):
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            result = backend.list_api_keys()
+            items = result.get("items", [])
+            if not items:
+                click.echo("No API keys found")
+                return
+            click.echo(f"API Keys ({len(items)}):")
             click.echo()
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
+            for k in items:
+                expires = k.get("expires_at", "Never") or "Never"
+                last_used = k.get("last_used_at", "Never") or "Never"
+                click.echo(f"  [{k['id']}] {k['name']}")
+                click.echo(f"      Prefix: {k['key_prefix']}")
+                click.echo(f"      Expires: {expires}")
+                click.echo(f"      Last used: {last_used}")
+                click.echo(f"      Created: {k['created_at']}")
+                click.echo()
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        if not user:
+            click.echo("Error: --user <username> is required in local mode", err=True)
+            sys.exit(1)
+        db_user = _resolve_user_local(config, user)
+        svc = _get_apikey_service_local(config)
+        try:
+            items = svc.list_api_keys(user_id=db_user.id)
+            if not items:
+                click.echo("No API keys found")
+                return
+            click.echo(f"API Keys ({len(items)}):")
+            click.echo()
+            for k in items:
+                click.echo(f"  [{k.id}] {k.name}")
+                click.echo(f"      Prefix: {k.key_prefix}")
+                click.echo(f"      Expires: {k.expires_at or 'Never'}")
+                click.echo(f"      Created: {k.created_at}")
+                click.echo()
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
 
 @apikey_cmd.command(name="revoke")
 @click.argument("key_id", type=int)
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.option("--user", "-u", default=None, help="Username (required in local mode)")
 @click.confirmation_option(prompt="Are you sure you want to revoke this API key?")
-def apikey_revoke(key_id: int, remote_url: str | None) -> None:
+def apikey_revoke(key_id: int, remote_url: str | None, user: str | None) -> None:
     """Revoke an API key by ID."""
     config = PeekConfig()
     backend = _get_backend(config, cli_remote_url=remote_url)
 
-    if not _is_remote_mode(backend):
-        click.echo("Error: API key management requires remote mode. Use --remote-url or configure remote.url", err=True)
-        sys.exit(1)
-
-    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
-
-    try:
-        backend.revoke_api_key(key_id)
-        click.echo(f"✓ Revoked API key: {key_id}")
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
+    if _is_remote_mode(backend):
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            backend.revoke_api_key(key_id)
+            click.echo(f"✓ Revoked API key: {key_id}")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        if not user:
+            click.echo("Error: --user <username> is required in local mode", err=True)
+            sys.exit(1)
+        db_user = _resolve_user_local(config, user)
+        svc = _get_apikey_service_local(config)
+        try:
+            svc.revoke_api_key(key_id=key_id, user_id=db_user.id)
+            click.echo(f"✓ Revoked API key: {key_id}")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
 
 @apikey_cmd.command(name="cleanup")
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
-def apikey_cleanup(remote_url: str | None) -> None:
+@click.option("--user", "-u", default=None, help="Username (required in local mode)")
+def apikey_cleanup(remote_url: str | None, user: str | None) -> None:
     """Delete all expired API keys."""
     config = PeekConfig()
     backend = _get_backend(config, cli_remote_url=remote_url)
 
-    if not _is_remote_mode(backend):
-        click.echo("Error: API key management requires remote mode. Use --remote-url or configure remote.url", err=True)
-        sys.exit(1)
+    if _is_remote_mode(backend):
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            result = backend.cleanup_expired_keys()
+            click.echo(f"✓ Cleaned up {result['deleted']} expired key(s)")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        if not user:
+            click.echo("Error: --user <username> is required in local mode", err=True)
+            sys.exit(1)
+        db_user = _resolve_user_local(config, user)
+        svc = _get_apikey_service_local(config)
+        try:
+            deleted = svc.cleanup_expired_keys(user_id=db_user.id)
+            click.echo(f"✓ Cleaned up {deleted} expired key(s)")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
-    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
 
-    try:
-        result = backend.cleanup_expired_keys()
-        click.echo(f"✓ Cleaned up {result['deleted']} expired key(s)")
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
 
+def _resolve_user_local(config: PeekConfig, username: str) -> "User":
+    """Local 모드: username → User 객체 조회. 없으면 에러 출력 후 exit."""
+    engine = init_db(config.db_path)
+    check_schema(engine)
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == username)).first()
+        if not user:
+            click.echo(f"Error: User '{username}' not found", err=True)
+            sys.exit(1)
+        return user
+
+
+def _get_apikey_service_local(config: PeekConfig) -> ApiKeyService:
+    """Local 모드: ApiKeyService 인스턴스 반환."""
+    engine = init_db(config.db_path)
+    check_schema(engine)
+    return ApiKeyService(engine=engine)
 
 def _get_admin_service(
     config: PeekConfig, cli_remote_url: str | None = None

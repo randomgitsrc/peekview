@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.1.61] - 2026-06-15
+
+### 新增
+
+- T010: apikey CLI 支持 local 模式（新增 --user 参数，local 直连 DB 生成/管理 pv_ key，无需 remote 模式）
+
+
 ## [mcp-v0.9.0] - 2026-06-15
 
 ### 新增
