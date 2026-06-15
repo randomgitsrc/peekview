@@ -33,6 +33,7 @@ export interface ConfigFileData {
     mode?: 'local' | 'remote';
     allowed_paths?: string[];
     trust_all_paths?: boolean;
+    path_namespaces?: Record<string, Record<string, string>>;
   };
   logging?: {
     level?: string;

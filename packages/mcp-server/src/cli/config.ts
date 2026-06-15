@@ -126,45 +126,65 @@ configCommand
   });
 
 // ── config list ─────────────────────────────────────────────────────────────
+
+export function configListAction(): void {
+  const config = loadConfigFromFile();
+
+  console.log('Configuration:');
+  console.log('');
+
+  console.log('peekview:');
+  console.log(`  url:          ${config?.peekview?.url || '(not set)'}  # 必填：PeekView API 内部地址`);
+  console.log(`  public_url:   ${config?.peekview?.public_url || '(not set)'}  # 必填：公开访问地址`);
+  console.log('');
+
+  console.log('server:');
+  console.log(`  port:         ${config?.server?.port ?? DEFAULT_CONFIG.server.port}  # MCP 服务端口`);
+  console.log(`  host:         ${config?.server?.host ?? DEFAULT_CONFIG.server.host}  # 绑定地址`);
+  console.log(`  cors_origins: ${config?.server?.cors_origins ?? DEFAULT_CONFIG.server.cors_origins}  # CORS 来源`);
+  console.log(`  mode:         ${config?.server?.mode ?? DEFAULT_CONFIG.server.mode}  # 部署模式: remote|local`);
+  console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 显式白名单；未设置时默认 cwd+系统临时目录`);
+  console.log(`  trust_all_paths:  ${config?.server?.trust_all_paths === true ? 'true' : 'false'}  # 危险：跳过白名单，仅 best-effort 敏感路径保护`);
+  console.log('');
+
+  console.log('logging:');
+  console.log(`  level:        ${config?.logging?.level || 'info'}  # 日志级别 (debug/info/warn/error)`);
+  console.log('');
+
+  const namespaces = config?.server?.path_namespaces;
+  if (namespaces && Object.keys(namespaces).length > 0) {
+    console.log('path_namespaces:');
+    for (const [ns, mappings] of Object.entries(namespaces)) {
+      console.log(`  ${ns}:`);
+      for (const [from, to] of Object.entries(mappings || {})) {
+        console.log(`    ${from} → ${to}`);
+      }
+    }
+    console.log('');
+  }
+
+  console.log('Available config keys:');
+  console.log('  peekview.url, peekview.public_url');
+  console.log('  server.port, server.host, server.cors_origins, server.mode, server.allowed_paths, server.trust_all_paths');
+  console.log('  logging.level');
+  console.log('');
+  console.log('Subcommands:');
+  console.log('  config allowed_path add <path>     # 追加白名单路径');
+  console.log('  config allowed_path remove <path>  # 移除白名单路径');
+  console.log('  config allowed_path list           # 列出白名单路径');
+  console.log('  config namespace add <ns> <container_path> <host_path>     # 添加 namespace 映射');
+  console.log('  config namespace remove <ns> [container_path]             # 删除 namespace 映射');
+  console.log('  config namespace list [ns]                                 # 列出 namespace');
+  console.log('');
+  console.log(`Config file: ~/.peekview/mcp-config.yaml`);
+}
+
 configCommand
   .command('list')
   .description('List all configuration values')
   .action(() => {
     try {
-      const config = loadConfigFromFile();
-
-      console.log('Configuration:');
-      console.log('');
-
-      console.log('peekview:');
-      console.log(`  url:          ${config?.peekview?.url || '(not set)'}  # 必填：PeekView API 内部地址`);
-      console.log(`  public_url:   ${config?.peekview?.public_url || '(not set)'}  # 必填：公开访问地址`);
-      console.log('');
-
-      console.log('server:');
-      console.log(`  port:         ${config?.server?.port ?? DEFAULT_CONFIG.server.port}  # MCP 服务端口`);
-      console.log(`  host:         ${config?.server?.host ?? DEFAULT_CONFIG.server.host}  # 绑定地址`);
-      console.log(`  cors_origins: ${config?.server?.cors_origins ?? DEFAULT_CONFIG.server.cors_origins}  # CORS 来源`);
-      console.log(`  mode:         ${config?.server?.mode ?? DEFAULT_CONFIG.server.mode}  # 部署模式: remote|local`);
-      console.log(`  allowed_paths:${config?.server?.allowed_paths?.join(':') || '(not set)'}  # local 显式白名单；未设置时默认 cwd+系统临时目录`);
-      console.log(`  trust_all_paths:  ${config?.server?.trust_all_paths === true ? 'true' : 'false'}  # 危险：跳过白名单，仅 best-effort 敏感路径保护`);
-      console.log('');
-
-      console.log('logging:');
-      console.log(`  level:        ${config?.logging?.level || 'info'}  # 日志级别 (debug/info/warn/error)`);
-      console.log('');
-
-      console.log('Available config keys:');
-      console.log('  peekview.url, peekview.public_url');
-      console.log('  server.port, server.host, server.cors_origins, server.mode, server.allowed_paths, server.trust_all_paths');
-      console.log('  logging.level');
-      console.log('');
-      console.log('Subcommands:');
-      console.log('  config allowed_path add <path>     # 追加白名单路径');
-      console.log('  config allowed_path remove <path>  # 移除白名单路径');
-      console.log('  config allowed_path list           # 列出白名单路径');
-      console.log('');
-      console.log(`Config file: ~/.peekview/mcp-config.yaml`);
+      configListAction();
     } catch (error) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
@@ -265,3 +285,124 @@ allowedPathCmd
   });
 
 configCommand.addCommand(allowedPathCmd);
+
+// ── config namespace ────────────────────────────────────────────────────────
+
+export function namespaceAdd(ns: string, containerPath: string, hostPath: string): void {
+  if (!containerPath.startsWith('/')) {
+    throw new Error('container_path must be an absolute path (starting with /)');
+  }
+  const existing = loadConfigFromFile() || {};
+  const config: ConfigFileData = { ...existing };
+  if (!config.server) config.server = {};
+  if (!config.server.path_namespaces) config.server.path_namespaces = {};
+  if (!config.server.path_namespaces[ns]) config.server.path_namespaces[ns] = {};
+  config.server.path_namespaces[ns][containerPath] = hostPath;
+  saveConfigToFile(config);
+  console.log(`✓ Added namespace ${ns}: ${containerPath} → ${hostPath}`);
+  console.log('  ⚠ Restart service to apply: peekview-mcp service restart');
+}
+
+export function namespaceRemove(ns: string, containerPath?: string, yes?: boolean): void {
+  const existing = loadConfigFromFile() || {};
+  const config: ConfigFileData = { ...existing };
+  const namespaces = config.server?.path_namespaces;
+  if (!namespaces?.[ns]) {
+    throw new Error(`namespace '${ns}' not found`);
+  }
+  if (containerPath) {
+    if (!(containerPath in namespaces[ns])) {
+      throw new Error(`mapping '${containerPath}' not found in namespace '${ns}'`);
+    }
+    delete namespaces[ns][containerPath];
+    if (Object.keys(namespaces[ns]).length === 0) {
+      delete namespaces[ns];
+    }
+    console.log(`✓ Removed ${ns}: ${containerPath}`);
+  } else {
+    delete namespaces[ns];
+    console.log(`✓ Deleted namespace ${ns}`);
+  }
+  saveConfigToFile(config);
+}
+
+export function namespaceList(ns?: string): void {
+  const config = loadConfigFromFile();
+  const namespaces = config?.server?.path_namespaces;
+  if (!namespaces || Object.keys(namespaces).length === 0) {
+    console.log('(no namespaces configured)');
+    return;
+  }
+  const toShow = ns ? { [ns]: namespaces[ns] } : namespaces;
+  for (const [nsId, mappings] of Object.entries(toShow)) {
+    if (!mappings) {
+      console.log(`  ${nsId}: (not found)`);
+      continue;
+    }
+    console.log(`${nsId}:`);
+    for (const [from, to] of Object.entries(mappings)) {
+      console.log(`  ${from} → ${to}`);
+    }
+  }
+}
+
+const namespaceCmd = new Command('namespace')
+  .description('Manage server.path_namespaces (add/remove/list)')
+  .addHelpText('after', `
+Examples:
+  peekview-mcp config namespace add docker-a /opt/data ~/docker-data
+  peekview-mcp config namespace add docker-a /opt/cache ~/cache
+  peekview-mcp config namespace remove docker-a /opt/data
+  peekview-mcp config namespace remove docker-a --yes
+  peekview-mcp config namespace list
+  peekview-mcp config namespace list docker-a
+`);
+
+namespaceCmd
+  .command('add')
+  .argument('<ns>', 'Namespace identifier')
+  .argument('<container_path>', 'Container absolute path (must start with /)')
+  .argument('<host_path>', 'Host path mapping')
+  .description('Add a namespace path mapping')
+  .action((ns: string, containerPath: string, hostPath: string) => {
+    try {
+      namespaceAdd(ns, containerPath, hostPath);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+namespaceCmd
+  .command('remove')
+  .argument('<ns>', 'Namespace identifier')
+  .argument('[container_path]', 'Container path to remove; omit to delete entire namespace')
+  .option('--yes', 'Skip confirmation when deleting entire namespace')
+  .description('Remove a namespace path mapping or entire namespace')
+  .action((ns: string, containerPath: string | undefined, options: { yes?: boolean }) => {
+    try {
+      if (!containerPath && !options.yes) {
+        console.error('Error: Removing entire namespace requires --yes flag to confirm');
+        process.exit(1);
+      }
+      namespaceRemove(ns, containerPath, options.yes);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+namespaceCmd
+  .command('list')
+  .argument('[ns]', 'Namespace identifier (omit to list all)')
+  .description('List namespace path mappings')
+  .action((ns: string | undefined) => {
+    try {
+      namespaceList(ns);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+configCommand.addCommand(namespaceCmd);
