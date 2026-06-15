@@ -7,11 +7,19 @@
 
 ## [Unreleased]
 
-## [0.1.61] - 2026-06-15
+## [0.1.61] - 2026-06-16
 
 ### 新增
 
 - T010: apikey CLI 支持 local 模式（新增 --user 参数，local 直连 DB 生成/管理 pv_ key，无需 remote 模式）
+- T011: 用户管理 API+CLI
+  - `GET /admin/users`：管理员查询用户列表（支持 ?username= 精确匹配）
+  - `DELETE /admin/users/{id}`：管理员删用户（级联删除 entries/files/apikeys，禁止删自己 → 400）
+  - `POST /admin/users/{id}/reset-password`：管理员重置他人密码
+  - `DELETE /auth/me`：用户自助注销（唯一 admin 需 confirm_username 确认 → 409）
+  - `POST /auth/change-password`：自助改密码（需验证旧密码）
+  - CLI: `peekview user delete/reset-password/change-password` + `peekview whoami`
+  - PeekClient: 新增 list_users/delete_user/reset_user_password/change_password/delete_self/whoami/update_entry 方法
 
 
 ## [mcp-v0.9.0] - 2026-06-15
