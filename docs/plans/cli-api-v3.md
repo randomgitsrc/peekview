@@ -1,4 +1,4 @@
-# PeekView CLI/API 补全方案 v2
+# PeekView CLI/API 补全方案 v3
 
 > 创建：2026-06-15
 > 取代：`docs/plans/agent-collaboration-roadmap.md`（已标注过时）
@@ -30,7 +30,7 @@ PeekView 是 **Agent Output Layer**——内容中转站。功能优先级：
 | Entry 删除 | `peekview delete` | `DELETE /entries/{slug}` | `delete_entry` | ✅ | ✅ |
 | Entry raw | — | `GET /entries/{slug}/raw` ✅ | — | — | — |
 | Entry 更新 | — | `PATCH /entries/{slug}` ✅ | — | — | — |
-| 用户创建 | `user create` | `POST /auth/register` | — | ✅ | ❌ |
+| 用户创建 | `user create`（local only） | `POST /auth/register`（自助注册，需 captcha） | — | ✅ | ❌ |
 | 用户列表 | `user list` | ❌ | — | ✅ | ❌ |
 | 用户升降级 | `user promote/demote` | ❌ | — | ✅ | ❌ |
 | 登录 | `peekview login` | `POST /auth/login` | — | ❌ | ✅ |
@@ -79,8 +79,8 @@ PeekView 是 **Agent Output Layer**——内容中转站。功能优先级：
 #### 唯一 admin 注销自己
 
 允许，视为**重置系统**：
-- 唯一 admin 调 `DELETE /auth/me` → 后端检测到是最后一个 admin → 返回 409 + 提示"这是最后一个管理员，注销将清空所有数据"
-- CLI 收到 409 → 展示警告，要求输入 username 确认
+- 唯一 admin 调 `DELETE /auth/me` → 后端检测到是最后一个 admin → 返回 409 + 提示"这是最后一个管理员，注销将清空所有数据，需输入密码确认"
+- CLI 收到 409 → 展示警告，要求输入**当前密码**确认（非 username——username 可从 `GET /admin/users` 获取，密码不可，防止 API key 泄露后被利用）
 - 确认后级联删除：entries + 磁盘文件 + api keys + user
 - 系统回到初始状态，下一个注册/创建的用户自动成为 admin（复用现有首用户逻辑）
 
@@ -97,22 +97,25 @@ PeekView 是 **Agent Output Layer**——内容中转站。功能优先级：
 # 管理员端点（require_admin）
 GET    /api/v1/admin/users              # 列出用户（支持 ?username= 查询）
 DELETE /api/v1/admin/users/{user_id}    # 删用户（不能删自己 → 400）
-POST   /api/v1/admin/users/{user_id}/reset-password  # 重置他人密码
+POST   /api/v1/admin/users/{user_id}/reset-password  # 重置他人密码，返回新密码明文（仅此一次）
 
 # 自助端点（require_auth）
 DELETE /api/v1/auth/me                  # 注销自己（级联；唯一 admin → 409 需确认）
 POST   /api/v1/auth/change-password     # 改自己密码（需旧密码验证）
 ```
 
-**`GET /admin/users` 查询参数**：
+**`GET /admin/users` 查询参数与响应格式**：
 - 无参数：返回所有用户（分页）
 - `?username=alice`：精确匹配，返回单个用户（CLI remote 模式的 username→id 解析用）
 - `?page=1&per_page=20`：分页
+- 响应格式统一为分页结构（与 `GET /entries` 一致）：`{"items": [{"id": 1, "username": "alice", "is_admin": false, "is_active": true, "created_at": "...", "entry_count": 2, "api_key_count": 1}], "total": 1, "page": 1, "per_page": 20}`
+- `entry_count` / `api_key_count`：供 CLI delete 确认提示用
 
 **`DELETE /auth/me` 唯一 admin 处理**：
 - 检测 `DELETE` 请求者是最后一个 admin → 返回 409 + body `{error: {message: "...", code: "last_admin", confirm_required: true}}`
-- CLI 收到 409 → 提示用户输入 username 确认 → 重发 `DELETE /auth/me?confirm_username=alice`
-- 服务端验证 `confirm_username` 匹配 → 执行删除
+- CLI 收到 409 → 提示用户输入当前密码确认 → 重发 `DELETE /auth/me`（body 含 `confirm_password`）
+- 服务端验证密码正确 → 执行删除
+- 注：使用 request body 传 `confirm_password`（非 query param），避免密码出现在 URL 日志中
 
 #### CLI 命令
 
@@ -180,7 +183,7 @@ peekview whoami
 | 任务 | 内容 | 包 | 优先级 | 依赖 |
 |------|------|-----|--------|------|
 | T010 | apikey local 模式解锁 | backend | P0 | 无 |
-| T011 | 用户管理（API + CLI：delete / password / whoami + PeekClient.update_entry） | backend | P0 | 无 |
+| T011 | 用户管理（API + CLI：delete / password / whoami + PeekClient.update_entry）| backend | P0 | 无 | P3/P6 不可裁剪（安全敏感+多改动端） |
 | T014 | MCP path_namespace CLI | mcp-server | P0 | 无 |
 | T015 | MCP config verify + unset | mcp-server | P1 | 无 |
 
@@ -198,9 +201,9 @@ peekview whoami
 - `admin_service.list_users(username=None)` — 列出/查询用户
 - `admin_service.reset_password(user_id)` — 重置密码
 - `auth_service.change_password(user_id, old_password, new_password)` — 改密码
-- `auth_service.delete_self(user_id, confirm_username=None)` — 注销自己
+- `auth_service.delete_self(user_id, confirm_password=None)` — 注销自己（唯一 admin 需密码确认）
 
-**PeekClient 层**（3 个新方法）：
+**PeekClient 层**（7 个新方法）：
 - `list_users(username=None)` — GET /admin/users
 - `delete_user(user_id)` — DELETE /admin/users/{user_id}
 - `reset_user_password(user_id)` — POST /admin/users/{id}/reset-password
@@ -240,7 +243,7 @@ T015 ──┘
 
 直连 DB，无需认证。控制台即管理员（和现有 `user create/promote/demote` 一致）。
 
-例外：`change-password` 和 `whoami` 不支持 local 模式——前者需要旧密码验证（本地无此机制），后者没有"当前用户"概念。
+例外：`change-password` 和 `whoami` 不支持 local 模式——前者需要旧密码验证（本地无此机制），后者没有"当前用户"概念。local 模式下管理员可用 `reset-password` 重置任何人的密码（包括自己），作为改密码的替代路径。
 
 ### remote 模式
 
@@ -280,7 +283,6 @@ peekview user delete alice --remote-url https://...
 | `peekview register` CLI | 低频，Web UI 可注册 |
 | `peekview download` CLI | local 模式文件在磁盘，remote 低频；移 backlog |
 | user promote/demote/disable/enable 的 remote 化 | 无痛点，local 直连 DB 可解决 |
-| `peekview entry update` CLI | 无痛点，但 API 已有端点 |
 
 ### 移入 backlog
 
@@ -293,8 +295,9 @@ peekview user delete alice --remote-url https://...
 
 ### 留了接口但不做 CLI
 
-- `PeekClient.update_entry()` — 补方法，未来 CLI 命令可用
+- `PeekClient.update_entry()` — 补方法，未来 `entry update` CLI 命令可用
 - `GET /admin/users` — T011 一起做，同时服务 CLI remote 和未来 Web UI
+- `PATCH /entries/{slug}` — API 已存在，PeekClient 补方法后 CLI 可按需实现
 
 ---
 
@@ -313,7 +316,7 @@ peekview user delete alice --remote-url https://...
 | `whoami` | 不做 | ✅ 补（普通用户 remote 下需确认身份） |
 | `download` CLI | 不做 | backlog（headless 场景成立但不急） |
 | `PeekClient.update_entry()` | 未提及 | ✅ 补方法（留接口，不做 CLI） |
-| 唯一 admin 注销 | 矛盾（既说禁止又说允许） | 明确：允许 + 409 确认流程 |
+| 唯一 admin 注销 | 矛盾（既说禁止又说允许） | 允许 + 409 + 密码确认（非 username，防 API key 泄露利用） |
 | T011/T012 拆分 | 两个任务 | 合并为 T011（同包同端，减少协调） |
 | username→id | 未解决 | `GET /admin/users?username=` 解决 |
 | `GET /admin/users` | 在 T011 但边界声明矛盾 | 明确在 T011 范围内 |
