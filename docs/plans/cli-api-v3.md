@@ -83,13 +83,27 @@ PeekView 是 **Agent Output Layer**——内容中转站。功能优先级：
 - CLI 收到 409 → 展示警告，要求输入**当前密码**确认（非 username——username 可从 `GET /admin/users` 获取，密码不可，防止 API key 泄露后被利用）
 - 确认后级联删除：entries + 磁盘文件 + api keys + user
 - 系统回到初始状态，下一个注册/创建的用户自动成为 admin（复用现有首用户逻辑）
+- **安全边界**：唯一 admin 注销后，`/auth/register`（Web UI 自助注册）仍对外可用。若 PeekView 暴露在公网，任何人可注册成为新 admin。
+  - 缓解：PeekView 部署在内网/VPN 后，或配合 nginx 访问控制；本地部署（`peekview user create`）不受此影响
+  - 未来如需加固：可在 `POST /auth/register` 端点增加"当前无 admin 时才允许注册"的限制（现有逻辑已如此，因为首用户自动 admin）
 
 #### 级联删除
 
-删除用户时必须清理：
+删除用户时必须清理，全部在**一个数据库事务**内完成：
+
 1. **entries + 磁盘文件**：逐个调用 `entry_service.delete_entry()`（确保文件清理，不用裸 SQL）
 2. **API keys**：删除该用户所有 `pv_` key
 3. **user 行**：删除 user 记录
+4. **提交事务**（全部成功）或 **回滚**（任一失败）
+
+**事务边界**：
+- 使用 `with Session(engine) as session:` 包装整个级联过程
+- 每个 `entry_service.delete_entry()` 内部已有事务，但 `admin_service.delete_user()` 将其包裹在外层事务中（`nested=True` 或手动控制 commit/rollback）
+- 超时风险：单用户 entries 数量通常 <100，逐个删除在事务超时窗口内可完成；若超过阈值需考虑分批或异步，但当前场景无需优化
+- 失败处理：任一 entry 删除失败（如磁盘 IO 错误）→ 整个事务回滚 → 用户数据完整保留 → 返回 500 并记录具体错误
+- 并发可见性：事务隔离级别为默认（SQLite 的 `SERIALIZABLE`），级联删除过程中其他请求看到的是删除前的完整状态
+
+**实现要点**：`entry_service.delete_entry()` 需支持 `session` 参数注入（而非内部新建 session），以便外层事务控制。
 
 #### API 端点
 
@@ -97,7 +111,7 @@ PeekView 是 **Agent Output Layer**——内容中转站。功能优先级：
 # 管理员端点（require_admin）
 GET    /api/v1/admin/users              # 列出用户（支持 ?username= 查询）
 DELETE /api/v1/admin/users/{user_id}    # 删用户（不能删自己 → 400）
-POST   /api/v1/admin/users/{user_id}/reset-password  # 重置他人密码，返回新密码明文（仅此一次）
+POST   /api/v1/admin/users/{user_id}/reset-password  # 重置他人密码，返回新密码明文（仅此一次，后端不存储、不记录）
 
 # 自助端点（require_auth）
 DELETE /api/v1/auth/me                  # 注销自己（级联；唯一 admin → 409 需确认）
@@ -198,7 +212,7 @@ peekview whoami
 
 **Service 层**：
 - `admin_service.delete_user(user_id)` — 级联删除（entries + files + apikeys + user）
-- `admin_service.list_users(username=None)` — 列出/查询用户
+- `admin_service.list_users(username=None) -> list[User]` — 列出/查询用户（返回 SQLModel User 对象列表，API 层用 Pydantic schema 序列化为 JSON 分页结构）
 - `admin_service.reset_password(user_id)` — 重置密码
 - `auth_service.change_password(user_id, old_password, new_password)` — 改密码
 - `auth_service.delete_self(user_id, confirm_password=None)` — 注销自己（唯一 admin 需密码确认）
@@ -208,7 +222,7 @@ peekview whoami
 - `delete_user(user_id)` — DELETE /admin/users/{user_id}
 - `reset_user_password(user_id)` — POST /admin/users/{id}/reset-password
 - `change_password(old_password, new_password)` — POST /auth/change-password
-- `delete_self(confirm_username=None)` — DELETE /auth/me
+- `delete_self(confirm_password=None)` — DELETE /auth/me
 - `whoami()` — GET /auth/me
 - `update_entry(slug, **kwargs)` — PATCH /entries/{slug}
 
@@ -257,7 +271,7 @@ T015 ──┘
 
 认证凭据：
 - config.remote.token（JWT，peekview login 存入）
-- config.remote.api_key（pv_ key，管理员 key 自然有 admin 权限）
+- config.remote.api_key 必须是 **admin 用户生成的** `pv_` key，才有 `require_admin` 权限（API key 权限 = 创建者的用户权限）
 ```
 
 API 返回 403 时 CLI 提示："需要管理员账号的 API Key 或已登录的 admin 账号"。
