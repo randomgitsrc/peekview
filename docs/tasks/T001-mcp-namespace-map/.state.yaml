@@ -1,6 +1,6 @@
 task_id: T001
-phase: P4
-status: in_progress
+phase: READY
+status: ready
 retry_count:
   P1: 0
   P2: 0
@@ -9,3 +9,4 @@ retry_count:
   P5: 0
   P8: 0
 updated: 2026-06-15
+version: mcp-v0.9.0
