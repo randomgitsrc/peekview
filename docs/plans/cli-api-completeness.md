@@ -1,5 +1,10 @@
 # PeekView CLI/API 全面性需求方案
 
+> ⚠️ **此文档已过时**
+> 取代文档：`docs/plans/agent-collaboration-roadmap.md`（2026-06-15）
+> 原因：优先级逻辑从「API 完整性对称」调整为「Agent 协作场景驱动」；任务重新拆分
+> 本文档保留作为历史参考，不再更新
+>
 > 目标：peekview 和 peekview-mcp 的 API/CLI、local/remote 接口系统性补全
 > 原则：API 有的能力，CLI 应该能用；CLI 支持的操作，local/remote 应该一致
 
