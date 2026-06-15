@@ -10,10 +10,10 @@ known_risks:
   - "namespace 标识不是安全凭证，翻译后路径仍须走完整安全链（realpath→denylist→allowlist）"
 
 executor_env:
-  platform: "claude-project"
-  has_task_tool: false
-  has_local_runtime: false
-  network: "restricted"
+  platform: "opencode"
+  has_task_tool: true
+  has_local_runtime: true
+  network: "full"
 
 env_constraints:
   debug_env: "make debug（:8888，/tmp/peekview-debug/）；MCP 测试须用临时HOME，严禁触碰 ~/.peekview/"

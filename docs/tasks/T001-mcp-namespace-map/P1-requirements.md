@@ -94,7 +94,7 @@ Then 请求被拒绝，安全链不被绕过
 
 ```yaml
 phases: [P1, P2, P3, P4, P5, P8]
-single_agent_mode: true   # executor_env.has_task_tool=false，P3-P8 需交接 OpenCode
+# 接手环境从 Claude Project 交接至 OpenCode，has_task_tool=true
 ```
 
 - 跳过 P6：无 UI 变化，验收条件由测试覆盖
@@ -117,6 +117,6 @@ gate_commands:
 capability_requirements:
   - need: local-node-runtime
     why: npm test、TypeScript 编译
-    status: GAP（当前 Claude Project 环境）
-    supplement: 交接 OpenCode 执行 P3-P5
+    status: available（OpenCode 环境）
+    supplement: 已从 Claude Project 交接
 ```
