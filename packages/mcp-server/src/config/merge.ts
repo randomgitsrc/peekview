@@ -2,7 +2,17 @@
  * Config merging logic
  * Priority: Env > File > Default
  */
+import os from 'os';
+import path from 'path';
 import type { ConfigFileData } from './file.js';
+
+export function expandHome(p: string): string {
+  if (p === '~') return os.homedir();
+  if (p.startsWith('~/') || p.startsWith('~\\')) {
+    return path.join(os.homedir(), p.slice(2));
+  }
+  return p;
+}
 
 export interface MergedConfig {
   peekviewUrl: string;
@@ -15,6 +25,7 @@ export interface MergedConfig {
   mode: 'local' | 'remote';
   allowedPaths: string[];
   trustAllPaths: boolean;
+  pathNamespaces: Record<string, Record<string, string>>;
   configSource: 'file' | 'env' | 'default';
   configPath: string | null;
 }
@@ -66,9 +77,19 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
   // Allowed paths - env (colon-separated) > file (array) > default []
   let allowedPaths: string[] = [];
   if (env.MCP_ALLOWED_PATHS) {
-    allowedPaths = env.MCP_ALLOWED_PATHS.split(':').filter((p) => p.length > 0);
+    allowedPaths = env.MCP_ALLOWED_PATHS.split(':').filter((p) => p.length > 0).map(expandHome);
   } else if (fileConfig?.server?.allowed_paths) {
-    allowedPaths = fileConfig.server.allowed_paths;
+    allowedPaths = fileConfig.server.allowed_paths.map(expandHome);
+  }
+
+  // Path namespaces - from file config only, host_path expanded via expandHome
+  const rawNamespaces = (fileConfig?.server as Record<string, unknown> | undefined)?.path_namespaces as Record<string, Record<string, string>> | undefined ?? {};
+  const pathNamespaces: Record<string, Record<string, string>> = {};
+  for (const [nsId, mappings] of Object.entries(rawNamespaces)) {
+    pathNamespaces[nsId] = {};
+    for (const [containerPath, hostPath] of Object.entries(mappings as Record<string, string>)) {
+      pathNamespaces[nsId][containerPath] = expandHome(hostPath);
+    }
   }
 
   // Trust all paths - env > file > default false
@@ -116,6 +137,7 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
     mode,
     allowedPaths,
     trustAllPaths,
+    pathNamespaces,
     configSource,
     configPath,
     ...(apiKey ? { apiKey } : {}),
