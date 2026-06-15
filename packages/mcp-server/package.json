@@ -22,7 +22,7 @@
     "start": "node dist/index.js",
     "serve": "node dist/index.js serve",
     "test": "npm run test:unit",
-    "test:unit": "vitest run tests/server.test.ts tests/client.test.ts tests/config.test.ts tests/config-file.test.ts tests/config-merge.test.ts tests/cli-config.test.ts tests/tools.test.ts tests/publishFiles.test.ts tests/fileNaming.test.ts tests/validators.test.ts tests/service-install.test.ts tests/cli/service.test.ts tests/cli/namespace.test.ts",
+    "test:unit": "vitest run tests/server.test.ts tests/client.test.ts tests/config.test.ts tests/config-file.test.ts tests/config-merge.test.ts tests/cli-config.test.ts tests/tools.test.ts tests/publishFiles.test.ts tests/fileNaming.test.ts tests/validators.test.ts tests/service-install.test.ts tests/cli/service.test.ts tests/cli/namespace.test.ts tests/cli/verify-unset.test.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts --reporter=verbose",
     "test:e2e": "cd ../../frontend-v3 && npx playwright test e2e/mcp-server.spec.ts",
     "test:e2e:node": "vitest run tests/e2e/**/*.test.ts --reporter=verbose",

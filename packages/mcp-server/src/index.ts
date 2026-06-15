@@ -174,4 +174,4 @@ if (process.argv.length <= 2) {
 }
 
 // Parse and execute
-program.parse();
+program.parseAsync();

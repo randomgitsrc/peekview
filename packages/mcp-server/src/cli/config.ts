@@ -3,8 +3,19 @@
  * PeekView MCP Server CLI - Config commands
  */
 import { Command } from 'commander';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { saveConfigToFile, loadConfigFromFile } from '../config/file.js';
 import type { ConfigFileData } from '../config/file.js';
+import { validateUrl } from '../config/validators.js';
+
+function getHomeDir(): string {
+  return process.env.HOME || process.env.USERPROFILE || '/tmp';
+}
+
+function getConfigFilePath(): string {
+  return join(getHomeDir(), '.peekview', 'mcp-config.yaml');
+}
 
 const DEFAULT_CONFIG = {
   server: { port: 33333, host: '0.0.0.0', cors_origins: '*', mode: 'remote' },
@@ -175,6 +186,8 @@ export function configListAction(): void {
   console.log('  config namespace add <ns> <container_path> <host_path>     # 添加 namespace 映射');
   console.log('  config namespace remove <ns> [container_path]             # 删除 namespace 映射');
   console.log('  config namespace list [ns]                                 # 列出 namespace');
+  console.log('  config verify                                                # 验证配置（连通性+认证）');
+  console.log('  config unset <key>                                           # 删除配置值');
   console.log('');
   console.log(`Config file: ~/.peekview/mcp-config.yaml`);
 }
@@ -406,3 +419,138 @@ namespaceCmd
   });
 
 configCommand.addCommand(namespaceCmd);
+
+// ── config verify ──────────────────────────────────────────────────────────
+
+export async function verifyAction(): Promise<void> {
+  const configPath = getConfigFilePath();
+  let allOk = true;
+
+  if (!existsSync(configPath)) {
+    console.log(`❌ 配置文件不存在：${configPath}`);
+    process.exit(1);
+  }
+  console.log(`✅ 配置文件：${configPath}`);
+
+  const config = loadConfigFromFile();
+
+  const peekviewUrl = config?.peekview?.url;
+  if (!peekviewUrl) {
+    console.log('❌ peekview.url 未配置（必填）');
+    process.exit(1);
+  }
+
+  try {
+    validateUrl(peekviewUrl, 'peekview.url');
+  } catch (e) {
+    console.log(`❌ peekview.url 格式错误：${e instanceof Error ? e.message : e}`);
+    allOk = false;
+  }
+
+  if (allOk) {
+    try {
+      const res = await fetch(`${peekviewUrl}/health`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        console.log(`✅ peekview.url：${peekviewUrl} — 可达`);
+      } else {
+        console.log(`❌ peekview.url：${peekviewUrl} — 响应 ${res.status}`);
+        allOk = false;
+      }
+    } catch {
+      console.log(`❌ peekview.url：${peekviewUrl} — 连接失败`);
+      allOk = false;
+    }
+  }
+
+  const apiKey = config?.peekview?.api_key;
+  if (allOk) {
+    if (!apiKey) {
+      console.log('⚠️  api_key 未配置（某些操作需要）');
+    } else {
+      const maskedKey = apiKey.slice(0, 6) + '...' + apiKey.slice(-4);
+      try {
+        const res = await fetch(`${peekviewUrl}/api/v1/entries?per_page=1`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.status === 200 || res.status === 403) {
+          console.log(`✅ api_key：${maskedKey} — 认证有效`);
+        } else if (res.status === 401) {
+          console.log(`❌ api_key：${maskedKey} — 认证失败（401）`);
+          allOk = false;
+        } else {
+          console.log(`⚠️  api_key：${maskedKey} — 响应 ${res.status}（无法确认）`);
+        }
+      } catch {
+        console.log('⚠️  api_key：无法验证（连接失败）');
+      }
+    }
+  }
+
+  const publicUrl = config?.peekview?.public_url;
+  if (publicUrl) {
+    console.log(`✅ peekview.public_url：${publicUrl}`);
+  } else {
+    console.log('⚠️  peekview.public_url 未配置（可选）');
+  }
+
+  if (!allOk) process.exit(1);
+}
+
+configCommand
+  .command('verify')
+  .description('Verify configuration — check connectivity and authentication')
+  .action(async () => {
+    try {
+      await verifyAction();
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+// ── config unset ───────────────────────────────────────────────────────────
+
+export function unsetAction(key: string): void {
+  const parts = key.split('.');
+  if (parts.length !== 2) {
+    console.error("Error: Invalid key format. Use 'section.key' format.");
+    process.exit(1);
+  }
+  const [section, prop] = parts;
+
+  const existing = loadConfigFromFile();
+  if (!existing) {
+    console.log(`${key} 未设置，无需删除`);
+    return;
+  }
+
+  const sectionData = existing[section] as Record<string, unknown> | undefined;
+  if (!sectionData || !(prop in sectionData)) {
+    console.log(`${key} 未设置，无需删除`);
+    return;
+  }
+
+  delete sectionData[prop];
+
+  if (Object.keys(sectionData).length === 0) {
+    delete existing[section];
+  }
+
+  saveConfigToFile(existing);
+  console.log(`✓ 已删除 ${key}`);
+  console.log('  ⚠ Restart service to apply: peekview-mcp service restart');
+}
+
+configCommand
+  .command('unset')
+  .argument('<key>', "Configuration key (e.g., peekview.url)")
+  .description('Remove a configuration value')
+  .action((key: string) => {
+    try {
+      unsetAction(key);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
