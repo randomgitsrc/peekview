@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [mcp-v0.9.0] - 2026-06-15
+
+### 新增
+
+- **Path namespace mapping**：Docker 容器内 Agent（Hermes/OpenClaw）可通过 `X-Peekview-Namespace` header 声明命名空间，MCP Server 自动翻译容器内路径到主机路径（如 `/opt/data` → `~/docker-data1`）
+- **expandHome**：配置中的 `~` 路径（allowed_paths 和 namespace host_path）现在正确展开为用户 HOME 目录
+
+### 修复
+
+- **allowed_paths ~ 前缀静默失效**：配置 `~/xxx` 以前不生效，现在正确展开
+
+
 ## [0.1.60] - 2026-06-15
 
 ### 新增
