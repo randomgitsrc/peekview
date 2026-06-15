@@ -11,9 +11,9 @@
 ### 进行中的任务
 
 | T010 | apikey-local | ✅✅ 已完成 | P8 | P0 | — | 2026-06-15 | 2026-06-15 |
-| T011 | user-management | ⏸️ 等待OpenCode | P2 | P0 | — | 2026-06-15 | 2026-06-15 |
-| T014 | mcp-namespace-cli | ⏸️ 等待OpenCode | P2 | P0 | — | 2026-06-15 | 2026-06-15 |
-| T015 | mcp-config-verify | ⏸️ 等待OpenCode | P2 | P1 | — | 2026-06-15 | 2026-06-15 |
+| T011 | user-management | ✅✅ 已完成 | P8 | P0 | — | 2026-06-15 | 2026-06-16 |
+| T014 | mcp-namespace-cli | 🔄 进行中 | P3 | P0 | — | 2026-06-15 | 2026-06-16 |
+| T015 | mcp-config-verify | ⬜ 待开始 | P3 | P1 | T014 | 2026-06-15 | 2026-06-16 |
 
 ### 待开始
 
