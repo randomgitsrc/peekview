@@ -9,6 +9,7 @@ from pathlib import Path
 from sqlalchemy import case, func
 from sqlmodel import Session, select
 
+from peekview.auth import hash_password
 from peekview.config import PeekConfig
 from peekview.exceptions import NotFoundError
 from peekview.models import (
@@ -20,6 +21,7 @@ from peekview.models import (
     EntryStats,
     StorageStats,
     User,
+    UserResponse,
 )
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
@@ -150,3 +152,61 @@ class AdminService:
             deleted_slugs=deleted_slugs,
             freed_mb=round(total_freed / (1024 * 1024), 2),
         )
+
+    def list_users(
+        self, username: str | None = None, page: int = 1, per_page: int = 20
+    ) -> list[UserResponse]:
+        with Session(self.engine) as session:
+            query = select(User)
+            if username is not None:
+                query = query.where(User.username == username)
+            query = query.order_by(User.id).offset((page - 1) * per_page).limit(per_page)
+            users = session.exec(query).all()
+            return [
+                UserResponse(
+                    id=u.id,
+                    username=u.username,
+                    display_name=u.display_name,
+                    is_active=u.is_active,
+                    is_admin=u.is_admin,
+                    created_at=u.created_at,
+                )
+                for u in users
+            ]
+
+    def delete_user(self, user_id: int, current_user_id: int) -> None:
+        if user_id == current_user_id:
+            raise ValueError("Cannot delete yourself")
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            entry_slugs = [
+                e.slug
+                for e in session.exec(select(Entry).where(Entry.owner_id == user_id)).all()
+            ]
+        entry_service = EntryService(
+            engine=self.engine, storage=self.storage, config=self.config
+        )
+        for slug in entry_slugs:
+            try:
+                entry_service.delete_entry(slug, is_api_key_auth=True)
+            except NotFoundError:
+                pass
+        with Session(self.engine) as session:
+            from sqlalchemy import delete as sa_delete
+            session.exec(sa_delete(ApiKey).where(ApiKey.user_id == user_id))
+            user = session.get(User, user_id)
+            if user:
+                session.delete(user)
+            session.commit()
+
+    def reset_password(self, user_id: int, new_password: str) -> str:
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            user.password_hash = hash_password(new_password)
+            session.add(user)
+            session.commit()
+        return new_password

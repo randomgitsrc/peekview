@@ -5,15 +5,15 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request, Response, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from peekview.auth import (
     create_access_token,
-    get_current_user,
     hash_password,
     require_auth,
+    verify_password,
 )
 from peekview.api.captcha import enforce_captcha
 from peekview.api.rate_limit import limiter, login_rate_limit
@@ -22,6 +22,7 @@ from peekview.exceptions import InvalidCredentialsError, RegistrationError
 from peekview.models import (
     RESERVED_USERNAMES,
     AuthResponse,
+    ChangePasswordRequest,
     User,
     UserLogin,
     UserRegister,
@@ -195,3 +196,55 @@ async def get_me(user: User = Depends(require_auth)) -> UserResponse:
         is_admin=user.is_admin,
         created_at=user.created_at,
     )
+
+
+@router.delete("/me", status_code=204)
+async def delete_self(
+    request: Request,
+    confirm_username: str | None = Query(None),
+    current_user: User = Depends(require_auth),
+) -> None:
+    engine = request.app.state.engine
+    admin_service = request.app.state.admin_service
+
+    if current_user.is_admin:
+        admin_count = 0
+        with Session(engine) as s:
+            admin_count = s.exec(
+                select(User).where(User.is_admin.is_(True))
+            ).all()
+            admin_count = len(admin_count)
+        if admin_count == 1 and confirm_username != current_user.username:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": "这是最后一个管理员，注销将清空所有数据",
+                    "code": "last_admin",
+                    "confirm_required": True,
+                },
+            )
+
+    admin_service.delete_user(current_user.id, current_user_id=-1)
+
+
+@router.post("/change-password", status_code=204)
+async def change_password(
+    data: ChangePasswordRequest,
+    request: Request,
+    current_user: User = Depends(require_auth),
+) -> None:
+    engine = request.app.state.engine
+
+    if not verify_password(data.old_password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Old password is incorrect")
+
+    with Session(engine) as session:
+        user = session.get(User, current_user.id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.password_hash = hash_password(data.new_password)
+        session.add(user)
+        session.commit()
+
+
+

@@ -326,3 +326,123 @@ class PeekClient:
             self._handle_error(resp)
 
         return resp.json()
+
+    def list_users(
+        self, username: str | None = None, page: int = 1, per_page: int = 20
+    ) -> list[dict[str, Any]]:
+        """GET /api/v1/admin/users — List users."""
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if username:
+            params["username"] = username
+
+        resp = requests.get(
+            f"{self.base_url}/api/v1/admin/users",
+            params=params,
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code != 200:
+            self._handle_error(resp)
+
+        return resp.json()
+
+    def delete_user(self, user_id: int) -> None:
+        """DELETE /api/v1/admin/users/{user_id} — Delete a user."""
+        resp = requests.delete(
+            f"{self.base_url}/api/v1/admin/users/{user_id}",
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code not in (200, 204):
+            self._handle_error(resp)
+
+    def reset_user_password(self, user_id: int, new_password: str) -> dict[str, Any]:
+        """POST /api/v1/admin/users/{user_id}/reset-password — Reset user password."""
+        resp = requests.post(
+            f"{self.base_url}/api/v1/admin/users/{user_id}/reset-password",
+            json={"new_password": new_password},
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code not in (200, 204):
+            self._handle_error(resp)
+
+        if resp.status_code == 204:
+            return {}
+        return resp.json()
+
+    def change_password(self, old_password: str, new_password: str) -> None:
+        """POST /api/v1/auth/change-password — Change own password."""
+        resp = requests.post(
+            f"{self.base_url}/api/v1/auth/change-password",
+            json={"old_password": old_password, "new_password": new_password},
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code not in (200, 204):
+            self._handle_error(resp)
+
+    def delete_self(self, confirm_username: str | None = None) -> None:
+        """DELETE /api/v1/auth/me — Delete own account."""
+        params = {}
+        if confirm_username:
+            params["confirm_username"] = confirm_username
+
+        resp = requests.delete(
+            f"{self.base_url}/api/v1/auth/me",
+            params=params,
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code == 409:
+            data = resp.json()
+            detail = data.get("detail", data)
+            if isinstance(detail, dict) and detail.get("code") == "last_admin":
+                raise PeekError(
+                    f"last_admin:{detail.get('message', 'Last admin - confirm required')}"
+                )
+            raise PeekError(detail.get("message", "Conflict"))
+
+        if resp.status_code not in (200, 204):
+            self._handle_error(resp)
+
+    def whoami(self) -> dict[str, Any]:
+        """GET /api/v1/auth/me — Get current user info."""
+        resp = requests.get(
+            f"{self.base_url}/api/v1/auth/me",
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code != 200:
+            self._handle_error(resp)
+
+        return resp.json()
+
+    def update_entry(self, slug: str, **kwargs: Any) -> dict[str, Any]:
+        """PATCH /api/v1/entries/{slug} — Update an entry."""
+        resp = requests.patch(
+            f"{self.base_url}/api/v1/entries/{slug}",
+            json=kwargs,
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code not in (200, 204):
+            self._handle_error(resp)
+
+        if resp.status_code == 204:
+            return {}
+        return resp.json()

@@ -1482,6 +1482,141 @@ def user_demote(username: str) -> None:
     click.echo(f"✓ Demoted {username} from admin")
 
 
+@user_cmd.command(name="delete")
+@click.argument("username")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.confirmation_option(prompt="Are you sure you want to delete this user?")
+def user_delete(username: str, remote_url: str | None) -> None:
+    """Delete a user and all their data."""
+    config = PeekConfig()
+    backend = _get_backend(config, cli_remote_url=remote_url)
+    is_remote = _is_remote_mode(backend)
+
+    if is_remote:
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            users = backend.list_users(username=username)
+            if not users:
+                click.echo(f"Error: User '{username}' not found", err=True)
+                sys.exit(1)
+            user_id = users[0]["id"]
+            backend.delete_user(user_id)
+            click.echo(f"✓ Deleted user: {username}")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        config.ensure_directories()
+        engine = init_db(config.db_path)
+        check_schema(engine)
+        storage = StorageManager(config=config)
+        admin_svc = AdminService(engine=engine, storage=storage, config=config)
+
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.username == username)).first()
+            if not user:
+                click.echo(f"Error: User '{username}' not found", err=True)
+                sys.exit(1)
+            user_id = user.id
+
+        try:
+            admin_svc.delete_user(user_id=user_id, current_user_id=-1)
+            click.echo(f"✓ Deleted user: {username}")
+        except ValueError as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+
+
+@user_cmd.command(name="reset-password")
+@click.argument("username")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+def user_reset_password(username: str, remote_url: str | None) -> None:
+    """Reset a user's password."""
+    config = PeekConfig()
+    backend = _get_backend(config, cli_remote_url=remote_url)
+    is_remote = _is_remote_mode(backend)
+
+    if is_remote:
+        click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        try:
+            users = backend.list_users(username=username)
+            if not users:
+                click.echo(f"Error: User '{username}' not found", err=True)
+                sys.exit(1)
+            user_id = users[0]["id"]
+            new_password = click.prompt("New password", hide_input=True)
+            confirm = click.prompt("Confirm new password", hide_input=True)
+            if new_password != confirm:
+                click.echo("Error: Passwords do not match", err=True)
+                sys.exit(1)
+            if len(new_password) < 8:
+                click.echo("Error: Password must be at least 8 characters", err=True)
+                sys.exit(1)
+            result = backend.reset_user_password(user_id, new_password)
+            click.echo(f"✓ Password reset for {username}")
+            if "new_password" in result:
+                click.echo(f"  New password: {result['new_password']}")
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
+    else:
+        config.ensure_directories()
+        engine = init_db(config.db_path)
+        check_schema(engine)
+        storage = StorageManager(config=config)
+        admin_svc = AdminService(engine=engine, storage=storage, config=config)
+
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.username == username)).first()
+            if not user:
+                click.echo(f"Error: User '{username}' not found", err=True)
+                sys.exit(1)
+            user_id = user.id
+
+        new_password = click.prompt("New password", hide_input=True)
+        confirm = click.prompt("Confirm new password", hide_input=True)
+        if new_password != confirm:
+            click.echo("Error: Passwords do not match", err=True)
+            sys.exit(1)
+        if len(new_password) < 8:
+            click.echo("Error: Password must be at least 8 characters", err=True)
+            sys.exit(1)
+        admin_svc.reset_password(user_id=user_id, new_password=new_password)
+        click.echo(f"✓ Password reset for {username}")
+
+
+@user_cmd.command(name="change-password")
+@click.option("--remote-url", "-r", default=None, help="Remote server URL (required)")
+def user_change_password(remote_url: str | None) -> None:
+    """Change your own password (remote mode only)."""
+    config = PeekConfig()
+    backend = _get_backend(config, cli_remote_url=remote_url)
+    is_remote = _is_remote_mode(backend)
+
+    if not is_remote:
+        click.echo("Error: change-password only supports remote mode", err=True)
+        sys.exit(1)
+
+    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+
+    old_password = click.prompt("Old password", hide_input=True)
+    new_password = click.prompt("New password", hide_input=True)
+    confirm = click.prompt("Confirm new password", hide_input=True)
+    if new_password != confirm:
+        click.echo("Error: Passwords do not match", err=True)
+        sys.exit(1)
+    if len(new_password) < 8:
+        click.echo("Error: Password must be at least 8 characters", err=True)
+        sys.exit(1)
+
+    try:
+        backend.change_password(old_password=old_password, new_password=new_password)
+        click.echo("✓ Password changed")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
 @cli.command()
 @click.option("--remote-url", "-r", required=True, help="Remote server URL")
 @click.option("--username", "-u", default=None, help="Username (prompted if not provided)")
@@ -1518,6 +1653,29 @@ def login(remote_url: str, username: str | None, password: str | None) -> None:
         click.echo(f"  Tip: Use 'peekview apikey create <name>' to create an API key")
     except Exception as e:
         click.echo(f"Error: Login failed - {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+def whoami(remote_url: str | None) -> None:
+    """Show current user info (remote mode only)."""
+    config = PeekConfig()
+    backend = _get_backend(config, cli_remote_url=remote_url)
+
+    if not _is_remote_mode(backend):
+        click.echo("Error: whoami only supports remote mode", err=True)
+        sys.exit(1)
+
+    click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+
+    try:
+        info = backend.whoami()
+        click.echo(f"Username:  {info.get('username', 'N/A')}")
+        click.echo(f"Admin:     {'Yes' if info.get('is_admin') else 'No'}")
+        click.echo(f"Created:   {info.get('created_at', 'N/A')}")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
 

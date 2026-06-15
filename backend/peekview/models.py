@@ -596,3 +596,12 @@ class AdminCleanupResponse(SQLModel):
     deleted_count: int
     deleted_slugs: list[str]
     freed_mb: float
+
+
+class ResetPasswordRequest(SQLModel):
+    new_password: str = Field(..., min_length=8, max_length=72)
+
+
+class ChangePasswordRequest(SQLModel):
+    old_password: str = Field(..., min_length=1, max_length=72)
+    new_password: str = Field(..., min_length=8, max_length=72)
