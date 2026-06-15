@@ -4,10 +4,20 @@ import request from 'supertest';
 import { createExpressApp, createMCPServer } from '../src/server.js';
 import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
-import type { SessionContext } from '../src/types.js';
+import type { SessionContext as BaseSessionContext } from '../src/types.js';
 import type { ServerConfig } from '../src/config.js';
 
-function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): ServerConfig {
+type SessionContext = BaseSessionContext;
+
+type ServerConfigWithNamespaces = ServerConfig & {
+  pathNamespaces: Record<string, Record<string, string>>;
+};
+
+function makeConfig(
+  mode: 'local' | 'remote',
+  allowedPaths: string[] = [],
+  pathNamespaces: Record<string, Record<string, string>> = {}
+): ServerConfigWithNamespaces {
   return {
     peekviewUrl: 'http://localhost:8080',
     publicUrl: 'http://localhost:8080',
@@ -17,6 +27,8 @@ function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = []): Serv
     logLevel: 'info',
     mode,
     allowedPaths,
+    trustAllPaths: false,
+    pathNamespaces,
   };
 }
 
@@ -43,6 +55,7 @@ function createTestApp() {
     host: '0.0.0.0',
     corsOrigins: ['*'],
     logLevel: 'info',
+    pathNamespaces: {},
   }, client);
 
   return { app, client };
@@ -393,5 +406,123 @@ describe('Streamable HTTP Server', () => {
       expect(toolNames).toContain('delete_entry');
       expect(toolNames).not.toContain('create_entry');
     });
+  });
+});
+
+// ─── T001: X-Peekview-Namespace header (AC1/AC3/AC4) ─────────────────────────
+//
+// phase: P3
+// task_id: T001
+// parent: P2-design.md
+// trace_id: T001-P3-20260615
+//
+// These tests target namespace header handling in server.ts that does NOT exist
+// yet. They should all FAIL (assertion failure) until P4 implementation lands.
+
+describe('T001: X-Peekview-Namespace header', () => {
+  function createTestAppWithNamespaces(pathNamespaces?: Record<string, Record<string, string>>) {
+    const client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
+    client.validateToken = async (token: string) => {
+      if (token === VALID_TOKEN) return { id: 1, username: 'alice' };
+      return null;
+    };
+    client.ping = async () => true;
+
+    const tools = createTools(client, makeConfig('remote'));
+    const config: ServerConfig = {
+      peekviewUrl: 'http://localhost:8080',
+      publicUrl: 'http://localhost:8080',
+      port: 33333,
+      host: '0.0.0.0',
+      corsOrigins: ['*'],
+      logLevel: 'info',
+      mode: 'remote',
+      allowedPaths: [],
+      trustAllPaths: false,
+      pathNamespaces: pathNamespaces ?? {},
+    };
+    const app = createExpressApp(tools, config, client);
+    return { app, client };
+  }
+
+  it('AC3: unknown namespace header → 400', async () => {
+    const { app } = createTestAppWithNamespaces({
+      'docker-a': { '/opt/data': '/home/host/d1' },
+    });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .set('X-Peekview-Namespace', 'docker-c')
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('docker-c');
+  });
+
+  it('AC3: unknown namespace 不静默 fallback，返回明确错误', async () => {
+    const { app } = createTestAppWithNamespaces({});
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .set('X-Peekview-Namespace', 'anything')
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/unknown.*namespace/i);
+  });
+
+  it('AC1: valid namespace header → 请求成功（SessionContext 注入 namespace）', async () => {
+    const { app } = createTestAppWithNamespaces({
+      'docker-a': { '/opt/data': '/home/host/d1' },
+    });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .set('X-Peekview-Namespace', 'docker-a')
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('AC4: 无 namespace header → 不影响现有流程', async () => {
+    const { app } = createTestAppWithNamespaces({
+      'docker-a': { '/opt/data': '/home/host/d1' },
+    });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('AC4: 空白 namespace header → 视为无 namespace', async () => {
+    const { app } = createTestAppWithNamespaces({
+      'docker-a': { '/opt/data': '/home/host/d1' },
+    });
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .set('X-Peekview-Namespace', '   ')
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('valid namespace + 无 pathNamespaces 配置 → 400', async () => {
+    const { app } = createTestAppWithNamespaces({});
+    const res = await request(app)
+      .post('/mcp')
+      .set('Accept', 'application/json, text/event-stream')
+      .set('Authorization', `Bearer ${VALID_TOKEN}`)
+      .set('X-Peekview-Namespace', 'docker-a')
+      .send(INIT_REQUEST);
+
+    expect(res.status).toBe(400);
   });
 });

@@ -2,10 +2,41 @@ import { z } from 'zod';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { pino } from 'pino';
 import type { PeekViewClient } from '../client.js';
 import type { ServerConfig } from '../config.js';
 import type { EntryFile, SessionContext, ToolDefinition, ToolResult } from '../types.js';
 import { translateError } from './utils.js';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV === 'development'
+    ? { target: 'pino-pretty' }
+    : undefined,
+});
+
+export function translatePath(
+  inputPath: string,
+  namespace: string | undefined,
+  pathNamespaces: Record<string, Record<string, string>> | undefined,
+): string {
+  if (!namespace || !pathNamespaces) return inputPath;
+  const mappings = pathNamespaces[namespace];
+  if (!mappings) return inputPath;
+
+  const sorted = Object.keys(mappings).sort((a, b) => b.length - a.length);
+  for (const containerPath of sorted) {
+    if (inputPath === containerPath) {
+      return path.resolve(mappings[containerPath]);
+    }
+    if (inputPath.startsWith(containerPath + path.sep)) {
+      const hostBase = path.resolve(mappings[containerPath]);
+      const rest = inputPath.slice(containerPath.length);
+      return hostBase + rest;
+    }
+  }
+  return inputPath;
+}
 
 // ── 限制（对齐后端，考虑 base64 膨胀）──
 const MAX_TEXT_FILE_BYTES = 7 * 1024 * 1024;       // 7MB
@@ -341,26 +372,31 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
             continue;
           }
 
-          // 2. stat 检查存在性（先于 realpath）
+          // 1.5 namespace 路径翻译
+          const translatedPath = translatePath(inputPath, ctx.namespace, ctx.pathNamespaces);
+
+          // 2. stat 检查存在性（对翻译后路径）
           let stat: import('fs').Stats;
           try {
-            stat = await fs.stat(inputPath);
+            stat = await fs.stat(translatedPath);
           } catch {
             skipped.push({ path: inputPath, reason: 'not_found' });
             continue;
           }
 
-          // 3. realpath 解析符号链接
-          const realPath = await fs.realpath(inputPath);
+          // 3. realpath 解析符号链接（对翻译后路径）
+          const realPath = await fs.realpath(translatedPath);
 
           // 4. denylist（安全类 → 拒绝整个请求）—— 对 realpath 后的路径
           if (isSensitive(realPath)) {
-            throw new SecurityRejection(realPath, 'sensitive', '');
+            logger.warn({ containerPath: inputPath, hostPath: realPath }, 'denylist rejected');
+            throw new SecurityRejection(inputPath, 'sensitive', '');
           }
 
           // 5. allowlist 边界检查（安全类 → 拒绝整个请求）
           if (!isWithinAllowed(realPath, allowedBases)) {
-            throw new SecurityRejection(realPath, 'out_of_scope', '');
+            logger.warn({ containerPath: inputPath, hostPath: realPath }, 'allowlist rejected');
+            throw new SecurityRejection(inputPath, 'out_of_scope', '');
           }
 
           if (stat.isDirectory()) {

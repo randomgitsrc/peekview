@@ -6,9 +6,16 @@ import * as os from 'os';
 import * as path from 'path';
 import { PeekViewClient } from '../src/client.js';
 import { createTools } from '../src/tools/index.js';
-import { publishFilesTool } from '../src/tools/publishFiles.js';
+import { publishFilesTool, translatePath } from '../src/tools/publishFiles.js';
+import { expandHome } from '../src/config/merge.js';
 import type { ServerConfig } from '../src/config.js';
-import type { SessionContext } from '../src/types.js';
+import type { SessionContext as BaseSessionContext } from '../src/types.js';
+
+type SessionContext = BaseSessionContext;
+
+type ServerConfigWithNamespaces = ServerConfig & {
+  pathNamespaces: Record<string, Record<string, string>>;
+};
 
 const mockServer = setupServer();
 beforeAll(() => mockServer.listen());
@@ -19,7 +26,12 @@ const client = new PeekViewClient({ peekviewUrl: 'http://localhost:8080' });
 
 const ctx: SessionContext = { userToken: 'pv_test', userId: 1, username: 'alice' };
 
-function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = [], trustAllPaths = false): ServerConfig {
+function makeConfig(
+  mode: 'local' | 'remote',
+  allowedPaths: string[] = [],
+  trustAllPaths = false,
+  pathNamespaces: Record<string, Record<string, string>> = {}
+): ServerConfigWithNamespaces {
   return {
     peekviewUrl: 'http://localhost:8080',
     publicUrl: 'http://localhost:8080',
@@ -30,6 +42,7 @@ function makeConfig(mode: 'local' | 'remote', allowedPaths: string[] = [], trust
     mode,
     allowedPaths,
     trustAllPaths,
+    pathNamespaces,
   };
 }
 
@@ -436,5 +449,160 @@ describe('publish_files', () => {
     const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
     await tool.handler({ summary: 'T', paths: [file], is_public: true }, ctx);
     expect(capturedBody?.is_public).toBe(true);
+  });
+});
+
+// ─── T001: translatePath + expandHome (AC1-AC8) ──────────────────────────────
+//
+// phase: P3
+// task_id: T001
+// parent: P2-design.md
+// trace_id: T001-P3-20260615
+//
+// These tests target the translatePath / expandHome functions that do NOT exist
+// yet. They should all FAIL (assertion failure) until P4 implementation lands.
+
+describe('T001: translatePath (AC1/AC4/AC5)', () => {
+  const namespaces = {
+    'docker-a': { '/opt/data': '/home/host/docker-data1' },
+    'docker-b': { '/opt/data': '/home/host/docker-data2' },
+    'docker-x': { '/opt/data': '/home/host/d1', '/opt/data/sub': '/home/host/d2' },
+  };
+
+  it('AC1: 基本路径翻译（namespace docker-a）', () => {
+    const result = translatePath('/opt/data/report.md', 'docker-a', namespaces);
+    expect(result).toBe('/home/host/docker-data1/report.md');
+  });
+
+  it('AC1: 精确匹配容器根路径', () => {
+    const result = translatePath('/opt/data', 'docker-a', namespaces);
+    expect(result).toBe('/home/host/docker-data1');
+  });
+
+  it('AC5: 最长前缀匹配 /opt/data/sub 优先于 /opt/data', () => {
+    const result = translatePath('/opt/data/sub/x.md', 'docker-x', namespaces);
+    expect(result).toBe('/home/host/d2/x.md');
+  });
+
+  it('AC5: 短前缀仍对非子路径生效', () => {
+    const result = translatePath('/opt/data/other/y.md', 'docker-x', namespaces);
+    expect(result).toBe('/home/host/d1/other/y.md');
+  });
+
+  it('AC6: 多 namespace 隔离 — docker-a 翻译到 data1', () => {
+    const result = translatePath('/opt/data/x.md', 'docker-a', namespaces);
+    expect(result).toBe('/home/host/docker-data1/x.md');
+  });
+
+  it('AC6: 多 namespace 隔离 — docker-b 翻译到 data2', () => {
+    const result = translatePath('/opt/data/x.md', 'docker-b', namespaces);
+    expect(result).toBe('/home/host/docker-data2/x.md');
+  });
+
+  it('AC4: 无 namespace → 不翻译，原样返回', () => {
+    const result = translatePath('/home/user/project/file.md', undefined, namespaces);
+    expect(result).toBe('/home/user/project/file.md');
+  });
+
+  it('AC4: namespace 为空字符串 → 不翻译', () => {
+    const result = translatePath('/home/user/project/file.md', '', namespaces);
+    expect(result).toBe('/home/user/project/file.md');
+  });
+
+  it('路径无匹配映射 → 原样返回（后续 allowlist 会拦）', () => {
+    const result = translatePath('/unrelated/path', 'docker-a', namespaces);
+    expect(result).toBe('/unrelated/path');
+  });
+});
+
+describe('T001: translatePath + 安全链集成 (AC2/AC8)', () => {
+  it('AC2: 翻译后路径不在 allowlist → 被拒绝', async () => {
+    const hostDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-ac2-host-'));
+    const allowedDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-ac2-allowed-'));
+    try {
+      const hostFile = path.join(hostDir, 'report.md');
+      await fs.writeFile(hostFile, 'content');
+      const namespaces = { 'docker-a': { '/opt/data': hostDir } };
+      const ctxWithNs: SessionContext = {
+        userToken: 'pv_test', userId: 1, username: 'alice',
+        namespace: 'docker-a', pathNamespaces: namespaces,
+      };
+      const tool = publishFilesTool(client, makeConfig('local', [allowedDir]));
+      const result = await tool.handler({ summary: 'AC2', paths: ['/opt/data/report.md'] }, ctxWithNs);
+      expect(result.content[0].text).toContain('发布被拒绝');
+      expect(result.content[0].text).not.toContain(hostDir);
+    } finally {
+      await fs.rm(hostDir, { recursive: true, force: true });
+      await fs.rm(allowedDir, { recursive: true, force: true });
+    }
+  });
+
+  it('AC2: 错误信息只含容器路径，不含主机路径', async () => {
+    const hostDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-ac2err-'));
+    const allowedDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-ac2err2-'));
+    try {
+      const hostFile = path.join(hostDir, 'secret.md');
+      await fs.writeFile(hostFile, 'data');
+      const namespaces = { 'docker-a': { '/opt/data': hostDir } };
+      const ctxWithNs: SessionContext = {
+        userToken: 'pv_test', userId: 1, username: 'alice',
+        namespace: 'docker-a', pathNamespaces: namespaces,
+      };
+      const tool = publishFilesTool(client, makeConfig('local', [allowedDir]));
+      const result = await tool.handler({ summary: 'AC2err', paths: ['/opt/data/secret.md'] }, ctxWithNs);
+      expect(result.content[0].text).toContain('/opt/data/secret.md');
+      expect(result.content[0].text).not.toContain(hostDir);
+    } finally {
+      await fs.rm(hostDir, { recursive: true, force: true });
+      await fs.rm(allowedDir, { recursive: true, force: true });
+    }
+  });
+
+  it('AC8: 翻译后路径命中 denylist → 被拒绝', async () => {
+    const hostDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pv-ac8-'));
+    try {
+      const pemFile = path.join(hostDir, 'private.pem');
+      await fs.writeFile(pemFile, 'KEY DATA');
+      const namespaces = { 'docker-a': { '/opt/secrets': hostDir } };
+      const ctxWithNs: SessionContext = {
+        userToken: 'pv_test', userId: 1, username: 'alice',
+        namespace: 'docker-a', pathNamespaces: namespaces,
+      };
+      const tool = publishFilesTool(client, makeConfig('local', [hostDir]));
+      const result = await tool.handler({ summary: 'AC8', paths: ['/opt/secrets/private.pem'] }, ctxWithNs);
+      expect(result.content[0].text).toContain('发布被拒绝');
+      expect(result.content[0].text).toContain('敏感文件保护规则');
+    } finally {
+      await fs.rm(hostDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('T001: expandHome (AC7)', () => {
+  it('AC7: ~/xxx 正确展开为 $HOME/xxx', () => {
+    const home = os.homedir();
+    const result = expandHome('~/projects');
+    expect(result).toBe(path.join(home, 'projects'));
+  });
+
+  it('AC7: 裸 ~ 展开为 $HOME', () => {
+    const home = os.homedir();
+    const result = expandHome('~');
+    expect(result).toBe(home);
+  });
+
+  it('非 ~ 开头路径原样返回', () => {
+    const result = expandHome('/absolute/path');
+    expect(result).toBe('/absolute/path');
+  });
+
+  it('相对路径原样返回', () => {
+    const result = expandHome('relative/path');
+    expect(result).toBe('relative/path');
+  });
+
+  it('~other 不展开（仅 ~ 和 ~/ 展开）', () => {
+    const result = expandHome('~other/projects');
+    expect(result).toBe('~other/projects');
   });
 });
