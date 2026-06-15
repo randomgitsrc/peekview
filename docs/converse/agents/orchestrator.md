@@ -85,12 +85,17 @@ function 执行一步(task_id):
      task: {一句话}
      known_risks:
        - {已知风险}
+     executor_env:
+       platform: {opencode|claude-code|codex|claude-project}
+       has_task_tool: {true|false}
+       has_local_runtime: {true|false}
+       network: {full|restricted}
      env_constraints:
        debug_env: {从 CLAUDE.md 读取调试命令}
      pruning_tendency: {保守/激进 + 理由}
      phase_hint: [P1, P2, ..., P8]
      ```
-     完成后自查四字段非空。
+     完成后自查五字段非空（含 executor_env）。
 
   4. 派发 subagent（用 task 工具）
      执行角色映射（固定，见 README 阶段总览）：
@@ -112,7 +117,7 @@ function 执行一步(task_id):
 
      | 门槛 | 命令/检查 | 反例（❌ 禁止） |
      |------|----------|----------------|
-     | P0→P1 | P0-brief.md 存在 + 四字段非空 | 文件存在就算过 |
+     | P0→P1 | P0-brief.md 存在 + 五字段非空（含 executor_env）| 文件存在就算过 |
      | P1→P2 | P1-requirements.md 有 Header + ≥1 条 BDD + 无未决 NEED_CONFIRM + 无 CAPABILITY_GAP | 信 subagent 的 ✅ |
      | P2→P3 | P2-review.md status==approved + P2-design.md 含 packages/domains/ui_affected/gate_commands | 信 subagent 的 "方案没问题" |
      | P3→P4 | `scripts/check-tdd-red.sh` exit 0 | 自己看 pytest 输出 |
@@ -183,6 +188,9 @@ P1-requirements.md 的「裁剪说明」声明跳过哪些阶段。
 
 **裁剪必须附理由**（"任务简单"不是合法理由）
 **最终拍板权在主 Agent**：结合 P0-brief 的 pruning_tendency 做独立判断，不接受 P1 analyst 的裁剪建议作为唯一依据
+
+**环境影响裁剪**：若 `executor_env.has_task_tool: false`（单 Agent 模式），所有「派发 subagent」步骤自动降级为「主 Agent 直接执行」。
+若 `has_local_runtime: false`，涉及 npm test / Playwright 的 gate 无法执行——不能跳过，须写 HANDOVER.md 交接或标记 `[CAPABILITY_GAP: gate-env]`。
 
 ---
 
