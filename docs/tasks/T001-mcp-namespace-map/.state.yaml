@@ -1,6 +1,6 @@
 task_id: T001
-phase: READY
-status: ready
+phase: DONE
+status: done
 retry_count:
   P1: 0
   P2: 0
