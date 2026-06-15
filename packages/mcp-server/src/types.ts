@@ -55,6 +55,8 @@ export interface SessionContext {
   userToken: string;
   userId: number;
   username: string;
+  namespace?: string;
+  pathNamespaces?: Record<string, Record<string, string>>;
 }
 
 
