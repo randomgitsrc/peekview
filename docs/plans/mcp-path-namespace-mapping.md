@@ -1,6 +1,7 @@
 # MCP Path Namespace 映射方案（Docker 路径空间错位）
 
 > 创建：2026-06-10
+> 更新：2026-06-15（适配 T008 无状态模式 v0.8.6）
 > 目标版本：MCP Server v0.9.0
 > 优先级：🟠 近期（解决 Docker agent 路径空间错位）
 > 关联：docs/roadmap/improvement-backlog.md
@@ -134,19 +135,12 @@ function expandHome(p: string): string {
 
 
 
-stateful 模式下，工具调用请求只带 `mcp-session-id` 头，不重复带 namespace 头。因此 **namespace 必须在 initialize 请求时从 header 捕获，存进 session**，后续工具调用从 session 读取。
+**T008 已将 MCP Server 改为无状态模式（v0.8.6），session 概念已删除。**
+因此 namespace 改为从**每次请求的 header** 直接读取，无需 initialize 阶段捕获或存储。
+Agent 配置了 `X-Peekview-Namespace` header 后，该 header 在每次工具调用时自动携带，
+MCP Server 在处理 `publish_files` 时直接从当次请求的 `req.headers` 读取。
 
-```typescript
-interface SessionEntry {
-  transport: StreamableHTTPServerTransport;
-  server: Server;
-  userToken: string;
-  userId: number;
-  username: string;
-  namespace?: string;   // 新增：initialize 时捕获
-  lastActivity: number;
-}
-```
+这简化了实现（不需要 session 绑定），同时与无状态架构完全兼容。
 
 ### 决策 2：无 namespace header → 不翻译，走本机真实路径
 
@@ -197,16 +191,15 @@ namespace 是"路径空间选择器"，不是"权限凭证"。安全边界由 al
 - 从 `fileConfig.server.path_namespaces` 读取
 - `config.ts:ServerConfig` 同步加字段
 
-### Step 2：initialize 捕获 namespace
-- `server.ts` 的 POST /mcp initialize 分支：
+### Step 2：POST /mcp 处理时读取 namespace（无状态模式）
+- `server.ts` 的 POST /mcp handler（无状态，每次请求独立）：
   - 读 `req.headers['x-peekview-namespace']`
-  - 若存在但不在 `config.pathNamespaces` 中 → 返回错误（决策 3）
-  - 存入 session entry 的 `namespace` 字段
-- 工具调用时，把 namespace 通过 SessionContext 传给 handler
+  - 若存在但不在 `config.pathNamespaces` 中 → 返回 400 错误（决策 3）
+  - 通过 `SessionContext` 传给工具 handler（SessionContext 已有 AsyncLocalStorage 机制）
 
 ### Step 3：SessionContext 加 namespace
-- `types.ts:SessionContext` 加 `namespace?: string` 和 `pathNamespaces?: Record<...>`
-- 或更简洁：把翻译函数注入 ctx
+- `types.ts:SessionContext` 加 `namespace?: string` 和 `pathNamespaces?: Record<string, Record<string, string>>`
+- server.ts 在 `sessionContext.run(ctx, ...)` 的 ctx 里注入 namespace（与 userToken/userId 同级）
 
 ### Step 4：publish_files 路径翻译
 - 在路径处理主循环最开始（绝对路径检查之后、stat 之前）插入翻译：
@@ -276,7 +269,7 @@ translated /opt/data/x.md → /home/user/docker-data1/x.md, not in allowlist
 | OpenCode | ✅ headers 配置字段 | |
 | Codex | ✅（OAuth/header）| 需实测 |
 | Hermes | 待实测 | first-class MCP client since v0.6.0 |
-| OpenClaw | 待实测 | 通过插件系统消费 MCP |
+| OpenClaw | ⚠️ 有已知 bug | issue #65590：streamable-http transport 不转发自定义 header，需用户实测当前版本是否已修复 |
 
 **风险**：不是所有 agent 都保证支持自定义 header。不支持的 agent 无法用 namespace 映射，但仍可：
 - 用无 namespace 模式（本机路径）
