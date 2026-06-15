@@ -1,5 +1,5 @@
 task_id: T009
-phase: P8
-status: in_progress
+phase: READY
+status: ready
 retry_count: {}
 updated: 2026-06-15
