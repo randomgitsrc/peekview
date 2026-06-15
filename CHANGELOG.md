@@ -13,6 +13,10 @@
 
 - **/{slug}/raw 短链接**：302 redirect 到 /api/v1/entries/{slug}/raw，方便用户和 Agent 直接在人类链接后加 `/raw` 获取原始内容
 
+### 修复
+
+- **SQLite pragma 未在所有连接生效**：`busy_timeout`/`synchronous`/`cache_size` 等连接级 pragma 只在初始化连接上设置，NullPool 下新连接缺失导致并发写时 SQLITE_BUSY 立即失败而非等待重试
+
 
 ## [0.1.59] - 2026-06-14
 
