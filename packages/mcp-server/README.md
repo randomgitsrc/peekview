@@ -81,6 +81,12 @@ peekview apikey create "Claude Code"
 claude mcp add peekview \
   --transport http http://localhost:33333/mcp \
   --header "Authorization: Bearer pv_xxxxxxxx..."
+
+# Docker 容器内的 Agent 需声明 namespace（容器路径自动翻译为主机路径）
+claude mcp add peekview \
+  --transport http http://host.docker.internal:33333/mcp \
+  --header "Authorization: Bearer pv_xxxxxxxx..." \
+  --header "X-Peekview-Namespace: docker-a"
 ```
 
 ## 命令详解
@@ -149,7 +155,8 @@ peekview-mcp service uninstall --user
 | `server.host` | `MCP_HOST` | `0.0.0.0` | 绑定地址，`127.0.0.1` 仅本地，`0.0.0.0` 所有接口 |
 | `server.cors_origins` | `MCP_CORS_ORIGINS` | `*` | CORS 来源，逗号分隔多个域名 |
 | `server.mode` | `MCP_MODE` | `remote` | 部署模式：`remote`（默认）或 `local` |
-| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+系统临时目录 |
+| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+系统临时目录；支持 `~` 展开 |
+| `server.path_namespaces` | — | — | Docker 容器路径映射（仅配置文件），见下方「Docker 容器部署」 |
 | `server.trust_all_paths` | `MCP_TRUST_ALL_PATHS` | `false` | 危险选项：跳过路径白名单，仅 best-effort 敏感路径保护 |
 | `logging.level` | `MCP_LOG_LEVEL` | `info` | 日志级别：`debug`, `info`, `warn`, `error` |
 
@@ -295,6 +302,7 @@ peekview-mcp config set peekview.public_url https://peek.example.com  # 同上
 | 多台服务器 + 有内网互通 | 场景二（多服务器+内网） |
 | 多台服务器 + 无内网互通 | 场景三（多服务器+公网） |
 | PeekView 不暴露公网 | 场景二（MCP通过内网访问） |
+| Agent 在 Docker 容器内 | 场景四（Docker + path_namespaces） |
 
 ## 配置文件示例
 
@@ -325,10 +333,31 @@ server:
   mode: local
   # 默认已允许 cwd + 系统临时目录；如需额外目录：
   allowed_paths:
-    - /home/alice/projects
+    - ~/projects       # ~ 会自动展开为 $HOME
     - /home/alice/notes
   # 完全本机自用（危险）：
   # trust_all_paths: true
+```
+
+Docker 容器部署示例（Agent 在容器内，MCP Server 在主机）：
+
+```yaml
+peekview:
+  url: http://localhost:8080
+  public_url: https://peek.example.com
+
+server:
+  mode: local
+  allowed_paths:
+    - ~/docker-data1   # 容器映射的主机目录
+    - ~/docker-data2
+  # 命名空间映射：容器内路径 → 主机路径
+  path_namespaces:
+    docker-a:
+      /opt/data: ~/docker-data1
+      /opt/logs: ~/docker-data1-logs
+    docker-b:
+      /opt/data: ~/docker-data2
 ```
 
 ## 环境变量
