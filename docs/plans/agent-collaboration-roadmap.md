@@ -1,5 +1,10 @@
 # PeekView Agent 协作能力路线图
 
+> ⚠️ **此文档已失效**
+> 取代文档：`docs/plans/cli-api-completeness-v2.md`（2026-06-15）
+> 原因：经评审发现多处设计矛盾和缺口，重新整理方案
+> 本文档保留作为历史参考，不再更新
+
 > 创建：2026-06-15
 > 取代：`docs/plans/cli-api-completeness.md`（已标注过时，见该文件头部）
 > 核心视角：**以 Agent 协作场景为驱动，而非 API 完整性对称**
