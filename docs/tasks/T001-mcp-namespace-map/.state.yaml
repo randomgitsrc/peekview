@@ -1,5 +1,5 @@
 task_id: T001
-phase: P3
+phase: P4
 status: in_progress
 retry_count:
   P1: 0
@@ -9,4 +9,3 @@ retry_count:
   P5: 0
   P8: 0
 updated: 2026-06-15
-handover: "Claude Project → OpenCode，已更新 executor_env"
