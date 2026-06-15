@@ -411,7 +411,13 @@ def get_db_stats(engine: Engine) -> dict:
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_conn, connection_record):
-    """Set SQLite pragmas on each connection."""
+    """Set SQLite pragmas on each new connection.
+
+    All connection-level pragmas (busy_timeout, synchronous, etc.) must be
+    applied here because NullPool creates a fresh connection per request.
+    journal_mode=WAL is file-level (persistent), but also set here for safety.
+    """
     cursor = dbapi_conn.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
+    for pragma, value in DEFAULT_PRAGMAS.items():
+        cursor.execute(f"PRAGMA {pragma} = {value}")
     cursor.close()
