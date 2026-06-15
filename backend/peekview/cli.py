@@ -1706,7 +1706,7 @@ def apikey_cleanup(remote_url: str | None, user: str | None) -> None:
 
 
 def _resolve_user_local(config: PeekConfig, username: str) -> "User":
-    """Local 모드: username → User 객체 조회. 없으면 에러 출력 후 exit."""
+    """Local mode: resolve username → User. Exits with error if not found."""
     engine = init_db(config.db_path)
     check_schema(engine)
     with Session(engine) as session:
@@ -1718,7 +1718,7 @@ def _resolve_user_local(config: PeekConfig, username: str) -> "User":
 
 
 def _get_apikey_service_local(config: PeekConfig) -> ApiKeyService:
-    """Local 모드: ApiKeyService 인스턴스 반환."""
+    """Local mode: return ApiKeyService instance."""
     engine = init_db(config.db_path)
     check_schema(engine)
     return ApiKeyService(engine=engine)
