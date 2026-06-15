@@ -241,3 +241,39 @@ async def test_raw_url_in_response_matches_request(client):
     data = resp.json()
     assert slug in data["raw_url"]
     assert "raw" in data["raw_url"]
+
+
+# --- Raw shortlink redirect tests (T009) ---
+
+
+# T009-AC1: 公开 entry 短链接 redirect 到 raw API
+async def test_raw_shortlink_public_entry_redirects(client):
+    content = "# Hello"
+    slug = await _create_public_entry(client, content)
+
+    resp = await client.get(f"/{slug}/raw", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"] == f"/api/v1/entries/{slug}/raw"
+
+
+# T009-AC2: 不存在的 slug 短链接仍 redirect（由目标路由返回 404）
+async def test_raw_shortlink_nonexistent_slug_still_redirects(client):
+    resp = await client.get("/noexist/raw", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/api/v1/entries/noexist/raw"
+
+
+# T009-AC3: 私有 entry 短链接 redirect 后目标路由处理认证
+async def test_raw_shortlink_private_entry_redirects_then_auth(client_with_key):
+    slug = await _create_private_entry(client_with_key, "secret content")
+
+    resp = await client_with_key.get(f"/{slug}/raw", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"] == f"/api/v1/entries/{slug}/raw"
+
+    # Follow redirect — target route should return 401 or 404 for unauthenticated
+    follow_resp = await client_with_key.get(f"/api/v1/entries/{slug}/raw")
+    assert follow_resp.status_code in (401, 404)

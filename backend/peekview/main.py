@@ -176,6 +176,13 @@ def create_app(
             if request.url.path.startswith("/api/v1/auth"):
                 return await call_next(request)
 
+            # Skip auth for raw shortlink redirect (target route handles auth)
+            path = request.url.path
+            if not path.startswith("/") or path.startswith("/api") or path.startswith("/assets") or path.startswith("/health"):
+                pass
+            elif path.endswith("/raw") and "/" not in path[1:-4]:
+                return await call_next(request)
+
             # Skip auth for API key management endpoints (require JWT)
             if request.url.path.startswith("/api/v1/apikeys"):
                 return await call_next(request)
@@ -336,6 +343,14 @@ def create_app(
                 }
             },
         )
+
+    # Raw shortlink redirect: /{slug}/raw → /api/v1/entries/{slug}/raw
+    # Must be registered before _setup_static_files to avoid SPA catch-all
+    from fastapi.responses import RedirectResponse
+
+    @app.get("/{slug}/raw")
+    async def raw_shortlink(slug: str):
+        return RedirectResponse(url=f"/api/v1/entries/{slug}/raw", status_code=302)
 
     # Static file serving for production SPA build
     _setup_static_files(app)
