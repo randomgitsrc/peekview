@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
 
-- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.0 (Streamable HTTP transport) has been released to npm.
-- **Current Version:** v0.1.61 (Backend/Frontend) | MCP Server v0.9.0
+- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.1 (Streamable HTTP transport) has been released to npm.
+- **Current Version:** v0.1.61 (Backend/Frontend) | MCP Server v0.9.1
 - **Architecture:** FastAPI (Python 3.12+) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
@@ -165,7 +165,7 @@ entry_service = request.app.state.entry_service
 2. **Local path:** `files[].local_path` - reads from server filesystem (allowlist check)
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
-### MCP Server Architecture (v0.9.0)
+### MCP Server Architecture (v0.9.1)
 - **Transport**: Streamable HTTP via `@modelcontextprotocol/sdk`
 - **Auth**: Two-layer — `pv_` prefix check at initialize, then passthrough to PeekView API
 - **Session**: Per-session Server instance with idle timeout cleanup
@@ -175,7 +175,7 @@ entry_service = request.app.state.entry_service
 - **publish_files**: reads files directly from disk, requires absolute paths, uses `server.allowed_paths` or cwd+tmpdir fallback, `trust_all_paths` option, rejects cwd `/`
 - **Service commands**: Auto-detect user/system service mode (`--user`/`--system` flags, default prefers user service)
 - **Deployment architecture**: Agent(A机器) → HTTP POST → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
-- **Version correspondence:** MCP Server v0.9.0 requires PeekView Backend v0.1.25+
+- **Version correspondence:** MCP Server v0.9.1 requires PeekView Backend v0.1.25+
 
 ### Error Response Format
 ```json

@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## [mcp-v0.9.1] - 2026-06-16
+
+### 新增
+
+- T014: `peekview-mcp config namespace add <ns> <container_path> <host_path>` — 添加 namespace 映射（container_path 必须为绝对路径）
+- T014: `peekview-mcp config namespace remove <ns> [container_path]` — 删除单条映射或整个 namespace（整个 namespace 需要 --yes 确认）
+- T014: `peekview-mcp config namespace list [ns]` — 列出所有/指定 namespace 映射
+- T014: `peekview-mcp config list` 输出追加 path_namespaces 部分
+
+
 ## [0.1.61] - 2026-06-16
 
 ### 新增
