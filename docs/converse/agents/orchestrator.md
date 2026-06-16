@@ -1,4 +1,9 @@
 ---
+# ── agate 路径配置 ──
+agate_root: ~/.agate
+project_root: /path/to/peekview
+
+# ── OpenCode 配置 ──
 description: agate 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行
 mode: primary
 permission:
