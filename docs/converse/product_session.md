@@ -13,22 +13,22 @@
 当用户讨论、分析、提问时——直接回答，不启动正式流程。
 可以自由探索代码、回答问题、讨论方案。
 
-### workflow-v4 执行模式
+### agate 执行模式
 
-当用户明确要完成一个非平凡任务时，启动 workflow-v4：
+当用户明确要完成一个非平凡任务时，启动 [agate](https://github.com/randomgitsrc/agate) 流程：
 
-1. 读取 `docs/process/workflow-v4/README.md` 和 `dispatch-protocol.md`
+1. 读取 `~/.agate/WORKFLOW.md` 和 `~/.agate/dispatch-protocol.md`
 2. 读取 `docs/tasks/active-tasks.md`，确定任务编号
 3. 创建 `docs/tasks/T{xxx}-{name}/`
-4. **主 Agent 亲自写 `P1-problems.md`**：从用户给的需求/计划文档提炼结构化问题定义（问题列表、优先级、依赖、影响域、隐含风险），这是 PM 的核心职责，不可委托给 subagent
-5. 派发 P1 analyst subagent（以 `P1-problems.md` 为核心输入，在此基础上做需求质疑、BDD 验收条件、裁剪判定）
+4. **主 Agent 亲自写 `P0-brief.md`**：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向
+5. 派发 P1 analyst subagent（基于 P0-brief 做需求质疑、BDD 验收条件、裁剪判定）
 6. 按 dispatch-protocol 派发 subagent 执行各阶段
 7. 每阶段完成后亲自跑命令验门槛，更新任务看板
 
 **模式判断**：
 - 改个文案、回个问题、看段代码 → 自由模式
-- 做一个功能、修一个 bug、实施一个方案 → workflow-v4 模式
-- 不确定时，先自由讨论，等方向明确再启动 workflow-v4
+- 做一个功能、修一个 bug、实施一个方案 → agate 模式
+- 不确定时，先自由讨论，等方向明确再启动 agate
 
 ## 项目上下文（新会话必须读取）
 
@@ -40,7 +40,7 @@
 - `README.md` — 产品定义、技术栈、配置
 - `docs/tasks/active-tasks.md` — 当前任务看板（Txxx/状态/阶段/依赖）
 
-如有 workflow-v4 流程规范变动，也应及时读取 `docs/process/workflow-v4/` 下相关文件。
+如有 agate 流程规范变动，也应及时读取 `~/.agate/` 下相关文件。
 
 ## 铁律（必须遵守）
 
@@ -69,7 +69,7 @@
 
 **裁剪必须保守，默认走完整流程，只有充分理由才可跳过阶段。**
 
-1. **不可跳过的阶段**：P1（需求基线）、P4（实现）、P5（技术验证）—— 这是 workflow-v4 已有的底线
+1. **不可跳过的阶段**：P1（需求基线）、P4（实现）、P5（技术验证）—— 这是 agate 已有的底线
 2. **P6（验收）默认不跳过**：涉及多端改动（API+CLI+Client）的任务必须走 P6，因为 P5 只验证自动化测试覆盖的行为，P6 才验证环境安全和行为完整性
 3. **裁剪需主 Agent 确认**：P1 analyst 的裁剪建议是"建议"，主 Agent 必须结合项目上下文做最终判定。涉及以下情况不裁剪：
    - 涉及 ≥2 个改动端（如 API + CLI）→ 不跳 P6

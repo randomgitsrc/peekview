@@ -1,136 +1,56 @@
-# Agent 新任务执行提示词（完整版）
+# Agent 新任务执行提示词
 
-> 当你有一个新需求时，把这个提示词发给 Agent，它会自动按 workflow-v2 流程执行。
+> 当你有一个新需求时，把这个提示词发给 Agent，它会自动按 [agate](https://github.com/randomgitsrc/agate) 流程执行。
 
 ---
 
 ```
 # 新任务启动
 
-## 你的任务
+我有一个新需求，请按照 agate 流程（P0-P8）来执行。
 
-我有一个新需求，请按照 `docs/process/workflow-v2.md` 定义的流程来执行。
-
-## 执行步骤（Agent 自动执行）
+## 执行步骤
 
 ### 第 1 步：读取流程规范
 
-首先读取以下文件，理解流程规范：
-- `docs/process/workflow-v2.md`
+- `~/.agate/WORKFLOW.md`（P0-P8 主规则）
+- `~/.agate/dispatch-protocol.md`（subagent 派发协议）
 - `docs/tasks/active-tasks.md`（任务看板）
+- `AGENTS.md`（项目铁律 + 常用命令）
 
 ### 第 2 步：确定任务编号
 
-从 `docs/tasks/active-tasks.md` 中找到当前最大任务编号，下一个编号 = 最大编号 + 1
+从 `docs/tasks/active-tasks.md` 读取最大任务编号，下一个 = 最大 + 1。
 
 ### 第 3 步：创建任务目录
 
-```bash
 mkdir -p docs/tasks/T{xxx}-{task-name}/
+
+### 第 4 步：主 Agent 亲自写 P0-brief.md
+
+P0 是主 Agent 不可委托的职责，包含：
+- 任务简报（一句话概括）
+- 环境约束（debug_env：端口、数据目录、隔离要求）
+- 已知风险
+- 裁剪倾向（哪些阶段计划保留/裁剪，及理由）
+
+### 第 5 步：按 agate 阶段链派发
+
+- P1 需求基线（analyst）→ BDD 验收条件
+- P2 方案设计（声明 packages/domains/ui_affected/gate_commands）
+- P3 TDD 测试
+- P4 代码实现
+- P5 技术验证（主 Agent 亲自跑 gate）
+- P6 验收（BDD 实跑 + UI Playwright）
+- P7 一致性检查（多文件改动时）
+- P8 发布准备（每个 package 各自 bump + CHANGELOG）
+
+### 第 6 步：每阶段 commit
+
+格式：wf({task_id}-{phase}): {summary}
+
+主 Agent 亲自跑 gate 命令，绝不信 subagent 自我报告。
 ```
-
-### 第 4 步：创建 P1-problems.md
-
-根据我提供的需求，创建 `P1-problems.md`，包含以下内容：
-
-```yaml
----
-phase: P1
-task_id: T{xxx}
-task_name: {task-name}
-type: problems
-trace_id: T{xxx}-P1-{日期}
-created: {日期}
-status: draft
-parent: {需求来源描述}
----
-
-# 问题定义：{任务名称}
-
-## 原始需求
-（把你收到的需求粘贴在这里）
-
-## 期望行为
-（描述期望的结��）
-
-## 验收标准
-- [ ] 标准1
-- [ ] 标准2
-- [ ] 标准3
-```
-
-### 第 5 步：更新任务看板
-
-在 `docs/tasks/active-tasks.md` 的任务列表中添加一行：
-
-```markdown
-| T{xxx} | {task-name} | ⬜ 待开始 | P1 | P{0-3} | {日期} | {日期} |
-```
-
-### 第 6 步：继续执行 P1 剩余工作
-
-创建 `P1-test-strategy.md`，定义测试策略：
-
-```yaml
----
-phase: P1
-task_id: T{xxx}
-task_name: {task-name}
-type: test_strategy
-trace_id: T{xxx}-P1-{日期}
-created: {日期}
-status: draft
-parent: T{xxx}/P1-problems.md
----
-
-# 测试策略
-
-| 验收标准 | 测试类型 | 测试文件/方法 |
-|----------|----------|---------------|
-| 标准1    | 单元测试 / 手工验证 | test_xxx.py / manual-checklist.md |
-| 标准2    | 单元测试 / E2E      | test_yyy.ts       |
-```
-
-### 第 7 步：更新看板状态
-
-完成后更新 `docs/tasks/active-tasks.md`：
-- 状态：待开始 → 进行中
-- 阶段：P1
-- 更新日期：今天
-
----
-
-## 完整示例
-
-假设我的需求是："给 PeekView ���加深色主题支持"
-
-你执行后的结果应该是：
-
-```
-✅ 任务已创建
-
-任务编号：T002
-任务名称：dark-theme-support
-
-产出文件：
-- docs/tasks/T002-dark-theme-support/
-  ├── P1-problems.md       # 问题定义
-  └── P1-test-strategy.md  # 测试策略
-
-任务看板已更新：
-| T002 | dark-theme-support | 🔄 进行中 | P1 | P2 | 2026-06-11 | 2026-06-11 |
-
-现在进入 P2 阶段吗？
-```
-
----
-
-## 关键约束
-
-1. **每个文件必须有 Header**：phase, task_id, parent, trace_id
-2. **任务编号自动递增**：不能手动指定，必须从看板读取最大编号+1
-3. **任务目录必须在 docs/tasks/ 下**
-4. **完成后必须更新看板**
 
 ## 需求格式
 
@@ -147,4 +67,10 @@ parent: T{xxx}/P1-problems.md
 （P0/P1/P2/P3）
 ```
 
-现在开始执行！
+## 关键约束
+
+1. **P0-brief 主 Agent 亲自写**，不委托 subagent
+2. **任务编号自动递增**，从看板读取最大编号 + 1
+3. **任务目录必须在 docs/tasks/ 下**
+4. **每阶段完成后必须更新看板**
+5. **gate 判定**：主 Agent 亲自跑命令，subagent 的 ✅/[SCOPE_GAP] 仅供参考

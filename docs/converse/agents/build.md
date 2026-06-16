@@ -27,7 +27,7 @@ permission:
 ## 工作流
 
 - 微/小任务（单文件改动、简单 bug fix）直接做
-- 中/大任务走 workflow-v4（`docs/process/workflow-v4/`）：P1-P8 阶段链
+- 中/大任务走 [agate](https://github.com/randomgitsrc/agate)（`~/.agate/WORKFLOW.md`）：P0-P8 阶段链
 - 开始前必读 `docs/tasks/active-tasks.md`
 
 ## 常用命令
