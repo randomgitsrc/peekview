@@ -105,7 +105,7 @@ make publish-npm          # 发布 MCP Server 到 npm
 
 **开始前必读 `docs/tasks/active-tasks.md`**，无进行中任务再启动新任务。
 
-非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/agate/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。
+非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。
 
 **阶段链 P0-P8（默认全走，裁剪须有理由）**：
 - **P0** 主 Agent 亲自写 `P0-brief.md`：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向
@@ -128,7 +128,7 @@ make publish-npm          # 发布 MCP Server 到 npm
 ## 详细参考
 
 - 完整配置和规范：`CLAUDE.md`
-- 开发流程：`~/agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agate)）
+- 开发流程：`~/.agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agate)）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
 - 改善清单：`docs/roadmap/improvement-backlog.md`

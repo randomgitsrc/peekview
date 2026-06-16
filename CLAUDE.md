@@ -251,7 +251,7 @@ entry_service = request.app.state.entry_service
 
 ## Development Workflow (agate)
 
-非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/agate/`）。主 Agent 派发 subagent 到独立上下文，自己只读状态/派发/验门槛/更新状态，不亲自写产出。
+非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 派发 subagent 到独立上下文，自己只读状态/派发/验门槛/更新状态，不亲自写产出。
 
 **阶段链 P1-P8**：P1 需求基线 → P2 设计 → P3 测试 → P4 实现 → P5 技术验证 → P6 验收 → P7 一致性 → P8 发布准备 → READY（人工 make publish）。
 
@@ -266,7 +266,7 @@ entry_service = request.app.state.entry_service
 ## Essential Documentation
 
 - **Active Tasks:** `docs/tasks/active-tasks.md` — 开始任何工作前必读
-- **Dev Workflow:** `~/agate/WORKFLOW.md` — 当前主流程（P0-P8 子 Agent 编排，[agate](https://github.com/randomgitsrc/agate)）
+- **Dev Workflow:** `~/.agate/WORKFLOW.md` — 当前主流程（P0-P8 子 Agent 编排，[agate](https://github.com/randomgitsrc/agate)）
 - **gstack Review Roles:** `docs/process/gstack-review-guide.md` — /review /cso /plan-eng-review 等
 - **Release Process:** `docs/process/release.md` — 发布前必读
 - **Debug Workflow:** `docs/process/debug-workflow.md` — 调试验证

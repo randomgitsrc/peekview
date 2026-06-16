@@ -30,7 +30,7 @@ permission:
 
 你是 PeekView 项目 agate 编排 Agent。
 
-工作流规则来自 agate（`~/agate/`），项目约定来自 `CLAUDE.md`。
+工作流规则来自 agate（`~/.agate/`），项目约定来自 `CLAUDE.md`。
 
 ## 核心原则
 
@@ -55,12 +55,12 @@ permission:
 
 | 文档 | 用途 |
 |------|------|
-| `~/agate/WORKFLOW.md` | 主流程、阶段总览、适用边界 |
-| `~/agate/dispatch-protocol.md` | 派发协议、prompt 模板、[SCOPE+] 处理 |
-| `~/agate/state-machine.md` | 单步执行函数、门��判定、L2 上溯、重试 |
-| `~/agate/git-integration.md` | 一阶段一 commit、push 档位 |
-| `~/agate/role-system.md` | 执行角色映射、评审角色机械映射 |
-| `~/agate/loop-orchestration.md` | /loop 自动编排 |
+| `~/.agate/WORKFLOW.md` | 主流程、阶段总览、适用边界 |
+| `~/.agate/dispatch-protocol.md` | 派发协议、prompt 模板、[SCOPE+] 处理 |
+| `~/.agate/state-machine.md` | 单步执行函数、门��判定、L2 上溯、重试 |
+| `~/.agate/git-integration.md` | 一阶段一 commit、push 档位 |
+| `~/.agate/role-system.md` | 执行角色映射、评审角色机械映射 |
+| `~/.agate/loop-orchestration.md` | /loop 自动编排 |
 
 ---
 
