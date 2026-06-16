@@ -149,7 +149,15 @@ if (namespaces && Object.keys(namespaces).length > 0) {
 }
 ```
 
-## 三、不含 namespace test 命令
+## 三、namespace remove 整个 namespace 无 --yes 确认（有意设计）
+
+设计阶段曾讨论过删整个 namespace 时加 `--yes` 确认参数。
+实现时有意省略：MCP CLI 主要用于 headless 脚本和自动化场景，
+交互确认反而是障碍。用户若要保护误删，应在脚本里自行确认。
+
+---
+
+## 四、不含 namespace test 命令
 
 v3 plan 明确决策：运行时 server.ts 已校验 unknown namespace → 400，CLI test 的价值低，不做。
 

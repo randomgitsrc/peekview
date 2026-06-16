@@ -175,6 +175,15 @@ class AdminService:
             ]
 
     def delete_user(self, user_id: int, current_user_id: int) -> None:
+        """Delete a user and all their data (cascade).
+
+        Args:
+            user_id: ID of the user to delete.
+            current_user_id: ID of the caller. Pass the actual user ID to
+                enforce the "cannot delete yourself" guard. Pass -1 to bypass
+                the guard (used by DELETE /auth/me which handles self-deletion
+                with its own 409 confirmation flow for the last-admin case).
+        """
         if user_id == current_user_id:
             raise ValueError("Cannot delete yourself")
         with Session(self.engine) as session:
