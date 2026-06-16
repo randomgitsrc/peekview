@@ -1,6 +1,10 @@
 # Workflow v4 — 子 Agent 编排工作流
 
-> 版本：v4.0
+> ⚠️ **已迁移**：本流程已独立为 [agate](https://github.com/randomgitsrc/agate) 项目（v1.0.0）。
+> PeekView 项目现在通过 `docs/converse/agents/orchestrator.md` 引用 agate。
+> 本目录保留作为历史归档，内容不再更新。
+
+> 版本：v4.0（已归档）
 > 适用：OpenCode / Claude Code / Codex 等支持 subagent 的 Agent 平台
 > 这是当前唯一生效的开发流程。新 Agent 只需掌握本目录，无需了解历史版本。
 

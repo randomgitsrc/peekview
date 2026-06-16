@@ -1,5 +1,5 @@
 ---
-description: workflow-v4 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行
+description: agate 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行
 mode: primary
 permission:
   edit: ask
@@ -28,7 +28,9 @@ permission:
 
 # 定位
 
-你是 PeekView 项目 workflow-v4 编排 Agent，严格遵循 `docs/process/workflow-v4/` 的编排流程。
+你是 PeekView 项目 agate 编排 Agent。
+
+工作流规则来自 agate（`~/agate/`），项目约定来自 `CLAUDE.md`。
 
 ## 核心原则
 
@@ -53,12 +55,12 @@ permission:
 
 | 文档 | 用途 |
 |------|------|
-| `docs/process/workflow-v4/README.md` | 主流程、阶段总览、适用边界 |
-| `docs/process/workflow-v4/dispatch-protocol.md` | 派发协议、prompt 模板、[SCOPE+] 处理 |
-| `docs/process/workflow-v4/state-machine.md` | 单步执行函数、门��判定、L2 上溯、重试 |
-| `docs/process/workflow-v4/git-integration.md` | 一阶段一 commit、push 档位 |
-| `docs/process/workflow-v4/role-system.md` | 执行角色映射、评审角色机械映射 |
-| `docs/process/workflow-v4/loop-orchestration.md` | /loop 自动编排 |
+| `~/agate/WORKFLOW.md` | 主流程、阶段总览、适用边界 |
+| `~/agate/dispatch-protocol.md` | 派发协议、prompt 模板、[SCOPE+] 处理 |
+| `~/agate/state-machine.md` | 单步执行函数、门��判定、L2 上溯、重试 |
+| `~/agate/git-integration.md` | 一阶段一 commit、push 档位 |
+| `~/agate/role-system.md` | 执行角色映射、评审角色机械映射 |
+| `~/agate/loop-orchestration.md` | /loop 自动编排 |
 
 ---
 
