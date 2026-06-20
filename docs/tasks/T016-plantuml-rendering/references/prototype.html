@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PlantUML 渲染原型</title>
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --success: #3fb950;
+      --error: #f85149;
+      --warning: #d29922;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      background: var(--bg-secondary);
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .diagram-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .diagram-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-tertiary);
+    }
+
+    .diagram-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .diagram-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .badge-dot { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+    .badge-sequence { background: rgba(210, 153, 34, 0.15); color: var(--warning); }
+    .badge-component { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+
+    .diagram-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-loading .status-dot {
+      background: var(--warning);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .status-success .status-dot { background: var(--success); }
+    .status-error .status-dot { background: var(--error); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .diagram-source {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .diagram-source summary {
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      outline: none;
+    }
+
+    .diagram-source summary:hover { color: var(--text-secondary); }
+
+    .diagram-source pre {
+      margin-top: 8px;
+      padding: 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
+    .diagram-output {
+      padding: 24px 16px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .diagram-output.loading {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .diagram-output.error {
+      color: var(--error);
+      font-size: 13px;
+    }
+
+    .diagram-output svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .diagram-output svg text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif !important;
+    }
+
+    .diagram-timing {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      text-align: right;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+      padding: 16px 24px;
+      margin-top: 32px;
+    }
+
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-stat {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .footer-stat strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .footer-stat .label {
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧪 PlantUML.js 渲染原型</h1>
+    <p>验证 plantuml.js 浏览器端渲染能力 — 含中文 · 串行队列 · 超时保护</p>
+  </header>
+
+  <main>
+    <div class="diagram-card" id="card-1">
+      <div class="diagram-header">
+        <div>
+          <span class="diagram-title">图1：类图</span>
+          <span class="diagram-badge badge-dot">dot 布局</span>
+        </div>
+        <div class="diagram-status status-loading" id="status-1">
+          <span class="status-dot"></span>
+          <span class="status-text">等待中</span>
+        </div>
+      </div>
+      <details class="diagram-source">
+        <summary>查看 PlantUML 源码</summary>
+        <pre id="source-1"></pre>
+      </details>
+      <div class="diagram-output loading" id="output-1">⏳ 等待渲染…</div>
+      <div class="diagram-timing" id="timing-1"></div>
+    </div>
+
+    <div class="diagram-card" id="card-2">
+      <div class="diagram-header">
+        <div>
+          <span class="diagram-title">图2：时序图</span>
+          <span class="diagram-badge badge-sequence">非 dot 布局</span>
+        </div>
+        <div class="diagram-status status-loading" id="status-2">
+          <span class="status-dot"></span>
+          <span class="status-text">等待中</span>
+        </div>
+      </div>
+      <details class="diagram-source">
+        <summary>查看 PlantUML 源码</summary>
+        <pre id="source-2"></pre>
+      </details>
+      <div class="diagram-output loading" id="output-2">⏳ 等待渲染…</div>
+      <div class="diagram-timing" id="timing-2"></div>
+    </div>
+
+    <div class="diagram-card" id="card-3">
+      <div class="diagram-header">
+        <div>
+          <span class="diagram-title">图3：组件图</span>
+          <span class="diagram-badge badge-component">dot 布局</span>
+        </div>
+        <div class="diagram-status status-loading" id="status-3">
+          <span class="status-dot"></span>
+          <span class="status-text">等待中</span>
+        </div>
+      </div>
+      <details class="diagram-source">
+        <summary>查看 PlantUML 源码</summary>
+        <pre id="source-3"></pre>
+      </details>
+      <div class="diagram-output loading" id="output-3">⏳ 等待渲染…</div>
+      <div class="diagram-timing" id="timing-3"></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-stat">
+        <span class="label">总渲染时间：</span>
+        <strong id="total-time">—</strong>
+      </div>
+      <div class="footer-stat">
+        <span class="label">viz-global.js：</span>
+        <strong id="size-viz">—</strong>
+      </div>
+      <div class="footer-stat">
+        <span class="label">plantuml.js：</span>
+        <strong id="size-plantuml">—</strong>
+      </div>
+    </div>
+  </footer>
+
+  <script src="extracted/viz-global.js"></script>
+  <script type="module">
+    import { render } from "./extracted/plantuml.js";
+
+    const diagrams = [
+      {
+        id: 1,
+        source: `@startuml
+class 用户 {
+  +用户名: String
+  +邮箱: String
+  +登录(): Boolean
+  +注册(): Boolean
+}
+class 订单 {
+  +订单号: String
+  +总金额: Float
+  +创建时间: Date
+  +支付(): Boolean
+}
+class 商品 {
+  +商品名: String
+  +价格: Float
+  +库存: Integer
+}
+用户 "1" --> "*" 订单 : 下单
+订单 "*" --> "*" 商品 : 包含
+@enduml`
+      },
+      {
+        id: 2,
+        source: `@startuml
+actor 用户
+participant "认证服务" as Auth
+participant "订单服务" as Order
+database "数据库" as DB
+
+用户 -> Auth : 登录请求
+Auth -> DB : 验证凭据
+DB --> Auth : 返回用户信息
+Auth --> 用户 : 返回令牌
+
+用户 -> Order : 提交订单
+Order -> DB : 保存订单
+DB --> Order : 确认保存
+Order --> 用户 : 订单创建成功
+@enduml`
+      },
+      {
+        id: 3,
+        source: `@startuml
+package "Frontend" {
+  [Vue App]
+  [Shiki Highlighter]
+}
+package "Backend" {
+  [FastAPI Server]
+  [Entry Service]
+  [Auth Module]
+}
+database "SQLite" as DB
+
+[Vue App] --> [FastAPI Server] : REST API
+[FastAPI Server] --> [Entry Service]
+[FastAPI Server] --> [Auth Module]
+[Entry Service] --> DB
+@enduml`
+      }
+    ];
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function setStatus(id, state, text) {
+      const el = document.getElementById(`status-${id}`);
+      el.className = `diagram-status status-${state}`;
+      el.querySelector('.status-text').textContent = text;
+    }
+
+    function setOutput(id, state, content) {
+      const el = document.getElementById(`output-${id}`);
+      el.className = `diagram-output ${state}`;
+      el.innerHTML = content;
+    }
+
+    function waitForSvg(targetId, timeout = 5000) {
+      return new Promise((resolve, reject) => {
+        const container = document.getElementById(targetId);
+        const existingSvg = container.querySelector('svg');
+        if (existingSvg) {
+          resolve(existingSvg);
+          return;
+        }
+
+        const observer = new MutationObserver((mutations, obs) => {
+          for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                const svg = node.tagName === 'svg' ? node : node.querySelector?.('svg');
+                if (svg) {
+                  obs.disconnect();
+                  clearTimeout(timer);
+                  resolve(svg);
+                  return;
+                }
+              }
+            }
+          }
+          const svg = container.querySelector('svg');
+          if (svg) {
+            obs.disconnect();
+            clearTimeout(timer);
+            resolve(svg);
+          }
+        });
+        observer.observe(container, { childList: true, subtree: true });
+
+        const timer = setTimeout(() => {
+          observer.disconnect();
+          const svg = container.querySelector('svg');
+          if (svg) {
+            resolve(svg);
+          } else {
+            reject(new Error('渲染超时 (5s)'));
+          }
+        }, timeout);
+      });
+    }
+
+    async function renderDiagram(diagram) {
+      const { id, source } = diagram;
+      const outputId = `output-${id}`;
+      const lines = source.split(/\r\n|\r|\n/);
+
+      document.getElementById(`source-${id}`).textContent = source;
+      setStatus(id, 'loading', '渲染中…');
+      setOutput(id, 'loading', '⏳ 正在渲染…');
+
+      const start = performance.now();
+
+      try {
+        render(lines, outputId);
+        await waitForSvg(outputId, 5000);
+        const elapsed = (performance.now() - start).toFixed(0);
+        setStatus(id, 'success', `✓ 完成 (${elapsed}ms)`);
+        setOutput(id, '', document.getElementById(outputId).innerHTML);
+        document.getElementById(`timing-${id}`).textContent = `渲染耗时 ${elapsed}ms`;
+        return elapsed;
+      } catch (err) {
+        const elapsed = (performance.now() - start).toFixed(0);
+        setStatus(id, 'error', `✗ 失败`);
+        setOutput(id, 'error', `❌ ${err.message}`);
+        document.getElementById(`timing-${id}`).textContent = `失败 (${elapsed}ms)`;
+        return elapsed;
+      }
+    }
+
+    async function measureScriptSize(url, label) {
+      try {
+        const res = await fetch(url);
+        const buf = await res.arrayBuffer();
+        return buf.byteLength;
+      } catch {
+        return null;
+      }
+    }
+
+    async function main() {
+      const totalStart = performance.now();
+
+      const [vizSize, plantumlSize] = await Promise.all([
+        measureScriptSize('extracted/viz-global.js', 'viz-global.js'),
+        measureScriptSize('extracted/plantuml.js', 'plantuml.js'),
+      ]);
+
+      document.getElementById('size-viz').textContent = vizSize != null ? formatBytes(vizSize) : '未知';
+      document.getElementById('size-plantuml').textContent = plantumlSize != null ? formatBytes(plantumlSize) : '未知';
+
+      for (const diagram of diagrams) {
+        await renderDiagram(diagram);
+      }
+
+      const totalElapsed = (performance.now() - totalStart).toFixed(0);
+      document.getElementById('total-time').textContent = `${totalElapsed}ms`;
+    }
+
+    main();
+  </script>
+</body>
+</html>
