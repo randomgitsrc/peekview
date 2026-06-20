@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { validateSource, render, ensureLoaded, _setPlantUmlRender, _setTimeout } from '../usePlantUML'
 
 describe('usePlantUML', () => {
@@ -28,7 +28,7 @@ describe('usePlantUML', () => {
 
   describe('render', () => {
     beforeEach(() => {
-      _setPlantUmlRender((lines: string[], targetId: string) => {
+      _setPlantUmlRender((_: string[], targetId: string) => {
         const el = document.getElementById(targetId)
         if (el) el.innerHTML = '<svg viewBox="0 0 100 50"><rect/></svg>'
       })
@@ -60,7 +60,7 @@ describe('usePlantUML', () => {
     it('串行队列：多次调用排队执行', async () => {
       const calls: number[] = []
       let callCount = 0
-      _setPlantUmlRender((lines: string[], targetId: string) => {
+      _setPlantUmlRender((_: string[], targetId: string) => {
         callCount++
         const el = document.getElementById(targetId)
         if (el) el.innerHTML = '<svg></svg>'
@@ -80,12 +80,12 @@ describe('usePlantUML', () => {
     })
 
     it('首次调用触发加载', async () => {
-      _setPlantUmlRender((lines: string[], targetId: string) => {})
+      _setPlantUmlRender(() => {})
       await ensureLoaded()
     })
 
     it('重复调用不重复加载', async () => {
-      _setPlantUmlRender((lines: string[], targetId: string) => {})
+      _setPlantUmlRender(() => {})
       await ensureLoaded()
       await ensureLoaded()
     })
