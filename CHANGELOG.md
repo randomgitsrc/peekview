@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.1.62] - 2026-06-20
+
+### 新增
+
+- T016: PlantUML 图表渲染支持 — markdown 中的 ` ```plantuml ` 代码块在浏览器端渲染为可交互 SVG（pan-zoom/全屏/PNG 导出），与现有 Mermaid 共存
+- T016: `usePlantUML.ts` 引擎封装 — 懒加载 plantuml.js v1.2026.6（8.3MB，仅检测到 plantuml 块时加载）+ 模块级 Promise 链串行队列（引擎共享状态硬约束）+ 5s 超时 + 四道语法错误降级
+- T016: `PlantUmlDiagram.vue` 展示组件 — 与 MermaidDiagram 接口对称，PNG 导出独立实现适配 PlantUML SVG 结构
+- T016: vendored `frontend-v3/public/vendor/plantuml/` — plantuml.js + viz-global.js + VERSION，同源加载命中 CSP `script-src 'self'`
+- T016: `MarkdownViewer.vue` renderToken 取消机制 — 快速切换条目/主题时丢弃旧渲染结果，防 mount 错位
+
+### 验证
+
+- 10/10 单元测试通过（validateSource 4 + render 4 + ensureLoaded 2）
+- 真实 CSP 下 Playwright + vision 验证：3 种图类型（类图/时序图/组件图）+ 中文渲染正常 + Mermaid 共存
+- 9/9 BDD 验收通过（含暗色主题、语法错误降级、多块串行、懒加载）
+
+
 ## [mcp-v0.9.2] - 2026-06-16
 
 ### 新增
