@@ -1,7 +1,7 @@
 task_id: T016
 task_name: plantuml-rendering
 status: ready
-status: in_progress
+status: done
 retry_count:
   P1: 0
   P2: 1
