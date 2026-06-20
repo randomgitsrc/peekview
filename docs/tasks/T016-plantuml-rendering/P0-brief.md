@@ -17,7 +17,16 @@ parent: docs/notes/plantuml-rendering-feasibility.md + 原型验证
 
 **技术路线已定**：路线 A（官方 plantuml.js v1.2026.6，TeaVM 编译产物，客户端渲染）。原型验证已通过，详见 `references/prototype-conclusion.md`。
 
-## 环境约束（debug_env）
+## executor_env
+
+```yaml
+platform: opencode
+has_task_tool: true
+has_local_runtime: true
+network: full
+```
+
+## 环境约束（env_constraints.debug_env）
 
 - 调试服务：`make debug`（`127.0.0.1:8888`，数据目录 `/tmp/peekview-debug/`）
 - 前端构建：`cd frontend-v3 && npm run build`（自动复制到 `backend/peekview/static/`）
@@ -36,6 +45,10 @@ parent: docs/notes/plantuml-rendering-feasibility.md + 原型验证
 | stdlib 体积 | 低 | awslib/azure/k8s 等图标库体积大 | 按需懒加载，原型未涉及，集成时评估 |
 | 暗色主题 | 低 | 原型未测 `{dark: true}` | P4 实现时验证 |
 | 失败降级 | 低 | 语法错误/超时需退回展示原始代码块 | 仿 `useMermaid.ts` 的失败处理，5s 超时 |
+
+## phase_hint
+
+[P1, P2, P3, P4, P5, P6, P7, P8] — 全保留，不裁剪
 
 ## 裁剪倾向
 
