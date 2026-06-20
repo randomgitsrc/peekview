@@ -1093,6 +1093,210 @@ watch(() => [props.content, theme.value], async () => {
   color: #ff8787;
 }
 
+/* === PlantUML Block Styles (mirror mermaid) === */
+.plantuml-block {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.plantuml-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plantuml-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.plantuml-header-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.plantuml-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plantuml-view-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+}
+
+.plantuml-view-toggle .toggle-icon {
+  font-size: 14px;
+}
+
+.plantuml-view-toggle.code-active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.plantuml-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plantuml-action-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.plantuml-dropdown {
+  position: relative;
+}
+
+.plantuml-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+}
+
+.plantuml-dropdown-menu.show {
+  display: block;
+}
+
+.plantuml-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.plantuml-dropdown-menu button:hover {
+  background: var(--bg-secondary);
+}
+
+.plantuml-content {
+  position: relative;
+  min-height: 300px;
+  height: auto;
+  width: 100%;
+}
+
+.plantuml-content.diagram-mode {
+  background: var(--bg-secondary);
+  overflow: hidden;
+  min-height: 300px;
+  height: 400px;
+  width: 100%;
+}
+
+.plantuml-content.code-mode {
+  background: var(--bg-secondary);
+  min-height: 100px;
+  aspect-ratio: auto;
+}
+
+.plantuml-content.diagram-mode:not(.is-active),
+.plantuml-content.code-mode:not(.is-active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.plantuml-content.code-mode pre {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--bg-secondary) !important;
+}
+
+.plantuml-viewer-mount {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.plantuml-viewer-mount :deep(svg) {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.plantuml-fullscreen-trigger {
+  display: none;
+}
+
+.plantuml-error {
+  padding: 1rem;
+  background: #ffeaea;
+  border: 1px solid #ff6b6b;
+  border-radius: 6px;
+  color: #c92a2a;
+  text-align: center;
+}
+
+[data-theme='dark'] .plantuml-error {
+  background: #3d1f1f;
+  border-color: #ff6b6b;
+  color: #ff8787;
+}
+
+@media (max-width: 768px) {
+  .plantuml-header {
+    padding: 6px 10px;
+  }
+
+  .plantuml-view-toggle .toggle-text {
+    display: none;
+  }
+}
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .mermaid-header {
