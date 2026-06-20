@@ -1,6 +1,6 @@
 task_id: T016
 task_name: plantuml-rendering
-current_phase: P8
+status: ready
 status: in_progress
 retry_count:
   P1: 0
