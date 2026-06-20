@@ -7,6 +7,7 @@ export interface MarkdownRenderResult {
   html: string
   headings: TocHeading[]
   mermaidSources: Map<number, string>
+  plantumlSources: Map<number, string>
 }
 
 export function useMarkdown() {
@@ -65,8 +66,7 @@ export function useMarkdown() {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
     const mermaidSources = new Map<number, string>()
-
-    // Extract front matter before processing
+    const plantumlSources = new Map<number, string>()
     let frontMatterHtml = ''
     let processedContent = content
     const frontMatterMatch = content.match(frontMatterRegex)
@@ -261,6 +261,38 @@ export function useMarkdown() {
           continue
         }
 
+        if (block.lang === 'plantuml') {
+          const plantumlBlockId = `plantuml-block-${block.index}`
+          plantumlSources.set(block.index, block.code)
+          const plantumlBlock = `<div class="plantuml-block" id="${plantumlBlockId}" data-index="${block.index}">
+            <div class="plantuml-header">
+              <span class="plantuml-label">PLANTUML</span>
+              <div class="plantuml-header-actions">
+                <button class="plantuml-view-toggle" data-action="toggle-plantuml-view" data-block-id="${plantumlBlockId}" title="Toggle Diagram/Code">
+                  <span class="toggle-icon">◫</span>
+                  <span class="toggle-text">Diagram</span>
+                </button>
+                <button class="plantuml-action-btn fullscreen-btn" data-action="open-plantuml-fullscreen" data-block-id="${plantumlBlockId}" title="Fullscreen">⧉</button>
+                <div class="plantuml-dropdown">
+                  <button class="plantuml-action-btn menu-btn" data-action="toggle-plantuml-menu" data-block-id="${plantumlBlockId}" title="More actions">⋯</button>
+                  <div class="plantuml-dropdown-menu" id="menu-${plantumlBlockId}">
+                    <button data-action="download-plantuml-png" data-block-id="${plantumlBlockId}">⬇ Download PNG</button>
+                    <button data-action="copy-plantuml-code" data-block-id="${plantumlBlockId}">⧉ Copy Code</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="plantuml-content diagram-mode is-active" data-mode="diagram">
+              <div class="plantuml-viewer-mount" data-index="${block.index}"></div>
+            </div>
+            <div class="plantuml-content code-mode" data-mode="code">
+              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
+            </div>
+          </div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, plantumlBlock)
+          continue
+        }
+
         const highlighted = await highlightCode(block.code, block.lang, theme)
         // Wrap highlighted code with our header and copy button
         const wrappedCode = `<div class="code-block-wrapper">
@@ -298,7 +330,7 @@ export function useMarkdown() {
       ADD_TAGS: ['button'],
     })
 
-    return { html, headings, mermaidSources }
+    return { html, headings, mermaidSources, plantumlSources }
   }
 
   return { render }

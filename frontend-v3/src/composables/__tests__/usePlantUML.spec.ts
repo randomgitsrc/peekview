@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { validateSource, render, ensureLoaded } from '../usePlantUML'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { validateSource, render, ensureLoaded, _setPlantUmlRender, _setTimeout } from '../usePlantUML'
 
 describe('usePlantUML', () => {
   describe('validateSource', () => {
@@ -27,6 +27,17 @@ describe('usePlantUML', () => {
   })
 
   describe('render', () => {
+    beforeEach(() => {
+      _setPlantUmlRender((lines: string[], targetId: string) => {
+        const el = document.getElementById(targetId)
+        if (el) el.innerHTML = '<svg viewBox="0 0 100 50"><rect/></svg>'
+      })
+    })
+
+    afterEach(() => {
+      _setPlantUmlRender(null)
+    })
+
     it('有效源码返回 SVG 字符串', async () => {
       const svg = await render('@startuml\nA -> B\n@enduml')
       expect(typeof svg).toBe('string')
@@ -34,37 +45,47 @@ describe('usePlantUML', () => {
     })
 
     it('语法错误时 reject', async () => {
-      await expect(render('invalid source')).rejects.toThrow()
+      await expect(render('invalid source')).rejects.toThrow('invalid')
     })
 
     it('超时时 reject', async () => {
-      vi.useFakeTimers()
-      const promise = render('@startuml\nA -> B\n@enduml')
-      vi.advanceTimersByTime(6000)
-      await expect(promise).rejects.toThrow('timeout')
-      vi.useRealTimers()
+      _setPlantUmlRender(() => {
+        // 不创建 SVG，模拟引擎静默不输出
+      })
+      _setTimeout(100)
+      await expect(render('@startuml\nA -> B\n@enduml')).rejects.toThrow('timeout')
+      _setTimeout(5000)
     })
 
     it('串行队列：多次调用排队执行', async () => {
       const calls: number[] = []
+      let callCount = 0
+      _setPlantUmlRender((lines: string[], targetId: string) => {
+        callCount++
+        const el = document.getElementById(targetId)
+        if (el) el.innerHTML = '<svg></svg>'
+      })
       const promises = [1, 2, 3].map((i) =>
         render('@startuml\nA -> B\n@enduml').then(() => calls.push(i)),
       )
       await Promise.all(promises)
       expect(calls).toEqual([1, 2, 3])
+      expect(callCount).toBe(3)
     })
   })
 
   describe('ensureLoaded', () => {
     beforeEach(() => {
-      vi.resetModules()
+      _setPlantUmlRender(null)
     })
 
     it('首次调用触发加载', async () => {
+      _setPlantUmlRender((lines: string[], targetId: string) => {})
       await ensureLoaded()
     })
 
     it('重复调用不重复加载', async () => {
+      _setPlantUmlRender((lines: string[], targetId: string) => {})
       await ensureLoaded()
       await ensureLoaded()
     })
