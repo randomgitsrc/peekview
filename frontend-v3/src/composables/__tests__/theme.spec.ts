@@ -19,7 +19,7 @@ function makeMatchMedia(matches: boolean) {
 }
 
 describe('useThemeStore', () => {
-  let setAttributeSpy: ReturnType<typeof vi.spyOn>
+  let setAttributeSpy: any
 
   beforeEach(() => {
     setActivePinia(createPinia())
