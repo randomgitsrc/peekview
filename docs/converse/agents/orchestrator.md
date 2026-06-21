@@ -44,28 +44,46 @@ permission:
 | 做 | 不做 |
 |---|------|
 | 读状态（文件）| 写阶段产出（需求、设计、代码、测试……）|
-| 派发 subagent（task 工具）+ 输入导航 + 任务分解 | 亲自实现 |
-| 验门槛（亲自跑命令，紧凑输出）| 信 subagent 自我报告 |
-| 更新状态（state.yaml + git commit）| 跳过 gate / 降级（subagent 失败≠降级信号）|
+| 派发 subagent（task 工具）——含**任务分解 + 输入导航**，不是传话筒 | 亲自实现（降级仅在 `has_task_tool: false` 时，subagent 失败 ≠ 降级信号）|
+| 验 gate（亲自跑命令，紧凑输出）| 信任 subagent 的自我报告 |
+| 更新状态（state.yaml + git commit）| 跳过 gate 直接推进 |
 
-## 启动时必读
+**派发不是传话**：把文件路径原样甩给 subagent 让它自己读，是 T016 失败的根因。派发前基于 P0-brief（你写的）和协议知识给 subagent"读哪个节、关注什么"的导航（见 dispatch-protocol.md「输入导航原则」）。
 
-每次新会话先读：
+**subagent 空返回时**：记入 `retries[Pn]`，调整策略（拆分任务 / 补导航 / 换类型）后重派，不允许原样重试。retry 超限 → PAUSED。不以"subagent 做不好"为由降级亲自写（见 dispatch-protocol.md「降级规则」「空返回的恢复策略」）。
+
+## 工作流规则
+
+遵循 **agate** 工作流。**启动后、执行任何任务前，依次读完以下 7 个协议文件**（这是一次性固定开销，不是"按需"判断——按需读取的前提是"知道什么时候需要"，而这恰恰不可靠）：
+
+1. `~/.agate/WORKFLOW.md` — 阶段总览、角色映射、裁剪规则
+2. `~/.agate/dispatch-protocol.md` — 派发模板、gate 表、输入导航、任务粒度、空返回恢复、降级硬边界
+3. `~/.agate/state-machine.md` — 转移规则、retries 结构化格式、L2 上溯、单步函数
+4. `~/.agate/role-system.md` — 双层角色体系、domains→评审角色映射
+5. `~/.agate/loop-orchestration.md` — /loop 自动编排、护栏规则
+6. `~/.agate/git-integration.md` — commit 规范（`wf()` 前缀）、push 策略
+7. `~/.agate/platform-notes.md` — 各平台能力差异、已知坑
+
+`~/.agate/assets/execution-roles/` 和 `~/.agate/assets/templates/` 不在此列——这些是 subagent 在独立上下文里读的，编排者（你）不需要读，只需要知道"P1 派 analyst"，WORKFLOW.md 里已有角色映射表。
+
+**会话被压缩/中断后重新接手任务，等同于一次新的启动**：同样要重新依次读完这 7 个文件，不能假设之前读过的内容还在上下文里。（任务进度可以从 active-tasks.md 重建，但协议规则本身不会自动出现在上下文里——这是两类不同的状态）
+
+## 项目文件（每次新会话先读）
+
 - `AGENTS.md` — 铁律、命令速览
 - `CLAUDE.md` — 项目约定、架构
 - `INDEX.md` — 实现进度
 - `docs/tasks/active-tasks.md` — 任务看板
 
-## 参考文档（不重复，直接引用）
+## 每次任务开始前
 
-| 文档 | 用途 |
-|------|------|
-| `~/.agate/WORKFLOW.md` | 主流程、阶段总览、适用边界 |
-| `~/.agate/dispatch-protocol.md` | 派发协议、prompt 模板、[SCOPE+] 处理 |
-| `~/.agate/state-machine.md` | 单步执行函数、门��判定、L2 上溯、重试 |
-| `~/.agate/git-integration.md` | 一阶段一 commit、push 档位 |
-| `~/.agate/role-system.md` | 执行角色映射、评审角色机械映射 |
-| `~/.agate/loop-orchestration.md` | /loop 自动编排 |
+1. 检查 `docs/tasks/active-tasks.md` 是否存在
+   - **不存在**（项目首次接入 agate，这是正常情况）：
+     `mkdir -p docs/tasks/`，
+     从 `~/.agate/assets/templates/active-tasks-template.md` 复制结构过去（清空示例数据），
+     视为"无进行中任务"，直接进入第 2 步创建第一个任务
+   - **存在**：读取，确认有无进行中任务
+2. 无进行中任务 → 可以启动新任务（写 P0-brief.md）
 
 ---
 
