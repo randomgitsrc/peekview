@@ -21,12 +21,12 @@ export function validateSource(code: string): ValidationResult {
   const trimmed = code.trim()
   if (!trimmed) return { ok: false, reason: 'empty source' }
 
-  const startumlCount = (trimmed.match(/^@startuml(\s|$|\()/gm) || []).length
-  const endumlCount = (trimmed.match(/^@enduml\s*$/gm) || []).length
+  const startCount = (trimmed.match(/^@start\w+(\s|$|\()/gm) || []).length
+  const endCount = (trimmed.match(/^@end\w+\s*$/gm) || []).length
 
-  if (startumlCount === 0) return { ok: false, reason: 'missing @startuml' }
-  if (endumlCount === 0) return { ok: false, reason: 'missing @enduml' }
-  if (startumlCount !== endumlCount) return { ok: false, reason: 'unbalanced @startuml/@enduml' }
+  if (startCount === 0) return { ok: false, reason: 'missing @start' }
+  if (endCount === 0) return { ok: false, reason: 'missing @end' }
+  if (startCount !== endCount) return { ok: false, reason: 'unbalanced @start/@end' }
 
   return { ok: true }
 }
