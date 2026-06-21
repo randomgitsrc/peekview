@@ -11,18 +11,55 @@ describe('usePlantUML', () => {
     it('缺少 @startuml 拒绝', () => {
       const result = validateSource('A -> B\n@enduml')
       expect(result.ok).toBe(false)
-      expect(result.reason).toContain('startuml')
+      expect(result.reason).toContain('start')
     })
 
     it('缺少 @enduml 拒绝', () => {
       const result = validateSource('@startuml\nA -> B')
       expect(result.ok).toBe(false)
-      expect(result.reason).toContain('enduml')
+      expect(result.reason).toContain('end')
     })
 
     it('空字符串拒绝', () => {
       const result = validateSource('')
       expect(result.ok).toBe(false)
+    })
+
+    it('@startmindmap/@endmindmap 通过校验', () => {
+      const result = validateSource('@startmindmap\n+ foo\n@endmindmap')
+      expect(result.ok).toBe(true)
+    })
+
+    it('@startgantt/@endgantt 通过校验', () => {
+      const result = validateSource('@startgantt\n[Task] lasts 5 days\n@endgantt')
+      expect(result.ok).toBe(true)
+    })
+
+    it('@startnwdiag/@endnwdiag 通过校验', () => {
+      const result = validateSource('@startnwdiag\nnetwork foo {}\n@endnwdiag')
+      expect(result.ok).toBe(true)
+    })
+
+    it('无 @start* 标记的纯文本拒绝', () => {
+      const result = validateSource('not plantuml content\nA -> B')
+      expect(result.ok).toBe(false)
+      expect(result.reason).toContain('start')
+    })
+
+    it('有 @start* 但无 @end* 拒绝', () => {
+      const result = validateSource('@startmindmap\n+ foo')
+      expect(result.ok).toBe(false)
+      expect(result.reason).toContain('end')
+    })
+
+    it('@start* 数量多于 @end* 拒绝', () => {
+      const result = validateSource('@startuml\nA -> B\n@enduml\n@startmindmap\n+ foo')
+      expect(result.ok).toBe(false)
+    })
+
+    it('@startmindmap(filename) 带文件名参数通过校验', () => {
+      const result = validateSource('@startmindmap(diagram.png)\n+ foo\n@endmindmap')
+      expect(result.ok).toBe(true)
     })
   })
 
