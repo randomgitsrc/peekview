@@ -1,7 +1,7 @@
 task_id: T017
 task_name: theme-media-query-fix
 current_phase: P3
-status: in_progress
+status: done
 retries: {}
 retry_count: {}
 created: 2026-06-21
