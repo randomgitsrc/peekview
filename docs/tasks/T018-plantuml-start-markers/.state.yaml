@@ -1,0 +1,11 @@
+task_id: T018
+task_name: plantuml-start-markers
+current_phase: P0
+status: in_progress
+retries: {}
+retry_count: {}
+created: 2026-06-21
+updated: 2026-06-21
+pruning:
+  skip_phases: [P2, P7]
+  reason: "方案明确（正则替换），单文件单点改动，无多文件一致性风险"
