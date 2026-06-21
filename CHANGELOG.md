@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [0.1.63] - 2026-06-21
+
+### 修复
+
+- T017: 主题切换 @media 冲突修复 — github-markdown-css v5.9.0 的 `@media (prefers-color-scheme: dark)` 越权绕过 `data-theme` 控制，导致系统黑夜时用户切 light 模式内容区仍为黑色。patch `public/css/github-markdown.css` 去掉 `@media` 包裹，改为 `[data-theme=dark] .markdown-body` / `[data-theme=light] .markdown-body` 显式选择器，`data-theme` 成为唯一真相源
+- T017: Playwright 3 场景验证通过（系统黑夜+light→白 / 系统黑夜+dark→黑 / 系统白天+dark→黑），vision 确认无割裂
+
+
 ## [0.1.62] - 2026-06-20
 
 ### 新增
