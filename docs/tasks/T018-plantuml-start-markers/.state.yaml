@@ -1,7 +1,7 @@
 task_id: T018
 task_name: plantuml-start-markers
 current_phase: P4
-status: in_progress
+status: done
 retries: {}
 retry_count: {}
 created: 2026-06-21
