@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## [0.1.64] - 2026-06-21
+
+### 修复
+
+- T018: PlantUML 起止标记通用化 — validateSource 只认 @startuml/@enduml，导致 @startmindmap/@startgantt/@startnwdiag 等 17+ 种非 UML 图类型被前置验证拦截。改为通用 @start\w+/@end\w+ 模式，覆盖 mindmap/gantt/nwdiag/salt/ditaa/wbs/json/yaml/creole 等所有 PlantUML 图类型
+- T018: Playwright 实测确认 mindmap 完美渲染，gantt/nwdiag 进入渲染流程（修复前被前端验证器拦截）
+
+### 验证
+
+- 17/17 单元测试通过（含 6 个新增 BDD 用例）
+- Playwright 实跑：10 种 PlantUML 图类型全部产出 SVG，0 console 错误
+
+
 ## [0.1.63] - 2026-06-21
 
 ### 修复
