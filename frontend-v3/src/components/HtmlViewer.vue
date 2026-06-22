@@ -51,7 +51,7 @@
 
     <!-- iframe 容器（正常渲染 / 512KB~2MB 时也显示此区域）-->
     <div v-else class="html-frame-container">
-      <!-- Loading 态：fetch 兄弟文件中 / blobUrl 创建后到 iframe load 事件前 -->
+      <!-- Loading 态：fetch 兄弟文件中 / processedHtml 生成后到 iframe load 事件前 -->
       <div
         v-if="isLoading || props.loadingSiblings"
         data-testid="html-loading"
@@ -61,12 +61,12 @@
         <span>渲染中...</span>
       </div>
 
-      <!-- iframe：content 非空且 blobUrl 已创建时显示 -->
+      <!-- iframe：content 非空且 processedHtml 已生成时显示 -->
       <iframe
-        v-if="blobUrl"
-        :src="blobUrl"
+        v-if="processedHtml"
+        :srcdoc="processedHtml"
         sandbox="allow-scripts"
-        csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' blob: data:; img-src blob: data:; media-src blob: data:; font-src blob: data:; connect-src 'none'; frame-src 'none'; form-action 'none';"
+        csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; style-src 'unsafe-inline' blob: data: https:; img-src blob: data: https:; media-src blob: data: https:; font-src blob: data: https:; connect-src blob: data: https:; worker-src blob:; frame-src 'none'; form-action 'none';"
         referrerpolicy="no-referrer"
         class="html-frame"
         @load="onIframeLoad"
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, inject } from 'vue'
 
 // ── 测试注入 key（Symbol 避免命名冲突，定义在 HtmlViewerTestKeys.ts）────
 import { HTML_VIEWER_TEST_SIZE_KEY } from './HtmlViewerTestKeys'
@@ -264,32 +264,19 @@ const showRelativePathWarning = computed(() =>
   relativePathWarningCount.value > 0 && !relativePathWarningDismissed.value
 )
 
-// ── Blob URL 管理 ─────────────────────────────────────────────────────────
-const blobUrl   = ref<string | null>(null)
+// ── 渲染状态 ──────────────────────────────────────────────────────────────
+const processedHtml = ref<string | null>(null)
 const isLoading = ref(false)
 
-function createBlobUrl(content: string): string {
-  const blob = new Blob([content], { type: 'text/html;charset=UTF-8' })
-  return URL.createObjectURL(blob)
-}
-
-function revokeBlobUrl(url: string | null) {
-  if (url) URL.revokeObjectURL(url)
-}
-
 function initRender(content: string) {
-  // 空内容不渲染，避免创建空 Blob 导致 iframe 短暂闪白
   if (!content) return
-  // 正在 fetch 兄弟文件，等数据到齐后再渲染
   if (props.loadingSiblings) return
-  // 大文件且未手动触发，不创建 Blob URL
   if (isBlockedBySize.value && !manuallyTriggered.value) return
 
   const { html: processed, unmatchedCount } = injectResources(content, props.siblingFiles ?? [])
   relativePathWarningCount.value = unmatchedCount
-  revokeBlobUrl(blobUrl.value)
   isLoading.value = true
-  blobUrl.value = createBlobUrl(processed)
+  processedHtml.value = processed
 }
 
 // content 变更时重新渲染（entry 切换文件时 content 会先置空再填充）
@@ -314,17 +301,11 @@ watch(manuallyTriggered, (triggered) => {
   if (triggered) initRender(props.content)
 })
 
-// 卸载时释放 Blob URL，防止内存泄漏
-onUnmounted(() => {
-  revokeBlobUrl(blobUrl.value)
-})
-
 // ── iframe 加载状态 ───────────────────────────────────────────────────────
 function onIframeLoad() {
   isLoading.value = false
 }
 
-// Blob URL 加载失败时也退出 loading 态，防止 Loading 永久卡住
 function onIframeError() {
   isLoading.value = false
 }
