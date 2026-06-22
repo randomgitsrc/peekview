@@ -1,12 +1,17 @@
 /**
- * HtmlViewer 单元测试
+ * HtmlViewer 单元测试（T019 rev 2：后端 render 路由方案）
  *
- * 覆盖 spec-html-render.md P1 测试项（T019: srcdoc + CSP 放宽）：
- * - iframe 通过 srcdoc 绑定处理后的 HTML（非 Blob URL）
- * - iframe CSP 属性支持 Three.js/WebGL/Canvas 富交互（connect-src/worker-src/img-src/font-src/style-src 放宽）
- * - DOMParser 相对路径检测触发警告条
- * - > 2MB 文件不自动渲染，手动触发正常
- * - Load 事件后 Loading 态消失
+ * 覆盖 P2-design.md「前端设计」节测试项：
+ * - iframe src 指向后端 render 路由 /api/v1/entries/{slug}/files/{file_id}/render
+ * - sibling file IDs 作为 ?inject= 逗号分隔 query 参数传递
+ * - iframe sandbox="allow-scripts"（无 allow-same-origin，凭据隔离）
+ * - iframe 无 csp 属性（CSP 由后端 HTTP response header 设置）
+ * - 前端仍保留 countRelativePaths 相对路径检测（显示警告条，不注入）
+ * - > 2MB 文件不自动渲染，手动触发后正常
+ * - loadingSiblings=true 时 iframe 不渲染（等 sibling IDs 到齐）
+ *
+ * 状态：P3 TDD RED。HtmlViewer.vue 仍为 srcdoc 方案，测试此时应失败；
+ * P4 改造 HtmlViewer.vue 为 :src="renderUrl" 后转 GREEN。
  */
 
 import { describe, it, expect } from 'vitest'
@@ -45,72 +50,136 @@ const HTML_CDN_ONLY = `
 
 const MB = 1024 * 1024
 
-// ─── srcdoc 绑定 ──────────────────────────────────────────────────────────────
-describe('srcdoc 绑定', () => {
-  it('挂载时 iframe srcdoc 绑定到处理后的 HTML', async () => {
+// 默认 props（构造完整 renderUrl 所需：slug + fileId + content + siblingFileIds）
+const DEFAULT_PROPS = {
+  slug: 'test-slug',
+  fileId: 42,
+  content: SIMPLE_HTML,
+  siblingFileIds: [] as number[],
+}
+
+// ─── renderUrl 拼接 ──────────────────────────────────────────────────────────
+describe('renderUrl 拼接', () => {
+  it('iframe src 指向 render 路由', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
+    })
+    await flushPromises()
+
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/api/v1/entries/test-slug/files/42/render')
+  })
+
+  it('无 siblingFileIds 时 URL 不含 inject 参数', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS, siblingFileIds: [] },
+    })
+    await flushPromises()
+
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/render')
+    expect(src).not.toContain('inject=')
+  })
+
+  it('sibling file IDs 作为 inject query 参数（逗号分隔）', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: {
+        ...DEFAULT_PROPS,
+        siblingFileIds: [10, 20, 30],
+      },
+    })
+    await flushPromises()
+
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/render')
+    expect(src).toContain('inject=10,20,30')
+  })
+
+  it('单个 sibling file ID 也走 inject 参数', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: {
+        ...DEFAULT_PROPS,
+        siblingFileIds: [99],
+      },
+    })
+    await flushPromises()
+
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('inject=99')
+  })
+
+  it('slug 变化时 URL 更新', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS },
+    })
+    await flushPromises()
+
+    let src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/entries/test-slug/files/42/render')
+
+    await wrapper.setProps({ slug: 'new-slug' })
+    await flushPromises()
+
+    src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/entries/new-slug/files/42/render')
+    expect(src).not.toContain('test-slug')
+  })
+
+  it('fileId 变化时 URL 更新', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS },
+    })
+    await flushPromises()
+
+    await wrapper.setProps({ fileId: 99 })
+    await flushPromises()
+
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/files/99/render')
+  })
+
+  it('siblingFileIds 变化时 inject 参数更新', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS, siblingFileIds: [1, 2] },
+    })
+    await flushPromises()
+
+    let src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('inject=1,2')
+
+    await wrapper.setProps({ siblingFileIds: [3, 4, 5] })
+    await flushPromises()
+
+    src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('inject=3,4,5')
+    expect(src).not.toContain('inject=1,2')
+  })
+
+  it('iframe 用 src 而非 srcdoc', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
     const iframe = wrapper.find('iframe')
-    expect(iframe.exists()).toBe(true)
-    const srcdoc = iframe.attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('<html')
-    expect(srcdoc).toContain('<h1>Hello</h1>')
-  })
-
-  it('卸载时无需释放（srcdoc 无 Blob URL）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
-    })
-    await flushPromises()
-
-    expect(() => wrapper.unmount()).not.toThrow()
-  })
-
-  it('content 变更时 srcdoc 更新', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
-    })
-    await flushPromises()
-
-    const srcdoc1 = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc1).toContain('Hello')
-
-    await wrapper.setProps({ content: '<html><body><h1>Updated</h1></body></html>' })
-    await flushPromises()
-
-    const srcdoc2 = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc2).toContain('Updated')
-    expect(srcdoc2).not.toContain('Hello')
+    expect(iframe.attributes('src')).toBeTruthy()
+    // 改用 :src 后不应再有 srcdoc 属性
+    expect(iframe.attributes('srcdoc')).toBeFalsy()
   })
 })
 
-// ─── srcdoc 渲染 ──────────────────────────────────────────────────────────────
-describe('srcdoc 渲染', () => {
-  it('iframe 用 srcdoc 而非 src', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
-    })
-    await flushPromises()
-
-    const iframe = wrapper.find('iframe')
-    expect(iframe.attributes('srcdoc')).toBeTruthy()
-    expect(iframe.attributes('src')).toBeFalsy()
-  })
-})
-
-// ─── iframe sandbox 属性 ──────────────────────────────────────────────────────
+// ─── iframe sandbox 属性（凭据隔离）──────────────────────────────────────────
 describe('iframe sandbox 属性', () => {
   it('sandbox 仅含 allow-scripts，不含危险权限', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
     const sandbox = wrapper.find('iframe').attributes('sandbox') ?? ''
     expect(sandbox).toContain('allow-scripts')
+    // 关键：无 allow-same-origin → iframe content 在 opaque origin 运行，
+    // 无法访问父页面 cookie/localStorage（BDD-8 凭据隔离）
     expect(sandbox).not.toContain('allow-same-origin')
     expect(sandbox).not.toContain('allow-forms')
     expect(sandbox).not.toContain('allow-popups')
@@ -119,7 +188,7 @@ describe('iframe sandbox 属性', () => {
 
   it('referrerpolicy 为 no-referrer', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
@@ -127,64 +196,27 @@ describe('iframe sandbox 属性', () => {
   })
 })
 
-// ─── iframe CSP 策略（支持 Three.js/WebGL/Canvas）─────────────────────────────
-describe('iframe CSP 策略（支持 Three.js/WebGL/Canvas）', () => {
-  it('csp 属性包含 unsafe-inline（inline script 执行）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+// ─── iframe 无 csp 属性（CSP 由后端 HTTP header 设置）─────────────────────────
+describe('iframe 无 csp 属性（CSP 由后端 HTTP response header 设置）', () => {
+  it('iframe 不携带 csp 属性', async () => {
+    // 新方案：iframe 加载独立 URL，浏览器用该 URL 响应的 CSP header
+    // iframe 的 csp 属性只能追加限制不能放宽，且 HTTP CSP 已生效，故移除
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS },
+    })
     await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toContain("'unsafe-inline'")
-  })
 
-  it('csp 属性包含 unsafe-eval（eval/new Function）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toContain("'unsafe-eval'")
-  })
-
-  it('connect-src 允许 https/blob/data（Three.js 模型加载）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toMatch(/connect-src[^;]*https/)
-    expect(csp).toMatch(/connect-src[^;]*blob:/)
-  })
-
-  it('worker-src 允许 blob（Web Worker）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toMatch(/worker-src[^;]*blob:/)
-  })
-
-  it('img-src 允许 https（外部纹理）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toMatch(/img-src[^;]*https/)
-  })
-
-  it('font-src 允许 https（Google Fonts）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toMatch(/font-src[^;]*https/)
-  })
-
-  it('style-src 允许 https（外部 CSS）', async () => {
-    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
-    await flushPromises()
-    const csp = wrapper.find('iframe').attributes('csp') ?? ''
-    expect(csp).toMatch(/style-src[^;]*https/)
+    expect(wrapper.find('iframe').attributes('csp')).toBeFalsy()
   })
 })
 
-// ─── 相对路径检测 ─────────────────────────────────────────────────────────────
+// ─── 相对路径检测警告（前端保留 countRelativePaths）──────────────────────────
+// 注意：注入移到后端，前端只检测相对路径数量并显示警告条。
+// siblingFileIds 不影响警告计数（前端不注入，仅传 ID 给后端）。
 describe('相对路径检测警告', () => {
   it('含相对路径时显示警告条，数量为 3', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: HTML_WITH_RELATIVE_PATHS },
+      props: { ...DEFAULT_PROPS, content: HTML_WITH_RELATIVE_PATHS },
     })
     await flushPromises()
 
@@ -197,7 +229,7 @@ describe('相对路径检测警告', () => {
 
   it('仅含 CDN 外链时不显示警告', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: HTML_CDN_ONLY },
+      props: { ...DEFAULT_PROPS, content: HTML_CDN_ONLY },
     })
     await flushPromises()
 
@@ -206,7 +238,7 @@ describe('相对路径检测警告', () => {
 
   it('无外部引用时不显示警告', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS, content: SIMPLE_HTML },
     })
     await flushPromises()
 
@@ -215,7 +247,7 @@ describe('相对路径检测警告', () => {
 
   it('可以关闭警告条', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: HTML_WITH_RELATIVE_PATHS },
+      props: { ...DEFAULT_PROPS, content: HTML_WITH_RELATIVE_PATHS },
     })
     await flushPromises()
 
@@ -225,14 +257,48 @@ describe('相对路径检测警告', () => {
 
     expect(wrapper.find('[data-testid="relative-path-warning"]').exists()).toBe(false)
   })
+
+  it('siblingFileIds 存在时仍按原始 content 计数警告', async () => {
+    // 前端只检测相对路径，不注入；注入由后端完成。
+    // 警告计数与 siblingFileIds 无关，始终基于原始 content 扫描。
+    const wrapper = mount(HtmlViewer, {
+      props: {
+        ...DEFAULT_PROPS,
+        content: HTML_WITH_RELATIVE_PATHS,
+        siblingFileIds: [10, 20, 30],
+      },
+    })
+    await flushPromises()
+
+    const warning = wrapper.find('[data-testid="relative-path-warning"]')
+    expect(warning.exists()).toBe(true)
+    // 警告数仍为 3（style.css + main.js + ../assets/logo.png）
+    expect(warning.text()).toContain('3')
+  })
+
+  it('content 变更时警告数更新', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS, content: SIMPLE_HTML },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="relative-path-warning"]').exists()).toBe(false)
+
+    await wrapper.setProps({ content: HTML_WITH_RELATIVE_PATHS })
+    await flushPromises()
+
+    const warning = wrapper.find('[data-testid="relative-path-warning"]')
+    expect(warning.exists()).toBe(true)
+    expect(warning.text()).toContain('3')
+  })
 })
 
 // ─── 大文件分级处理 ───────────────────────────────────────────────────────────
-// 通过 mock 组件内部的大小计算函数避免生成真实大字符串
+// 通过 provide HTML_VIEWER_TEST_SIZE_KEY 注入虚假大小，避免生成真实大字符串
 describe('大文件分级处理', () => {
   it('< 512KB：正常渲染，无警告', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
@@ -242,9 +308,8 @@ describe('大文件分级处理', () => {
   })
 
   it('512KB ~ 2MB：显示性能警告，仍自动渲染', async () => {
-    // mock contentSize computed 返回 600KB
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
       global: {
         provide: { [HTML_VIEWER_TEST_SIZE_KEY]: 600 * 1024 },
       },
@@ -258,7 +323,7 @@ describe('大文件分级处理', () => {
 
   it('> 2MB：不自动渲染，显示手动触发按钮', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
       global: {
         provide: { [HTML_VIEWER_TEST_SIZE_KEY]: 3 * MB },
       },
@@ -272,7 +337,7 @@ describe('大文件分级处理', () => {
 
   it('恰好 512KB：显示性能警告，仍自动渲染', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
       global: { provide: { [HTML_VIEWER_TEST_SIZE_KEY]: 512 * 1024 } },
     })
     await flushPromises()
@@ -284,7 +349,7 @@ describe('大文件分级处理', () => {
 
   it('恰好 2MB：不自动渲染，显示手动触发按钮', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
       global: { provide: { [HTML_VIEWER_TEST_SIZE_KEY]: 2 * MB } },
     })
     await flushPromises()
@@ -295,7 +360,7 @@ describe('大文件分级处理', () => {
 
   it('> 2MB：点击手动触发后正常渲染', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
       global: {
         provide: { [HTML_VIEWER_TEST_SIZE_KEY]: 3 * MB },
       },
@@ -305,10 +370,11 @@ describe('大文件分级处理', () => {
     await wrapper.find('[data-testid="manual-render-btn"]').trigger('click')
     await flushPromises()
 
-    // 点击渲染后 iframe 出现，srcdoc 绑定到处理后的 HTML
+    // 点击渲染后 iframe 出现，src 指向 render 路由
     const iframe = wrapper.find('iframe')
     expect(iframe.exists()).toBe(true)
-    expect(iframe.attributes('srcdoc') ?? '').toContain('<h1>Hello</h1>')
+    const src = iframe.attributes('src') ?? ''
+    expect(src).toContain('/api/v1/entries/test-slug/files/42/render')
   })
 })
 
@@ -316,7 +382,7 @@ describe('大文件分级处理', () => {
 describe('Loading 状态', () => {
   it('iframe load 事件前显示 Loading 态', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
@@ -325,7 +391,7 @@ describe('Loading 状态', () => {
 
   it('iframe load 事件后 Loading 态消失', async () => {
     const wrapper = mount(HtmlViewer, {
-      props: { content: SIMPLE_HTML },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
@@ -333,207 +399,27 @@ describe('Loading 状态', () => {
 
     expect(wrapper.find('[data-testid="html-loading"]').exists()).toBe(false)
   })
+
+  it('iframe error 事件后 Loading 态消失', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { ...DEFAULT_PROPS },
+    })
+    await flushPromises()
+
+    await wrapper.find('iframe').trigger('error')
+
+    expect(wrapper.find('[data-testid="html-loading"]').exists()).toBe(false)
+  })
 })
 
-// ─── 多文件注入 ──────────────────────────────────────────────────────────────
-describe('多文件注入', () => {
-  const HTML_MULTI = `<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js"></script>
-  <script type="module" src="main.mjs"></script>
-  <link rel="icon" href="favicon.ico">
-  <script type="application/json" src="data.json"></script>
-</head>
-<body>
-  <h1>Hello</h1>
-  <script src="https://cdn.example.com/lib.js"></script>
-  <img src="missing.png">
-</body>
-</html>`
-
-  it('无 siblingFiles 时行为与当前一致，相对路径警告正常', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: { content: HTML_MULTI },
-    })
-    await flushPromises()
-
-    // styles.css + app.js + main.mjs + favicon.ico + data.json + missing.png = 6
-    // (https://cdn... 不计入)
-    const warning = wrapper.find('[data-testid="relative-path-warning"]')
-    expect(warning.exists()).toBe(true)
-    expect(warning.text()).toContain('6')
-  })
-
-  it('CSS 内联注入：link[rel=stylesheet] 替换为 style', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'styles.css', content: 'body { color: red; }', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: styles.css */')
-    expect(srcdoc).toContain('body { color: red; }')
-    // link[rel=stylesheet] should be gone
-    expect(srcdoc).not.toMatch(/<link[^>]*href="styles\.css"/)
-  })
-
-  it('JS 内联注入：script[src] 替换为 inline script 并移到 body 末尾', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'app.js', content: 'console.log("hi")', language: 'javascript', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: app.js */')
-    expect(srcdoc).toContain('console.log("hi")')
-    // head 中不应有注入的 script（原 <script src="app.js"> 在 head 中）
-    // 注入后移到 body 末尾，保证 DOM 就绪再执行
-    const bodyStart = srcdoc.indexOf('<body')
-    const injectMarker = srcdoc.indexOf('/* injected from: app.js */')
-    expect(injectMarker).toBeGreaterThan(bodyStart)
-  })
-
-  it('混合注入：CSS + JS 同时注入', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [
-          { filename: 'styles.css', content: 'body {}', language: 'css', isBinary: false },
-          { filename: 'app.js', content: 'console.log(1)', language: 'javascript', isBinary: false },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: styles.css */')
-    expect(srcdoc).toContain('/* injected from: app.js */')
-  })
-
-  it('文件名带 ./ 前缀的 href 正确匹配', async () => {
-    const html = '<html><head><link rel="stylesheet" href="./styles.css"></head><body></body></html>'
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: styles.css */')
-  })
-
-  it('不匹配的引用保留原节点，计入 unmatchedCount', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    // styles.css 注入成功，剩余: app.js + main.mjs + favicon.ico + data.json + missing.png = 5
-    const warning = wrapper.find('[data-testid="relative-path-warning"]')
-    expect(warning.exists()).toBe(true)
-    expect(warning.text()).toContain('5')
-  })
-
-  it('非 stylesheet 的 link 不替换（rel=icon）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'favicon.ico', content: 'not-real', language: 'ico', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    // favicon.ico link should remain unchanged
-    expect(srcdoc).toContain('href="favicon.ico"')
-    expect(srcdoc).not.toContain('/* injected from: favicon.ico */')
-  })
-
-  it('type="module" script 不注入，计入 unmatchedCount', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'main.mjs', content: 'export default {}', language: 'javascript', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).not.toContain('/* injected from: main.mjs */')
-    expect(srcdoc).toContain('src="main.mjs"')
-  })
-
-  it('type="application/json" script 不替换', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'data.json', content: '{}', language: 'json', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).not.toContain('/* injected from: data.json */')
-  })
-
-  it('空文件内容不崩溃', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'styles.css', content: '', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: styles.css */')
-  })
-
-  it('siblingFile filename 含 ./ 前缀时 normalizeRef 正确 strip', async () => {
-    const html = '<html><head><link rel="stylesheet" href="styles.css"></head><body></body></html>'
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [{ filename: './styles.css', content: 'body{}', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: styles.css */')
-  })
-
-  it('siblingFile filename 为绝对路径时不崩溃', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: '/absolute/path.css', content: 'body{}', language: 'css', isBinary: false }],
-      },
-    })
-    await flushPromises()
-
-    // /absolute/path.css → normalizeRef returns null → fileMap skips it → no crash
-    // iframe 仍正常渲染（srcdoc 绑定到处理后的 HTML）
-    expect(wrapper.find('iframe').exists()).toBe(true)
-  })
-
+// ─── loadingSiblings 时序 ─────────────────────────────────────────────────────
+// P2-design：shouldRender = !showManualRender && !props.loadingSiblings
+// 等 sibling IDs 到齐再渲染，避免双次加载
+describe('loadingSiblings 时序', () => {
   it('loadingSiblings=true 时显示 Loading 态，不渲染 iframe', async () => {
     const wrapper = mount(HtmlViewer, {
       props: {
-        content: SIMPLE_HTML,
+        ...DEFAULT_PROPS,
         loadingSiblings: true,
       },
     })
@@ -543,377 +429,67 @@ describe('多文件注入', () => {
     expect(wrapper.find('iframe').exists()).toBe(false)
   })
 
-  it('DOCTYPE 保留：注入后序列化结果含 <!DOCTYPE html>', async () => {
+  it('loadingSiblings 从 true 切到 false 后渲染 iframe', async () => {
     const wrapper = mount(HtmlViewer, {
       props: {
-        content: HTML_MULTI,
-        siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
+        ...DEFAULT_PROPS,
+        loadingSiblings: true,
       },
     })
     await flushPromises()
+    expect(wrapper.find('iframe').exists()).toBe(false)
 
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('<!DOCTYPE html>')
+    await wrapper.setProps({ loadingSiblings: false })
+    await flushPromises()
+
+    expect(wrapper.find('iframe').exists()).toBe(true)
+    const src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/render')
   })
 
-  it('unmatchedCount 正确：全部注入时警告消失', async () => {
-    const html = '<html><head><link rel="stylesheet" href="styles.css"></head><body></body></html>'
+  it('loadingSiblings=true 时即便有 siblingFileIds 也不渲染', async () => {
+    // 防止 P4 误实现：把 siblingFileIds 非空当作"已就绪"
     const wrapper = mount(HtmlViewer, {
       props: {
-        content: html,
-        siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
+        ...DEFAULT_PROPS,
+        siblingFileIds: [10, 20, 30],
+        loadingSiblings: true,
       },
     })
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="relative-path-warning"]').exists()).toBe(false)
-  })
-})
-
-// ─── 二进制资源注入 ──────────────────────────────────────────────────────────
-describe('二进制资源注入', () => {
-  const HTML_WITH_IMG = `
-<html>
-<head><link rel="icon" href="favicon.ico"></head>
-<body>
-  <img src="logo.png">
-  <img src="https://cdn.example.com/ok.png">
-</body>
-</html>
-`
-
-  const HTML_WITH_FONT = `
-<html>
-<head>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    @font-face { font-family: 'Inter'; src: url('fonts/inter.woff2') format('woff2'); }
-  </style>
-</head>
-<body><p>Hello</p></body>
-</html>
-`
-
-  const HTML_IFRAME = `
-<html>
-<body>
-  <iframe src="inner.html"></iframe>
-  <object data="widget.swf"></object>
-  <embed src="plugin.swf">
-</body>
-</html>
-`
-
-  it('img src 替换为 data URI', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_IMG,
-        siblingFiles: [
-          { filename: 'logo.png', content: 'base64data==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/png;base64,base64data==')
-    expect(srcdoc).not.toContain('src="logo.png"')
-  })
-
-  it('favicon href 替换为 data URI', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_IMG,
-        siblingFiles: [
-          { filename: 'favicon.ico', content: 'icodata==', isBinary: true, mimeType: 'image/x-icon' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/x-icon;base64,icodata==')
-    expect(srcdoc).not.toContain('href="favicon.ico"')
-  })
-
-  it('CDN 外链 img 不替换', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_IMG,
-        siblingFiles: [
-          { filename: 'logo.png', content: 'base64data==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('src="https://cdn.example.com/ok.png"')
-  })
-
-  it('iframe/object/embed src 不注入（安全风险）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_IFRAME,
-        siblingFiles: [
-          { filename: 'inner.html', content: '<html></html>', language: 'html', isBinary: false },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('src="inner.html"')
-    expect(srcdoc).toContain('data="widget.swf"')
-    expect(srcdoc).toContain('src="plugin.swf"')
-  })
-
-  it('video/audio/source/track src 可注入', async () => {
-    const html = `
-<html><body>
-  <video src="clip.mp4"></video>
-  <audio src="sound.mp3"></audio>
-</body></html>
-`
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [
-          { filename: 'clip.mp4', content: 'mp4data==', isBinary: true, mimeType: 'video/mp4' },
-          { filename: 'sound.mp3', content: 'mp3data==', isBinary: true, mimeType: 'audio/mpeg' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:video/mp4;base64,mp4data==')
-    expect(srcdoc).toContain('data:audio/mpeg;base64,mp3data==')
-  })
-
-  it('混合注入：CSS + JS + 图片同时注入', async () => {
-    const html = `
-<html>
-<head><link rel="stylesheet" href="style.css"></head>
-<body>
-  <img src="logo.png">
-  <script src="app.js"></script>
-</body>
-</html>
-`
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [
-          { filename: 'style.css', content: 'body{}', language: 'css', isBinary: false },
-          { filename: 'app.js', content: 'console.log(1)', language: 'javascript', isBinary: false },
-          { filename: 'logo.png', content: 'pngdata==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: style.css */')
-    expect(srcdoc).toContain('/* injected from: app.js */')
-    expect(srcdoc).toContain('data:image/png;base64,pngdata==')
-  })
-
-  it('CSS @font-face url() 不注入（仅处理 HTML 属性）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_FONT,
-        siblingFiles: [
-          { filename: 'style.css', content: '@font-face { font-family: Inter; src: url(fonts/inter.woff2) }', language: 'css', isBinary: false },
-          { filename: 'fonts/inter.woff2', content: 'woff2data==', isBinary: true, mimeType: 'font/woff2' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    // @font-face url() inside CSS text is not processed by HTML attribute injection
-    expect(srcdoc).toContain('url(fonts/inter.woff2)')
-  })
-
-  it('匹配的二进制文件不计入 unmatchedCount', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_IMG,
-        siblingFiles: [
-          { filename: 'logo.png', content: 'base64data==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    // logo.png injected, favicon.ico is relative but no sibling → 1 unmatched
-    const warning = wrapper.find('[data-testid="relative-path-warning"]')
-    expect(warning.exists()).toBe(true)
-    expect(warning.text()).toContain('1')
-  })
-
-  it('全部二进制注入后警告消失', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_WITH_IMG,
-        siblingFiles: [
-          { filename: 'logo.png', content: 'base64data==', isBinary: true, mimeType: 'image/png' },
-          { filename: 'favicon.ico', content: 'icodata==', isBinary: true, mimeType: 'image/x-icon' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="relative-path-warning"]').exists()).toBe(false)
-  })
-
-  it('shortcut icon link href 替换为 data URI', async () => {
-    const html = '<html><head><link rel="shortcut icon" href="favicon.ico"></head><body></body></html>'
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [
-          { filename: 'favicon.ico', content: 'icodata==', isBinary: true, mimeType: 'image/x-icon' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/x-icon;base64,icodata==')
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="html-loading"]').exists()).toBe(true)
   })
 })
 
-// ─── 层级目录路径匹配 ─────────────────────────────────────────────────────────
-describe('层级目录路径匹配', () => {
-  const HTML_NESTED = `<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/app.js"></script>
-  <link rel="icon" href="assets/favicon.png">
-</head>
-<body>
-  <h1>Nested Paths</h1>
-  <img src="assets/logo.png">
-  <img src="hero.png">
-</body>
-</html>`
-
-  it('层级路径通过 path 字段匹配 CSS 注入', async () => {
+// ─── content 切换 ─────────────────────────────────────────────────────────────
+describe('content 切换', () => {
+  it('content 变更时 iframe 仍指向 render 路由（URL 不变）', async () => {
+    // renderUrl 仅由 slug + fileId + siblingFileIds 决定，与 content 无关
+    // content 仅用于相对路径检测和 size 检测
     const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'style.css', path: 'css/style.css', content: 'body { color: blue; }', language: 'css', isBinary: false },
-        ],
-      },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: css/style.css */')
-    expect(srcdoc).toContain('body { color: blue; }')
-    expect(srcdoc).not.toMatch(/<link[^>]*href="css\/style\.css"/)
+    let src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/test-slug/files/42/render')
+
+    await wrapper.setProps({ content: '<html><body><h1>Updated</h1></body></html>' })
+    await flushPromises()
+
+    src = wrapper.find('iframe').attributes('src') ?? ''
+    expect(src).toContain('/test-slug/files/42/render')
   })
 
-  it('层级路径通过 path 字段匹配 JS 注入', async () => {
+  it('卸载时不崩溃', async () => {
+    // 后端 URL 方案无需手动 revoke Blob URL，unmount 应无副作用
     const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'app.js', path: 'js/app.js', content: 'console.log("nested")', language: 'javascript', isBinary: false },
-        ],
-      },
+      props: { ...DEFAULT_PROPS },
     })
     await flushPromises()
 
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('/* injected from: js/app.js */')
-    expect(srcdoc).toContain('console.log("nested")')
-  })
-
-  it('层级路径通过 path 字段匹配二进制注入（img src）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'logo.png', path: 'assets/logo.png', content: 'logodata==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/png;base64,logodata==')
-    expect(srcdoc).not.toContain('src="assets/logo.png"')
-  })
-
-  it('层级路径通过 path 字段匹配 favicon 注入', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'favicon.png', path: 'assets/favicon.png', content: 'favdata==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/png;base64,favdata==')
-    expect(srcdoc).not.toContain('href="assets/favicon.png"')
-  })
-
-  it('basename 仍可匹配同级引用（hero.png 无 path）', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'hero.png', content: 'herodata==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    expect(srcdoc).toContain('data:image/png;base64,herodata==')
-    expect(srcdoc).not.toContain('src="hero.png"')
-  })
-
-  it('混合层级 + 同级：全部注入后无警告', async () => {
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: HTML_NESTED,
-        siblingFiles: [
-          { filename: 'style.css', path: 'css/style.css', content: 'body{}', language: 'css', isBinary: false },
-          { filename: 'app.js', path: 'js/app.js', content: 'console.log(1)', language: 'javascript', isBinary: false },
-          { filename: 'favicon.png', path: 'assets/favicon.png', content: 'favdata==', isBinary: true, mimeType: 'image/png' },
-          { filename: 'logo.png', path: 'assets/logo.png', content: 'logodata==', isBinary: true, mimeType: 'image/png' },
-          { filename: 'hero.png', content: 'herodata==', isBinary: true, mimeType: 'image/png' },
-        ],
-      },
-    })
-    await flushPromises()
-
-    expect(wrapper.find('[data-testid="relative-path-warning"]').exists()).toBe(false)
-  })
-
-  it('path 与 filename 不同时两者均可作为匹配 key', async () => {
-    const html = '<html><head><link rel="stylesheet" href="style.css"></head><body></body></html>'
-    const wrapper = mount(HtmlViewer, {
-      props: {
-        content: html,
-        siblingFiles: [
-          { filename: 'style.css', path: 'css/style.css', content: 'body{}', language: 'css', isBinary: false },
-        ],
-      },
-    })
-    await flushPromises()
-
-    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-    // href="style.css" matches via filename key
-    expect(srcdoc).toContain('/* injected from: style.css */')
+    expect(() => wrapper.unmount()).not.toThrow()
   })
 })
