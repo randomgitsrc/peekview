@@ -1,35 +1,18 @@
 /**
  * HtmlViewer 单元测试
  *
- * 覆盖 spec-html-render.md P1 测试项：
- * - Blob URL 正确创建和释放（无内存泄漏）
+ * 覆盖 spec-html-render.md P1 测试项（T019: srcdoc + CSP 放宽）：
+ * - iframe 通过 srcdoc 绑定处理后的 HTML（非 Blob URL）
+ * - iframe CSP 属性支持 Three.js/WebGL/Canvas 富交互（connect-src/worker-src/img-src/font-src/style-src 放宽）
  * - DOMParser 相对路径检测触发警告条
  * - > 2MB 文件不自动渲染，手动触发正常
  * - Load 事件后 Loading 态消失
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import HtmlViewer from '../HtmlViewer.vue'
 import { HTML_VIEWER_TEST_SIZE_KEY } from '../HtmlViewerTestKeys'
-
-// ─── Mock URL.createObjectURL / revokeObjectURL ──────────────────────────────
-const mockBlobUrl = 'blob:null/mock-uuid-1234'
-const createObjectURLMock = vi.fn(() => mockBlobUrl)
-const revokeObjectURLMock = vi.fn()
-
-beforeEach(() => {
-  vi.stubGlobal('URL', {
-    createObjectURL: createObjectURLMock,
-    revokeObjectURL: revokeObjectURLMock,
-  })
-  createObjectURLMock.mockClear()
-  revokeObjectURLMock.mockClear()
-})
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
 
 // ─── 测试用 HTML ─────────────────────────────────────────────────────────────
 const SIMPLE_HTML = '<html><body><h1>Hello</h1></body></html>'
@@ -62,55 +45,59 @@ const HTML_CDN_ONLY = `
 
 const MB = 1024 * 1024
 
-// ─── Blob URL 创建与释放 ──────────────────────────────────────────────────────
-describe('Blob URL 创建与释放', () => {
-  it('挂载时创建 Blob URL，src 绑定到 iframe', async () => {
+// ─── srcdoc 绑定 ──────────────────────────────────────────────────────────────
+describe('srcdoc 绑定', () => {
+  it('挂载时 iframe srcdoc 绑定到处理后的 HTML', async () => {
     const wrapper = mount(HtmlViewer, {
       props: { content: SIMPLE_HTML },
     })
     await flushPromises()
-
-    expect(createObjectURLMock).toHaveBeenCalledOnce()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0]
-    expect(blob).toBeInstanceOf(Blob)
-    expect((blob as Blob).type).toBe('text/html;charset=utf-8')
 
     const iframe = wrapper.find('iframe')
     expect(iframe.exists()).toBe(true)
-    expect(iframe.attributes('src')).toBe(mockBlobUrl)
+    const srcdoc = iframe.attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('<html')
+    expect(srcdoc).toContain('<h1>Hello</h1>')
   })
 
-  it('卸载时释放 Blob URL，防止内存泄漏', async () => {
+  it('卸载时无需释放（srcdoc 无 Blob URL）', async () => {
     const wrapper = mount(HtmlViewer, {
       props: { content: SIMPLE_HTML },
     })
     await flushPromises()
 
-    wrapper.unmount()
-
-    expect(revokeObjectURLMock).toHaveBeenCalledOnce()
-    expect(revokeObjectURLMock).toHaveBeenCalledWith(mockBlobUrl)
+    expect(() => wrapper.unmount()).not.toThrow()
   })
 
-  it('content 变更时释放旧 URL 并创建新 URL', async () => {
-    const mockBlobUrl2 = 'blob:null/mock-uuid-5678'
-    createObjectURLMock
-      .mockReturnValueOnce(mockBlobUrl)
-      .mockReturnValueOnce(mockBlobUrl2)
-
+  it('content 变更时 srcdoc 更新', async () => {
     const wrapper = mount(HtmlViewer, {
       props: { content: SIMPLE_HTML },
     })
     await flushPromises()
-    expect(createObjectURLMock).toHaveBeenCalledTimes(1)
 
-    await wrapper.setProps({ content: '<html><body>Updated</body></html>' })
+    const srcdoc1 = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc1).toContain('Hello')
+
+    await wrapper.setProps({ content: '<html><body><h1>Updated</h1></body></html>' })
     await flushPromises()
 
-    expect(revokeObjectURLMock).toHaveBeenCalledWith(mockBlobUrl)
-    expect(createObjectURLMock).toHaveBeenCalledTimes(2)
-    expect(wrapper.find('iframe').attributes('src')).toBe(mockBlobUrl2)
+    const srcdoc2 = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc2).toContain('Updated')
+    expect(srcdoc2).not.toContain('Hello')
+  })
+})
+
+// ─── srcdoc 渲染 ──────────────────────────────────────────────────────────────
+describe('srcdoc 渲染', () => {
+  it('iframe 用 srcdoc 而非 src', async () => {
+    const wrapper = mount(HtmlViewer, {
+      props: { content: SIMPLE_HTML },
+    })
+    await flushPromises()
+
+    const iframe = wrapper.find('iframe')
+    expect(iframe.attributes('srcdoc')).toBeTruthy()
+    expect(iframe.attributes('src')).toBeFalsy()
   })
 })
 
@@ -137,6 +124,59 @@ describe('iframe sandbox 属性', () => {
     await flushPromises()
 
     expect(wrapper.find('iframe').attributes('referrerpolicy')).toBe('no-referrer')
+  })
+})
+
+// ─── iframe CSP 策略（支持 Three.js/WebGL/Canvas）─────────────────────────────
+describe('iframe CSP 策略（支持 Three.js/WebGL/Canvas）', () => {
+  it('csp 属性包含 unsafe-inline（inline script 执行）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toContain("'unsafe-inline'")
+  })
+
+  it('csp 属性包含 unsafe-eval（eval/new Function）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toContain("'unsafe-eval'")
+  })
+
+  it('connect-src 允许 https/blob/data（Three.js 模型加载）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toMatch(/connect-src[^;]*https/)
+    expect(csp).toMatch(/connect-src[^;]*blob:/)
+  })
+
+  it('worker-src 允许 blob（Web Worker）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toMatch(/worker-src[^;]*blob:/)
+  })
+
+  it('img-src 允许 https（外部纹理）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toMatch(/img-src[^;]*https/)
+  })
+
+  it('font-src 允许 https（Google Fonts）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toMatch(/font-src[^;]*https/)
+  })
+
+  it('style-src 允许 https（外部 CSS）', async () => {
+    const wrapper = mount(HtmlViewer, { props: { content: SIMPLE_HTML } })
+    await flushPromises()
+    const csp = wrapper.find('iframe').attributes('csp') ?? ''
+    expect(csp).toMatch(/style-src[^;]*https/)
   })
 })
 
@@ -225,7 +265,7 @@ describe('大文件分级处理', () => {
     })
     await flushPromises()
 
-    expect(createObjectURLMock).not.toHaveBeenCalled()
+    // 大文件未点击渲染时无 iframe
     expect(wrapper.find('iframe').exists()).toBe(false)
     expect(wrapper.find('[data-testid="manual-render-btn"]').exists()).toBe(true)
   })
@@ -265,8 +305,10 @@ describe('大文件分级处理', () => {
     await wrapper.find('[data-testid="manual-render-btn"]').trigger('click')
     await flushPromises()
 
-    expect(createObjectURLMock).toHaveBeenCalledOnce()
-    expect(wrapper.find('iframe').exists()).toBe(true)
+    // 点击渲染后 iframe 出现，srcdoc 绑定到处理后的 HTML
+    const iframe = wrapper.find('iframe')
+    expect(iframe.exists()).toBe(true)
+    expect(iframe.attributes('srcdoc') ?? '').toContain('<h1>Hello</h1>')
   })
 })
 
@@ -325,7 +367,7 @@ describe('多文件注入', () => {
   })
 
   it('CSS 内联注入：link[rel=stylesheet] 替换为 style', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'styles.css', content: 'body { color: red; }', language: 'css', isBinary: false }],
@@ -333,16 +375,15 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: styles.css */')
-    expect(text).toContain('body { color: red; }')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: styles.css */')
+    expect(srcdoc).toContain('body { color: red; }')
     // link[rel=stylesheet] should be gone
-    expect(text).not.toMatch(/<link[^>]*href="styles\.css"/)
+    expect(srcdoc).not.toMatch(/<link[^>]*href="styles\.css"/)
   })
 
   it('JS 内联注入：script[src] 替换为 inline script 并移到 body 末尾', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'app.js', content: 'console.log("hi")', language: 'javascript', isBinary: false }],
@@ -350,19 +391,18 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: app.js */')
-    expect(text).toContain('console.log("hi")')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: app.js */')
+    expect(srcdoc).toContain('console.log("hi")')
     // head 中不应有注入的 script（原 <script src="app.js"> 在 head 中）
     // 注入后移到 body 末尾，保证 DOM 就绪再执行
-    const bodyStart = text.indexOf('<body')
-    const injectMarker = text.indexOf('/* injected from: app.js */')
+    const bodyStart = srcdoc.indexOf('<body')
+    const injectMarker = srcdoc.indexOf('/* injected from: app.js */')
     expect(injectMarker).toBeGreaterThan(bodyStart)
   })
 
   it('混合注入：CSS + JS 同时注入', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [
@@ -373,15 +413,14 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: styles.css */')
-    expect(text).toContain('/* injected from: app.js */')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: styles.css */')
+    expect(srcdoc).toContain('/* injected from: app.js */')
   })
 
   it('文件名带 ./ 前缀的 href 正确匹配', async () => {
     const html = '<html><head><link rel="stylesheet" href="./styles.css"></head><body></body></html>'
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
@@ -389,9 +428,8 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: styles.css */')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: styles.css */')
   })
 
   it('不匹配的引用保留原节点，计入 unmatchedCount', async () => {
@@ -410,7 +448,7 @@ describe('多文件注入', () => {
   })
 
   it('非 stylesheet 的 link 不替换（rel=icon）', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'favicon.ico', content: 'not-real', language: 'ico', isBinary: false }],
@@ -418,15 +456,14 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
     // favicon.ico link should remain unchanged
-    expect(text).toContain('href="favicon.ico"')
-    expect(text).not.toContain('/* injected from: favicon.ico */')
+    expect(srcdoc).toContain('href="favicon.ico"')
+    expect(srcdoc).not.toContain('/* injected from: favicon.ico */')
   })
 
   it('type="module" script 不注入，计入 unmatchedCount', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'main.mjs', content: 'export default {}', language: 'javascript', isBinary: false }],
@@ -434,14 +471,13 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).not.toContain('/* injected from: main.mjs */')
-    expect(text).toContain('src="main.mjs"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).not.toContain('/* injected from: main.mjs */')
+    expect(srcdoc).toContain('src="main.mjs"')
   })
 
   it('type="application/json" script 不替换', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'data.json', content: '{}', language: 'json', isBinary: false }],
@@ -449,13 +485,12 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).not.toContain('/* injected from: data.json */')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).not.toContain('/* injected from: data.json */')
   })
 
   it('空文件内容不崩溃', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'styles.css', content: '', language: 'css', isBinary: false }],
@@ -463,14 +498,13 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: styles.css */')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: styles.css */')
   })
 
   it('siblingFile filename 含 ./ 前缀时 normalizeRef 正确 strip', async () => {
     const html = '<html><head><link rel="stylesheet" href="styles.css"></head><body></body></html>'
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [{ filename: './styles.css', content: 'body{}', language: 'css', isBinary: false }],
@@ -478,13 +512,12 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: styles.css */')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: styles.css */')
   })
 
   it('siblingFile filename 为绝对路径时不崩溃', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: '/absolute/path.css', content: 'body{}', language: 'css', isBinary: false }],
@@ -493,7 +526,8 @@ describe('多文件注入', () => {
     await flushPromises()
 
     // /absolute/path.css → normalizeRef returns null → fileMap skips it → no crash
-    expect(createObjectURLMock).toHaveBeenCalled()
+    // iframe 仍正常渲染（srcdoc 绑定到处理后的 HTML）
+    expect(wrapper.find('iframe').exists()).toBe(true)
   })
 
   it('loadingSiblings=true 时显示 Loading 态，不渲染 iframe', async () => {
@@ -510,7 +544,7 @@ describe('多文件注入', () => {
   })
 
   it('DOCTYPE 保留：注入后序列化结果含 <!DOCTYPE html>', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_MULTI,
         siblingFiles: [{ filename: 'styles.css', content: 'body{}', language: 'css', isBinary: false }],
@@ -518,9 +552,8 @@ describe('多文件注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('<!DOCTYPE html>')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('<!DOCTYPE html>')
   })
 
   it('unmatchedCount 正确：全部注入时警告消失', async () => {
@@ -572,7 +605,7 @@ describe('二进制资源注入', () => {
 `
 
   it('img src 替换为 data URI', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_WITH_IMG,
         siblingFiles: [
@@ -582,14 +615,13 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/png;base64,base64data==')
-    expect(text).not.toContain('src="logo.png"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/png;base64,base64data==')
+    expect(srcdoc).not.toContain('src="logo.png"')
   })
 
   it('favicon href 替换为 data URI', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_WITH_IMG,
         siblingFiles: [
@@ -599,14 +631,13 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/x-icon;base64,icodata==')
-    expect(text).not.toContain('href="favicon.ico"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/x-icon;base64,icodata==')
+    expect(srcdoc).not.toContain('href="favicon.ico"')
   })
 
   it('CDN 外链 img 不替换', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_WITH_IMG,
         siblingFiles: [
@@ -616,13 +647,12 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('src="https://cdn.example.com/ok.png"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('src="https://cdn.example.com/ok.png"')
   })
 
   it('iframe/object/embed src 不注入（安全风险）', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_IFRAME,
         siblingFiles: [
@@ -632,11 +662,10 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('src="inner.html"')
-    expect(text).toContain('data="widget.swf"')
-    expect(text).toContain('src="plugin.swf"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('src="inner.html"')
+    expect(srcdoc).toContain('data="widget.swf"')
+    expect(srcdoc).toContain('src="plugin.swf"')
   })
 
   it('video/audio/source/track src 可注入', async () => {
@@ -646,7 +675,7 @@ describe('二进制资源注入', () => {
   <audio src="sound.mp3"></audio>
 </body></html>
 `
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [
@@ -657,10 +686,9 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:video/mp4;base64,mp4data==')
-    expect(text).toContain('data:audio/mpeg;base64,mp3data==')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:video/mp4;base64,mp4data==')
+    expect(srcdoc).toContain('data:audio/mpeg;base64,mp3data==')
   })
 
   it('混合注入：CSS + JS + 图片同时注入', async () => {
@@ -673,7 +701,7 @@ describe('二进制资源注入', () => {
 </body>
 </html>
 `
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [
@@ -685,15 +713,14 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: style.css */')
-    expect(text).toContain('/* injected from: app.js */')
-    expect(text).toContain('data:image/png;base64,pngdata==')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: style.css */')
+    expect(srcdoc).toContain('/* injected from: app.js */')
+    expect(srcdoc).toContain('data:image/png;base64,pngdata==')
   })
 
   it('CSS @font-face url() 不注入（仅处理 HTML 属性）', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_WITH_FONT,
         siblingFiles: [
@@ -704,10 +731,9 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
     // @font-face url() inside CSS text is not processed by HTML attribute injection
-    expect(text).toContain('url(fonts/inter.woff2)')
+    expect(srcdoc).toContain('url(fonts/inter.woff2)')
   })
 
   it('匹配的二进制文件不计入 unmatchedCount', async () => {
@@ -744,7 +770,7 @@ describe('二进制资源注入', () => {
 
   it('shortcut icon link href 替换为 data URI', async () => {
     const html = '<html><head><link rel="shortcut icon" href="favicon.ico"></head><body></body></html>'
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [
@@ -754,9 +780,8 @@ describe('二进制资源注入', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/x-icon;base64,icodata==')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/x-icon;base64,icodata==')
   })
 })
 
@@ -777,7 +802,7 @@ describe('层级目录路径匹配', () => {
 </html>`
 
   it('层级路径通过 path 字段匹配 CSS 注入', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_NESTED,
         siblingFiles: [
@@ -787,15 +812,14 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: css/style.css */')
-    expect(text).toContain('body { color: blue; }')
-    expect(text).not.toMatch(/<link[^>]*href="css\/style\.css"/)
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: css/style.css */')
+    expect(srcdoc).toContain('body { color: blue; }')
+    expect(srcdoc).not.toMatch(/<link[^>]*href="css\/style\.css"/)
   })
 
   it('层级路径通过 path 字段匹配 JS 注入', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_NESTED,
         siblingFiles: [
@@ -805,14 +829,13 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('/* injected from: js/app.js */')
-    expect(text).toContain('console.log("nested")')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('/* injected from: js/app.js */')
+    expect(srcdoc).toContain('console.log("nested")')
   })
 
   it('层级路径通过 path 字段匹配二进制注入（img src）', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_NESTED,
         siblingFiles: [
@@ -822,14 +845,13 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/png;base64,logodata==')
-    expect(text).not.toContain('src="assets/logo.png"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/png;base64,logodata==')
+    expect(srcdoc).not.toContain('src="assets/logo.png"')
   })
 
   it('层级路径通过 path 字段匹配 favicon 注入', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_NESTED,
         siblingFiles: [
@@ -839,14 +861,13 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/png;base64,favdata==')
-    expect(text).not.toContain('href="assets/favicon.png"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/png;base64,favdata==')
+    expect(srcdoc).not.toContain('href="assets/favicon.png"')
   })
 
   it('basename 仍可匹配同级引用（hero.png 无 path）', async () => {
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: HTML_NESTED,
         siblingFiles: [
@@ -856,10 +877,9 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
-    expect(text).toContain('data:image/png;base64,herodata==')
-    expect(text).not.toContain('src="hero.png"')
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
+    expect(srcdoc).toContain('data:image/png;base64,herodata==')
+    expect(srcdoc).not.toContain('src="hero.png"')
   })
 
   it('混合层级 + 同级：全部注入后无警告', async () => {
@@ -882,7 +902,7 @@ describe('层级目录路径匹配', () => {
 
   it('path 与 filename 不同时两者均可作为匹配 key', async () => {
     const html = '<html><head><link rel="stylesheet" href="style.css"></head><body></body></html>'
-    mount(HtmlViewer, {
+    const wrapper = mount(HtmlViewer, {
       props: {
         content: html,
         siblingFiles: [
@@ -892,9 +912,8 @@ describe('层级目录路径匹配', () => {
     })
     await flushPromises()
 
-    const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-    const text = await blob.text()
+    const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
     // href="style.css" matches via filename key
-    expect(text).toContain('/* injected from: style.css */')
+    expect(srcdoc).toContain('/* injected from: style.css */')
   })
 })
