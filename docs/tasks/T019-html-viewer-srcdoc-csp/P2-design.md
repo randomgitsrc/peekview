@@ -5,197 +5,353 @@ task_name: html-viewer-srcdoc-csp
 type: design
 trace_id: T019-P2-2026-06-22
 created: 2026-06-22
-status: draft
+status: revised
+revision: 2
 parent: docs/tasks/T019-html-viewer-srcdoc-csp/P1-requirements.md
+supersedes: docs/tasks/T019-html-viewer-srcdoc-csp/P2-design.md (rev 1, srcdoc 方案)
 ---
 
-# T019 P2 方案设计
+# T019 P2 方案设计（修订版）
+
+## 修订说明
+
+原 P2（rev 1）方案「blob URL → srcdoc」在 P6 实跑失败：Chrome 安全设计使 **srcdoc iframe 继承父文档 CSP**，iframe 的 `csp` 属性只能追加限制不能放宽。父文档 CSP `script-src 'self' 'unsafe-eval'`（无 `'unsafe-inline'`）拦截所有 inline script。data URL 虽不继承 CSP 但有 ~2MB 大小限制，3.3MB 测试样本超限。
+
+**新方案方向**：后端新增独立 HTML 渲染路由，iframe 用普通 HTTP URL 加载该路由。**关键原理**：iframe 加载独立 URL 时，用的是该 URL 响应的 CSP header，不是父页面的 CSP。
+
+**P1 的 8 条 BDD 全部保留不变**，本方案不修改 P1。
 
 ## 方案概述
 
-将 `HtmlViewer.vue` 的 iframe 渲染方式从 `blob:` URL 改为 `srcdoc`，让 iframe 的 origin 为 `null`，彻底脱离主应用 HTTP header CSP（`script-src 'self' 'unsafe-eval'`）的继承性拦截；同时重写 iframe 的 `csp` 属性，专为 Three.js/WebGL/Canvas 等富交互 HTML 放宽 `connect-src` / `worker-src` / `img-src` / `font-src` / `style-src`，并保留 `sandbox="allow-scripts"`（无 `allow-same-origin`）确保凭据隔离。
+新增后端路由 `GET /api/v1/entries/{slug}/files/{file_id}/render`，返回 HTML 内容（含兄弟文件注入），响应设置宽松 CSP（支持 Three.js/WebGL/Canvas）和 `frame-ancestors 'self'`（允许同源 iframe 嵌入）。前端 `HtmlViewer.vue` 的 iframe 从 `srcdoc` 改为 `:src="renderUrl"`，兄弟文件注入逻辑从前端移到后端。
 
-纯前端单文件改动，后端 `main.py:146` 的主应用 CSP 不动。
+**认证关键原理**：iframe 同源加载后端路由，浏览器初始 fetch **自动携带 cookie**（`peekview_token`）——sandbox flags 限制 iframe content 的 browsing context，不影响初始 resource fetch。因此 private entry 的 iframe 也能正常加载。同时 `sandbox="allow-scripts"`（无 `allow-same-origin`）使 iframe content 在 opaque origin 运行，iframe 内 JS **无法访问** cookie/localStorage——BDD-8 凭据隔离仍满足。
 
 ## 字段声明
 
 ### packages
-- `[frontend-v3]`
+- `[backend, frontend-v3]`（原 P1 仅 `[frontend-v3]`，**[SCOPE+]** 扩展到后端）
 
 ### domains
-- `[frontend]`
+- `[backend, frontend]`（原 P1 仅 `[frontend]`，**[SCOPE+]** 扩展）
 
 ### ui_affected
 - `true`
-  - loading 态时机变化（srcdoc load 事件在 HTML 解析 + 同步 script 执行完触发，Three.js 异步初始化不在此范围，loading 可能提前消失——P0 风险 4，判定可接受，P6 实跑观察）。
-  - iframe DOM 由 `<iframe :src="blobUrl">` 变为 `<iframe :srcdoc="processedHtml">`，用户视觉无感知。
+  - iframe DOM 由 `<iframe :srcdoc="processedHtml">` 变为 `<iframe :src="renderUrl">`，用户视觉无感知
+  - loading 态时机：HTTP URL load 事件在 iframe 完整加载（含同步资源 + 同步 script）后触发，与原 blob URL 行为一致（比 srcdoc 更接近原体验）
+  - sibling files 加载从"前端 fetch 内容"变为"前端只传 file IDs"，**消除前端 N 次 fetch**，体验更流畅
 
 ### gate_commands
 
-继承自 P1，无补充：
+继承自 P1，补充后端测试 gate：
 
 ```bash
-# 1. 单元测试（P3 产出，P5 gate）
+# 1. 后端单元测试（P3 产出，P5 gate）—— [SCOPE+] 新增
+cd backend && python -m pytest tests/test_html_render.py -v
+cd backend && python -m pytest tests/test_api.py -v  # 无回归
+
+# 2. 后端 lint
+cd backend && make lint
+
+# 3. 前端单元测试（P3 产出，P5 gate）
 cd frontend-v3 && npx vitest run src/components/__tests__/HtmlViewer.spec.ts
 cd frontend-v3 && npx vitest run src/components/__tests__/HtmlViewerIntegration.spec.ts
 
-# 2. 全量单元测试（无回归）
+# 4. 全量单元测试（无回归）
 cd frontend-v3 && npx vitest run
 
-# 3. 类型检查 + 构建
+# 5. 类型检查 + 构建
 cd frontend-v3 && npm run build
 
-# 4. Lint
+# 6. Lint
 cd frontend-v3 && npm run lint
 
-# 5. Playwright 实跑（P6 gate）
+# 7. Playwright 实跑（P6 gate）—— 3D Model Viewer + CSP/WebGL 验证
 make debug-start
-# Playwright CDP 127.0.0.1:18800：
+# 通过 Playwright CDP 127.0.0.1:18800：
 #   a. 创建 entry 指向测试样本 HTML
 #   b. 打开 entry，点击「点击渲染」
-#   c. page.on('console') 抓 CSP 违规（应为 0 条）
+#   c. page.on('console') 抓取 CSP 违规（应为 0 条）
 #   d. 检查 iframe 内 #root childElementCount > 0
 #   e. 检查 iframe 内 canvas + WebGL context 非 null
 #   f. 采样两帧 canvas.toDataURL() 确认渲染循环
 #   g. vision-helper 截图确认 3D 模型可见
-#   h. BDD-8 sandbox 安全性验证（cookie/localStorage/fetch 凭据隔离）
+#   h. 验证 private entry 的 iframe 也能加载（cookie 自动携带）—— [SCOPE+] 新增
 make debug-stop
 ```
 
-## 改动文件清单
+## 后端设计
 
-| 文件 | 改动摘要 |
-|------|---------|
-| `frontend-v3/src/components/HtmlViewer.vue` | 主体改写：`blobUrl` ref → `processedHtml` ref；iframe `:src` → `:srcdoc`；更新 `csp` 属性字符串（放宽 connect-src/worker-src/img-src/font-src/style-src + https:）；删除 `createBlobUrl` / `revokeBlobUrl` / `onUnmounted` revoke 逻辑；`initRender` 直接赋值 `processedHtml`。 |
-| `frontend-v3/src/components/__tests__/HtmlViewer.spec.ts` | [SCOPE+] 测试回补：删除 `Blob URL 创建与释放` describe 块；新增 `srcdoc 渲染` / `CSP 属性` describe 块；多文件注入/二进制注入测试从 `createObjectURLMock` 读取 blob.text() 改为读 `iframe.attributes('srcdoc')`；删除 URL mock（不再需要）。 |
+### 1. 新路由：`GET /api/v1/entries/{slug}/files/{file_id}/render`
 
-**不改动**：
-- `backend/peekview/main.py:146-148`（主应用 CSP，srcdoc iframe 不继承）
-- `frontend-v3/src/components/__tests__/HtmlViewerIntegration.spec.ts`（mock 了 HtmlViewer，不受影响）
-- `frontend-v3/src/components/HtmlViewerTestKeys.ts`（测试注入 key，不变）
+**路径**：复用 `files` router 的前缀 `/api/v1/entries`，与 `download_file` / `get_file_content` 同级，RESTful 一致。
 
-## CSP 策略设计
+**Query 参数**：
+- `inject`（可选）：逗号分隔的 sibling file IDs，如 `?inject=12,15,18`。后端读取这些文件并注入到主 HTML。
 
-### 最终 CSP 字符串（iframe `csp` 属性值）
+**响应**：
+- `Content-Type: text/html; charset=utf-8`
+- `Content-Security-Policy`：见下文「CSP 策略」
+- `X-Frame-Options`：**不设**（中间件特判跳过 DENY，由 CSP `frame-ancestors 'self'` 接管）
+- `Cache-Control: no-store, no-cache, must-revalidate`
+- `Referrer-Policy: no-referrer`（iframe 不向外泄露 URL）
+- `X-Content-Type-Options: nosniff`
 
-```
-default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; style-src 'unsafe-inline' blob: data: https:; img-src blob: data: https:; media-src blob: data: https:; font-src blob: data: https:; connect-src blob: data: https:; worker-src blob:; frame-src 'none'; form-action 'none';
-```
+**认证**：`Depends(get_current_user)` + `_resolve_entry(request, slug, current_user)`（复用现有可见性逻辑）。anonymous 访问公开 entry OK；private entry 需 owner/admin/API key（cookie 或 header）。**关键**：iframe 同源加载，浏览器自动携带 `peekview_token` cookie，private entry 无需额外处理。
 
-### 逐指令说明
+**路由伪代码**（`backend/peekview/api/files.py`）：
 
-| 指令 | 取值 | 允许 | 拒绝 | 理由 |
-|------|------|------|------|------|
-| `default-src` | `'unsafe-inline' 'unsafe-eval' blob: data: https:` | inline 资源 / eval / blob/data/https 来源 | 其他来源（如 `file:`、`ftp:`、非 https http） | 兜底指令，为未显式声明的指令提供基线。含 `https:` 允许 CDN 资源；`'unsafe-inline'` + `'unsafe-eval'` 为富交互 HTML 必需。 |
-| `script-src` | `'unsafe-inline' 'unsafe-eval' blob: data: https:` | inline `<script>` / `eval()` / `new Function()` / blob/data/https 脚本 | 非 https 的 http 脚本、`file:` 脚本 | **核心指令**：`'unsafe-inline'` 解除 React/Three.js inline script 拦截（根因 1）；`'unsafe-eval'` 允许 Three.js shader 编译（部分 3D 库用 `new Function()` 编译 shader）；`blob:` 允许 `new Worker(URL.createObjectURL(...))` 间接创建的脚本；`https:` 允许 CDN 加载 Three.js 库本身。 |
-| `style-src` | `'unsafe-inline' blob: data: https:` | inline `<style>` / `style=` 属性 / blob/data/https 样式表 | 非 https http 样式表 | `unsafe-inline'` 允许 React 内联样式 + Three.js 动态样式；`https:` 允许 Google Fonts CSS、Tailwind CDN 等。 |
-| `img-src` | `blob: data: https:` | blob/data/https 图片 | 非 https http 图片、`file:` | Three.js 纹理加载（`TextureLoader.load()`）、`<img>` 元素、Canvas `drawImage`。`data:` 覆盖 base64 纹理，`blob:` 覆盖动态生成纹理，`https:` 覆盖外部纹理 URL。 |
-| `media-src` | `blob: data: https:` | blob/data/https 音视频 | 非 https http 媒体 | 与 img-src 对齐，允许 `<video>`/`<audio>` 加载外部媒体。 |
-| `font-src` | `blob: data: https:` | blob/data/https 字体 | 非 https http 字体 | **BDD-5 核心**：允许 Google Fonts（`https://fonts.gstatic.com`）加载 woff2；`data:` 覆盖 base64 内嵌字体。 |
-| `connect-src` | `blob: data: https:` | fetch/XHR/WebSocket 到 blob/data/https | `'none'`（当前值）→ 放宽；非 https http、`file:` | **根因 2 核心**：允许 `GLTFLoader.load()` fetch `.glb`/`.gltf` 模型；`blob:` 覆盖动态生成模型数据；`https:` 覆盖外部模型 CDN。**安全**：sandbox 无 `allow-same-origin`，fetch 不携带主页面 cookie，匿名跨域请求。 |
-| `worker-src` | `blob:` | blob URL Worker | https/data/非 blob Worker | Three.js DRACOLoader/MeshoptDecoder 等通过 `URL.createObjectURL(new Blob([workerCode]))` 创建解码 Worker。**仅允许 blob:**——Worker 脚本应内联生成，不允许外部 https Worker（减少攻击面）。若 P6 发现需要 https Worker，再放宽（条件性 [NEED_CONFIRM]）。 |
-| `frame-src` | `'none'` | 无 | 任何 iframe 嵌套 | 禁止 iframe 内嵌 iframe，防止钓鱼嵌套。 |
-| `form-action` | `'none'` | 无 | 任何表单提交 | 禁止表单提交，防止恶意 HTML 向外部发送数据。 |
+```python
+@router.get("/{slug}/files/{file_id}/render")
+async def render_html_file(
+    slug: str,
+    file_id: int,
+    request: Request,
+    inject: str | None = Query(None),
+    current_user: User | None = Depends(get_current_user),
+):
+    config = request.app.state.config
+    engine = get_engine(config)
+    storage = StorageManager(config=config)
 
-### Three.js/WebGL/Canvas 场景覆盖矩阵
+    entry_id = _resolve_entry(request, slug, current_user)
 
-| 场景 | 对应 CSP 指令 | 覆盖情况 |
-|------|--------------|---------|
-| inline script 执行（React/Three.js 入口） | `script-src 'unsafe-inline'` | ✅ |
-| eval/new Function（shader 编译） | `script-src 'unsafe-eval'` | ✅ |
-| WebGL context 创建（`getContext('webgl')`） | 无需 CSP（Canvas/WebGL API 不受 CSP 管控） | ✅ N/A |
-| Canvas 2D context | 无需 CSP（同上） | ✅ N/A |
-| requestAnimationFrame 渲染循环 | 无需 CSP（定时器 API 不受 CSP 管控） | ✅ N/A |
-| fetch/XHR 加载外部模型（.glb/.gltf） | `connect-src blob: data: https:` | ✅ |
-| 纹理图片加载（Image + data:/blob:/https:） | `img-src blob: data: https:` | ✅ |
-| Google Fonts 加载 | `font-src ... https:` + `style-src ... https:` | ✅ |
-| Web Worker（物理引擎、DRACOLoader 等） | `worker-src blob:` | ✅ |
-| OffscreenCanvas | 无需 CSP（Canvas API）+ Worker 内代码受 `worker-src` 控制 | ✅ |
+    with Session(engine) as session:
+        # 主文件
+        file_record = session.exec(
+            select(File).where(File.id == file_id, File.entry_id == entry_id)
+        ).first()
+        if not file_record:
+            raise NotFoundError(f"File not found: {file_id}")
 
-### 可选加固（超范围，需 [SCOPE+] 评估）
+        # 限制：只对 HTML 主文件提供 render 路由
+        if file_record.language != "html":
+            raise NotFoundError("Render endpoint only available for HTML files")
 
-以下指令 P0 未要求，当前方案不引入。若 P6/P7 发现需要，按 [SCOPE+] 流程增补：
+        # 解析 inject 参数
+        inject_ids = _parse_inject_ids(inject, file_id)
 
-- `object-src 'none'`：禁止 `<object>`/`<embed>`/`<applet>`。当前由 `default-src` 兜底（允许 blob/data/https），但现代浏览器已废弃插件，实际风险极低。
-- `base-uri 'none'`：禁止 `<base>` 标签注入。srcdoc 内容是用户自己的 HTML，非外部攻击向量，风险低。
-- `child-src`：`worker-src` + `frame-src` 的旧版兜底，现代浏览器用后者，无需显式声明。
+        # 读取 sibling files（验证属于同一 entry）
+        siblings: list[SiblingFileData] = []
+        if inject_ids:
+            sibling_records = session.exec(
+                select(File).where(
+                    File.id.in_(inject_ids),
+                    File.entry_id == entry_id,
+                )
+            ).all()
+            for f in sibling_records:
+                siblings.append(_build_sibling_data(f, storage))
 
-## srcdoc 实现细节
+    # 读主 HTML
+    html_bytes = storage.read_file(entry_id, file_record.filename, file_record.path)
+    html = html_bytes.decode("utf-8", errors="replace")
 
-### 1. `processedHtml` ref 替代 `blobUrl` ref
+    # 注入兄弟文件
+    if siblings:
+        html = inject_resources(html, siblings)
 
-```ts
-// ── 改前 ──
-const blobUrl = ref<string | null>(null)
-const isLoading = ref(false)
-
-function createBlobUrl(content: string): string {
-  const blob = new Blob([content], { type: 'text/html;charset=UTF-8' })
-  return URL.createObjectURL(blob)
-}
-
-function revokeBlobUrl(url: string | null) {
-  if (url) URL.revokeObjectURL(url)
-}
-
-// ── 改后 ──
-const processedHtml = ref<string | null>(null)
-const isLoading = ref(false)
-// createBlobUrl / revokeBlobUrl 删除
-```
-
-### 2. `initRender` 函数改动
-
-```ts
-// ── 改前 ──
-function initRender(content: string) {
-  if (!content) return
-  if (props.loadingSiblings) return
-  if (isBlockedBySize.value && !manuallyTriggered.value) return
-
-  const { html: processed, unmatchedCount } = injectResources(content, props.siblingFiles ?? [])
-  relativePathWarningCount.value = unmatchedCount
-  revokeBlobUrl(blobUrl.value)
-  isLoading.value = true
-  blobUrl.value = createBlobUrl(processed)
-}
-
-// ── 改后 ──
-function initRender(content: string) {
-  if (!content) return
-  if (props.loadingSiblings) return
-  if (isBlockedBySize.value && !manuallyTriggered.value) return
-
-  const { html: processed, unmatchedCount } = injectResources(content, props.siblingFiles ?? [])
-  relativePathWarningCount.value = unmatchedCount
-  isLoading.value = true
-  processedHtml.value = processed  // 直接赋值，无需 revoke 旧值
-}
+    return Response(
+        content=html.encode("utf-8"),
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Content-Security-Policy": RENDER_CSP,
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Referrer-Policy": "no-referrer",
+        },
+    )
 ```
 
-`injectResources` 返回的 `processed` 字符串直接赋给 `processedHtml` ref，Vue 响应式触发 iframe 重新渲染。无 Blob 创建/释放开销。
+**`_parse_inject_ids` 安全要点**：
+- 解析逗号分隔的整数列表
+- 自动剔除主 `file_id`（避免自引用）
+- 去重
+- 上限 50 个 sibling（防止 DoS）
 
-### 3. 模板改动（iframe 标签）
+**`_build_sibling_data` 安全要点**：
+- 二进制文件大小限制 768KB（沿用前端 `BINARY_SIZE_LIMIT`），超过则跳过注入并 logger.warning
+- 文本文件无大小限制（但前端 manual render 阈值 2MB 仍生效，不会发起 render 请求）
+
+### 2. 新 service：`backend/peekview/services/html_render_service.py`
+
+复刻前端 `injectResources` 逻辑（CSS link → style、JS script src → inline、binary img → data URI、favicon → data URI）。
+
+**依赖**：`beautifulsoup4` + Python 内置 `html.parser`（BS4 默认后端）。**[SCOPE+] 新依赖**，理由：
+- Python 标准库 `html.parser` 是 SAX 风格，手写状态机实现 inject 逻辑需 200+ 行且易出 bug
+- BS4 是 PyPI 主流包，纯 Python（无 C 扩展），wheel 普遍可用，体积小
+- 前端用 DOMParser，BS4 + html.parser 行为最接近
+
+**接口**：
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class SiblingFileData:
+    filename: str
+    path: str | None
+    content: str           # 文本内容 或 base64 编码的二进制内容
+    language: str | None   # 文本文件用
+    is_binary: bool
+    mime_type: str | None  # 二进制文件用
+
+def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
+    """注入兄弟文件到 HTML。
+
+    逻辑（与前端 injectResources 一致）：
+    1. <link rel="stylesheet" href="x"> → <style>/* injected */ ...</style>
+    2. <script src="x" type="text/javascript"> → inline <script>（移到 body 末尾）
+    3. <img|video|audio|source|track src="x"> → src 替换为 data URI
+    4. <link rel="icon|shortcut icon" href="x"> → href 替换为 data URI
+
+    匹配规则：normalizeRef(filename) 和 normalizeRef(path) 都作为 key，
+    跳过 http(s)/data/blob/mailto/tel///# 开头的引用。
+    """
+    ...
+```
+
+**`normalizeRef` 规则**（与前端一致）：
+- 跳过：`http://` / `https://` / `data:` / `blob:` / `mailto:` / `tel:` / `//` / `#` / `/` 开头
+- 去除前导 `./`
+
+### 3. `main.py` CSP 中间件特判
+
+现有中间件（`main.py:136-141`）对所有 `/api` 路径强制 `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` 和 `X-Frame-Options: DENY`，会**覆盖**路由自设的 CSP。
+
+**改动**：在中间件中特判 render 路由，跳过 CSP 和 X-Frame-Options 覆盖（路由自设），但仍设 `X-Content-Type-Options` / `Cache-Control` / `Referrer-Policy`。
+
+```python
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+
+    # 新增：render 路由特判
+    is_render_route = path.endswith("/render") and "/files/" in path
+
+    if path.startswith("/api") or path == "/health":
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        if is_render_route:
+            # render 路由自设 CSP 和 X-Frame-Options，中间件不覆盖
+            pass
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    elif path == "/" or ...:
+        # 主应用 CSP 不变
+        ...
+    return response
+```
+
+**注意**：中间件在路由之后执行，`response.headers["X"] = "..."` 会覆盖路由设的同名 header。因此特判必须**在中间件层**跳过赋值，不能依赖路由 setdefault。
+
+### 4. CSP 策略（render 路由专用）
+
+```
+default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:;
+script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:;
+style-src 'unsafe-inline' blob: data: https:;
+img-src blob: data: https:;
+media-src blob: data: https:;
+font-src blob: data: https:;
+connect-src blob: data: https:;
+worker-src blob:;
+frame-src 'none';
+frame-ancestors 'self';
+form-action 'none';
+base-uri 'self';
+```
+
+**逐条说明**：
+
+| 指令 | 值 | 放宽容许 | 拒绝 |
+|------|-----|---------|------|
+| `default-src` | `'unsafe-inline' 'unsafe-eval' blob: data: https:` | inline 任意元素、eval、blob/data/https 兜底 | http:、file:、ftp: |
+| `script-src` | `'unsafe-inline' 'unsafe-eval' blob: data: https:` | inline `<script>`、eval（Three.js 需要）、blob/data/https script | http: script |
+| `style-src` | `'unsafe-inline' blob: data: https:` | inline `<style>`、外部 https CSS | http: CSS |
+| `img-src` | `blob: data: https:` | 外部 https 图片、data URI、blob | http: 图片 |
+| `media-src` | `blob: data: https:` | 同上，音视频 | http: |
+| `font-src` | `blob: data: https:` | Google Fonts 等 | http: 字体 |
+| `connect-src` | `blob: data: https:` | fetch 外部 API、XHR、WebSocket over HTTPS | http:、'self'（避免 iframe 向主应用发请求） |
+| `worker-src` | `blob:` | Web Worker（物理引擎等） | data:、https:、'self' |
+| `frame-src` | `'none'` | — | iframe 内嵌 iframe（防钓鱼） |
+| `frame-ancestors` | `'self'` | 同源父页面嵌入 | 跨源嵌入（防 clickjacking） |
+| `form-action` | `'none'` | — | 表单提交（防数据外泄） |
+| `base-uri` | `'self'` | — | `<base>` 改写 |
+
+**与原 P2（rev 1）CSP 的差异**：
+- `frame-ancestors 'self'`（新增）：允许同源 iframe 嵌入——这是新方案能工作的核心
+- 不再使用 iframe 的 `csp` 属性（HTTP header CSP 已生效，且 `csp` 属性不能放宽 HTTP CSP）
+- `connect-src` 不含 `'self'`（避免 iframe 向主应用 `/api` 发请求；如 Three.js 需加载同源模型，由后端 inject 为 data URI）
+
+**安全考量**：
+- `sandbox="allow-scripts"`（前端 iframe 属性，无 `allow-same-origin`）：iframe content 在 opaque origin 运行，无法访问父 cookie/localStorage，即使 `connect-src https:` 允许 fetch，也是匿名跨域请求，不携带凭据
+- `frame-ancestors 'self'`：仅同源父页面可嵌入（PeekView 主应用），防跨站 clickjacking
+- `frame-src 'none'`：禁止 iframe 内嵌 iframe
+- `form-action 'none'`：禁止表单提交，防数据外泄
+
+### 5. 新依赖
+
+`backend/pyproject.toml` `dependencies` 新增：
+```
+"beautifulsoup4>=4.12.0",
+```
+
+## 前端设计
+
+### 1. `HtmlViewer.vue` 改写
+
+**Props 变更**：
+
+```typescript
+// 改前
+const props = defineProps<{
+  content: string                    // 用于 size 检测 + 警告计数
+  siblingFiles?: SiblingFile[]       // 已注入的内容
+  loadingSiblings?: boolean
+}>()
+
+// 改后
+const props = defineProps<{
+  slug: string                       // [新增] 拼 renderUrl
+  fileId: number                     // [新增] 拼 renderUrl
+  content: string                    // [保留] 用于 size 检测 + 警告计数
+  siblingFileIds: number[]           // [替换 siblingFiles] 轻量 ID 列表
+  loadingSiblings?: boolean          // [保留] 兼容现有 EntryDetailView 流程
+}>()
+```
+
+**移除**：
+- `processedHtml` ref
+- `injectResources()` 函数（移到后端）
+- `createBlobUrl` / `revokeBlobUrl` / `blobUrl`（P0 提到，原 rev 1 已移除 srcdoc 时残留逻辑，现彻底清理）
+- `serializeDoc()`、`countRelativePathsInDoc()` 中与 inject 相关的部分
+
+**保留**：
+- `normalizeRef()`、`countRelativePaths()`：用于警告计数（同步扫描 `props.content`，不修改 HTML，与后端 inject 规则一致）
+- size warning / manual render 逻辑（基于 `content.length`）
+- 相对路径警告条
+
+**新增**：
+- `renderUrl` computed：根据 slug / fileId / siblingFileIds 拼接 URL
+
+```typescript
+const renderUrl = computed(() => {
+  const base = `/api/v1/entries/${props.slug}/files/${props.fileId}/render`
+  if (props.siblingFileIds.length === 0) return base
+  return `${base}?inject=${props.siblingFileIds.join(',')}`
+})
+```
+
+**iframe 模板**：
 
 ```vue
-<!-- ── 改前 ── -->
 <iframe
-  v-if="blobUrl"
-  :src="blobUrl"
+  v-if="shouldRender"
+  :src="renderUrl"
   sandbox="allow-scripts"
-  csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' blob: data:; img-src blob: data:; media-src blob: data:; font-src blob: data:; connect-src 'none'; frame-src 'none'; form-action 'none';"
-  referrerpolicy="no-referrer"
-  class="html-frame"
-  @load="onIframeLoad"
-  @error="onIframeError"
-/>
-
-<!-- ── 改后 ── -->
-<iframe
-  v-if="processedHtml"
-  :srcdoc="processedHtml"
-  sandbox="allow-scripts"
-  csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; style-src 'unsafe-inline' blob: data: https:; img-src blob: data: https:; media-src blob: data: https:; font-src blob: data: https:; connect-src blob: data: https:; worker-src blob:; frame-src 'none'; form-action 'none';"
   referrerpolicy="no-referrer"
   class="html-frame"
   @load="onIframeLoad"
@@ -203,267 +359,261 @@ function initRender(content: string) {
 />
 ```
 
-CSP 字符串差异（改后 vs 改前）：
-- `default-src` / `script-src` / `style-src` / `img-src` / `media-src` / `font-src`：追加 ` https:`
-- `connect-src`：`'none'` → `blob: data: https:`
-- `worker-src`：新增 `blob:`
-- `frame-src` / `form-action`：不变
+**关键变化**：
+- 不再设 `csp` 属性（HTTP header CSP 已生效，且 `csp` 属性不能放宽 HTTP CSP）
+- `:src="renderUrl"` 替代 `:srcdoc="processedHtml"`
+- `shouldRender` = `!showManualRender && !props.loadingSiblings`（等 sibling IDs 到齐再渲染，避免双次加载）
 
-### 4. `onIframeLoad` 时机
+**`initRender` 简化**：
 
-`onIframeLoad` 函数本身**不变**：
+```typescript
+function initRender() {
+  if (!props.content) return
+  if (props.loadingSiblings) return       // 等 sibling IDs 到齐
+  if (isBlockedBySize.value && !manuallyTriggered.value) return
 
-```ts
-function onIframeLoad() {
-  isLoading.value = false
+  // 警告计数：同步扫描原始 content（不修改）
+  relativePathWarningCount.value = countRelativePaths(props.content)
+  isLoading.value = true
+  // 不再设置 processedHtml —— iframe 直接加载 renderUrl
 }
 
-function onIframeError() {
-  isLoading.value = false
-}
+watch(() => props.content, () => {
+  manuallyTriggered.value = false
+  initRender()
+}, { immediate: true })
+
+watch(() => props.siblingFileIds, () => {
+  initRender()
+}, { immediate: true })
+
+watch(manuallyTriggered, (triggered) => {
+  if (triggered) initRender()
+})
 ```
 
-**时机变化**（P0 风险 4）：
-- blob URL：load 事件在 iframe 完整加载（含所有同步资源）后触发。
-- srcdoc：load 事件在 HTML 解析完成 + **同步 script 执行完**后触发，但 Three.js 初始化（异步 import、模型加载、shader 编译）跨多个微任务/宏任务，可能在 load 事件后才完成。
+### 2. `EntryDetailView.vue` 改写
 
-**影响**：loading 态可能在 Three.js 还在初始化时消失，用户看到短暂空白或未渲染 canvas。
+**移除**：sibling 文件内容 fetch 逻辑（约 50 行，line 330-388）
+- 不再调用 `api.getFileContent` / `api.getFileAsBase64`
+- 不再有 `BINARY_SIZE_LIMIT` 前端检查（后端处理）
 
-**判定**：可接受。loading 的语义是「iframe 加载完成」而非「内容渲染完成」。P6 实跑观察实际体验：
-- 若 < 1 秒空白：无感知，不需处理。
-- 若 1~3 秒空白：可接受（3D 渲染本就需要初始化时间）。
-- 若 > 3 秒空白：考虑加渲染完成检测（如轮询 `canvas` 元素出现 + WebGL context 非空）——**超范围，需 [NEED_CONFIRM]**。
+**新增**：sibling file IDs 提取（轻量，从 entry files list 取）
 
-### 5. `onUnmounted` 清理
-
-```ts
-// ── 改前 ──
-onUnmounted(() => {
-  revokeBlobUrl(blobUrl.value)
+```typescript
+const siblingFileIds = computed<number[]>(() => {
+  if (!currentEntry.value || !activeFile.value) return []
+  if (activeFile.value.language !== 'html') return []
+  return currentEntry.value.files
+    .filter(f => f.id !== activeFile.value!.id)
+    .map(f => f.id)
 })
 
-// ── 改后 ──
-// onUnmounted 删除——srcdoc 无需手动清理，processedHtml ref 随组件卸载自动 GC。
+const isFetchingSiblings = ref(false)  // 保留为 false（不再 fetch），兼容 HtmlViewer 接口
 ```
 
-srcdoc 是字符串值，不持有浏览器资源句柄（不像 blob URL 持有 ObjectURL 句柄需 revoke）。组件卸载时 `processedHtml` ref 失去引用，V8 GC 自动回收字符串内存。无内存泄漏风险。
+**模板**：
 
-## 兄弟文件注入兼容性
-
-### injectResources 返回值直接作为 srcdoc
-
-`injectResources(html, siblings)` 返回 `{ html: string, unmatchedCount: number }`，其中 `html` 是经过 DOMParser 解析 + `serializeDoc` 序列化后的 HTML 字符串。该字符串直接赋给 `processedHtml` ref，作为 `:srcdoc` 绑定值。
-
-### 编码/转义分析
-
-**结论：无编码问题，processedHtml 字符串原样传递。**
-
-详细分析：
-
-1. **Vue 绑定机制**：`:srcdoc="processedHtml"` 等价于 `iframe.setAttribute('srcdoc', processedHtml)`。Vue 3 对普通 attribute（非 property 如 `value`/`checked`）用 `setAttribute` 设置。
-
-2. **setAttribute 行为**：`setAttribute('srcdoc', value)` 将 `value` 转为字符串后存为属性值。浏览器内部存储原始字符串，**不经过 HTML 实体编码/解码**。
-
-3. **iframe 渲染时取值**：浏览器取 srcdoc 属性值的原始字符串，直接作为 iframe 内的 HTML 解析。不经过二次实体解码。
-
-4. **特殊字符处理**：
-   - `"`（双引号）：processedHtml 中可能含双引号（如 `<div class="foo">`）。`setAttribute` 不受属性值引号边界影响——它操作的是 DOM 节点属性，不是 HTML 文本。无破坏问题。
-   - `<` / `>`：同上，DOM 属性值不受影响。
-   - `&`：同上，不经过实体解码。
-   - null 字符（`\0`）：HTML 内容通常不含，可忽略。若含，浏览器会容错处理。
-
-5. **对比声明式 HTML**：若用 `<iframe srcdoc="<p>hello</p>">` 声明式写法，属性值会经过 HTML 实体解码（`&lt;` → `<`）。但 Vue 的 DOM API 绑定不走 HTML 解析路径，直接 setAttribute，无此问题。
-
-6. **base64 二进制资源**：injectResources 将二进制兄弟文件转为 `data:${mimeType};base64,${content}` 嵌入 HTML。base64 字符集为 `[A-Za-z0-9+/=]`，不含特殊字符，无转义问题。base64 会让 srcdoc 变大——已知行为（P0 风险 3），非回归。
-
-### 流程对比
-
-```
-改前: content → injectResources → processedHtml → createBlobUrl → blobUrl → :src="blobUrl"
-改后: content → injectResources → processedHtml → processedHtml ref → :srcdoc="processedHtml"
+```vue
+<HtmlViewer
+  v-if="isHtml"
+  :slug="slug"
+  :file-id="entryStore.activeFile.id"
+  :content="entryStore.fileContent"
+  :sibling-file-ids="siblingFileIds"
+  :loading-siblings="false"
+/>
 ```
 
-中间产物形态（HTML 字符串）不变，只是末端载体从 Blob 换成字符串。`injectResources` 函数本身**零改动**。
+### 3. 前端 API 客户端
 
-## loading 态时机变化处理
-
-### 当前逻辑（保留）
-
-```ts
-// initRender 中：
-isLoading.value = true
-processedHtml.value = processed  // 触发 iframe 渲染
-
-// onIframeLoad：
-isLoading.value = false
-```
-
-isLoading 显示条件：`v-if="isLoading || props.loadingSiblings"`。
-
-### 时机差异
-
-| 阶段 | blob URL | srcdoc |
-|------|---------|--------|
-| initRender 调用 | isLoading=true，createObjectURL 同步返回 | isLoading=true，processedHtml 赋值同步 |
-| iframe 创建 | 浏览器异步加载 blob URL | 浏览器同步解析 srcdoc 字符串 |
-| load 事件触发 | blob 内容完整加载后 | HTML 解析 + 同步 script 执行完后 |
-| Three.js 初始化 | load 事件后异步 | load 事件后异步（相同） |
-
-**关键差异**：srcdoc 的 load 事件可能比 blob URL 略早触发（因为 srcdoc 无网络请求阶段），但两者都在「同步 script 执行完」后触发。Three.js 异步初始化不受影响。
-
-### 处理策略
-
-- **不改动 loading 逻辑**：`isLoading` / `onIframeLoad` / `onIframeError` 保持现状。
-- **P6 实跑观察**：记录点击「点击渲染」到 loading 消失的时长，以及 loading 消失到 canvas 出现内容的间隔。
-- **阈值判定**：
-  - loading 消失后 ≤ 1 秒出现内容：无感知，不需处理。
-  - 1~3 秒：可接受（3D 渲染初始化正常耗时）。
-  - \> 3 秒：**条件性 [NEED_CONFIRM]**——考虑加「渲染完成检测」（轮询 canvas + WebGL context），但这改变 loading 语义为「内容渲染完成」，超 P0 范围。
+**无需新增方法**——iframe 直接用 URL 加载，不走 axios/fetch。
 
 ## 测试策略
 
-### P3 单元测试
+### 后端测试（[SCOPE+] 全新）
 
-**文件**：`frontend-v3/src/components/__tests__/HtmlViewer.spec.ts`
+**`backend/tests/test_html_render.py`**（新增）：
 
-#### 删除项
+| 测试类 | 测试项 |
+|--------|--------|
+| `TestRenderRoute` | 公开 entry 匿名访问返回 200 + text/html |
+| | 私有 entry 匿名访问 404 |
+| | 私有 entry owner cookie 访问 200 |
+| | 非 HTML 文件访问 render 路由 404 |
+| | 不存在的 file_id 404 |
+| | 不存在的 slug 404 |
+| `TestRenderHeaders` | CSP header 含 `script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:` |
+| | CSP header 含 `frame-ancestors 'self'` |
+| | X-Frame-Options header **不存在**（中间件特判生效） |
+| | Cache-Control: no-store |
+| | Referrer-Policy: no-referrer |
+| `TestSiblingInjection` | `?inject=` 含 CSS sibling → 响应含 `<style>` 不含原 `<link>` |
+| | `?inject=` 含 JS sibling → 响应含 inline `<script>` |
+| | `?inject=` 含 binary sibling → `<img src>` 替换为 data URI |
+| | `?inject=` 含不属于该 entry 的 file_id → 该 ID 被忽略 |
+| | `?inject=` 含主 file_id 自身 → 被去重 |
+| | `?inject=` 含非数字 → 解析忽略 |
+| | 无 `?inject=` → 返回原始 HTML |
+| | sibling 超过 50 个 → 截断到 50 |
+| | 二进制 sibling > 768KB → 跳过注入（logger.warning） |
+| `TestInjectResources` | 单元测试 `inject_resources()` 函数（无 HTTP） |
+| | `<link rel="stylesheet" href="style.css">` 替换 |
+| | `<script src="main.js">` 替换 |
+| | `<script src="x.js" type="module">` 不替换（type != text/javascript） |
+| | `<img src="logo.png">` 替换为 data URI |
+| | `<link rel="icon" href="favicon.ico">` 替换 |
+| | 外部 https 引用不替换 |
+| | data URI 引用不替换 |
+| | `#anchor` / `/abs` / `//cdn` 不替换 |
+| | filename 和 path 都可匹配 |
 
-- 删除 `beforeEach`/`afterEach` 中的 `URL.createObjectURL`/`revokeObjectURL` mock（srcdoc 不调用 URL API）。
-- 删除 `describe('Blob URL 创建与释放')` 整块（3 个测试）。
-- 删除所有测试中 `createObjectURLMock.mock.calls` 读取 blob.text() 的断言模式。
+### 前端测试（重写）
 
-#### 新增项
+**`HtmlViewer.spec.ts`** 大幅重写（约 919 行 → 估计 600 行）：
 
-**`describe('srcdoc 渲染')`**：
-1. `挂载时 srcdoc 属性含注入后的 HTML`：`expect(iframe.attributes('srcdoc')).toContain('<html')`，且含原始 HTML 内容。
-2. `content 变更时 srcdoc 更新`：setProps 新 content，断言 srcdoc 属性含新内容。
-3. `卸载时无残留`：unmount 后不断言（srcdoc 无句柄需清理），仅验证不抛错。
-4. `空 content 不渲染 iframe`：`expect(wrapper.find('iframe').exists()).toBe(false)`。
+| describe 块 | 变化 |
+|-------------|------|
+| `srcdoc 绑定` | **删除**，替换为 `iframe src URL` describe 块 |
+| `srcdoc 渲染` | **删除**，合并到上面 |
+| `CSP 属性`（原 rev 1 计划新增） | **删除**（不再用 iframe csp 属性） |
+| `sandbox 属性`（原 rev 1 计划新增） | **保留**：`sandbox="allow-scripts"` |
+| `相对路径警告` | **保留**：警告计数仍在前端（countRelativePaths） |
+| `大文件保护` | **保留**：基于 content.length |
+| `sibling 注入`（如有） | **重写**：断言 renderUrl 含 `?inject=12,15` |
 
-**`describe('CSP 属性')`**：
-1. `csp 含 connect-src blob: data: https:`：断言放宽外部模型加载。
-2. `csp 含 worker-src blob:`：断言允许 Web Worker。
-3. `csp 含 font-src blob: data: https:`：断言允许 Google Fonts。
-4. `csp 含 style-src 'unsafe-inline' blob: data: https:`：断言允许外部 CSS + inline 样式。
-5. `csp 含 script-src 'unsafe-inline' 'unsafe-eval'`：断言允许 inline script + eval（核心解除拦截）。
-6. `csp 含 img-src blob: data: https:`：断言允许外部纹理。
-7. `csp 含 frame-src 'none'`：断言禁止 iframe 嵌套。
-8. `csp 含 form-action 'none'`：断言禁止表单提交。
+**新增** describe 块 `renderUrl 拼接`：
+- 无 siblingFileIds → URL 无 `?inject=`
+- 有 siblingFileIds → URL 含 `?inject=12,15,18`
+- slug/fileId 变化 → URL 更新
 
-**`describe('sandbox 属性')`**（已有，保留并补充）：
-- `sandbox="allow-scripts"`（已有）。
-- 补充：`不含 allow-same-origin`（已有，保留——BDD-8 安全性核心）。
+**新增** describe 块 `loading 时序`：
+- loadingSiblings=true → iframe 不渲染
+- loadingSiblings=false → iframe 渲染
 
-#### 改写项（多文件注入/二进制注入测试）
+### P6 Playwright 实跑（继承 P1）
 
-所有通过 `createObjectURLMock.mock.calls[0][0]` 读取 Blob 再 `blob.text()` 的断言，改为直接读 `wrapper.find('iframe').attributes('srcdoc')`：
+P1 的 8 条 BDD 全部保留。**新增 P6 验证项**（[SCOPE+]）：
+- BDD-8 之外，额外验证 private entry 的 iframe 也能加载（cookie 自动携带）
+- 验证 iframe 内 `fetch('/api/v1/entries/...')` 不携带 cookie（sandbox 隔离）
 
-```ts
-// 改前
-const blob = (createObjectURLMock.mock.calls as any[][])[0][0] as Blob
-const text = await blob.text()
-expect(text).toContain('/* injected from: styles.css */')
+## [SCOPE+] 标注汇总
 
-// 改后
-const srcdoc = wrapper.find('iframe').attributes('srcdoc') ?? ''
-expect(srcdoc).toContain('/* injected from: styles.css */')
-```
+本修订版引入以下原 P1 未覆盖的范围扩展：
 
-受影响测试（约 15 个）：`多文件注入` / `二进制资源注入` / `层级目录路径匹配` describe 块内所有读取 blob.text() 的测试。
+### [SCOPE+]-1: 后端新增路由 + service
 
-#### 保留项（无改动）
+**位置**：本文件「后端设计 §1 §2」
+**内容**：
+- 新路由 `GET /api/v1/entries/{slug}/files/{file_id}/render`
+- 新 service `backend/peekview/services/html_render_service.py`（含 `inject_resources` 函数）
+**原因**：srcdoc/blob/data URL 三种前端方案均失败，必须由后端返回独立 URL 的 HTML 响应才能控制 CSP。sibling 注入因此也必须移到后端（前端无法把 inject 后的 HTML 塞进 iframe）。
+**影响**：原 P1 `domains: [frontend]` 扩展为 `[backend, frontend]`；`packages: [frontend-v3]` 扩展为 `[backend, frontend-v3]`。
 
-- `describe('相对路径检测警告')`：逻辑不变。
-- `describe('大文件分级处理')`：逻辑不变，但删除 `expect(createObjectURLMock).not.toHaveBeenCalled()` 断言（mock 不存在），改为 `expect(wrapper.find('iframe').exists()).toBe(false)`。
-- `describe('Loading 状态')`：逻辑不变。
-- `describe('iframe sandbox 属性')`：逻辑不变。
+### [SCOPE+]-2: 新依赖 beautifulsoup4
 
-### P6 Playwright 实跑
+**位置**：本文件「后端设计 §2 §5」
+**内容**：`backend/pyproject.toml` 新增 `beautifulsoup4>=4.12.0`
+**原因**：后端实现 `inject_resources` 需要 HTML 解析。Python 标准库 `html.parser` 是 SAX 风格，手写状态机实现复杂且易出 bug。BS4 是纯 Python 主流包，与前端 DOMParser 行为最接近。
+**影响**：发布时需确认 wheel 可用（BS4 全平台支持）。
 
-**环境**：`make debug-start`（`127.0.0.1:8888`，`/tmp/peekview-debug/`），Playwright CDP `127.0.0.1:18800`。
-**测试样本**：`~/oclab/open-codesign/test01/AI-3D-Model-Viewer-Workspace-App-2026-06-22-135809.html`（3.3MB，Three.js + React + WebGL）。
-**Skill**：`playwright-vision`（vision-helper subagent 截图确认）。
+### [SCOPE+]-3: main.py CSP 中间件特判
 
-#### 测试步骤
+**位置**：本文件「后端设计 §3」
+**内容**：`main.py:132-160` 的 `add_security_headers` 中间件新增 render 路由特判分支
+**原因**：现有中间件对所有 `/api` 路径强制 `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` 和 `X-Frame-Options: DENY`，会覆盖 render 路由自设的宽松 CSP。必须在中间件层特判跳过。
+**影响**：P5 须跑全量后端测试确认无回归。
 
-1. **创建 entry**：`PEEKVIEW_DEBUG_MODE=1 peekview create -s "3D Model Viewer" <测试样本>`。
-2. **打开 entry**：Playwright 导航到 EntryDetailView，确认显示「文件较大（3.3 MB），自动渲染已关闭」。
-3. **点击渲染**：`frame.locator('[data-testid="manual-render-btn"]').click()`。
-4. **CSP 违规抓取**（BDD-1）：
-   - `page.on('console')` 收集所有 console 消息。
-   - `page.on('pageerror')` 收集 JS 错误。
-   - 等待 5 秒（让 Three.js 初始化 + 模型加载）。
-   - 断言：无 `Refused to execute inline script` / `Refused to load` 等 CSP 违规消息。
-5. **React 挂载验证**（BDD-2）：
-   - `const frame = page.frameLocator('iframe.html-frame')`
-   - `const root = frame.locator('#root')`
-   - 断言 `root.childElementCount > 0`。
-6. **WebGL context 验证**（BDD-3）：
-   - `const canvas = frame.locator('canvas')`
-   - 断言 canvas 存在。
-   - 在 frame 内执行 `canvas.getContext('webgl') || canvas.getContext('webgl2')`，断言非 null。
-7. **渲染循环验证**（BDD-4）：
-   - 在 frame 内执行两次 `canvas.toDataURL()`（间隔 `requestAnimationFrame` ×2 + 100ms）。
-   - 断言两次 dataURL 不同（渲染循环在持续绘制）。
-8. **Google Fonts 验证**（BDD-5）：
-   - 等待 2 秒（网络请求）。
-   - 断言 console 无 `Refused to load stylesheet` / `Refused to load font`。
-   - 可选：检查 `document.fonts.ready` resolve。
-9. **vision 截图**：
-   - `vision-helper` subagent 截图 iframe 区域。
-   - 确认 3D 模型可见（非空白/非错误页）。
-10. **sandbox 安全性验证**（BDD-8）：
-    - 在 frame 内执行 `document.cookie`，断言返回空字符串。
-    - 在 frame 内执行 `localStorage.getItem('peekview_token')`，断言抛 SecurityError 或返回 null。
-    - 在 frame 内执行 `fetch('/api/entries')`，断言请求为匿名跨域（不携带 cookie）——可通过后端日志或 network 拦截验证。
+### [SCOPE+]-4: 前端 EntryDetailView 重写 sibling 加载逻辑
 
-#### 小文件回归（BDD-6/BDD-7）
+**位置**：本文件「前端设计 §2」
+**内容**：移除 `EntryDetailView.vue:330-388` 的 sibling 内容 fetch 逻辑（约 50 行），改为提取 file IDs（约 5 行）
+**原因**：sibling 注入移到后端，前端不再需要 fetch sibling 内容。
+**影响**：原 P1「纯前端单文件改动（HtmlViewer.vue）」假设不成立，需改 EntryDetailView.vue。P7 一致性检查范围扩大。
 
-- 创建 <2MB 简单 HTML entry（含 inline `<script>`），打开后自动渲染，inline script 执行，loading 正常消失。
-- 创建纯文本 HTML entry（无 script），打开后显示内容，无 CSP 违规，无 JS 错误。
+### [SCOPE+]-5: 后端测试新增
 
-## 风险评估
+**位置**：本文件「测试策略 §后端测试」
+**内容**：新增 `backend/tests/test_html_render.py`（约 25 个测试用例）
+**原因**：后端新增路由和 service 需要单元测试覆盖。
+**影响**：P3 工作量增加；P5 gate 新增后端测试命令。
 
-| # | 风险 | 等级 | 缓解措施 |
-|---|------|------|---------|
-| 1 | srcdoc 大小限制：Chrome 无硬限制但超大文档（>10MB）可能卡顿；Firefox ~50MB；Safari 较保守 | 中 | 测试文件 3.3MB 实测可行（P0 已确认）。P6 实跑验证。若未来出现 >10MB 文件，考虑回到 blob URL + 后端单独下发宽松 CSP header 的方案（超范围 [SCOPE+]）。 |
-| 2 | CSP 放宽 `connect-src https:` 后恶意 HTML 可向外部发送数据 | 低 | `sandbox="allow-scripts"` 无 `allow-same-origin`，iframe origin=null，无法读取主页面 cookie/localStorage；`referrerpolicy="no-referrer"` 不泄露来源；fetch 为匿名跨域请求。风险可控。 |
-| 3 | 兄弟文件注入的 base64 二进制让 srcdoc 变大 | 低 | 已知行为（P0 风险 3），非回归。srcdoc 大小限制同风险 1。 |
-| 4 | `onIframeLoad` 时机变化导致 loading 提前消失 | 低 | loading 语义是「iframe 加载」非「内容渲染」。P6 实跑观察：>3 秒空白才考虑加渲染完成检测（条件性 [NEED_CONFIRM]，超 P0 范围）。 |
-| 5 | srcdoc + sandbox 无 allow-same-origin 下 WebGL/Canvas/OffscreenCanvas 是否正常工作 | 需验证 | 理论上 Canvas/WebGL API 不需要 same-origin。P6 实跑验证（BDD-3/BDD-4）。若失败，考虑加 `allow-same-origin`（降低安全性，**[NEED_CONFIRM]**）——但这会让 iframe 能访问主页面 cookie，需重新评估 sandbox 策略。 |
-| 6 | 现有测试 `HtmlViewer.spec.ts` 大量 mock `createObjectURL`/`revokeObjectURL`，改 srcdoc 后 mock 不再被调用 | 低 | [SCOPE+] P3 阶段回补：删除 URL mock，重写 Blob URL 测试为 srcdoc 断言，多文件注入测试改读 `iframe.attributes('srcdoc')`。逐个验证不崩。 |
-| 7 | `worker-src blob:` 可能不足以覆盖所有 Three.js Worker 场景（如外部 https Worker 脚本） | 低 | Three.js DRACOLoader/MeshoptDecoder 等用 blob Worker。P6 实跑观察 console 是否有 `worker-src` 违规。若需 https Worker，放宽 `worker-src blob: https:`（条件性 [NEED_CONFIRM]）。 |
+## 关键差异：新方案 vs 原方案（rev 1）
 
-## 标记汇总
+| 维度 | 原 P2 rev 1（srcdoc） | 新 P2 rev 2（后端 render 路由） |
+|------|----------------------|------------------------------|
+| **iframe 加载方式** | `:srcdoc="processedHtml"` | `:src="renderUrl"`（HTTP URL） |
+| **CSP 来源** | iframe `csp` 属性 | HTTP response header（路由自设） |
+| **CSP 生效原理** | srcdoc origin=null 不继承父 CSP（**实际失败**：Chrome 仍继承） | iframe 加载独立 URL，用该 URL 响应的 CSP |
+| **sibling 注入位置** | 前端（DOMParser + injectResources） | 后端（BS4 + inject_resources） |
+| **sibling 数据流** | 前端 fetch 内容 → inject → srcdoc 字符串 | 前端传 file IDs → 后端读 + inject → HTTP 响应 |
+| **改动范围** | 纯前端单文件 | 后端 + 前端多文件 |
+| **新依赖** | 无 | beautifulsoup4 |
+| **认证模型** | 不涉及（srcdoc 无 HTTP 请求） | iframe 同源 fetch 带 cookie，private entry 自动通过 |
+| **main.py 改动** | 不动 | CSP 中间件特判 render 路由 |
+| **BDD-8 sandbox 隔离** | sandbox opaque origin 阻止 cookie 访问 | 同左（不变） |
+| **BDD 1-7** | 期望通过（实际失败） | 期望通过（独立 URL CSP 可控） |
+| **测试范围** | 前端 vitest | 前端 vitest + 后端 pytest |
 
-### [SCOPE+] 测试代码回补
+## 风险与缓解
 
-- **来源**：P1「隐含依赖检查 §4」已标记。
-- **内容**：`HtmlViewer.spec.ts` 删除 Blob URL 测试，新增 srcdoc/CSP 测试，多文件注入测试改读 srcdoc 属性。
-- **影响**：P3 工作量增加，不改变 P1 基线范围。
-- **处置**：P3 阶段执行回补。
+### 风险 1（中）：sandbox 不带 allow-same-origin 时初始 fetch 是否携带 cookie
 
-### [NEED_CONFIRM] 条件性（P6 验证后触发）
+**描述**：方案依赖"iframe 同源加载时浏览器自动携带 cookie"。若实际行为是 sandbox 阻止初始 fetch 携带 cookie，private entry 的 iframe 会 401。
 
-以下不是当前需要 confirm 的点，而是 P6 实跑后**若触发条件**才需 confirm：
+**理论依据**：[WHATWG HTML spec §4.7.5](https://html.spec.whatwg.org/multipage/iframe-embed-object.html#attr-iframe-sandbox) — sandbox flags 限制 iframe content 的 browsing context（运行时环境），不影响初始 resource fetch（网络请求）。初始 fetch 按 iframe 元素所在 document 的 origin 处理 cookie。
 
-1. **loading 态 >3 秒空白**（风险 4）：若 P6 观察到 loading 消失后 >3 秒才出现内容，需 confirm 是否加渲染完成检测（改变 loading 语义，超 P0 范围）。
-2. **WebGL/Canvas 在 sandbox 无 allow-same-origin 下失败**（风险 5）：若 P6 BDD-3/BDD-4 失败，需 confirm 是否加 `allow-same-origin`（降低安全性）。
-3. **worker-src blob: 不足**（风险 7）：若 P6 console 出现 worker-src CSP 违规，需 confirm 是否放宽到 `worker-src blob: https:`。
+**缓解**：
+- P6 必须实测 private entry 的 iframe 加载（[SCOPE+]-5 新增 P6 验证项）
+- Fallback 方案：若实测不带 cookie，前端在 renderUrl 后追加短期 token query 参数（`?pv_token=<short-lived-jwt>`），后端优先从 query 参数认证。这会引入 token URL 泄露风险（但 sandbox 限制 referer，且 token 短期有效）。
 
-当前方案无需 confirm，直接进入 P3。
+### 风险 2（中）：BS4 + html.parser 与前端 DOMParser 行为差异
 
-### [SCOPE_GAP] 无
+**描述**：后端 inject_resources 用 BS4 解析 HTML，前端警告计数用 DOMParser。两者对畸形 HTML 的解析可能不一致，导致警告数与实际注入数不匹配。
 
-无方案缺口。P0 已锁定方案（blob URL → srcdoc + CSP 放宽），P1 已确认所有隐含依赖兼容，P2 细化实现细节无缺口。
+**缓解**：
+- 后端测试覆盖关键场景（link/script/img/icon 注入）
+- 前端警告条改为"提示性"（不保证精确）——若 P6 实跑发现明显不一致，可考虑后端响应 header `X-Peekview-Unmatched-Count`，但 iframe 父 JS 无法读 iframe 响应 header（sandbox 阻止），需额外 HEAD 请求。暂不实现，P6 观察后决定。
 
-### [CAPABILITY_GAP] 无
+### 风险 3（低）：iframe src 暴露 file_id 和 sibling file_ids
 
-继承 P1：所有验证能力齐备（Playwright WebGL 检测、3D 测试样本、CDP 连接、CSP 抓取、vision 截图）。
+**描述**：URL 如 `/api/v1/entries/{slug}/files/42/render?inject=43,44,45` 暴露 file IDs。但 file_id 是自增整数，可枚举。
+
+**缓解**：
+- 所有 file 访问都经 `_resolve_entry` 可见性检查，private entry 对非 owner 返回 404
+- 公开 entry 本就预期可被任意访问
+- file_id 暴露不增加攻击面（已有 `/files/{file_id}/content` 路由同样暴露）
+
+### 风险 4（低）：main.py 中间件特判影响其他路由
+
+**描述**：特判条件 `path.endswith("/render") and "/files/" in path` 可能误匹配未来新增路由。
+
+**缓解**：
+- 特判条件精确（同时要求 `/files/` 子串和 `/render` 后缀）
+- P5 跑全量后端测试确认无回归
+- 若未来有其他 `/render` 路由，需 review 特判条件
+
+### 风险 5（低）：sibling 注入大小限制行为变化
+
+**描述**：原前端方案对 binary sibling 限制 768KB（base64 后 ~1MB），超过则前端不传。新方案前端只传 file_id，后端读取时才发现超限，需后端 skip + log。
+
+**缓解**：后端 `_build_sibling_data` 检查 `f.size > 768*1024` 跳过，与前端原逻辑一致。
+
+### 风险 6（低）：警告计数与 inject 分离可能导致不一致
+
+**描述**：前端 `countRelativePaths(props.content)` 扫描原始 HTML，后端 `inject_resources` 实际注入。两者规则需严格一致（normalizeRef 逻辑、跳过前缀列表）。
+
+**缓解**：
+- 后端 `normalizeRef` 复刻前端规则（注释明确标注"与前端 HtmlViewer.vue normalizeRef 保持一致"）
+- P3 测试覆盖 normalizeRef 边界情况
+- P7 一致性检查确认两端规则同步
 
 ## 下一步
 
-P2 方案已明确，可进入 P3（TDD）：
-1. 先改写 `HtmlViewer.spec.ts`（删除 Blob URL 测试，新增 srcdoc/CSP 测试）——测试应失败（因为 HtmlViewer.vue 还没改）。
-2. 再改 `HtmlViewer.vue`（blobUrl → processedHtml，CSP 字符串更新）——测试应全绿。
-3. 跑 `npx vitest run src/components/__tests__/HtmlViewer.spec.ts` 确认 P3 gate 通过。
+P2 修订完成，可进入 P3（TDD）：
+1. 后端：先写 `test_html_render.py`（覆盖路由 + inject_resources）
+2. 后端：实现 `html_render_service.py` + 路由 + 中间件特判
+3. 前端：重写 `HtmlViewer.spec.ts`（移除 srcdoc 断言，新增 renderUrl 断言）
+4. 前端：改 `HtmlViewer.vue` + `EntryDetailView.vue`
+
+P3 完成后进 P4 实现、P5 gate、P6 Playwright 实跑（**重点验证风险 1**：private entry iframe cookie 携带）。
