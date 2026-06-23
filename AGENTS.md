@@ -41,11 +41,14 @@ packages/mcp-server/src/
 3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
 4. **严禁** 开发/测试/发布流程中写生产数据库（`~/.peekview/peekview.db`）；测试必须用临时目录或 debug 模式
 5. **严禁** `pip3 install --break-system-packages -e .` 或任何向系统 Python 安装 peekview 的操作——这会覆盖 pipx 的 `/home/kity/.local/bin/peekview` 符号链接，导致生产服务加载源码而非 pipx 隔离 venv 的代码。开发测试用 `make dev`（venv 隔离）或 `make debug-start`（独立进程）
-6. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
-7. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
-8. 改代码前先读周围上下文，理解代码风格和现有库选择
-9. 不加注释（除非被要求）
-10. 完成任务后必须跑 lint/typecheck
+6. **严禁** 直接用 sqlite3 操作生产数据库（`~/.peekview/peekview.db`）。如发现测试数据误入生产 DB，报告给用户决定清理方式，不自行 DELETE。如必须清理，用 `peekview delete <slug>` CLI 命令（走应用逻辑，清理 DB + 存储 + FTS），清理后验证 `PRAGMA integrity_check` + `foreign_key_check`
+7. **严禁** 用 CLI（`peekview create`）创建测试 entry——CLI 可能加载非 debug 配置导致误写生产 DB。测试 entry 只通过 debug backend HTTP API 创建：`curl -X POST http://127.0.0.1:8888/api/v1/entries ...`，创建后验证数据落在 debug DB
+8. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
+9. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+10. 改代码前先读周围上下文，理解代码风格和现有库选择
+11. 不加注释（除非被要求）
+12. 完成任务后必须跑 lint/typecheck
+13. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
 
 ## 环境隔离机制（代码层面保障）
 
