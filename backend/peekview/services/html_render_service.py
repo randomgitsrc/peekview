@@ -6,7 +6,6 @@ BeautifulSoup with the stdlib html.parser backend.
 
 from __future__ import annotations
 
-import base64
 from dataclasses import dataclass
 
 from bs4 import BeautifulSoup

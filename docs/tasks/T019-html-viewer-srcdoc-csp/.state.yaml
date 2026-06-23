@@ -1,8 +1,12 @@
 task_id: T019
 task_name: html-viewer-srcdoc-csp
-current_phase: P5
+current_phase: P6
 status: in_progress
 retries: {}
 retry_count: {}
 created: 2026-06-22
-updated: 2026-06-22
+updated: 2026-06-23
+phase_history:
+  P4: completed 2026-06-23
+  P5: completed 2026-06-23
+notes: "P5 gate passed. 1 pre-existing failure (mime.spec.ts SVG) unrelated to T019. F401 lint fix applied."
