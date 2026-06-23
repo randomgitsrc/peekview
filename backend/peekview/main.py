@@ -133,12 +133,17 @@ def create_app(
     async def add_security_headers(request: Request, call_next):
         response = await call_next(request)
         path = request.url.path
+        is_render_route = path.endswith("/render") and "/files/" in path
         if path.startswith("/api") or path == "/health":
             response.headers["X-Content-Type-Options"] = "nosniff"
-            response.headers["X-Frame-Options"] = "DENY"
             response.headers["Cache-Control"] = "no-store"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+            if is_render_route:
+                # render route sets its own CSP and intentionally omits X-Frame-Options
+                pass
+            else:
+                response.headers["X-Frame-Options"] = "DENY"
+                response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         elif path == "/" or path.startswith("/assets") or (not path.startswith("/api") and not path.startswith("/health")):
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"

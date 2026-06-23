@@ -4,16 +4,49 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
 from sqlmodel import Session, select
 
 from peekview.auth import get_current_user
 from peekview.database import get_engine
 from peekview.exceptions import NotFoundError
+from peekview.language import detect_language
 from peekview.models import API_KEY_PREFIX, Entry, EntryRawResponse, File, RawFileItem, User
 from peekview.services.entry_service import EntryService, get_entry_service
+from peekview.services.html_render_service import (
+    SiblingFileData,
+    inject_resources,
+    parse_inject_ids,
+)
 from peekview.storage import StorageManager
+
+RENDER_CSP = (
+    "default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; "
+    "script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; "
+    "style-src 'unsafe-inline' blob: data: https:; "
+    "img-src blob: data: https:; "
+    "media-src blob: data: https:; "
+    "font-src blob: data: https:; "
+    "connect-src blob: data: https:; "
+    "worker-src blob:; "
+    "frame-src 'none'; "
+    "frame-ancestors 'self'; "
+    "form-action 'none';"
+)
+
+_BINARY_SIZE_LIMIT = 768 * 1024
+
+_LANGUAGE_TO_MIME = {
+    "css": "text/css",
+    "javascript": "text/javascript",
+    "json": "application/json",
+    "html": "text/html",
+    "xml": "text/xml",
+    "yaml": "text/yaml",
+    "text": "text/plain",
+    "markdown": "text/markdown",
+}
 
 router = APIRouter(prefix="/api/v1/entries", tags=["files"])
 
@@ -177,6 +210,102 @@ async def get_file_content(
     return Response(
         content=content,
         media_type=content_type,
+    )
+
+
+def _build_sibling_data(file_record: File, storage: StorageManager) -> SiblingFileData | None:
+    """Read a sibling file and build SiblingFileData; None if skipped (oversized binary)."""
+    if file_record.is_binary and file_record.size > _BINARY_SIZE_LIMIT:
+        return None
+    actual_path = file_record.path or file_record.filename
+    raw = storage.read_file(file_record.entry_id, actual_path, file_record.path)
+    if file_record.is_binary:
+        import base64
+        import mimetypes
+
+        mime = file_record.language and _LANGUAGE_TO_MIME.get(file_record.language)
+        if not mime:
+            mime, _ = mimetypes.guess_type(actual_path)
+        if not mime:
+            mime = "application/octet-stream"
+        return SiblingFileData(
+            filename=actual_path,
+            path=file_record.path,
+            content=base64.b64encode(raw).decode("ascii"),
+            language=file_record.language,
+            is_binary=True,
+            mime_type=mime,
+        )
+    return SiblingFileData(
+        filename=actual_path,
+        path=file_record.path,
+        content=raw.decode("utf-8", errors="replace"),
+        language=file_record.language,
+        is_binary=False,
+        mime_type=None,
+    )
+
+
+@router.get("/{slug}/files/{file_id}/render")
+async def render_html_file(
+    slug: str,
+    file_id: int,
+    request: Request,
+    inject: str | None = Query(None),
+    current_user: User | None = Depends(get_current_user),
+):
+    """Render an HTML file with optional sibling resource injection.
+
+    Returns the HTML with a permissive-but-bounded CSP allowing inline
+    scripts/styles and https/blob/data resources, plus `frame-ancestors 'self'`
+    so the result can be embedded in a same-origin iframe.
+    """
+    config = request.app.state.config
+    engine = get_engine(config)
+    storage = StorageManager(config=config)
+
+    entry_id = _resolve_entry(request, slug, current_user)
+
+    with Session(engine) as session:
+        file_record = session.exec(
+            select(File).where(File.id == file_id, File.entry_id == entry_id)
+        ).first()
+        if not file_record:
+            raise NotFoundError(f"File not found: {file_id}")
+
+        detected = file_record.language or detect_language(file_record.path or file_record.filename)
+        if detected != "html":
+            raise NotFoundError("Render endpoint only available for HTML files")
+
+        inject_ids = parse_inject_ids(inject, file_id)
+
+        siblings: list[SiblingFileData] = []
+        if inject_ids:
+            sibling_records = session.exec(
+                select(File).where(
+                    File.id.in_(inject_ids),
+                    File.entry_id == entry_id,
+                )
+            ).all()
+            for f in sibling_records:
+                data = _build_sibling_data(f, storage)
+                if data is not None:
+                    siblings.append(data)
+
+    html_bytes = storage.read_file(entry_id, file_record.filename, file_record.path)
+    html = html_bytes.decode("utf-8", errors="replace")
+
+    if siblings:
+        html = inject_resources(html, siblings)
+
+    return Response(
+        content=html.encode("utf-8"),
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Content-Security-Policy": RENDER_CSP,
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Referrer-Policy": "no-referrer",
+        },
     )
 
 
