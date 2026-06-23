@@ -5,8 +5,10 @@ task_name: html-viewer-srcdoc-csp
 type: requirements
 trace_id: T019-P1-2026-06-22
 created: 2026-06-22
-status: draft
+status: updated
 parent: docs/tasks/T019-html-viewer-srcdoc-csp/P0-brief.md
+revision: 2
+revision_note: "2026-06-23 [SCOPE+] 增补——P2-rev2 改为后端 render 路由方案，domains/packages 扩展到后端，BDD-8 验证方式更新"
 ---
 
 # T019 P1 需求基线
@@ -17,12 +19,16 @@ parent: docs/tasks/T019-html-viewer-srcdoc-csp/P0-brief.md
 
 ## 范围界定
 
-- **domains**: `[frontend]`
-  - 纯前端改动。`HtmlViewer.vue` 单文件主体改写；后端 `main.py:148` 的主应用 CSP **不动**——srcdoc iframe 的 origin 为 null，不继承也不走主应用 HTTP header，其 CSP 完全由 iframe 的 `csp` 属性决定。
-- **packages**: `[frontend-v3]`
+> **[SCOPE+] 2026-06-23 增补**：原 P1 基于已废弃的 srcdoc 方案（domains: [frontend]）。P2-rev2 改为后端 render 路由方案后，范围扩展到后端。下方已更新。
+
+- **domains**: `[backend, frontend]`
+  - **[SCOPE+] 后端**：新增 `GET /api/v1/entries/{slug}/files/{file_id}/render` 路由 + `html_render_service.py`（BS4 sibling 注入）+ `main.py` CSP 中间件特判 + 新依赖 `beautifulsoup4`
+  - **前端**：`HtmlViewer.vue` 从 blob URL 改为 render URL；`EntryDetailView.vue` 移除前端 sibling fetch 逻辑。主应用 CSP（`main.py`）的主页面部分**不动**——render 路由返回独立的 CSP header，不继承主页面 CSP。
+- **packages**: `[backend, frontend-v3]`
 - **ui_affected**: `true`
-  - loading 态时机变化（srcdoc load 事件在 HTML 解析完成触发，但 inline script 可能仍在执行 Three.js 初始化，loading 可能提前消失——P0 风险 4 已识别为可接受）。
-  - iframe 视觉行为从「blob URL 加载」变为「直接渲染 HTML 字符串」，用户无感知但 DOM 结构变化。
+  - loading 态时机变化（render URL 的 load 事件在 iframe 完整加载后触发，与原 blob URL 行为一致）
+  - iframe 视觉行为从「blob URL 加载」变为「后端 render URL 加载」，用户无感知
+  - sibling 文件加载从「前端 N 次 fetch 内容」变为「前端只传 file IDs」，体验更流畅
 
 ## 裁剪说明
 
@@ -88,21 +94,33 @@ P4/P5 默认走。
 
 ### BDD-8: sandbox 安全性——iframe 无法访问主页面凭据
 
+> **[SCOPE+] 2026-06-23 更新**：验证方式从 srcdoc（origin=null）改为后端 render 路由（同源加载 + sandbox opaque origin）。
+
 - **Given** 主页面已登录（`peekview_token` cookie 存在），且 HtmlViewer 正在渲染任一 HTML
 - **When** Playwright 在 iframe 内尝试执行 `document.cookie`、`localStorage.getItem('peekview_token')`、`fetch('/api/entries')`（带凭据）
 - **Then**
-  - `document.cookie` 返回空字符串（sandbox 无 `allow-same-origin`，iframe origin=null）
+  - `document.cookie` 返回空字符串（sandbox 无 `allow-same-origin`，iframe 在 opaque origin 运行，虽同源加载但无法访问 cookie）
   - `localStorage` 抛 `SecurityError` 或返回 null
-  - `fetch('/api/entries')` 因 `connect-src` 允许 https: 但 iframe 无 same-origin 凭据，**不携带主页面 cookie**（请求为匿名跨域请求，主页面 cookie 不被发送）
+  - `fetch('/api/entries')` 因 sandbox opaque origin 无法携带主页面 cookie，**不携带主页面 cookie**（请求为匿名跨域请求，主页面 cookie 不被发送）
+  - **补充验证**：iframe 初始加载 render URL 时浏览器自动携带 cookie（sandbox 不影响初始 resource fetch），private entry 的 iframe 能正常加载
 
 ## gate_commands
 
+> **[SCOPE+] 2026-06-23 增补**：后端 render 路由 + BS4 注入新增后端测试。
+
 ```bash
-# 1. 单元测试（P3 产出，P5 gate）
+# 1. 后端单元测试（[SCOPE+] 新增）
+cd backend && python3 -m pytest tests/test_html_render.py -v
+cd backend && python3 -m pytest tests/test_api.py -v  # 无回归
+
+# 2. 后端 lint
+cd backend && make lint
+
+# 3. 前端单元测试（P3 产出，P5 gate）
 cd frontend-v3 && npx vitest run src/components/__tests__/HtmlViewer.spec.ts
 cd frontend-v3 && npx vitest run src/components/__tests__/HtmlViewerIntegration.spec.ts
 
-# 2. 全量单元测试（确保无回归）
+# 4. 全量单元测试（确保无回归）
 cd frontend-v3 && npx vitest run
 
 # 3. 类型检查 + 构建
