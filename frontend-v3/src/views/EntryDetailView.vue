@@ -125,9 +125,10 @@
           <!-- HTML File -->
           <HtmlViewer
             v-if="isHtml"
+            :slug="slug"
+            :file-id="entryStore.activeFile.id"
             :content="entryStore.fileContent"
-            :sibling-files="siblingFilesContent"
-            :loading-siblings="isFetchingSiblings"
+            :sibling-file-ids="siblingFileIds"
           />
 
           <!-- Markdown File -->
@@ -302,7 +303,6 @@ import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
-import type { SiblingFile } from '@/components/HtmlViewer.vue'
 import { guessMimeType } from '@/utils/mime'
 import { formatExpiresIn } from '@/utils/expires'
 import FileTree from '@/components/FileTree.vue'
@@ -310,7 +310,6 @@ import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { TocHeading } from '@/types'
-import { api } from '@/api/client'
 
 const props = defineProps<{
   slug: string
@@ -326,66 +325,14 @@ const { currentEntry, activeFile } = storeToRefs(entryStore)
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
 
-// Sibling files for HTML multi-file injection
-const siblingFilesContent = ref<SiblingFile[]>([])
-const isFetchingSiblings = ref(false)
-let fetchToken = 0
-const BINARY_SIZE_LIMIT = 768 * 1024  // 768KB → base64 后约 1MB
-
-watch(
-  () => entryStore.activeFile,
-  async (file) => {
-    siblingFilesContent.value = []
-    if (!file || file.language !== 'html') return
-    if (!currentEntry.value) return
-
-    const siblings = currentEntry.value.files.filter(f => f.id !== file.id)
-    if (siblings.length === 0) return
-
-    isFetchingSiblings.value = true
-    const token = ++fetchToken
-    try {
-      const settled = await Promise.allSettled(
-        siblings.map(async (f): Promise<SiblingFile | null> => {
-          if (f.isBinary) {
-            if (f.size > BINARY_SIZE_LIMIT || f.size === 0) return null
-            const mimeType = guessMimeType(f.filename)
-            if (!mimeType) return null
-            const base64 = await api.getFileAsBase64(currentEntry.value!.slug, f.id)
-            return {
-              filename: f.filename,
-              path: f.path,
-              content: base64,
-              isBinary: true as const,
-              mimeType,
-            }
-          }
-          return {
-            filename: f.filename,
-            path: f.path,
-            language: f.language ?? '',
-            content: await api.getFileContent(currentEntry.value!.slug, f.id),
-            isBinary: false as const,
-          }
-        })
-      )
-      if (token !== fetchToken) return
-
-      const results = settled
-        .filter((r): r is PromiseFulfilledResult<SiblingFile | null> => r.status === 'fulfilled')
-        .map(r => r.value)
-        .filter((v): v is SiblingFile => v !== null)
-      const failedCount = settled.filter(r => r.status === 'rejected').length
-      if (failedCount > 0) {
-        toast.show(`${failedCount} 个资源文件加载失败，部分引用无法注入`, 'warning')
-      }
-      siblingFilesContent.value = results
-    } finally {
-      if (token === fetchToken) isFetchingSiblings.value = false
-    }
-  },
-  { immediate: true }
-)
+// Sibling file IDs for HTML render route injection
+const siblingFileIds = computed<number[]>(() => {
+  if (!currentEntry.value || !activeFile.value) return []
+  if (activeFile.value.language !== 'html') return []
+  return currentEntry.value.files
+    .filter(f => f.id !== activeFile.value!.id)
+    .map(f => f.id)
+})
 
 // Delete confirmation
 const showConfirmDelete = ref(false)

@@ -32,9 +32,7 @@
       </span>
     </div>
 
-    <!-- 大文件手动触发（> 2MB）
-         v-if/v-else 链：showManualRender 为 true 时显示手动触发区，
-         否则显示 iframe 容器（含 loading 态）-->
+    <!-- 大文件手动触发（> 2MB） -->
     <div v-if="showManualRender" class="html-manual-render">
       <div class="manual-render-info">
         <span class="file-size-icon">📄</span>
@@ -49,9 +47,8 @@
       </div>
     </div>
 
-    <!-- iframe 容器（正常渲染 / 512KB~2MB 时也显示此区域）-->
+    <!-- iframe 容器 -->
     <div v-else class="html-frame-container">
-      <!-- Loading 态：fetch 兄弟文件中 / processedHtml 生成后到 iframe load 事件前 -->
       <div
         v-if="isLoading || props.loadingSiblings"
         data-testid="html-loading"
@@ -61,12 +58,10 @@
         <span>渲染中...</span>
       </div>
 
-      <!-- iframe：content 非空且 processedHtml 已生成时显示 -->
       <iframe
-        v-if="processedHtml"
-        :srcdoc="processedHtml"
+        v-if="renderUrl"
+        :src="renderUrl"
         sandbox="allow-scripts"
-        csp="default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; style-src 'unsafe-inline' blob: data: https:; img-src blob: data: https:; media-src blob: data: https:; font-src blob: data: https:; connect-src blob: data: https:; worker-src blob:; frame-src 'none'; form-action 'none';"
         referrerpolicy="no-referrer"
         class="html-frame"
         @load="onIframeLoad"
@@ -78,43 +73,20 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, inject } from 'vue'
-
-// ── 测试注入 key（Symbol 避免命名冲突，定义在 HtmlViewerTestKeys.ts）────
 import { HTML_VIEWER_TEST_SIZE_KEY } from './HtmlViewerTestKeys'
 
 const props = defineProps<{
   content: string
-  siblingFiles?: SiblingFile[]
+  fileId: number
+  slug: string
+  siblingFileIds?: number[]
   loadingSiblings?: boolean
 }>()
 
-export interface TextSiblingFile {
-  filename: string
-  path?: string | null  // 完整路径（如 'css/style.css'），用于层级目录匹配
-  content: string
-  language: string
-  isBinary: false
-}
-
-export interface BinarySiblingFile {
-  filename: string
-  path?: string | null  // 完整路径（如 'assets/logo.png'），用于层级目录匹配
-  content: string       // base64 编码的二进制内容
-  mimeType: string      // 如 'image/png'
-  isBinary: true
-}
-
-export type SiblingFile = TextSiblingFile | BinarySiblingFile
-
 // ── 文件大小阈值 ──────────────────────────────────────────────────────────
-const SIZE_WARN  = 512 * 1024       // 512KB
-const SIZE_BLOCK = 2 * 1024 * 1024  // 2MB
+const SIZE_WARN  = 512 * 1024
+const SIZE_BLOCK = 2 * 1024 * 1024
 
-// 测试环境可注入虚假大小；生产环境用字符数近似字节数
-// 注意：JS 字符串为 UTF-16，content.length 是字符数而非字节数。
-// Blob 实际用 UTF-8 编码，多字节字符（如中文）会导致实际体积更大。
-// 此处用字符数作近似，对纯 ASCII HTML 误差极小；含大量多字节字符时
-// 实际 Blob 可能比阈值计算结果更大，可接受的已知偏差。
 const testContentSize = inject<number | null>(HTML_VIEWER_TEST_SIZE_KEY, null)
 
 const contentSize = computed(() => {
@@ -125,7 +97,6 @@ const contentSize = computed(() => {
 const fileSizeLabel = computed(() => {
   const size = contentSize.value
   if (size >= SIZE_BLOCK) return `${(size / (1024 * 1024)).toFixed(1)} MB`
-  // fileSizeLabel 只在 size >= SIZE_WARN 时显示，KB 分支是实际最小值
   return `${(size / 1024).toFixed(0)} KB`
 })
 
@@ -137,123 +108,11 @@ const showManualRender  = computed(() => isBlockedBySize.value && !manuallyTrigg
 
 function triggerManualRender() {
   manuallyTriggered.value = true
-}
-
-// ── 资源注入 ────────────────────────────────────────────────────────────
-
-function normalizeRef(ref: string): string | null {
-  const trimmed = ref.trim()
-  if (!trimmed) return null
-  if (/^(https?:\/\/|data:|blob:|mailto:|tel:)/.test(trimmed)) return null
-  if (trimmed.startsWith('//')) return null
-  if (trimmed.startsWith('#')) return null
-  if (trimmed.startsWith('/')) return null
-  return trimmed.replace(/^\.\//, '')
-}
-
-function injectResources(
-  html: string,
-  siblings: SiblingFile[]
-): { html: string; unmatchedCount: number } {
-  if (!siblings || siblings.length === 0) {
-    return { html, unmatchedCount: countRelativePaths(html) }
-  }
-
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-
-  const textSiblings = siblings.filter((f): f is TextSiblingFile => f.isBinary !== true)
-  const binarySiblings = siblings.filter((f): f is BinarySiblingFile => f.isBinary === true)
-
-  // 文本资源 map：filename + path → content string
-  // 同时用 filename（basename）和 path（层级路径）作为 key，
-  // 以匹配 <link href="style.css"> 和 <link href="css/style.css">
-  const fileMap = new Map<string, string>()
-  for (const f of textSiblings) {
-    const byName = normalizeRef(f.filename)
-    if (byName) fileMap.set(byName, f.content)
-    const byPath = normalizeRef(f.path ?? '')
-    if (byPath && byPath !== byName) fileMap.set(byPath, f.content)
-  }
-
-  // CSS: <link rel="stylesheet"> → <style>
-  doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-    const href = normalizeRef(link.getAttribute('href') ?? '')
-    if (!href || !fileMap.has(href)) return
-    const style = doc.createElement('style')
-    style.textContent = `/* injected from: ${href} */\n${fileMap.get(href)}`
-    link.replaceWith(style)
-  })
-
-  // JS: <script src> → inline <script>，移到 body 末尾
-  doc.querySelectorAll('script[src]').forEach(script => {
-    const src = normalizeRef(script.getAttribute('src') ?? '')
-    if (!src || !fileMap.has(src)) return
-    const type = script.getAttribute('type')
-    if (type && type !== 'text/javascript') return
-    const inline = doc.createElement('script')
-    inline.textContent = `/* injected from: ${src} */\n${fileMap.get(src)}`
-    script.remove()
-    doc.body.appendChild(inline)
-  })
-
-  // 二进制资源：安全 src 元素 → data URI
-  if (binarySiblings.length > 0) {
-    // 二进制资源 map：filename + path → BinarySiblingFile
-    const binaryMap = new Map<string, BinarySiblingFile>()
-    for (const f of binarySiblings) {
-      const byName = normalizeRef(f.filename)
-      if (byName) binaryMap.set(byName, f)
-      const byPath = normalizeRef(f.path ?? '')
-      if (byPath && byPath !== byName) binaryMap.set(byPath, f)
-    }
-
-    const SAFE_SRC_SELECTORS = ['img[src]', 'video[src]', 'audio[src]', 'source[src]', 'track[src]']
-    doc.querySelectorAll(SAFE_SRC_SELECTORS.join(',')).forEach(el => {
-      const src = normalizeRef(el.getAttribute('src') ?? '')
-      if (!src || !binaryMap.has(src)) return
-      const file = binaryMap.get(src)!
-      el.setAttribute('src', `data:${file.mimeType};base64,${file.content}`)
-    })
-
-    // favicon：<link rel="icon" href> → data URI
-    doc.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(link => {
-      const href = normalizeRef(link.getAttribute('href') ?? '')
-      if (!href || !binaryMap.has(href)) return
-      const file = binaryMap.get(href)!
-      link.setAttribute('href', `data:${file.mimeType};base64,${file.content}`)
-    })
-  }
-
-  const unmatchedCount = countRelativePathsInDoc(doc)
-  return { html: serializeDoc(doc), unmatchedCount }
-}
-
-function serializeDoc(doc: Document): string {
-  const dt = doc.doctype
-  const doctypeStr = dt ? `<!DOCTYPE ${dt.name}>` : '<!DOCTYPE html>'
-  return doctypeStr + '\n' + doc.documentElement.outerHTML
-}
-
-function countRelativePaths(html: string): number {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  return countRelativePathsInDoc(doc)
-}
-
-function countRelativePathsInDoc(doc: Document): number {
-  const attrs = [
-    ...Array.from(doc.querySelectorAll('[href]')).map(el => el.getAttribute('href') ?? ''),
-    ...Array.from(doc.querySelectorAll('[src]')).map(el => el.getAttribute('src') ?? ''),
-  ]
-  return attrs.filter(a => a && normalizeRef(a) !== null).length
+  isLoading.value = true
 }
 
 // ── 相对路径检测 ─────────────────────────────────────────────────────────
-// 检测范围：静态 HTML 属性（href / src）
-// 不覆盖 JS 动态创建的资源请求（已知限制，见 spec §3.4）
 const relativePathWarningCount = ref(0)
-
-// 用户是否主动关闭了警告（切换文件时 content 变更自动重置）
 const relativePathWarningDismissed = ref(false)
 
 watch(() => props.content, () => {
@@ -264,44 +123,38 @@ const showRelativePathWarning = computed(() =>
   relativePathWarningCount.value > 0 && !relativePathWarningDismissed.value
 )
 
-// ── 渲染状态 ──────────────────────────────────────────────────────────────
-const processedHtml = ref<string | null>(null)
-const isLoading = ref(false)
-
-function initRender(content: string) {
-  if (!content) return
-  if (props.loadingSiblings) return
-  if (isBlockedBySize.value && !manuallyTriggered.value) return
-
-  const { html: processed, unmatchedCount } = injectResources(content, props.siblingFiles ?? [])
-  relativePathWarningCount.value = unmatchedCount
-  isLoading.value = true
-  processedHtml.value = processed
+function countRelativePaths(html: string): number {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const attrs = [
+    ...Array.from(doc.querySelectorAll('[href]')).map(el => el.getAttribute('href') ?? ''),
+    ...Array.from(doc.querySelectorAll('[src]')).map(el => el.getAttribute('src') ?? ''),
+  ]
+  return attrs.filter(a => {
+    const trimmed = a.trim()
+    if (!trimmed) return false
+    if (/^(https?:\/\/|data:|blob:|mailto:|tel:)/.test(trimmed)) return false
+    if (trimmed.startsWith('//')) return false
+    if (trimmed.startsWith('#')) return false
+    if (trimmed.startsWith('/')) return false
+    return true
+  }).length
 }
 
-// content 变更时重新渲染（entry 切换文件时 content 会先置空再填充）
-watch(
-  () => props.content,
-  (newContent) => {
-    manuallyTriggered.value = false
-    initRender(newContent)
-  },
-  { immediate: true }
-)
-
-// siblingFiles 到齐后触发渲染
-// 不合并到 content watch：合并会导致 content 先到时先渲染无注入版本，
-// siblingFiles 到了再渲染一次有注入版本，用户看到闪烁
-watch(() => props.siblingFiles, (siblings) => {
-  if (siblings && siblings.length > 0) initRender(props.content)
-})
-
-// 手动触发时渲染
-watch(manuallyTriggered, (triggered) => {
-  if (triggered) initRender(props.content)
+// ── renderUrl ─────────────────────────────────────────────────────────────
+const renderUrl = computed(() => {
+  if (!props.content || !props.fileId || !props.slug) return null
+  if (props.loadingSiblings) return null
+  if (isBlockedBySize.value && !manuallyTriggered.value) return null
+  let url = `/api/v1/entries/${props.slug}/files/${props.fileId}/render`
+  if (props.siblingFileIds && props.siblingFileIds.length > 0) {
+    url += `?inject=${props.siblingFileIds.join(',')}`
+  }
+  return url
 })
 
 // ── iframe 加载状态 ───────────────────────────────────────────────────────
+const isLoading = ref(false)
+
 function onIframeLoad() {
   isLoading.value = false
 }
@@ -309,6 +162,27 @@ function onIframeLoad() {
 function onIframeError() {
   isLoading.value = false
 }
+
+// ── content 变更 ──────────────────────────────────────────────────────────
+watch(
+  () => props.content,
+  (newContent) => {
+    manuallyTriggered.value = false
+    relativePathWarningCount.value = countRelativePaths(newContent)
+    isLoading.value = true
+  },
+  { immediate: true }
+)
+
+// ── siblingFileIds 变更（切换到非空时重新触发加载态）─────────────────────
+watch(() => props.siblingFileIds, () => {
+  if (renderUrl.value) isLoading.value = true
+})
+
+// ── 手动触发后启动加载态 ─────────────────────────────────────────────────
+watch(manuallyTriggered, (triggered) => {
+  if (triggered && renderUrl.value) isLoading.value = true
+})
 </script>
 
 <style scoped>
@@ -429,7 +303,7 @@ function onIframeError() {
   height: 100%;
   border: none;
   display: block;
-  background: transparent; /* 由 iframe 内容自己决定背景色 */
-  overflow: auto;          /* 替代过时的 scrolling 属性 */
+  background: transparent;
+  overflow: auto;
 }
 </style>
