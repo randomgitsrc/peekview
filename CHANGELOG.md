@@ -7,6 +7,33 @@
 
 ## [Unreleased]
 
+## [0.1.65] - 2026-06-23
+
+### 新增
+
+- T019: HTML Viewer 后端 render 路由 — `GET /api/v1/entries/{slug}/files/{file_id}/render?inject=...`，返回 HTML + 独立宽松 CSP（支持 Three.js/WebGL/Canvas 富交互 HTML）
+- T019: 后端 sibling 文件注入服务（`html_render_service.py`，BS4 实现），CSS/JS/img/favicon 内联注入
+- T019: `main.py` CSP 中间件 render 路由特判（跳过 X-Frame-Options DENY，由 render 路由自设 `frame-ancestors 'self'`）
+
+### 修复
+
+- T019: 修复 iframe 加载 blob URL 继承主页面 CSP 导致 inline script 被拦截的问题 — 改用后端 render 路由，iframe 用 HTTP URL 加载，使用响应的独立 CSP
+- T019: 修复主应用 CSP `frame-src blob:` 阻止同源 render URL iframe 的问题 — 改为 `frame-src 'self' blob:`
+
+### 变更
+
+- T019: `HtmlViewer.vue` 从 blob URL 改为 render URL（`:src="renderUrl"`），移除 createObjectURL/revokeBlobUrl 逻辑
+- T019: `EntryDetailView.vue` 移除前端 sibling 内容 fetch 逻辑，改为只传 file IDs（后端注入）
+- T019: 新增依赖 `beautifulsoup4>=4.12.0`
+
+### 验证
+
+- 后端 15/15 单元测试通过（test_html_render.py）
+- 后端 17/17 API 回归测试通过
+- 前端 31/31 + 5/5 单元测试通过
+- Playwright 实跑 BDD 8/8 全部通过：CSP 0 违规、React 渲染、WebGL 2.0 context（D3D11 硬件加速）、sandbox 凭据隔离
+
+
 ## [0.1.64] - 2026-06-21
 
 ### 修复

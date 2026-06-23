@@ -1,7 +1,7 @@
 task_id: T019
 task_name: html-viewer-srcdoc-csp
-current_phase: P7
-status: in_progress
+current_phase: P8
+status: ready
 retries: {}
 retry_count: {}
 created: 2026-06-22
@@ -10,4 +10,6 @@ phase_history:
   P4: completed 2026-06-23
   P5: completed 2026-06-23
   P6: completed 2026-06-23
-notes: "P6 BDD 8/8 PASS. CSP frame-src fix applied (main.py). Playwright click issue worked around with dispatchEvent."
+  P7: completed 2026-06-23
+  P8: completed 2026-06-23
+notes: "All phases complete. Ready for publish. Bump-version timeout issue: use timeout=300000 for make bump-version."
