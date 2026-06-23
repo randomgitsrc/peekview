@@ -156,7 +156,7 @@ def create_app(
                 "media-src 'self' blob: data:; "
                 "font-src 'self'; "
                 "connect-src 'self'; "
-                "frame-src blob:; "
+                "frame-src 'self' blob:; "
                 "worker-src blob:; "
                 "frame-ancestors 'none'; "
                 "form-action 'none'; "

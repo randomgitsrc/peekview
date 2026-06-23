@@ -1,6 +1,6 @@
 task_id: T019
 task_name: html-viewer-srcdoc-csp
-current_phase: P6
+current_phase: P7
 status: in_progress
 retries: {}
 retry_count: {}
@@ -9,4 +9,5 @@ updated: 2026-06-23
 phase_history:
   P4: completed 2026-06-23
   P5: completed 2026-06-23
-notes: "P5 gate passed. 1 pre-existing failure (mime.spec.ts SVG) unrelated to T019. F401 lint fix applied."
+  P6: completed 2026-06-23
+notes: "P6 BDD 8/8 PASS. CSP frame-src fix applied (main.py). Playwright click issue worked around with dispatchEvent."
