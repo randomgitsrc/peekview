@@ -52,7 +52,7 @@ pip install -e ".[test]"
 
 # 验证安装
 peekview --version
-# 输出: peekview, version 0.1.26
+# 输出: peekview, version 0.1.65
 ```
 
 ### 前端构建

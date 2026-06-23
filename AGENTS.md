@@ -60,11 +60,12 @@ packages/mcp-server/src/
 ## 常用命令
 
 ```bash
+make dev                  # 创建/更新 backend/.venv（开发隔离，不影响 pipx 生产环境）
 make debug                # 构建+启动+E2E（完整调试流程）
-make debug-start          # 仅启动调试服务
+make debug-start          # 仅启动调试服务（自动用 .venv Python）
 make debug-stop           # 停止调试服务
 
-cd backend && make test   # 后端测试
+cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv）
 cd backend && make lint   # 后端 lint (ruff check + format --check)
 cd backend && make format # 后端自动修复 (ruff check --fix + format)
 
@@ -84,7 +85,9 @@ make publish-npm          # 发布 MCP Server 到 npm
 - **认证三层**：JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key。优先级：`Authorization` header > Cookie > API key
 - **权限模型**：Anonymous→仅公开；Authenticated→公开+自己私有；Admin→全部可见。`get_current_user`(可选) / `require_auth`(必须) / `require_admin`(管理员)
 - **配置**：`PEEKVIEW_*` 环境变量，`__` 分隔嵌套（如 `PEEKVIEW_STORAGE__DATA_DIR`）
-- **CSP**：`script-src 'self' 'unsafe-eval'`（`unsafe-eval` 为 Mermaid/d3 的 `new Function()` 必需，不可移除）
+- **CSP（主应用）**：`script-src 'self' 'unsafe-eval'`（`unsafe-eval` 为 Mermaid/d3 的 `new Function()` 必需，不可移除）
+- **CSP（HTML render 路由）**：`GET /api/v1/entries/{slug}/files/{file_id}/render` 返回独立宽松 CSP（`script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:` + `frame-ancestors 'self'`），支持 Three.js/WebGL/Canvas 富交互 HTML。中间件特判跳过 `X-Frame-Options: DENY`。主应用 `frame-src 'self' blob:` 允许同源 iframe
+- **sibling 注入**：后端 BS4 实现（`html_render_service.py`），CSS/JS/img/favicon 内联注入。前端只传 file IDs，不 fetch 内容
 - **DOMPurify**：清理 markdown 输出。Mermaid 源码不走 DOM（用 `Map` 传递）。含 `-->` 的属性会被 DOMPurify 删除
 - **Rate limit**：captcha 端点用 `rate_limit_per_minute`，login/register 用 `rate_limit_login_per_minute`。`default_limits` 兜底其他 API 端点
 - **MCP 版本独立**：由 `bump-mcp-version` 管理，主线 `bump-version` 不会碰。doc-sync 脚本已移除了 MCP package.json 同步条目
@@ -99,6 +102,7 @@ make publish-npm          # 发布 MCP Server 到 npm
 - Entry 私有访问对非 owner 返回 404（非 403），防止 slug 枚举
 - Global API key 中间件跳过 auth 端点，数据端点受保护
 - FTS5 查询净化仅转义引号，复杂语法错误被 try/except 静默吞掉返回空结果
+- HTML render 路由：`sandbox="allow-scripts"`（无 `allow-same-origin`）使 iframe 在 opaque origin 运行，无法访问主页面 cookie/localStorage。初始 fetch 携带 cookie（private entry 可加载），但 iframe内 JS 无法读取凭据
 
 ## 发布注意事项
 

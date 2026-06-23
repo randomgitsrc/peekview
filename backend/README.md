@@ -127,7 +127,7 @@ remote:
 ### Health Check
 
 ```
-GET /health → { "status": "ok", "version": "0.1.52" }  # version auto-synced from __init__.py
+GET /health → { "status": "ok", "version": "0.1.65" }  # version auto-synced from __init__.py
 ```
 
 ### Entry API
@@ -213,10 +213,10 @@ GET /health → { "status": "ok", "version": "0.1.52" }  # version auto-synced f
 
 ```bash
 git clone https://github.com/randomgitsrc/peekview.git
-cd peekview/backend
-pip install -e ".[test,dev]"
-make test      # 393 tests
-make dev       # Start dev server
+cd peekview
+make dev         # Create venv + install editable (isolated)
+cd backend && .venv/bin/python -m pytest tests/  # Run tests
+make debug-start # Start dev server (port 8888)
 ```
 
 ## License

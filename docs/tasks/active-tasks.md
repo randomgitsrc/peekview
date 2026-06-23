@@ -207,5 +207,9 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-06-23 | 完成 T019 | html-viewer-srcdoc-csp v0.1.65 发布到 PyPI |
+| 2026-06-21 | 完成 T018 | plantuml-start-markers v0.1.64 发布到 PyPI |
+| 2026-06-21 | 完成 T017 | theme-media-query-fix v0.1.63 发布到 PyPI |
+| 2026-06-20 | 完成 T016 | plantuml-rendering v0.1.62 发布到 PyPI |
 | 2026-06-20 | 创建 T016 | plantuml-rendering 立项，P0-brief 已写，原型验证通过（路线 A 确定可行） |
-| 2026-06-11 | 创建 | 初始版本，基于 workflow-v2 || 2026-06-20 | 完成 T016 | plantuml-rendering v0.1.62 发布到 PyPI |
+| 2026-06-11 | 创建 | 初始版本，基于 workflow-v2 |

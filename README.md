@@ -269,7 +269,7 @@ Full list: see [CLAUDE.md](CLAUDE.md) Configuration section (33 variables).
 ## Development
 
 ```bash
-cd backend && pip install -e ".[test,dev]" && make test
+make dev && cd backend && .venv/bin/python -m pytest tests/
 cd frontend-v3 && npm install && npm run dev
 cd packages/mcp-server && npm ci && npm run test:unit
 ```

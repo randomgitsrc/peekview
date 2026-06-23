@@ -86,9 +86,9 @@ Code-level protection against accidental writes to production data:
 ### Backend Commands (from `backend/`)
 
 ```bash
-# Setup
-pip install -e ".[test]"    # Install with test deps
-make dev                    # uvicorn peekview.main:app --reload (port 8080)
+# Setup (venv isolated, does NOT touch system Python or pipx)
+make dev                     # Create/update backend/.venv + install editable
+source backend/.venv/bin/activate  # Activate venv
 
 # Testing
 make test                   # pytest tests/ -v --tb=short
@@ -158,7 +158,8 @@ entry_service = request.app.state.entry_service
 6. **JWT user auth**: `Authorization: Bearer <jwt>` header OR httpOnly cookie (`peekview_token`) — cookie set on login/register, cleared on logout
 7. **Entry visibility**: Anonymous users see only public entries; authenticated users see public + own private entries; admin sees all
 8. **MCP local publish_files**: realpath + sensitive blacklist + allowed_paths/cwd boundary; cwd fallback must reject `/`
-9. **CSP**: Frontend pages have Content-Security-Policy (script-src includes unsafe-eval for Mermaid/d3); externalized inline scripts
+9. **CSP**: Frontend pages have Content-Security-Policy (script-src includes unsafe-eval for Mermaid/d3); externalized inline scripts. HTML render route (`GET /api/v1/entries/{slug}/files/{file_id}/render`) returns permissive CSP (script-src unsafe-inline unsafe-eval blob data https + frame-ancestors self) for Three.js/WebGL/Canvas. Main app `frame-src 'self' blob:` allows same-origin iframe. Middleware skips X-Frame-Options for render route.
+10. **Sibling injection**: Backend BS4 implementation (`html_render_service.py`) inlines CSS/JS/img/favicon. Frontend passes file IDs via `?inject=` query param, does not fetch sibling content.
 
 ### File Upload Modes
 1. **Content inline:** `files[].content` with optional `path`

@@ -29,10 +29,9 @@ git remote -v
 
 **后端（Python 3.12+）:**
 ```bash
-cd backend
-pip install -e ".[test]"
+make dev    # 创建 venv + 安装 editable（隔离，不污染系统 Python）
 # 验证
-make test  # 应显示 393 passed
+cd backend && .venv/bin/python -m pytest tests/ -v  # 应显示通过
 ```
 
 **前端（Node.js 18+）:**
