@@ -276,7 +276,7 @@ ls backend/peekview/static/assets/ | grep index
 # 原因 1: 调试服务运行旧代码（pipx 版本没有 auth 端点）
 # 检查版本:
 curl -s http://127.0.0.1:8888/health | jq '.version'
-# 如果不是本地开发版本，重新安装: pip install -e ".[test]" --break-system-packages
+# 如果不是本地开发版本，重新安装: make dev（venv 隔离，不影响 pipx 生产环境）
 
 # 原因 2: dev-server.sh 使用了错误的 Python 版本
 # 检查启动日志中 Python 版本

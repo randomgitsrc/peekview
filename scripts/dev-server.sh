@@ -74,12 +74,15 @@ start_server() {
     echo "  数据库: $DB_PATH"
     echo "  数据目录: $DATA_DIR/data"
     echo "  自动过期: 3600秒 (1小时)"
-    # Use local backend with PYTHONPATH (ensure we use dev code, not pipx install)
-    PYTHON="python3.12"
-    if ! command -v "$PYTHON" &>/dev/null; then
+    # Use venv Python (isolated from system/pipx), fallback to system python3
+    if [ -f "$(pwd)/backend/.venv/bin/python" ]; then
+        PYTHON="$(pwd)/backend/.venv/bin/python"
+    elif command -v python3.12 &>/dev/null; then
+        PYTHON="python3.12"
+    else
         PYTHON="python3"
     fi
-    echo "✓ Python: $($PYTHON --version) (local backend)"
+    echo "✓ Python: $($PYTHON --version) ($PYTHON)"
 
     cd backend
     # Captcha: disabled by default for debug; enable via PEEKVIEW_AUTH__CAPTCHA_ENABLED=true

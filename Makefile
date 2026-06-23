@@ -425,9 +425,17 @@ install:
 	pipx install backend/ --force
 	@echo "✓ Installed peekview from source"
 
-# Development mode (no build, just symlink)
+# Development mode — uses venv for isolation (never pollutes system Python / pipx)
 dev:
-	cd backend && pip install -e ".[test]"
+	@if [ ! -d "backend/.venv" ]; then \
+		echo "→ Creating venv..."; \
+		cd backend && python3 -m venv .venv; \
+	fi
+	@echo "→ Installing editable (in venv, isolated from system/pipx)..."
+	cd backend && .venv/bin/pip install -e ".[test]"
+	@echo "✓ Installed in backend/.venv (isolated)"
+	@echo "  Activate: source backend/.venv/bin/activate"
+	@echo "  Test:     backend/.venv/bin/python -m pytest tests/"
 
 clean:
 	@echo "→ Cleaning..."

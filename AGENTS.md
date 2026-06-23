@@ -40,11 +40,12 @@ packages/mcp-server/src/
 2. **严禁** 停止/触碰用户的 pipx 正式服务（`:8080`）
 3. **严禁** 跑会触碰真实 `~/.peekview/` 的测试；MCP/E2E 测试必须用临时 HOME 或 debug backend
 4. **严禁** 开发/测试/发布流程中写生产数据库（`~/.peekview/peekview.db`）；测试必须用临时目录或 debug 模式
-5. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
-6. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
-7. 改代码前先读周围上下文，理解代码风格和现有库选择
-8. 不加注释（除非被要求）
-9. 完成任务后必须跑 lint/typecheck
+5. **严禁** `pip3 install --break-system-packages -e .` 或任何向系统 Python 安装 peekview 的操作——这会覆盖 pipx 的 `/home/kity/.local/bin/peekview` 符号链接，导致生产服务加载源码而非 pipx 隔离 venv 的代码。开发测试用 `make dev`（venv 隔离）或 `make debug-start`（独立进程）
+6. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
+7. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+8. 改代码前先读周围上下文，理解代码风格和现有库选择
+9. 不加注释（除非被要求）
+10. 完成任务后必须跑 lint/typecheck
 
 ## 环境隔离机制（代码层面保障）
 
