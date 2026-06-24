@@ -1,13 +1,24 @@
 task_id: T020
 task_name: svg-codeblock-viewer
 phase: P3
-status: in_progress
+status: paused
 retries:
   P2:
     - round: 1
       failure_mode: quality
       prompt_changed: true
       adjustment: add_navigation
+  P3:
+    - round: 1
+      failure_mode: empty_return
+      prompt_changed: false
+      adjustment: null
+    - round: 2
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: split_task
 retry_count:
   P2: 1
+  P3: 2
 updated: 2026-06-24
+paused_reason: P3 retry 耗尽（2 次空返回），test-designer 扛不住 Vue 组件测试代码
