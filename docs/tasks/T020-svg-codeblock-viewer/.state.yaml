@@ -17,8 +17,14 @@ retries:
       failure_mode: empty_return
       prompt_changed: true
       adjustment: split_task
+    - round: 3
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: switch_type
+recovery_bonus:
+  P3: 0
 retry_count:
   P2: 1
-  P3: 2
+  P3: 3
 updated: 2026-06-24
-paused_reason: P3 retry 耗尽（2 次空返回），test-designer 扛不住 Vue 组件测试代码
+paused_reason: P3 3 次空返回（含 recovery_bonus），根因是 P2 组件契约不够细，应回 P2
