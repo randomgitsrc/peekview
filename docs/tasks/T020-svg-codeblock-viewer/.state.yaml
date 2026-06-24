@@ -1,7 +1,7 @@
 task_id: T020
 task_name: svg-codeblock-viewer
-phase: P3
-status: paused
+phase: P4
+status: in_progress
 retries:
   P2:
     - round: 1
@@ -27,4 +27,3 @@ retry_count:
   P2: 1
   P3: 3
 updated: 2026-06-24
-paused_reason: P3 3 次空返回（含 recovery_bonus），根因是 P2 组件契约不够细，应回 P2

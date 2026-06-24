@@ -44,7 +44,7 @@ describe('guessMimeType', () => {
     expect(guessMimeType('src/fonts/inter.woff2')).toBe('font/woff2')
   })
 
-  it('returns null for svg (excluded by design)', () => {
-    expect(guessMimeType('icon.svg')).toBeNull()
+  it('returns image/svg+xml for svg (supported)', () => {
+    expect(guessMimeType('icon.svg')).toBe('image/svg+xml')
   })
 })
