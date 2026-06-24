@@ -16,6 +16,8 @@ import { storeToRefs } from 'pinia'
 import type { TocHeading } from '@/types'
 import MermaidDiagram from '@/components/MermaidDiagram.vue'
 import PlantUmlDiagram from '@/components/PlantUmlDiagram.vue'
+import SvgDiagram from '@/components/SvgDiagram.vue'
+import DOMPurify from 'dompurify'
 
 const props = defineProps<{ content: string }>()
 const emit = defineEmits<{ headings: [headings: TocHeading[]] }>()
@@ -32,10 +34,12 @@ const isLoading = ref(false)
 const mermaidCache = new Map<string, string>()
 let mermaidSourcesMap: Map<number, string> = new Map()
 let plantumlSourcesMap: Map<number, string> = new Map()
+let svgSourcesMap: Map<number, string> = new Map()
 let renderToken = 0
 
 const mermaidInstances = new Map<string, any>()
 const plantumlInstances = new Map<string, any>()
+const svgInstances = new Map<string, any>()
 
 
 async function copyCodeBlock(btn: HTMLButtonElement) {
@@ -349,6 +353,11 @@ function handleDelegatedAction(e: MouseEvent) {
     case 'toggle-plantuml-menu': togglePlantUmlMenu(blockId!); break
     case 'download-plantuml-png': downloadPlantUmlPng(blockId!); break
     case 'copy-plantuml-code': copyPlantUmlCode(blockId!); break
+    case 'toggle-svg-view': toggleSvgView(blockId!); break
+    case 'open-svg-fullscreen': openSvgFullscreen(blockId!); break
+    case 'toggle-svg-menu': toggleSvgMenu(blockId!); break
+    case 'download-svg-png': downloadSvgPng(blockId!); break
+    case 'copy-svg-code': copySvgCode(blockId!); break
     case 'copy-code-block': copyCodeBlock(target as HTMLButtonElement); break
   }
 }
@@ -380,6 +389,7 @@ async function renderContent() {
     renderedHtml.value = result.html
     mermaidSourcesMap = result.mermaidSources
     plantumlSourcesMap = result.plantumlSources
+    svgSourcesMap = result.svgSources
     emit('headings', result.headings)
     await nextTick()
 
@@ -394,11 +404,17 @@ async function renderContent() {
       plantumlMountPoints.forEach(mp => {
         delete (mp as HTMLElement).dataset.rendered
       })
+      const svgMountPoints = contentRef.value.querySelectorAll('.svg-viewer-mount')
+      svgMountPoints.forEach(mp => {
+        delete (mp as HTMLElement).dataset.rendered
+      })
     }
 
     await renderMermaidDiagrams()
     if (myToken !== renderToken) return
     await renderPlantUmlDiagrams(myToken)
+    if (myToken !== renderToken) return
+    await renderSvgBlocks(myToken)
   } catch (err) {
     if (myToken === renderToken) console.error('Markdown render failed:', err)
   } finally {
@@ -513,6 +529,47 @@ async function renderPlantUmlDiagrams(myToken: number) {
   }
 }
 
+async function renderSvgBlocks(myToken: number) {
+  if (!contentRef.value) return
+  if (svgSourcesMap.size === 0) return
+
+  const blocks = contentRef.value.querySelectorAll('.svg-block')
+
+  for (const block of blocks) {
+    if (myToken !== renderToken) return
+
+    const mountPoint = block.querySelector('.svg-viewer-mount')
+    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
+
+    const index = parseInt(block.getAttribute('data-index') || '0')
+    const code = svgSourcesMap.get(index) || ''
+    if (!code) continue
+
+    try {
+      const cleanSvg = DOMPurify.sanitize(code, {
+        ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
+        ADD_TAGS: ['button'],
+      })
+
+      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+
+      const vNode = h(SvgDiagram, {
+        svgContent: cleanSvg,
+        id: `svg-${index}`,
+      })
+      vueRender(vNode, mountPoint)
+
+      // Capture the mounted component instance to call its exposed
+      // toggleFullscreen / downloadPng methods later.
+      const inst = (vNode as any).component?.proxy
+      svgInstances.set(`svg-block-${index}`, inst)
+    } catch (err) {
+      console.error('SVG render failed:', err)
+      mountPoint.innerHTML = '<div class="svg-error">Failed to render SVG</div>'
+    }
+  }
+}
+
 function togglePlantUmlView(blockId: string) {
   const block = document.getElementById(blockId)
   if (!block) return
@@ -621,6 +678,114 @@ async function downloadPlantUmlPng(blockId: string) {
     }, 'image/png')
   } catch (err) {
     console.error('Failed to download PlantUML PNG:', err)
+  }
+}
+
+// SVG toggle — toggle between diagram and code view
+function toggleSvgView(blockId: string) {
+  const root = contentRef.value
+  if (!root) return
+  const block = root.querySelector(`#${blockId}`) as HTMLElement | null
+  if (!block) return
+
+  const diagramMode = block.querySelector('.svg-content[data-mode="diagram"]') as HTMLElement
+  const codeMode = block.querySelector('.svg-content[data-mode="code"]') as HTMLElement
+  const toggleBtn = block.querySelector('.svg-view-toggle') as HTMLElement
+  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
+
+  if (!diagramMode || !codeMode) return
+
+  const isCurrentlyCode = codeMode.classList.contains('is-active')
+
+  if (isCurrentlyCode) {
+    // Switch to diagram
+    codeMode.classList.remove('is-active')
+    diagramMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Diagram'
+    toggleBtn?.classList.remove('code-active')
+
+    // Trigger resize on the pan-zoom instance after display change
+    const viewer = diagramMode.querySelector('.svg-viewer')
+    if (viewer) {
+      viewer.dispatchEvent(new CustomEvent('svg-refresh', { bubbles: true }))
+    }
+  } else {
+    // Switch to code
+    diagramMode.classList.remove('is-active')
+    codeMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Code'
+    toggleBtn?.classList.add('code-active')
+  }
+}
+
+// Open SVG fullscreen via the mounted SvgDiagram instance
+function openSvgFullscreen(blockId: string) {
+  const instance = svgInstances.get(blockId)
+  if (instance && instance.toggleFullscreen) {
+    instance.toggleFullscreen()
+  }
+}
+
+// Toggle SVG dropdown menu
+function toggleSvgMenu(blockId: string) {
+  const root = contentRef.value
+  if (!root) return
+  const menu = root.querySelector(`#menu-${blockId}`) as HTMLElement | null
+  if (!menu) return
+
+  // Close other menus
+  root.querySelectorAll('.svg-dropdown-menu').forEach((m) => {
+    if (m.id !== `menu-${blockId}`) {
+      m.classList.remove('show')
+    }
+  })
+
+  menu.classList.toggle('show')
+
+  // Close on click outside
+  const closeMenu = (e: Event) => {
+    if (!(e.target as Element).closest('.svg-dropdown')) {
+      menu.classList.remove('show')
+      document.removeEventListener('click', closeMenu)
+    }
+  }
+
+  // Add listener next tick to avoid immediate close
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu)
+  }, 0)
+}
+
+// Copy the raw SVG source code
+async function copySvgCode(blockId: string) {
+  const index = parseInt(blockId.replace('svg-block-', ''))
+  const code = svgSourcesMap.get(index) || ''
+  if (!code) return
+  try {
+    await navigator.clipboard.writeText(code)
+    // Show feedback
+    const root = contentRef.value
+    const menu = root?.querySelector(`#menu-${blockId}`)
+    if (menu) {
+      const btn = menu.querySelector('button:last-child')
+      if (btn) {
+        const original = btn.textContent
+        btn.textContent = '✓ Copied!'
+        setTimeout(() => {
+          btn.textContent = original
+        }, 2000)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
+}
+
+// Download SVG as PNG via the mounted SvgDiagram instance's downloadPng method
+function downloadSvgPng(blockId: string) {
+  const instance = svgInstances.get(blockId)
+  if (instance && instance.downloadPng) {
+    instance.downloadPng()
   }
 }
 
@@ -1285,6 +1450,259 @@ watch(() => [props.content, theme.value], async () => {
   background: #3d1f1f;
   border-color: #ff6b6b;
   color: #ff8787;
+}
+
+/* === SVG Block Styles (mirror mermaid) === */
+.svg-block {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.svg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.svg-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.svg-header-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Toggle button */
+.svg-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.svg-view-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+}
+
+.svg-view-toggle .toggle-icon {
+  font-size: 14px;
+}
+
+.svg-view-toggle.code-active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+/* Action buttons */
+.svg-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.svg-action-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* Dropdown menu */
+.svg-dropdown {
+  position: relative;
+}
+
+.svg-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+}
+
+.svg-dropdown-menu.show {
+  display: block;
+}
+
+.svg-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.svg-dropdown-menu button:hover {
+  background: var(--bg-secondary);
+}
+
+/* Content areas */
+.svg-content {
+  position: relative;
+  min-height: 300px;
+  height: auto;
+  width: 100%;
+}
+
+.svg-content.diagram-mode {
+  background: var(--bg-secondary);
+  overflow: hidden;
+  min-height: 300px;
+  height: 400px;
+  width: 100%;
+}
+
+.svg-content.code-mode {
+  background: var(--bg-secondary);
+  min-height: 100px;
+  aspect-ratio: auto;
+}
+
+/* Toggle visibility using is-active class */
+.svg-content.diagram-mode:not(.is-active),
+.svg-content.code-mode:not(.is-active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.svg-content.code-mode pre {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--bg-secondary) !important;
+}
+
+.svg-viewer-mount {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.svg-viewer-mount :deep(svg) {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Resize handle */
+.svg-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  background: linear-gradient(
+    -45deg,
+    transparent 40%,
+    var(--border-color) 40%,
+    var(--border-color) 45%,
+    transparent 45%,
+    transparent 50%,
+    var(--border-color) 50%,
+    var(--border-color) 55%,
+    transparent 55%
+  );
+  z-index: 100;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+}
+
+.svg-content.resizing {
+  position: relative !important;
+}
+
+.svg-content.resizing .svg-resize-handle {
+  opacity: 1;
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+}
+
+/* Fullscreen trigger (hidden) */
+.svg-fullscreen-trigger {
+  display: none;
+}
+
+/* SVG error state */
+.svg-error {
+  padding: 1rem;
+  background: #ffeaea;
+  border: 1px solid #ff6b6b;
+  border-radius: 6px;
+  color: #c92a2a;
+  text-align: center;
+}
+
+[data-theme='dark'] .svg-error {
+  background: #3d1f1f;
+  border-color: #ff6b6b;
+  color: #ff8787;
+}
+
+@media (max-width: 768px) {
+  .svg-header {
+    padding: 6px 10px;
+  }
+
+  .svg-view-toggle .toggle-text {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .svg-view-toggle {
+    padding: 4px 8px;
+  }
 }
 
 @media (max-width: 768px) {

@@ -21,9 +21,19 @@ retries:
       failure_mode: empty_return
       prompt_changed: true
       adjustment: switch_type
+  P4:
+    - round: 1
+      failure_mode: empty_return
+      prompt_changed: false
+      adjustment: null
+    - round: 2
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: add_navigation
 recovery_bonus:
   P3: 0
 retry_count:
   P2: 1
   P3: 3
+  P4: 2
 updated: 2026-06-24

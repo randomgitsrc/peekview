@@ -17,6 +17,7 @@ import java from 'shiki/langs/java.mjs'
 import cpp from 'shiki/langs/cpp.mjs'
 import c from 'shiki/langs/c.mjs'
 import sql from 'shiki/langs/sql.mjs'
+import xml from 'shiki/langs/xml.mjs'
 
 // Theme imports
 import githubDark from 'shiki/themes/github-dark.mjs'
@@ -37,7 +38,8 @@ const commonLangs = [
   java,
   cpp,
   c,
-  sql
+  sql,
+  xml
 ]
 
 let highlighterPromise: Promise<Highlighter> | null = null

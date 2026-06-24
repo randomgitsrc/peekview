@@ -8,6 +8,7 @@ export interface MarkdownRenderResult {
   headings: TocHeading[]
   mermaidSources: Map<number, string>
   plantumlSources: Map<number, string>
+  svgSources: Map<number, string>
 }
 
 export function useMarkdown() {
@@ -67,6 +68,7 @@ export function useMarkdown() {
     const codeBlocks: CodeBlock[] = []
     const mermaidSources = new Map<number, string>()
     const plantumlSources = new Map<number, string>()
+    const svgSources = new Map<number, string>()
     let frontMatterHtml = ''
     let processedContent = content
     const frontMatterMatch = content.match(frontMatterRegex)
@@ -293,6 +295,39 @@ export function useMarkdown() {
           continue
         }
 
+        if (block.lang === 'svg') {
+          const svgBlockId = `svg-block-${block.index}`
+          svgSources.set(block.index, block.code)
+          const svgBlock = `<div class="svg-block" id="${svgBlockId}" data-index="${block.index}">
+            <div class="svg-header">
+              <span class="svg-label">SVG</span>
+              <div class="svg-header-actions">
+                <button class="svg-view-toggle" data-action="toggle-svg-view" data-block-id="${svgBlockId}" title="Toggle Diagram/Code">
+                  <span class="toggle-icon">◫</span>
+                  <span class="toggle-text">Diagram</span>
+                </button>
+                <button class="svg-action-btn fullscreen-btn" data-action="open-svg-fullscreen" data-block-id="${svgBlockId}" title="Fullscreen">⧉</button>
+                <div class="svg-dropdown">
+                  <button class="svg-action-btn menu-btn" data-action="toggle-svg-menu" data-block-id="${svgBlockId}" title="More actions">⋯</button>
+                  <div class="svg-dropdown-menu" id="menu-${svgBlockId}">
+                    <button data-action="download-svg-png" data-block-id="${svgBlockId}">⬇ Download PNG</button>
+                    <button data-action="copy-svg-code" data-block-id="${svgBlockId}">⧉ Copy Code</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="svg-content diagram-mode is-active" data-mode="diagram">
+              <div class="svg-viewer-mount" data-index="${block.index}"></div>
+              <div class="svg-resize-handle" data-action="start-resize" data-block-id="${svgBlockId}"></div>
+            </div>
+            <div class="svg-content code-mode" data-mode="code">
+              <pre class="shiki"><code>${await highlightCode(block.code, 'xml', theme)}</code></pre>
+            </div>
+          </div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, svgBlock)
+          continue
+        }
+
         const highlighted = await highlightCode(block.code, block.lang, theme)
         // Wrap highlighted code with our header and copy button
         const wrappedCode = `<div class="code-block-wrapper">
@@ -330,7 +365,7 @@ export function useMarkdown() {
       ADD_TAGS: ['button'],
     })
 
-    return { html, headings, mermaidSources, plantumlSources }
+    return { html, headings, mermaidSources, plantumlSources, svgSources }
   }
 
   return { render }

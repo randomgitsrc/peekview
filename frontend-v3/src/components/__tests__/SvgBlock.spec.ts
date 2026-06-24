@@ -17,8 +17,8 @@
  * action 处理后转 GREEN。
  */
 
-import { describe, it, expect } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi } from 'vitest'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import MarkdownViewer from '../MarkdownViewer.vue'
 
@@ -56,9 +56,17 @@ function mountViewer(content: string) {
 }
 
 // 等待 MarkdownViewer 的完整异步渲染链：
-// render(content) → setRenderedHtml → nextTick → renderMermaidDiagrams → renderPlantUmlDiagrams
-async function waitForRender() {
+// render(content) → setRenderedHtml → nextTick → renderMermaidDiagrams → renderPlantUmlDiagrams → renderSvgBlocks
+// render() 内部调用 Shiki 的 createHighlighter（macrotask，动态导入语言/主题），
+// flushPromises 只能 flush microtask，无法可靠等待 macrotask → 用 vi.waitFor 轮询。
+async function waitForRender(wrapper: VueWrapper) {
   await flushPromises()
+  await vi.waitFor(() => {
+    const body = wrapper.find('.markdown-body')
+    if (!body.exists() || body.text() === '') {
+      throw new Error('markdown not rendered yet')
+    }
+  }, { timeout: 5000, interval: 10 })
   await flushPromises()
   await flushPromises()
   await flushPromises()
@@ -68,14 +76,14 @@ async function waitForRender() {
 describe('TC-01 渲染结构', () => {
   it('```svg 代码块生成 .svg-block 容器', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     expect(wrapper.find('.svg-block').exists()).toBe(true)
   })
 
   it('.svg-block 含 .svg-label 文本 "SVG"', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const label = wrapper.find('.svg-block .svg-label')
     expect(label.exists()).toBe(true)
@@ -84,7 +92,7 @@ describe('TC-01 渲染结构', () => {
 
   it('.svg-block 含 .svg-view-toggle / .fullscreen-btn / .svg-dropdown', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     expect(wrapper.find('.svg-block .svg-view-toggle').exists()).toBe(true)
     expect(wrapper.find('.svg-block .fullscreen-btn').exists()).toBe(true)
@@ -96,7 +104,7 @@ describe('TC-01 渲染结构', () => {
 describe('TC-02 默认图形视图', () => {
   it('diagram-mode 默认 is-active', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const diagram = wrapper.find('.svg-block .svg-content[data-mode="diagram"]')
     expect(diagram.exists()).toBe(true)
@@ -105,7 +113,7 @@ describe('TC-02 默认图形视图', () => {
 
   it('code-mode 默认非 is-active', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const code = wrapper.find('.svg-block .svg-content[data-mode="code"]')
     expect(code.exists()).toBe(true)
@@ -114,7 +122,7 @@ describe('TC-02 默认图形视图', () => {
 
   it('toggle-text 默认为 "Diagram"', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const toggleText = wrapper.find('.svg-block .svg-view-toggle .toggle-text')
     expect(toggleText.exists()).toBe(true)
@@ -126,7 +134,7 @@ describe('TC-02 默认图形视图', () => {
 describe('TC-03 toggle 切换', () => {
   it('点击 toggle 后切换到 code 视图', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const toggleBtn = wrapper.find('[data-action="toggle-svg-view"]')
     expect(toggleBtn.exists()).toBe(true)
@@ -144,7 +152,7 @@ describe('TC-03 toggle 切换', () => {
 
   it('再次点击切回 diagram 视图', async () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     const toggleBtn = wrapper.find('[data-action="toggle-svg-view"]')
 
@@ -170,7 +178,7 @@ describe('TC-03 toggle 切换', () => {
 describe('TC-10 内联 svg 不受影响', () => {
   it('内联 svg 不产生 .svg-block 容器', async () => {
     const wrapper = mountViewer(MD_WITH_INLINE_SVG)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     // 内联 svg 走 markdown inline html，不走代码块管线，不应有 .svg-block
     expect(wrapper.find('.svg-block').exists()).toBe(false)
@@ -181,7 +189,7 @@ describe('TC-10 内联 svg 不受影响', () => {
 describe('TC-12 三族共存', () => {
   it('mermaid / plantuml / svg 三块各自有独立容器', async () => {
     const wrapper = mountViewer(MD_WITH_THREE_FAMILIES)
-    await waitForRender()
+    await waitForRender(wrapper)
 
     expect(wrapper.find('.mermaid-block').exists()).toBe(true)
     expect(wrapper.find('.plantuml-block').exists()).toBe(true)
