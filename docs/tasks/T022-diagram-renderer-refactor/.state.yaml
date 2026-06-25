@@ -1,6 +1,6 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P4
+phase: P5
 status: in_progress
 retries:
   P2:
@@ -30,20 +30,10 @@ retries:
       prompt_changed: true
       adjustment: switch_type
   P4:
-    - note: P4a-P4e1 分步实现完成。核心结构建立但 MarkdownViewer 未挂载新组件。
+    - note: P4a-P4e2 分步实现完成，dispatch-context模式零空返回
 retry_count:
   P1: 0
   P2: 2
   P3: 4
   P4: 0
 updated: 2026-06-26
-note: |
-  P4 进度：
-  - useCodeBlockRenderer.ts ✅ 161行
-  - diagramRegistry.ts ✅ 40行
-  - useMarkdown.ts ✅ 368行（注册模式+sources合并）
-  - BaseDiagram.vue ✅ 493行（script+template）
-  - 三薄包装 ✅ 194行总计
-  - MarkdownViewer.vue ✅ 消费sources接口（但未挂载新组件、未迁出状态到composable）
-  旧测试 152 passed（行为保真核心达成），新测试 13 failed（TDD红灯）
-  剩余：MarkdownViewer挂载新薄包装组件 + 状态迁出到composable
