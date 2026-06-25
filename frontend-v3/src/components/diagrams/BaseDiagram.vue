@@ -464,4 +464,30 @@ defineExpose({
 })
 </script>
 
-<template><div></div></template>
+<template>
+  <div ref="containerRef" :class="classPrefix + '-viewer'" @wheel="onWheel">
+    <div ref="svgContainer" :class="classPrefix + '-container'" v-html="svgContent"></div>
+  </div>
+
+  <Teleport to="body">
+    <div
+      v-if="isFullscreen"
+      :class="classPrefix + '-modal-overlay'"
+      @click.self="closeFullscreen"
+    >
+      <div :class="classPrefix + '-modal'">
+        <div :class="classPrefix + '-modal-toolbar'">
+          <span class="modal-title">{{ modalTitle }}</span>
+          <button class="toolbar-btn" @click="zoomInModal" title="Zoom In">+</button>
+          <button class="toolbar-btn" @click="zoomOutModal" title="Zoom Out">−</button>
+          <button class="toolbar-btn" @click="resetZoomModal" title="Reset">⟲</button>
+          <button class="toolbar-btn" @click="downloadPng" title="Download PNG">⬇</button>
+          <button class="toolbar-btn close-btn" @click="closeFullscreen" title="Close">×</button>
+        </div>
+        <div ref="modalContainer" :class="classPrefix + '-modal-container'" @wheel="onWheelModal">
+          <div ref="modalSvgWrapper" :class="classPrefix + '-wrapper'" v-html="svgContent"></div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+</template>
