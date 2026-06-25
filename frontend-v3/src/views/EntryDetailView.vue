@@ -1,5 +1,6 @@
 <template>
-  <div class="entry-detail">
+  <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
+    <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Header -->
     <header class="detail-header">
       <span class="back-btn" @click="goBack" title="Back to list">⌂</span>
@@ -104,7 +105,7 @@
       </aside>
 
       <!-- Main Content Area -->
-      <main class="content-area">
+      <main class="content-area" tabindex="-1">
         <!-- Loading State -->
         <div v-if="entryStore.loading" class="loading-state">
           <span>Loading...</span>
@@ -293,7 +294,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
@@ -305,6 +306,7 @@ import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { guessMimeType } from '@/utils/mime'
 import { formatExpiresIn } from '@/utils/expires'
+import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -324,6 +326,32 @@ const { currentEntry, activeFile } = storeToRefs(entryStore)
 // Drawer state
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
+
+// Zen mode state
+const zenMode = ref(false)
+const zenAriaText = ref('')
+
+function updateZenAria(zen: boolean) {
+  zenAriaText.value = zen ? 'Zen mode on. Press f or Escape to exit.' : 'Zen mode off.'
+}
+
+function handleZenKeydown(event: KeyboardEvent) {
+  if (!shouldHandleZenShortcut(event)) return
+  if (event.key === 'Escape' && zenMode.value) {
+    zenMode.value = false
+    updateZenAria(false)
+    event.preventDefault()
+    return
+  }
+  if (event.key === 'f' || event.key === 'F') {
+    zenMode.value = !zenMode.value
+    if (zenMode.value) {
+      redirectFocusIfHidden()
+    }
+    updateZenAria(zenMode.value)
+    event.preventDefault()
+  }
+}
 
 // Sibling file IDs for HTML render route injection
 const siblingFileIds = computed<number[]>(() => {
@@ -539,6 +567,11 @@ function formatRelativeTime(dateStr: string): string {
 // Load entry on mount and when slug changes
 onMounted(() => {
   entryStore.loadEntry(props.slug)
+  document.addEventListener('keydown', handleZenKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleZenKeydown)
 })
 
 watch(() => props.slug, (newSlug) => {

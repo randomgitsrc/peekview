@@ -184,3 +184,10 @@
 .error-state {
   color: var(--error-color);
 }
+
+.zen-mode .detail-header,
+.zen-mode .file-sidebar,
+.zen-mode .toc-sidebar,
+.zen-mode .mobile-actions {
+  display: none;
+}
