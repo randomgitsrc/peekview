@@ -1,7 +1,7 @@
 task_id: T020
 task_name: svg-codeblock-viewer
-phase: P6
-status: paused
+phase: P7
+status: in_progress
 retries:
   P2:
     - round: 1
@@ -39,31 +39,25 @@ retries:
       failure_mode: quality
       prompt_changed: false
       adjustment: null
+    - round: 3
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: split_task
+      note: "PAUSED 恢复后重跑（recovery_bonus=1）。空返回：任务过重（写脚本+跑16BDD+写报告+截图）。调整：拆分跑BDD与写报告"
 recovery_bonus:
   P3: 0
+  P6: 1
 retry_count:
   P2: 1
   P3: 3
   P4: 2
-  P6: 2
+  P6: 3
 updated: 2026-06-25
-paused_reason: |
-  P6 结果存疑，需新会话重验：
-  1. 主 Agent 给 subagent 传了错误 URL（http://127.0.0.1:8888/#/entry/g1orbb，
-     未确认前端路由是 hash 还是 history 模式，未确认 debug backend 怎么服务前端静态文件）
-  2. 主 Agent 没给 playwright-vision skill 的操作指导（CDP 怎么连、
-     vision-helper agent 怎么调、截图怎么存），subagent 自己摸索
-  3. 16/16 PASS 的自我报告未经主 Agent 亲自验证（截图未看、URL 未核实）
-  违反 C7 规则：gate 不信 subagent 自我报告
-  违反 A1 原则：主 Agent 须亲自跑命令验证
-resolution: |
-  新会话恢复后：
-  1. 核实 debug backend 前端访问 URL（读 router.ts 确认 hash/history 模式，
-     确认 backend main.py 怎么 serve static/）
-  2. 读 playwright-vision skill 文件，提取关键操作步骤
-  3. 亲自验证 P6 截图证据是否真实存在且内容匹配
-  4. 如果 P6 不可信，重跑 P6（给正确 URL + 完整 skill 指导）
-  5. P6 通过后继续 P7-P8
-
-  额外问题：长流程导致主 Agent 判断力下降（P3-P6 大量 retry 循环），
-  应考虑是否拆分到新会话执行
+recovery_note: |
+  PAUSED 恢复（2026-06-25 新会话）：
+  1. 核实前端路由 history 模式，正确 URL http://127.0.0.1:8888/{slug}
+  2. playwright-vision skill 已加载（CDP 18800, NODE_PATH 必设, try/finally, 三层超时）
+  3. P6 截图造假已坐实（6张=3对md5相同），原报告作废
+  4. P5 gate 亲自复验通过（vitest 104/104）
+  5. 测试数据 g1orbb 完好（8个svg围栏块+mermaid+plantuml+内联svg）
+  6. 主 Agent 模型不支持图像输入，验证模型：断言值stdout为主 + vision-analyst交叉验证 + md5去重防造假
