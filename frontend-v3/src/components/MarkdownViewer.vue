@@ -14,9 +14,9 @@ import * as usePlantUML from '@/composables/usePlantUML'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
 import type { TocHeading } from '@/types'
-import MermaidDiagram from '@/components/MermaidDiagram.vue'
-import PlantUmlDiagram from '@/components/PlantUmlDiagram.vue'
-import SvgDiagram from '@/components/SvgDiagram.vue'
+import MermaidDiagram from '@/components/diagrams/MermaidDiagram.vue'
+import PlantUmlDiagram from '@/components/diagrams/PlantUmlDiagram.vue'
+import SvgDiagram from '@/components/diagrams/SvgDiagram.vue'
 import DOMPurify from 'dompurify'
 
 const props = defineProps<{ content: string }>()
@@ -457,8 +457,11 @@ async function renderMermaidDiagrams() {
 
       // Mount MermaidDiagram component
       const vNode = h(MermaidDiagram, {
+        blockIndex: index,
+        blockId: `mermaid-block-${index}`,
         svgContent: svg,
-        id: `mermaid-${index}`,
+        codeViewHtml: '',
+        theme: theme.value === 'dark' ? 'dark' : 'light',
       })
       vueRender(vNode, mountPoint)
 
@@ -508,8 +511,11 @@ async function renderPlantUmlDiagrams(myToken: number) {
       ;(mountPoint as HTMLElement).dataset.rendered = 'true'
 
       const vNode = h(PlantUmlDiagram, {
+        blockIndex: index,
+        blockId: `plantuml-block-${index}`,
         svgContent: svg,
-        id: `plantuml-${index}`,
+        codeViewHtml: '',
+        theme: theme.value === 'dark' ? 'dark' : 'light',
       })
       vueRender(vNode, mountPoint)
 
@@ -560,8 +566,11 @@ async function renderSvgBlocks(myToken: number) {
       ;(mountPoint as HTMLElement).dataset.rendered = 'true'
 
       const vNode = h(SvgDiagram, {
+        blockIndex: index,
+        blockId: `svg-block-${index}`,
         svgContent: cleanSvg,
-        id: `svg-${index}`,
+        codeViewHtml: '',
+        theme: theme.value === 'dark' ? 'dark' : 'light',
       })
       vueRender(vNode, mountPoint)
 
