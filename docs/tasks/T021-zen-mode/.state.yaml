@@ -1,7 +1,7 @@
 task_id: T021
 task_name: zen-mode
-phase: P0
+phase: P2
 status: in_progress
 retries: {}
 retry_count: {}
-updated: 2026-06-24
+updated: 2026-06-25
