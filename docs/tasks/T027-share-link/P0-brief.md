@@ -10,6 +10,10 @@ created: 2026-06-25
 
 ## task
 
+**一句话（工程视角）**：为 private entry 实现"临时分享链接"功能（路径 C，非密码）—— 后端 `entry_shares` 表 + 3 端点（生成/列表/批量撤销）+ private→public 自动撤销；前端 EntryDetailView owner 视角加分享管理面板（生成对话框 + 列表 + 勾选批量撤销）；访问 `?share={token}` 凭 16 字符密码学 token 即可（无需登录）。
+
+**详细**：
+
 为 private entry 实现"临时分享链接"功能（GitHub gist / GitLab snippet 模式），让 owner 可以：
 
 1. 生成一个临时链接（`/{slug}?share={token}`）
@@ -110,6 +114,10 @@ created: 2026-06-25
   - **严禁** pip3 install --break-system-packages -e .（AGENTS.md 铁律 5）
   - **严禁** 用 CLI 创建测试 entry
   - **严禁** 直接 sqlite3 操作生产数据库
+
+## pruning_tendency
+
+**保守** — T027 是大块头：后端新表 + 3 端点 + 安全 token + private→public hook，前端分享管理面板 + 多处 UX 决策。涉及**安全敏感**（token 生成/存储/验证）和**多 agent 协调**（T021 改 EntryDetailView）。T020 P6 PAUSED 教训：subagent 自我报告不可信，主 Agent 必须亲自 gate。P3-P8 不裁剪。
 
 ## phase_hint
 

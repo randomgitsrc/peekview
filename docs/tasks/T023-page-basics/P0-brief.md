@@ -10,6 +10,10 @@ created: 2026-06-25
 
 ## task
 
+**一句话（工程视角）**：删 17 行僵尸 HomeView.vue + 加 4 行 catch-all 404 路由（vue-router `:pathMatch(.*)*`）。
+
+**详细**：
+
 清理前端页面体系的两个**基础完整度**问题：
 
 1. **删除 `views/HomeView.vue` 僵尸文件**：router.ts 未引用，是 v3 起步时的占位欢迎页（17 行），留着误导后人、占搜索结果、占 git 树
@@ -52,6 +56,10 @@ created: 2026-06-25
   - **严禁** pip3 install --break-system-packages -e .（AGENTS.md 铁律 5）
   - **严禁** 用 CLI 创建测试 entry
   - **严禁** 直接 sqlite3 操作生产数据库
+
+## pruning_tendency
+
+**激进** — T023 是纯前端小活（1 个文件删除 + 1 个新组件 + 1 路由配置），无后端改动、无安全风险、无行为保真压力。P3 单元测试价值低（仅 1 个静态组件），P1 BDD 简明（3-4 条即可）。P6 端到端必做（验证 404 路由 + 返回首页可用）。其他阶段由执行期 subagent 能力决定。
 
 ## phase_hint
 

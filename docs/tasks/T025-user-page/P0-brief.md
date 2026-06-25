@@ -10,6 +10,10 @@ created: 2026-06-25
 
 ## task
 
+**一句话（工程视角）**：加 `/users/:username` 路由复用 EntryListView + 后端 `list_entries` 接 `owner=username`（User join）+ EntryListView 接受 `owner` prop + tab URL 同步 + 卡片 `@username` 包 router-link。
+
+**详细**：
+
 实现"看特定用户发布历史"的产品核心场景，包含 4 个紧密相关改动：
 
 1. **新增 `/users/:username` 路由**（复用 EntryListView，不新组件）
@@ -64,6 +68,10 @@ created: 2026-06-25
   - **严禁** pip3 install --break-system-packages -e .（AGENTS.md 铁律 5）
   - **严禁** 用 CLI 创建测试 entry
   - **严禁** 直接 sqlite3 操作生产数据库
+
+## pruning_tendency
+
+**保守** — T025 涉及后端 User join 性能、嵌套 router-link HTML 不允许、大小写敏感性等多个隐含点。新增 `owner=username` 是 backend API 扩展（非破坏性，但需回归）。P3 单元测试必做（5-8 个后端测试覆盖），P6 端到端必做（验证用户公开页、tab URL 同步、卡片 click username、不存在用户处理）。
 
 ## phase_hint
 

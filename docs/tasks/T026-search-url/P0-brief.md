@@ -10,6 +10,10 @@ created: 2026-06-25
 
 ## task
 
+**一句话（工程视角）**：EntryListView header 加 search input（防抖 300ms 同步 `?q=`，按 Enter 立即触发，按 Esc 清空），与现有 `?owner=` tab 共存。
+
+**详细**：
+
 将搜索功能 URL 化，让搜索结果可分享 / 可书签 / 可链接。
 
 **当前状态**：
@@ -70,6 +74,10 @@ created: 2026-06-25
   - **严禁** pip3 install --break-system-packages -e .（AGENTS.md 铁律 5）
   - **严禁** 用 CLI 创建测试 entry
   - **严禁** 直接 sqlite3 操作生产数据库
+
+## pruning_tendency
+
+**激进** — T026 是纯前端小活（后端 FTS5 已有），无后端改动、无安全风险。P3 单元测试轻量（防抖测试繁琐可省），P1 BDD 简明（5-6 条即可）。P6 端到端必做（验证 URL 同步、清空、tab 组合）。
 
 ## phase_hint
 

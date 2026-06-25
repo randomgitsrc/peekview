@@ -10,6 +10,10 @@ created: 2026-06-25
 
 ## task
 
+**一句话（工程视角）**：把 `/` 从 EntryListView 改为新 LandingView，EntryListView 路由迁到 `/explore`，已登录用户访问 `/` 自动跳 `/explore`。
+
+**详细**：
+
 解决"主页是 EntryListView"的硬伤 —— 将 `/` 从 EntryListView 改为 LandingView。
 
 **LandingView 角色**：首次访问者入口 + 营销/SEO 价值。
@@ -62,6 +66,10 @@ created: 2026-06-25
   - **严禁** pip3 install --break-system-packages -e .（AGENTS.md 铁律 5）
   - **严禁** 用 CLI 创建测试 entry
   - **严禁** 直接 sqlite3 操作生产数据库
+
+## pruning_tendency
+
+**激进** — T024 是纯前端小活（1 新组件 + 路由迁移 + 跳转守卫），无后端改动、无安全风险。P3 单测轻量（1 个 smoke test 即可），P1 BDD 简明（4-5 条）。P6 端到端必做（验证未登录看 Landing / 已登录跳 /explore）。
 
 ## phase_hint
 
