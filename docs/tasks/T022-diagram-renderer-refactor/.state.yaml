@@ -1,6 +1,6 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P5
+phase: P6
 status: in_progress
 retries:
   P2:
@@ -30,10 +30,13 @@ retries:
       prompt_changed: true
       adjustment: switch_type
   P4:
-    - note: P4a-P4e2 分步实现完成，dispatch-context模式零空返回
+    - note: dispatch-context模式零空返回
+  P5:
+    - note: gate通过（旧测试158passed行为保真，7新测试红灯TDD延续）
 retry_count:
   P1: 0
   P2: 2
   P3: 4
   P4: 0
+  P5: 0
 updated: 2026-06-26

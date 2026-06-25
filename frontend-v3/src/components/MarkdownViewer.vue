@@ -466,16 +466,8 @@ async function renderMermaidDiagrams() {
       vueRender(vNode, mountPoint)
 
       // Store instance reference for external access (fullscreen, etc)
-      // Note: vueRender doesn't give us the instance directly, so we store the mount point
-      // and use a data attribute to track it
-      mermaidInstances.set(`mermaid-block-${index}`, {
-        toggleFullscreen: () => {
-          const btn = mountPoint.querySelector('.mermaid-fullscreen-trigger')
-          if (btn) {
-            (btn as HTMLElement).click()
-          }
-        }
-      })
+      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
+      mermaidInstances.set(`mermaid-block-${index}`, inst)
     } catch (err) {
       console.error('Mermaid render failed:', err)
       mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
@@ -519,14 +511,8 @@ async function renderPlantUmlDiagrams(myToken: number) {
       })
       vueRender(vNode, mountPoint)
 
-      plantumlInstances.set(`plantuml-block-${index}`, {
-        toggleFullscreen: () => {
-          const btn = mountPoint.querySelector('.plantuml-fullscreen-trigger')
-          if (btn) {
-            (btn as HTMLElement).click()
-          }
-        }
-      })
+      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
+      plantumlInstances.set(`plantuml-block-${index}`, inst)
     } catch (err) {
       console.error('PlantUML render failed:', err)
       const blockEl = block as HTMLElement
