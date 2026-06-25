@@ -7,6 +7,31 @@
 
 ## [Unreleased]
 
+## [0.1.66] - 2026-06-25
+
+### 新增
+
+- T020: ` ```svg ` 代码块一体化查看工具栏 — markdown 中 ` ```svg ` 围栏代码块渲染为带工具栏的矢量图容器，对齐现有 mermaid/plantuml 体验
+- T020: 图/码 toggle — 默认图形视图，可切换查看 Shiki 高亮的 SVG 源码（xml grammar，effectiveLang=xml 非 text）
+- T020: 工具栏操作 — Copy Code（原始源码入剪贴板 + "✓ Copied!" 2s 反馈）、Download PNG（透明背景，不调 fillRect，canvas 默认 alpha=0）、Fullscreen modal（svg-pan-zoom 滚轮缩放 + 拖拽平移）
+- T020: SvgDiagram.vue 新组件 — pan-zoom + fullscreen modal + 透明 PNG 导出（独立 exportSvgToPng，不复用 mermaid 白底逻辑）
+- T020: useShiki.ts 注册 xml grammar（static import `shiki/langs/xml.mjs` + commonLangs 追加），svg 代码块 code-mode 走 Shiki 高亮
+
+### 修复
+
+- T020: 修复 `mime.spec.ts` 过时测试 — `guessMimeType('icon.svg')` 期望从 null 改为 `'image/svg+xml'`（自 e8069c6b 起实际返回此值，测试未跟上）
+
+### 安全
+
+- T020: ` ```svg ` 代码块内容单独 `DOMPurify.sanitize`（配置与全局末尾相同但调用独立，作用域隔离）— 剥除 `<script>`/`on*`/`<foreignObject>`/`javascript:` 引用，保留合法图形元素；不改全局 DOMPurify 配置，内联 `<svg>` 与独立 `.svg` 文件管线行为不变
+
+### 验证
+
+- 前端 104/104 单元测试通过（含 SvgBlock.spec.ts 新增组件测试）
+- 前端构建 + vue-tsc typecheck 全绿
+- Playwright 实跑 BDD 16/16 全部通过：渲染矢量图、图/码 toggle（Shiki 高亮）、Copy Code、透明 PNG（对角像素 alpha=0）、Fullscreen 缩放、XSS（script/on*/foreignObject/javascript: 剥除）、三管线共存（mermaid+plantuml+svg 互不干扰）、主题切换重挂载、尺寸回退
+
+
 ## [0.1.65] - 2026-06-23
 
 ### 新增

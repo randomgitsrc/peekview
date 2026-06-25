@@ -561,7 +561,7 @@ async function renderSvgBlocks(myToken: number) {
 
       // Capture the mounted component instance to call its exposed
       // toggleFullscreen / downloadPng methods later.
-      const inst = (vNode as any).component?.proxy
+      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
       svgInstances.set(`svg-block-${index}`, inst)
     } catch (err) {
       console.error('SVG render failed:', err)

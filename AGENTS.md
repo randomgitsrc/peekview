@@ -47,13 +47,13 @@ packages/mcp-server/src/
 9. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
 10. 改代码前先读周围上下文，理解代码风格和现有库选择
 11. 不加注释（除非被要求）
-12. 完成任务后必须跑 lint/typecheck
+12. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
 13. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
 
 ## 环境隔离机制（代码层面保障）
 
-- **`PEEKVIEW_DEBUG_MODE=1`**：所有 `PeekConfig()` 无参调用自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。pytest 通过 conftest fixture 自动设置。
-- **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` fixture 自动设置 `PEEKVIEW_STORAGE__*` env vars，所有 `PeekConfig()` 无参调用在测试中自动指向 tmp_path。
+- **`PEEKVIEW_DEBUG_MODE=1`**：`PeekConfig()` 无参调用且无 `PEEKVIEW_STORAGE__*` env 时，自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用（config.py:374）。`make debug-start` 额外显式设了 STORAGE env，走更直接路径
+- **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` 是 `autouse=True`，每个测试自动设 `PEEKVIEW_STORAGE__DATA_DIR`/`DB_PATH` 指向 tmp_path（不依赖 DEBUG_MODE）
 - **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
 - **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
 
@@ -65,12 +65,13 @@ make debug                # 构建+启动+E2E（完整调试流程）
 make debug-start          # 仅启动调试服务（自动用 .venv Python）
 make debug-stop           # 停止调试服务
 
-cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv）
-cd backend && make lint   # 后端 lint (ruff check + format --check)
+cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv；pyproject 已设 -v --tb=short）
+cd backend && make lint   # 后端 lint (ruff check + format --check；CI 不跑，本地约定)
 cd backend && make format # 后端自动修复 (ruff check --fix + format)
 
-cd frontend-v3 && npm run build   # 前端构建（自动复制到 static/）
-cd frontend-v3 && npm run test    # 前端单元测试
+make build-frontend          # 前端构建 + 复制 dist/* → backend/peekview/static/（关键：npm run build 只产出 frontend-v3/dist/，不复制；dev-server.sh 启动前检查 backend/peekview/static/index.html 存在，缺失直接退出）
+cd frontend-v3 && ./node_modules/.bin/vitest run   # 前端单测一次性运行（⚠️ npm run test = vitest 无参 = watch 模式，会挂住 agent）
+cd frontend-v3 && npx vue-tsc --noEmit             # 前端类型检查（CI 强制；npm run build 内含此步）
 
 make test-mcp-unit        # MCP 单元测试
 make build-mcp            # MCP 构建
@@ -81,6 +82,8 @@ make publish-npm          # 发布 MCP Server 到 npm
 
 ## 技术要点
 
+- **静态文件双路径**：`main.py:_setup_static_files` 优先 serve `frontend-v3/dist/`（开发），其次 `peekview/static/`（pipx 安装包）。但 `make debug-start`（dev-server.sh）启动前强制检查 `backend/peekview/static/index.html`，缺失直接退出——所以改前端后必须 `make build-frontend`（不是只 `npm run build`）
+- **vite dev 代理陷阱**：`npm run dev`（vite :5173）把 `/api` 代理到 `localhost:8080`（**生产** backend），会读写生产数据。前端开发走 `make debug`（:8888 隔离数据），不要用 `npm run dev` 对真实数据测试
 - **DI 模式**：`request.app.state.entry_service`（非模块级全局变量）
 - **认证三层**：JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key。优先级：`Authorization` header > Cookie > API key
 - **权限模型**：Anonymous→仅公开；Authenticated→公开+自己私有；Admin→全部可见。`get_current_user`(可选) / `require_auth`(必须) / `require_admin`(管理员)
