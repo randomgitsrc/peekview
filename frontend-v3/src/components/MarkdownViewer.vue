@@ -387,9 +387,15 @@ async function renderContent() {
     if (myToken !== renderToken) return
     headings.value = result.headings
     renderedHtml.value = result.html
-    mermaidSourcesMap = result.mermaidSources
-    plantumlSourcesMap = result.plantumlSources
-    svgSourcesMap = result.svgSources
+    const sources = result.sources
+    mermaidSourcesMap.clear()
+    plantumlSourcesMap.clear()
+    svgSourcesMap.clear()
+    sources.forEach((val, idx) => {
+      if (val.lang === 'mermaid') mermaidSourcesMap.set(idx, val.code)
+      else if (val.lang === 'plantuml') plantumlSourcesMap.set(idx, val.code)
+      else if (val.lang === 'svg') svgSourcesMap.set(idx, val.code)
+    })
     emit('headings', result.headings)
     await nextTick()
 
