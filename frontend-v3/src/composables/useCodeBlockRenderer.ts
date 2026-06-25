@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import type { ComponentPublicInstance } from 'vue'
 import { useMermaid } from '@/composables/useMermaid'
 import * as usePlantUML from '@/composables/usePlantUML'
 import { useShiki } from '@/composables/useShiki'
@@ -19,9 +18,9 @@ export function useCodeBlockRenderer() {
   const sourcesMap = new Map<number, BlockSource>()
   const renderToken = ref(0)
   const instances = {
-    mermaid: new Map<string, ComponentPublicInstance>(),
-    plantuml: new Map<string, ComponentPublicInstance>(),
-    svg: new Map<string, ComponentPublicInstance>(),
+    mermaid: new Map<string, any>(),
+    plantuml: new Map<string, any>(),
+    svg: new Map<string, any>(),
   }
   const resizingBlock = ref<string | null>(null)
   const startY = ref(0)
@@ -45,7 +44,8 @@ export function useCodeBlockRenderer() {
     try {
       let svg = mermaidCache.get(key)
       if (!svg) {
-        svg = await useMermaid.render(index, code, theme)
+        const { render: renderMermaid } = useMermaid()
+        svg = await renderMermaid(String(index), code, theme.includes('dark') ? 'dark' : 'light')
         mermaidCache.set(key, svg)
       }
       sourcesMap.set(index, { lang: 'mermaid', code, svgContent: svg, codeViewHtml })
@@ -56,7 +56,7 @@ export function useCodeBlockRenderer() {
   }
   async function preRenderPlantUml(index: number, code: string, theme: string, codeViewHtml: string): Promise<void> {
     try {
-      const svg = await usePlantUML.render(code, theme)
+      const svg = await usePlantUML.render(code, theme.includes('dark') ? 'dark' : 'light')
       sourcesMap.set(index, { lang: 'plantuml', code, svgContent: svg, codeViewHtml })
     } catch (err) {
       console.error('PlantUML render failed:', err)
@@ -66,7 +66,7 @@ export function useCodeBlockRenderer() {
   async function registerSvg(index: number, code: string, theme: string): Promise<void> {
     let codeViewHtml = ''
     try {
-      codeViewHtml = await highlightCode(code, 'xml', theme)
+      codeViewHtml = await highlightCode(code, 'xml', theme.includes('dark') ? 'github-dark' : 'github-light')
     } catch (err) {
       console.error('SVG Shiki highlight failed:', err)
     }
@@ -74,10 +74,11 @@ export function useCodeBlockRenderer() {
   }
 
   async function renderMermaidFresh(code: string, theme: string): Promise<string> {
-    return await useMermaid.render(Date.now(), code, theme)
+    const { render: renderMermaid } = useMermaid()
+    return await renderMermaid(String(Date.now()), code, theme.includes('dark') ? 'dark' : 'light')
   }
   async function renderPlantUmlFresh(code: string, theme: string): Promise<string> {
-    return await usePlantUML.render(code, theme)
+    return await usePlantUML.render(code, theme.includes('dark') ? 'dark' : 'light')
   }
 
   async function svgToPng(svgString: string, opts: {
@@ -129,7 +130,7 @@ export function useCodeBlockRenderer() {
   function nextToken(): number { return ++renderToken.value }
   function isCurrent(token: number): boolean { return token === renderToken.value }
 
-  function registerInstance(lang: string, id: string, inst: ComponentPublicInstance) {
+  function registerInstance(lang: string, id: string, inst: any) {
     instances[lang as keyof typeof instances].set(id, inst)
   }
   function unregisterInstance(lang: string, id: string) {

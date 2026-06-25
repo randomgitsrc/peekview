@@ -20,7 +20,6 @@ vi.mock('@/composables/useShiki', () => ({
 
 import { useMarkdown } from '@/composables/useMarkdown'
 import {
-  diagramRegistry,
   registerDiagramType,
   getDiagramType,
   getAllDiagramTypes,
@@ -113,7 +112,7 @@ describe('useMarkdown 注册表 + DOMPurify', () => {
       '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle r="40"/></svg>'
     const result = await render('```svg\n' + svgWithScript + '\n```', 'github-light')
     const storedCode =
-      result.svgSources.get(0) || result.sources?.get(0)?.code || ''
+      result.sources?.get(0)?.code || ''
     expect(storedCode).not.toContain('<script>')
     expect(storedCode).not.toContain('</script>')
     expect(storedCode).not.toContain('alert(1)')
@@ -125,7 +124,7 @@ describe('useMarkdown 注册表 + DOMPurify', () => {
       '<svg xmlns="http://www.w3.org/2000/svg"><circle onclick="alert(1)" r="40" fill="red"/></svg>'
     const result = await render('```svg\n' + svgWithOnclick + '\n```', 'github-light')
     const storedCode =
-      result.svgSources.get(0) || result.sources?.get(0)?.code || ''
+      result.sources?.get(0)?.code || ''
     expect(storedCode).not.toContain('onclick')
     expect(storedCode).toContain('<circle')
     expect(storedCode).toContain('r="40"')
@@ -138,7 +137,7 @@ describe('useMarkdown 注册表 + DOMPurify', () => {
       '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div>x</div></foreignObject><circle r="40"/></svg>'
     const result = await render('```svg\n' + svgWithForeign + '\n```', 'github-light')
     const storedCode =
-      result.svgSources.get(0) || result.sources?.get(0)?.code || ''
+      result.sources?.get(0)?.code || ''
     expect(storedCode.toLowerCase()).not.toContain('foreignobject')
   })
 
@@ -159,7 +158,7 @@ describe('useMarkdown 注册表 + DOMPurify', () => {
     const inlineSvg = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="40"/></svg>'
     const result = await render('Inline: ' + inlineSvg, 'github-light')
     expect(result.html).not.toContain('svg-block')
-    expect(result.svgSources.size).toBe(0)
+    expect(result.sources.size).toBe(0)
     expect(result.sources?.size ?? 0).toBe(0)
   })
 
