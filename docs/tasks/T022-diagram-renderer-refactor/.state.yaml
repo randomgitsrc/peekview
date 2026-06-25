@@ -29,9 +29,21 @@ retries:
       failure_mode: empty_return
       prompt_changed: true
       adjustment: switch_type
-    - note: recovery_bonus 后调整策略成功——frontend subagent + 单测试粒度 + dispatch-context 骨架
+  P4:
+    - note: P4a-P4e1 分步实现完成。核心结构建立但 MarkdownViewer 未挂载新组件。
 retry_count:
   P1: 0
   P2: 2
   P3: 4
-updated: 2026-06-25
+  P4: 0
+updated: 2026-06-26
+note: |
+  P4 进度：
+  - useCodeBlockRenderer.ts ✅ 161行
+  - diagramRegistry.ts ✅ 40行
+  - useMarkdown.ts ✅ 368行（注册模式+sources合并）
+  - BaseDiagram.vue ✅ 493行（script+template）
+  - 三薄包装 ✅ 194行总计
+  - MarkdownViewer.vue ✅ 消费sources接口（但未挂载新组件、未迁出状态到composable）
+  旧测试 152 passed（行为保真核心达成），新测试 13 failed（TDD红灯）
+  剩余：MarkdownViewer挂载新薄包装组件 + 状态迁出到composable
