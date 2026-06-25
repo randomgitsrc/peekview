@@ -1,13 +1,15 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P7
-status: in_progress
+phase: READY
+status: ready
 retries:
   P2: [{round:1,failure_mode:empty_return},{round:2,failure_mode:quality}]
   P3: [{round:1,2,3,4,failure_mode:empty_return}]
   P4: []
   P5: []
   P6: []
+  P7: []
+  P8: []
 retry_count:
   P1: 0
   P2: 2
@@ -15,4 +17,6 @@ retry_count:
   P4: 0
   P5: 0
   P6: 0
+  P7: 0
+  P8: 0
 updated: 2026-06-26
