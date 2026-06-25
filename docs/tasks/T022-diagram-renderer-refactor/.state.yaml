@@ -1,7 +1,9 @@
-task_id: T022
+task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P0
+phase: P2
 status: in_progress
-retries: {}
-retry_count: {}
+retries:
+  P1: []
+retry_count:
+  P1: 0
 updated: 2026-06-25
