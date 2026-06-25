@@ -1,9 +1,19 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P2
+phase: P3
 status: in_progress
 retries:
-  P1: []
+  P2:
+    - round: 1
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: add_navigation
+    - round: 2
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: add_navigation
+      note: 评审打回 6 BLOCKER，修订后二审 approved
 retry_count:
   P1: 0
+  P2: 2
 updated: 2026-06-25
