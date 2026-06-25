@@ -1,7 +1,7 @@
 task_id: T021
 task_name: zen-mode
-phase: READY
-status: ready
+phase: DONE
+status: done
 retries: {}
 retry_count: {}
 updated: 2026-06-25

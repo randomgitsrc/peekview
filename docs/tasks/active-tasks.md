@@ -13,7 +13,6 @@
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|----------|----------|
 | T020 | svg-codeblock-viewer | ⏳ 待发布 | READY | 🟠 | 2026-06-24 | 2026-06-25 |
-| T021 | zen-mode | ⏳ 待发布 | READY | 🟡 | 2026-06-24 | 2026-06-25 |
 | T022 | diagram-renderer-refactor | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
 | T023 | page-basics | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
 | T024 | landing-page | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
@@ -47,6 +46,7 @@
 | T017 | theme-media-query-fix | ✅✅ 已完成 | P8 | 🟠 | 2026-06-21 |
 | T018 | plantuml-start-markers | ✅✅ 已完成 | P8 | 🟠 | 2026-06-21 |
 | T019 | html-viewer-srcdoc-csp | ✅✅ 已完成 | P8 | 🔴 | 2026-06-23 |
+| T021 | zen-mode | ✅✅ 已完成 | P8 | 🟡 | 2026-06-25 |
 
 > **依赖列说明**：主 Agent 启动任务前检查依赖列。所有依赖任务状态为 ✅✅ 已完成 才启动。
 > **active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 扫描所有 `.state.yaml` 重建。消除多 Agent 并发 git 冲突。
@@ -146,7 +146,7 @@ mkdir -p docs/tasks/T{xxx}-{task-name}
 
 ### 步骤 3：创建 P1 文件
 
-必��包含以下 Header 字段：
+必须包含以下 Header 字段：
 
 ```yaml
 ---
