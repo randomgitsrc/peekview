@@ -1,4 +1,5 @@
-// STUB src/composables/diagramRegistry.ts - P3b 创建，P4 实现
+import DOMPurify, { type Config } from 'dompurify'
+
 export interface DiagramTypeMeta {
   lang: string
   classPrefix: string
@@ -7,12 +8,33 @@ export interface DiagramTypeMeta {
   sanitize?: (code: string) => string
 }
 
-const diagramRegistry = new Map<string, DiagramTypeMeta>()
+const SVG_SANITIZE_CONFIG: Config = {
+  ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
+  ADD_TAGS: ['button'],
+}
 
-export function registerDiagramType(_meta: DiagramTypeMeta) {}   // STUB: 不写入
+const diagramRegistry = new Map<string, DiagramTypeMeta>([
+  ['mermaid', { lang: 'mermaid', classPrefix: 'mermaid', label: 'MERMAID', codeViewHighlighter: 'escape-html' }],
+  ['plantuml', { lang: 'plantuml', classPrefix: 'plantuml', label: 'PLANTUML', codeViewHighlighter: 'escape-html' }],
+  ['svg', {
+    lang: 'svg',
+    classPrefix: 'svg',
+    label: 'SVG',
+    codeViewHighlighter: 'shiki-xml',
+    sanitize: (code: string) => DOMPurify.sanitize(code, SVG_SANITIZE_CONFIG),
+  }],
+])
 
-export function getDiagramType(_lang: string): DiagramTypeMeta | undefined { return undefined }
+export function registerDiagramType(meta: DiagramTypeMeta) {
+  diagramRegistry.set(meta.lang, meta)
+}
 
-export function getAllDiagramTypes(): DiagramTypeMeta[] { return [] }
+export function getDiagramType(lang: string): DiagramTypeMeta | undefined {
+  return diagramRegistry.get(lang)
+}
+
+export function getAllDiagramTypes(): DiagramTypeMeta[] {
+  return Array.from(diagramRegistry.values())
+}
 
 export { diagramRegistry }

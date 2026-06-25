@@ -6,9 +6,7 @@ import { useShiki } from './useShiki'
 export interface MarkdownRenderResult {
   html: string
   headings: TocHeading[]
-  mermaidSources: Map<number, string>
-  plantumlSources: Map<number, string>
-  svgSources: Map<number, string>
+  sources: Map<number, { lang: string; code: string }>
 }
 
 export function useMarkdown() {
@@ -66,9 +64,7 @@ export function useMarkdown() {
   async function render(content: string, theme: 'github-dark' | 'github-light'): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
-    const mermaidSources = new Map<number, string>()
-    const plantumlSources = new Map<number, string>()
-    const svgSources = new Map<number, string>()
+    const sources = new Map<number, { lang: string; code: string }>()
     let frontMatterHtml = ''
     let processedContent = content
     const frontMatterMatch = content.match(frontMatterRegex)
@@ -232,7 +228,7 @@ export function useMarkdown() {
         // Skip mermaid blocks - they will be rendered by Mermaid.js with toggle support
         if (block.lang === 'mermaid') {
           const mermaidBlockId = `mermaid-block-${block.index}`
-          mermaidSources.set(block.index, block.code)
+          sources.set(block.index, { lang: block.lang, code: block.code })
           const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-index="${block.index}">
             <div class="mermaid-header">
               <span class="mermaid-label">MERMAID</span>
@@ -265,7 +261,7 @@ export function useMarkdown() {
 
         if (block.lang === 'plantuml') {
           const plantumlBlockId = `plantuml-block-${block.index}`
-          plantumlSources.set(block.index, block.code)
+          sources.set(block.index, { lang: block.lang, code: block.code })
           const plantumlBlock = `<div class="plantuml-block" id="${plantumlBlockId}" data-index="${block.index}">
             <div class="plantuml-header">
               <span class="plantuml-label">PLANTUML</span>
@@ -297,7 +293,7 @@ export function useMarkdown() {
 
         if (block.lang === 'svg') {
           const svgBlockId = `svg-block-${block.index}`
-          svgSources.set(block.index, block.code)
+          sources.set(block.index, { lang: block.lang, code: block.code })
           const svgBlock = `<div class="svg-block" id="${svgBlockId}" data-index="${block.index}">
             <div class="svg-header">
               <span class="svg-label">SVG</span>
@@ -365,7 +361,7 @@ export function useMarkdown() {
       ADD_TAGS: ['button'],
     })
 
-    return { html, headings, mermaidSources, plantumlSources, svgSources }
+    return { html, headings, sources }
   }
 
   return { render }
