@@ -14,6 +14,7 @@
 |------|----------|------|------|--------|----------|----------|
 | T020 | svg-codeblock-viewer | ⏳ 待发布 | READY | 🟠 | 2026-06-24 | 2026-06-25 |
 | T021 | zen-mode | 🔄 进行中 | P2 | 🟡 | 2026-06-24 | 2026-06-25 |
+| T022 | diagram-renderer-refactor | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
 
 ### 待开始
 
@@ -210,6 +211,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-06-25 | 创建 T022 | diagram-renderer-refactor 立项，P0-brief 已写（Markdown 渲染管线重构，B+温和C路线） |
 | 2026-06-24 | 创建 T021 | zen-mode 立项，P0-brief 已写（详情页 f 键专注模式） |
 | 2026-06-23 | 完成 T019 | html-viewer-srcdoc-csp v0.1.65 发布到 PyPI |
 | 2026-06-21 | 完成 T018 | plantuml-start-markers v0.1.64 发布到 PyPI |
