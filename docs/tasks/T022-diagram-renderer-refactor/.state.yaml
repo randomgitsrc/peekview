@@ -1,7 +1,7 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P3
-status: paused
+phase: P4
+status: in_progress
 retries:
   P2:
     - round: 1
@@ -17,20 +17,21 @@ retries:
       failure_mode: empty_return
       prompt_changed: true
       adjustment: split_task
-      note: P3b2 26测试点组件测试空返回
     - round: 2
       failure_mode: empty_return
       prompt_changed: true
       adjustment: split_task
-      note: P3b2a/b 拆分后仍空返回
     - round: 3
       failure_mode: empty_return
       prompt_changed: true
       adjustment: switch_type
-      note: P3b3 Playwright e2e 空返回（general subagent）
+    - round: 4
+      failure_mode: empty_return
+      prompt_changed: true
+      adjustment: switch_type
+    - note: recovery_bonus 后调整策略成功——frontend subagent + 单测试粒度 + dispatch-context 骨架
 retry_count:
   P1: 0
   P2: 2
-  P3: 3
+  P3: 4
 updated: 2026-06-25
-paused_reason: P3 测试代码 subagent 连续 3 轮空返回（组件测试 2 轮 + e2e 1 轮），Playwright 用例未产出（ui_affected gate 硬要求）
