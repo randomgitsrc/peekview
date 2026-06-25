@@ -7,6 +7,22 @@
 
 ## [Unreleased]
 
+## [0.1.67] - 2026-06-25
+
+### 新增
+
+- T021: Zen mode — 按 `f` 键进入沉浸阅读模式，隐藏 header/sidebar/mobile-actions，content-area 占满视口；按 `f` 或 `Esc` 退出
+- T021: 焦点重定向 — 进入 zen 时若焦点在被隐藏元素内（header 按钮、侧边栏链接），自动重定向到 `.content-area`（tabindex=-1），防止焦点丢失
+- T021: aria-live 通知 — zen 状态切换时屏幕阅读器播报 "Zen mode on/off"（`aria-live="polite"` + `.sr-only` span）
+- T021: 输入框焦点排除 — `INPUT`/`TEXTAREA`/`contenteditable`/模态对话框（`role="alertdialog"`）内按 `f` 不触发 zen
+- T021: CSS-only 隐藏策略 — `.zen-mode` class 控制 `display:none`，不改变 `v-if` 逻辑，退出后状态零丢失（FileTree 展开状态、滚动位置、iframe 均保持）
+
+### 验证
+
+- 前端 140/140 单元测试通过（含 zen-shortcut.ts 纯函数测试）
+- Playwright 实跑 BDD 13/13 全部通过：f 进入 zen、Esc 退出、f toggle 退出、输入框排除、状态零丢失、滚动不跳动、iframe 不重载、非详情页不触发、ConfirmDialog 排除、单文件 entry、焦点重定向、aria-live 通知
+
+
 ## [0.1.66] - 2026-06-25
 
 ### 新增
