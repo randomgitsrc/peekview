@@ -225,102 +225,28 @@ export function useMarkdown() {
     // Second pass: replace placeholders with highlighted code
     for (const block of codeBlocks) {
       try {
-        // Skip mermaid blocks - they will be rendered by Mermaid.js with toggle support
+        // Skip mermaid blocks - they will be rendered by Mermaid.js via BaseDiagram placeholder
         if (block.lang === 'mermaid') {
-          const mermaidBlockId = `mermaid-block-${block.index}`
           sources.set(block.index, { lang: block.lang, code: block.code, codeViewHtml: escapeHtml(block.code) })
-          const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-index="${block.index}">
-            <div class="mermaid-header">
-              <span class="mermaid-label">MERMAID</span>
-              <div class="mermaid-header-actions">
-                <button class="mermaid-view-toggle" data-action="toggle-mermaid-view" data-block-id="${mermaidBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="mermaid-action-btn fullscreen-btn" data-action="open-mermaid-fullscreen" data-block-id="${mermaidBlockId}" title="Fullscreen">⧉</button>
-                <div class="mermaid-dropdown">
-                  <button class="mermaid-action-btn menu-btn" data-action="toggle-mermaid-menu" data-block-id="${mermaidBlockId}" title="More actions">⋯</button>
-                  <div class="mermaid-dropdown-menu" id="menu-${mermaidBlockId}">
-                    <button data-action="download-mermaid-png" data-block-id="${mermaidBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-mermaid-code" data-block-id="${mermaidBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="mermaid-content diagram-mode is-active" data-mode="diagram">
-              <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
-              <div class="mermaid-resize-handle" data-action="start-resize" data-block-id="${mermaidBlockId}"></div>
-            </div>
-            <div class="mermaid-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, mermaidBlock)
+          const blockId = `mermaid-block-${block.index}`
+          const blockHtml = `<div class="mermaid-block" id="${blockId}" data-block-id="${blockId}" data-index="${block.index}" data-lang="mermaid"></div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, blockHtml)
           continue
         }
 
         if (block.lang === 'plantuml') {
-          const plantumlBlockId = `plantuml-block-${block.index}`
           sources.set(block.index, { lang: block.lang, code: block.code, codeViewHtml: escapeHtml(block.code) })
-          const plantumlBlock = `<div class="plantuml-block" id="${plantumlBlockId}" data-index="${block.index}">
-            <div class="plantuml-header">
-              <span class="plantuml-label">PLANTUML</span>
-              <div class="plantuml-header-actions">
-                <button class="plantuml-view-toggle" data-action="toggle-plantuml-view" data-block-id="${plantumlBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="plantuml-action-btn fullscreen-btn" data-action="open-plantuml-fullscreen" data-block-id="${plantumlBlockId}" title="Fullscreen">⧉</button>
-                <div class="plantuml-dropdown">
-                  <button class="plantuml-action-btn menu-btn" data-action="toggle-plantuml-menu" data-block-id="${plantumlBlockId}" title="More actions">⋯</button>
-                  <div class="plantuml-dropdown-menu" id="menu-${plantumlBlockId}">
-                    <button data-action="download-plantuml-png" data-block-id="${plantumlBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-plantuml-code" data-block-id="${plantumlBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="plantuml-content diagram-mode is-active" data-mode="diagram">
-              <div class="plantuml-viewer-mount" data-index="${block.index}"></div>
-            </div>
-            <div class="plantuml-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, plantumlBlock)
+          const blockId = `plantuml-block-${block.index}`
+          const blockHtml = `<div class="plantuml-block" id="${blockId}" data-block-id="${blockId}" data-index="${block.index}" data-lang="plantuml"></div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, blockHtml)
           continue
         }
 
         if (block.lang === 'svg') {
-          const svgBlockId = `svg-block-${block.index}`
           sources.set(block.index, { lang: block.lang, code: block.code, codeViewHtml: '' })
-          const svgBlock = `<div class="svg-block" id="${svgBlockId}" data-index="${block.index}">
-            <div class="svg-header">
-              <span class="svg-label">SVG</span>
-              <div class="svg-header-actions">
-                <button class="svg-view-toggle" data-action="toggle-svg-view" data-block-id="${svgBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="svg-action-btn fullscreen-btn" data-action="open-svg-fullscreen" data-block-id="${svgBlockId}" title="Fullscreen">⧉</button>
-                <div class="svg-dropdown">
-                  <button class="svg-action-btn menu-btn" data-action="toggle-svg-menu" data-block-id="${svgBlockId}" title="More actions">⋯</button>
-                  <div class="svg-dropdown-menu" id="menu-${svgBlockId}">
-                    <button data-action="download-svg-png" data-block-id="${svgBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-svg-code" data-block-id="${svgBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="svg-content diagram-mode is-active" data-mode="diagram">
-              <div class="svg-viewer-mount" data-index="${block.index}"></div>
-              <div class="svg-resize-handle" data-action="start-resize" data-block-id="${svgBlockId}"></div>
-            </div>
-            <div class="svg-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${await highlightCode(block.code, 'xml', theme)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, svgBlock)
+          const blockId = `svg-block-${block.index}`
+          const blockHtml = `<div class="svg-block" id="${blockId}" data-block-id="${blockId}" data-index="${block.index}" data-lang="svg"></div>`
+          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, blockHtml)
           continue
         }
 

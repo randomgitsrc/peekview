@@ -11,7 +11,13 @@ const props = defineProps<{
   theme: 'light' | 'dark'
 }>()
 
-defineEmits(['zoom-in', 'zoom-out', 'reset', 'fullscreen', 'download-png'])
+defineEmits<{
+  (e: 'zoom-in'): void
+  (e: 'zoom-out'): void
+  (e: 'reset'): void
+  (e: 'fullscreen', blockId: string | number): void
+  (e: 'download-png', blockId: string | number): void
+}>()
 
 const renderer = useCodeBlockRenderer()
 
@@ -37,6 +43,7 @@ const baseProps = computed(() => ({
   resizeEnabled: true,
   refreshEventName: 'mermaid-refresh',
   modalTitle: 'Mermaid Diagram',
+  label: 'MERMAID',
   toggleTextUpdates: true,
   refreshOnToggle: true,
   copyFeedback: true,

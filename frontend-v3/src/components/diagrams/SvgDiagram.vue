@@ -31,9 +31,10 @@ const baseProps = computed(() => ({
   resizeEnabled: true,
   refreshEventName: 'svg-refresh',
   modalTitle: 'SVG Diagram',
-  toggleTextUpdates: false,
-  refreshOnToggle: false,
-  copyFeedback: false,
+  label: 'SVG',
+  toggleTextUpdates: true,
+  refreshOnToggle: true,
+  copyFeedback: true,
   menuClickOutside: true,
   menuCloseOthers: true,
 }))

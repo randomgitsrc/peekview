@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, h, render as vueRender, onMounted, onBeforeUnmount } from 'vue'
-import mermaid from 'mermaid'
+
 import { useMarkdown, type MarkdownRenderResult } from '@/composables/useMarkdown'
 import { useMermaid } from '@/composables/useMermaid'
 import * as usePlantUML from '@/composables/usePlantUML'
@@ -42,341 +42,68 @@ const plantumlInstances = new Map<string, any>()
 const svgInstances = new Map<string, any>()
 
 
-async function copyCodeBlock(btn: HTMLButtonElement) {
-  const code = btn.getAttribute('data-code')
-  if (code) {
-    try {
-      await navigator.clipboard.writeText(code)
-      const originalText = btn.textContent
-      btn.textContent = 'Copied!'
-      btn.classList.add('copied')
-      setTimeout(() => {
-        btn.textContent = originalText
-        btn.classList.remove('copied')
-      }, 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
-    }
-  }
-}
-
-async function copyMermaidCode(blockId: string) {
-  const index = parseInt(blockId.replace('mermaid-block-', ''))
-  const code = mermaidSourcesMap.get(index) || ''
-  if (!code) return
-  try {
-    await navigator.clipboard.writeText(code)
-    // Show feedback
-    const menu = document.getElementById(`menu-${blockId}`)
-    if (menu) {
-      const btn = menu.querySelector('button:last-child')
-      if (btn) {
-        const original = btn.textContent
-        btn.textContent = '✓ Copied!'
-        setTimeout(() => {
-          btn.textContent = original
-        }, 2000)
-      }
-    }
-  } catch (err) {
-    console.error('Failed to copy:', err)
-  }
-}
-
-// Global download function for mermaid PNG - re-renders mermaid code to clean SVG
-async function downloadMermaidPng(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-
-  const index = parseInt(block.getAttribute('data-index') || '0')
-  const code = mermaidSourcesMap.get(index) || ''
-  if (!code) {
-    console.error('No mermaid code found')
-    return
-  }
-
-  try {
-    // Re-render the mermaid code to get a clean SVG (no DOM transforms/foreignObject)
-    const { svg } = await mermaid.render(`export-${blockId}`, code)
-
-    // Parse the clean SVG
-    // Fix: mermaid uses <br> but DOMParser requires XHTML <br/>
-    const fixedSvg = svg.replace(/<br>/gi, '<br/>')
-    const parser = new DOMParser()
-    const svgDoc = parser.parseFromString(fixedSvg, 'image/svg+xml')
-    const svgEl = svgDoc.documentElement as unknown as SVGElement
-
-    // Check for parse errors
-    const parseError = svgDoc.querySelector('parsererror')
-    if (parseError) {
-      console.error('SVG Parse Error:', parseError.textContent)
-      console.error('SVG preview:', svg.substring(0, 500))
-      throw new Error(`Failed to parse SVG: ${parseError.textContent?.substring(0, 100)}`)
-    }
-
-    // Get dimensions from viewBox (mermaid calculates this accurately including foreignObject content)
-    // Just use viewBox width/height directly - mermaid already includes all content boundaries
-    let width = 0, height = 0
-    const viewBox = svgEl.getAttribute('viewBox')
-    if (viewBox) {
-      const parts = viewBox.split(/\s+/).map(parseFloat)
-      if (parts.length >= 4) {
-        // parts = [x, y, width, height], e.g., "-8 -8 142 284"
-        // Use width/height directly, don't modify viewBox or add transforms
-        width = Math.ceil(parts[2] + 20)  // Small padding
-        height = Math.ceil(parts[3] + 20)
-      }
-    }
-
-    // Fallback: try to get dimensions from g.root bbox
-    // Note: getBBox() may not include foreignObject content accurately
-    if (width === 0 || height === 0) {
-      try {
-        const tempDiv = document.createElement('div')
-        tempDiv.style.cssText = 'position: absolute; left: -9999px; top: 0; visibility: hidden;'
-        tempDiv.innerHTML = svg
-        document.body.appendChild(tempDiv)
-        const tempSvg = tempDiv.querySelector('svg')
-        if (tempSvg) {
-          const rootGroup = tempSvg.querySelector('g.root')
-          if (rootGroup) {
-            const bbox = (rootGroup as SVGGElement).getBBox()
-            if (bbox && bbox.width > 0 && bbox.height > 0) {
-              width = Math.ceil(bbox.width + 40)
-              height = Math.ceil(bbox.height + 40)
-            }
-          }
-        }
-        document.body.removeChild(tempDiv)
-      } catch (e) {
-        console.error('Error getting bbox:', e)
-      }
-    }
-
-    // Final fallback
-    if (width === 0 || height === 0) {
-      width = 800
-      height = 600
-    }
-
-    // Ensure minimum size
-    width = Math.max(width, 100)
-    height = Math.max(height, 100)
-
-    // Set dimensions
-    svgEl.setAttribute('width', String(width))
-    svgEl.setAttribute('height', String(height))
-    svgEl.style.width = `${width}px`
-    svgEl.style.height = `${height}px`
-    svgEl.style.maxWidth = 'none'
-    svgEl.style.maxHeight = 'none'
-
-    // Ensure namespace
-    if (!svgEl.getAttribute('xmlns')) {
-      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    }
-
-    // Serialize to data URL
-    const serializer = new XMLSerializer()
-    const serialized = serializer.serializeToString(svgEl)
-    const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
-    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
-
-    // Load and draw to canvas
-    const img = new Image()
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = reject
-      img.src = dataUrl
-    })
-
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-
-    const ctx = canvas.getContext('2d')!
-
-    // Fill white background
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Draw SVG
-    ctx.drawImage(img, 0, 0, width, height)
-
-    // Export PNG
-    canvas.toBlob((pngBlob) => {
-      if (pngBlob) {
-        const pngUrl = URL.createObjectURL(pngBlob)
-        const a = document.createElement('a')
-        a.href = pngUrl
-        a.download = `mermaid-diagram-${blockId.replace('mermaid-block-', '')}.png`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(pngUrl)
-      }
-    }, 'image/png')
-  } catch (err) {
-    console.error('Failed to export PNG:', err)
-    alert('Failed to download PNG. Please try again.')
-  }
-}
-
-// Global toggle function for mermaid view - toggle mode
-function toggleMermaidView(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-
-  const diagramMode = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
-  const codeMode = block.querySelector('.mermaid-content[data-mode="code"]') as HTMLElement
-  const toggleBtn = block.querySelector('.mermaid-view-toggle') as HTMLElement
-  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
-
-  if (!diagramMode || !codeMode) return
-
-  const isCurrentlyCode = codeMode.classList.contains('is-active')
-
-  if (isCurrentlyCode) {
-    // Switch to diagram
-    codeMode.classList.remove('is-active')
-    diagramMode.classList.add('is-active')
-    if (toggleText) toggleText.textContent = 'Diagram'
-    toggleBtn?.classList.remove('code-active')
-
-    // Trigger resize on the pan-zoom instance after display change
-    const viewer = diagramMode.querySelector('.mermaid-viewer')
-    if (viewer) {
-      viewer.dispatchEvent(new CustomEvent('mermaid-refresh', { bubbles: true }))
-    }
-  } else {
-    // Switch to code
-    diagramMode.classList.remove('is-active')
-    codeMode.classList.add('is-active')
-    if (toggleText) toggleText.textContent = 'Code'
-    toggleBtn?.classList.add('code-active')
-  }
-}
-
-// Open mermaid fullscreen
-function openMermaidFullscreen(blockId: string) {
-  const instance = mermaidInstances.get(blockId)
-  if (instance && instance.toggleFullscreen) {
-    instance.toggleFullscreen()
-  }
-}
-
-// Toggle mermaid dropdown menu
-function toggleMermaidMenu(blockId: string) {
-  const menu = document.getElementById(`menu-${blockId}`)
-  if (!menu) return
-
-  // Close other menus
-  document.querySelectorAll('.mermaid-dropdown-menu').forEach((m) => {
-    if (m.id !== `menu-${blockId}`) {
-      m.classList.remove('show')
-    }
-  })
-
-  menu.classList.toggle('show')
-
-  // Close on click outside
-  const closeMenu = (e: Event) => {
-    if (!(e.target as Element).closest('.mermaid-dropdown')) {
-      menu.classList.remove('show')
-      document.removeEventListener('click', closeMenu)
-    }
-  }
-
-  // Add listener next tick to avoid immediate close
-  setTimeout(() => {
-    document.addEventListener('click', closeMenu)
-  }, 0)
-}
-
 // Resize handling
-let resizingBlock: HTMLElement | null = null
-let startY = 0
-let startHeight = 0
 
-function startResize(blockId: string, e: MouseEvent) {
-  e.preventDefault()
-  const block = document.getElementById(blockId)
-  if (!block) return
 
-  const content = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
-  if (!content) return
-
-  resizingBlock = content
-  startY = e.clientY
-  // Get current computed height
-  const computedStyle = window.getComputedStyle(content)
-  startHeight = parseInt(computedStyle.height) || 400
-
-  document.addEventListener('mousemove', onResizeMove)
-  document.addEventListener('mouseup', onResizeEnd)
-  document.body.style.cursor = 'se-resize'
-  content.classList.add('resizing')
-}
-
-function onResizeMove(e: MouseEvent) {
-  if (!resizingBlock) return
-  const delta = e.clientY - startY
-  const newHeight = Math.max(200, startHeight + delta)
-  resizingBlock.style.height = `${newHeight}px`
-  // Remove maxHeight constraint during resize
-  resizingBlock.style.maxHeight = 'none'
-}
-
-function onResizeEnd() {
-  if (resizingBlock) {
-    resizingBlock.classList.remove('resizing')
-    resizingBlock = null
-  }
-  document.removeEventListener('mousemove', onResizeMove)
-  document.removeEventListener('mouseup', onResizeEnd)
-  document.body.style.cursor = ''
-}
-
-function handleDelegatedAction(e: MouseEvent) {
-  const target = (e.target as Element).closest('[data-action]') as HTMLElement | null
-  if (!target) return
-  const action = target.dataset.action
-  const blockId = target.dataset.blockId
-  switch (action) {
-    case 'toggle-mermaid-view': toggleMermaidView(blockId!); break
-    case 'open-mermaid-fullscreen': openMermaidFullscreen(blockId!); break
-    case 'toggle-mermaid-menu': toggleMermaidMenu(blockId!); break
-    case 'download-mermaid-png': downloadMermaidPng(blockId!); break
-    case 'copy-mermaid-code': copyMermaidCode(blockId!); break
-    case 'toggle-plantuml-view': togglePlantUmlView(blockId!); break
-    case 'open-plantuml-fullscreen': openPlantUmlFullscreen(blockId!); break
-    case 'toggle-plantuml-menu': togglePlantUmlMenu(blockId!); break
-    case 'download-plantuml-png': downloadPlantUmlPng(blockId!); break
-    case 'copy-plantuml-code': copyPlantUmlCode(blockId!); break
-    case 'toggle-svg-view': toggleSvgView(blockId!); break
-    case 'open-svg-fullscreen': openSvgFullscreen(blockId!); break
-    case 'toggle-svg-menu': toggleSvgMenu(blockId!); break
-    case 'download-svg-png': downloadSvgPng(blockId!); break
-    case 'copy-svg-code': copySvgCode(blockId!); break
-    case 'copy-code-block': copyCodeBlock(target as HTMLButtonElement); break
-  }
-}
-
-function handleDelegatedResize(e: MouseEvent) {
-  const target = (e.target as Element).closest('[data-action="start-resize"]') as HTMLElement | null
-  if (!target) return
-  startResize(target.dataset.blockId!, e)
-}
 
 onMounted(() => {
-  contentRef.value?.addEventListener('click', handleDelegatedAction)
-  contentRef.value?.addEventListener('mousedown', handleDelegatedResize)
 })
 
 onBeforeUnmount(() => {
-  contentRef.value?.removeEventListener('click', handleDelegatedAction)
-  contentRef.value?.removeEventListener('mousedown', handleDelegatedResize)
 })
+
+function handleToggleView(blockId: string | number, prefix: string) {
+  const block = document.getElementById(String(blockId))
+  if (!block) return
+  const diagramMode = block.querySelector(`.${prefix}-content.diagram-mode`)
+  const codeMode = block.querySelector(`.${prefix}-content.code-mode`)
+  if (diagramMode && codeMode) {
+    diagramMode.classList.toggle('is-active')
+    codeMode.classList.toggle('is-active')
+  }
+}
+
+function handleFullscreen(blockId: string | number, prefix: string) {
+  const instances = prefix === 'mermaid' ? mermaidInstances : prefix === 'plantuml' ? plantumlInstances : svgInstances
+  const inst = instances.get(String(blockId))
+  inst?.toggleFullscreen?.()
+}
+
+function handleCopyCode(blockId: string | number, prefix: string) {
+  const code = prefix === 'mermaid' ? mermaidSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) :
+               prefix === 'plantuml' ? plantumlSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) :
+               svgSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) || ''
+  if (code) navigator.clipboard.writeText(code).catch(() => {})
+}
+
+function handleDownloadPng(blockId: string | number, prefix: string) {
+  if (prefix === 'svg') {
+    const inst = svgInstances.get(String(blockId))
+    inst?.downloadPng?.()
+  }
+}
+
+function handleToggleMenu(_blockId: string | number, _prefix: string) {
+  // menu 开关由 BaseDiagram 内部 menuOpen 控制
+}
+
+function handleStartResize(blockId: string | number, startY: number, _prefix: string) {
+  const block = document.getElementById(String(blockId))
+  if (!block) return
+  const content = block.querySelector('.diagram-mode') as HTMLElement
+  if (!content) return
+  const startHeight = content.offsetHeight
+  const onMove = (e: MouseEvent) => {
+    const delta = e.clientY - startY
+    content.style.height = Math.max(200, startHeight + delta) + 'px'
+  }
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove)
+    document.removeEventListener('mouseup', onUp)
+  }
+  document.addEventListener('mousemove', onMove)
+  document.addEventListener('mouseup', onUp)
+}
 
 async function renderContent() {
   const myToken = ++renderToken
@@ -462,6 +189,12 @@ async function renderMermaidDiagrams() {
         svgContent: svg,
         codeViewHtml: '',
         theme: theme.value === 'dark' ? 'dark' : 'light',
+        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'mermaid'),
+        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'mermaid'),
+        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'mermaid'),
+        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'mermaid'),
+        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'mermaid'),
+        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'mermaid'),
       })
       vueRender(vNode, mountPoint)
 
@@ -508,6 +241,12 @@ async function renderPlantUmlDiagrams(myToken: number) {
         svgContent: svg,
         codeViewHtml: '',
         theme: theme.value === 'dark' ? 'dark' : 'light',
+        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'plantuml'),
+        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'plantuml'),
+        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'plantuml'),
+        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'plantuml'),
+        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'plantuml'),
+        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'plantuml'),
       })
       vueRender(vNode, mountPoint)
 
@@ -557,6 +296,12 @@ async function renderSvgBlocks(myToken: number) {
         svgContent: cleanSvg,
         codeViewHtml: '',
         theme: theme.value === 'dark' ? 'dark' : 'light',
+        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'svg'),
+        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'svg'),
+        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'svg'),
+        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'svg'),
+        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'svg'),
+        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'svg'),
       })
       vueRender(vNode, mountPoint)
 
@@ -571,225 +316,11 @@ async function renderSvgBlocks(myToken: number) {
   }
 }
 
-function togglePlantUmlView(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-  const diagramMode = block.querySelector('.plantuml-content.diagram-mode')
-  const codeMode = block.querySelector('.plantuml-content.code-mode')
-  if (diagramMode && codeMode) {
-    diagramMode.classList.toggle('is-active')
-    codeMode.classList.toggle('is-active')
-  }
-}
-
-function openPlantUmlFullscreen(blockId: string) {
-  const instance = plantumlInstances.get(blockId)
-  instance?.toggleFullscreen()
-}
-
-function togglePlantUmlMenu(blockId: string) {
-  const menu = document.getElementById(`menu-${blockId}`)
-  if (menu) {
-    menu.classList.toggle('show')
-  }
-}
-
-function copyPlantUmlCode(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-  const index = parseInt(block.getAttribute('data-index') || '0')
-  const code = plantumlSourcesMap.get(index) || ''
-  navigator.clipboard.writeText(code).then(() => {
-    console.log('PlantUML code copied')
-  }).catch(err => console.error('Copy failed:', err))
-}
-
-async function downloadPlantUmlPng(blockId: string) {
-  const block = document.getElementById(blockId)
-  if (!block) return
-  const index = parseInt(block.getAttribute('data-index') || '0')
-  const code = plantumlSourcesMap.get(index) || ''
-  if (!code) return
-
-  try {
-    const svg = await usePlantUML.render(code, theme.value)
-
-    const parser = new DOMParser()
-    const svgDoc = parser.parseFromString(svg, 'image/svg+xml')
-    const svgEl = svgDoc.documentElement as unknown as SVGElement
-
-    let width = 0, height = 0
-    const viewBox = svgEl.getAttribute('viewBox')
-    if (viewBox) {
-      const parts = viewBox.split(/\s+/).map(parseFloat)
-      if (parts.length >= 4) {
-        width = Math.ceil(parts[2] + 20)
-        height = Math.ceil(parts[3] + 20)
-      }
-    }
-    if (width === 0 || height === 0) {
-      const w = svgEl.getAttribute('width')
-      const h = svgEl.getAttribute('height')
-      if (w) width = Math.ceil(parseFloat(w) + 20)
-      if (h) height = Math.ceil(parseFloat(h) + 20)
-    }
-    if (width === 0 || height === 0) {
-      width = 800
-      height = 600
-    }
-    width = Math.max(width, 100)
-    height = Math.max(height, 100)
-
-    svgEl.setAttribute('width', String(width))
-    svgEl.setAttribute('height', String(height))
-    if (!svgEl.getAttribute('xmlns')) {
-      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    }
-
-    const serializer = new XMLSerializer()
-    const serialized = serializer.serializeToString(svgEl)
-    const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
-    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
-
-    const img = new Image()
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = reject
-      img.src = dataUrl
-    })
-
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const ctx = canvas.getContext('2d')!
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(img, 0, 0, width, height)
-
-    canvas.toBlob((b) => {
-      if (!b) return
-      const url = URL.createObjectURL(b)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `plantuml-diagram-${blockId}.png`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 'image/png')
-  } catch (err) {
-    console.error('Failed to download PlantUML PNG:', err)
-  }
-}
-
 // SVG toggle — toggle between diagram and code view
-function toggleSvgView(blockId: string) {
-  const root = contentRef.value
-  if (!root) return
-  const block = root.querySelector(`#${blockId}`) as HTMLElement | null
-  if (!block) return
-
-  const diagramMode = block.querySelector('.svg-content[data-mode="diagram"]') as HTMLElement
-  const codeMode = block.querySelector('.svg-content[data-mode="code"]') as HTMLElement
-  const toggleBtn = block.querySelector('.svg-view-toggle') as HTMLElement
-  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
-
-  if (!diagramMode || !codeMode) return
-
-  const isCurrentlyCode = codeMode.classList.contains('is-active')
-
-  if (isCurrentlyCode) {
-    // Switch to diagram
-    codeMode.classList.remove('is-active')
-    diagramMode.classList.add('is-active')
-    if (toggleText) toggleText.textContent = 'Diagram'
-    toggleBtn?.classList.remove('code-active')
-
-    // Trigger resize on the pan-zoom instance after display change
-    const viewer = diagramMode.querySelector('.svg-viewer')
-    if (viewer) {
-      viewer.dispatchEvent(new CustomEvent('svg-refresh', { bubbles: true }))
-    }
-  } else {
-    // Switch to code
-    diagramMode.classList.remove('is-active')
-    codeMode.classList.add('is-active')
-    if (toggleText) toggleText.textContent = 'Code'
-    toggleBtn?.classList.add('code-active')
-  }
-}
-
 // Open SVG fullscreen via the mounted SvgDiagram instance
-function openSvgFullscreen(blockId: string) {
-  const instance = svgInstances.get(blockId)
-  if (instance && instance.toggleFullscreen) {
-    instance.toggleFullscreen()
-  }
-}
-
 // Toggle SVG dropdown menu
-function toggleSvgMenu(blockId: string) {
-  const root = contentRef.value
-  if (!root) return
-  const menu = root.querySelector(`#menu-${blockId}`) as HTMLElement | null
-  if (!menu) return
-
-  // Close other menus
-  root.querySelectorAll('.svg-dropdown-menu').forEach((m) => {
-    if (m.id !== `menu-${blockId}`) {
-      m.classList.remove('show')
-    }
-  })
-
-  menu.classList.toggle('show')
-
-  // Close on click outside
-  const closeMenu = (e: Event) => {
-    if (!(e.target as Element).closest('.svg-dropdown')) {
-      menu.classList.remove('show')
-      document.removeEventListener('click', closeMenu)
-    }
-  }
-
-  // Add listener next tick to avoid immediate close
-  setTimeout(() => {
-    document.addEventListener('click', closeMenu)
-  }, 0)
-}
-
 // Copy the raw SVG source code
-async function copySvgCode(blockId: string) {
-  const index = parseInt(blockId.replace('svg-block-', ''))
-  const code = svgSourcesMap.get(index) || ''
-  if (!code) return
-  try {
-    await navigator.clipboard.writeText(code)
-    // Show feedback
-    const root = contentRef.value
-    const menu = root?.querySelector(`#menu-${blockId}`)
-    if (menu) {
-      const btn = menu.querySelector('button:last-child')
-      if (btn) {
-        const original = btn.textContent
-        btn.textContent = '✓ Copied!'
-        setTimeout(() => {
-          btn.textContent = original
-        }, 2000)
-      }
-    }
-  } catch (err) {
-    console.error('Failed to copy:', err)
-  }
-}
-
 // Download SVG as PNG via the mounted SvgDiagram instance's downloadPng method
-function downloadSvgPng(blockId: string) {
-  const instance = svgInstances.get(blockId)
-  if (instance && instance.downloadPng) {
-    instance.downloadPng()
-  }
-}
-
 watch(() => [props.content, theme.value], async () => {
   await renderContent()
 }, { immediate: true })

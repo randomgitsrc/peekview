@@ -38,6 +38,7 @@ const baseProps = computed(() => ({
   resizeEnabled: false,
   refreshEventName: 'plantuml-refresh',
   modalTitle: 'PlantUML Diagram',
+  label: 'PLANTUML',
   toggleTextUpdates: false,
   refreshOnToggle: false,
   copyFeedback: false,

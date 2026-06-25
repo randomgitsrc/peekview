@@ -32,6 +32,7 @@ const baseProps = {
   blockIndex: 0,
   classPrefix: 'mermaid' as const,
   theme: 'light' as const,
+  label: 'MERMAID',
   pngBackground: '#ffffff' as const,
   pngViewBoxFallback: 'g-root-getBBox' as const,
   pngFinalSize: { width: 800, height: 600 },

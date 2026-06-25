@@ -9,6 +9,7 @@ const props = defineProps<{
   // ── 标识 ──
   blockId: string | number
   blockIndex: number
+  label: string
   classPrefix: 'mermaid' | 'plantuml' | 'svg'
   // ── 主题 ──
   theme: 'light' | 'dark'
@@ -54,6 +55,8 @@ const modalSvgWrapper = ref<HTMLElement>()
 
 // ── 状态 ──
 const isFullscreen = ref(false)
+const isCodeView = ref(false)
+const menuOpen = ref(false)
 let panZoomInstance: any = null
 let modalPanZoomInstance: any = null
 let resizeObserver: ResizeObserver | null = null
@@ -183,6 +186,20 @@ function closeFullscreen() {
     modalPanZoomInstance.destroy()
     modalPanZoomInstance = null
   }
+}
+
+// ── view toggle / resize（emit-based，P4c2）──
+function onToggleView() {
+  isCodeView.value = !isCodeView.value
+  emit('toggle-view', props.blockId)
+  if (props.refreshOnToggle && props.refreshEventName) {
+    window.dispatchEvent(new CustomEvent(props.refreshEventName))
+  }
+}
+
+function onResizeStart(e: MouseEvent) {
+  e.preventDefault()
+  emit('start-resize', props.blockId, e.clientY)
 }
 
 // ── PNG 导出（modal 路径：用传入 svgContent；inline 路径：用挂载 DOM svg via downloadPng）──
@@ -465,16 +482,37 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="containerRef" :class="classPrefix + '-viewer'" @wheel="onWheel">
-    <div ref="svgContainer" :class="classPrefix + '-container'" v-html="svgContent"></div>
+  <div :class="classPrefix + '-block'" :data-block-id="blockId" :data-index="blockIndex">
+    <div :class="classPrefix + '-header'">
+      <span :class="classPrefix + '-label'">{{ label }}</span>
+      <div :class="classPrefix + '-header-actions'">
+        <button :class="classPrefix + '-view-toggle'" @click="onToggleView" title="Toggle Diagram/Code">
+          <span class="toggle-icon">◫</span>
+          <span class="toggle-text" v-if="toggleTextUpdates">{{ isCodeView ? 'Code' : 'Diagram' }}</span>
+        </button>
+        <button :class="classPrefix + '-action-btn fullscreen-btn'" @click="emit('fullscreen', blockId)" title="Fullscreen">⧉</button>
+        <div :class="classPrefix + '-dropdown'">
+          <button :class="classPrefix + '-action-btn menu-btn'" @click="menuOpen = !menuOpen" title="More actions">⋯</button>
+          <div :class="classPrefix + '-dropdown-menu'" v-if="menuOpen">
+            <button @click="emit('download-png', blockId); menuOpen = false">⬇ Download PNG</button>
+            <button @click="emit('copy-code', blockId); menuOpen = false">⧉ Copy Code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div :class="[classPrefix + '-content', 'diagram-mode', { 'is-active': !isCodeView }]" data-mode="diagram">
+      <div ref="containerRef" :class="classPrefix + '-viewer'" @wheel="onWheel">
+        <div ref="svgContainer" :class="classPrefix + '-container'" v-html="svgContent"></div>
+      </div>
+      <div v-if="resizeEnabled" :class="classPrefix + '-resize-handle'" @mousedown="onResizeStart"></div>
+    </div>
+    <div :class="[classPrefix + '-content', 'code-mode', { 'is-active': isCodeView }]" data-mode="code">
+      <pre class="shiki"><code v-html="codeViewHtml"></code></pre>
+    </div>
   </div>
 
   <Teleport to="body">
-    <div
-      v-if="isFullscreen"
-      :class="classPrefix + '-modal-overlay'"
-      @click.self="closeFullscreen"
-    >
+    <div v-if="isFullscreen" :class="classPrefix + '-modal-overlay'" @click.self="closeFullscreen">
       <div :class="classPrefix + '-modal'">
         <div :class="classPrefix + '-modal-toolbar'">
           <span class="modal-title">{{ modalTitle }}</span>
