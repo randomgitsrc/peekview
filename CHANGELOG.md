@@ -7,6 +7,22 @@
 
 ## [Unreleased]
 
+## [0.1.68] - 2026-06-26
+
+### 重构
+
+- T022: Markdown 渲染管线重构 — 提取 `BaseDiagram.vue` 基类组件（493行），封装 zoom/fullscreen/pan/PNG 导出骨架；三胞胎组件（MermaidDiagram/PlantUmlDiagram/SvgDiagram）退化为薄包装（各 < 150 行），仅提供差异 props
+- T022: `useCodeBlockRenderer` composable — 从 MarkdownViewer 迁出渲染状态（mermaidCache/sourcesMap/renderToken/instances），封装 preRender/getter/instance 管理（161 行）
+- T022: `diagramRegistry` 注册模式 — useMarkdown 从三分支 if/else 改为查表路由，新增图表类型只需 1 文件 + 1 行注册（40 行）
+- T022: `useMarkdown.render()` 返回值合并 — `mermaidSources/plantumlSources/svgSources` 三 Map 合并为 `sources: Map<number, BlockSource>`，含 codeViewHtml 字段
+
+### 验证
+
+- 前端 vue-tsc 0 error，npm run build 成功
+- 旧测试 152 passed（行为保真，重构未破坏现有功能）
+- 后端 577 passed（无回归）
+- Playwright BDD 6/6 PASS：mermaid/plantuml/svg 渲染、toggle 切换、fullscreen modal、sanitize 安全
+
 ## [0.1.67] - 2026-06-25
 
 ### 新增

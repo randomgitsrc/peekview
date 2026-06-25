@@ -1,42 +1,18 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P6
+phase: P7
 status: in_progress
 retries:
-  P2:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: add_navigation
-    - round: 2
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: add_navigation
-  P3:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 2
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 3
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: switch_type
-    - round: 4
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: switch_type
-  P4:
-    - note: dispatch-context模式零空返回
-  P5:
-    - note: gate通过（旧测试158passed行为保真，7新测试红灯TDD延续）
+  P2: [{round:1,failure_mode:empty_return},{round:2,failure_mode:quality}]
+  P3: [{round:1,2,3,4,failure_mode:empty_return}]
+  P4: []
+  P5: []
+  P6: []
 retry_count:
   P1: 0
   P2: 2
   P3: 4
   P4: 0
   P5: 0
+  P6: 0
 updated: 2026-06-26

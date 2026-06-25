@@ -44,11 +44,12 @@ packages/mcp-server/src/
 6. **严禁** 直接用 sqlite3 操作生产数据库（`~/.peekview/peekview.db`）。如发现测试数据误入生产 DB，报告给用户决定清理方式，不自行 DELETE。如必须清理，用 `peekview delete <slug>` CLI 命令（走应用逻辑，清理 DB + 存储 + FTS），清理后验证 `PRAGMA integrity_check` + `foreign_key_check`
 7. **严禁** 用 CLI（`peekview create`）创建测试 entry——CLI 可能加载非 debug 配置导致误写生产 DB。测试 entry 只通过 debug backend HTTP API 创建：`curl -X POST http://127.0.0.1:8888/api/v1/entries ...`，创建后验证数据落在 debug DB
 8. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
-9. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
-10. 改代码前先读周围上下文，理解代码风格和现有库选择
-11. 不加注释（除非被要求）
-12. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
-13. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
+9. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。访问 entry 页面用 `http://127.0.0.1:8888/{slug}`（如 `/t022-test`），不要拼 `/entries/{slug}`。创建 entry 的 API 路径是 `/api/v1/entries`，但前端页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败，务必记住
+10. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+11. 改代码前先读周围上下文，理解代码风格和现有库选择
+12. 不加注释（除非被要求）
+13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
+14. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
 
 ## 环境隔离机制（代码层面保障）
 
