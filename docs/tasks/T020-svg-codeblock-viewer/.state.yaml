@@ -1,7 +1,7 @@
 task_id: T020
 task_name: svg-codeblock-viewer
-phase: P8
-status: in_progress
+phase: READY
+status: ready
 retries:
   P2:
     - round: 1
