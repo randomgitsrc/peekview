@@ -46,7 +46,7 @@
 | T018 | plantuml-start-markers | ✅✅ 已完成 | P8 | 🟠 | 2026-06-21 |
 | T019 | html-viewer-srcdoc-csp | ✅✅ 已完成 | P8 | 🔴 | 2026-06-23 |
 | T021 | zen-mode | ✅✅ 已完成 | P8 | 🟡 | 2026-06-25 |
-| T022 | diagram-renderer-refactor | ✅✅ 已完成 | P8 | 🟠 | 2026-06-26 |
+| T022 | diagram-renderer-refactor | ❌ 已回退 | P8→REVERTED | 🟠 | 2026-06-26 |
 
 > **依赖列说明**：主 Agent 启动任务前检查依赖列。所有依赖任务状态为 ✅✅ 已完成 才启动。
 > **active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 扫描所有 `.state.yaml` 重建。消除多 Agent 并发 git 冲突。

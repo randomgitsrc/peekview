@@ -1,7 +1,14 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
 phase: DONE
-status: published
+status: reverted
+revert_reason: |
+  P4 实现遗漏三个系统性缺陷导致 diagram 功能全面损坏：
+  A) CSS 全未迁移（旧组件 scoped CSS 变死代码，BaseDiagram 0行样式）
+  B) 双重 DOM 嵌套（placeholder + BaseDiagram 根元素都用 .{prefix}-block）
+  C) 双重状态管理（Vue 响应式 vs DOM 操作打架）
+  P6 BDD 29/29 全绿但用户可见功能大面积损坏（BDD 测代码行为不测视觉行为）
+  回退到 v0.1.67 (commit bb5a505a)，详见 docs/plans/T028-diagram-rollback-and-redo.md
 retries:
   P2:
     - round: 1
