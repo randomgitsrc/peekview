@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-06-26
+
+### 修复
+
+- 回退 T022 diagram-renderer-refactor — v0.2.0 引入的 BaseDiagram 薄包装架构导致 diagram 功能全面损坏（双重 DOM 嵌套、CSS 全未迁移、双重状态管理），恢复 MarkdownViewer.vue 和 useMarkdown.ts 到 v0.1.67 版本，删除 T022 新增的 diagrams/ 目录、useCodeBlockRenderer.ts、diagramRegistry.ts 及相关测试文件。Playwright 验证：Mermaid/PlantUML/SVG 三种 diagram 的渲染、toggle、dropdown、fullscreen modal 全部正常
+
+
 ## [0.2.2] - 2026-06-26
 
 ### 修复
