@@ -17,15 +17,15 @@ describe('useMarkdown svg 代码块识别', () => {
     expect(result.html).toContain('svg-block')
   })
 
-  it('result.sources 是 Map 且含原始 SVG 源码', async () => {
+  it('result.svgSources 是 Map 且含原始 SVG 源码', async () => {
     const svgSrc = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="40" fill="red"/></svg>'
     const md = '```svg\n' + svgSrc + '\n```'
     const result = await render(md, 'github-light')
-    expect(result.sources).toBeInstanceOf(Map)
-    expect(result.sources.size).toBeGreaterThan(0)
-    const first = Array.from(result.sources.values())[0]
-    expect(first.code).toContain('<svg')
-    expect(first.code).toContain('circle')
+    expect(result.svgSources).toBeInstanceOf(Map)
+    expect(result.svgSources.size).toBeGreaterThan(0)
+    const first = Array.from(result.svgSources.values())[0]
+    expect(first).toContain('<svg')
+    expect(first).toContain('circle')
   })
 })
 

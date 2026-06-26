@@ -6,26 +6,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, render as vueRender, type Component } from 'vue'
+import { ref, watch, nextTick, h, render as vueRender, onMounted, onBeforeUnmount } from 'vue'
+import mermaid from 'mermaid'
 import { useMarkdown, type MarkdownRenderResult } from '@/composables/useMarkdown'
+import { useMermaid } from '@/composables/useMermaid'
 import * as usePlantUML from '@/composables/usePlantUML'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
 import type { TocHeading } from '@/types'
-import MermaidDiagram from '@/components/diagrams/MermaidDiagram.vue'
-import PlantUmlDiagram from '@/components/diagrams/PlantUmlDiagram.vue'
-import SvgDiagram from '@/components/diagrams/SvgDiagram.vue'
-import { useCodeBlockRenderer } from '@/composables/useCodeBlockRenderer'
-
-const renderer = useCodeBlockRenderer()
-const { sourcesMap, nextToken, isCurrent, registerInstance, getInstance,
-  preRenderMermaid, preRenderPlantUml, registerSvg,
-  renderMermaidFresh, renderPlantUmlFresh, svgToPng } = renderer
+import MermaidDiagram from '@/components/MermaidDiagram.vue'
+import PlantUmlDiagram from '@/components/PlantUmlDiagram.vue'
+import SvgDiagram from '@/components/SvgDiagram.vue'
+import DOMPurify from 'dompurify'
 
 const props = defineProps<{ content: string }>()
 const emit = defineEmits<{ headings: [headings: TocHeading[]] }>()
 
 const { render } = useMarkdown()
+const { render: renderMermaid } = useMermaid()
 const themeStore = useThemeStore()
 const { theme } = storeToRefs(themeStore)
 
@@ -33,200 +31,761 @@ const contentRef = ref<HTMLElement>()
 const headings = ref<TocHeading[]>([])
 const renderedHtml = ref('')
 const isLoading = ref(false)
+const mermaidCache = new Map<string, string>()
+let mermaidSourcesMap: Map<number, string> = new Map()
+let plantumlSourcesMap: Map<number, string> = new Map()
+let svgSourcesMap: Map<number, string> = new Map()
+let renderToken = 0
 
-const wrapperRegistry: Record<string, Component> = {
-  mermaid: MermaidDiagram, plantuml: PlantUmlDiagram, svg: SvgDiagram
-}
+const mermaidInstances = new Map<string, any>()
+const plantumlInstances = new Map<string, any>()
+const svgInstances = new Map<string, any>()
 
-function getThemeName() { return theme.value === 'dark' ? 'github-dark' : 'github-light' }
-function getThemeLight() { return theme.value === 'dark' ? 'dark' : 'light' }
 
-function handleToggleView(blockId: string | number, prefix: string) {
-  const block = document.getElementById(String(blockId))
-  if (!block) return
-  const dm = block.querySelector(`.${prefix}-content.diagram-mode`)
-  const cm = block.querySelector(`.${prefix}-content.code-mode`)
-  if (dm && cm) {
-    dm.classList.toggle('is-active')
-    cm.classList.toggle('is-active')
+async function copyCodeBlock(btn: HTMLButtonElement) {
+  const code = btn.getAttribute('data-code')
+  if (code) {
+    try {
+      await navigator.clipboard.writeText(code)
+      const originalText = btn.textContent
+      btn.textContent = 'Copied!'
+      btn.classList.add('copied')
+      setTimeout(() => {
+        btn.textContent = originalText
+        btn.classList.remove('copied')
+      }, 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
-  if (prefix === 'mermaid' || prefix === 'svg') {
-    const tt = block.querySelector(`.${prefix}-view-toggle .toggle-text`)
-    if (tt) tt.textContent = cm?.classList.contains('is-active') ? 'Code' : 'Diagram'
-    const viewer = block.querySelector(`.${prefix}-viewer`) || block.querySelector(`.${prefix}-viewer-mount`)
-    viewer?.dispatchEvent(new CustomEvent(`${prefix}-refresh`))
-  }
 }
 
-function handleFullscreen(blockId: string | number, prefix: string) {
-  getInstance(prefix, String(blockId))?.toggleFullscreen?.()
-}
-
-function handleCopyCode(blockId: string | number, prefix: string) {
-  const idx = parseInt(String(blockId).split('-').pop() || '0')
-  const code = sourcesMap.get(idx)?.code || ''
+async function copyMermaidCode(blockId: string) {
+  const index = parseInt(blockId.replace('mermaid-block-', ''))
+  const code = mermaidSourcesMap.get(index) || ''
   if (!code) return
-  navigator.clipboard.writeText(code).catch(() => {})
-  if (prefix === 'mermaid' || prefix === 'svg') {
-    const block = document.getElementById(String(blockId))
-    if (!block) return
-    const btn = block.querySelector(`.${prefix}-dropdown-menu button:last-child`)
-    if (btn) {
-      const orig = (btn as HTMLElement).textContent || ''
-      ;(btn as HTMLElement).textContent = '✓ Copied!'
-      setTimeout(() => { (btn as HTMLElement).textContent = orig }, 2000)
+  try {
+    await navigator.clipboard.writeText(code)
+    // Show feedback
+    const menu = document.getElementById(`menu-${blockId}`)
+    if (menu) {
+      const btn = menu.querySelector('button:last-child')
+      if (btn) {
+        const original = btn.textContent
+        btn.textContent = '✓ Copied!'
+        setTimeout(() => {
+          btn.textContent = original
+        }, 2000)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
+}
+
+// Global download function for mermaid PNG - re-renders mermaid code to clean SVG
+async function downloadMermaidPng(blockId: string) {
+  const block = document.getElementById(blockId)
+  if (!block) return
+
+  const index = parseInt(block.getAttribute('data-index') || '0')
+  const code = mermaidSourcesMap.get(index) || ''
+  if (!code) {
+    console.error('No mermaid code found')
+    return
+  }
+
+  try {
+    // Re-render the mermaid code to get a clean SVG (no DOM transforms/foreignObject)
+    const { svg } = await mermaid.render(`export-${blockId}`, code)
+
+    // Parse the clean SVG
+    // Fix: mermaid uses <br> but DOMParser requires XHTML <br/>
+    const fixedSvg = svg.replace(/<br>/gi, '<br/>')
+    const parser = new DOMParser()
+    const svgDoc = parser.parseFromString(fixedSvg, 'image/svg+xml')
+    const svgEl = svgDoc.documentElement as unknown as SVGElement
+
+    // Check for parse errors
+    const parseError = svgDoc.querySelector('parsererror')
+    if (parseError) {
+      console.error('SVG Parse Error:', parseError.textContent)
+      console.error('SVG preview:', svg.substring(0, 500))
+      throw new Error(`Failed to parse SVG: ${parseError.textContent?.substring(0, 100)}`)
+    }
+
+    // Get dimensions from viewBox (mermaid calculates this accurately including foreignObject content)
+    // Just use viewBox width/height directly - mermaid already includes all content boundaries
+    let width = 0, height = 0
+    const viewBox = svgEl.getAttribute('viewBox')
+    if (viewBox) {
+      const parts = viewBox.split(/\s+/).map(parseFloat)
+      if (parts.length >= 4) {
+        // parts = [x, y, width, height], e.g., "-8 -8 142 284"
+        // Use width/height directly, don't modify viewBox or add transforms
+        width = Math.ceil(parts[2] + 20)  // Small padding
+        height = Math.ceil(parts[3] + 20)
+      }
+    }
+
+    // Fallback: try to get dimensions from g.root bbox
+    // Note: getBBox() may not include foreignObject content accurately
+    if (width === 0 || height === 0) {
+      try {
+        const tempDiv = document.createElement('div')
+        tempDiv.style.cssText = 'position: absolute; left: -9999px; top: 0; visibility: hidden;'
+        tempDiv.innerHTML = svg
+        document.body.appendChild(tempDiv)
+        const tempSvg = tempDiv.querySelector('svg')
+        if (tempSvg) {
+          const rootGroup = tempSvg.querySelector('g.root')
+          if (rootGroup) {
+            const bbox = (rootGroup as SVGGElement).getBBox()
+            if (bbox && bbox.width > 0 && bbox.height > 0) {
+              width = Math.ceil(bbox.width + 40)
+              height = Math.ceil(bbox.height + 40)
+            }
+          }
+        }
+        document.body.removeChild(tempDiv)
+      } catch (e) {
+        console.error('Error getting bbox:', e)
+      }
+    }
+
+    // Final fallback
+    if (width === 0 || height === 0) {
+      width = 800
+      height = 600
+    }
+
+    // Ensure minimum size
+    width = Math.max(width, 100)
+    height = Math.max(height, 100)
+
+    // Set dimensions
+    svgEl.setAttribute('width', String(width))
+    svgEl.setAttribute('height', String(height))
+    svgEl.style.width = `${width}px`
+    svgEl.style.height = `${height}px`
+    svgEl.style.maxWidth = 'none'
+    svgEl.style.maxHeight = 'none'
+
+    // Ensure namespace
+    if (!svgEl.getAttribute('xmlns')) {
+      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    }
+
+    // Serialize to data URL
+    const serializer = new XMLSerializer()
+    const serialized = serializer.serializeToString(svgEl)
+    const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
+    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
+
+    // Load and draw to canvas
+    const img = new Image()
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = reject
+      img.src = dataUrl
+    })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const ctx = canvas.getContext('2d')!
+
+    // Fill white background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw SVG
+    ctx.drawImage(img, 0, 0, width, height)
+
+    // Export PNG
+    canvas.toBlob((pngBlob) => {
+      if (pngBlob) {
+        const pngUrl = URL.createObjectURL(pngBlob)
+        const a = document.createElement('a')
+        a.href = pngUrl
+        a.download = `mermaid-diagram-${blockId.replace('mermaid-block-', '')}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(pngUrl)
+      }
+    }, 'image/png')
+  } catch (err) {
+    console.error('Failed to export PNG:', err)
+    alert('Failed to download PNG. Please try again.')
+  }
+}
+
+// Global toggle function for mermaid view - toggle mode
+function toggleMermaidView(blockId: string) {
+  const block = document.getElementById(blockId)
+  if (!block) return
+
+  const diagramMode = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
+  const codeMode = block.querySelector('.mermaid-content[data-mode="code"]') as HTMLElement
+  const toggleBtn = block.querySelector('.mermaid-view-toggle') as HTMLElement
+  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
+
+  if (!diagramMode || !codeMode) return
+
+  const isCurrentlyCode = codeMode.classList.contains('is-active')
+
+  if (isCurrentlyCode) {
+    // Switch to diagram
+    codeMode.classList.remove('is-active')
+    diagramMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Diagram'
+    toggleBtn?.classList.remove('code-active')
+
+    // Trigger resize on the pan-zoom instance after display change
+    const viewer = diagramMode.querySelector('.mermaid-viewer')
+    if (viewer) {
+      viewer.dispatchEvent(new CustomEvent('mermaid-refresh', { bubbles: true }))
     }
   } else {
-    console.log('Code copied to clipboard')
+    // Switch to code
+    diagramMode.classList.remove('is-active')
+    codeMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Code'
+    toggleBtn?.classList.add('code-active')
   }
 }
 
-function handleDownloadPng(blockId: string | number, prefix: string) {
-  const idx = parseInt(String(blockId).split('-').pop() || '0')
-  const source = sourcesMap.get(idx)
-  if (!source) return
-  const t = getThemeLight()
-  if (prefix === 'svg') {
-    getInstance('svg', String(blockId))?.downloadPng?.()
-  } else if (prefix === 'mermaid') {
-    renderMermaidFresh(source.code, t).then(svg => {
-      svgToPng(svg, { width: 800, height: 600, background: '#ffffff', filename: `mermaid-diagram-${idx}.png` })
-    }).catch(() => {})
-  } else if (prefix === 'plantuml') {
-    renderPlantUmlFresh(source.code, t).then(svg => {
-      svgToPng(svg, { width: 800, height: 600, background: '#ffffff', filename: `plantuml-diagram-${idx}.png` })
-    }).catch(() => {})
+// Open mermaid fullscreen
+function openMermaidFullscreen(blockId: string) {
+  const instance = mermaidInstances.get(blockId)
+  if (instance && instance.toggleFullscreen) {
+    instance.toggleFullscreen()
   }
 }
 
-function handleToggleMenu(blockId: string | number, prefix: string) {
-  const block = document.getElementById(String(blockId))
-  if (!block) return
-  const menu = block.querySelector(`.${prefix}-dropdown-menu`)
+// Toggle mermaid dropdown menu
+function toggleMermaidMenu(blockId: string) {
+  const menu = document.getElementById(`menu-${blockId}`)
   if (!menu) return
-  const isShown = menu.classList.contains('show')
-  if (prefix === 'mermaid' || prefix === 'svg') {
-    document.querySelectorAll(`.${prefix}-dropdown-menu.show`).forEach(m => {
-      if (m !== menu) m.classList.remove('show')
-    })
-  }
+
+  // Close other menus
+  document.querySelectorAll('.mermaid-dropdown-menu').forEach((m) => {
+    if (m.id !== `menu-${blockId}`) {
+      m.classList.remove('show')
+    }
+  })
+
   menu.classList.toggle('show')
-  if (!isShown && (prefix === 'mermaid' || prefix === 'svg')) {
-    const onClose = (e: MouseEvent) => {
-      if (!block.contains(e.target as Node)) {
-        menu.classList.remove('show')
-        document.removeEventListener('click', onClose)
-      }
+
+  // Close on click outside
+  const closeMenu = (e: Event) => {
+    if (!(e.target as Element).closest('.mermaid-dropdown')) {
+      menu.classList.remove('show')
+      document.removeEventListener('click', closeMenu)
     }
-    setTimeout(() => document.addEventListener('click', onClose), 0)
   }
+
+  // Add listener next tick to avoid immediate close
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu)
+  }, 0)
 }
 
-function handleStartResize(blockId: string | number, startY: number, _prefix: string) {
-  const block = document.getElementById(String(blockId))
+// Resize handling
+let resizingBlock: HTMLElement | null = null
+let startY = 0
+let startHeight = 0
+
+function startResize(blockId: string, e: MouseEvent) {
+  e.preventDefault()
+  const block = document.getElementById(blockId)
   if (!block) return
-  const content = block.querySelector('.diagram-mode') as HTMLElement
+
+  const content = block.querySelector('.mermaid-content[data-mode="diagram"]') as HTMLElement
   if (!content) return
-  const startHeight = content.offsetHeight
-  const onMove = (e: MouseEvent) => {
-    content.style.height = Math.max(200, startHeight + e.clientY - startY) + 'px'
-  }
-  const onUp = () => {
-    document.removeEventListener('mousemove', onMove)
-    document.removeEventListener('mouseup', onUp)
-  }
-  document.addEventListener('mousemove', onMove)
-  document.addEventListener('mouseup', onUp)
+
+  resizingBlock = content
+  startY = e.clientY
+  // Get current computed height
+  const computedStyle = window.getComputedStyle(content)
+  startHeight = parseInt(computedStyle.height) || 400
+
+  document.addEventListener('mousemove', onResizeMove)
+  document.addEventListener('mouseup', onResizeEnd)
+  document.body.style.cursor = 'se-resize'
+  content.classList.add('resizing')
 }
 
-async function mountDiagrams(myToken: number) {
-  if (!contentRef.value) return
-  let hasPlantuml = false
-  for (const s of sourcesMap.values()) { if (s.lang === 'plantuml') { hasPlantuml = true; break } }
-  if (hasPlantuml) {
-    await usePlantUML.ensureLoaded()
-    if (!isCurrent(myToken)) return
+function onResizeMove(e: MouseEvent) {
+  if (!resizingBlock) return
+  const delta = e.clientY - startY
+  const newHeight = Math.max(200, startHeight + delta)
+  resizingBlock.style.height = `${newHeight}px`
+  // Remove maxHeight constraint during resize
+  resizingBlock.style.maxHeight = 'none'
+}
+
+function onResizeEnd() {
+  if (resizingBlock) {
+    resizingBlock.classList.remove('resizing')
+    resizingBlock = null
   }
-  for (const [index, source] of sourcesMap) {
-    if (!isCurrent(myToken)) return
-    const mountPoint = contentRef.value!.querySelector(
-      `.${source.lang}-block[data-index="${index}"]`
-    ) as HTMLElement | null
-    if (!mountPoint || mountPoint.dataset.rendered === 'true') continue
-    delete mountPoint.dataset.rendered
-    if (source.error) {
-      if (source.lang === 'mermaid') {
-        mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
-      } else if (source.lang === 'plantuml') {
-        const dm = mountPoint.querySelector('.plantuml-content.diagram-mode')
-        const cm = mountPoint.querySelector('.plantuml-content.code-mode')
-        dm?.classList.remove('is-active')
-        cm?.classList.add('is-active')
-      }
-      mountPoint.dataset.rendered = 'true'
-      continue
-    }
-    if (!source.svgContent && source.lang === 'mermaid') {
-      await preRenderMermaid(index, source.code, getThemeName(), source.codeViewHtml || '')
-      if (!isCurrent(myToken)) return
-    } else if (!source.svgContent && source.lang === 'plantuml') {
-      await preRenderPlantUml(index, source.code, getThemeName(), source.codeViewHtml || '')
-      if (!isCurrent(myToken)) return
-    } else if (!source.svgContent && source.lang === 'svg') {
-      await registerSvg(index, source.code, getThemeName())
-      if (!isCurrent(myToken)) return
-    }
-    const Wrapper = wrapperRegistry[source.lang]
-    if (!Wrapper) continue
-    const updatedSource = sourcesMap.get(index)
-    const vNode = h(Wrapper, {
-      blockIndex: index,
-      blockId: `${source.lang}-block-${index}`,
-      svgContent: updatedSource?.svgContent || '',
-      codeViewHtml: updatedSource?.codeViewHtml || '',
-      theme: getThemeLight(),
-      onToggleView: (blockId: string | number) => handleToggleView(blockId, source.lang),
-      onFullscreen: (blockId: string | number) => handleFullscreen(blockId, source.lang),
-      onCopyCode: (blockId: string | number) => handleCopyCode(blockId, source.lang),
-      onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, source.lang),
-      onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, source.lang),
-      onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, source.lang),
-    })
-    try {
-      vueRender(vNode, mountPoint)
-      registerInstance(source.lang, `${source.lang}-block-${index}`, (vNode as any).component?.exposed ?? (vNode as any).component?.proxy)
-    } catch (err) {
-      if (source.lang === 'svg') {
-        mountPoint.innerHTML = '<div class="svg-error">Failed to render SVG</div>'
-      }
-    }
-    mountPoint.dataset.rendered = 'true'
+  document.removeEventListener('mousemove', onResizeMove)
+  document.removeEventListener('mouseup', onResizeEnd)
+  document.body.style.cursor = ''
+}
+
+function handleDelegatedAction(e: MouseEvent) {
+  const target = (e.target as Element).closest('[data-action]') as HTMLElement | null
+  if (!target) return
+  const action = target.dataset.action
+  const blockId = target.dataset.blockId
+  switch (action) {
+    case 'toggle-mermaid-view': toggleMermaidView(blockId!); break
+    case 'open-mermaid-fullscreen': openMermaidFullscreen(blockId!); break
+    case 'toggle-mermaid-menu': toggleMermaidMenu(blockId!); break
+    case 'download-mermaid-png': downloadMermaidPng(blockId!); break
+    case 'copy-mermaid-code': copyMermaidCode(blockId!); break
+    case 'toggle-plantuml-view': togglePlantUmlView(blockId!); break
+    case 'open-plantuml-fullscreen': openPlantUmlFullscreen(blockId!); break
+    case 'toggle-plantuml-menu': togglePlantUmlMenu(blockId!); break
+    case 'download-plantuml-png': downloadPlantUmlPng(blockId!); break
+    case 'copy-plantuml-code': copyPlantUmlCode(blockId!); break
+    case 'toggle-svg-view': toggleSvgView(blockId!); break
+    case 'open-svg-fullscreen': openSvgFullscreen(blockId!); break
+    case 'toggle-svg-menu': toggleSvgMenu(blockId!); break
+    case 'download-svg-png': downloadSvgPng(blockId!); break
+    case 'copy-svg-code': copySvgCode(blockId!); break
+    case 'copy-code-block': copyCodeBlock(target as HTMLButtonElement); break
   }
 }
+
+function handleDelegatedResize(e: MouseEvent) {
+  const target = (e.target as Element).closest('[data-action="start-resize"]') as HTMLElement | null
+  if (!target) return
+  startResize(target.dataset.blockId!, e)
+}
+
+onMounted(() => {
+  contentRef.value?.addEventListener('click', handleDelegatedAction)
+  contentRef.value?.addEventListener('mousedown', handleDelegatedResize)
+})
+
+onBeforeUnmount(() => {
+  contentRef.value?.removeEventListener('click', handleDelegatedAction)
+  contentRef.value?.removeEventListener('mousedown', handleDelegatedResize)
+})
 
 async function renderContent() {
-  const myToken = nextToken()
+  const myToken = ++renderToken
   isLoading.value = true
   try {
-    const result: MarkdownRenderResult = await render(props.content, getThemeName())
-    if (!isCurrent(myToken)) return
+    const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
+    const result: MarkdownRenderResult = await render(props.content, themeName)
+    if (myToken !== renderToken) return
     headings.value = result.headings
     renderedHtml.value = result.html
-    sourcesMap.clear()
-    result.sources.forEach((val, idx) => sourcesMap.set(idx, val))
+    mermaidSourcesMap = result.mermaidSources
+    plantumlSourcesMap = result.plantumlSources
+    svgSourcesMap = result.svgSources
     emit('headings', result.headings)
     await nextTick()
-    if (!isCurrent(myToken)) return
+
+    if (myToken !== renderToken) return
+
     if (contentRef.value) {
-      contentRef.value.querySelectorAll('[data-rendered]').forEach(
-        el => delete (el as HTMLElement).dataset.rendered
-      )
+      const mountPoints = contentRef.value.querySelectorAll('.mermaid-viewer-mount')
+      mountPoints.forEach(mp => {
+        delete (mp as HTMLElement).dataset.rendered
+      })
+      const plantumlMountPoints = contentRef.value.querySelectorAll('.plantuml-viewer-mount')
+      plantumlMountPoints.forEach(mp => {
+        delete (mp as HTMLElement).dataset.rendered
+      })
+      const svgMountPoints = contentRef.value.querySelectorAll('.svg-viewer-mount')
+      svgMountPoints.forEach(mp => {
+        delete (mp as HTMLElement).dataset.rendered
+      })
     }
-    await mountDiagrams(myToken)
+
+    await renderMermaidDiagrams()
+    if (myToken !== renderToken) return
+    await renderPlantUmlDiagrams(myToken)
+    if (myToken !== renderToken) return
+    await renderSvgBlocks(myToken)
   } catch (err) {
-    if (isCurrent(myToken)) console.error('Markdown render failed:', err)
+    if (myToken === renderToken) console.error('Markdown render failed:', err)
   } finally {
-    if (isCurrent(myToken)) isLoading.value = false
+    if (myToken === renderToken) isLoading.value = false
+  }
+}
+
+async function renderMermaidDiagrams() {
+  if (!contentRef.value) return
+
+  // Find new mermaid blocks that need rendering
+  const blocks = contentRef.value.querySelectorAll('.mermaid-block')
+
+  for (const block of blocks) {
+    const mountPoint = block.querySelector('.mermaid-viewer-mount')
+    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
+
+    const index = parseInt(block.getAttribute('data-index') || '0')
+    const code = mermaidSourcesMap.get(index) || ''
+    if (!code) continue
+    const cacheKey = `${theme.value}-${code}`
+
+    try {
+      let svg: string
+      if (mermaidCache.has(cacheKey)) {
+        svg = mermaidCache.get(cacheKey)!
+      } else {
+        svg = await renderMermaid(String(index), code, theme.value)
+        mermaidCache.set(cacheKey, svg)
+      }
+
+      // Mark as rendered to avoid re-rendering
+      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+
+      // Mount MermaidDiagram component
+      const vNode = h(MermaidDiagram, {
+        svgContent: svg,
+        id: `mermaid-${index}`,
+      })
+      vueRender(vNode, mountPoint)
+
+      // Store instance reference for external access (fullscreen, etc)
+      // Note: vueRender doesn't give us the instance directly, so we store the mount point
+      // and use a data attribute to track it
+      mermaidInstances.set(`mermaid-block-${index}`, {
+        toggleFullscreen: () => {
+          const btn = mountPoint.querySelector('.mermaid-fullscreen-trigger')
+          if (btn) {
+            (btn as HTMLElement).click()
+          }
+        }
+      })
+    } catch (err) {
+      console.error('Mermaid render failed:', err)
+      mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
+    }
+  }
+}
+
+// PlantUML rendering — 串行硬约束：plantuml.js 用共享内部状态，并发调用静默覆盖。
+// 不可改为并行。L1 引擎层 usePlantUML.render 内部有模块级 Promise 链队列保证串行。
+async function renderPlantUmlDiagrams(myToken: number) {
+  if (!contentRef.value) return
+  if (plantumlSourcesMap.size === 0) return
+
+  await usePlantUML.ensureLoaded()
+  if (myToken !== renderToken) return
+
+  const blocks = contentRef.value.querySelectorAll('.plantuml-block')
+
+  for (const block of blocks) {
+    if (myToken !== renderToken) return
+
+    const mountPoint = block.querySelector('.plantuml-viewer-mount')
+    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
+
+    const index = parseInt(block.getAttribute('data-index') || '0')
+    const code = plantumlSourcesMap.get(index) || ''
+    if (!code) continue
+
+    try {
+      const svg = await usePlantUML.render(code, theme.value)
+      if (myToken !== renderToken) return
+
+      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+
+      const vNode = h(PlantUmlDiagram, {
+        svgContent: svg,
+        id: `plantuml-${index}`,
+      })
+      vueRender(vNode, mountPoint)
+
+      plantumlInstances.set(`plantuml-block-${index}`, {
+        toggleFullscreen: () => {
+          const btn = mountPoint.querySelector('.plantuml-fullscreen-trigger')
+          if (btn) {
+            (btn as HTMLElement).click()
+          }
+        }
+      })
+    } catch (err) {
+      console.error('PlantUML render failed:', err)
+      const blockEl = block as HTMLElement
+      const diagramMode = blockEl.querySelector('.plantuml-content.diagram-mode')
+      const codeMode = blockEl.querySelector('.plantuml-content.code-mode')
+      if (diagramMode && codeMode) {
+        diagramMode.classList.remove('is-active')
+        codeMode.classList.add('is-active')
+      }
+      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+    }
+  }
+}
+
+async function renderSvgBlocks(myToken: number) {
+  if (!contentRef.value) return
+  if (svgSourcesMap.size === 0) return
+
+  const blocks = contentRef.value.querySelectorAll('.svg-block')
+
+  for (const block of blocks) {
+    if (myToken !== renderToken) return
+
+    const mountPoint = block.querySelector('.svg-viewer-mount')
+    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
+
+    const index = parseInt(block.getAttribute('data-index') || '0')
+    const code = svgSourcesMap.get(index) || ''
+    if (!code) continue
+
+    try {
+      const cleanSvg = DOMPurify.sanitize(code, {
+        ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
+        ADD_TAGS: ['button'],
+      })
+
+      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+
+      const vNode = h(SvgDiagram, {
+        svgContent: cleanSvg,
+        id: `svg-${index}`,
+      })
+      vueRender(vNode, mountPoint)
+
+      // Capture the mounted component instance to call its exposed
+      // toggleFullscreen / downloadPng methods later.
+      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
+      svgInstances.set(`svg-block-${index}`, inst)
+    } catch (err) {
+      console.error('SVG render failed:', err)
+      mountPoint.innerHTML = '<div class="svg-error">Failed to render SVG</div>'
+    }
+  }
+}
+
+function togglePlantUmlView(blockId: string) {
+  const block = document.getElementById(blockId)
+  if (!block) return
+  const diagramMode = block.querySelector('.plantuml-content.diagram-mode')
+  const codeMode = block.querySelector('.plantuml-content.code-mode')
+  if (diagramMode && codeMode) {
+    diagramMode.classList.toggle('is-active')
+    codeMode.classList.toggle('is-active')
+  }
+}
+
+function openPlantUmlFullscreen(blockId: string) {
+  const instance = plantumlInstances.get(blockId)
+  instance?.toggleFullscreen()
+}
+
+function togglePlantUmlMenu(blockId: string) {
+  const menu = document.getElementById(`menu-${blockId}`)
+  if (menu) {
+    menu.classList.toggle('show')
+  }
+}
+
+function copyPlantUmlCode(blockId: string) {
+  const block = document.getElementById(blockId)
+  if (!block) return
+  const index = parseInt(block.getAttribute('data-index') || '0')
+  const code = plantumlSourcesMap.get(index) || ''
+  navigator.clipboard.writeText(code).then(() => {
+    console.log('PlantUML code copied')
+  }).catch(err => console.error('Copy failed:', err))
+}
+
+async function downloadPlantUmlPng(blockId: string) {
+  const block = document.getElementById(blockId)
+  if (!block) return
+  const index = parseInt(block.getAttribute('data-index') || '0')
+  const code = plantumlSourcesMap.get(index) || ''
+  if (!code) return
+
+  try {
+    const svg = await usePlantUML.render(code, theme.value)
+
+    const parser = new DOMParser()
+    const svgDoc = parser.parseFromString(svg, 'image/svg+xml')
+    const svgEl = svgDoc.documentElement as unknown as SVGElement
+
+    let width = 0, height = 0
+    const viewBox = svgEl.getAttribute('viewBox')
+    if (viewBox) {
+      const parts = viewBox.split(/\s+/).map(parseFloat)
+      if (parts.length >= 4) {
+        width = Math.ceil(parts[2] + 20)
+        height = Math.ceil(parts[3] + 20)
+      }
+    }
+    if (width === 0 || height === 0) {
+      const w = svgEl.getAttribute('width')
+      const h = svgEl.getAttribute('height')
+      if (w) width = Math.ceil(parseFloat(w) + 20)
+      if (h) height = Math.ceil(parseFloat(h) + 20)
+    }
+    if (width === 0 || height === 0) {
+      width = 800
+      height = 600
+    }
+    width = Math.max(width, 100)
+    height = Math.max(height, 100)
+
+    svgEl.setAttribute('width', String(width))
+    svgEl.setAttribute('height', String(height))
+    if (!svgEl.getAttribute('xmlns')) {
+      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    }
+
+    const serializer = new XMLSerializer()
+    const serialized = serializer.serializeToString(svgEl)
+    const svgBase64 = btoa(unescape(encodeURIComponent(serialized)))
+    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`
+
+    const img = new Image()
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = reject
+      img.src = dataUrl
+    })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(img, 0, 0, width, height)
+
+    canvas.toBlob((b) => {
+      if (!b) return
+      const url = URL.createObjectURL(b)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `plantuml-diagram-${blockId}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  } catch (err) {
+    console.error('Failed to download PlantUML PNG:', err)
+  }
+}
+
+// SVG toggle — toggle between diagram and code view
+function toggleSvgView(blockId: string) {
+  const root = contentRef.value
+  if (!root) return
+  const block = root.querySelector(`#${blockId}`) as HTMLElement | null
+  if (!block) return
+
+  const diagramMode = block.querySelector('.svg-content[data-mode="diagram"]') as HTMLElement
+  const codeMode = block.querySelector('.svg-content[data-mode="code"]') as HTMLElement
+  const toggleBtn = block.querySelector('.svg-view-toggle') as HTMLElement
+  const toggleText = toggleBtn?.querySelector('.toggle-text') as HTMLElement
+
+  if (!diagramMode || !codeMode) return
+
+  const isCurrentlyCode = codeMode.classList.contains('is-active')
+
+  if (isCurrentlyCode) {
+    // Switch to diagram
+    codeMode.classList.remove('is-active')
+    diagramMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Diagram'
+    toggleBtn?.classList.remove('code-active')
+
+    // Trigger resize on the pan-zoom instance after display change
+    const viewer = diagramMode.querySelector('.svg-viewer')
+    if (viewer) {
+      viewer.dispatchEvent(new CustomEvent('svg-refresh', { bubbles: true }))
+    }
+  } else {
+    // Switch to code
+    diagramMode.classList.remove('is-active')
+    codeMode.classList.add('is-active')
+    if (toggleText) toggleText.textContent = 'Code'
+    toggleBtn?.classList.add('code-active')
+  }
+}
+
+// Open SVG fullscreen via the mounted SvgDiagram instance
+function openSvgFullscreen(blockId: string) {
+  const instance = svgInstances.get(blockId)
+  if (instance && instance.toggleFullscreen) {
+    instance.toggleFullscreen()
+  }
+}
+
+// Toggle SVG dropdown menu
+function toggleSvgMenu(blockId: string) {
+  const root = contentRef.value
+  if (!root) return
+  const menu = root.querySelector(`#menu-${blockId}`) as HTMLElement | null
+  if (!menu) return
+
+  // Close other menus
+  root.querySelectorAll('.svg-dropdown-menu').forEach((m) => {
+    if (m.id !== `menu-${blockId}`) {
+      m.classList.remove('show')
+    }
+  })
+
+  menu.classList.toggle('show')
+
+  // Close on click outside
+  const closeMenu = (e: Event) => {
+    if (!(e.target as Element).closest('.svg-dropdown')) {
+      menu.classList.remove('show')
+      document.removeEventListener('click', closeMenu)
+    }
+  }
+
+  // Add listener next tick to avoid immediate close
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu)
+  }, 0)
+}
+
+// Copy the raw SVG source code
+async function copySvgCode(blockId: string) {
+  const index = parseInt(blockId.replace('svg-block-', ''))
+  const code = svgSourcesMap.get(index) || ''
+  if (!code) return
+  try {
+    await navigator.clipboard.writeText(code)
+    // Show feedback
+    const root = contentRef.value
+    const menu = root?.querySelector(`#menu-${blockId}`)
+    if (menu) {
+      const btn = menu.querySelector('button:last-child')
+      if (btn) {
+        const original = btn.textContent
+        btn.textContent = '✓ Copied!'
+        setTimeout(() => {
+          btn.textContent = original
+        }, 2000)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
+}
+
+// Download SVG as PNG via the mounted SvgDiagram instance's downloadPng method
+function downloadSvgPng(blockId: string) {
+  const instance = svgInstances.get(blockId)
+  if (instance && instance.downloadPng) {
+    instance.downloadPng()
   }
 }
 
