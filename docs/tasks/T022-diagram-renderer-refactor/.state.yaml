@@ -1,6 +1,6 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P5
+phase: P4
 status: in_progress
 retries:
   P2:
@@ -12,33 +12,11 @@ retries:
       failure_mode: quality
       prompt_changed: true
       adjustment: add_navigation
-  P3:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: false
-      adjustment: null
-    - round: 2
-      failure_mode: empty_return
-      prompt_changed: false
-      adjustment: null
-    - round: 3
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 4
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: add_navigation
-    - round: 5
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: switch_type
+  P3: []
   P4: []
-  P5: []
 retry_count:
   P1: 0
   P2: 2
-  P3: 5
+  P3: 0
   P4: 0
-  P5: 0
 updated: 2026-06-26
