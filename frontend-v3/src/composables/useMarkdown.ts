@@ -2,6 +2,7 @@ import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
 import type { TocHeading } from '@/types'
 import { useShiki } from './useShiki'
+import { getDiagramType } from './diagramRegistry'
 
 export interface MarkdownRenderResult {
   html: string
@@ -243,7 +244,9 @@ export function useMarkdown() {
         }
 
         if (block.lang === 'svg') {
-          sources.set(block.index, { lang: block.lang, code: block.code, codeViewHtml: '' })
+          const meta = getDiagramType('svg')
+          const safeCode = meta?.sanitize ? meta.sanitize(block.code) : block.code
+          sources.set(block.index, { lang: block.lang, code: safeCode, codeViewHtml: '' })
           const blockId = `svg-block-${block.index}`
           const blockHtml = `<div class="svg-block" id="${blockId}" data-block-id="${blockId}" data-index="${block.index}" data-lang="svg"></div>`
           html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, blockHtml)

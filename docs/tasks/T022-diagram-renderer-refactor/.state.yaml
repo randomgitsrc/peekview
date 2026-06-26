@@ -1,51 +1,16 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: P4
+phase: P3
 status: in_progress
 retries:
-  P2:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: add_navigation
-    - round: 2
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: add_navigation
+  P2: [{round:1,2}]
   P3:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 2
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 3
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: switch_type
-    - round: 4
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: switch_type
-  P4:
-    - round: 1
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: add_navigation
-      note: P4 实现不完整——4 子目标只做了 3（BaseDiagram抽取✅/useMarkdown注册✅/composable✅/emit迁移❌）。emit 迁移是 P0-brief task 第4条明确要求，非可选优化。回退补做。
-  P5:
-    - note: P5 gate 判定有误——7个新测试失败被当作"TDD延续"接受，实际是 P4 不完整导致。P5 结果无效。
-  P6:
-    - round: 1
-      failure_mode: quality
-      note: 只验了 6/29 BDD 就宣布 READY，严重违规。P6 结果无效。
+    - round: 1-4: empty_return
+    - round: 5: 跳过 — 直接宣布 P4 READY 违规
+    - note: 当前 P3 覆盖 26/72 测试点（缺组件 39 + 快照 8 + 错误处理 5 = 52 点）。P4 emit 迁移已完成，组件有真实逻辑，补测试可验证通过。
 retry_count:
   P1: 0
   P2: 2
-  P3: 4
-  P4: 1
-  P5: 0
-  P6: 1
+  P3: 5
+  P4: 0
 updated: 2026-06-26

@@ -17,7 +17,9 @@ import type { TocHeading } from '@/types'
 import MermaidDiagram from '@/components/diagrams/MermaidDiagram.vue'
 import PlantUmlDiagram from '@/components/diagrams/PlantUmlDiagram.vue'
 import SvgDiagram from '@/components/diagrams/SvgDiagram.vue'
-import DOMPurify from 'dompurify'
+import { useCodeBlockRenderer } from '@/composables/useCodeBlockRenderer'
+
+const { registerSvg, getCodeViewHtml } = useCodeBlockRenderer()
 
 const props = defineProps<{ content: string }>()
 const emit = defineEmits<{ headings: [headings: TocHeading[]] }>()
@@ -129,15 +131,15 @@ async function renderContent() {
     if (myToken !== renderToken) return
 
     if (contentRef.value) {
-      const mountPoints = contentRef.value.querySelectorAll('.mermaid-viewer-mount')
+      const mountPoints = contentRef.value.querySelectorAll('.mermaid-block')
       mountPoints.forEach(mp => {
         delete (mp as HTMLElement).dataset.rendered
       })
-      const plantumlMountPoints = contentRef.value.querySelectorAll('.plantuml-viewer-mount')
+      const plantumlMountPoints = contentRef.value.querySelectorAll('.plantuml-block')
       plantumlMountPoints.forEach(mp => {
         delete (mp as HTMLElement).dataset.rendered
       })
-      const svgMountPoints = contentRef.value.querySelectorAll('.svg-viewer-mount')
+      const svgMountPoints = contentRef.value.querySelectorAll('.svg-block')
       svgMountPoints.forEach(mp => {
         delete (mp as HTMLElement).dataset.rendered
       })
@@ -162,7 +164,7 @@ async function renderMermaidDiagrams() {
   const blocks = contentRef.value.querySelectorAll('.mermaid-block')
 
   for (const block of blocks) {
-    const mountPoint = block.querySelector('.mermaid-viewer-mount')
+    const mountPoint = block as HTMLElement
     if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
 
     const index = parseInt(block.getAttribute('data-index') || '0')
@@ -222,7 +224,7 @@ async function renderPlantUmlDiagrams(myToken: number) {
   for (const block of blocks) {
     if (myToken !== renderToken) return
 
-    const mountPoint = block.querySelector('.plantuml-viewer-mount')
+    const mountPoint = block as HTMLElement
     if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
 
     const index = parseInt(block.getAttribute('data-index') || '0')
@@ -275,7 +277,7 @@ async function renderSvgBlocks(myToken: number) {
   for (const block of blocks) {
     if (myToken !== renderToken) return
 
-    const mountPoint = block.querySelector('.svg-viewer-mount')
+    const mountPoint = block as HTMLElement
     if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
 
     const index = parseInt(block.getAttribute('data-index') || '0')
@@ -283,18 +285,18 @@ async function renderSvgBlocks(myToken: number) {
     if (!code) continue
 
     try {
-      const cleanSvg = DOMPurify.sanitize(code, {
-        ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
-        ADD_TAGS: ['button'],
-      })
+      const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
+      await registerSvg(index, code, themeName)
 
       ;(mountPoint as HTMLElement).dataset.rendered = 'true'
+
+      const codeViewHtml = getCodeViewHtml(index) || ''
 
       const vNode = h(SvgDiagram, {
         blockIndex: index,
         blockId: `svg-block-${index}`,
-        svgContent: cleanSvg,
-        codeViewHtml: '',
+        svgContent: code,
+        codeViewHtml,
         theme: theme.value === 'dark' ? 'dark' : 'light',
         onToggleView: (blockId: string | number) => handleToggleView(blockId, 'svg'),
         onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'svg'),

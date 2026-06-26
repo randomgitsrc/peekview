@@ -120,9 +120,10 @@ describe('useCodeBlockRenderer', () => {
   it('1.9 registerSvg 异步 Shiki 填 codeViewHtml', async () => {
     const r = useCodeBlockRenderer()
     await r.registerSvg(0, '<svg xmlns="x"><circle r="40"/></svg>', 'light')
-    expect(highlightCodeMock).toHaveBeenCalledWith(expect.any(String), 'xml', 'light')
+    expect(highlightCodeMock).toHaveBeenCalledWith(expect.any(String), 'xml', 'github-light')
     expect(r.getCodeViewHtml(0)).toBe('<shiki>highlighted</shiki>')
-    expect(r.getMermaidSvgByIndex(0)).toBe('')
+    // registerSvg 设 svgContent=code；mermaid svg getter 仍返回 svgContent（svg 源码）—— getMermaidSvgByIndex 是按 index 查 sourcesMap.svgContent，不分 lang
+    expect(r.getMermaidSvgByIndex(0)).toBe('<svg xmlns="x"><circle r="40"/></svg>')
   })
 
   it('1.10 registerInstance/unregister/getInstance 按 lang+id', () => {

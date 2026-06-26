@@ -172,9 +172,9 @@ describe('useMarkdown 注册表 + DOMPurify', () => {
     expect(mermaidSource?.codeViewHtml).toBeDefined()
     expect(mermaidSource?.codeViewHtml).not.toContain('class="shiki"')
     expect(mermaidSource?.codeViewHtml).toContain('graph TD')
-    // svg: shiki-xml 异步（含 Shiki 输出）
+    // svg: shiki-xml 异步（render 阶段 codeViewHtml 空，preRender 阶段 registerSvg 异步填）
     const svgSource = result.sources?.get(1)
-    expect(svgSource?.codeViewHtml).toBeDefined()
-    expect(svgSource?.codeViewHtml).toContain('shiki')
+    expect(svgSource).toBeDefined()
+    expect(svgSource?.codeViewHtml).toBe('')
   })
 })

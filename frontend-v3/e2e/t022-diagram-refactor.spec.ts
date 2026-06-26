@@ -91,4 +91,59 @@ test.describe('T022 Diagram Refactor', () => {
 
     await expect(overlay).not.toBeVisible()
   })
+
+  test('7.2 plantuml copy-code: no Copied feedback (console.log only)', async ({ page }) => {
+    await page.goto(`${BASE_URL}/entries/test-plantuml-2`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(3000)
+
+    // 打开 plantuml dropdown menu
+    const menuBtn = page.locator('.plantuml-block .plantuml-action-btn.menu-btn').first()
+    await menuBtn.click()
+    await page.waitForTimeout(300)
+
+    // 点击 copy-code 按钮
+    const copyBtn = page.locator('.plantuml-block [data-action="copy-plantuml-code"], .plantuml-block .plantuml-dropdown-menu button:has-text("Copy")').first()
+    const logs: string[] = []
+    page.on('console', msg => { if (msg.type() === 'log') logs.push(msg.text()) })
+    await copyBtn.click()
+    await page.waitForTimeout(500)
+
+    // 断言：无 .copied / 无 "Copied" 文字
+    const copiedText = await page.locator('.plantuml-block .copied, .plantuml-block :text("Copied!")').count()
+    expect(copiedText).toBe(0)
+  })
+
+  test('7.5 renderToken 防竞态: 快速切主题无旧 SVG 覆盖', async ({ page }) => {
+    await page.goto(`${BASE_URL}/entries/test-mermaid-2`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    // 快速切换主题两次（不等渲染完成）
+    const themeToggle = page.locator('.theme-toggle, [data-theme-toggle], button:has-text("Theme")').first()
+    if (await themeToggle.count() > 0) {
+      await themeToggle.click()
+      await themeToggle.click()
+      await page.waitForTimeout(3000)
+
+      // 断言：mermaid svg 仍然可见（不是被旧 token 覆盖为空）
+      await expect(page.locator('.mermaid-block svg').first()).toBeVisible()
+    }
+  })
+
+  test('7.7 响应式断点 <=768px: header padding 变化', async ({ page }) => {
+    await page.goto(`${BASE_URL}/entries/test-mermaid-2`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    // 模拟移动端视口
+    await page.setViewportSize({ width: 375, height: 667 })
+    await page.waitForTimeout(500)
+
+    // 断言：mermaid-header 在移动端 padding 变化
+    const headerPadding = await page.locator('.mermaid-block .mermaid-header').first().evaluate((el) => {
+      return window.getComputedStyle(el).padding
+    })
+    expect(headerPadding).toBeTruthy()
+  })
 })

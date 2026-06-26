@@ -136,7 +136,7 @@ describe('TC-03 toggle 切换', () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
     await waitForRender(wrapper)
 
-    const toggleBtn = wrapper.find('[data-action="toggle-svg-view"]')
+    const toggleBtn = wrapper.find(".svg-block .svg-view-toggle")
     expect(toggleBtn.exists()).toBe(true)
     await toggleBtn.trigger('click')
     await flushPromises()
@@ -154,7 +154,7 @@ describe('TC-03 toggle 切换', () => {
     const wrapper = mountViewer(MD_WITH_SVG_BLOCK)
     await waitForRender(wrapper)
 
-    const toggleBtn = wrapper.find('[data-action="toggle-svg-view"]')
+    const toggleBtn = wrapper.find(".svg-block .svg-view-toggle")
 
     // 第一次：切到 code
     await toggleBtn.trigger('click')
