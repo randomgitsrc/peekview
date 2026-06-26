@@ -201,3 +201,19 @@
 ---
 
 *维护：随评审持续更新*
+
+---
+
+### 🔵 18. 发布通道统一到 CI（本地 `make publish` 降级为验证）
+
+**来源**：2026-06-26 发布流程复盘
+
+**问题**：peekview 和 peekview-mcp 均存在"本地 `make publish` + push tag 触发 CI publish"的双通道发布。两者都会上传到 PyPI/npm，第二个到的会因版本号冲突而失败。本地 token（`~/.bash_env`）的安全性也不如 CI 的 OIDC Trusted Publishing。
+
+**方案**：
+- 本地 `make publish` 改为纯验证（lint + test + typecheck + build，不上传）
+- 本地 `make publish-npm` 同理
+- 发布流程标准化为：`bump-version → 填 CHANGELOG → commit → push tag → 等 CI 绿`
+- PyPI 用 OIDC Trusted Publishing（CI 已配置），npm 用 `secrets.NPM_TOKEN`（CI 已配置）
+
+**优先级**：🟡 中期（不影响当前开发，CI 已经是正确路径，本地发布是冗余）
