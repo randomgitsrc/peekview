@@ -208,14 +208,17 @@ describe('markdown-viewer-degeneration', () => {
       diagramMode.className = 'mermaid-content diagram-mode is-active'
       const codeMode = document.createElement('div')
       codeMode.className = 'mermaid-content code-mode'
+      const toggleWrap = document.createElement('div')
+      toggleWrap.className = 'mermaid-view-toggle'
       const toggleText = document.createElement('span')
       toggleText.className = 'toggle-text'
       toggleText.textContent = 'Diagram'
+      toggleWrap.appendChild(toggleText)
       const viewer = document.createElement('div')
       viewer.className = 'mermaid-viewer'
       block.appendChild(diagramMode)
       block.appendChild(codeMode)
-      block.appendChild(toggleText)
+      block.appendChild(toggleWrap)
       block.appendChild(viewer)
       document.body.appendChild(block)
 
@@ -242,14 +245,17 @@ describe('markdown-viewer-degeneration', () => {
       diagramMode.className = 'plantuml-content diagram-mode is-active'
       const codeMode = document.createElement('div')
       codeMode.className = 'plantuml-content code-mode'
+      const toggleWrap = document.createElement('div')
+      toggleWrap.className = 'plantuml-view-toggle'
       const toggleText = document.createElement('span')
       toggleText.className = 'toggle-text'
       toggleText.textContent = 'Diagram'
+      toggleWrap.appendChild(toggleText)
       const viewer = document.createElement('div')
       viewer.className = 'plantuml-viewer'
       block.appendChild(diagramMode)
       block.appendChild(codeMode)
-      block.appendChild(toggleText)
+      block.appendChild(toggleWrap)
       block.appendChild(viewer)
       document.body.appendChild(block)
 
@@ -276,14 +282,17 @@ describe('markdown-viewer-degeneration', () => {
       diagramMode.className = 'svg-content diagram-mode is-active'
       const codeMode = document.createElement('div')
       codeMode.className = 'svg-content code-mode'
+      const toggleWrap = document.createElement('div')
+      toggleWrap.className = 'svg-view-toggle'
       const toggleText = document.createElement('span')
       toggleText.className = 'toggle-text'
       toggleText.textContent = 'Diagram'
+      toggleWrap.appendChild(toggleText)
       const viewer = document.createElement('div')
       viewer.className = 'svg-viewer'
       block.appendChild(diagramMode)
       block.appendChild(codeMode)
-      block.appendChild(toggleText)
+      block.appendChild(toggleWrap)
       block.appendChild(viewer)
       document.body.appendChild(block)
 
@@ -301,6 +310,34 @@ describe('markdown-viewer-degeneration', () => {
     })
 
     it('D3.4 handleCopyCode mermaid/svg: clipboard + Copied UI feedback', async () => {
+      mocks.useCodeBlockRendererMock.mockReturnValue({
+        mermaidCache: new Map(),
+        sourcesMap: new Map([[0, { lang: 'mermaid', code: 'graph TD', svgContent: '<svg>mock</svg>', codeViewHtml: '<pre>code</pre>' }]]),
+        renderToken: ref(0),
+        instances: { mermaid: new Map(), plantuml: new Map(), svg: new Map() },
+        resizingBlock: ref<string | null>(null),
+        startY: ref(0),
+        startHeight: ref(0),
+        getMermaidSvgByIndex: vi.fn(() => ''),
+        getPlantUmlSvgByIndex: vi.fn(() => ''),
+        getCodeViewHtml: vi.fn(() => undefined),
+        getError: vi.fn(() => undefined),
+        preRenderMermaid: vi.fn(async () => {}),
+        preRenderPlantUml: vi.fn(async () => {}),
+        registerSvg: vi.fn(async () => {}),
+        renderMermaidFresh: vi.fn(async () => '<svg>fresh</svg>'),
+        renderPlantUmlFresh: vi.fn(async () => '<svg>fresh</svg>'),
+        svgToPng: vi.fn(async () => {}),
+        nextToken: vi.fn(() => 1),
+        isCurrent: vi.fn(() => true),
+        registerInstance: vi.fn(),
+        unregisterInstance: vi.fn(),
+        getInstance: vi.fn(),
+        beginResize: vi.fn(),
+        endResize: vi.fn(),
+        clearInstances: vi.fn(),
+      })
+
       const wrapper = await mountViewer()
       const vm = wrapper.vm as any
 
@@ -309,10 +346,12 @@ describe('markdown-viewer-degeneration', () => {
 
       const block = document.createElement('div')
       block.id = 'mermaid-block-0'
+      const menu = document.createElement('div')
+      menu.className = 'mermaid-dropdown-menu'
       const menuBtn = document.createElement('button')
-      menuBtn.className = 'mermaid-dropdown-menu-button'
       menuBtn.textContent = 'Copy Code'
-      block.appendChild(menuBtn)
+      menu.appendChild(menuBtn)
+      block.appendChild(menu)
       document.body.appendChild(block)
 
       vm.handleCopyCode('mermaid-block-0', 'mermaid')
@@ -325,19 +364,49 @@ describe('markdown-viewer-degeneration', () => {
     })
 
     it('D3.5 handleCopyCode plantuml: clipboard + only console.log, no Copied UI feedback', async () => {
+      mocks.useCodeBlockRendererMock.mockReturnValue({
+        mermaidCache: new Map(),
+        sourcesMap: new Map([[0, { lang: 'plantuml', code: '@startuml\nBob->Alice\n@enduml', svgContent: '<svg>mock</svg>', codeViewHtml: '<pre>code</pre>' }]]),
+        renderToken: ref(0),
+        instances: { mermaid: new Map(), plantuml: new Map(), svg: new Map() },
+        resizingBlock: ref<string | null>(null),
+        startY: ref(0),
+        startHeight: ref(0),
+        getMermaidSvgByIndex: vi.fn(() => ''),
+        getPlantUmlSvgByIndex: vi.fn(() => ''),
+        getCodeViewHtml: vi.fn(() => undefined),
+        getError: vi.fn(() => undefined),
+        preRenderMermaid: vi.fn(async () => {}),
+        preRenderPlantUml: vi.fn(async () => {}),
+        registerSvg: vi.fn(async () => {}),
+        renderMermaidFresh: vi.fn(async () => '<svg>fresh</svg>'),
+        renderPlantUmlFresh: vi.fn(async () => '<svg>fresh</svg>'),
+        svgToPng: vi.fn(async () => {}),
+        nextToken: vi.fn(() => 1),
+        isCurrent: vi.fn(() => true),
+        registerInstance: vi.fn(),
+        unregisterInstance: vi.fn(),
+        getInstance: vi.fn(),
+        beginResize: vi.fn(),
+        endResize: vi.fn(),
+        clearInstances: vi.fn(),
+      })
+
       const wrapper = await mountViewer()
       const vm = wrapper.vm as any
 
       const writeTextMock = vi.fn().mockResolvedValue(undefined)
       Object.defineProperty(navigator, 'clipboard', { value: { writeText: writeTextMock }, writable: true, configurable: true })
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       const block = document.createElement('div')
       block.id = 'plantuml-block-0'
+      const menu = document.createElement('div')
+      menu.className = 'plantuml-dropdown-menu'
       const menuBtn = document.createElement('button')
-      menuBtn.className = 'plantuml-dropdown-menu-button'
       menuBtn.textContent = 'Copy Code'
-      block.appendChild(menuBtn)
+      menu.appendChild(menuBtn)
+      block.appendChild(menu)
       document.body.appendChild(block)
 
       vm.handleCopyCode('plantuml-block-0', 'plantuml')

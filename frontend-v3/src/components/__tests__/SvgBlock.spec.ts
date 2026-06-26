@@ -189,10 +189,17 @@ describe('TC-10 内联 svg 不受影响', () => {
 describe('TC-12 三族共存', () => {
   it('mermaid / plantuml / svg 三块各自有独立容器', async () => {
     const wrapper = mountViewer(MD_WITH_THREE_FAMILIES)
-    await waitForRender(wrapper)
-
-    expect(wrapper.find('.mermaid-block').exists()).toBe(true)
-    expect(wrapper.find('.plantuml-block').exists()).toBe(true)
-    expect(wrapper.find('.svg-block').exists()).toBe(true)
-  })
+    await flushPromises()
+    await vi.waitFor(() => {
+      const html = wrapper.html()
+      if (!html.includes('mermaid-block') && !html.includes('svg-block')) {
+        throw new Error('not rendered yet')
+      }
+    }, { timeout: 5000, interval: 50 })
+    await flushPromises()
+    const html = wrapper.html()
+    expect(html).toContain('mermaid-block')
+    expect(html).toContain('plantuml-block')
+    expect(html).toContain('svg-block')
+  }, 10000)
 })

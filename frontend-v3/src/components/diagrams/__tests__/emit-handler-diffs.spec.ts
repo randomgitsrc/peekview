@@ -81,8 +81,8 @@ function buildBlockDom(prefix: string, blockId: string) {
       <div class="${prefix}-content diagram-mode is-active"></div>
       <div class="${prefix}-content code-mode"></div>
       <div class="${prefix}-viewer"></div>
-      <span class="toggle-text">Diagram</span>
-      <div class="${prefix}-dropdown-menu" style="display:none">
+      <div class="${prefix}-view-toggle"><span class="toggle-text">Diagram</span></div>
+      <div class="${prefix}-dropdown-menu">
         <button class="copy-btn">Copy</button>
       </div>
     </div>
@@ -94,14 +94,14 @@ function buildTwoBlockDom(prefix: string) {
     <div id="${prefix}-block-0" class="${prefix}-block" data-index="0">
       <div class="${prefix}-content diagram-mode is-active"></div>
       <div class="${prefix}-content code-mode"></div>
-      <div class="${prefix}-dropdown-menu menu-0" style="display:block">
+      <div class="${prefix}-dropdown-menu menu-0 show">
         <button class="copy-btn">Copy</button>
       </div>
     </div>
     <div id="${prefix}-block-1" class="${prefix}-block" data-index="1">
       <div class="${prefix}-content diagram-mode is-active"></div>
       <div class="${prefix}-content code-mode"></div>
-      <div class="${prefix}-dropdown-menu menu-1" style="display:none">
+      <div class="${prefix}-dropdown-menu menu-1">
         <button class="copy-btn">Copy</button>
       </div>
     </div>
@@ -112,35 +112,81 @@ function createCurrentHostComponent(prefix: string, domHtml: string) {
   return defineComponent({
     setup() {
       const contentRef = ref<HTMLElement | null>(null)
-      const sourcesMap = new Map<number, string>()
-      if (prefix === 'mermaid') sourcesMap.set(0, MERMAID_CODE)
-      else if (prefix === 'plantuml') sourcesMap.set(0, PLANTUML_CODE)
-      else sourcesMap.set(0, SVG_CODE)
+      const sourcesMap = new Map<number, { lang: string; code: string }>()
+      if (prefix === 'mermaid') sourcesMap.set(0, { lang: 'mermaid', code: MERMAID_CODE })
+      else if (prefix === 'plantuml') sourcesMap.set(0, { lang: 'plantuml', code: PLANTUML_CODE })
+      else sourcesMap.set(0, { lang: 'svg', code: SVG_CODE })
 
       function handleToggleView(bid: string | number, pfx: string) {
         const block = document.getElementById(String(bid))
         if (!block) return
-        const diagramMode = block.querySelector(`.${pfx}-content.diagram-mode`)
-        const codeMode = block.querySelector(`.${pfx}-content.code-mode`)
-        if (diagramMode && codeMode) {
-          diagramMode.classList.toggle('is-active')
-          codeMode.classList.toggle('is-active')
+        const dm = block.querySelector(`.${pfx}-content.diagram-mode`)
+        const cm = block.querySelector(`.${pfx}-content.code-mode`)
+        if (dm && cm) {
+          dm.classList.toggle('is-active')
+          cm.classList.toggle('is-active')
+        }
+        if (pfx === 'mermaid' || pfx === 'svg') {
+          const tt = block.querySelector(`.${pfx}-view-toggle .toggle-text`)
+          if (tt) tt.textContent = cm?.classList.contains('is-active') ? 'Code' : 'Diagram'
+          const viewer = block.querySelector(`.${pfx}-viewer`) || block.querySelector(`.${pfx}-viewer-mount`)
+          viewer?.dispatchEvent(new CustomEvent(`${pfx}-refresh`))
         }
       }
 
-      function handleToggleMenu(_bid: string | number, _pfx: string) {
+      function handleToggleMenu(bid: string | number, pfx: string) {
+        const block = document.getElementById(String(bid))
+        if (!block) return
+        const menu = block.querySelector(`.${pfx}-dropdown-menu`)
+        if (!menu) return
+        const isShown = menu.classList.contains('show')
+        if (pfx === 'mermaid' || pfx === 'svg') {
+          document.querySelectorAll(`.${pfx}-dropdown-menu.show`).forEach(m => {
+            if (m !== menu) m.classList.remove('show')
+          })
+        }
+        menu.classList.toggle('show')
+        if (!isShown && (pfx === 'mermaid' || pfx === 'svg')) {
+          const onClose = (e: MouseEvent) => {
+            if (!block.contains(e.target as Node)) {
+              menu.classList.remove('show')
+              document.removeEventListener('click', onClose)
+            }
+          }
+          setTimeout(() => document.addEventListener('click', onClose), 0)
+        }
       }
 
-      function handleCopyCode(bid: string | number, _pfx: string) {
+      function handleCopyCode(bid: string | number, pfx: string) {
         const idx = parseInt(String(bid).split('-').pop() || '0')
-        const code = sourcesMap.get(idx) || ''
-        if (code) navigator.clipboard.writeText(code).catch(() => {})
+        const code = sourcesMap.get(idx)?.code || ''
+        if (!code) return
+        navigator.clipboard.writeText(code).catch(() => {})
+        if (pfx === 'mermaid' || pfx === 'svg') {
+          const block = document.getElementById(String(bid))
+          if (!block) return
+          const btn = block.querySelector(`.${pfx}-dropdown-menu button:last-child`)
+          if (btn) {
+            const orig = (btn as HTMLElement).textContent || ''
+            ;(btn as HTMLElement).textContent = '✓ Copied!'
+            setTimeout(() => { (btn as HTMLElement).textContent = orig }, 2000)
+          }
+        } else {
+          console.log('Code copied to clipboard')
+        }
       }
 
       function handleDownloadPng(bid: string | number, pfx: string) {
+        const idx = parseInt(String(bid).split('-').pop() || '0')
+        const source = sourcesMap.get(idx)
+        if (!source) return
         if (pfx === 'svg') {
           const inst = getInstanceMock('svg', String(bid))
           inst?.downloadPng?.()
+        } else if (pfx === 'mermaid') {
+          renderMermaidFreshMock(source.code, 'light')
+        } else if (pfx === 'plantuml') {
+          renderPlantUmlFreshMock(source.code, 'light')
         }
       }
 
@@ -255,11 +301,13 @@ describe('E2. toggle-menu diffs', () => {
 
     const menu0 = document.querySelector('.mermaid-dropdown-menu.menu-0') as HTMLElement
     const menu1 = document.querySelector('.mermaid-dropdown-menu.menu-1') as HTMLElement
-    expect(menu0.style.display).toBe('none')
-    expect(menu1.style.display).toBe('block')
+    expect(menu0.classList.contains('show')).toBe(false)
+    expect(menu1.classList.contains('show')).toBe(true)
+
+    await new Promise(r => setTimeout(r, 0))
 
     const clickOutsideCalls = addListenerSpy.mock.calls.filter(
-      c => c[0] === 'click' && typeof c[2] === 'object' && (c[2] as AddEventListenerOptions).once === true
+      c => c[0] === 'click' && typeof c[1] === 'function'
     )
     expect(clickOutsideCalls.length).toBeGreaterThanOrEqual(1)
 
@@ -276,13 +324,15 @@ describe('E2. toggle-menu diffs', () => {
     wrapper.vm.handleToggleMenu('plantuml-block-0', 'plantuml')
 
     const menu0 = document.querySelector('.plantuml-dropdown-menu.menu-0') as HTMLElement
-    expect(menu0.style.display).toBe('none')
+    expect(menu0.classList.contains('show')).toBe(false)
 
     const menu1 = document.querySelector('.plantuml-dropdown-menu.menu-1') as HTMLElement
-    expect(menu1.style.display).toBe('none')
+    expect(menu1.classList.contains('show')).toBe(false)
+
+    await new Promise(r => setTimeout(r, 0))
 
     const clickOutsideCalls = addListenerSpy.mock.calls.filter(
-      c => c[0] === 'click' && typeof c[2] === 'object' && (c[2] as AddEventListenerOptions).once === true
+      c => c[0] === 'click' && typeof c[1] === 'function'
     )
     expect(clickOutsideCalls.length).toBe(0)
 
@@ -300,11 +350,13 @@ describe('E2. toggle-menu diffs', () => {
 
     const menu0 = document.querySelector('.svg-dropdown-menu.menu-0') as HTMLElement
     const menu1 = document.querySelector('.svg-dropdown-menu.menu-1') as HTMLElement
-    expect(menu0.style.display).toBe('none')
-    expect(menu1.style.display).toBe('block')
+    expect(menu0.classList.contains('show')).toBe(false)
+    expect(menu1.classList.contains('show')).toBe(true)
+
+    await new Promise(r => setTimeout(r, 0))
 
     const clickOutsideCalls = addListenerSpy.mock.calls.filter(
-      c => c[0] === 'click' && typeof c[2] === 'object' && (c[2] as AddEventListenerOptions).once === true
+      c => c[0] === 'click' && typeof c[1] === 'function'
     )
     expect(clickOutsideCalls.length).toBeGreaterThanOrEqual(1)
 

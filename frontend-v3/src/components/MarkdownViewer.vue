@@ -6,10 +6,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, render as vueRender, onMounted, onBeforeUnmount } from 'vue'
-
+import { ref, watch, nextTick, h, render as vueRender, type Component } from 'vue'
 import { useMarkdown, type MarkdownRenderResult } from '@/composables/useMarkdown'
-import { useMermaid } from '@/composables/useMermaid'
 import * as usePlantUML from '@/composables/usePlantUML'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
@@ -19,13 +17,15 @@ import PlantUmlDiagram from '@/components/diagrams/PlantUmlDiagram.vue'
 import SvgDiagram from '@/components/diagrams/SvgDiagram.vue'
 import { useCodeBlockRenderer } from '@/composables/useCodeBlockRenderer'
 
-const { registerSvg, getCodeViewHtml } = useCodeBlockRenderer()
+const renderer = useCodeBlockRenderer()
+const { sourcesMap, nextToken, isCurrent, registerInstance, getInstance,
+  preRenderMermaid, preRenderPlantUml, registerSvg,
+  renderMermaidFresh, renderPlantUmlFresh, svgToPng } = renderer
 
 const props = defineProps<{ content: string }>()
 const emit = defineEmits<{ headings: [headings: TocHeading[]] }>()
 
 const { render } = useMarkdown()
-const { render: renderMermaid } = useMermaid()
 const themeStore = useThemeStore()
 const { theme } = storeToRefs(themeStore)
 
@@ -33,60 +33,93 @@ const contentRef = ref<HTMLElement>()
 const headings = ref<TocHeading[]>([])
 const renderedHtml = ref('')
 const isLoading = ref(false)
-const mermaidCache = new Map<string, string>()
-let mermaidSourcesMap: Map<number, string> = new Map()
-let plantumlSourcesMap: Map<number, string> = new Map()
-let svgSourcesMap: Map<number, string> = new Map()
-let renderToken = 0
 
-const mermaidInstances = new Map<string, any>()
-const plantumlInstances = new Map<string, any>()
-const svgInstances = new Map<string, any>()
+const wrapperRegistry: Record<string, Component> = {
+  mermaid: MermaidDiagram, plantuml: PlantUmlDiagram, svg: SvgDiagram
+}
 
-
-// Resize handling
-
-
-
-onMounted(() => {
-})
-
-onBeforeUnmount(() => {
-})
+function getThemeName() { return theme.value === 'dark' ? 'github-dark' : 'github-light' }
+function getThemeLight() { return theme.value === 'dark' ? 'dark' : 'light' }
 
 function handleToggleView(blockId: string | number, prefix: string) {
   const block = document.getElementById(String(blockId))
   if (!block) return
-  const diagramMode = block.querySelector(`.${prefix}-content.diagram-mode`)
-  const codeMode = block.querySelector(`.${prefix}-content.code-mode`)
-  if (diagramMode && codeMode) {
-    diagramMode.classList.toggle('is-active')
-    codeMode.classList.toggle('is-active')
+  const dm = block.querySelector(`.${prefix}-content.diagram-mode`)
+  const cm = block.querySelector(`.${prefix}-content.code-mode`)
+  if (dm && cm) {
+    dm.classList.toggle('is-active')
+    cm.classList.toggle('is-active')
+  }
+  if (prefix === 'mermaid' || prefix === 'svg') {
+    const tt = block.querySelector(`.${prefix}-view-toggle .toggle-text`)
+    if (tt) tt.textContent = cm?.classList.contains('is-active') ? 'Code' : 'Diagram'
+    const viewer = block.querySelector(`.${prefix}-viewer`) || block.querySelector(`.${prefix}-viewer-mount`)
+    viewer?.dispatchEvent(new CustomEvent(`${prefix}-refresh`))
   }
 }
 
 function handleFullscreen(blockId: string | number, prefix: string) {
-  const instances = prefix === 'mermaid' ? mermaidInstances : prefix === 'plantuml' ? plantumlInstances : svgInstances
-  const inst = instances.get(String(blockId))
-  inst?.toggleFullscreen?.()
+  getInstance(prefix, String(blockId))?.toggleFullscreen?.()
 }
 
 function handleCopyCode(blockId: string | number, prefix: string) {
-  const code = prefix === 'mermaid' ? mermaidSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) :
-               prefix === 'plantuml' ? plantumlSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) :
-               svgSourcesMap.get(parseInt(String(blockId).split('-').pop() || '0')) || ''
-  if (code) navigator.clipboard.writeText(code).catch(() => {})
-}
-
-function handleDownloadPng(blockId: string | number, prefix: string) {
-  if (prefix === 'svg') {
-    const inst = svgInstances.get(String(blockId))
-    inst?.downloadPng?.()
+  const idx = parseInt(String(blockId).split('-').pop() || '0')
+  const code = sourcesMap.get(idx)?.code || ''
+  if (!code) return
+  navigator.clipboard.writeText(code).catch(() => {})
+  if (prefix === 'mermaid' || prefix === 'svg') {
+    const block = document.getElementById(String(blockId))
+    if (!block) return
+    const btn = block.querySelector(`.${prefix}-dropdown-menu button:last-child`)
+    if (btn) {
+      const orig = (btn as HTMLElement).textContent || ''
+      ;(btn as HTMLElement).textContent = '✓ Copied!'
+      setTimeout(() => { (btn as HTMLElement).textContent = orig }, 2000)
+    }
+  } else {
+    console.log('Code copied to clipboard')
   }
 }
 
-function handleToggleMenu(_blockId: string | number, _prefix: string) {
-  // menu 开关由 BaseDiagram 内部 menuOpen 控制
+function handleDownloadPng(blockId: string | number, prefix: string) {
+  const idx = parseInt(String(blockId).split('-').pop() || '0')
+  const source = sourcesMap.get(idx)
+  if (!source) return
+  const t = getThemeLight()
+  if (prefix === 'svg') {
+    getInstance('svg', String(blockId))?.downloadPng?.()
+  } else if (prefix === 'mermaid') {
+    renderMermaidFresh(source.code, t).then(svg => {
+      svgToPng(svg, { width: 800, height: 600, background: '#ffffff', filename: `mermaid-diagram-${idx}.png` })
+    }).catch(() => {})
+  } else if (prefix === 'plantuml') {
+    renderPlantUmlFresh(source.code, t).then(svg => {
+      svgToPng(svg, { width: 800, height: 600, background: '#ffffff', filename: `plantuml-diagram-${idx}.png` })
+    }).catch(() => {})
+  }
+}
+
+function handleToggleMenu(blockId: string | number, prefix: string) {
+  const block = document.getElementById(String(blockId))
+  if (!block) return
+  const menu = block.querySelector(`.${prefix}-dropdown-menu`)
+  if (!menu) return
+  const isShown = menu.classList.contains('show')
+  if (prefix === 'mermaid' || prefix === 'svg') {
+    document.querySelectorAll(`.${prefix}-dropdown-menu.show`).forEach(m => {
+      if (m !== menu) m.classList.remove('show')
+    })
+  }
+  menu.classList.toggle('show')
+  if (!isShown && (prefix === 'mermaid' || prefix === 'svg')) {
+    const onClose = (e: MouseEvent) => {
+      if (!block.contains(e.target as Node)) {
+        menu.classList.remove('show')
+        document.removeEventListener('click', onClose)
+      }
+    }
+    setTimeout(() => document.addEventListener('click', onClose), 0)
+  }
 }
 
 function handleStartResize(blockId: string | number, startY: number, _prefix: string) {
@@ -96,8 +129,7 @@ function handleStartResize(blockId: string | number, startY: number, _prefix: st
   if (!content) return
   const startHeight = content.offsetHeight
   const onMove = (e: MouseEvent) => {
-    const delta = e.clientY - startY
-    content.style.height = Math.max(200, startHeight + delta) + 'px'
+    content.style.height = Math.max(200, startHeight + e.clientY - startY) + 'px'
   }
   const onUp = () => {
     document.removeEventListener('mousemove', onMove)
@@ -107,222 +139,97 @@ function handleStartResize(blockId: string | number, startY: number, _prefix: st
   document.addEventListener('mouseup', onUp)
 }
 
+async function mountDiagrams(myToken: number) {
+  if (!contentRef.value) return
+  let hasPlantuml = false
+  for (const s of sourcesMap.values()) { if (s.lang === 'plantuml') { hasPlantuml = true; break } }
+  if (hasPlantuml) {
+    await usePlantUML.ensureLoaded()
+    if (!isCurrent(myToken)) return
+  }
+  for (const [index, source] of sourcesMap) {
+    if (!isCurrent(myToken)) return
+    const mountPoint = contentRef.value!.querySelector(
+      `.${source.lang}-block[data-index="${index}"]`
+    ) as HTMLElement | null
+    if (!mountPoint || mountPoint.dataset.rendered === 'true') continue
+    delete mountPoint.dataset.rendered
+    if (source.error) {
+      if (source.lang === 'mermaid') {
+        mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
+      } else if (source.lang === 'plantuml') {
+        const dm = mountPoint.querySelector('.plantuml-content.diagram-mode')
+        const cm = mountPoint.querySelector('.plantuml-content.code-mode')
+        dm?.classList.remove('is-active')
+        cm?.classList.add('is-active')
+      }
+      mountPoint.dataset.rendered = 'true'
+      continue
+    }
+    if (!source.svgContent && source.lang === 'mermaid') {
+      await preRenderMermaid(index, source.code, getThemeName(), source.codeViewHtml || '')
+      if (!isCurrent(myToken)) return
+    } else if (!source.svgContent && source.lang === 'plantuml') {
+      await preRenderPlantUml(index, source.code, getThemeName(), source.codeViewHtml || '')
+      if (!isCurrent(myToken)) return
+    } else if (!source.svgContent && source.lang === 'svg') {
+      await registerSvg(index, source.code, getThemeName())
+      if (!isCurrent(myToken)) return
+    }
+    const Wrapper = wrapperRegistry[source.lang]
+    if (!Wrapper) continue
+    const updatedSource = sourcesMap.get(index)
+    const vNode = h(Wrapper, {
+      blockIndex: index,
+      blockId: `${source.lang}-block-${index}`,
+      svgContent: updatedSource?.svgContent || '',
+      codeViewHtml: updatedSource?.codeViewHtml || '',
+      theme: getThemeLight(),
+      onToggleView: (blockId: string | number) => handleToggleView(blockId, source.lang),
+      onFullscreen: (blockId: string | number) => handleFullscreen(blockId, source.lang),
+      onCopyCode: (blockId: string | number) => handleCopyCode(blockId, source.lang),
+      onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, source.lang),
+      onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, source.lang),
+      onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, source.lang),
+    })
+    try {
+      vueRender(vNode, mountPoint)
+      registerInstance(source.lang, `${source.lang}-block-${index}`, (vNode as any).component?.exposed ?? (vNode as any).component?.proxy)
+    } catch (err) {
+      if (source.lang === 'svg') {
+        mountPoint.innerHTML = '<div class="svg-error">Failed to render SVG</div>'
+      }
+    }
+    mountPoint.dataset.rendered = 'true'
+  }
+}
+
 async function renderContent() {
-  const myToken = ++renderToken
+  const myToken = nextToken()
   isLoading.value = true
   try {
-    const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
-    const result: MarkdownRenderResult = await render(props.content, themeName)
-    if (myToken !== renderToken) return
+    const result: MarkdownRenderResult = await render(props.content, getThemeName())
+    if (!isCurrent(myToken)) return
     headings.value = result.headings
     renderedHtml.value = result.html
-    const sources = result.sources
-    mermaidSourcesMap.clear()
-    plantumlSourcesMap.clear()
-    svgSourcesMap.clear()
-    sources.forEach((val, idx) => {
-      if (val.lang === 'mermaid') mermaidSourcesMap.set(idx, val.code)
-      else if (val.lang === 'plantuml') plantumlSourcesMap.set(idx, val.code)
-      else if (val.lang === 'svg') svgSourcesMap.set(idx, val.code)
-    })
+    sourcesMap.clear()
+    result.sources.forEach((val, idx) => sourcesMap.set(idx, val))
     emit('headings', result.headings)
     await nextTick()
-
-    if (myToken !== renderToken) return
-
+    if (!isCurrent(myToken)) return
     if (contentRef.value) {
-      const mountPoints = contentRef.value.querySelectorAll('.mermaid-block')
-      mountPoints.forEach(mp => {
-        delete (mp as HTMLElement).dataset.rendered
-      })
-      const plantumlMountPoints = contentRef.value.querySelectorAll('.plantuml-block')
-      plantumlMountPoints.forEach(mp => {
-        delete (mp as HTMLElement).dataset.rendered
-      })
-      const svgMountPoints = contentRef.value.querySelectorAll('.svg-block')
-      svgMountPoints.forEach(mp => {
-        delete (mp as HTMLElement).dataset.rendered
-      })
+      contentRef.value.querySelectorAll('[data-rendered]').forEach(
+        el => delete (el as HTMLElement).dataset.rendered
+      )
     }
-
-    await renderMermaidDiagrams()
-    if (myToken !== renderToken) return
-    await renderPlantUmlDiagrams(myToken)
-    if (myToken !== renderToken) return
-    await renderSvgBlocks(myToken)
+    await mountDiagrams(myToken)
   } catch (err) {
-    if (myToken === renderToken) console.error('Markdown render failed:', err)
+    if (isCurrent(myToken)) console.error('Markdown render failed:', err)
   } finally {
-    if (myToken === renderToken) isLoading.value = false
+    if (isCurrent(myToken)) isLoading.value = false
   }
 }
 
-async function renderMermaidDiagrams() {
-  if (!contentRef.value) return
-
-  // Find new mermaid blocks that need rendering
-  const blocks = contentRef.value.querySelectorAll('.mermaid-block')
-
-  for (const block of blocks) {
-    const mountPoint = block as HTMLElement
-    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
-
-    const index = parseInt(block.getAttribute('data-index') || '0')
-    const code = mermaidSourcesMap.get(index) || ''
-    if (!code) continue
-    const cacheKey = `${theme.value}-${code}`
-
-    try {
-      let svg: string
-      if (mermaidCache.has(cacheKey)) {
-        svg = mermaidCache.get(cacheKey)!
-      } else {
-        svg = await renderMermaid(String(index), code, theme.value)
-        mermaidCache.set(cacheKey, svg)
-      }
-
-      // Mark as rendered to avoid re-rendering
-      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
-
-      // Mount MermaidDiagram component
-      const vNode = h(MermaidDiagram, {
-        blockIndex: index,
-        blockId: `mermaid-block-${index}`,
-        svgContent: svg,
-        codeViewHtml: '',
-        theme: theme.value === 'dark' ? 'dark' : 'light',
-        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'mermaid'),
-        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'mermaid'),
-        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'mermaid'),
-        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'mermaid'),
-        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'mermaid'),
-        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'mermaid'),
-      })
-      vueRender(vNode, mountPoint)
-
-      // Store instance reference for external access (fullscreen, etc)
-      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
-      mermaidInstances.set(`mermaid-block-${index}`, inst)
-    } catch (err) {
-      console.error('Mermaid render failed:', err)
-      mountPoint.innerHTML = '<div class="mermaid-error">Failed to render diagram</div>'
-    }
-  }
-}
-
-// PlantUML rendering — 串行硬约束：plantuml.js 用共享内部状态，并发调用静默覆盖。
-// 不可改为并行。L1 引擎层 usePlantUML.render 内部有模块级 Promise 链队列保证串行。
-async function renderPlantUmlDiagrams(myToken: number) {
-  if (!contentRef.value) return
-  if (plantumlSourcesMap.size === 0) return
-
-  await usePlantUML.ensureLoaded()
-  if (myToken !== renderToken) return
-
-  const blocks = contentRef.value.querySelectorAll('.plantuml-block')
-
-  for (const block of blocks) {
-    if (myToken !== renderToken) return
-
-    const mountPoint = block as HTMLElement
-    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
-
-    const index = parseInt(block.getAttribute('data-index') || '0')
-    const code = plantumlSourcesMap.get(index) || ''
-    if (!code) continue
-
-    try {
-      const svg = await usePlantUML.render(code, theme.value)
-      if (myToken !== renderToken) return
-
-      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
-
-      const vNode = h(PlantUmlDiagram, {
-        blockIndex: index,
-        blockId: `plantuml-block-${index}`,
-        svgContent: svg,
-        codeViewHtml: '',
-        theme: theme.value === 'dark' ? 'dark' : 'light',
-        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'plantuml'),
-        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'plantuml'),
-        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'plantuml'),
-        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'plantuml'),
-        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'plantuml'),
-        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'plantuml'),
-      })
-      vueRender(vNode, mountPoint)
-
-      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
-      plantumlInstances.set(`plantuml-block-${index}`, inst)
-    } catch (err) {
-      console.error('PlantUML render failed:', err)
-      const blockEl = block as HTMLElement
-      const diagramMode = blockEl.querySelector('.plantuml-content.diagram-mode')
-      const codeMode = blockEl.querySelector('.plantuml-content.code-mode')
-      if (diagramMode && codeMode) {
-        diagramMode.classList.remove('is-active')
-        codeMode.classList.add('is-active')
-      }
-      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
-    }
-  }
-}
-
-async function renderSvgBlocks(myToken: number) {
-  if (!contentRef.value) return
-  if (svgSourcesMap.size === 0) return
-
-  const blocks = contentRef.value.querySelectorAll('.svg-block')
-
-  for (const block of blocks) {
-    if (myToken !== renderToken) return
-
-    const mountPoint = block as HTMLElement
-    if (!mountPoint || (mountPoint as HTMLElement).dataset.rendered === 'true') continue
-
-    const index = parseInt(block.getAttribute('data-index') || '0')
-    const code = svgSourcesMap.get(index) || ''
-    if (!code) continue
-
-    try {
-      const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
-      await registerSvg(index, code, themeName)
-
-      ;(mountPoint as HTMLElement).dataset.rendered = 'true'
-
-      const codeViewHtml = getCodeViewHtml(index) || ''
-
-      const vNode = h(SvgDiagram, {
-        blockIndex: index,
-        blockId: `svg-block-${index}`,
-        svgContent: code,
-        codeViewHtml,
-        theme: theme.value === 'dark' ? 'dark' : 'light',
-        onToggleView: (blockId: string | number) => handleToggleView(blockId, 'svg'),
-        onFullscreen: (blockId: string | number) => handleFullscreen(blockId, 'svg'),
-        onCopyCode: (blockId: string | number) => handleCopyCode(blockId, 'svg'),
-        onDownloadPng: (blockId: string | number) => handleDownloadPng(blockId, 'svg'),
-        onToggleMenu: (blockId: string | number) => handleToggleMenu(blockId, 'svg'),
-        onStartResize: (blockId: string | number, startY: number) => handleStartResize(blockId, startY, 'svg'),
-      })
-      vueRender(vNode, mountPoint)
-
-      // Capture the mounted component instance to call its exposed
-      // toggleFullscreen / downloadPng methods later.
-      const inst = (vNode as any).component?.exposed ?? (vNode as any).component?.proxy
-      svgInstances.set(`svg-block-${index}`, inst)
-    } catch (err) {
-      console.error('SVG render failed:', err)
-      mountPoint.innerHTML = '<div class="svg-error">Failed to render SVG</div>'
-    }
-  }
-}
-
-// SVG toggle — toggle between diagram and code view
-// Open SVG fullscreen via the mounted SvgDiagram instance
-// Toggle SVG dropdown menu
-// Copy the raw SVG source code
-// Download SVG as PNG via the mounted SvgDiagram instance's downloadPng method
 watch(() => [props.content, theme.value], async () => {
   await renderContent()
 }, { immediate: true })
