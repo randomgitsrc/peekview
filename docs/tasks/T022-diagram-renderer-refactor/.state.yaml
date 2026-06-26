@@ -23,4 +23,12 @@ retry_count:
   P4: 0
   P5: 0
   P6: 0
+p6_context:
+  test_entry_slug: "1x1w9t"
+  test_entry_url: "http://127.0.0.1:8888/1x1w9t"
+  playwright_script: "/tmp/peekview-debug/p6-bdd-verify.ts"
+  screenshot_dir: "/tmp/peekview-debug/p6-screenshots"
+  bdd_dimensions_to_verify: [2, 5, 6, 7, 8, 9]
+  bdd_dimensions_covered_by_vitest: [1, 5, 9]
+  next_step: "Run p6-bdd-verify.ts via npx tsx, then vision-helper for screenshots"
 updated: 2026-06-26
