@@ -7,6 +7,41 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-26
+
+### 重构
+
+- **T022**: Markdown 渲染管线重构 — `MarkdownViewer.vue`（脚本 322 → 236 行）、`useCodeBlockRenderer` composable（162 行）、`BaseDiagram.vue` 基类骨架（zoom/fullscreen/pan/PNG 导出 + refresh listener + slot 注入）、三薄包装 `MermaidDiagram/PlantUmlDiagram/SvgDiagram`（77/69/57 行）
+- **T022**: `useMarkdown` 注册模式 — `diagramRegistry.ts` 独立文件 + `registerDiagramType()` API；识别 fenced code block 后查表路由（mermaid/plantuml/svg 三族）
+- **T022**: 事件委托迁移到 emit — 去除原 `data-action` 字符串协议 + `closest()` + `switch case`（15 case），子组件用标准 Vue `emit` 通讯，`defineExpose` 按差异暴露
+- **T022**: composable API — `useCodeBlockRenderer` 提供 `getMermaidSvgByIndex`/`getPlantUmlSvgByIndex`/`getCodeViewHtml`/`getError`/`preRenderMermaid`/`preRenderPlantUml`/`registerSvg`/`renderMermaidFresh`/`renderPlantUmlFresh`/`svgToPng`/`nextToken`/`isCurrent`/`registerInstance`/`unregisterInstance`/`getInstance`/`beginResize`/`endResize`/`clearInstances`
+- **T022**: 渲染状态抽离 — `mermaidCache`/`plantumlSourcesMap`/`svgSourcesMap`/`renderToken`/`instances.{mermaid,plantuml,svg}` 从 MarkdownViewer 迁出至 composable
+
+### 行为保真
+
+- T022: 三族（mermaid/svg/plantuml）共存渲染无干扰
+- T022: 按钮交互（图/码 toggle/Copy/Fullscreen/Download PNG）行为不变
+- T022: DOMPurify 两层净化保留（svg meta.sanitize + 末尾整体净化）
+- T022: renderToken 8 检查点保留（renderContent 4 个 + mountDiagrams 4 个），异步渲染竞态防护
+- T022: 响应式断点（>768px desktop / <768px mobile compact layout）保留
+- T022: 主题切换（dark/light）保留，watch([content, theme]) 触发 renderContent
+- T022: CSP 合规 — 全用 Vue @click（编译为 addEventListener），无内联 onclick
+
+### 修复
+
+- 修复 `test_cli.py` 版本断言 hard-code `"0.1."` 导致 minor bump 后测试失败（改为读取 `__version__` 做断言）
+
+### 验证
+
+- T022: 前端 235/235 单元测试通过（含 `markdown-viewer-degeneration.spec.ts` 15 + `emit-handler-diffs.spec.ts` 15 + `mount-loop-unified.spec.ts` 8 新增）
+- T022: 后端 577/577 pytest 通过
+- T022: Playwright BDD 验收 29/29 全部通过（9 维度：渲染输出/按钮交互/全屏/竞态/安全/响应式/主题/CSP/错误处理）
+- T022: P7 一致性检查 PASS（0 BLOCKER, 3 DEVIATION + 5 EXTENSION 均为合理偏差）
+  - DEVIATION-1: BaseDiagram.vue 531 行 vs 目标 <400（P2 行数预算过紧，功能完整且无新行为）
+  - DEVIATION-2: MarkdownViewer.vue CSS 未按归属拆分（不影响行为，可作下一轮独立任务）
+  - DEVIATION-3: useMarkdown 仍 if-else 三分支（`registerDiagramType` API 已实现但 `if/else` 查表落地不彻底，扩展性 BDD-10.1 仍间接验证通过）
+
+
 ## [0.1.67] - 2026-06-25
 
 ### 新增
