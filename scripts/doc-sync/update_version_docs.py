@@ -73,13 +73,6 @@ def make_rules(version: str) -> list[dict]:
             ],
         },
         {
-            "file": "docs/tasks/active-tasks.md",
-            "desc": "active-tasks.md 当前版本",
-            "patterns": [
-                (r"当前版本 v\d+\.\d+\.\d+ 已发布", f"当前版本 v{version} 已发布"),
-            ],
-        },
-        {
             "file": "backend/README.md",
             "desc": "backend README health 返回示例",
             "patterns": [
