@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-26
+
+### 变更
+
+- Footer 样式改版 — 图标+文字 pill 卡片（GitHub/PyPI/npm），hover 圆角背景浮现；右侧新增 tagline "Built for sharing code & docs"；space-between 双栏布局替代居中；移动端堆叠居中
+
+### 修复
+
+- doc-sync 脚本 `docs/process/active-tasks.md` 路径修正为 `docs/tasks/active-tasks.md`（6/12 目录整理后的遗留 bug，v0.2.0 CI 首次暴露）
+
+
 ## [0.2.0] - 2026-06-26
 
 ### 重构
