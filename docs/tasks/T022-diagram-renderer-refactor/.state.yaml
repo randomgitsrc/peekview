@@ -1,7 +1,7 @@
 task_id: T022-diagram-renderer-refactor
 task_name: diagram-renderer-refactor
-phase: READY
-status: ready_for_publish
+phase: DONE
+status: published
 retries:
   P2:
     - round: 1
@@ -33,6 +33,8 @@ p8_summary:
   changelog: "filled"
   pre_publish: "all_pass (577/577 pytest + 235/235 frontend + 0 TS errors)"
   tag_created: "v0.2.0"
+  pypi_published: true
+  pypi_url: "https://pypi.org/project/peekview/0.2.0/"
   test_fix: "test_cli.py version assertion reads __version__ instead of hard-coded '0.1.'"
   cleanup:
     debug_backend_stopped: true

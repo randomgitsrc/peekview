@@ -13,8 +13,6 @@
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|----------|----------|
 | T020 | svg-codeblock-viewer | ⏳ 待发布 | READY | 🟠 | 2026-06-24 | 2026-06-25 |
-| T022 | diagram-renderer-refactor | ⏳ 待发布 | READY | 🟠 | 2026-06-25 | 2026-06-26 |
-| T022 | diagram-renderer-refactor | 🔄 进行中 | P6 | 🟠 | 2026-06-25 | 2026-06-26 |
 | T023 | page-basics | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
 | T024 | landing-page | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
 | T025 | user-page | 🔄 进行中 | P0 | 🟠 | 2026-06-25 | 2026-06-25 |
@@ -48,6 +46,7 @@
 | T018 | plantuml-start-markers | ✅✅ 已完成 | P8 | 🟠 | 2026-06-21 |
 | T019 | html-viewer-srcdoc-csp | ✅✅ 已完成 | P8 | 🔴 | 2026-06-23 |
 | T021 | zen-mode | ✅✅ 已完成 | P8 | 🟡 | 2026-06-25 |
+| T022 | diagram-renderer-refactor | ✅✅ 已完成 | P8 | 🟠 | 2026-06-26 |
 
 > **依赖列说明**：主 Agent 启动任务前检查依赖列。所有依赖任务状态为 ✅✅ 已完成 才启动。
 > **active-tasks.md 降级为汇总视图**：不再由 subagent 直接修改，由主 Agent 扫描所有 `.state.yaml` 重建。消除多 Agent 并发 git 冲突。
@@ -217,6 +216,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-06-26 | 完成 T022 | diagram-renderer-refactor v0.2.0 发布到 PyPI（frontend-only 重构 + 行为保真 9 维度） |
 | 2026-06-25 | 创建 T024-T027 | 路由/页面/分享批任务 P0 全部立项完成（T024 Landing / T025 用户公开页 / T026 搜索 URL 化 / T027 临时分享链接） |
 | 2026-06-25 | 创建 T023 | page-basics 立项，P0-brief 已写（删 HomeView 僵尸 + 404 兜底，路由/页面批任务依赖链根） |
 | 2026-06-25 | 创建 T022 | diagram-renderer-refactor 立项，P0-brief 已写（Markdown 渲染管线重构，B+温和C路线） |
