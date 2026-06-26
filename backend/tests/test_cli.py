@@ -47,10 +47,12 @@ class TestCliBasics:
 
     def test_cli_version(self, runner):
         """CLI should report version."""
+        from peekview import __version__
+
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
         assert "peekview" in result.output.lower()
-        assert "0.1." in result.output
+        assert __version__ in result.output
 
     def test_cli_help(self, runner):
         """CLI help should list all commands."""
@@ -522,10 +524,12 @@ class TestCliShortOptions:
 
     def test_cli_version_short(self, runner):
         """CLI should report version with -v."""
+        from peekview import __version__
+
         result = runner.invoke(cli, ["-v"])
         assert result.exit_code == 0
         assert "peekview" in result.output.lower()
-        assert "0.1." in result.output
+        assert __version__ in result.output
 
     def test_cli_help_short(self, runner):
         """CLI should show help with -h."""
