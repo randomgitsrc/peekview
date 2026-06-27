@@ -30,6 +30,11 @@ function toggleView() {
   }
 }
 
+// Fullscreen (spec §5.3 #18)
+function openFullscreen() {
+  rendererRef.value?.openFullscreen?.()
+}
+
 // Dropdown menu (spec §5.4 #25-31)
 function toggleMenu() {
   if (props.block.lang !== "plantuml") {
@@ -122,7 +127,7 @@ defineExpose({
           <span class="toggle-icon">◫</span>
           <span class="toggle-text">{{ toggleText }}</span>
         </button>
-        <button class="diagram-action-btn fullscreen-btn" title="Fullscreen">⧉</button>
+        <button class="diagram-action-btn fullscreen-btn" @click="openFullscreen" title="Fullscreen">⧉</button>
         <div class="diagram-dropdown" ref="dropdownRef">
           <button class="diagram-action-btn menu-btn" @click="toggleMenu" title="More actions">⋯</button>
           <div class="diagram-dropdown-menu" :class="{ show: isMenuOpen }">
@@ -321,19 +326,6 @@ defineExpose({
   background: var(--bg-secondary);
 }
 
-/* Visually hidden (spec #9) */
-.diagram-block .diagram-viewer:not(.is-active),
-.diagram-block .diagram-code:not(.is-active) {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
 
 /* Resize handle (spec #63-65) */
 .diagram-block .diagram-resize-handle {
