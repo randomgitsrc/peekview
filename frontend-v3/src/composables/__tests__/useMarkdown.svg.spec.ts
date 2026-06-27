@@ -11,21 +11,24 @@ const PURIFY_CONFIG = {
 describe('useMarkdown svg 代码块识别', () => {
   const { render } = useMarkdown()
 
-  it('```svg 代码块渲染为 .svg-block 容器', async () => {
+  it('```svg 代码块渲染为 diagram block', async () => {
     const md = '```svg\n<svg xmlns="http://www.w3.org/2000/svg"><circle r="40" fill="red"/></svg>\n```'
     const result = await render(md, 'github-light')
-    expect(result.html).toContain('svg-block')
+    const svgBlocks = result.blocks.filter(b => b.type === 'diagram' && b.lang === 'svg')
+    expect(svgBlocks).toHaveLength(1)
   })
 
-  it('result.svgSources 是 Map 且含原始 SVG 源码', async () => {
+  it('svg diagram block 含原始 SVG 源码', async () => {
     const svgSrc = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="40" fill="red"/></svg>'
     const md = '```svg\n' + svgSrc + '\n```'
     const result = await render(md, 'github-light')
-    expect(result.svgSources).toBeInstanceOf(Map)
-    expect(result.svgSources.size).toBeGreaterThan(0)
-    const first = Array.from(result.svgSources.values())[0]
-    expect(first).toContain('<svg')
-    expect(first).toContain('circle')
+    const svgBlocks = result.blocks.filter(b => b.type === 'diagram' && b.lang === 'svg')
+    expect(svgBlocks).toHaveLength(1)
+    const first = svgBlocks[0]
+    if (first.type === 'diagram') {
+      expect(first.code).toContain('<svg')
+      expect(first.code).toContain('circle')
+    }
   })
 })
 

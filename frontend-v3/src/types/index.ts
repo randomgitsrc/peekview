@@ -57,6 +57,29 @@ export interface TocHeading {
   id: string
 }
 
+// Markdown block types
+export type MarkdownBlockType = "html" | "diagram"
+
+export interface HtmlBlock {
+  type: "html"
+  html: string
+}
+
+export interface DiagramBlockData {
+  type: "diagram"
+  lang: "mermaid" | "plantuml" | "svg"
+  code: string
+  codeViewHtml: string
+  index: number
+}
+
+export type MarkdownBlock = HtmlBlock | DiagramBlockData
+
+export interface MarkdownBlocksResult {
+  blocks: MarkdownBlock[]
+  headings: TocHeading[]
+}
+
 // Theme
 export type Theme = 'light' | 'dark'
 

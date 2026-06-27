@@ -1,14 +1,47 @@
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
-import type { TocHeading } from '@/types'
+import type { TocHeading, MarkdownBlock, MarkdownBlocksResult } from '@/types'
 import { useShiki } from './useShiki'
 
-export interface MarkdownRenderResult {
+// Compat type for MarkdownViewer (removed in Task 7)
+export interface MarkdownRenderResult extends MarkdownBlocksResult {
   html: string
-  headings: TocHeading[]
   mermaidSources: Map<number, string>
   plantumlSources: Map<number, string>
   svgSources: Map<number, string>
+}
+
+function buildCodeBlockWrapper(
+  lang: string,
+  code: string,
+  highlighted: string,
+  escapeFn: (text: string) => string,
+): string {
+  return `<div class="code-block-wrapper">
+    <div class="code-block-header">
+      <span class="code-lang">${lang.toUpperCase()}</span>
+      <button class="code-copy-btn" data-code="${escapeFn(code)}" data-action="copy-code-block">Copy</button>
+    </div>
+    ${highlighted}
+  </div>`
+}
+
+function buildFallbackCodeBlock(
+  lang: string,
+  code: string,
+  escapeFn: (text: string) => string,
+): string {
+  const escapedCode = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  return `<div class="code-block-wrapper">
+    <div class="code-block-header">
+      <span class="code-lang">${lang.toUpperCase()}</span>
+      <button class="code-copy-btn" data-code="${escapeFn(code)}" data-action="copy-code-block">Copy</button>
+    </div>
+    <pre><code class="language-${lang}">${escapedCode}</code></pre>
+  </div>`
 }
 
 export function useMarkdown() {
@@ -66,9 +99,6 @@ export function useMarkdown() {
   async function render(content: string, theme: 'github-dark' | 'github-light'): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
-    const mermaidSources = new Map<number, string>()
-    const plantumlSources = new Map<number, string>()
-    const svgSources = new Map<number, string>()
     let frontMatterHtml = ''
     let processedContent = content
     const frontMatterMatch = content.match(frontMatterRegex)
@@ -226,146 +256,61 @@ export function useMarkdown() {
     // Restore fence renderer
     md.renderer.rules.fence = originalFence
 
-    // Second pass: replace placeholders with highlighted code
-    for (const block of codeBlocks) {
-      try {
-        // Skip mermaid blocks - they will be rendered by Mermaid.js with toggle support
-        if (block.lang === 'mermaid') {
-          const mermaidBlockId = `mermaid-block-${block.index}`
-          mermaidSources.set(block.index, block.code)
-          const mermaidBlock = `<div class="mermaid-block" id="${mermaidBlockId}" data-index="${block.index}">
-            <div class="mermaid-header">
-              <span class="mermaid-label">MERMAID</span>
-              <div class="mermaid-header-actions">
-                <button class="mermaid-view-toggle" data-action="toggle-mermaid-view" data-block-id="${mermaidBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="mermaid-action-btn fullscreen-btn" data-action="open-mermaid-fullscreen" data-block-id="${mermaidBlockId}" title="Fullscreen">⧉</button>
-                <div class="mermaid-dropdown">
-                  <button class="mermaid-action-btn menu-btn" data-action="toggle-mermaid-menu" data-block-id="${mermaidBlockId}" title="More actions">⋯</button>
-                  <div class="mermaid-dropdown-menu" id="menu-${mermaidBlockId}">
-                    <button data-action="download-mermaid-png" data-block-id="${mermaidBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-mermaid-code" data-block-id="${mermaidBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="mermaid-content diagram-mode is-active" data-mode="diagram">
-              <div class="mermaid-viewer-mount" data-index="${block.index}"></div>
-              <div class="mermaid-resize-handle" data-action="start-resize" data-block-id="${mermaidBlockId}"></div>
-            </div>
-            <div class="mermaid-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, mermaidBlock)
-          continue
+    // Second pass: build blocks array from html + placeholders
+    const blocks: MarkdownBlock[] = []
+    const parts = html.split(/<!--CODE_BLOCK_(\d+)-->/)
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 0) {
+        const segment = parts[i].trim()
+        if (segment) {
+          blocks.push({ type: 'html', html: segment })
         }
-
-        if (block.lang === 'plantuml') {
-          const plantumlBlockId = `plantuml-block-${block.index}`
-          plantumlSources.set(block.index, block.code)
-          const plantumlBlock = `<div class="plantuml-block" id="${plantumlBlockId}" data-index="${block.index}">
-            <div class="plantuml-header">
-              <span class="plantuml-label">PLANTUML</span>
-              <div class="plantuml-header-actions">
-                <button class="plantuml-view-toggle" data-action="toggle-plantuml-view" data-block-id="${plantumlBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="plantuml-action-btn fullscreen-btn" data-action="open-plantuml-fullscreen" data-block-id="${plantumlBlockId}" title="Fullscreen">⧉</button>
-                <div class="plantuml-dropdown">
-                  <button class="plantuml-action-btn menu-btn" data-action="toggle-plantuml-menu" data-block-id="${plantumlBlockId}" title="More actions">⋯</button>
-                  <div class="plantuml-dropdown-menu" id="menu-${plantumlBlockId}">
-                    <button data-action="download-plantuml-png" data-block-id="${plantumlBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-plantuml-code" data-block-id="${plantumlBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="plantuml-content diagram-mode is-active" data-mode="diagram">
-              <div class="plantuml-viewer-mount" data-index="${block.index}"></div>
-            </div>
-            <div class="plantuml-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${escapeHtml(block.code)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, plantumlBlock)
-          continue
+      } else {
+        const blockIdx = parseInt(parts[i])
+        const codeBlock = codeBlocks[blockIdx]
+        if (codeBlock.lang === 'mermaid' || codeBlock.lang === 'plantuml' || codeBlock.lang === 'svg') {
+          let codeViewHtml: string
+          if (codeBlock.lang === 'svg') {
+            codeViewHtml = '<pre class="shiki"><code>' + await highlightCode(codeBlock.code, 'xml', theme) + '</code></pre>'
+          } else {
+            codeViewHtml = '<pre class="shiki"><code>' + escapeHtml(codeBlock.code) + '</code></pre>'
+          }
+          blocks.push({
+            type: 'diagram',
+            lang: codeBlock.lang as 'mermaid' | 'plantuml' | 'svg',
+            code: codeBlock.code,
+            codeViewHtml,
+            index: codeBlock.index,
+          })
+        } else {
+          try {
+            const highlighted = await highlightCode(codeBlock.code, codeBlock.lang, theme)
+            const wrappedCode = buildCodeBlockWrapper(codeBlock.lang, codeBlock.code, highlighted, escapeHtmlAttribute)
+            blocks.push({ type: 'html', html: wrappedCode })
+          } catch (err) {
+            const fallbackCode = buildFallbackCodeBlock(codeBlock.lang, codeBlock.code, escapeHtmlAttribute)
+            blocks.push({ type: 'html', html: fallbackCode })
+          }
         }
-
-        if (block.lang === 'svg') {
-          const svgBlockId = `svg-block-${block.index}`
-          svgSources.set(block.index, block.code)
-          const svgBlock = `<div class="svg-block" id="${svgBlockId}" data-index="${block.index}">
-            <div class="svg-header">
-              <span class="svg-label">SVG</span>
-              <div class="svg-header-actions">
-                <button class="svg-view-toggle" data-action="toggle-svg-view" data-block-id="${svgBlockId}" title="Toggle Diagram/Code">
-                  <span class="toggle-icon">◫</span>
-                  <span class="toggle-text">Diagram</span>
-                </button>
-                <button class="svg-action-btn fullscreen-btn" data-action="open-svg-fullscreen" data-block-id="${svgBlockId}" title="Fullscreen">⧉</button>
-                <div class="svg-dropdown">
-                  <button class="svg-action-btn menu-btn" data-action="toggle-svg-menu" data-block-id="${svgBlockId}" title="More actions">⋯</button>
-                  <div class="svg-dropdown-menu" id="menu-${svgBlockId}">
-                    <button data-action="download-svg-png" data-block-id="${svgBlockId}">⬇ Download PNG</button>
-                    <button data-action="copy-svg-code" data-block-id="${svgBlockId}">⧉ Copy Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="svg-content diagram-mode is-active" data-mode="diagram">
-              <div class="svg-viewer-mount" data-index="${block.index}"></div>
-              <div class="svg-resize-handle" data-action="start-resize" data-block-id="${svgBlockId}"></div>
-            </div>
-            <div class="svg-content code-mode" data-mode="code">
-              <pre class="shiki"><code>${await highlightCode(block.code, 'xml', theme)}</code></pre>
-            </div>
-          </div>`
-          html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, svgBlock)
-          continue
-        }
-
-        const highlighted = await highlightCode(block.code, block.lang, theme)
-        // Wrap highlighted code with our header and copy button
-        const wrappedCode = `<div class="code-block-wrapper">
-          <div class="code-block-header">
-            <span class="code-lang">${block.lang.toUpperCase()}</span>
-            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" data-action="copy-code-block">Copy</button>
-          </div>
-          ${highlighted}
-        </div>`
-        html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, wrappedCode)
-      } catch (err) {
-        // Fallback to plain text if highlighting fails
-        const escapedCode = block.code
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-        const fallbackCode = `<div class="code-block-wrapper">
-          <div class="code-block-header">
-            <span class="code-lang">${block.lang.toUpperCase()}</span>
-            <button class="code-copy-btn" data-code="${escapeHtmlAttribute(block.code)}" data-action="copy-code-block">Copy</button>
-          </div>
-          <pre><code class="language-${block.lang}">${escapedCode}</code></pre>
-        </div>`
-        html = html.replace(`<!--CODE_BLOCK_${block.index}-->`, fallbackCode)
       }
     }
 
-    // Prepend front matter HTML if present
+    // Prepend front matter as html block if present
     if (frontMatterHtml) {
-      html = frontMatterHtml + html
+      blocks.unshift({ type: 'html', html: frontMatterHtml })
     }
 
-    html = DOMPurify.sanitize(html, {
-      ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
-      ADD_TAGS: ['button'],
-    })
+    // Sanitize html blocks
+    for (const block of blocks) {
+      if (block.type === 'html') {
+        block.html = DOMPurify.sanitize(block.html, {
+          ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
+          ADD_TAGS: ['button'],
+        })
+      }
+    }
 
-    return { html, headings, mermaidSources, plantumlSources, svgSources }
+    return { blocks, headings, html: '', mermaidSources: new Map(), plantumlSources: new Map(), svgSources: new Map() }
   }
 
   return { render }
