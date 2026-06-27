@@ -278,7 +278,7 @@ describe('useDiagramViewer', () => {
     container.el.remove()
   })
 
-  it('refreshPanZoom destroys old and re-inits', async () => {
+  it('refreshPanZoom reuses instance and calls resize+fit+center', async () => {
     const { useDiagramViewer } = await import('../useDiagramViewer')
     const container = makeContainer()
     const svgContainer = makeSvgContainer()
@@ -289,8 +289,12 @@ describe('useDiagramViewer', () => {
     await viewer.initPanZoom()
     expect(svgPanZoomMock).toHaveBeenCalledTimes(1)
     await viewer.refreshPanZoom()
-    expect(svgPanZoomMock).toHaveBeenCalledTimes(2)
-    expect(mockDestroy).toHaveBeenCalled()
+    // Refresh reuses the existing instance — svg-pan-zoom's instancesStore
+    // returns the same broken instance if we re-init the same SVG.
+    expect(svgPanZoomMock).toHaveBeenCalledTimes(1)
+    expect(mockFit).toHaveBeenCalled()
+    expect(mockCenter).toHaveBeenCalled()
+    expect(mockResize).toHaveBeenCalled()
     viewer.cleanup()
     svgContainer.el.remove()
     container.el.remove()

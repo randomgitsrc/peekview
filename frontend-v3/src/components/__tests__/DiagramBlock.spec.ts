@@ -53,10 +53,13 @@ describe("DiagramBlock basics", () => {
     expect(wrapper.find(".toggle-text").text()).toBe("Diagram")
   })
 
-  it("plantuml toggle does NOT change text", async () => {
+  it("plantuml toggle changes text Diagram <-> Code", async () => {
     const wrapper = mount(DiagramBlock, {
       props: { block: makeBlock("plantuml"), theme: "dark" },
     })
+    expect(wrapper.find(".toggle-text").text()).toBe("Diagram")
+    await wrapper.find(".diagram-view-toggle").trigger("click")
+    expect(wrapper.find(".toggle-text").text()).toBe("Code")
     await wrapper.find(".diagram-view-toggle").trigger("click")
     expect(wrapper.find(".toggle-text").text()).toBe("Diagram")
   })
