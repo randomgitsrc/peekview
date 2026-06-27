@@ -19,15 +19,16 @@ const rendererRef = ref()
 const dropdownRef = ref<HTMLElement>()
 
 const toggleText = computed(() => {
-  if (props.block.lang === "plantuml") return "Diagram"
   return isCodeMode.value ? "Code" : "Diagram"
 })
 
 function toggleView() {
   isCodeMode.value = !isCodeMode.value
-  if (!isCodeMode.value && props.block.lang !== "plantuml") {
-    rendererRef.value?.refresh?.()
-  }
+  // Note: do NOT call renderer.refresh() here. svg-pan-zoom caches internal
+  // viewport <g> state and gets corrupted when re-initialized on the same
+  // SVG (returns the stale broken instance from its instancesStore). The
+  // first init already fits the diagram to the container; toggle just
+  // flips v-show and the browser handles visibility.
 }
 
 // Fullscreen (spec §5.3 #18)
@@ -51,6 +52,12 @@ function toggleMenu() {
 
 function closeMenu() {
   isMenuOpen.value = false
+}
+
+// Download PNG (delegate to renderer)
+function handleDownloadPng() {
+  rendererRef.value?.downloadPng?.()
+  closeMenu()
 }
 
 // Copy code (spec §5.8 #59-60)
@@ -131,7 +138,7 @@ defineExpose({
         <div class="diagram-dropdown" ref="dropdownRef">
           <button class="diagram-action-btn menu-btn" @click="toggleMenu" title="More actions">⋯</button>
           <div class="diagram-dropdown-menu" :class="{ show: isMenuOpen }">
-            <button @click="closeMenu">⬇ Download PNG</button>
+            <button @click="handleDownloadPng">⬇ Download PNG</button>
             <button @click="handleCopyCode">{{ copyButtonText }}</button>
           </div>
         </div>

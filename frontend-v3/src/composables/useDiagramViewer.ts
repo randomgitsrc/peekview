@@ -44,6 +44,11 @@ export function useDiagramViewer(options: UseDiagramViewerOptions) {
     if (!svg) return
 
     await nextTick()
+    // Wait for layout to settle so svg-pan-zoom can read real dimensions.
+    // Without this, calling init right after v-show toggle (viewer just became
+    // visible) gives bbox=(0,0,0,0) → svg-pan-zoom fit() computes scale=0
+    // → matrix(0,0,0,0,0,0) → blank viewer on toggle back to diagram.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
     svg.removeAttribute('width')
     svg.removeAttribute('height')
@@ -82,9 +87,26 @@ export function useDiagramViewer(options: UseDiagramViewerOptions) {
   }
 
   async function refreshPanZoom() {
-    destroyPanZoom()
+    // Bug fix (2026-06-27): Destroying and re-initializing svg-pan-zoom corrupts
+    // its internal viewport <g> state — transform ends up as matrix(0,0,0,0,0,0)
+    // and reset()/fit() throw 'matrix not invertible'. Reuse the instance and
+    // just call resize() to recompute the fit against current dimensions.
+    if (!panZoomInstance) {
+      await initPanZoom()
+      return
+    }
     await nextTick()
-    await initPanZoom()
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    try {
+      panZoomInstance.resize()
+      panZoomInstance.fit()
+      panZoomInstance.center()
+    } catch (e) {
+      console.warn('svg-pan-zoom resize failed:', e)
+      // Fall back to full re-init if resize fails for any reason
+      destroyPanZoom()
+      await initPanZoom()
+    }
   }
 
   function onWheel(e: WheelEvent) {
@@ -151,6 +173,12 @@ export function useDiagramViewer(options: UseDiagramViewerOptions) {
   function setupResizeObserver() {
     if (!enableResize || !containerRef.value || !('ResizeObserver' in window)) return
     resizeObserver = new ResizeObserver(() => {
+      // Skip when viewer is hidden (v-show=false → container has 0×0).
+      // svg-pan-zoom.fit() on a 0×0 box computes scale=0, setting
+      // transform=matrix(0,0,0,0,0,0) — blank until re-initialized.
+      if (!containerRef.value) return
+      const rect = containerRef.value.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) return
       if (panZoomInstance) {
         panZoomInstance.resize()
         panZoomInstance.fit()
