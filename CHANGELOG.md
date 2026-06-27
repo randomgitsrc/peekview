@@ -7,6 +7,30 @@
 
 ## [Unreleased]
 
+### 重构
+
+- **Diagram 渲染管线重构（T020 redo）** — 在 v0.2.3 回退 T022 后，基于 v0.1.67 重新实现：
+  - `useMarkdown.ts` 返回 `blocks[]` 数组（html | diagram），替代原 HTML+sourcesMap 模式
+  - `DiagramBlock.vue` 统一外壳（header/toggle/dropdown/copy/error/resize）+ 3 个独立渲染器：`MermaidRenderer.vue` / `PlantUmlRenderer.vue` / `SvgRenderer.vue`
+  - `useDiagramViewer.ts` composable — svg-pan-zoom 封装（pan/zoom/touch/resize observer）
+  - `MarkdownViewer.vue` 改用 `v-for blocks` 模板，删除 1500+ 行旧 diagram 事件委托/CSS
+  - 删除旧组件：`MermaidDiagram.vue` / `PlantUmlDiagram.vue` / `SvgDiagram.vue`
+
+### 修复
+
+- **CSS `:not(.is-active)` 死规则** — Task 8 CSS 迁移时复制的 `.diagram-viewer:not(.is-active)` 规则（来自旧 MarkdownViewer 的激活模型）在 v-show 控制下永远匹配，导致 viewer 被压成 1×1px，SVG 渲染后不可见
+- **Fullscreen 按钮无 click handler** — `@click` 未绑定 `openFullscreen()`，点击无反应
+- **Toggle 切回 Diagram 空白** — ResizeObserver 在 viewer `display:none` 时触发 `svg-pan-zoom.fit()`，对 0×0 容器计算 scale=0，写入 `transform=matrix(0,0,0,0,0,0)`，此后所有 zoom 操作抛 "matrix not invertible"；修复：ResizeObserver handler 跳过 width/height 为 0 的情况
+- **PlantUML toggle 文案不变** — `toggleText` computed 对 plantuml 硬编码返回 "Diagram"，忽略 `isCodeMode` 状态
+- **Download PNG 按钮无效** — dropdown 中 "Download PNG" 按钮无 `@click` handler，未调用 `rendererRef.downloadPng()`
+
+### 验证
+
+- 193/193 vitest 单元测试通过
+- 52/52 Playwright E2E 测试通过（含 mermaid toggle/fullscreen、plantuml toggle、svg 渲染、mobile responsive）
+- `vue-tsc --noEmit` 0 errors
+- `make build-frontend` 成功
+
 ## [0.2.3] - 2026-06-26
 
 ### 修复
