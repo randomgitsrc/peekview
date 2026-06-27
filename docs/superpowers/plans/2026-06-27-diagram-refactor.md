@@ -130,7 +130,13 @@ for (let i = 0; i < parts.length; i++) {
 
 Note: Extract the code-block-wrapper HTML generation (lines 333-340 and 347-355) into helper functions `buildCodeBlockWrapper` and `buildFallbackCodeBlock` to avoid inline template duplication. The exact HTML output must match v0.2.3.
 
-- [ ] Prepend front matter as html block if present (front matter HTML goes as the first html block in the blocks array)
+- [ ] Prepend front matter as html block if present. After building the blocks array, if `frontMatterHtml` is non-empty, unshift it as the first html block:
+
+```ts
+if (frontMatterHtml) {
+  blocks.unshift({ type: "html", html: frontMatterHtml })
+}
+```
 - [ ] Run DOMPurify on all html blocks (same config as current lines 363-366). After building the blocks array, sanitize each html block:
 
 ```ts
@@ -164,10 +170,7 @@ describe("useMarkdown blocks structure", () => {
   })
 
   it("mermaid code block generates diagram block", async () => {
-    const md = "\\" + "mermaid
-graph TD
-A-->B
-" + "\\"
+    const md = "```mermaid\ngraph TD\nA-->B\n```"
     const result = await render(md, "github-light")
     const d = result.blocks.find(b => b.type === "diagram")
     expect(d).toBeDefined()
@@ -179,11 +182,7 @@ A-->B
   })
 
   it("plantuml code block generates diagram block", async () => {
-    const md = "\\" + "plantuml
-@startuml
-A -> B
-@enduml
-" + "\\"
+    const md = "```plantuml\n@startuml\nA -> B\n@enduml\n```"
     const result = await render(md, "github-light")
     const d = result.blocks.find(b => b.type === "diagram")
     expect(d).toBeDefined()
@@ -191,9 +190,7 @@ A -> B
   })
 
   it("svg code block generates diagram block with xml highlighting", async () => {
-    const md = "\\" + "svg
-<svg xmlns="http://www.w3.org/2000/svg"><circle r="40"/></svg>
-" + "\\"
+    const md = "```svg\n<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"40\"/></svg>\n```"
     const result = await render(md, "github-light")
     const d = result.blocks.find(b => b.type === "diagram")
     expect(d).toBeDefined()
@@ -204,14 +201,7 @@ A -> B
   })
 
   it("html+diagram interleaving maintains document order", async () => {
-    const md = "Before
-
-" + "\\" + "mermaid
-graph TD
-A-->B
-" + "\\" + "
-
-After"
+    const md = "Before\n\n```mermaid\ngraph TD\nA-->B\n```\n\nAfter"
     const result = await render(md, "github-light")
     const types = result.blocks.map(b => b.type)
     expect(types).toContain("html")
@@ -219,29 +209,19 @@ After"
   })
 
   it("multiple diagram blocks are independent", async () => {
-    const md = "\\" + "mermaid
-graph TD
-A-->B
-" + "\\" + "
-
-" + "\\" + "plantuml
-@startuml
-A -> B
-@enduml
-" + "\\"
+    const md = "```mermaid\ngraph TD\nA-->B\n```\n\n```plantuml\n@startuml\nA -> B\n@enduml\n```"
     const result = await render(md, "github-light")
     expect(result.blocks.filter(b => b.type === "diagram")).toHaveLength(2)
   })
 
   it("no mermaidSources/plantumlSources/svgSources in result", async () => {
-    const md = "\\" + "mermaid
-graph TD
-A-->B
-" + "\\"
+    const md = "```mermaid\ngraph TD\nA-->B\n```"
     const result = await render(md, "github-light")
     expect((result as any).mermaidSources).toBeUndefined()
     expect((result as any).plantumlSources).toBeUndefined()
     expect((result as any).svgSources).toBeUndefined()
+  })
+})
   })
 })
 ```
@@ -389,7 +369,7 @@ Use the exact Unicode characters from MermaidDiagram.vue lines 18-22 for button 
 
 3. **render ID** (M2): Use `crypto.randomUUID()` for render IDs: `mermaid-${crypto.randomUUID()}`
 
-4. **renderDiagram()**: Check cache with key `${currentTheme}-${code}`. If hit, use cached SVG. If miss, call `renderMermaid(renderId, props.code, currentTheme)` and cache result. On error: console.error + emit("renderError"). Check cancelled.value before updating svgContent.
+4. **renderDiagram()**: Check cache with key `${props.theme}-${props.code}`. If hit, use cached SVG. If miss, call `renderMermaid(renderId, props.code, props.theme)` and cache result. On error: console.error + emit("renderError"). Check cancelled.value before updating svgContent.
 
 5. **exportPng()** (R3): Re-render with `mermaid.render("export-${crypto.randomUUID()}", props.code)` using **original code prop** (not svgContent). Apply br fix: svg.replace(/<br>/gi, "<br/>"). Parse with DOMParser, check parseError. Dimensions: viewBox (+20px padding) -> g.root getBBox (+40px padding) -> 800x600 fallback. Min size: max(w,100) x max(h,100). **White background**: ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,w,h). Return Blob.
 
