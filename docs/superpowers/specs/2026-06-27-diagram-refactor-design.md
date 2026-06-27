@@ -52,14 +52,17 @@ MarkdownViewer.vue（简化渲染）
 
 DiagramBlock.vue（外壳，~200行）
   props: block (diagram type), registry
-  管理：header 按钮 / toggle Diagram↔Code / fullscreen modal / dropdown menu / resize handle / code 模式
-  <slot> 插入渲染器
-  CSS: diagram-* 统一规则（非 scoped，放在这里或独立 CSS 文件）
+  管理：header 按钮 / toggle Diagram↔Code / dropdown menu / resize handle / code 模式
+  通过 <component :is="registry.component" ref="rendererRef" /> 动态渲染对应渲染器
+  通过 rendererRef.value.openFullscreen() / .refresh() / .exportPng() 调用渲染器方法
+  CSS: diagram-* 统一规则（非 scoped，所有规则以 .diagram-block 为根前缀）
 
 渲染器（各 ~100-150行）：
-  MermaidRenderer.vue — mermaid render + pan-zoom + touch + resize
-  PlantUmlRenderer.vue — plantuml server render + pan-zoom（无 touch 无 resize）
-  SvgRenderer.vue — DOMPurify sanitize + pan-zoom + touch + resize + try-catch
+  MermaidRenderer.vue — mermaid render + pan-zoom + touch + resize + fullscreen modal
+  PlantUmlRenderer.vue — plantuml server render + pan-zoom + fullscreen modal（无 touch 无 resize）
+  SvgRenderer.vue — DOMPurify sanitize + pan-zoom + touch + resize + try-catch + fullscreen modal
+  注意：fullscreen modal 在渲染器内（modal 内含 SVG + 独立 pan-zoom 实例），与 v0.2.3 架构一致
+  渲染器通过 defineExpose 暴露：openFullscreen / closeFullscreen / refresh / exportPng
 
 useDiagramRegistry.ts（~60行）
   返回 { mermaid: { component, render, pngBg, hasResize, hasTouch, hasCloseOthers, hasClickOutside, copyFeedback, ... }, plantuml: {...}, svg: {...} }
@@ -139,7 +142,7 @@ useDiagramViewer.ts（~150行）
 | 4 | label 样式 | font-weight:600, font-size:12px, color:var(--text-secondary), text-transform:uppercase | getComputedStyle |
 | 5 | header-actions | display:flex, gap:var(--space-2), align-items:center | getComputedStyle |
 | 6 | diagram-mode 默认高度 | height:400px, min-height:300px | getComputedStyle |
-| 7 | diagram-mode 样式 | background:var(--bg-secondary), overflow:hidden, width:100% | getComputedStyle |
+| 7 | diagram-mode 样式 | position:relative, background:var(--bg-secondary), overflow:hidden, width:100% | getComputedStyle |
 | 8 | code-mode 样式 | background:var(--bg-secondary), min-height:100px | getComputedStyle |
 | 9 | 隐藏机制 | `.not(.is-active)` 用 visually-hidden：position:absolute, width:1px, height:1px, padding:0, margin:-1px, overflow:hidden, clip:rect(0,0,0,0), white-space:nowrap, border:0 | getComputedStyle |
 | 10 | code-mode pre | margin:0, padding:var(--space-3), overflow-x:auto, background:var(--bg-secondary) | getComputedStyle |
@@ -294,10 +297,92 @@ v0.2.3 的 CSS 分布在两处：
 - MarkdownViewer 非 scoped diagram 部分（~720行 3 套重复）→ 移到 DiagramBlock 非 scoped CSS（~240行 1 套）
 - 属性值**完全不变**（所有 var(--xxx) 保持原值）
 
+### 🔴 作用域护栏（BLOCKER 级约束）
+
+T022 CSS 失败根因之一是 scoped CSS 的 `[data-v-xxx]` 属性提供特异性保护消失后，裸 class 选择器打不过全局规则。v0.3.0 改非 scoped 后必须用**选择器特异性人工补回**这层保护。
+
+**强制约定：所有 diagram CSS 规则以 `.diagram-block` 为根前缀**。
+- ✅ `.diagram-block .diagram-header { ... }`（特异性 0,2,0）
+- ✅ `.diagram-block .diagram-viewer svg { ... }`（特异性 0,2,1）
+- ❌ `.diagram-header { ... }`（特异性 0,1,0，太低，会被全局规则覆盖）
+
+这把特异性统一抬到 (0,2,x) 起步，复刻 v0.2.3 scoped `[data-v-xxx]` 提供的保护层。
+
+### SVG 选择器特异性
+
+v0.2.3 用 scoped `:deep(svg)` 实现的 `.svg-container[data-v-xxx] svg`（特异性 0,2,1），能压过全局 `.markdown-body .mermaid svg { max-width:100% }`（0,2,1，但注入顺序靠后胜出）。
+
+v0.3.0 非 scoped 必须写成 `.diagram-block .diagram-viewer svg`（特异性 0,2,1），**不能用裸 `.diagram-viewer svg`**（0,1,1，会被全局规则覆盖导致 SVG 纵向溢出）。
+
+### 无前缀 class 重命名
+
+v0.2.3 组件 scoped 内有依赖 scoped 隔离的无前缀 class，非 scoped 后必须重命名加前缀：
+
+| v0.2.3 class（scoped 内） | v0.3.0 class（非 scoped） |
+|--------------------------|--------------------------|
+| `.modal-title` | `.diagram-modal-title` |
+| `.toolbar-btn` | `.diagram-toolbar-btn` |
+| `.toolbar-btn.close-btn` | `.diagram-toolbar-btn.close-btn` |
+| `.svg-wrapper` | `.diagram-svg-wrapper` |
+| `.svg-container` | `.diagram-svg-container` |
+
+### 基础规则拆分
+
+v0.2.3 的 `.mermaid-content` 基础规则同时作用于 diagram-mode 和 code-mode。v0.3.0 拆成两个独立元素，属性落点必须明确：
+
+| 属性 | 落点 | 说明 |
+|------|------|------|
+| `position: relative` | `.diagram-viewer` | resize-handle 锚点必需 |
+| `min-height: 300px` | `.diagram-viewer` | |
+| `height: 400px` | `.diagram-viewer` | 默认高度 |
+| `background: var(--bg-secondary)` | `.diagram-viewer` + `.diagram-code` | 两者都有 |
+| `overflow: hidden` | `.diagram-viewer` | |
+| `width: 100%` | `.diagram-viewer` + `.diagram-code` | |
+| `min-height: 100px` | `.diagram-code` | code 模式更小 |
+| `aspect-ratio: auto` | `.diagram-code` | |
+
+### `.resizing` 规则迁移
+
+```css
+/* v0.2.3 */
+.mermaid-content.resizing { position: relative !important; }
+.mermaid-content.resizing .mermaid-resize-handle { opacity:1; position:absolute !important; bottom:0 !important; right:0 !important; }
+
+/* v0.3.0 */
+.diagram-block .diagram-viewer.resizing { position: relative !important; }
+.diagram-block .diagram-viewer.resizing .diagram-resize-handle { opacity:1; position:absolute !important; bottom:0 !important; right:0 !important; }
+```
+
+### Mobile 响应式差异（mermaid-only）
+
+v0.2.3 三套 mobile 规则**不完全相同**。mermaid 有额外规则（action-btn 26px、viewer min-height 150px、toggle padding 4px 8px），svg/plantuml 没有。统一 class 后用 `[data-type]` 限定：
+
+```css
+@media (max-width: 768px) {
+  /* 三类共用 */
+  .diagram-block .diagram-header { padding: 6px 10px; }
+  .diagram-block .diagram-view-toggle .toggle-text { display: none; }
+
+  /* mermaid-only */
+  .diagram-block[data-type="mermaid"] .diagram-view-toggle { padding: 4px 8px; }
+  .diagram-block[data-type="mermaid"] .diagram-action-btn { width: 26px; height: 26px; font-size: 12px; }
+  .diagram-block[data-type="mermaid"] .diagram-viewer { min-height: 150px; }
+}
+```
+
+### 死代码清理
+
+迁移时一并删除 MarkdownViewer 中的 v2 遗留死代码（CSS 中存在但无模板/脚本引用）：
+- `.diagram-view`（MarkdownViewer.vue:996, 1777）
+- `.mermaid-view`（:1773）
+- `.code-toggle-btn`（:968-989, 1750-1771）
+- `.mermaid-actions`（:961-965, 1744-1748）
+
 ### 去重计算
 - 组件 scoped CSS：360 行 → 120 行（-240行）
 - MarkdownViewer 非 scoped diagram CSS：~720 行 → ~240 行（-480行）
-- 总计 CSS 去重：-720 行
+- 死代码清理：~80 行
+- 总计 CSS 去重：-800 行
 
 ## 7. 验证策略
 
