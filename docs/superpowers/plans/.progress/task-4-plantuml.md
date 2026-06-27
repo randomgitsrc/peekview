@@ -22,20 +22,40 @@
 - 无 mermaidCache / 无 touch / 无 resize observer
 
 ## 步骤
-- [x] RED: 写 `PlantUmlRenderer.spec.ts`（90 行）
+- [x] RED: 写 `PlantUmlRenderer.spec.ts`（92 行）
 - [x] RED 验证：`Failed to resolve import "../PlantUmlRenderer.vue"`（文件不存在，feature missing）
-- [ ] GREEN: 写 `PlantUmlRenderer.vue`
-- [ ] GREEN 验证：跑 vitest 确认通过
-- [ ] 类型检查：vue-tsc --noEmit
-- [ ] 全量测试：vitest run
-- [ ] 构建：npm run build
-- [ ] git commit
-- [ ] 更新 progress
+- [x] GREEN: 写 `PlantUmlRenderer.vue`（340 行）
+- [x] GREEN 验证：4/4 通过
+- [x] 类型检查：vue-tsc --noEmit（无输出，通过）
+- [x] 全量测试：14 文件 166/166 通过（无 regression）
+- [x] 构建：npm run build ✓ built in 12.42s
+- [x] git commit: 44e8e252
+- [x] 更新 progress
 
 ## RED 验证结果
 命令：`cd frontend-v3 && ./node_modules/.bin/vitest run src/components/renderers/__tests__/PlantUmlRenderer.spec.ts`
 失败原因：`Error: Failed to resolve import "../PlantUmlRenderer.vue"` — 文件不存在（feature missing，非 typo/mock 问题）
 状态：1 failed suite / 0 tests（import 解析失败，符合 TDD RED）
 
+## 实现要点映射
+- 命名空间导入 `import * as usePlantUML`，调用 `usePlantUML.ensureLoaded()` + `usePlantUML.render(code, theme)`
+- renderError 无参 emit（与 MermaidRenderer 的 `[err]` 不同，对齐 spec #66）
+- enableTouch:false / enableResize:false / refreshEventName:"plantuml-refresh" / maxZoom:10
+- onMounted 仅 setupRefreshListener（无 touch/resize observer）
+- exportPng 用 `usePlantUML.render(props.code, props.theme)` 重新渲染，无 br fix，白底，维度回退 viewBox→width/height attr→800×600（无 getBBox）
+- downloadPng 失败只 console.error，无 alert（对齐 spec #58）
+- 无 mermaidCache（PlantUML 无缓存，spec #67）
+- cancelled flag：onUnmounted 设 true，ensureLoaded 后 + render 后双重检查
+- modal title "PlantUML Diagram"
+
+## 结果
+- 测试：`PlantUmlRenderer.spec.ts` 4/4 通过
+- 全量：14 文件 166/166 通过，无 regression
+- 类型检查：`npx vue-tsc --noEmit` 无输出（通过）
+- 构建：`npm run build` ✓ built in 12.42s
+- 行数：PlantUmlRenderer.vue = 340 行 / PlantUmlRenderer.spec.ts = 92 行
+- commit: 44e8e252 `feat(PlantUmlRenderer): plantuml render + pan-zoom + renderError emit (TDD)`
+- stderr 中的 "PlantUML render failed: Error: render failed" 是 renderError 测试的预期 console.error（catch 分支），非失败
+
 ## 进度
-- 进行中：GREEN 阶段
+- 完成 ✅
