@@ -291,8 +291,8 @@ describe("DiagramBlock error handling", () => {
 
     // After error: viewer hidden, code shown
     // v-show toggles display, check the actual style attribute
-    expect(viewer.element.style.display).toBe("none")
-    expect(code.element.style.display).toBe("")
+    expect((viewer.element as HTMLElement).style.display).toBe("none")
+    expect((code.element as HTMLElement).style.display).toBe("")
 
     // Error div should NOT appear for plantuml
     expect(wrapper.find(".diagram-error").exists()).toBe(false)

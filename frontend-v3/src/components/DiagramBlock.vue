@@ -165,3 +165,250 @@ defineExpose({
     </div>
   </div>
 </template>
+
+<style>
+/* === DiagramBlock Styles (Task 8 CSS Migration) === */
+/* All rules use .diagram-block as root prefix for specificity (0,2,x) */
+
+/* Block appearance (spec #1) */
+.diagram-block {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+/* Header (spec #2-5) */
+.diagram-block .diagram-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.diagram-block .diagram-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.diagram-block .diagram-header-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Toggle button (spec #12-17) */
+.diagram-block .diagram-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diagram-block .diagram-view-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+}
+
+.diagram-block .diagram-view-toggle .toggle-icon {
+  font-size: 14px;
+}
+
+.diagram-block .diagram-view-toggle.code-active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+/* Action buttons (spec #18-24) */
+.diagram-block .diagram-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diagram-block .diagram-action-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* Dropdown (spec #25-31) */
+.diagram-block .diagram-dropdown {
+  position: relative;
+}
+
+.diagram-block .diagram-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+}
+
+.diagram-block .diagram-dropdown-menu.show {
+  display: block;
+}
+
+.diagram-block .diagram-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.diagram-block .diagram-dropdown-menu button:hover {
+  background: var(--bg-secondary);
+}
+
+/* Viewer and Code areas (spec #6-10) */
+.diagram-block .diagram-viewer {
+  position: relative;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  min-height: 300px;
+  height: 400px;
+  width: 100%;
+}
+
+.diagram-block .diagram-code {
+  background: var(--bg-secondary);
+  min-height: 100px;
+  width: 100%;
+  aspect-ratio: auto;
+}
+
+.diagram-block .diagram-code pre {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--bg-secondary);
+}
+
+/* Visually hidden (spec #9) */
+.diagram-block .diagram-viewer:not(.is-active),
+.diagram-block .diagram-code:not(.is-active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Resize handle (spec #63-65) */
+.diagram-block .diagram-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  background: linear-gradient(
+    -45deg,
+    transparent 40%,
+    var(--border-color) 40%,
+    var(--border-color) 45%,
+    transparent 45%,
+    transparent 50%,
+    var(--border-color) 50%,
+    var(--border-color) 55%,
+    transparent 55%
+  );
+  z-index: 100;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+}
+
+.diagram-block .diagram-viewer.resizing {
+  position: relative !important;
+}
+
+.diagram-block .diagram-viewer.resizing .diagram-resize-handle {
+  opacity: 1;
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+}
+
+/* Error state (spec #66) */
+.diagram-block .diagram-error {
+  padding: 1rem;
+  background: #ffeaea;
+  border: 1px solid #ff6b6b;
+  border-radius: 6px;
+  color: #c92a2a;
+  text-align: center;
+}
+
+[data-theme='dark'] .diagram-block .diagram-error {
+  background: #3d1f1f;
+  border-color: #ff6b6b;
+  color: #ff8787;
+}
+
+/* Mobile responsive (spec #71-74) */
+@media (max-width: 768px) {
+  .diagram-block .diagram-header {
+    padding: 6px 10px;
+  }
+
+  .diagram-block .diagram-view-toggle .toggle-text {
+    display: none;
+  }
+
+  .diagram-block[data-type="mermaid"] .diagram-view-toggle {
+    padding: 4px 8px;
+  }
+
+  .diagram-block[data-type="mermaid"] .diagram-action-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .diagram-block[data-type="mermaid"] .diagram-viewer {
+    min-height: 150px;
+  }
+}
+</style>
