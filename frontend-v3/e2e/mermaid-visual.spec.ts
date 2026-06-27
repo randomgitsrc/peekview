@@ -55,7 +55,7 @@ test.describe('Mermaid Visual Tests', () => {
     await page.screenshot({ path: '/tmp/mermaid-before-toggle.png', fullPage: true })
 
     // 点击Code按钮
-    const toggleBtn = page.locator('.mermaid-view-toggle').first()
+    const toggleBtn = page.locator('.diagram-view-toggle').first()
     await toggleBtn.click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: '/tmp/mermaid-code-view.png', fullPage: true })
@@ -89,7 +89,7 @@ test.describe('Mermaid Visual Tests', () => {
     await page.screenshot({ path: '/tmp/mermaid-fullscreen.png' })
 
     // 检查modal
-    const modal = page.locator('.mermaid-modal-overlay').first()
+    const modal = page.locator('.diagram-modal-overlay').first()
     const modalVisible = await modal.isVisible().catch(() => false)
     expect(modalVisible).toBe(true)
 

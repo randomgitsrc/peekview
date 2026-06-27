@@ -9,18 +9,18 @@ test('mermaid rendered and visible', async ({ page }) => {
   console.log('截图已保存: /tmp/mermaid-screenshot.png')
   
   // 检查mermaid-block是否存在
-  const count = await page.locator('.mermaid-block').count()
+  const count = await page.locator('.diagram-block').count()
   console.log(`找到 ${count} 个 mermaid-block`)
   expect(count).toBeGreaterThan(0)
   
   if (count > 0) {
     // 检查容器高度
-    const box = await page.locator('.mermaid-content.diagram-mode').first().boundingBox()
+    const box = await page.locator('.diagram-viewer').first().boundingBox()
     console.log(`容器高度: ${box?.height}px`)
     expect(box?.height).toBeGreaterThan(200)
     
     // 检查SVG
-    const svgBox = await page.locator('.mermaid-content.diagram-mode svg').first().boundingBox()
+    const svgBox = await page.locator('.diagram-viewer svg').first().boundingBox()
     console.log(`SVG高度: ${svgBox?.height}px`)
     expect(svgBox?.height).toBeGreaterThan(100)
   }

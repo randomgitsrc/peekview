@@ -17,7 +17,7 @@ test.describe('T022 Diagram Refactor', () => {
     // 监听下载 + 点击下载按钮
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.click('.mermaid-modal .toolbar-btn[title="Download PNG"]')
+      page.click('.diagram-modal .toolbar-btn[title="Download PNG"]')
     ])
 
     const downloadPath = '/tmp/t022-mermaid.png'
@@ -83,7 +83,7 @@ test.describe('T022 Diagram Refactor', () => {
     await fullscreenBtn.click()
     await page.waitForTimeout(1000)
 
-    const overlay = page.locator('.mermaid-modal-overlay')
+    const overlay = page.locator('.diagram-modal-overlay')
     await expect(overlay).toBeVisible()
 
     await page.keyboard.press('Escape')
@@ -127,7 +127,7 @@ test.describe('T022 Diagram Refactor', () => {
       await page.waitForTimeout(3000)
 
       // 断言：mermaid svg 仍然可见（不是被旧 token 覆盖为空）
-      await expect(page.locator('.mermaid-block svg').first()).toBeVisible()
+      await expect(page.locator('.diagram-block svg').first()).toBeVisible()
     }
   })
 
@@ -141,7 +141,7 @@ test.describe('T022 Diagram Refactor', () => {
     await page.waitForTimeout(500)
 
     // 断言：mermaid-header 在移动端 padding 变化
-    const headerPadding = await page.locator('.mermaid-block .mermaid-header').first().evaluate((el) => {
+    const headerPadding = await page.locator('.diagram-block .mermaid-header').first().evaluate((el) => {
       return window.getComputedStyle(el).padding
     })
     expect(headerPadding).toBeTruthy()

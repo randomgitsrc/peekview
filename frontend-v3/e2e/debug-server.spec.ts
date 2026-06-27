@@ -195,11 +195,11 @@ graph TD
     await page.screenshot({ path: '/tmp/e2e-results/03-mermaid-diagram.png', fullPage: true })
 
     // Check mermaid block exists
-    const mermaidCount = await page.locator('.mermaid-block').count()
+    const mermaidCount = await page.locator('.diagram-block').count()
     expect(mermaidCount).toBeGreaterThan(0)
 
     // Check SVG fills container (height > 200px)
-    const svg = page.locator('.mermaid-content.diagram-mode svg').first()
+    const svg = page.locator('.diagram-viewer svg').first()
     const box = await svg.boundingBox()
     expect(box?.height).toBeGreaterThan(100)
     expect(box?.width).toBeGreaterThan(200)
@@ -227,19 +227,19 @@ graph TD
     await page.waitForTimeout(3000)
 
     // Click Code to switch to code view
-    await page.click('.mermaid-view-toggle')
+    await page.click('.diagram-view-toggle')
     await page.waitForTimeout(1000)
 
     // Verify code is visible
-    const codeBlock = page.locator('.mermaid-content.code-mode pre')
+    const codeBlock = page.locator('.diagram-code pre')
     await expect(codeBlock).toBeVisible()
 
     // Click toggle again to switch back to diagram view
-    await page.click('.mermaid-view-toggle')
+    await page.click('.diagram-view-toggle')
     await page.waitForTimeout(2000)
 
     // Verify diagram is still rendered
-    const svg = page.locator('.mermaid-content.diagram-mode svg')
+    const svg = page.locator('.diagram-viewer svg')
     await expect(svg).toBeVisible()
 
     const box = await svg.boundingBox()
@@ -275,7 +275,7 @@ graph TD
     await page.waitForTimeout(1000)
 
     // Check modal SVG fills window
-    const modalSvg = page.locator('.mermaid-modal svg')
+    const modalSvg = page.locator('.diagram-modal svg')
     const box = await modalSvg.boundingBox()
     expect(box?.width).toBeGreaterThan(800)
     expect(box?.height).toBeGreaterThan(500)
@@ -283,7 +283,7 @@ graph TD
     await page.screenshot({ path: '/tmp/e2e-results/05-mermaid-fullscreen.png' })
 
     // Close modal
-    await page.click('.mermaid-modal .close-btn, .mermaid-modal .modal-overlay')
+    await page.click('.diagram-modal .close-btn, .diagram-modal .modal-overlay')
     await expect(modalSvg).not.toBeVisible()
   })
 })

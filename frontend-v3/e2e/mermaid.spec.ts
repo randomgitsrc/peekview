@@ -29,8 +29,8 @@ test.describe('Mermaid Diagram Rendering', () => {
   })
 
   test('Code/Diagram toggle works', async ({ page }) => {
-    const block = page.locator('.mermaid-block').first()
-    const toggleBtn = block.locator('.mermaid-view-toggle')
+    const block = page.locator('.diagram-block').first()
+    const toggleBtn = block.locator('.diagram-view-toggle')
     const diagramMode = block.locator('.mermaid-content[data-mode="diagram"]')
     const codeMode = block.locator('.mermaid-content[data-mode="code"]')
 
@@ -58,7 +58,7 @@ test.describe('Mermaid Diagram Rendering', () => {
     await fullscreenBtn.click()
     await page.waitForTimeout(1000)
 
-    const modal = page.locator('.mermaid-modal-overlay')
+    const modal = page.locator('.diagram-modal-overlay')
     await expect(modal).toBeVisible()
 
     const modalBox = await modal.boundingBox()

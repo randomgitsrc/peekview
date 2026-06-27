@@ -7,15 +7,15 @@ test('mermaid renders correctly', async ({ page }) => {
   await page.screenshot({ path: '/tmp/mermaid-test.png', fullPage: true })
   console.log('截图已保存')
   
-  const count = await page.locator('.mermaid-block').count()
+  const count = await page.locator('.diagram-block').count()
   console.log(`mermaid-block数量: ${count}`)
   expect(count).toBeGreaterThan(0)
   
-  const box = await page.locator('.mermaid-content.diagram-mode').first().boundingBox()
+  const box = await page.locator('.diagram-viewer').first().boundingBox()
   console.log(`容器高度: ${box?.height}px`)
   expect(box?.height).toBeGreaterThan(200)
   
-  const svgBox = await page.locator('.mermaid-content.diagram-mode svg').first().boundingBox()
+  const svgBox = await page.locator('.diagram-viewer svg').first().boundingBox()
   console.log(`SVG高度: ${svgBox?.height}px`)
   expect(svgBox?.height).toBeGreaterThan(100)
 })
