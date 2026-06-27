@@ -130,8 +130,19 @@ for (let i = 0; i < parts.length; i++) {
 
 Note: Extract the code-block-wrapper HTML generation (lines 333-340 and 347-355) into helper functions `buildCodeBlockWrapper` and `buildFallbackCodeBlock` to avoid inline template duplication. The exact HTML output must match v0.2.3.
 
-- [ ] Prepend front matter as html block if present
-- [ ] Run DOMPurify on all html blocks (same config as current lines 363-366)
+- [ ] Prepend front matter as html block if present (front matter HTML goes as the first html block in the blocks array)
+- [ ] Run DOMPurify on all html blocks (same config as current lines 363-366). After building the blocks array, sanitize each html block:
+
+```ts
+for (const block of blocks) {
+  if (block.type === "html") {
+    block.html = DOMPurify.sanitize(block.html, {
+      ADD_ATTR: ["data-action", "data-code", "data-line", "data-block-id", "data-index", "data-mode", "target", "rel"],
+      ADD_TAGS: ["button"],
+    })
+  }
+}
+```
 - [ ] Return `{ blocks, headings }` instead of `{ html, headings, mermaidSources, plantumlSources, svgSources }`
 - [ ] Change the function return type from `Promise<MarkdownRenderResult>` to `Promise<MarkdownBlocksResult>`
 
@@ -390,7 +401,7 @@ Use the exact Unicode characters from MermaidDiagram.vue lines 18-22 for button 
 
 9. **useModalPanZoom**: maxZoom:20
 
-10. **Watch**: `watch(() => [props.code, currentTheme.value], async () => { await renderDiagram(); await nextTick(); await viewer.initPanZoom() }, { immediate: true })`
+10. **Watch**: `watch(() => [props.code, props.theme], async () => { await renderDiagram(); await nextTick(); await viewer.initPanZoom() }, { immediate: true })`
 
 11. **onMounted**: viewer.setupResizeObserver(), viewer.setupTouchListeners(), viewer.setupRefreshListener()
 
@@ -497,6 +508,8 @@ cd frontend-v3 && npx vue-tsc --noEmit
 
 **Key differences from MermaidRenderer (spec behavior matrix):**
 
+0. **cancelled flag** (R2 consistency): `const cancelled = ref(false)`. Set in onUnmounted. SVG sanitize is sync but pan-zoom init is async - check cancelled after initPanZoom.
+
 1. **DOMPurify sanitize** (M1): In onMounted and watch on code change, sanitize props.code:
 
 ```ts
@@ -571,6 +584,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  cancelled.value = true
   viewer.cleanup()
   modal.destroyModalPanZoom()
 })
@@ -731,22 +745,25 @@ cd frontend-v3 && npx vue-tsc --noEmit
 - [ ] Add new state:
   ```ts
   const blocks = ref<MarkdownBlock[]>([])
+  let renderToken = 0  // Keep for content prop rapid-change debounce (spec R2: renderer-level cancelled handles component destroy, but MarkdownViewer-level token prevents stale blocks overwrite)
   ```
 
 - [ ] Replace renderContent with:
   ```ts
   async function renderContent() {
+    const myToken = ++renderToken
     isLoading.value = true
     try {
       const themeName = theme.value === "dark" ? "github-dark" : "github-light"
       const result: MarkdownBlocksResult = await render(props.content, themeName)
+      if (myToken !== renderToken) return  // Stale render, discard
       headings.value = result.headings
       blocks.value = result.blocks
       emit("headings", result.headings)
     } catch (err) {
-      console.error("Markdown render failed:", err)
+      if (myToken === renderToken) console.error("Markdown render failed:", err)
     } finally {
-      isLoading.value = false
+      if (myToken === renderToken) isLoading.value = false
     }
   }
   ```
