@@ -1,6 +1,6 @@
 task_id: T025-user-page
 task_name: user-page
-phase: P5
+phase: P6
 status: in_progress
 retries:
   P2:
