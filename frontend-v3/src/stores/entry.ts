@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
 import type { Entry, File, ListEntriesParams } from '@/types'
+import { useToast } from '@/composables/useToast'
 
 export const useEntryStore = defineStore('entry', () => {
   // State
@@ -70,23 +71,26 @@ export const useEntryStore = defineStore('entry', () => {
     }
   }
 
-  async function loadEntry(slug: string): Promise<void> {
+  async function loadEntry(slug: string, shareToken?: string): Promise<void> {
     loading.value = true
     error.value = null
 
     try {
-      const entry = await api.getEntry(slug)
+      const entry = await api.getEntry(slug, shareToken)
       currentEntry.value = entry
 
-      // Reset active file when entry changes, then auto-select first file
       activeFile.value = null
       fileContent.value = ''
 
       if (entry.files.length > 0) {
         await selectFile(entry.files[0])
       }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load entry'
+    } catch (err: any) {
+      if (shareToken) {
+        error.value = 'This share link is no longer valid.'
+      } else {
+        error.value = err instanceof Error ? err.message : 'Failed to load entry'
+      }
       currentEntry.value = null
     } finally {
       loading.value = false
@@ -124,12 +128,10 @@ export const useEntryStore = defineStore('entry', () => {
   }
 
   async function toggleVisibility(entry: Entry): Promise<boolean> {
-    // Optimistic update
     const originalPublic = entry.isPublic
     const index = entries.value.findIndex(e => e.id === entry.id)
     const newPublic = !originalPublic
 
-    // Update locally first
     entry.isPublic = newPublic
     if (index >= 0) {
       entries.value[index] = { ...entries.value[index], isPublic: newPublic }
@@ -139,10 +141,13 @@ export const useEntryStore = defineStore('entry', () => {
     }
 
     try {
-      await api.toggleEntryVisibility(entry.slug, newPublic)
+      const updated = await api.toggleEntryVisibility(entry.slug, newPublic)
+      if (updated.revokedShares && updated.revokedShares > 0) {
+        const toast = useToast()
+        toast.show(`${updated.revokedShares} share link(s) revoked — entry is now public`, 'warning')
+      }
       return true
     } catch {
-      // Rollback on failure
       entry.isPublic = originalPublic
       if (index >= 0) {
         entries.value[index] = { ...entries.value[index], isPublic: originalPublic }

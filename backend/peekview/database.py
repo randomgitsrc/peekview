@@ -13,7 +13,7 @@ from sqlalchemy import Engine, event, text
 from sqlmodel import Session, SQLModel, create_engine
 
 from peekview.exceptions import SchemaMismatchError
-from peekview.models import ApiKey, Entry, File, User
+from peekview.models import ApiKey, Entry, EntryShare, File, User
 
 if TYPE_CHECKING:
     from peekview.config import PeekConfig

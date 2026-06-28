@@ -4,6 +4,7 @@ Defines Entry and File models with proper relationships,
 indexes, and FTS5 integration.
 """
 
+import hashlib
 import hmac
 import json
 import re
@@ -215,10 +216,43 @@ class Entry(EntryBase, table=True):
         back_populates="entry",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    shares: list["EntryShare"] = Relationship(
+        back_populates="entry",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
     owner: User | None = Relationship(back_populates="entries")
 
     def __repr__(self) -> str:
         return f"<Entry(id={self.id}, slug={self.slug!r})>"
+
+
+class EntryShare(SQLModel, table=True):
+    """Share link model — grants temporary read access to private entries."""
+
+    __tablename__ = "entry_shares"
+    __table_args__ = (
+        Index("idx_entry_shares_entry_prefix", "entry_id", "token_prefix"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    entry_id: int = Field(foreign_key="entries.id", index=True)
+    token_hash: str = Field(unique=True, max_length=64, index=True)
+    token_prefix: str = Field(max_length=8)
+    expires_at: datetime | None = Field(default=None)
+    max_views: int | None = Field(default=None, ge=1)
+    view_count: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
+    created_by: int = Field(foreign_key="users.id", index=True)
+    created_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+    )
+    revoked_at: datetime | None = Field(default=None)
+
+    entry: Entry | None = Relationship(back_populates="shares")
+    creator: User | None = Relationship()
+
+    def __repr__(self) -> str:
+        return f"<EntryShare(id={self.id}, prefix={self.token_prefix!r})>"
 
 
 class FileBase(SQLModel):
@@ -369,6 +403,11 @@ class FileResponse(SQLModel):
     )
 
 
+class EntryShareContext(SQLModel):
+    is_share_access: bool = False
+    shared_by: str | None = None
+
+
 class EntryResponse(SQLModel):
     """Schema for entry response (single entry)."""
 
@@ -384,6 +423,8 @@ class EntryResponse(SQLModel):
     expires_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    share_context: EntryShareContext | None = None
+    revoked_shares: int | None = None
 
 
 class EntryListItem(SQLModel):
@@ -611,3 +652,41 @@ class ResetPasswordRequest(SQLModel):
 class ChangePasswordRequest(SQLModel):
     old_password: str = Field(..., min_length=1, max_length=72)
     new_password: str = Field(..., min_length=8, max_length=72)
+
+
+# Share schemas
+
+
+class ShareCreateRequest(SQLModel):
+    expires_in: str | None = Field(
+        default="7d",
+        description="Duration: 1h, 24h, 7d, 30d, or 0 for permanent",
+    )
+    max_views: int | None = Field(
+        default=None, ge=1, le=100000,
+        description="Max view count. null = unlimited",
+    )
+
+
+class ShareResponse(SQLModel):
+    id: int
+    token_prefix: str
+    expires_at: datetime | None
+    max_views: int | None
+    view_count: int
+    created_by: int
+    created_at: datetime
+    revoked_at: datetime | None
+
+
+class ShareCreateResponse(ShareResponse):
+    share_url: str
+
+
+class ShareListResponse(SQLModel):
+    shares: list[ShareResponse]
+    total: int
+
+
+class ShareRevokeRequest(SQLModel):
+    share_ids: list[int] = Field(..., min_length=1)

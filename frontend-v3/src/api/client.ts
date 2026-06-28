@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios'
-import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, ApiKey, ApiKeyCreateResult } from '@/types'
-import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse } from './types'
+import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult } from '@/types'
+import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -70,6 +70,14 @@ class PeekAPI {
       username: entry.username,
       expiresAt: entry.expires_at,
       createdAt: entry.created_at,
+      updatedAt: entry.updated_at,
+      shareContext: entry.share_context
+        ? {
+            isShareAccess: entry.share_context.is_share_access,
+            sharedBy: entry.share_context.shared_by,
+          }
+        : null,
+      revokedShares: entry.revoked_shares ?? undefined,
     }
   }
 
@@ -107,8 +115,9 @@ class PeekAPI {
     }
   }
 
-  async getEntry(slug: string): Promise<Entry> {
-    const response = await this.client.get<EntryResponse>(`/entries/${slug}`)
+  async getEntry(slug: string, shareToken?: string): Promise<Entry> {
+    const config = shareToken ? { params: { share: shareToken } } : undefined
+    const response = await this.client.get<EntryResponse>(`/entries/${slug}`, config)
     return this.transformEntry(response.data)
   }
 
@@ -229,6 +238,48 @@ class PeekAPI {
   async cleanupExpiredKeys(): Promise<number> {
     const response = await this.client.delete<{ deleted: number }>('/apikeys/expired')
     return response.data.deleted
+  }
+
+  // --- Share API --- //
+
+  private transformShare(share: ShareResponse): ShareInfo {
+    return {
+      id: share.id,
+      tokenPrefix: share.token_prefix,
+      expiresAt: share.expires_at,
+      maxViews: share.max_views,
+      viewCount: share.view_count,
+      createdBy: share.created_by,
+      createdAt: share.created_at,
+      revokedAt: share.revoked_at,
+    }
+  }
+
+  async createShare(slug: string, data: { expires_in: string; max_views: number | null }): Promise<ShareCreateResult> {
+    const response = await this.client.post<ShareCreateResponse>(`/entries/${slug}/shares`, data)
+    const d = response.data
+    return {
+      id: d.id,
+      tokenPrefix: d.token_prefix,
+      shareUrl: d.share_url,
+      expiresAt: d.expires_at,
+      maxViews: d.max_views,
+      viewCount: d.view_count,
+      createdAt: d.created_at,
+    }
+  }
+
+  async listShares(slug: string): Promise<{ shares: ShareInfo[]; total: number }> {
+    const response = await this.client.get<ShareListApiResponse>(`/entries/${slug}/shares`)
+    return {
+      shares: response.data.shares.map(s => this.transformShare(s)),
+      total: response.data.total,
+    }
+  }
+
+  async revokeShares(slug: string, data: { share_ids: number[] }): Promise<{ revoked_count: number }> {
+    const response = await this.client.post(`/entries/${slug}/shares/revoke`, data)
+    return response.data
   }
 }
 

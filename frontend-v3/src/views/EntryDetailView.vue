@@ -10,14 +10,21 @@
         <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
           <div class="owner-actions desktop-only">
             <button
-              class="btn btn-sm"
+              class="btn btn-sm visibility-btn"
               :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
               @click="handleToggleVisibility"
             >
               {{ entryStore.currentEntry.isPublic ? '🌐 Public' : '🔒 Private' }}
             </button>
             <button
-              class="btn btn-sm btn-danger"
+              v-if="showShareButton"
+              class="btn btn-sm share-btn"
+              @click="showShareDialog = true"
+            >
+              Share
+            </button>
+            <button
+              class="btn btn-sm btn-danger delete-btn"
               @click="confirmDeleteEntry"
             >
               Delete
@@ -105,14 +112,14 @@
       </aside>
 
       <!-- Main Content Area -->
-      <main class="content-area" tabindex="-1">
+      <main class="content-area entry-content" tabindex="-1">
         <!-- Loading State -->
         <div v-if="entryStore.loading" class="loading-state">
           <span>Loading...</span>
         </div>
 
         <!-- Error State -->
-        <div v-else-if="entryStore.error" class="error-state">
+        <div v-else-if="entryStore.error" class="error-state" :class="{ 'share-error': shareErrorState }">
           <span>{{ entryStore.error }}</span>
         </div>
 
@@ -182,14 +189,21 @@
       <!-- Owner actions on mobile -->
       <template v-if="authStore.isOwner(entryStore.currentEntry.ownerId)">
         <button
-          class="btn btn-sm"
+          class="btn btn-sm visibility-btn"
           :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
           @click="handleToggleVisibility"
         >
           {{ entryStore.currentEntry.isPublic ? '🌐' : '🔒' }}
         </button>
         <button
-          class="btn btn-sm btn-danger"
+          v-if="showShareButton"
+          class="btn btn-sm share-btn"
+          @click="showShareDialog = true"
+        >
+          Share
+        </button>
+        <button
+          class="btn btn-sm btn-danger delete-btn"
           @click="confirmDeleteEntry"
         >
           🗑️
@@ -290,15 +304,36 @@
       @confirm="handleDelete"
       @cancel="cancelDelete"
     />
+
+    <!-- Share Dialog -->
+    <ShareDialog
+      v-model:visible="showShareDialog"
+      :entry-slug="slug"
+      @share-created="handleShareCreated"
+    />
+
+    <!-- Share Management Panel (owner, private entry only) -->
+    <ShareManagementPanel
+      v-if="showShareButton && currentEntry"
+      :entry-slug="slug"
+      class="entry-content"
+      @share-revoked="handleShareRevoked"
+    />
+
+    <!-- Share watermark (non-owner share access only) -->
+    <div v-if="isShareAccess" class="share-watermark">
+      Shared by @{{ currentEntry?.shareContext?.sharedBy }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
+import { useShareStore } from '@/stores/share'
 import { useToast } from '@/composables/useToast'
 import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
@@ -311,6 +346,8 @@ import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ShareDialog from '@/components/ShareDialog.vue'
+import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
 import type { TocHeading } from '@/types'
 
 const props = defineProps<{
@@ -318,14 +355,37 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const entryStore = useEntryStore()
 const authStore = useAuthStore()
+const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
 
 // Drawer state
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
+
+// Share dialog state
+const showShareDialog = ref(false)
+const shareErrorState = ref(false)
+
+const isShareAccess = computed(() => {
+  if (!currentEntry.value) return false
+  if (authStore.isOwner(currentEntry.value.ownerId)) return false
+  return currentEntry.value.shareContext?.isShareAccess === true
+})
+
+const showOwnerActions = computed(() => {
+  if (!currentEntry.value) return false
+  return authStore.isOwner(currentEntry.value.ownerId)
+})
+
+const showShareButton = computed(() => {
+  if (!currentEntry.value) return false
+  if (!authStore.isOwner(currentEntry.value.ownerId)) return false
+  return !currentEntry.value.isPublic
+})
 
 // Zen mode state
 const zenMode = ref(false)
@@ -392,12 +452,25 @@ function cancelDelete() {
 // Visibility toggle
 async function handleToggleVisibility() {
   if (!currentEntry.value) return
+  const wasPublic = currentEntry.value.isPublic
   const success = await entryStore.toggleVisibility(currentEntry.value)
   if (success) {
-    toast.show(currentEntry.value.isPublic ? 'Entry made public' : 'Entry made private', 'success')
+    if (!wasPublic) {
+      // Private -> public, shares revoked (toast shown by store)
+    } else {
+      toast.show('Entry made private', 'success')
+    }
   } else {
     toast.show('Failed to change visibility', 'error')
   }
+}
+
+function handleShareCreated() {
+  shareStore.fetchShares(props.slug)
+}
+
+function handleShareRevoked() {
+  // Panel already refreshes internally
 }
 
 // Computed properties
@@ -565,8 +638,16 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 // Load entry on mount and when slug changes
-onMounted(() => {
-  entryStore.loadEntry(props.slug)
+onMounted(async () => {
+  const shareToken = route.query.share as string | undefined
+  shareErrorState.value = false
+  await entryStore.loadEntry(props.slug, shareToken)
+  if (shareToken && !currentEntry.value && entryStore.error) {
+    shareErrorState.value = true
+  }
+  if (shareToken) {
+    router.replace({ path: route.path, query: {} })
+  }
   document.addEventListener('keydown', handleZenKeydown)
 })
 
@@ -667,6 +748,27 @@ watch(() => entryStore.currentEntry, (entry) => {
 
 .entry-expires-never {
   color: var(--text-tertiary);
+}
+
+.share-watermark {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.75));
+  color: var(--text-secondary, #aaa);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+}
+
+.share-error {
+  color: var(--error-text);
+  font-size: 15px;
+  text-align: center;
+  padding: 40px 16px;
 }
 </style>
 

@@ -108,13 +108,16 @@ def create_app(
     from peekview.services.entry_service import EntryService
     from peekview.services.apikey_service import ApiKeyService
     from peekview.services.admin_service import AdminService
+    from peekview.services.share_service import ShareService
     storage = StorageManager(config=config)
     entry_service = EntryService(engine=engine, storage=storage, config=config)
     apikey_service = ApiKeyService(engine=engine)
     admin_service = AdminService(engine=engine, storage=storage, config=config)
+    share_service = ShareService(engine=engine, config=config)
     app.state.entry_service = entry_service
     app.state.apikey_service = apikey_service
     app.state.admin_service = admin_service
+    app.state.share_service = share_service
 
     # Setup CORS - use config or default
     cors_origins = getattr(config, 'cors_origins', ["http://localhost:5173"])
@@ -134,10 +137,14 @@ def create_app(
         response = await call_next(request)
         path = request.url.path
         is_render_route = path.endswith("/render") and "/files/" in path
+        has_share_param = "share=" in request.url.query
         if path.startswith("/api") or path == "/health":
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Cache-Control"] = "no-store"
-            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            if has_share_param:
+                response.headers["Referrer-Policy"] = "no-referrer"
+            else:
+                response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             if is_render_route:
                 # render route sets its own CSP and intentionally omits X-Frame-Options
                 pass
@@ -147,7 +154,10 @@ def create_app(
         elif path == "/" or path.startswith("/assets") or (not path.startswith("/api") and not path.startswith("/health")):
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"
-            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            if has_share_param:
+                response.headers["Referrer-Policy"] = "no-referrer"
+            else:
+                response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-eval'; "
@@ -256,6 +266,7 @@ def create_app(
     from peekview.api.config_router import router as config_router
     from peekview.api.captcha_router import router as captcha_router
     from peekview.api.admin import router as admin_router
+    from peekview.api.shares import router as shares_router
     app.include_router(auth_router)
     app.include_router(apikeys_router)
     app.include_router(entries_router)
@@ -263,6 +274,7 @@ def create_app(
     app.include_router(config_router)
     app.include_router(captcha_router)
     app.include_router(admin_router)
+    app.include_router(shares_router)
 
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (

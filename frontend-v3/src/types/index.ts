@@ -12,6 +12,12 @@ export interface Entry {
   username: string | null
   expiresAt: string | null
   createdAt: string
+  updatedAt?: string
+  shareContext?: {
+    isShareAccess: boolean
+    sharedBy: string | null
+  } | null
+  revokedShares?: number | null
 }
 
 export interface File {
@@ -118,5 +124,27 @@ export interface ApiKeyCreateResult {
   key: string
   keyPrefix: string
   expiresAt: string | null
+  createdAt: string
+}
+
+// Share types
+export interface ShareInfo {
+  id: number
+  tokenPrefix: string
+  expiresAt: string | null
+  maxViews: number | null
+  viewCount: number
+  createdBy: number
+  createdAt: string
+  revokedAt: string | null
+}
+
+export interface ShareCreateResult {
+  id: number
+  tokenPrefix: string
+  shareUrl: string
+  expiresAt: string | null
+  maxViews: number | null
+  viewCount: number
   createdAt: string
 }

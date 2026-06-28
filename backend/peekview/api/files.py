@@ -128,6 +128,8 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
     Uses EntryService.get_entry() for non-global-API-key requests,
     which centralizes visibility logic (owner, admin, public).
     For global API key auth, fetches entry directly (bypasses visibility).
+    Also checks share cookie for sub-resource access when user is
+    not the owner/admin.
     """
     config = request.app.state.config
     engine = get_engine(config)
@@ -143,10 +145,32 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
     else:
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
-        entry_response = service.get_entry(
-            slug, current_user_id=current_user_id, is_admin=is_admin
-        )
-        return entry_response.id
+
+        # First try normal access (public entry, owner, admin)
+        try:
+            entry_response = service.get_entry(
+                slug, current_user_id=current_user_id, is_admin=is_admin
+            )
+            return entry_response.id
+        except NotFoundError:
+            pass
+
+        # Check share cookie for sub-resource access
+        with Session(engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+
+            cookie_name = f"peekview_share_{entry.id}"
+            cookie_value = request.cookies.get(cookie_name)
+            if cookie_value:
+                from peekview.services.share_service import ShareService
+                share_service = ShareService(engine=engine, config=config)
+                share = share_service.verify_share_cookie(entry.id, cookie_value)
+                if share:
+                    return entry.id
+
+        raise NotFoundError(f"Entry not found: {slug}")
 
 
 @router.get("/{slug}/files/{file_id}")

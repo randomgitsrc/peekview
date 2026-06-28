@@ -30,6 +30,11 @@ export interface EntryResponse {
   expires_at: string | null
   created_at: string
   updated_at: string
+  share_context?: {
+    is_share_access: boolean
+    shared_by: string | null
+  } | null
+  revoked_shares?: number | null
 }
 
 export interface FileResponse {
@@ -87,4 +92,25 @@ export interface ApiKeyCreateResponse {
 
 export interface ApiKeyListApiResponse {
   items: ApiKeyResponse[]
+}
+
+// Share API response types
+export interface ShareResponse {
+  id: number
+  token_prefix: string
+  expires_at: string | null
+  max_views: number | null
+  view_count: number
+  created_by: number
+  created_at: string
+  revoked_at: string | null
+}
+
+export interface ShareCreateResponse extends ShareResponse {
+  share_url: string
+}
+
+export interface ShareListApiResponse {
+  shares: ShareResponse[]
+  total: number
 }

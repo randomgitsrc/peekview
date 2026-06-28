@@ -28,6 +28,7 @@ from peekview.models import (
     EntryListItem,
     EntryListResponse,
     EntryResponse,
+    EntryShareContext,
     File,
     FileResponse,
     User,
@@ -477,6 +478,8 @@ class EntryService:
 
             entry_id = entry.id
 
+            was_private = not entry.is_public
+
             # Update fields
             if summary is not None:
                 entry.summary = summary.strip()
@@ -488,6 +491,12 @@ class EntryService:
                 entry.is_public = is_public
             entry.updated_at = datetime.now(timezone.utc)
             session.add(entry)
+
+            # Private→public: auto-revoke all active shares
+            revoked_shares = None
+            if is_public is True and was_private:
+                share_service = self._get_share_service()
+                revoked_shares = share_service.revoke_all_for_entry(entry_id)
 
             # Remove files (DB records + disk)
             if remove_file_ids:
@@ -574,7 +583,10 @@ class EntryService:
                 select(File).where(File.entry_id == entry.id)
             ).all()
 
-            return self._build_response(entry, list(files))
+            response = self._build_response(entry, list(files))
+            if revoked_shares is not None:
+                response.revoked_shares = revoked_shares
+            return response
 
     def delete_entry(self, slug: str, current_user_id: int | None = None, is_api_key_auth: bool = False, allow_local: bool = False, is_admin: bool = False) -> None:
         """Delete entry and all associated files.
@@ -838,3 +850,48 @@ class EntryService:
             created_at=entry.created_at,
             updated_at=entry.updated_at,
         )
+
+    def _get_share_service(self):
+        from peekview.services.share_service import ShareService
+        return ShareService(engine=self.engine, config=self.config)
+
+    def get_entry_with_share(self, slug: str, share_token: str, share_service) -> tuple[EntryResponse, Any] | None:
+        """Get entry with share token validation.
+
+        Returns (EntryResponse, EntryShare) on success, None on failure.
+        For share access, share_context is set in the response.
+        """
+        with Session(self.engine) as session:
+            entry = session.exec(
+                select(Entry).where(Entry.slug == slug)
+            ).first()
+            if not entry:
+                return None
+
+            if entry.is_public:
+                return None
+
+            now = datetime.now(timezone.utc)
+            if entry.expires_at:
+                entry_exp = entry.expires_at.replace(tzinfo=timezone.utc) if entry.expires_at.tzinfo is None else entry.expires_at
+                if entry_exp <= now:
+                    return None
+
+            entry_share = share_service.verify_share_token(entry.id, share_token)
+            if not entry_share:
+                return None
+
+            files = session.exec(
+                select(File).where(File.entry_id == entry.id)
+            ).all()
+
+            username = self._resolve_username(session, entry.owner_id)
+            shared_by = self._resolve_username(session, entry_share.created_by)
+
+            response = self._build_response(entry, list(files), username)
+            from peekview.models import EntryShareContext
+            response.share_context = EntryShareContext(
+                is_share_access=True,
+                shared_by=shared_by,
+            )
+            return response, entry_share

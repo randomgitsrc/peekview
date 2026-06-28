@@ -10,9 +10,10 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from peekview.auth import get_current_user
 from peekview.api.files import _sanitize_filename
-from peekview.exceptions import AuthenticationError
-from peekview.models import API_KEY_PREFIX, CreateEntryRequest, EntryUpdate, User
+from peekview.exceptions import AuthenticationError, NotFoundError
+from peekview.models import API_KEY_PREFIX, CreateEntryRequest, Entry, EntryShareContext, EntryUpdate, User
 from peekview.services.entry_service import EntryService, get_entry_service
+from sqlmodel import Session, select
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 
@@ -20,6 +21,39 @@ router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 def _get_service(request: Request) -> EntryService:
     """Get EntryService from app state."""
     return get_entry_service(request.app)
+
+
+def _check_share_cookie(request: Request, slug: str, service: EntryService):
+    from peekview.services.share_service import ShareService
+    from peekview.models import File
+
+    share_service: ShareService = request.app.state.share_service
+
+    with Session(request.app.state.engine) as session:
+        entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+        if not entry:
+            return None
+
+        if entry.is_public:
+            return None
+
+        cookie_name = f"peekview_share_{entry.id}"
+        cookie_value = request.cookies.get(cookie_name)
+        if not cookie_value:
+            return None
+
+        share = share_service.verify_share_cookie(entry.id, cookie_value)
+        if not share:
+            return None
+
+        files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+        username = service._resolve_username(session, entry.owner_id)
+        response = service._build_response(entry, list(files), username)
+        response.share_context = EntryShareContext(
+            is_share_access=True,
+            shared_by=service._resolve_username(session, share.created_by),
+        )
+        return response
 
 
 def _looks_like_jwt(token: str) -> bool:
@@ -130,13 +164,56 @@ async def list_entries(
 @router.get("/{slug}")
 async def get_entry(
     slug: str,
-    request: Request,
+    share: str | None = Query(default=None, max_length=64),
+    request: Request = None,  # injected by FastAPI
     service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
-    """Get entry details by slug."""
+    """Get entry details by slug.
+
+    Supports ?share={token} query param for share link access.
+    If share token is valid, sets a share cookie and returns entry
+    with share_context. Cookie enables subsequent sub-resource access.
+    """
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
+
+    if share:
+        from peekview.services.share_service import ShareService
+
+        share_service: ShareService = request.app.state.share_service
+
+        with Session(request.app.state.engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+
+            if entry.is_public or (current_user_id is not None and (is_admin or entry.owner_id == current_user_id)):
+                return service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+
+        result = service.get_entry_with_share(slug, share, share_service)
+        if result is None:
+            raise NotFoundError(f"Entry not found: {slug}")
+
+        entry_response, entry_share = result
+
+        is_secure = request.url.scheme == "https"
+        cookie_params = share_service.build_share_cookie_params(
+            entry_id=entry_response.id,
+            token_prefix=entry_share.token_prefix,
+            expires_at=entry_share.expires_at,
+            is_secure=is_secure,
+        )
+
+        content = entry_response.model_dump(mode="json")
+        response = JSONResponse(content=content)
+        response.set_cookie(**cookie_params)
+        return response
+
+    cookie_result = _check_share_cookie(request, slug, service)
+    if cookie_result is not None:
+        return cookie_result
+
     return service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
 
 
