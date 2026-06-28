@@ -5,7 +5,7 @@ TDD red-light: imports EntryShare which does not exist yet.
 
 import shutil
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pytest

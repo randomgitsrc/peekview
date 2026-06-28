@@ -208,6 +208,7 @@ async def get_entry(
         content = entry_response.model_dump(mode="json")
         response = JSONResponse(content=content)
         response.set_cookie(**cookie_params)
+        response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
     cookie_result = _check_share_cookie(request, slug, service)
@@ -314,11 +315,17 @@ async def download_entry_files(
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
 
-        entry = service.get_entry(
-            slug,
-            current_user_id=current_user_id,
-            is_admin=is_admin,
-        )
+        try:
+            entry = service.get_entry(
+                slug,
+                current_user_id=current_user_id,
+                is_admin=is_admin,
+            )
+        except NotFoundError:
+            cookie_result = _check_share_cookie(request, slug, service)
+            if cookie_result is None:
+                raise
+            entry = cookie_result
 
     if not entry.files:
         return JSONResponse(

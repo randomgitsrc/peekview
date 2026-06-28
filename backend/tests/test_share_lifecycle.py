@@ -3,10 +3,10 @@
 TDD red-light: imports EntryShare which does not exist yet.
 """
 
+import asyncio
 import hashlib
 import shutil
 import tempfile
-import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -48,10 +48,12 @@ def _auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
-async def _create_private_entry(client, auth_token, slug=None, summary="Private entry"):
+async def _create_private_entry(client, auth_token, slug=None, summary="Private entry", files=None):
     data = {"summary": summary, "is_public": False}
     if slug:
         data["slug"] = slug
+    if files:
+        data["files"] = files
     resp = await client.post("/api/v1/entries", json=data, headers=_auth(auth_token))
     assert resp.status_code == 201
     return resp.json()
@@ -105,7 +107,7 @@ class TestShareLifecycle:
         assert resp.status_code == 200
         data = resp.json()
 
-        assert data.get("revoked_shares") == 3, "revoked_shares must count 3 formerly active shares"
+        assert data.get("revoked_shares") == 2, "revoked_shares must count 2 still-active shares (1 was already revoked)"
 
         engine = app.state.engine
         with Session(engine) as session:
@@ -193,22 +195,18 @@ class TestShareLifecycle:
         results = []
         errors = []
 
-        def access_share():
-            import httpx
+        async def access_share():
             try:
-                with httpx.Client(transport=ASGITransport(app=app), base_url="http://test") as c:
-                    resp = c.get(f"/api/v1/entries/atomic-count?share={token}")
+                transport = ASGITransport(app=app)
+                async with AsyncClient(transport=transport, base_url="http://test") as c:
+                    resp = await c.get(f"/api/v1/entries/atomic-count?share={token}")
                     results.append(resp.status_code)
             except Exception as e:
                 errors.append(e)
 
-        threads = [threading.Thread(target=access_share) for _ in range(10)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join(timeout=10)
+        await asyncio.gather(*[access_share() for _ in range(10)])
 
-        assert len(errors) == 0, f"Thread errors: {errors}"
+        assert len(errors) == 0, f"Concurrent access errors: {errors}"
 
         engine = app.state.engine
         with Session(engine) as session:
@@ -260,5 +258,7 @@ class TestShareLifecycle:
         assert data["expires_at"] is not None, "Default expiry must set expires_at"
         expected = datetime.now(timezone.utc) + timedelta(days=7)
         actual = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+        if actual.tzinfo is None:
+            actual = actual.replace(tzinfo=timezone.utc)
         delta = abs((actual - expected).total_seconds())
         assert delta < 60, f"Default expires_at should be ~7d, delta={delta}s"

@@ -7,7 +7,7 @@ import hashlib
 import re
 import shutil
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -109,8 +109,7 @@ class TestShareSecurity:
         import secrets as secrets_module
 
         with patch.object(secrets_module, "token_urlsafe", wraps=secrets_module.token_urlsafe) as mock_gen:
-            resp = await _create_share(client, alice["access_token"], "csprng-test")
-            assert resp.status_code == 201
+            data = await _create_share(client, alice["access_token"], "csprng-test")
 
             mock_gen.assert_called()
             call_args = mock_gen.call_args_list

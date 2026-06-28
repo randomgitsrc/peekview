@@ -369,7 +369,14 @@ async def get_entry_raw(
     else:
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
-        entry_resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+        try:
+            entry_resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+        except NotFoundError:
+            from peekview.api.entries import _check_share_cookie
+            cookie_result = _check_share_cookie(request, slug, service)
+            if cookie_result is None:
+                raise
+            entry_resp = cookie_result
         entry_id = entry_resp.id
         entry_slug = entry_resp.slug
         entry_summary = entry_resp.summary

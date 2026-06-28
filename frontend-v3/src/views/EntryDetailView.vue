@@ -376,11 +376,6 @@ const isShareAccess = computed(() => {
   return currentEntry.value.shareContext?.isShareAccess === true
 })
 
-const showOwnerActions = computed(() => {
-  if (!currentEntry.value) return false
-  return authStore.isOwner(currentEntry.value.ownerId)
-})
-
 const showShareButton = computed(() => {
   if (!currentEntry.value) return false
   if (!authStore.isOwner(currentEntry.value.ownerId)) return false

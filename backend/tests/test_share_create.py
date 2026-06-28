@@ -108,6 +108,8 @@ class TestCreateShare:
         assert data["expires_at"] is not None, "Default 7d expiry should set expires_at"
         expected_expiry = datetime.now(timezone.utc) + timedelta(days=7)
         actual_expiry = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+        if actual_expiry.tzinfo is None:
+            actual_expiry = actual_expiry.replace(tzinfo=timezone.utc)
         delta = abs((actual_expiry - expected_expiry).total_seconds())
         assert delta < 60, f"expires_at should be ~7d from now, delta={delta}s"
 
@@ -132,6 +134,8 @@ class TestCreateShare:
         assert data["expires_at"] is not None
         expected_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
         actual_expiry = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+        if actual_expiry.tzinfo is None:
+            actual_expiry = actual_expiry.replace(tzinfo=timezone.utc)
         delta = abs((actual_expiry - expected_expiry).total_seconds())
         assert delta < 60
 
@@ -178,6 +182,7 @@ class TestCreateSharePermission:
         alice = await _register(client, "alice")
         await _create_private_entry(client, alice["access_token"], slug="alices-private")
 
+        client.cookies.clear()
         resp = await client.post(
             "/api/v1/entries/alices-private/shares",
             json={"expires_in": "7d"},

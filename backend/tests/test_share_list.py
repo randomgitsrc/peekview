@@ -153,5 +153,6 @@ class TestListShares:
         await _create_private_entry(client, alice["access_token"], slug="anon-list")
         await _create_share(client, alice["access_token"], "anon-list")
 
+        client.cookies.clear()
         resp = await client.get("/api/v1/entries/anon-list/shares")
         assert resp.status_code == 401
