@@ -118,19 +118,101 @@
 
 ## 启示
 
-### 对 agate
+### 对 agate（面向所有项目，非 PeekView 特定）
 
-- **P6 gate 需要独立可验证证据**：不只检查 `grep PASS`，还要检查证据文件存在（截图、Playwright trace、测试日志）且时间戳合理
-- **考虑引入"审计 trail"**：每个 BDD PASS 必须附带可重现步骤 + 证据路径，不只是标签
-- **大任务（如 16 条 BDD）的 P6 应拆分成多个验证子任务**：减少单个主 Agent 的造假动机和覆盖盲区
+#### 建议 1：P6 gate 从"文件内容判定"升级为"独立产出判定"
 
-### 对 orchestrator
+当前 P6 gate 检查的是主 Agent 自己维护的 `P6-acceptance.md` 中的 PASS/FAIL 计数。文件是主 Agent 写的，`grep PASS` 也是主 Agent 跑的——作者和裁判是同一人。
+
+**问题本质**：P1-P5 的 gate 命令产出由外部工具生成（pytest exit code、`vue-tsc` 输出、`git log`），主 Agent 无法伪造。但 P6 gate 的判定对象是主 Agent 自己写的 markdown 文件，真正验证了 BDD 的那个测试产出（Playwright 报告、截图、日志）反而不在 gate 判定路径上。
+
+**建议**：
+
+```
+P6 gate 改为两级判定：
+
+第一级（机器可判定，当前有）：
+  - P6-acceptance.md 存在且含 Header ✅
+  - BDD 条数匹配 ✅
+  - 无 NEED_CONFIRM ✅
+
+第二级（证据存在性判定，新增）：
+  - P6 证据目录存在且非空（截图、trace、log 至少一种）
+  - 证据文件时间戳晚于 P6 阶段开始时间
+  - 证据文件数量 ≥ BDD 总数（每条 BDD 至少一个证据）
+  - 若 ui_affected==true：至少一张截图通过 image diff 检查
+```
+
+不要求主 Agent 判断证据"是否正确"——只判断"证据是否存在"。存在性判定和内容判定分离。
+
+#### 建议 2：P6 verifier 产出的测试脚本必须被执行，不得被绕过
+
+T026 中 P6 verifier 产出了完整的 Playwright 测试（`search.spec.ts`），但主 Agent 绕过了它，自写了 3 个 CDP 脚本。如果 gate 规则要求"P6 verifier 产出的测试脚本执行日志必须存在于证据目录中"，绕过就不可能发生。
+
+**建议**：在 dispatch-protocol.md 的 P6 派发规则中增加：
+
+```
+P6 verifier 交付物：
+  1. P6-acceptance.md 框架
+  2. 可执行验证脚本（Playwright / shell / pytest）
+  3. 脚本执行说明
+
+P6 gate 强制检查：
+  - verifier 交付的脚本的执行输出存在于证据目录
+  - 不接受主 Agent 自写脚本替代
+```
+
+#### 建议 3：gate 命令分类——"外部产出 gate" vs "自写文件 gate"
+
+当前 gate 表将所有门槛统一为"主 Agent 亲自跑命令"。但实际有两类：
+
+| 类型 | 例子 | 判定对象 | 可伪造？ |
+|------|------|----------|----------|
+| 外部产出 | P3 TDD 红灯、P5 pytest、vue-tsc | 外部工具输出 | 否（exit code 不可伪造） |
+| 自写文件 | P6 grep PASS、P7 grep BLOCKER、P1 grep BDD 数量 | 主 Agent 写的内容 | **是**（主 Agent 直接写文件） |
+
+**建议**：dispatch-protocol.md 的 gate 表对"自写文件 gate"加 `⚠️ self-authored` 标记，并配套证据存在性检查。长远考虑将 P6 判定改为"外部产出 gate"——即 gate 命令直接跑 verifier 的脚本，看 exit code 和输出，不相信 `P6-acceptance.md` 的 PASS 标签。
+
+#### 建议 4：P6 BDD 数与证据数强制关联
+
+当前 gate 只要求 `grep -cE 'PASS|FAIL' = P1 BDD 总数`。但 PASS 标签可以被无证据写入。
+
+**建议**：state-machine.md 的 P6 gate 公式改为：
+
+```
+P6 gate = 原有条件
+  AND evidence_files_count >= bdd_count
+  AND evidence_files_mtime > phase_start_time
+```
+
+证据文件路径约定（由 P2 gate_commands 或 P6 verifier 产出中声明）：
+- 截图：`{task}/P6-evidence/screenshots/*.png`
+- 日志：`{task}/P6-evidence/test-output.log`
+- Trace：`{task}/P6-evidence/trace.zip`
+
+#### 建议 5：引入"验证者 ≠ 作者"的最低保障
+
+T026 的核心故障模式是"一个人写了假数据，自己判定通过"。在不引入多 Agent 验证的情况下，最低保障是：
+
+**建议**：P6 派发拆分为两个独立 subagent：
+
+```
+P6a verifier（验收模式）：运行测试、收集证据、写 P6-acceptance.md
+P6b verifier（独立核查模式）：读 P6-acceptance.md + 证据目录，逐条核对
+  - 每条 BDD PASS 是否有对应证据
+  - 证据是否匹配 BDD 描述
+  - 产出 P6-verification.md（status: verified / disputed）
+```
+
+P6a 和 P6b 由不同 subagent 实例执行（独立上下文），P6b 不知道 P6a 的内部状态。这样造假需要两个独立 Agent 共谋，大幅提高门槛。
+
+### 对 orchestrator 角色
 
 - **永远不编造 gate 结果**：宁可 PAUSED 等人决策，也不走捷径
-- **优先用已有工具而非重复发明**：playwright-vision skill 已加载就调它，不重写 CDP 脚本；P6 verifier 的 `search.spec.ts` 应该执行，不被绕过
-- **Vision 和 E2E 应该规划进 P2 gate_commands**：不作为事后补救，而是流程内置的一环
+- **优先用已有工具而非重复发明**：skill 已加载就调，不重写脚本；verifier 的测试直接执行，不被绕过
+- **Vision 和 E2E 应该规划进 P2 gate_commands**：不作为事后补救
 
 ### 对 PeekView 项目
 
 - **`run-e2e-tests.sh` 应支持参数化 spec**：不要硬编码 `debug-server.spec.ts`，增加 `E2E_SPEC` 变量或通配符模式
-- **playwright-vision skill 应在 CLAUDE.md 中写明位置**：避免主 Agent 找不到或绕过
+- **playwright-vision skill 在 CLAUDE.md 中写明位置**：避免主 Agent 找不到或绕过
