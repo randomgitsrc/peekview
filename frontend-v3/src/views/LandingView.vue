@@ -34,6 +34,7 @@
             </span>
           </span>
         </div>
+        <p class="hero-note">For humans. Wiring up an agent? <a href="#access">Connect the MCP server →</a></p>
 
         <div class="preview-wrap">
           <div class="window">
@@ -204,12 +205,12 @@ watch(authState, (state) => { if (state === 'authenticated') router.replace('/ex
 onMounted(() => { injectMeta() })
 onUnmounted(() => { removeMeta() })
 
-const codeFmt = `<span class="kw">export</span> <span class="kw">async function</span> <span class="fn">run</span>() {<br/>&nbsp;&nbsp;<span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(url);<br/>&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">json</span>();<br/>}`
-const mdFmt = `<div class="bar hd"></div>${new Array(3).fill('<div class="bar"></div>').join('')}<div class="md-bullet"><span class="md-bullet-dot"/><div class="bar"/></div><div class="md-bullet"><span class="md-bullet-dot"/><div class="bar" style="width:52%"/></div>`
-const diagramFmt = `<span class="node">Start</span><span class="vbar"/><span class="node">Decide</span><span class="vbar"/><span class="node">Ship</span>`
-const htmlFmt = `<div class="bar hd"></div><div class="html-box"/><span class="html-btn">Button</span>`
-const svgFmt = `<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent2)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg>`
-const dataFmt = `<table class="l-table"><tr><th>name</th><th>runs</th><th>ok</th></tr><tr><td>plan</td><td>128</td><td class="ok">✓</td></tr><tr><td>act</td><td>96</td><td class="ok">✓</td></tr></table>`
+const codeFmt = `<div style="font-family:var(--font-mono);font-size:12px;line-height:1.95;color:var(--c-muted)"><span class="kw">export</span> <span class="kw">async function</span> <span class="fn">run</span>() {<br/>&nbsp;&nbsp;<span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(url);<br/>&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">json</span>();<br/>}</div>`
+const mdFmt = `<div><div class="bar hd"></div>${new Array(3).fill('<div class="bar"></div>').join('')}<div class="md-bullet"><span class="md-bullet-dot"/><div class="bar"/></div><div class="md-bullet"><span class="md-bullet-dot"/><div class="bar" style="width:52%"/></div></div>`
+const diagramFmt = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px"><span class="node" style="font-size:11px;padding:7px 13px">Start</span><span style="width:2px;height:13px;background:var(--c-border2);display:block"></span><span class="node" style="font-size:11px;padding:7px 13px">Decide</span><span style="width:2px;height:13px;background:var(--c-border2);display:block"></span><span class="node" style="font-size:11px;padding:7px 13px">Ship</span></div>`
+const htmlFmt = `<div style="display:flex;flex-direction:column;gap:11px;justify-content:center"><div class="bar hd"></div><div style="height:36px;border-radius:8px;border:1px solid var(--c-border);background:var(--c-panel)"></div><span style="display:inline-flex;align-self:flex-start;height:27px;padding:0 15px;align-items:center;border-radius:7px;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600">Button</span></div>`
+const svgFmt = `<div style="display:flex;align-items:center;justify-content:center"><div style="width:100%;height:100%;border-radius:9px;border:1px solid var(--c-border);background-image:repeating-linear-gradient(45deg,var(--c-border) 0 1px,transparent 1px 10px);display:flex;align-items:center;justify-content:center"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent2)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></div></div>`
+const dataFmt = `<div style="display:flex;align-items:center;justify-content:center"><div style="width:100%;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:1px;border:1px solid var(--c-border);border-radius:7px;overflow:hidden;font-family:var(--font-mono);font-size:11px"><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">name</div><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">runs</div><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">ok</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">plan</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">128</div><div style="background:var(--c-panel2);color:#7ee787;padding:7px 9px">✓</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">act</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">96</div><div style="background:var(--c-panel2);color:#7ee787;padding:7px 9px">✓</div></div></div>`
 </script>
 
 <style>
@@ -270,6 +271,9 @@ h1 { margin:0;font-size:76px;line-height:1.02;font-weight:700;letter-spacing:-.0
 .pr { color:var(--c-accent2) }
 .copy { display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;color:var(--c-faint);border:1px solid transparent;cursor:pointer }
 .copy:hover { color:var(--c-text);background:var(--c-border) }
+.hero-note { margin:18px 0 0;font-size:13.5px;color:var(--c-faint) }
+.hero-note a { color:var(--c-accent2);border-bottom:1px solid transparent;transition:border-color .15s }
+.hero-note a:hover { border-color:var(--c-accent2) }
 
 /* preview window — always dark */
 .preview-wrap { margin:68px auto 0;max-width:980px;perspective:1600px }
