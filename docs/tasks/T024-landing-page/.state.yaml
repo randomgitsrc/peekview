@@ -1,7 +1,7 @@
 task_id: T024
 task_name: landing-page
-phase: P8
-status: in_progress
+phase: DONE
+status: completed
 retries: {}
 retry_count: {}
 updated: 2026-06-28
@@ -9,3 +9,4 @@ pruning:
   P2: skipped
   P3: skipped
   P7: skipped
+note: "发布为 v0.2.5（含 T023），tag 已创建"
