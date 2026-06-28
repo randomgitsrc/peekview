@@ -7,6 +7,22 @@
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-06-28
+
+### 新增
+
+- **`/users/:username` 路由**：用户公开页，复用 EntryListView 显示特定用户的所有公开 entry，含 banner 头（"@username 的发布内容" + Back to Home）
+- **`list_entries` API 扩展**：`owner=username` 查询参数，大小写不敏感（`func.lower`），返回 `owner_found` 三态字段（None/True/False）
+- **`BannerBar` 组件**：用户页大标题组件（可复用）
+- **`FilterChip` 组件**：可消除的筛选标签组件（供搜索等场景复用）
+- **卡片 `@username` 可点击**：点击卡片中的用户名跳转对应 `/users/:username`，已登录用户点自己跳 `/explore?owner=me`
+
+### 变更
+
+- **EntryListView 三态驱动**：`owner` prop 驱动 banner/chip/tab 三态 UI 切换
+- **嵌套 `router-link` 修复**：卡片外层从 `<router-link>` 改为 `<div @click>`，消除 `<a>` 嵌套 `<a>` 的 HTML 违规
+- **Tab URL 同步**：`/explore` 的 All/Mine tab 切换通过 `router.replace` 同步到 URL（`?owner=me` 可分享）
+
 ## [0.2.6] - 2026-06-28
 
 ### 新增
