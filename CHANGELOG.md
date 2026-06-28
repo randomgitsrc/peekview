@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-29
+
+### 新增
+
+- **临时分享链接**：private entry 的 owner 可生成临时分享链接（`/{slug}?share={token}`），无需密码即可访问
+- **`entry_shares` 表**：存储分享 token 的 SHA256 hash、过期时间、view 次数限制、撤销状态
+- **3 个分享 API 端点**：`POST /entries/{slug}/shares`（创建）、`GET /entries/{slug}/shares`（列表）、`POST /entries/{slug}/shares/revoke`（批量撤销）
+- **ShareDialog 组件**：有效期选择（1h/24h/7d/30d/永久）+ view 次数限制 + 生成后显示 URL + Copy 按钮
+- **ShareManagementPanel 组件**：分享列表（active/expired/revoked）+ 单个/批量撤销 + view_count 统计
+- **分享水印**：share 访问时显示"由 @username 分享"，owner 自己不显示
+- **private→public 自动撤销**：entry 从 private 变为 public 时，同一事务内撤销所有 active shares
+- **Share cookie 隔离**：独立命名空间的 HTTPOnly cookie，与登录 cookie 不冲突
+- **Referrer-Policy: no-referrer**：share 访问时防止 token 通过 Referer 泄露
+
+
 ## [0.2.7] - 2026-06-28
 
 ### 新增
