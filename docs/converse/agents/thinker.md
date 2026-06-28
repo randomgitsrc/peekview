@@ -1,5 +1,9 @@
 ---
+name: thinker
 description: 多视角思维伙伴
+model: inherit
+tools: Read, Glob, Grep, Agent, WebFetch
+color: pink
 mode: primary
 permission:
   edit: ask

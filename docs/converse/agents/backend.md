@@ -1,5 +1,9 @@
 ---
+name: backend
 description: 后端专项 Agent，负责 FastAPI/Python 后端的实现、测试、调试
+model: inherit
+tools: Read, Edit, Write, Bash, Grep, Glob, Agent
+color: blue
 mode: subagent
 permission:
   edit: allow

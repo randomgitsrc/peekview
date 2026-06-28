@@ -4,7 +4,10 @@ agate_root: ~/.agate
 project_root: /home/kity/oclab/peekview
 
 # ── OpenCode 配置 ──
+name: orchestrator
 description: agate 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行
+model: inherit
+color: orange
 mode: primary
 permission:
   edit: ask

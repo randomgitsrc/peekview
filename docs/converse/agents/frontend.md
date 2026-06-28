@@ -1,5 +1,9 @@
 ---
+name: frontend
 description: 前端专项 Agent，负责 Vue 3/TypeScript 前端的实现和测试
+model: inherit
+tools: Read, Edit, Write, Bash, Grep, Glob, Agent
+color: purple
 mode: subagent
 permission:
   edit: allow

@@ -1,5 +1,8 @@
 ---
+name: build
 description: PeekView 全栈开发 Agent，负责实现功能、修复 BUG、编写测试
+model: inherit
+color: green
 mode: primary
 permission:
   edit: allow

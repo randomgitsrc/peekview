@@ -1,5 +1,9 @@
 ---
+name: security
 description: 安全审计 Agent，识别安全漏洞和权限问题
+model: inherit
+tools: Read, Glob, Grep
+color: red
 mode: subagent
 hidden: true
 permission:

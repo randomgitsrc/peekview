@@ -1,5 +1,9 @@
 ---
+name: plan
 description: 只读分析 Agent，用于代码审查、架构分析、问题诊断，不做任何代码修改
+model: inherit
+tools: Read, Glob, Grep, Agent, WebFetch
+color: cyan
 mode: primary
 permission:
   edit: deny
