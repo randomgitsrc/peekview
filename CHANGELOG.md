@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-06-28
+
+### 新增
+
+- **LandingView 全新设计**：基于静态 HTML 设计稿完整迁移为 Vue SFC（Hero + 产品预览窗 + Access 双入口 + 6 种格式画廊 + Features + CTA + Footer），暗色默认 + 亮色切换
+- **格式卡片真实渲染**：Code（行号 + 语法高亮）、Markdown（结构化渲染）、Diagram（Mermaid 流程图）、HTML（Web UI 模拟）、SVG（架构图）、Data（JSON 表格）
+- **移动端导航自适应**：ThemeToggle 移入 `.nav-cta`，≤860px 紧凑间距，≤380px 隐藏 Sign in，预览窗跟随主题切换
+
+### 修复
+
+- **版本号统一注入**：LandingView 底栏版本号从硬编码 `v0.2.5` 改为 `__APP_VERSION__` 构建时注入，与 EntryListView 一致
+- **MCP 过期版本号清理**：源码注释和回退值从 `v0.3.0`/`v0.2.0`/`v0.8.0` 更正为当前版本
+
+
 ## [0.2.5] - 2026-06-28
 
 ### 新增
