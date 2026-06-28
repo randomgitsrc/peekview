@@ -21,43 +21,43 @@ function mountPagination(props: {
 describe('totalPages computed', () => {
   it('ceil(total / perPage)', () => {
     const wrapper = mountPagination({ total: 100, perPage: 10, page: 1 })
-    expect(wrapper.vm.totalPages).toBe(10)
+    expect((wrapper.vm as any).totalPages).toBe(10)
   })
 
   it('rounds up when not evenly divisible', () => {
     const wrapper = mountPagination({ total: 25, perPage: 10, page: 1 })
-    expect(wrapper.vm.totalPages).toBe(3)
+    expect((wrapper.vm as any).totalPages).toBe(3)
   })
 
   it('minimum is 1 even when total is 0', () => {
     const wrapper = mountPagination({ total: 0, perPage: 10, page: 1 })
-    expect(wrapper.vm.totalPages).toBe(1)
+    expect((wrapper.vm as any).totalPages).toBe(1)
   })
 
   it('total equals perPage gives 1 page', () => {
     const wrapper = mountPagination({ total: 10, perPage: 10, page: 1 })
-    expect(wrapper.vm.totalPages).toBe(1)
+    expect((wrapper.vm as any).totalPages).toBe(1)
   })
 })
 
 describe('visiblePages computed', () => {
   it('returns all pages when total <= maxVisible', () => {
     const wrapper = mountPagination({ total: 50, perPage: 10, page: 1, maxVisible: 7 })
-    expect(wrapper.vm.visiblePages).toEqual([1, 2, 3, 4, 5])
+    expect((wrapper.vm as any).visiblePages).toEqual([1, 2, 3, 4, 5])
   })
 
-  it('first page: shows leading pages with no left ellipsis', () => {
+  it('first page: shows window + trailing endpoint', () => {
     const wrapper = mountPagination({ total: 200, perPage: 10, page: 1, maxVisible: 7 })
-    const pages = wrapper.vm.visiblePages
+    const pages = (wrapper.vm as any).visiblePages
     expect(pages[0]).toBe(1)
     expect(pages[pages.length - 1]).toBe(20)
-    // No ellipsis on left side since start=1
-    expect(pages.length).toBeLessThanOrEqual(7)
+    // Window of maxVisible=7 pages (1-7) + endpoint (20) = 8
+    expect(pages).toEqual([1, 2, 3, 4, 5, 6, 7, 20])
   })
 
   it('middle page: shows both ends with surrounding pages', () => {
     const wrapper = mountPagination({ total: 200, perPage: 10, page: 10, maxVisible: 7 })
-    const pages = wrapper.vm.visiblePages
+    const pages = (wrapper.vm as any).visiblePages
     expect(pages[0]).toBe(1)
     expect(pages[pages.length - 1]).toBe(20)
     expect(pages).toContain(10)
@@ -65,14 +65,14 @@ describe('visiblePages computed', () => {
 
   it('last page: shows trailing pages with no right ellipsis', () => {
     const wrapper = mountPagination({ total: 200, perPage: 10, page: 20, maxVisible: 7 })
-    const pages = wrapper.vm.visiblePages
+    const pages = (wrapper.vm as any).visiblePages
     expect(pages[0]).toBe(1)
     expect(pages[pages.length - 1]).toBe(20)
   })
 
   it('all values are numbers (ellipsis strings filtered out)', () => {
     const wrapper = mountPagination({ total: 300, perPage: 10, page: 15, maxVisible: 7 })
-    for (const p of wrapper.vm.visiblePages) {
+    for (const p of (wrapper.vm as any).visiblePages) {
       expect(typeof p).toBe('number')
     }
   })

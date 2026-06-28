@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import CodeViewer from '@/components/CodeViewer.vue'
@@ -70,8 +69,8 @@ describe('CodeViewer', () => {
     expect(wrapper.find('.code-body').html()).toContain('console.log')
   })
 
-  it('uses github-dark theme when theme store is dark', async () => {
-    const wrapper = mountCodeViewer({ loading: false })
+  it('uses github-light theme when theme store is light', async () => {
+    mountCodeViewer({ loading: false })
     await flushPromises()
 
     expect(mocks.mockHighlight).toHaveBeenCalledWith(
@@ -82,7 +81,7 @@ describe('CodeViewer', () => {
   })
 
   it('passes correct language to highlight', async () => {
-    const wrapper = mountCodeViewer({
+    mountCodeViewer({
       loading: false,
       content: 'print(1)',
       language: 'python',
@@ -97,7 +96,7 @@ describe('CodeViewer', () => {
   })
 
   it('falls back to text language when language is null', async () => {
-    const wrapper = mountCodeViewer({
+    mountCodeViewer({
       loading: false,
       content: 'plain text',
       language: null,
