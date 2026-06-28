@@ -37,6 +37,86 @@ docs/converse/agents/      ← 规范定义（事实源，git 跟踪）
 | **plan** | 只读分析，代码审查/架构分析/问题诊断 | Review 代码、分析架构 |
 | **security** | 安全审计 | 漏洞扫描、权限审查 |
 | **thinker** | 多视角思维伙伴 | 头脑风暴、方案讨论 |
+| **vision-helper** | 图片/截图分析（MCP 桥接到 vision 模型）| 分析截图、图表、UI 审查 |
+
+---
+
+## Vision Helper 配置
+
+`vision-helper` 通过 **MCP Bridge** 调用外部 vision 模型（如 MiniMax-M3），解决主模型无视觉能力的问题。
+
+### 架构
+
+```
+Claude Code (DeepSeek 无 vision)
+  └─ vision-helper agent
+       └─ MCP tool: analyze_image()
+            └─ HTTP → 外部 vision API (MiniMax-M3 / GPT-4o / ...)
+```
+
+### 前置条件
+
+设置环境变量（三种方式，选其一）：
+
+**方式一：`.env` 文件（推荐）**
+
+在项目根目录创建 `.env`，MCP server 启动时自动加载。建议加入 `.gitignore`：
+
+```bash
+# peekview/.env（不提交 git）
+VISION_API_KEY=sk-xxx
+VISION_API_BASE_URL=https://api.minimaxi.com/anthropic
+VISION_MODEL=MiniMax-M3
+VISION_API_FORMAT=anthropic
+```
+
+**方式二：`.claude/settings.json` `env` 块**
+
+Claude Code 启动时自动注入到子进程环境：
+
+```json
+{
+  "env": {
+    "VISION_API_KEY": "sk-xxx",
+    "VISION_API_BASE_URL": "https://api.minimaxi.com/anthropic",
+    "VISION_MODEL": "MiniMax-M3",
+    "VISION_API_FORMAT": "anthropic"
+  }
+}
+```
+
+**方式三：shell export（临时测试）**
+
+```bash
+export VISION_API_KEY="sk-xxx"
+export VISION_API_BASE_URL="https://api.minimaxi.com/anthropic"
+export VISION_MODEL="MiniMax-M3"
+export VISION_API_FORMAT="anthropic"
+```
+
+优先级：shell > .claude/settings.json > .env
+
+### 换 Provider
+
+只需改环境变量，无需改任何代码或 agent 文件：
+
+```bash
+# 切换到 OpenAI-compatible provider
+export VISION_API_KEY="sk-xxx"
+export VISION_API_BASE_URL="https://api.openai.com/v1"
+export VISION_MODEL="gpt-4o"
+export VISION_API_FORMAT="openai"
+```
+
+### 使用
+
+```bash
+# 分析单张截图
+claude --agent vision-helper "分析 /home/kity/screenshot.png 中的页面布局"
+
+# 对话中派发
+> 用 vision-helper 检查 /tmp/demo-diagrams.png 的 mermaid 渲染效果
+```
 
 ---
 

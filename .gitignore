@@ -60,6 +60,7 @@ frontend-v3/playwright/.cache/
 test-results/
 screenshot*.png
 connect_cdp.py
+.env
 .env.test.local
 
 # Node.js (if accidentally committed from frontend)
