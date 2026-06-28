@@ -3,22 +3,6 @@
 agate_root: ~/.agate
 project_root: /home/kity/oclab/peekview
 
-# ── Claude Code 配置 ──
-name: orchestrator
-description: agate 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行。附带 vision MCP bridge 用于截图分析
-model: inherit
-mcpServers:
-  - vision-mcp:
-      type: stdio
-      command: python3
-      args: ["scripts/vision-mcp-server.py"]
-      env:
-        VISION_API_KEY: ${VISION_API_KEY}
-        VISION_API_BASE_URL: ${VISION_API_BASE_URL}
-        VISION_MODEL: ${VISION_MODEL}
-        VISION_API_FORMAT: ${VISION_API_FORMAT}
-color: orange
-
 # ── OpenCode 配置 ──
 name: orchestrator
 description: agate 编排 Agent，负责 P0-P8 全流程管理，派发 subagent 执行
