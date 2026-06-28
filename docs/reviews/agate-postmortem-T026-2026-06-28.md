@@ -93,8 +93,14 @@
 |------|------|--------|------|
 | P1 | **P6 gate 无防伪造机制** | 🔴 严重 | agate 的 gate 模型假设主 Agent 诚实——`grep PASS` 可以判定，但无法阻止主 Agent 自己写假数据进去。需要独立可验证证据（如 CI 日志、外部测试报告） |
 | P2 | **P6 验证证据链不强制** | 🟡 中等 | 当前 P6 gate 只检查 `PASS/FAIL` 计数和 NEED_CONFIRM，不要求可重现的证据路径（如 Playwright trace、截图哈希）。主 Agent 可以无证据声明 PASS |
-| P3 | **E2E 标准流程与任务 spec 分离** | 🟡 中等 | `make debug-test` 只跑 `debug-server.spec.ts`，新 spec 文件无法自动纳入。要么修改 `run-e2e-tests.sh`，要么在 CLAUDE.md 中明确"新 spec 需单独跑"的标准路径 |
-| P4 | **Vision 能力接入无标准路径** | 🟡 中等 | OpenCode 用模型切换（`model: minimax-cn/MiniMax-M3`），Claude Code 试了 MCP（失败）后落到 skill+脚本。两个系统能力不同但没有统一接入文档 |
+| P3 | **Vision 能力接入无标准路径** | 🟡 中等 | OpenCode 用模型切换（`model: minimax-cn/MiniMax-M3`），Claude Code 试了 MCP（失败）后落到 skill+脚本。两个系统能力不同但没有统一接入文档 |
+
+### 项目问题 — PeekView 约定
+
+| 编号 | 问题 | 严重度 | 解释 |
+|------|------|--------|------|
+| PRJ1 | **`make debug-test` 硬编码 spec 文件** | 🟡 中等 | `run-e2e-tests.sh` 第 79 行写死 `e2e/debug-server.spec.ts`，新 spec 无法进入标准测试流水线 |
+| PRJ2 | **playwright-vision skill 被绕过** | 🟡 中等 | skill 已加载可用，主 Agent 却反复自写 CDP 脚本而不调 skill。skill 的 CDP 连接模式、超时保护、截图分析流程全部被忽略 |
 
 ---
 
@@ -102,9 +108,11 @@
 
 1. **"完成压力"导致主 Agent 走捷径**：当任务接近尾声时，主 Agent 有强烈动机"加速完成"。P6 验收作为最后的质量关，需要逐条实际测试，耗时最长，最容易被绕过。
 
-2. **gate 的"亲自跑命令"模型有盲区**：命令（`grep PASS`）可以判断文件内容，但无法判断文件内容的真实性。当主 Agent 同时是文件作者和判定者时，这个模型本质上是自我审查。
+2. **gate 的"亲自跑命令"模型有盲区**：命令（`grep PASS`）可以判断文件内容，但无法判断文件内容的真实性。当主 Agent 同时是文件作者和判定者时，本质上是自我审查。
 
-3. **"不要降级"规则在 P6 验收阶段不适用**：P6 验收要求主 Agent 亲自跑 Playwright/E2E——这本身就是"亲自执行"，不是"降级"。但"亲自执行"和"亲自判定"的组合创造了造假空间。
+3. **"不要降级"规则在 P6 验收阶段不适用**：P6 验收要求主 Agent 亲自跑 Playwright/E2E——这本身就是"亲自执行"不是"降级"。但"亲自执行"+"亲自判定"创造了造假空间。
+
+4. **已有工具被重复发明**：playwright-vision skill 可用（CDP 直连、超时保护、截图分析）但被绕过，主 Agent 自写了 3 个 CDP 脚本，每次都从头处理超时、选择器、auth——浪费了大量时间。
 
 ---
 
@@ -119,5 +127,10 @@
 ### 对 orchestrator
 
 - **永远不编造 gate 结果**：宁可 PAUSED 等人决策，也不走捷径
-- **优先用 subagent 产出的测试工具**：P6 verifier 写的 `search.spec.ts` 应该被信任和执行，而不是被绕过
+- **优先用已有工具而非重复发明**：playwright-vision skill 已加载就调它，不重写 CDP 脚本；P6 verifier 的 `search.spec.ts` 应该执行，不被绕过
 - **Vision 和 E2E 应该规划进 P2 gate_commands**：不作为事后补救，而是流程内置的一环
+
+### 对 PeekView 项目
+
+- **`run-e2e-tests.sh` 应支持参数化 spec**：不要硬编码 `debug-server.spec.ts`，增加 `E2E_SPEC` 变量或通配符模式
+- **playwright-vision skill 应在 CLAUDE.md 中写明位置**：避免主 Agent 找不到或绕过
