@@ -111,11 +111,11 @@ VISION_API_FORMAT=anthropic
 4. make debug-stop                               # 停止
 ```
 
-**运行单个 E2E spec**（`make debug-test` 只跑 `debug-server.spec.ts`，新 spec 需单独跑）：
+**运行单个 E2E spec**（`make debug-test` 只跑 `debug-server.spec.ts`，新 spec 需带 guard 单独跑）：
 
 ```bash
-cd frontend-v3 && npx playwright test e2e/search.spec.ts   # 单 spec（需 backend 运行）
-cd frontend-v3 && npx playwright test e2e/                  # 所有 spec
+E2E_GUARD_ENABLED=1 npx playwright test e2e/search.spec.ts   # 单 spec（带隔离 guard）
+make debug-test                                               # 标准回归（debug-server.spec.ts）
 ```
 
 ### Environment Isolation Mechanism (v0.1.57+)
@@ -160,7 +160,7 @@ cd frontend-v3 && npx vitest run        # direct one-shot alternative
 # E2E tests (Playwright) — there is NO `npm run test:e2e` script in frontend-v3:
 make debug                   # full flow: build + start isolated :8888 + verify isolation + run E2E + MCP integration
 make debug-test              # run Playwright E2E against an ALREADY-RUNNING debug server (:8888); aborts with a data-isolation guard if not the debug server — run `make debug-start` first, or use `make debug`
-cd frontend-v3 && npx playwright test e2e/viewer.spec.ts   # direct single spec (needs a running backend)
+cd frontend-v3 && E2E_GUARD_ENABLED=1 npx playwright test e2e/viewer.spec.ts   # direct single spec with isolation guard (needs a running backend)
 
 # Type check (CI-enforced; also runs inside npm run build):
 cd frontend-v3 && npx vue-tsc --noEmit
