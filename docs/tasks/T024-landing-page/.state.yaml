@@ -1,7 +1,11 @@
 task_id: T024
 task_name: landing-page
-phase: P0
+phase: P8
 status: in_progress
 retries: {}
 retry_count: {}
-updated: 2026-06-25
+updated: 2026-06-28
+pruning:
+  P2: skipped
+  P3: skipped
+  P7: skipped
