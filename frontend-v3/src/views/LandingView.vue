@@ -18,6 +18,7 @@
         <div class="nav-cta">
           <button class="btn btn-ghost btn-sm" @click="showLogin = true">Sign in</button>
           <router-link to="/explore" class="btn btn-primary btn-sm">Explore</router-link>
+          <ThemeToggle />
         </div>
       </nav>
 
@@ -172,7 +173,6 @@
     </footer>
 
     <LoginDialog v-model:visible="showLogin" :allow-registration="true" />
-    <ThemeToggle class="theme-fab" />
   </div>
 </template>
 
@@ -264,7 +264,6 @@ a { color:inherit;text-decoration:none }
 .glow { position:absolute;top:-260px;left:50%;transform:translateX(-50%);width:1100px;height:720px;z-index:-1;pointer-events:none;background:radial-gradient(50% 50% at 50% 50%,var(--glow-color) 0%,rgba(77,141,255,.06) 40%,transparent 70%);filter:blur(8px) }
 .grid-bg { position:absolute;inset:0;z-index:-2;pointer-events:none;background-image:linear-gradient(var(--c-border) 1px,transparent 1px),linear-gradient(90deg,var(--c-border) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(70% 55% at 50% 30%,#000 0%,transparent 75%);-webkit-mask-image:radial-gradient(70% 55% at 50% 30%,#000 0%,transparent 75%);opacity:.5 }
 .wrap { max-width:1120px;margin:0 auto;padding:0 32px }
-.theme-fab { position:absolute;top:16px;right:16px;z-index:10 }
 
 /* nav */
 nav { display:flex;align-items:center;justify-content:space-between;height:72px }
@@ -391,6 +390,12 @@ footer { border-top:1px solid var(--c-border);padding:40px 0 }
 @media (max-width:860px) {
   h1 { font-size:48px }
   .nav-links { display:none }
+  .nav-cta { gap:6px }
+  .btn-sm { height:34px;padding:0 10px;font-size:13px }
+  @media (max-width:380px) {
+    .btn-ghost { display:none }
+    .btn-sm { height:32px;padding:0 8px }
+  }
   .viewer { grid-template-columns:1fr }
   .filetree { display:none }
   .feat-grid { grid-template-columns:1fr }
