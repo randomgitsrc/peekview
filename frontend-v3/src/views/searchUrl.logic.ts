@@ -1,19 +1,31 @@
 // ============================================================
-// T026 search-url — Stub implementations (TDD red light)
+// T026 search-url — Pure logic functions for URL query management
 //
-// These functions WILL be implemented in EntryListView.vue during P4.
-// Currently they are intentionally wrong stubs so P3 tests fail.
-//
-// After P4: the real logic lives in EntryListView.vue <script setup>.
-// This file may be deleted or kept as a pure-logic extraction.
+// These functions are used by EntryListView.vue to:
+//   - mergeQuery: build new URL query strings from current state
+//   - parseRestoreQuery: restore state from URL on mount / back/forward
+//   - resolveSearchKeyAction: dispatch keyboard events for search input
+//   - createDebouncedSearch: debounce wrapper with cancel support
 // ============================================================
 
 export function mergeQuery(
-  _currentQueryString: string,
-  _updates: Record<string, string | undefined>,
+  currentQueryString: string,
+  updates: Record<string, string | undefined>,
 ): string {
-  // STUB: returns empty string, ignoring all inputs
-  return ''
+  const params = new URLSearchParams(currentQueryString)
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined || value === '') {
+      params.delete(key)
+    } else if (key === 'page' && value === '1') {
+      // page=1 is the default, omit from URL for cleanliness
+      params.delete(key)
+    } else {
+      params.set(key, value)
+    }
+  }
+
+  return params.toString()
 }
 
 export interface RestoredQuery {
@@ -22,28 +34,54 @@ export interface RestoredQuery {
   page: number
 }
 
-export function parseRestoreQuery(_queryString: string): RestoredQuery {
-  // STUB: returns hardcoded defaults, ignoring the URL
-  return { q: '', owner: null, page: 1 }
+export function parseRestoreQuery(queryString: string): RestoredQuery {
+  const params = new URLSearchParams(queryString)
+
+  const q = params.get('q') ?? ''
+  const owner = params.get('owner') ?? null
+
+  let page = 1
+  const pageParam = params.get('page')
+  if (pageParam !== null) {
+    const parsed = parseInt(pageParam, 10)
+    if (!isNaN(parsed) && parsed > 0) {
+      page = parsed
+    }
+  }
+
+  return { q, owner, page }
 }
 
 export type SearchKeyAction = 'flush' | 'clear' | 'none'
 
-export function resolveSearchKeyAction(_key: string): SearchKeyAction {
-  // STUB: always returns 'none', even for Enter/Escape
+export function resolveSearchKeyAction(key: string): SearchKeyAction {
+  if (key === 'Enter') return 'flush'
+  if (key === 'Escape') return 'clear'
   return 'none'
 }
 
 export function createDebouncedSearch<T extends (...args: unknown[]) => unknown>(
-  _fn: T,
-  _delay: number,
+  fn: T,
+  delay: number,
 ): { debounced: (...args: Parameters<T>) => void; cancel: () => void } {
-  // STUB: debounced calls immediately (no debounce), cancel is no-op
-  const debounced = (..._args: Parameters<T>): void => {
-    // does nothing
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  const debounced = (...args: Parameters<T>): void => {
+    if (timer !== null) {
+      clearTimeout(timer)
+    }
+    timer = setTimeout(() => {
+      timer = null
+      fn(...args)
+    }, delay)
   }
+
   const cancel = (): void => {
-    // does nothing
+    if (timer !== null) {
+      clearTimeout(timer)
+      timer = null
+    }
   }
+
   return { debounced, cancel }
 }

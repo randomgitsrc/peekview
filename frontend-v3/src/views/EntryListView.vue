@@ -2,6 +2,17 @@
   <div class="entry-list">
     <header class="list-header">
       <router-link to="/" class="logo-link">PeekView</router-link>
+      <div class="search-box" role="search">
+        <input
+          v-model="searchQuery"
+          type="search"
+          class="search-input"
+          aria-label="Search entries"
+          placeholder="Search entries..."
+          @input="onSearchInput"
+          @keydown="onSearchKeydown"
+        />
+      </div>
       <div class="header-actions">
         <template v-if="authState === 'anonymous'">
           <button class="btn btn-login" @click="showLogin = true">Login</button>
@@ -43,6 +54,17 @@
 
       <div v-if="showChip" class="filter-chip-bar">
         <FilterChip :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+      </div>
+
+      <div
+        v-if="searchQuery"
+        class="search-status sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <template v-if="loading">Searching...</template>
+        <template v-else>{{ entries.length }} result{{ entries.length === 1 ? '' : 's' }}</template>
       </div>
 
       <div v-if="loading" class="loading">Loading...</div>
@@ -197,8 +219,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -211,6 +233,8 @@ import BannerBar from '@/components/BannerBar.vue'
 import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
 import { formatExpiresIn, isExpiringSoon } from '@/utils/expires'
+import { useDebounce } from '@/composables/useDebounce'
+import { mergeQuery, parseRestoreQuery } from '@/views/searchUrl.logic'
 
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
@@ -246,24 +270,69 @@ const effectiveOwner = computed(() => props.owner || currentOwner.value || undef
 
 const currentUserUsername = computed(() => user.value?.username ?? null)
 
+// Search state
+const searchQuery = ref('')
+let suppressRouteUpdate = false
+
+function updateURL(params: Record<string, string | undefined>): void {
+  const currentQuery = window.location.search.slice(1)
+  const newQuery = mergeQuery(currentQuery, params)
+  const path = props.owner ? `/users/${props.owner}` : '/explore'
+
+  suppressRouteUpdate = true
+  if (!newQuery) {
+    router.replace({ path })
+  } else {
+    const queryObj: Record<string, string> = {}
+    new URLSearchParams(newQuery).forEach((value, key) => {
+      queryObj[key] = value
+    })
+    router.replace({ path, query: queryObj })
+  }
+  nextTick(() => { suppressRouteUpdate = false })
+}
+
+function flushSearch() {
+  const q = searchQuery.value.trim()
+  updateURL({ q: q || undefined, page: undefined })
+  currentPage.value = 1
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, q: q || undefined })
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  updateURL({ q: undefined })
+  currentPage.value = 1
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value })
+}
+
+const debouncedSearch = useDebounce(flushSearch, 300)
+
+function onSearchInput() {
+  debouncedSearch()
+}
+
+function onSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    flushSearch()
+    ;(e.target as HTMLInputElement)?.blur()
+  } else if (e.key === 'Escape') {
+    clearSearch()
+  }
+}
+
 function setOwner(owner: string | null) {
   currentOwner.value = owner
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined })
-  if (owner === 'me') {
-    router.replace({ path: '/explore', query: { owner: 'me' } })
-  } else if (owner) {
-    router.replace({ path: '/explore', query: { owner } })
-  } else {
-    router.replace({ path: '/explore' })
-  }
+  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, q: searchQuery.value || undefined })
+  updateURL({ owner: owner || undefined, page: undefined })
 }
 
 function clearOwnerFilter() {
   currentOwner.value = null
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value })
-  router.replace({ path: '/explore' })
+  loadEntries({ page: 1, perPage: perPage.value, q: searchQuery.value || undefined })
+  updateURL({ owner: undefined, page: undefined })
 }
 
 function navigateToEntry(entry: Entry) {
@@ -354,14 +423,15 @@ const currentPage = ref(1)
 const totalPages = computed(() => Math.ceil(total.value / perPage.value))
 
 watch(currentPage, (newPage) => {
-  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value })
+  updateURL({ page: newPage > 1 ? String(newPage) : undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, q: searchQuery.value || undefined })
 })
 
 watch(() => props.owner, (newOwner) => {
   if (newOwner) {
     currentOwner.value = null
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner })
+    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, q: searchQuery.value || undefined })
   }
 })
 
@@ -372,7 +442,7 @@ watch(authState, (newState) => {
     if (ownerParam === 'me' && currentOwner.value !== 'me') {
       currentOwner.value = 'me'
       currentPage.value = 1
-      loadEntries({ page: 1, perPage: perPage.value, owner: 'me' })
+      loadEntries({ page: 1, perPage: perPage.value, owner: 'me', q: searchQuery.value || undefined })
     }
   }
 })
@@ -385,21 +455,34 @@ function restoreFromURL() {
   } else if (ownerParam === 'me' && authState.value === 'authenticated') {
     currentOwner.value = 'me'
   }
+
+  const restored = parseRestoreQuery(window.location.search.slice(1))
+  searchQuery.value = restored.q
+  currentPage.value = restored.page
 }
 
 onMounted(() => {
   if (props.owner) {
     currentOwner.value = null
-    currentPage.value = 1
-  } else {
-    currentPage.value = 1
-    restoreFromURL()
   }
-  if (!props.owner) {
-    loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value })
-  } else {
-    loadEntries({ page: 1, perPage: perPage.value, owner: props.owner })
-  }
+  restoreFromURL()
+  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, q: searchQuery.value || undefined })
+})
+
+// Browser back/forward: restore state from URL query
+onBeforeRouteUpdate((to) => {
+  if (suppressRouteUpdate) return
+  if (to.path !== '/explore' && !to.path.startsWith('/users/')) return
+
+  const newQ = (to.query.q as string) || ''
+  const newOwner = (to.query.owner as string) || null
+  const newPage = parseInt(to.query.page as string) || 1
+
+  searchQuery.value = newQ
+  currentOwner.value = newOwner
+  currentPage.value = Math.max(1, newPage)
+
+  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, q: newQ || undefined })
 })
 
 // Relative time formatter
@@ -428,10 +511,51 @@ function formatRelativeTime(dateStr: string): string {
 <style scoped>
 .entry-list { min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
 .list-header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-.logo-link { font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); text-decoration: none }
+.logo-link { font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); text-decoration: none; flex-shrink: 0 }
 .logo-link:hover { color: var(--accent-color) }
 
+/* Search box */
+.search-box {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 var(--space-4);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.search-input:focus {
+  border-color: var(--accent-color);
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .header-actions {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -752,6 +876,16 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 @media (max-width: 640px) {
+  .list-header {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .search-box {
+    flex: 1 1 100%;
+    max-width: none;
+    margin: var(--space-1) 0;
+    order: 3;
+  }
   .list-footer {
     flex-direction: column;
     align-items: stretch;
