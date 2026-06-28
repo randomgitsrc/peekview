@@ -1,0 +1,3 @@
+
+6:import hmac
+208:            if not hmac.compare_digest(computed_hash, share.token_hash):

@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+date: Sun, 28 Jun 2026 19:22:01 GMT
+server: uvicorn
+content-length: 461
+content-type: application/json
+set-cookie: peekview_share_2=QTb2_RVH; HttpOnly; Max-Age=604502; Path=/; SameSite=lax
+referrer-policy: no-referrer
+x-content-type-options: nosniff
+cache-control: no-store
+x-frame-options: DENY
+content-security-policy: default-src 'none'; frame-ancestors 'none'
+

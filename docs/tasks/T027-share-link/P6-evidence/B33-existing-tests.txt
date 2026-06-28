@@ -1,0 +1,10 @@
+tests/test_auth.py::TestCookieAuth::test_header_jwt_takes_priority_over_cookie
+tests/test_auth.py::TestCookieAuth::test_expired_cookie_returns_anonymous
+tests/test_auth.py::TestCookieAuth::test_invalid_cookie_returns_anonymous
+tests/test_auth.py::TestCookieAuth::test_user_a_cookie_not_valid_for_user_b
+tests/test_auth.py::TestCookieAuth::test_user_a_cookie_not_valid_for_user_b
+  /home/kity/oclab/peekview/backend/.venv/lib/python3.12/site-packages/httpx/_client.py:1768: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return await self.request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 635 passed, 1 skipped, 7 warnings in 121.18s (0:02:01) ============
