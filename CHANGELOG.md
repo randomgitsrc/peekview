@@ -20,6 +20,19 @@
 - **private→public 自动撤销**：entry 从 private 变为 public 时，同一事务内撤销所有 active shares
 - **Share cookie 隔离**：独立命名空间的 HTTPOnly cookie，与登录 cookie 不冲突
 - **Referrer-Policy: no-referrer**：share 访问时防止 token 通过 Referer 泄露
+- **`make setup-local`**：新 clone 后快速初始化 `.claude/`/`.opencode/` agents symlink
+- **playwright-vision / vision-analyzer 全局 skills**：从项目 symlink 改为全局独立目录，任何会话可直接调用
+- **搜索 URL 化**（T026）：`/explore?q=关键词&owner=me` 搜索条件同步到 URL，可分享/书签
+
+### 变更
+
+- **Claude Code + OpenCode 双系统兼容**：agent 定义源统一在 `docs/converse/agents/`，本地目录加入 gitignore
+- **E2E 脚本参数化**：`run-e2e-tests.sh` 支持 `E2E_SPEC` 变量，不再硬编码 `debug-server.spec.ts`
+- **E2E 单 spec 隔离 guard**：`E2E_GUARD_ENABLED=1` 强制验证 debug backend，防误写生产
+
+### 修复
+
+- **vision-analyzer 全局独立**：从项目 symlink 改为全局目录，playwright-vision 同步独立
 
 
 ## [0.2.7] - 2026-06-28
