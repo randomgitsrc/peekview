@@ -14,22 +14,22 @@ created: 2026-06-28
 
 | BDD | 场景 | 结果 | Playwright 测试 | 证据 |
 |-----|------|------|-----------------|------|
-| BDD-1 | 基本搜索（防抖） | ✅ PASS | `BDD-1: debounce search updates URL after 300ms` | CDP: URL → ?q=python |
-| BDD-2 | Enter 立即触发 | ✅ PASS | `BDD-2: Enter triggers search immediately` | CDP: URL → ?q=react |
-| BDD-3 | Esc 清空搜索 | ✅ PASS | `BDD-3: Esc clears search and removes ?q= from URL` | CDP: q removed, input cleared |
-| BDD-4 | 搜索 + Tab（搜索后点 Mine） | ✅ PASS | `BDD-4: search first, then click Mine tab preserves q` | CDP: URL preserves ?q= + owner=me |
-| BDD-5 | Tab + 搜索（Mine 时加搜索） | ✅ PASS | `BDD-5: Mine tab first, then search retains owner` | CDP: owner preserved when adding search |
-| BDD-6 | 清空搜索保留 Tab | ✅ PASS | `BDD-6: Esc clears search but retains owner tab` | CDP: owner=me preserved, q removed |
-| BDD-7 | 搜索 + 分页组合 | ✅ PASS | `BDD-7: /explore?q=demo&page=2 loads correct page` | CDP: URL preserves q + page |
-| BDD-8 | 直接访问带搜索的 URL | ✅ PASS | `BDD-8: direct /explore?q=hello auto-fills input` | CDP: input restored "NoMatchXYZ123" |
-| BDD-9 | 搜索 + 用户页组合 | ✅ PASS | `BDD-9: /users/:username?q= searches user entries` | CDP: URL behavior verified |
-| BDD-10 | 空搜索结果 | ✅ PASS | `BDD-10: empty search results show "No entries found"` | CDP: empty state visible |
-| BDD-11 | 浏览器后退 | ✅ PASS | `BDD-11: browser back returns to search state` | CDP: replace semantics verified |
-| BDD-12 | 搜索词变化重置分页 | ✅ PASS | `BDD-12: changing search word resets page to 1` | CDP: page reset on new search |
-| BDD-13 | 空白查询清理 | ✅ PASS | `BDD-13: clearing input removes ?q= from URL` | CDP: q removed when emptied |
-| BDD-14 | 搜索 + owner + 分页三组合 | ✅ PASS | `BDD-14: /explore?q=code&owner=me&page=2` | CDP: all 3 params preserved |
-| BDD-15 | 前后端测试不退化 | ✅ PASS | P5 gate: `vitest run` | 479/479, 447 regression |
-| BDD-16 | 类型检查和构建通过 | ✅ PASS | P5 gate: `vue-tsc --noEmit` + `npm run build` + a11y | 0 errors, aria-label OK |
+| BDD-1 | 基本搜索（防抖） | ✅ PASS | CDP Chrome 真实浏览器 | URL→?q=python, 结果过滤 6→1 卡片, vision截图确认 |
+| BDD-2 | Enter 立即触发 | ✅ PASS | CDP Chrome 真实浏览器 | Enter 后 URL 立即→?q=react |
+| BDD-3 | Esc 清空搜索 | ✅ PASS | CDP Chrome 真实浏览器 | q 移除, input 清空, "something"→"" |
+| BDD-4 | 搜索 + Tab（搜索后点 Mine） | ✅ PASS | CDP Chrome 真实浏览器 | ?q=python&owner=me, 已登录用户验证 |
+| BDD-5 | Tab + 搜索（Mine 时加搜索） | ✅ PASS | CDP Chrome 真实浏览器 | ?owner=me&q=test, 两参数均保留 |
+| BDD-6 | 清空搜索保留 Tab | ✅ PASS | CDP Chrome 真实浏览器 | owner=me 保留, q 移除 |
+| BDD-7 | 搜索 + 分页组合 | ✅ PASS | CDP Chrome 真实浏览器 | ?q=demo&page=2 正确加载 |
+| BDD-8 | 直接访问带搜索的 URL | ✅ PASS | CDP Chrome 真实浏览器 | input 从 URL 恢复 "python", 1 卡片 |
+| BDD-9 | 搜索 + 用户页组合 | ✅ PASS | CDP Chrome 真实浏览器 | input 从 URL 恢复 "demo" |
+| BDD-10 | 空搜索结果 | ✅ PASS | CDP Chrome 真实浏览器 | "No entries found" 显示, input 保留, vision截图确认 |
+| BDD-11 | 浏览器后退 | ✅ PASS | CDP Chrome 真实浏览器 | replace 语义正确 |
+| BDD-12 | 搜索词变化重置分页 | ✅ PASS | CDP Chrome 真实浏览器 | 新搜索后 page 参数消失 |
+| BDD-13 | 空白查询清理 | ✅ PASS | CDP Chrome 真实浏览器 | input 清空后 ?q= 移除 |
+| BDD-14 | 搜索 + owner + 分页三组合 | ✅ PASS | CDP Chrome 真实浏览器 | ?q=test&owner=me&page=1 三参数完整 |
+| BDD-15 | 前后端测试不退化 | ✅ PASS | P5 gate: vitest run | 479/479 (35 files), 447 regression |
+| BDD-16 | a11y + 类型检查 + 构建 | ✅ PASS | P5 gate: vue-tsc + build + CDP a11y | 0 errors, aria-label="Search entries", role=search |
 
 **图例**: ⬜ 待执行 / ✅ PASS / ❌ FAIL / ❓ NEED_CONFIRM
 

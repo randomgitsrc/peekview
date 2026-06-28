@@ -2,6 +2,11 @@ task_id: T026
 task_name: search-url
 phase: READY
 status: ready
-retries: {}
-retry_count: {}
+retries:
+  P6:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: add_navigation
+retry_count: { P6: 1 }
 updated: 2026-06-28
