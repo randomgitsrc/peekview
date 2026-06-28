@@ -40,6 +40,7 @@ help:
 	@echo "  make sync-version-docs  - 仅同步文档版本号（不 bump）"
 	@echo "  make check-doc-sync     - 全面文档一致性检查"
 	@echo "  make update-docs        - 自动生成 FEATURES.md"
+	@echo "  make setup-local        - 初始化本地配置 (.claude/.opencode agents symlink)"
 	@echo "  make setup-hooks        - 安装 pre-commit hook"
 	@echo ""
 	@echo "MCP SERVER:"
@@ -654,6 +655,10 @@ update-docs:
 	@echo "✓ FEATURES.md 已更新"
 	@echo ""
 	@echo "注意：README.md 等需要手动更新"
+
+# Setup local .claude/ .opencode/ after clone
+setup-local:
+	@bash scripts/setup-local-config.sh
 
 # Setup Git hooks for automatic documentation checking
 setup-hooks:
