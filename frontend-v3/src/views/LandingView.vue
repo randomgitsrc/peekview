@@ -6,23 +6,7 @@
       <p class="hero-desc">Agent-powered formatting, human-friendly viewing. Create entries via API, CLI, or MCP &mdash; view code, markdown, diagrams, and HTML in your browser.</p>
       <div class="hero-actions">
         <button class="cta cta-primary" @click="showLogin = true">Login</button>
-        <button class="cta cta-secondary" @click="showLogin = true">Get Started</button>
-      </div>
-    </section>
-
-    <section class="examples">
-      <h2 class="section-title">Recent Public Entries</h2>
-      <div v-if="loadingExamples" class="state-info">Loading examples...</div>
-      <div v-else-if="errorExamples" class="state-err">{{ errorExamples }}</div>
-      <div v-else-if="exampleEntries.length === 0" class="state-info">No public entries yet</div>
-      <div v-else class="examples-grid">
-        <router-link v-for="entry in exampleEntries" :key="entry.id" :to="`/${entry.slug}`" class="example-card">
-          <h3 class="card-title">{{ entry.summary }}</h3>
-          <div class="card-meta">
-            <span>{{ entry.fileCount ?? 0 }} files</span>
-            <span v-if="entry.username">@{{ entry.username }}</span>
-          </div>
-        </router-link>
+        <router-link to="/explore" class="cta cta-secondary">Explore</router-link>
       </div>
     </section>
 
@@ -44,18 +28,13 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { api } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import type { Entry } from '@/types'
 
 const router = useRouter()
 const { authState } = storeToRefs(useAuthStore())
 const showLogin = ref(false)
-const exampleEntries = ref<Entry[]>([])
-const loadingExamples = ref(true)
-const errorExamples = ref('')
 
 const SEO_TITLE = 'PeekView — Share code snippets instantly'
 const SEO_DESC = 'Agent-powered code snippet sharing. Create entries via API, CLI, or MCP — view beautifully formatted code, markdown, diagrams, and HTML in your browser.'
@@ -68,14 +47,8 @@ function injectMeta() {
 }
 function removeMeta() { document.querySelectorAll('[data-peekview-landing]').forEach(el => el.remove()); document.title = 'PeekView' }
 
-async function loadExamples() {
-  try { exampleEntries.value = (await api.listEntries({ perPage: 4 })).items }
-  catch (e: any) { errorExamples.value = e?.message || 'Failed to load examples' }
-  finally { loadingExamples.value = false }
-}
-
 watch(authState, (state) => { if (state === 'authenticated') router.replace('/explore') })
-onMounted(() => { injectMeta(); loadExamples() })
+onMounted(() => { injectMeta() })
 onUnmounted(() => { removeMeta() })
 </script>
 
@@ -91,18 +64,9 @@ onUnmounted(() => { removeMeta() })
 .cta { padding:var(--space-2) var(--space-5);border-radius:var(--radius-md);font-size:var(--font-md);font-weight:600;cursor:pointer;border:none;transition:all var(--transition-fast) }
 .cta-primary { background:var(--accent-color);color:var(--text-on-accent) }
 .cta-primary:hover { background:var(--accent-hover) }
-.cta-secondary { background:var(--bg-secondary);color:var(--accent-color);border:1px solid var(--accent-color) }
+.cta-secondary { background:var(--bg-secondary);color:var(--accent-color);border:1px solid var(--accent-color);text-decoration:none }
+.cta-secondary { background:var(--bg-secondary);color:var(--accent-color);border:1px solid var(--accent-color);text-decoration:none;display:inline-flex;align-items:center }
 .cta-secondary:hover { background:var(--accent-light) }
-
-.examples { width:100%;max-width:900px;padding:0 var(--space-4) var(--space-7) }
-.section-title { font-size:var(--font-lg);font-weight:600;margin-bottom:var(--space-4);text-align:center }
-.state-info,.state-err { text-align:center;padding:var(--space-5);color:var(--text-secondary);font-size:var(--font-sm) }
-.state-err { color:var(--error-text) }
-.examples-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-4) }
-.example-card { display:block;padding:var(--space-4);background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-lg);text-decoration:none;color:var(--text-primary);transition:all var(--transition-fast) }
-.example-card:hover { border-color:var(--accent-color);box-shadow:var(--shadow-md) }
-.card-title { font-size:var(--font-md);font-weight:600;margin-bottom:var(--space-2) }
-.card-meta { display:flex;gap:var(--space-3);font-size:var(--font-xs);color:var(--text-secondary) }
 
 .landing-footer { width:100%;max-width:900px;padding:var(--space-5) var(--space-4);border-top:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-top:auto }
 .footer-links { display:flex;gap:var(--space-2) }
