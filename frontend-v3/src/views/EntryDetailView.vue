@@ -379,7 +379,7 @@ async function handleDelete() {
   const success = await entryStore.deleteEntry(currentEntry.value.slug)
   if (success) {
     toast.show('Entry deleted', 'success')
-    router.push('/')
+    router.push('/explore')
   } else {
     toast.show('Failed to delete entry', 'error')
   }
@@ -443,7 +443,7 @@ const tocHeadings = computed<TocHeading[]>(() => {
 
 // Methods
 function goBack() {
-  router.push('/')
+  router.push('/explore')
 }
 
 function selectFileAndCloseDrawer(file: { id: number }) {

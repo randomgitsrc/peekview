@@ -1,10 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from './stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'list',
+    name: 'landing',
+    component: () => import('./views/LandingView.vue'),
+  },
+  {
+    path: '/explore',
+    name: 'explore',
     component: () => import('./views/EntryListView.vue'),
   },
   {
@@ -40,6 +46,15 @@ const router = createRouter({
     }
     return { top: 0 }
   },
+})
+
+router.beforeEach((to, _from) => {
+  if (to.path === '/') {
+    const authStore = useAuthStore()
+    if (authStore.authState === 'authenticated') {
+      return '/explore'
+    }
+  }
 })
 
 export default router
