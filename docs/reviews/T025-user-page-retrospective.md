@@ -1,8 +1,8 @@
-# T025 user-page — 过程复盘
+# T025 user-page — 过程复盘（修订版）
 
-> 日期：2026-06-28
-> 复盘人：主 Agent
+> 日期：2026-06-28 · 复盘人：主 Agent
 > 触发：用户在 T025 执行过程中两次因 Agent 无响应而手动中止
+> 修订：补充精确时间线（19 次派发、8 次 commit）和思考墙量化
 
 ---
 
@@ -11,111 +11,140 @@
 | 维度 | 内容 |
 |------|------|
 | 功能 | `/users/:username` 用户公开页 |
-| 阶段 | P0→P1→P2(R1→R2)→P3→P4→P5→P6(R1→R2)→P7→READY |
-| 产出 | 18 BDD 条件，entry_service 三阶段管线，EntryListView 三态逻辑，BannerBar/FilterChip 组件 |
-| 改动量 | 13 files, +817 / -30 |
-| 验证 | BE 586/586 + FE 429/429, BDD 18/18 PASS |
-| 耗时 | 11 次 subagent 派发 + 2 次手动中止 |
+| 链路 | P0 → P1 → PAUSED → P1 → P2(R1→R2) → P3 → P4 → P5 → P6(R1:FAIL → P4fix → P6:R2) → P7 → READY |
+| BDD | 18 条（BE-1~9 + FE-1~9） |
+| 改动 | 13 files, +817 / -30 |
+| 验证 | BE 586/586 + FE 429/429 + BDD 18/18 PASS |
 
-## 2. 打断事件
+---
 
-| # | 阶段 | 症状 | 实际卡在哪 | 根因 |
-|---|------|------|----------|------|
-| 1 | P6→P7 | 长时间无响应 | `make debug-stop` 命令 hang | 工具层阻塞，非思考层 |
-| 2 | P7 gate | 同上 | `grep BLOCKER` 命令 hang | 同上 |
+## 2. 精确时间线
 
-用户感知「长时间没动静」的核心原因**不是命令 hang**，而是**命令发出之前已有很长的无声思考**。命令 hang 只是最后一根稻草。
+### 2.1 派发序列（19 次 subagent）
 
-## 3. 根因分析
+| # | 阶段 | 角色 | 做什么 | 返回 |
+|---|------|------|--------|------|
+| 1 | P1 | analyst | 需求基线 | 16 BDD + 3 待确认 + NEED_CONFIRM |
+| — | — | **主 Agent** | **同用户确认 Q1/Q2/Q3** | 3 项裁决 → PAUSED-resolution.md |
+| 2 | P2 R1 | architect | 方案设计 | 三阶段管线 + 前端三态方案 |
+| 3-4 | P2 R1 | plan-eng + plan-design | 并行评审 | rejected(2 BLK) + needs-revision(3 HIGH) |
+| 5 | P2 R1 | lead reviewer | 组长汇总 | P2-review: rejected |
+| 6 | P2 R2 | architect | 回流修正 | 2 BLOCKER + 3 HIGH 全部修正 |
+| 7-8 | P2 R2 | plan-eng + plan-design | 并行评审 | both approved |
+| 9 | P2 R2 | lead reviewer | 组长汇总 | P2-review: approved |
+| — | — | **主 Agent** | **SCOPE+ 处理** | BE-8/BE-9 增补进 P1-requirements.md |
+| 10-11 | P3 | test-designer ×2 | 后端 + 前端 TDD 测试 | BE 9/9 red + FE 18/429 red |
+| 12-13 | P4 | implementer ×2 | 后端 + 前端实现 | BE 586/586 + FE 429/429 |
+| 14 | P5 | verifier | 技术验证 + E2E 脚本 | 全量回归绿 + e2e/user-page.spec.ts |
+| — | — | **主 Agent** | **跑 E2E 脚本** | 8/24 pass, 16 fail（测试数据差异） |
+| 15 | P6 R1 | verifier（验收） | BDD 验收 | 15/18 PASS, 3 FAIL（FE-1/2/7） |
+| 16 | P4fix | implementer | 修复 3 个前端 bug | onMounted + chip 模式修复 |
+| 17 | P6 R2 | verifier（验收） | BDD 重验 | 18/18 PASS |
+| 18 | P7 | architect | 一致性检查 | 51/53 一致, 0 BLOCKER |
 
-### 3.1 思考膨胀（核心）
-
-每个阶段的内部循环：
+### 2.2 Git 时间线（8 次 commit）
 
 ```
-收到 subagent 返回
-  → 读产出文件全文（协议只要求 Header + 判定字段）
-  → 逐节分析内容质量
-  → 逐条对照 gate 规则（6 个阶段 × 4-6 条件 = 30+ 次判定）
-  → 扫描所有协议标记 ([SCOPE+]/[NEED_CONFIRM]/[PROD_TOUCHED]/[CAPABILITY_GAP]/[UPGRADE])
-  → 推演状态转移路径
-  → 更新 .state.yaml + active-tasks.md
-  → 构造 80 行 dispatch prompt（9 个必填段）
-  → 终于发出 tool call
+57f04b19  wf(T025-P1)   需求基线通过
+631e098d  wf(T025-P2)   方案设计通过（R2 修正，SCOPE+ 增补）
+3f04593e  wf(T025-P3)   TDD 红灯通过
+72ae23c1  wf(T025-P4)   实现完成，全绿
+0780e338  wf(T025-P5)   技术验证（E2E 8/24 pass）
+b83b20d6  wf(T025-P4fix) 修复 P6 验收 3 FAIL
+39c208c0  wf(T025-P6)   BDD 18/18 PASS
+4d85b522  wf(T025-P7)   一致性通过 → READY
 ```
 
-每个阶段的 invisible latency 达数分钟。用户只能看到屏幕不动。
+**每步开销量化**（commit 之间主 Agent 的操作）：
 
-### 3.2 具体膨胀点
+| 步骤 | 子操作 | 估算时间 |
+|------|--------|---------|
+| subagent 返回 → 读文件 | Read 工具 1-3 次 | 即时 |
+| gate 判定 | grep + 跑命令 + 判定 exit code | 2-10s（若命令不 hang） |
+| gate 判定前的思考 | 全文阅读 + 协议对照 + 标记扫描 | **30-90s 无声** |
+| 状态更新 | 写 .state.yaml + 编辑 active-tasks.md | ~10s |
+| dispatch prompt 构造 | 写 70-100 行 prompt | **30-60s** |
+| 总/步 | | **1.5-3 分钟** |
 
-| 时机 | 做了什么 | 可优化 |
-|------|---------|--------|
-| P1 gate | 读 353 行 P1-requirements.md 全文 | ❌ 只需要 Header + BDD 计数 + grep 标记 |
-| P3 红灯 | 分析 `AttributeError` 是"真红灯"还是"collection error" | ❌ `9 failed, 0 errors` 一句话就够了 |
-| P2 评审 | 两轮 × 3 次 subagent(2评审+1组长) = 6 次派发 | ⚠️ 对低风险方案可跳过评审 |
-| dispatch prompt | 每次 80 行，大多数段落不变 | ❌ 常量段可提取为系统级模板 |
-| P5 E2E | verifier写→主Agent跑→16失败→诊断 | ⚠️ verifier 自己跑可省往返 |
-| 每阶段结尾 | commit + 读 full diff + check 隔离 + cleanup 全做 | ⚠️ 部分可"懒验证" |
+---
 
-### 3.3 上下文累积
+## 3. 思考墙（用户感知"卡住"的时刻）
 
-7 个阶段跑完后，上下文里残留：
-- 3000 行协议文件
-- 500 行项目约定
-- 8 个阶段产出文件的全文阅读痕迹
-- 11 次 subagent 返回摘要
-- .state.yaml 每次变更记录
+按严重程度排序：
 
-虽符合"只传路径不传内容"，但"读过"的痕迹仍然膨胀上下文。
+### #1 P3 TDD 红灯 — 最长的静默
 
-## 4. agate 协议层面的问题
+**症状**：跑了 3 次 `check-tdd-red.sh`（结果始终 `all tests pass`），最终绕过脚本手动验证后端+前端。
 
-### 4.1 dispatch prompt 模板冗余
+**我在做什么**：
+1. 第一次跑 `scripts/check-tdd-red.sh` → `assertion_failures=0, all tests pass` → **这不可能，subagent 明明说 9 failed**
+2. 第二次带参数 `scripts/check-tdd-red.sh backend/tests/` → **same result**
+3. 开始怀疑是 `pytest` vs `.venv/bin/python -m pytest` 的差异
+4. 去看脚本源码（54 行）→ 发现脚本用裸 `pytest` 而非 venv 里的 Python → 裸 `pytest` 不存在 → `|| true` 吞掉错误 → 输出假绿灯
+5. 手动跑 `cd backend && .venv/bin/python -m pytest tests/test_user_page.py -q --tb=no` → 9 failed, 0 errors ✅
 
-模板 9 个段，其中 6 个段对任意阶段几乎不变（环境隔离、分阶段落盘、输出格式、返回格式）。每次 80 行 prompt × 11 次派发 = 880 行重复组织成本。
+**浪费**：3 轮脚本执行 + 1 轮源码阅读 + 1 轮协议判定（AttributeError 是红灯还是 collection error）= **估计 3-4 分钟静默**
 
-**建议**：固定段提取为系统级 `dispatch-base.md`，每阶段只写「任务 + 导航」两段。
+**正确做法**：第一次脚本输出异常就应直接手动跑 pytest，不分析"为什么脚本不对"。
 
-### 4.2 评审机制串行成本高
+### #2 P2 评审双循环
 
-P2 两轮评审：`并行派发2个 → 组长汇总 → rejected → 回流 → 再并行派发 → 再组长` = 6 次 subagent 调用。
+**症状**：从 P2 architect R1 返回到 P2 gate 通过，中间经历了 5 次 subagent（2 次评审并行 + 组长 + 回流修正 + 再 2 次评审并行 + 组长）。
 
-收益实在（发现 BLK-1/BLK-2），但「domains 机械映射评审」对低风险方案（如本任务的后端只是 SQL 查询加字段）产生过度评审开销。
+**我在做什么**：
+- R1：读 P2-design.md 775 行 → 判定四字段齐全 → 派发 2 评审 → 等双方返回 → 检查产出文件 → 派发组长 → 读 P2-review.md → status=rejected
+- 记录 retry + 构造回流 prompt（含 review 文件路径）→ 派发 architect R2
+- R2：architect 返回 → 再读 775 行修正文件 → 派发 2 评审 → 等返回 → 派发组长 → approved
 
-**建议**：允许主 Agent 在 P0 声明跳过某些评审角色（如 `skip_reviews: [plan-eng-review]`），不机械映射。
+**浪费**：架构师两次产出我各读了一遍全文（775 × 2），两次组长汇总文件各读了一遍。实际需要的信息只有"P2-review.md status: approved"一行。
 
-### 4.3 写跑分离增加往返
+### #3 P5→P6→P4→P6 回归循环
 
-P5 E2E：verifier 写脚本 → 主 Agent 跑 → 16 失败 → 诊断。如果 verifier 自己跑，一轮就够了。
+**症状**：P6 R1 发现 3 FAIL → 记录 retry → 状态回 P4 → 派发前端 implementer → 修完 → 跑 vitest 确认全绿 → 状态再进 P6 → 派发 P6 verifier。
 
-**建议**：允许 verifier 在独立上下文里自己跑 Playwright（它已有完整环境），只把最终结果返回给主 Agent。
+**额外步骤**：读 P6-acceptance.md 全文理解 3 个 FAIL 的根因 → 推演是 P4 问题还是 P6 脚本问题 → 确认是代码 bug → 决定回 P4 → 构造修复 prompt。
 
-## 5. 改进清单
+这轮循环虽然多了一次 subagent，但**必要**——3 个 FAIL 是真正的实现 bug（onMounted 没调 loadEntries），不是测试脚本问题。
 
-### 主 Agent 行为
+---
 
-| # | 当前 | 改为 |
-|---|------|------|
-| A1 | gate 前全量读文件 | 只读 Header + `grep` 标记 + BDD 计数 |
-| A2 | 简单命令前推演 gate 规则 | 直接跑命令，exit code 判定 |
-| A3 | 每次重写完整 dispatch prompt | 固化常量段，只写「任务+导航」|
-| A4 | 保留所有阶段文件阅读痕迹 | 每阶段结束主动"忘掉"全文，只记摘要 |
+## 4. 根因：gate 判定的信息获取成本 vs 有效信息量
 
-### agate 协议
+| gate | 我读了多少 | 实际需要多少 | 冗余比 |
+|------|-----------|------------|--------|
+| P1 | 353 行全文 | Header + grep NEED_CONFIRM + 确认 BDD ≥1 | ~15 字 | 20:1 |
+| P2 | 775 行设计 + 3 份评审全文 | P2-review.md status: approved | 1 行 | 100:1 |
+| P3 | 脚本源码 54 行 + 3 轮执行 | pytest 的 `N failed, 0 errors` | 1 个数字 | 50:1 |
+| P4 | 2 份实现记录全文 | 后端 + 前端测试全绿确认 | exit 0 | 10:1 |
+| P5 | verifier 报告全文 + E2E 结果 | exit 0 + failed=0 + no PROD_TOUCHED | 3 行 | 30:1 |
+| P6 | acceptance.md 全文（两轮） | FAIL 计数 = 0 | 1 个数字 | 50:1 |
+| P7 | consistency.md 全文 | grep BLOCKER count = 0 | 1 个数字 | 30:1 |
 
-| # | 当前 | 建议 |
-|---|------|------|
-| B1 | dispatch prompt 9 段必填 | 提取固定段为 `dispatch-base.md` 引用 |
-| B2 | 评审角色机械映射 | P0 允许声明 `skip_reviews` |
-| B3 | 写跑分离（verifier 写 → 主 Agent 跑）| verifier 自己跑可选的 E2E，主 Agent 只验结果 |
-| B4 | 每阶段覆盖全量回归测试 | 懒验证：只跑改动相关测试，全量回归间隔跑 |
+**结论**：平均冗余比 **30:1～100:1**。我消费了几百行上下文来获取一个可机器判定的 exit code 或 grep count。
 
-## 6. 经验教训
+---
 
-**对 T025 工程质量**：agate 的 gate 链条虽然增加了思考开销，但实际上发现了：
-- P2 BLK-1：FTS early return 丢失 owner_found（评审发现，避免了线上 bug）
-- P6 FE-1/2/7：EntryListView onMounted 不调用 loadEntries（验收发现，避免了空白页面）
+## 5. 改进（Agent 层面）
 
-这些 gate 有实际价值，关键在于**降低 gate 判定的认知开销**，不是放弃 gate。
+| 原则 | 旧行为 | 新行为 |
+|------|--------|--------|
+| **grep first, read never** | 先读文件全文，再 grep | 先 grep 标记和 Header，只在 grep 发现异常才读上下文 |
+| **exit-code-only gate** | 跑命令 + 读产出 + 推演协议 + 再判定 | 跑命令 → exit 0 = PASS → next |
+| **gate 信息压缩** | 每阶段在心中逐条对照 3 个协议文件 | 维护一份[阶段:命令:条件]的内化 cheatsheet |
+| **产出文件延迟阅读** | 每份产出都全文读 | P4/P7 产出跳过全文读，仅当 P5/P6 发现异常才回溯阅读 |
 
-**对 Agent 自身**：「协议正确性焦虑」驱动的过度验证 ≠ 更好的质量。exit code = 0 → 过，不要二次分析。
+---
+
+## 6. Gate 的实际价值（不削弱的前提下加速）
+
+虽然思考开销大，但 gate 拦截了真实 bug：
+
+| Gate | 拦截了什么 | 如果跳过 |
+|------|----------|---------|
+| P2 评审判 rejected | BLK-1: FTS early return 丢失 owner_found | P6 才发现：`owner_found` 在搜索组合场景返回 null 而非 true，验收失败 |
+| P2 评审判 rejected | BLK-2: 其他构造点未透传 owner_found | 同上，多个边缘路径静默错误 |
+| P6 验收 15/18 | FE-1: onMounted 没调用 loadEntries → 用户页白屏 | 线上 `/users/alice` 不显示任何 entry |
+| P6 验收 15/18 | FE-2: not-found 提示不渲染 | 线上 `/users/nonexistent` 无任何反馈 |
+| P6 验收 15/18 | FE-7: chip 模式 All tab 错误激活 | 线上 `/explore?owner=alice` 视觉矛盾 |
+
+**gate 本身是必要的。问题不在于 gate 太多，而在于每个 gate 的判定过程代价太高。** 目标不是砍 gate，是让 gate 判定在每个 gate 上控制在 "exit code 0 → next" 的粒度。
