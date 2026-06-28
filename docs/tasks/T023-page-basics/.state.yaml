@@ -1,7 +1,12 @@
 task_id: T023
 task_name: page-basics
-phase: P0
-status: in_progress
+phase: DONE
+status: completed
 retries: {}
 retry_count: {}
-updated: 2026-06-25
+updated: 2026-06-28
+pruning:
+  P2: skipped (方案明确)
+  P3: skipped (纯静态)
+  P7: skipped (单文件改动)
+  P8: skipped (纯前端)
