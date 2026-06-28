@@ -496,7 +496,7 @@ class EntryService:
             revoked_shares = None
             if is_public is True and was_private:
                 share_service = self._get_share_service()
-                revoked_shares = share_service.revoke_all_for_entry(entry_id)
+                revoked_shares = share_service.revoke_all_for_entry(entry_id, session=session)
 
             # Remove files (DB records + disk)
             if remove_file_ids:
