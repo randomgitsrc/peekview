@@ -9,11 +9,11 @@ until the actual code changes are applied in P4.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import text
-from sqlmodel import Session, SQLModel, select
+from sqlmodel import Session, select
 
 from peekview.database import _run_migrations, init_db
 from peekview.exceptions import PeekError

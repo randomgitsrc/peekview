@@ -1,8 +1,7 @@
 """Shared test fixtures — single source of truth for all test files."""
 
-import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 from httpx import ASGITransport, AsyncClient

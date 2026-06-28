@@ -5,7 +5,6 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-import requests
 
 from peekview.client import PeekClient, RemoteEntry, RemoteFile
 from peekview.exceptions import NotFoundError, PeekError

@@ -8,7 +8,6 @@ Tests cover:
 - Cap service unavailability handled gracefully
 """
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,15 +15,14 @@ from httpx import ASGITransport, AsyncClient
 
 from peekview.config import (
     PeekAuth,
-    PeekConfig,
-    PeekServer,
-    PeekStorage,
-    PeekLimits,
     PeekCleanup,
+    PeekConfig,
+    PeekLimits,
     PeekLogging,
     PeekRemote,
+    PeekServer,
+    PeekStorage,
 )
-
 
 # ─── Captcha config fixtures ────────────────────────────────────────────────
 
@@ -182,7 +180,7 @@ class TestVerifyCaptcha:
     @pytest.mark.asyncio
     async def test_empty_token_raises_required(self):
         """Empty token raises CaptchaRequiredError."""
-        from peekview.api.captcha import verify_captcha, CaptchaRequiredError
+        from peekview.api.captcha import CaptchaRequiredError, verify_captcha
 
         with pytest.raises(CaptchaRequiredError):
             await verify_captcha(
@@ -195,7 +193,7 @@ class TestVerifyCaptcha:
     @pytest.mark.asyncio
     async def test_empty_string_token_raises_required(self):
         """Empty string token raises CaptchaRequiredError."""
-        from peekview.api.captcha import verify_captcha, CaptchaRequiredError
+        from peekview.api.captcha import CaptchaRequiredError, verify_captcha
 
         with pytest.raises(CaptchaRequiredError):
             await verify_captcha(
@@ -209,6 +207,7 @@ class TestVerifyCaptcha:
     async def test_cap_service_unreachable_raises(self):
         """Cap service network error raises an error (not crash)."""
         import httpx
+
         from peekview.api.captcha import verify_captcha
 
         with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:

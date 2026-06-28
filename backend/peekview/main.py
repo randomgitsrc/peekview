@@ -10,14 +10,14 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
 
 from peekview import __version__
+from peekview.api.rate_limit import limiter
 from peekview.config import PeekConfig
 from peekview.database import init_db
 from peekview.exceptions import PeekError
-from peekview.api.rate_limit import limiter
-from slowapi.errors import RateLimitExceeded
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -104,11 +104,11 @@ def create_app(
     engine = init_db(config.db_path, run_migrations=True)
     app.state.engine = engine
 
-    from peekview.storage import StorageManager
-    from peekview.services.entry_service import EntryService
-    from peekview.services.apikey_service import ApiKeyService
     from peekview.services.admin_service import AdminService
+    from peekview.services.apikey_service import ApiKeyService
+    from peekview.services.entry_service import EntryService
     from peekview.services.share_service import ShareService
+    from peekview.storage import StorageManager
     storage = StorageManager(config=config)
     entry_service = EntryService(engine=engine, storage=storage, config=config)
     apikey_service = ApiKeyService(engine=engine)
@@ -259,13 +259,13 @@ def create_app(
     app.add_middleware(SlowAPIMiddleware)
 
     # Register API routes
-    from peekview.api.auth import router as auth_router
+    from peekview.api.admin import router as admin_router
     from peekview.api.apikeys import router as apikeys_router
+    from peekview.api.auth import router as auth_router
+    from peekview.api.captcha_router import router as captcha_router
+    from peekview.api.config_router import router as config_router
     from peekview.api.entries import router as entries_router
     from peekview.api.files import router as files_router
-    from peekview.api.config_router import router as config_router
-    from peekview.api.captcha_router import router as captcha_router
-    from peekview.api.admin import router as admin_router
     from peekview.api.shares import router as shares_router
     app.include_router(auth_router)
     app.include_router(apikeys_router)
@@ -278,8 +278,8 @@ def create_app(
 
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (
-        set_login_rate_limit,
         set_captcha_rate_limit,
+        set_login_rate_limit,
     )
 
     login_limit = f"{config.server.rate_limit_login_per_minute}/minute"

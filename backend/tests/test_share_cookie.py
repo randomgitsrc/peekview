@@ -3,7 +3,6 @@
 TDD red-light: imports EntryShare which does not exist yet.
 """
 
-import hashlib
 import shutil
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -13,8 +12,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
-from peekview.models import EntryShare, User
-
+from peekview.models import EntryShare
 
 # --- Fixtures ---
 

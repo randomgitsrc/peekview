@@ -9,7 +9,6 @@ from peekview.models import ShareCreateRequest, ShareRevokeRequest, User
 
 
 def _get_share_service(request: Request):
-    from peekview.services.share_service import ShareService
     return request.app.state.share_service
 
 

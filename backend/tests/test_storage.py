@@ -4,8 +4,6 @@ Includes security tests for path traversal protection.
 """
 
 import hashlib
-import os
-from pathlib import Path
 
 import pytest
 

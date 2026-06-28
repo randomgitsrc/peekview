@@ -4,9 +4,7 @@ Defines Entry and File models with proper relationships,
 indexes, and FTS5 integration.
 """
 
-import hashlib
 import hmac
-import json
 import re
 import secrets
 import string
@@ -14,13 +12,13 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, ForeignKey, Index, event, text
-from sqlalchemy.dialects.sqlite import JSON
 from pydantic import field_validator
+from sqlalchemy import Column, ForeignKey, Index, text
+from sqlalchemy.dialects.sqlite import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 # Valid slug characters: lowercase letters, digits, underscores, hyphens

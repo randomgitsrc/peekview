@@ -14,7 +14,6 @@ from peekview.services.file_service import (
     validate_local_path,
 )
 
-
 # --- validate_local_path (ALLOWLIST approach) ---
 
 

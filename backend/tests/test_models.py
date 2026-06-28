@@ -1,18 +1,15 @@
 """Tests for data models."""
 
-import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, select
 
 from peekview.models import (
     CreateEntryRequest,
     DirCreate,
     Entry,
     EntryCreate,
-    EntryListItem,
-    EntryResponse,
     File,
     FileCreate,
     FileInfo,

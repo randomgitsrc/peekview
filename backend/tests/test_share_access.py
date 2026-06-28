@@ -4,7 +4,6 @@ TDD red-light: imports EntryShare, share_service which do not exist yet.
 Tests should fail at import/attribute time.
 """
 
-import hashlib
 import shutil
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -14,8 +13,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
-from peekview.models import EntryShare, User
-
+from peekview.models import EntryShare
 
 # --- Fixtures ---
 

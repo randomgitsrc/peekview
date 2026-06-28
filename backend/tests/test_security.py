@@ -7,7 +7,6 @@ SQL injection, XSS, and other security concerns.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -713,8 +712,9 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_rate_limit_disabled(self):
         """When rate limiting disabled, no 429 responses."""
-        from peekview.main import create_app
         from pathlib import Path
+
+        from peekview.main import create_app
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         disabled_app = create_app(
@@ -736,8 +736,9 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_login_rate_limit_respects_config_value(self):
         """login limit should respect the config value passed to create_app."""
-        from peekview.main import create_app
         from pathlib import Path
+
+        from peekview.main import create_app
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(
@@ -762,8 +763,9 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_captcha_challenge_rate_limited(self):
         """Captcha challenge endpoint should be rate limited."""
-        from peekview.main import create_app
         from pathlib import Path
+
+        from peekview.main import create_app
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(

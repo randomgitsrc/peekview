@@ -1,6 +1,5 @@
 """Tests for exception hierarchy."""
 
-import pytest
 
 from peekview.exceptions import (
     ConflictError,

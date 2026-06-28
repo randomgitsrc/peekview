@@ -4,9 +4,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
-from peekview.auth import create_access_token, hash_password
 from peekview.main import create_app
-from peekview.models import ApiKey, Entry, User
+from peekview.models import Entry, User
 from peekview.services.admin_service import AdminService
 
 
@@ -155,8 +154,8 @@ class TestStatsUnauthenticatedRejected:
 class TestCLIAdminStatsLocal:
     def test_admin_stats_local_runs(self, tmp_path, monkeypatch):
         from click.testing import CliRunner
+
         from peekview.cli import cli
-        from peekview.config import PeekConfig
 
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -177,6 +176,7 @@ class TestCLIAdminStatsLocal:
 class TestCLIAdminStatsRemote:
     def test_admin_stats_remote_mode_flag(self, tmp_path, monkeypatch):
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         data_dir = tmp_path / "data"
@@ -197,7 +197,9 @@ class TestCLIAdminStatsRemote:
 class TestCLIAdminStatsJSON:
     def test_admin_stats_json_output(self, tmp_path, monkeypatch):
         import json
+
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         data_dir = tmp_path / "data"
@@ -249,9 +251,10 @@ class TestStatsEmptySystem:
 class TestStatsPerformance:
     def test_stats_performance_1000_entries(self, tmp_path):
         import time
+
         from peekview.config import PeekConfig
-        from peekview.storage import StorageManager
         from peekview.database import init_db
+        from peekview.storage import StorageManager
 
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -415,6 +418,7 @@ class TestCleanupUnauthenticatedRejected:
 class TestCLIAdminCleanupLocal:
     def test_admin_cleanup_local_runs(self, tmp_path, monkeypatch):
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         data_dir = tmp_path / "data"
@@ -436,6 +440,7 @@ class TestCLIAdminCleanupLocal:
 class TestCLIAdminCleanupRemote:
     def test_admin_cleanup_remote_mode_flag(self, tmp_path, monkeypatch):
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         data_dir = tmp_path / "data"

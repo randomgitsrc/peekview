@@ -13,7 +13,6 @@ from sqlalchemy import Engine, event, text
 from sqlmodel import Session, SQLModel, create_engine
 
 from peekview.exceptions import SchemaMismatchError
-from peekview.models import ApiKey, Entry, EntryShare, File, User
 
 if TYPE_CHECKING:
     from peekview.config import PeekConfig
@@ -256,7 +255,7 @@ def setup_fts5(engine: Engine) -> None:
         logger.info("FTS5 virtual table and triggers created")
 
 
-def get_engine(config_or_path: "PeekConfig" | Path | str | None = None) -> Engine:
+def get_engine(config_or_path: PeekConfig | Path | str | None = None) -> Engine:
     """Get or create a database engine.
 
     This is a convenience function for use in the application.
@@ -370,9 +369,7 @@ def get_db_stats(engine: Engine) -> dict:
         Dict with entry count, file count, FTS stats
     """
     with Session(engine) as session:
-        from sqlalchemy import func
 
-        from peekview.models import Entry, File
 
         entry_count = session.exec(
             text("SELECT COUNT(*) FROM entries")

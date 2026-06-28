@@ -1,8 +1,6 @@
 """Test data factories for creating test entries and files."""
 
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Optional
 
 from sqlmodel import Session
 
@@ -18,11 +16,11 @@ class EntryFactory:
 
     def create(
         self,
-        summary: Optional[str] = None,
-        slug: Optional[str] = None,
+        summary: str | None = None,
+        slug: str | None = None,
         status: str = "active",
-        tags: Optional[list] = None,
-        expires_at: Optional[datetime] = None,
+        tags: list | None = None,
+        expires_at: datetime | None = None,
     ) -> Entry:
         """Create a test entry with default values."""
         self.counter += 1
@@ -62,9 +60,9 @@ class FileFactory:
     def create(
         self,
         entry_id: int,
-        path: Optional[str] = None,
-        filename: Optional[str] = None,
-        language: Optional[str] = None,
+        path: str | None = None,
+        filename: str | None = None,
+        language: str | None = None,
         is_binary: bool = False,
         size: int = 100,
     ) -> File:

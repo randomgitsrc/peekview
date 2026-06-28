@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 import secrets
@@ -28,7 +27,6 @@ from peekview.models import (
     EntryListItem,
     EntryListResponse,
     EntryResponse,
-    EntryShareContext,
     File,
     FileResponse,
     User,
@@ -47,7 +45,7 @@ logger = logging.getLogger(__name__)
 SLUG_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 
 
-def get_entry_service(app: Any) -> "EntryService":
+def get_entry_service(app: Any) -> EntryService:
     """Get or create EntryService from app.state (singleton per app).
 
     This avoids creating new service instances on every request.
@@ -743,7 +741,6 @@ class EntryService:
 
     def _process_file_input(self, fd: dict[str, Any]) -> dict[str, Any] | None:
         """Process a single file input dict."""
-        from pathlib import Path
 
         path = fd.get("path")
         filename = fd.get("filename") or "untitled"

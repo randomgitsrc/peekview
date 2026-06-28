@@ -3,20 +3,14 @@
 TDD red-light: imports EntryShare, share_service which do not exist yet.
 """
 
-import hashlib
 import re
 import shutil
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlmodel import Session, select
-
-from peekview.models import EntryShare, User
-
 
 # --- Fixtures ---
 
@@ -87,8 +81,9 @@ class TestShareSecurity:
         await _create_private_entry(client, alice["access_token"], slug="security-test")
         token = await _get_share_token(client, alice["access_token"], "security-test")
 
-        from peekview.services.share_service import ShareService
         import hmac as hmac_module
+
+        from peekview.services.share_service import ShareService
 
         engine = app.state.engine
         service = ShareService(engine=engine)

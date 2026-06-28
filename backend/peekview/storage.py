@@ -15,7 +15,6 @@ from pathlib import Path
 
 from peekview.config import PeekConfig
 from peekview.exceptions import ForbiddenPathError, StorageError
-from peekview.models import Entry
 
 logger = logging.getLogger(__name__)
 

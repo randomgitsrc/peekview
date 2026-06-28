@@ -3,8 +3,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from peekview.auth import require_admin, require_auth, get_current_user
-from peekview.exceptions import ForbiddenError, AuthenticationError
+from peekview.auth import require_admin, require_auth
+from peekview.exceptions import AuthenticationError, ForbiddenError
 from peekview.main import create_app
 from peekview.models import User
 

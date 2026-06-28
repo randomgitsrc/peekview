@@ -11,17 +11,14 @@ Tests cover:
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlmodel import Session, select
 
 from peekview.auth import (
+    _load_or_generate_secret_key,
     create_access_token,
     decode_access_token,
     hash_password,
     verify_password,
-    _load_or_generate_secret_key,
 )
-from peekview.models import Entry, User
-
 
 # --- Password hashing tests --- #
 

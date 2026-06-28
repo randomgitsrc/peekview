@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
+from peekview.api.captcha import enforce_captcha
+from peekview.api.rate_limit import limiter, login_rate_limit
 from peekview.auth import (
     create_access_token,
     hash_password,
     require_auth,
     verify_password,
 )
-from peekview.api.captcha import enforce_captcha
-from peekview.api.rate_limit import limiter, login_rate_limit
-from peekview.database import get_engine
 from peekview.exceptions import InvalidCredentialsError, RegistrationError
 from peekview.models import (
     RESERVED_USERNAMES,

@@ -11,7 +11,6 @@ from sqlmodel import Session, select
 
 from peekview.models import ApiKey, User, hash_api_key
 
-
 # --- Fixtures ---
 
 @pytest.fixture(scope="function")

@@ -5,24 +5,21 @@ Run: pytest tests/test_captcha_builtin.py -v
 Expected: ALL FAIL initially (modules don't exist yet)
 """
 
-import json
 import time
-from unittest.mock import MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from peekview.config import (
     PeekAuth,
-    PeekConfig,
     PeekCleanup,
+    PeekConfig,
     PeekLimits,
     PeekLogging,
     PeekRemote,
     PeekServer,
     PeekStorage,
 )
-
 
 # ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -110,7 +107,7 @@ class TestPrngFromHash:
 
 class TestSha256Pow:
     def test_matches(self):
-        from peekview.captcha_engine import sha256_hex, pow_matches
+        from peekview.captcha_engine import pow_matches, sha256_hex
         hash_hex = sha256_hex("test")
         assert pow_matches(hash_hex, hash_hex[:4])
         assert not pow_matches(hash_hex, "ffff")
@@ -169,8 +166,14 @@ class TestGenerateChallenge:
 class TestValidateChallenge:
     @pytest.mark.asyncio
     async def test_valid_solutions_succeeds(self):
-        from peekview.captcha_engine import generate_challenge, validate_challenge
-        from peekview.captcha_engine import fnv1a, fnv1a_resume, prng_from_hash, sha256_hex
+        from peekview.captcha_engine import (
+            fnv1a,
+            fnv1a_resume,
+            generate_challenge,
+            prng_from_hash,
+            sha256_hex,
+            validate_challenge,
+        )
 
         challenge = generate_challenge("secret", "site_key", c=3, s=8, d=1, ttl_ms=60000)
         token = challenge["token"]
@@ -244,8 +247,15 @@ class TestValidateChallenge:
 class TestSiteverifyToken:
     @pytest.mark.asyncio
     async def test_valid_token_succeeds(self):
-        from peekview.captcha_engine import generate_challenge, validate_challenge, siteverify_token
-        from peekview.captcha_engine import fnv1a, fnv1a_resume, prng_from_hash, sha256_hex
+        from peekview.captcha_engine import (
+            fnv1a,
+            fnv1a_resume,
+            generate_challenge,
+            prng_from_hash,
+            sha256_hex,
+            siteverify_token,
+            validate_challenge,
+        )
 
         challenge = generate_challenge("secret", "site_key", c=2, s=8, d=1)
         token = challenge["token"]

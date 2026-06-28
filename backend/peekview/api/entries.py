@@ -7,13 +7,20 @@ import zipfile
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-
-from peekview.auth import get_current_user
-from peekview.api.files import _sanitize_filename
-from peekview.exceptions import AuthenticationError, NotFoundError
-from peekview.models import API_KEY_PREFIX, CreateEntryRequest, Entry, EntryShareContext, EntryUpdate, User
-from peekview.services.entry_service import EntryService, get_entry_service
 from sqlmodel import Session, select
+
+from peekview.api.files import _sanitize_filename
+from peekview.auth import get_current_user
+from peekview.exceptions import AuthenticationError, NotFoundError
+from peekview.models import (
+    API_KEY_PREFIX,
+    CreateEntryRequest,
+    Entry,
+    EntryShareContext,
+    EntryUpdate,
+    User,
+)
+from peekview.services.entry_service import EntryService, get_entry_service
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 
@@ -24,8 +31,8 @@ def _get_service(request: Request) -> EntryService:
 
 
 def _check_share_cookie(request: Request, slug: str, service: EntryService):
-    from peekview.services.share_service import ShareService
     from peekview.models import File
+    from peekview.services.share_service import ShareService
 
     share_service: ShareService = request.app.state.share_service
 

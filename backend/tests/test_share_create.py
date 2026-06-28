@@ -15,8 +15,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
-from peekview.models import EntryShare, User
-
+from peekview.models import EntryShare
 
 # --- Fixtures ---
 

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 MAX_ACTIVE_KEYS_PER_USER = 10
 
 
-def get_apikey_service(app: Any) -> "ApiKeyService":
+def get_apikey_service(app: Any) -> ApiKeyService:
     """Get or create ApiKeyService from app.state (singleton per app)."""
     if not hasattr(app.state, "apikey_service"):
         from peekview.config import PeekConfig

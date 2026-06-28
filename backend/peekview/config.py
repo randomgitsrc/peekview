@@ -3,14 +3,12 @@
 Uses Pydantic Settings for environment variable and config file support.
 """
 
-import os
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # Path to local config file
 CONFIG_FILE = Path.home() / ".peekview" / "config.yaml"
@@ -73,8 +71,9 @@ class PeekLimits(BaseSettings):
     @field_validator("default_expires_in", mode="after")
     @classmethod
     def validate_default_expires_in(cls, v: str) -> str:
-        from peekview.services.file_service import parse_expires_in
         import logging
+
+        from peekview.services.file_service import parse_expires_in
         _config_logger = logging.getLogger("peekview.config")
         try:
             parse_expires_in(v)

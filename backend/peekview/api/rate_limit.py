@@ -1,10 +1,9 @@
 """Rate limiting module using slowapi."""
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)

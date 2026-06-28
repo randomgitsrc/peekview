@@ -1,11 +1,9 @@
 """Tests for database initialization and management."""
 
-import sqlite3
 from pathlib import Path
 
-import pytest
 from sqlalchemy import Engine, text
-from sqlmodel import Session, SQLModel, select
+from sqlmodel import Session
 
 from peekview.database import (
     close_engine,
@@ -14,7 +12,6 @@ from peekview.database import (
     init_db,
     rebuild_fts_index,
     search_entries,
-    setup_fts5,
 )
 from peekview.models import Entry, File
 

@@ -5,8 +5,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request
 
-from peekview.api.rate_limit import limiter, captcha_rate_limit
-from peekview.captcha_engine import generate_challenge, validate_challenge, siteverify_token
+from peekview.api.rate_limit import captcha_rate_limit, limiter
+from peekview.captcha_engine import generate_challenge, siteverify_token, validate_challenge
 
 router = APIRouter(prefix="/api/v1/captcha", tags=["captcha"])
 

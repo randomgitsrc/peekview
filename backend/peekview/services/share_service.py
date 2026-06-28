@@ -20,7 +20,6 @@ from peekview.models import (
     ShareCreateResponse,
     ShareListResponse,
     ShareResponse,
-    User,
 )
 from peekview.services.file_service import parse_expires_in
 

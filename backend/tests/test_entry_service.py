@@ -1,12 +1,10 @@
 """Tests for entry service."""
 
 import pytest
-from sqlmodel import Session, select
 
 from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
 from peekview.database import init_db
-from peekview.exceptions import InvalidSlugError, NotFoundError, ValidationError
-from peekview.models import Entry
+from peekview.exceptions import InvalidSlugError, NotFoundError
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
 
@@ -154,6 +152,7 @@ class TestCreateEntry:
     def test_create_with_custom_default_expires_in(self, entry_service, tmp_path):
         """When limits.default_expires_in is changed, it takes effect."""
         import datetime
+
         from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
         from peekview.database import init_db
         db_path = tmp_path / "test_custom.db"
@@ -313,7 +312,6 @@ class TestDeleteEntry:
 class TestGetEntryService:
     def test_get_entry_service_from_app_state(self, tmp_path):
         """get_entry_service() should use app.state services, not create new instances."""
-        from fastapi import FastAPI
 
         from peekview.main import create_app
 

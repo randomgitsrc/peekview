@@ -1,6 +1,5 @@
 """Tests for language detection."""
 
-import pytest
 
 from peekview.language import (
     PLAIN_TEXT_LANGS,
@@ -108,7 +107,7 @@ class TestIsBinaryContent:
 
     def test_utf8_content(self):
         """UTF-8 text is not binary."""
-        assert not is_binary_content("Hello 世界".encode("utf-8"))
+        assert not is_binary_content("Hello 世界".encode())
 
     def test_empty_content(self):
         """Empty content is not binary."""

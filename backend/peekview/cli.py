@@ -15,7 +15,6 @@ import platform
 import re
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -27,12 +26,14 @@ from peekview import __version__
 from peekview.client import PeekClient
 from peekview.config import PeekConfig
 from peekview.database import check_schema, init_db
-from peekview.main import create_app
-from peekview.models import AdminCleanupResponse, AdminStatsResponse, CreateEntryRequest, EntryCreate, User
+from peekview.models import (
+    AdminCleanupResponse,
+    AdminStatsResponse,
+    User,
+)
 from peekview.services.admin_service import AdminService
 from peekview.services.apikey_service import ApiKeyService
 from peekview.services.entry_service import EntryService
-from peekview.services.file_service import scan_directory
 from peekview.storage import StorageManager
 
 
@@ -579,7 +580,7 @@ def config_set(key: str, value: str) -> None:
         peekview config set server.base_url https://example.com\n
         peekview config set storage.data_dir /var/peekview
     """
-    from peekview.config import load_config_file, save_config_file, CONFIG_FILE
+    from peekview.config import CONFIG_FILE, load_config_file, save_config_file
 
     config = load_config_file()
 
@@ -613,9 +614,7 @@ def config_set(key: str, value: str) -> None:
                       "rate_limit_enabled", "check_on_start", "verify_ssl",
                       "captcha_enabled", "captcha_exempt_first_user"):
         value = value.lower() in ("true", "1", "yes", "on")
-    elif key_name == "cors_origins":
-        value = [v.strip() for v in value.split(",")]
-    elif key_name == "allowed_paths":
+    elif key_name == "cors_origins" or key_name == "allowed_paths":
         value = [v.strip() for v in value.split(",")]
     elif key_name in ("data_dir", "db_path", "log_file"):
         # Path expansion handled by config validator
@@ -626,7 +625,7 @@ def config_set(key: str, value: str) -> None:
     save_config_file(config)
     click.echo(f"✓ Set {key} = {value}")
     click.echo(f"  Config file: {CONFIG_FILE}")
-    click.echo(f"  ⚠  Restart service to apply: peekview service restart")
+    click.echo("  ⚠  Restart service to apply: peekview service restart")
 
 
 @config_cmd.command(name="get", epilog=CONFIG_KEYS_HELP)
@@ -636,7 +635,7 @@ def config_get(key: str) -> None:
 
     Example: peekview config get server.port
     """
-    from peekview.config import load_config_file, PeekConfig
+    from peekview.config import PeekConfig, load_config_file
 
     config = load_config_file()
     defaults = PeekConfig()
@@ -682,7 +681,7 @@ def config_get(key: str) -> None:
 @config_cmd.command(name="list")
 def config_list() -> None:
     """List all configuration values."""
-    from peekview.config import load_config_file, CONFIG_FILE, PeekConfig
+    from peekview.config import CONFIG_FILE, PeekConfig, load_config_file
 
     config = load_config_file()
     defaults = PeekConfig()
@@ -1098,7 +1097,7 @@ def _uninstall_systemd_service(user_mode: bool) -> None:
                 subprocess.run(["sudo", "rm", str(service_path)], check=True)
             subprocess.run(["sudo", "systemctl", "daemon-reload"], check=True)
 
-        click.echo(f"✓ Service uninstalled")
+        click.echo("✓ Service uninstalled")
     except subprocess.CalledProcessError as e:
         click.echo(f"Error uninstalling service: {e}", err=True)
         sys.exit(1)
@@ -1125,7 +1124,7 @@ def _uninstall_launchd_service(user_mode: bool) -> None:
             else:
                 subprocess.run(["sudo", "rm", str(plist_path)], check=True)
 
-        click.echo(f"✓ Service uninstalled")
+        click.echo("✓ Service uninstalled")
     except subprocess.CalledProcessError as e:
         click.echo(f"Error uninstalling service: {e}", err=True)
         sys.exit(1)
@@ -1179,7 +1178,7 @@ def service_status(user_mode: bool, system_mode: bool) -> None:
                 capture_output=True, text=True
             )
             click.echo(result.stdout if result.stdout else "Service not loaded")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             click.echo("Service not found or not running")
     else:
         click.echo(f"Service status check not supported on {system}")
@@ -1370,10 +1369,10 @@ def user_create(username: str, password: str | None, admin: bool) -> None:
         click.echo(f"Error: Username '{username}' is reserved", err=True)
         sys.exit(1)
     if len(username) < 3 or len(username) > 32:
-        click.echo(f"Error: Username must be 3-32 characters", err=True)
+        click.echo("Error: Username must be 3-32 characters", err=True)
         sys.exit(1)
     if not re.match(r"^[a-zA-Z0-9_-]+$", username):
-        click.echo(f"Error: Username must contain only letters, digits, underscores, and hyphens", err=True)
+        click.echo("Error: Username must contain only letters, digits, underscores, and hyphens", err=True)
         sys.exit(1)
 
     # Get password
@@ -1649,8 +1648,8 @@ def login(remote_url: str, username: str | None, password: str | None) -> None:
 
         user_info = result["user"]
         click.echo(f"✓ Logged in as: {user_info['username']}")
-        click.echo(f"  Token saved to config")
-        click.echo(f"  Tip: Use 'peekview apikey create <name>' to create an API key")
+        click.echo("  Token saved to config")
+        click.echo("  Tip: Use 'peekview apikey create <name>' to create an API key")
     except Exception as e:
         click.echo(f"Error: Login failed - {e}", err=True)
         sys.exit(1)

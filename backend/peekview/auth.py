@@ -13,13 +13,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import bcrypt as _bcrypt
 from fastapi import Depends, Request
 from jose import JWTError, jwt
-import bcrypt as _bcrypt
 from sqlmodel import Session, select
 
-from peekview.database import get_engine
-from peekview.models import API_KEY_PREFIX, User, hash_api_key
+from peekview.models import API_KEY_PREFIX, User
 
 logger = logging.getLogger(__name__)
 
