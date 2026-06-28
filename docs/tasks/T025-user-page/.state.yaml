@@ -1,7 +1,7 @@
-task_id: T025
+task_id: T025-user-page
 task_name: user-page
-phase: P0
+phase: P2
 status: in_progress
 retries: {}
 retry_count: {}
-updated: 2026-06-25
+updated: 2026-06-28
