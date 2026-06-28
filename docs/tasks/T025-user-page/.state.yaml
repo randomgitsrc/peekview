@@ -1,6 +1,6 @@
 task_id: T025-user-page
 task_name: user-page
-phase: P6
+phase: P7
 status: in_progress
 retries:
   P2:
@@ -11,7 +11,7 @@ retries:
   P6:
     - round: 1
       failure_mode: quality
-      prompt_changed: false
+      prompt_changed: true
       adjustment: null
 retry_count:
   P2: 1
