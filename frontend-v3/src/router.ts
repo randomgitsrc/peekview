@@ -18,6 +18,11 @@ const routes: RouteRecordRaw[] = [
     name: 'api-keys',
     component: () => import('./views/ApiKeyListView.vue'),
   },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('./views/NotFoundView.vue'),
+  },
 ]
 
 const router = createRouter({
