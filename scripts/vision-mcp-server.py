@@ -191,7 +191,8 @@ async def analyze_image(
 
     async with httpx.AsyncClient(timeout=120) as client:
         try:
-            resp = await client.post(f"{BASE_URL}/messages", headers=headers, json=body)
+            path = "/v1/messages" if API_FORMAT == "anthropic" else "/v1/chat/completions"
+            resp = await client.post(f"{BASE_URL}{path}", headers=headers, json=body)
             resp.raise_for_status()
         except httpx.HTTPStatusError as e:
             return f"API error ({e.response.status_code}): {e.response.text[:500]}"
