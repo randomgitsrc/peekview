@@ -23,6 +23,7 @@ describe('API client: listEntries ownerFound passthrough', () => {
   let mockGet: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
+    vi.resetModules()
     mockGet = vi.fn()
     const mockClient = {
       get: mockGet,

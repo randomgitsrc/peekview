@@ -26,8 +26,9 @@
     </header>
 
     <div class="list-content">
-      <!-- All/Mine tabs for authenticated users -->
-      <div v-if="authState === 'authenticated'" class="owner-tabs">
+      <BannerBar v-if="isBannerMode" :username="props.owner!" />
+
+      <div v-if="showTabs" class="owner-tabs">
         <button
           class="owner-tab"
           :class="{ active: currentOwner !== 'me' }"
@@ -40,12 +41,25 @@
         >Mine</button>
       </div>
 
+      <div v-if="showChip" class="filter-chip-bar">
+        <FilterChip :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+      </div>
+
       <div v-if="loading" class="loading">Loading...</div>
+
+      <div v-else-if="ownerFound === false && props.owner" class="user-not-found">
+        User <strong>@{{ props.owner }}</strong> not found
+      </div>
 
       <div v-else-if="error" class="error">{{ error }}</div>
 
       <div v-else-if="entries.length === 0" class="empty">
-        No entries found
+        <template v-if="ownerFound === true">
+          No entries from @{{ props.owner }}
+        </template>
+        <template v-else>
+          No entries found
+        </template>
       </div>
 
       <div v-else>
@@ -74,11 +88,30 @@
             </div>
 
             <!-- Card body (clickable, navigates to detail) -->
-            <router-link :to="`/${entry.slug}`" class="card-body">
+            <div
+              class="card-body"
+              role="link"
+              tabindex="0"
+              @click="navigateToEntry(entry)"
+              @keydown.enter.prevent="navigateToEntry(entry)"
+              @keydown.space.prevent="navigateToEntry(entry)"
+            >
               <h3 class="entry-title">{{ entry.summary }}</h3>
               <div class="entry-meta">
                 <span class="meta-item">{{ entry.fileCount ?? entry.files?.length ?? 0 }} files</span>
-                <span v-if="entry.username" class="meta-item meta-creator">@{{ entry.username }}</span>
+                <span v-if="entry.username" class="meta-item meta-creator" @click.stop>
+                  <span class="creator-text">@</span>
+                  <template v-if="entry.username === currentUserUsername">
+                    <router-link :to="{ path: '/explore', query: { owner: 'me' } }" class="username-link">
+                      {{ entry.username }}
+                    </router-link>
+                  </template>
+                  <template v-else>
+                    <router-link :to="`/users/${entry.username}`" class="username-link">
+                      {{ entry.username }}
+                    </router-link>
+                  </template>
+                </span>
                 <span class="meta-item meta-time">{{ formatRelativeTime(entry.createdAt) }}</span>
                 <span v-if="!entry.isPublic" class="meta-item meta-private">private</span>
                 <span v-if="entry.expiresAt" class="meta-item meta-expires"
@@ -89,7 +122,7 @@
                   {{ entry.tags.join(', ') }}
                 </span>
               </div>
-            </router-link>
+            </div>
           </div>
         </div>
 
@@ -174,6 +207,8 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import BannerBar from '@/components/BannerBar.vue'
+import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
 import { formatExpiresIn, isExpiringSoon } from '@/utils/expires'
 
@@ -184,17 +219,55 @@ const entryStore = useEntryStore()
 const authStore = useAuthStore()
 const toast = useToast()
 const router = useRouter()
-const { entries, loading, error, total, page, perPage } = storeToRefs(entryStore)
+const { entries, loading, error, total, perPage, ownerFound } = storeToRefs(entryStore)
 const { loadEntries } = entryStore
 const { user, authState } = storeToRefs(authStore)
 
+const props = defineProps<{
+  owner?: string
+}>()
+
 // Owner filter (All/Mine)
 const currentOwner = ref<string | null>(null)
+
+const isBannerMode = computed(() =>
+  !!(props.owner) && props.owner !== 'me' && ownerFound.value !== false
+)
+
+const showTabs = computed(() =>
+  authState.value === 'authenticated' && !isBannerMode.value
+)
+
+const showChip = computed(() =>
+  !!currentOwner.value && currentOwner.value !== 'me' && !props.owner
+)
+
+const effectiveOwner = computed(() => props.owner || currentOwner.value || undefined)
+
+const currentUserUsername = computed(() => user.value?.username ?? null)
 
 function setOwner(owner: string | null) {
   currentOwner.value = owner
   currentPage.value = 1
   loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined })
+  if (owner === 'me') {
+    router.replace({ path: '/explore', query: { owner: 'me' } })
+  } else if (owner) {
+    router.replace({ path: '/explore', query: { owner } })
+  } else {
+    router.replace({ path: '/explore' })
+  }
+}
+
+function clearOwnerFilter() {
+  currentOwner.value = null
+  currentPage.value = 1
+  loadEntries({ page: 1, perPage: perPage.value })
+  router.replace({ path: '/explore' })
+}
+
+function navigateToEntry(entry: Entry) {
+  router.push(`/${entry.slug}`)
 }
 
 function navigateToApiKeys() {
@@ -281,18 +354,50 @@ const currentPage = ref(1)
 const totalPages = computed(() => Math.ceil(total.value / perPage.value))
 
 watch(currentPage, (newPage) => {
-  loadEntries({ page: newPage, perPage: perPage.value, owner: currentOwner.value || undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value })
 })
 
-onMounted(() => {
-  // Restore owner from URL if present
+watch(() => props.owner, (newOwner) => {
+  if (newOwner) {
+    currentOwner.value = null
+    currentPage.value = 1
+    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner })
+  }
+})
+
+watch(authState, (newState) => {
+  if (newState === 'authenticated' && !props.owner) {
+    const urlParams = new URLSearchParams(window.location.search)
+    const ownerParam = urlParams.get('owner')
+    if (ownerParam === 'me' && currentOwner.value !== 'me') {
+      currentOwner.value = 'me'
+      currentPage.value = 1
+      loadEntries({ page: 1, perPage: perPage.value, owner: 'me' })
+    }
+  }
+})
+
+function restoreFromURL() {
   const urlParams = new URLSearchParams(window.location.search)
   const ownerParam = urlParams.get('owner')
-  if (ownerParam === 'me' && authState.value === 'authenticated') {
+  if (ownerParam && ownerParam !== 'me') {
+    currentOwner.value = ownerParam
+  } else if (ownerParam === 'me' && authState.value === 'authenticated') {
     currentOwner.value = 'me'
   }
-  currentPage.value = page.value || 1
-  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: currentOwner.value || undefined })
+}
+
+onMounted(() => {
+  if (props.owner) {
+    currentOwner.value = null
+    currentPage.value = 1
+  } else {
+    currentPage.value = 1
+    restoreFromURL()
+  }
+  if (!props.owner) {
+    loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value })
+  }
 })
 
 // Relative time formatter
@@ -446,6 +551,19 @@ function formatRelativeTime(dateStr: string): string {
   padding-bottom: var(--space-1);
 }
 
+/* Filter chip bar */
+.filter-chip-bar {
+  margin-bottom: var(--space-3);
+}
+
+/* User not found */
+.user-not-found {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--text-secondary);
+  font-size: var(--font-md);
+}
+
 .owner-tab {
   padding: var(--space-1) var(--space-3);
   border: none;
@@ -516,6 +634,7 @@ function formatRelativeTime(dateStr: string): string {
   padding: var(--space-4);
   text-decoration: none;
   color: var(--text-primary);
+  cursor: pointer;
 }
 
 .entry-title { font-size: var(--font-md); font-weight: 600; margin-bottom: var(--space-2); }
@@ -530,6 +649,15 @@ function formatRelativeTime(dateStr: string): string {
 
 .meta-item { display: inline-flex; align-items: center; }
 .meta-creator { color: var(--accent-color); }
+.creator-text { color: var(--accent-color); }
+.username-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+.username-link:hover {
+  text-decoration: underline;
+}
 .meta-private { color: var(--warning-color); font-weight: 500; }
 .meta-tags { color: var(--accent-color); }
 .meta-expires { color: var(--text-secondary); }

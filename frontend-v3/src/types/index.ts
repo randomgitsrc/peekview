@@ -30,6 +30,7 @@ export interface EntryListResponse {
   total: number
   page: number
   perPage: number
+  ownerFound?: boolean | null
 }
 
 export interface ListEntriesParams {

@@ -13,6 +13,9 @@ export const useEntryStore = defineStore('entry', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  // Owner found state
+  const ownerFound = ref<boolean | null>(null)
+
   // Pagination state
   const page = ref(1)
   const perPage = ref(20)
@@ -57,6 +60,8 @@ export const useEntryStore = defineStore('entry', () => {
       page.value = response.page
       perPage.value = response.perPage
       total.value = response.total
+      // Update owner found state
+      ownerFound.value = response.ownerFound ?? null
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load entries'
       entries.value = []
@@ -176,6 +181,8 @@ export const useEntryStore = defineStore('entry', () => {
     wrapEnabled,
     loading,
     error,
+    // Owner found state
+    ownerFound,
     // Pagination state
     page,
     perPage,

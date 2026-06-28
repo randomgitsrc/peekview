@@ -47,6 +47,7 @@ export interface EntryListApiResponse {
   total: number
   page: number
   per_page: number
+  owner_found?: boolean | null
 }
 
 // Auth API response types

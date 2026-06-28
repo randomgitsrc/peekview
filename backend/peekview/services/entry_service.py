@@ -303,6 +303,7 @@ class EntryService:
         Logged-in users see public entries + their own private entries.
         Admin users see all entries.
         owner="me" filters to only entries owned by current_user_id.
+        owner=<username> filters to entries owned by that user (case-insensitive).
         """
         per_page = min(per_page, self.config.limits.max_per_page)
         page = max(page, 1)
@@ -321,21 +322,46 @@ class EntryService:
                 query = query.where(Entry.status != "archived")
                 count_query = count_query.where(Entry.status != "archived")
 
-            # Visibility filter
-            if owner == "me":
-                if current_user_id is None:
-                    return EntryListResponse(items=[], total=0, page=page, per_page=per_page)
-                query = query.where(Entry.owner_id == current_user_id)
-                count_query = count_query.where(Entry.owner_id == current_user_id)
-            elif is_admin:
-                # Admin sees all entries
+            # === Phase 1: Resolve owner to user_id ===
+            # owner_found tri-state: None (N/A or "me") | True (user exists) | False (user not found)
+            owner_found = None
+            owner_user_id = None
+
+            if owner is not None:
+                if owner == "me":
+                    if current_user_id is None:
+                        return EntryListResponse(
+                            items=[], total=0, page=page, per_page=per_page,
+                            owner_found=None,
+                        )
+                    owner_user_id = current_user_id
+                    # owner_found stays None for "me" (not applicable)
+                else:
+                    # Real username: case-insensitive lookup
+                    user = session.exec(
+                        select(User).where(func.lower(User.username) == owner.lower())
+                    ).first()
+                    if user:
+                        owner_user_id = user.id
+                        owner_found = True
+                    else:
+                        return EntryListResponse(
+                            items=[], total=0, page=page, per_page=per_page,
+                            owner_found=False,
+                        )
+
+            # === Phase 2: Apply owner filter to query ===
+            if owner_user_id is not None:
+                query = query.where(Entry.owner_id == owner_user_id)
+                count_query = count_query.where(Entry.owner_id == owner_user_id)
+
+            # === Phase 3: Apply visibility filter (existing logic, unchanged) ===
+            if is_admin:
                 pass
             elif current_user_id is None:
-                # Anonymous: only public entries
                 query = query.where(Entry.is_public == True)
                 count_query = count_query.where(Entry.is_public == True)
             else:
-                # Logged in: public + own entries (both public and private)
                 query = query.where(
                     (Entry.is_public == True) | (Entry.owner_id == current_user_id)
                 )
@@ -363,7 +389,8 @@ class EntryService:
                         count_query = count_query.where(Entry.id.in_(fts_ids))
                     else:
                         return EntryListResponse(
-                            items=[], total=0, page=page, per_page=per_page
+                            items=[], total=0, page=page, per_page=per_page,
+                            owner_found=owner_found,
                         )
                 except Exception:
                     # FTS might not be available
@@ -408,7 +435,10 @@ class EntryService:
                     )
                 )
 
-        return EntryListResponse(items=items, total=total, page=page, per_page=per_page)
+        return EntryListResponse(
+            items=items, total=total, page=page, per_page=per_page,
+            owner_found=owner_found,
+        )
 
     def update_entry(
         self,

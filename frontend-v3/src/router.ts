@@ -14,6 +14,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./views/EntryListView.vue'),
   },
   {
+    // Must appear before /:slug to avoid matching "users" as a slug parameter
+    path: '/users/:username',
+    name: 'user-entries',
+    component: () => import('./views/EntryListView.vue'),
+    props: (route) => ({ owner: route.params.username as string }),
+  },
+  {
     path: '/:slug',
     name: 'detail',
     component: () => import('./views/EntryDetailView.vue'),

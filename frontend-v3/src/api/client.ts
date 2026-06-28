@@ -103,6 +103,7 @@ class PeekAPI {
       total: response.data.total,
       page: response.data.page,
       perPage: response.data.per_page,
+      ownerFound: response.data.owner_found ?? null,
     }
   }
 

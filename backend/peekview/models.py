@@ -433,6 +433,12 @@ class EntryListResponse(SQLModel):
     total: int
     page: int
     per_page: int
+    owner_found: bool | None = Field(
+        default=None,
+        description="Tri-state: None=owner not specified or 'me' (N/A), "
+        "True=username exists in database, "
+        "False=username not found",
+    )
 
 
 class CreateEntryRequest(SQLModel):
