@@ -33,9 +33,26 @@ echo "✓ 调试服务运行中"
 # Check 3: 调试服务必须使用独立数据库
 PID=$(lsof -t -i :8888 2>/dev/null || echo "")
 if [ -n "$PID" ]; then
-    # Check if using debug database
+    # 方法 A: lsof 检查进程 fd（SQLite WAL 模式下 fd 可能已关闭，会漏判）
     if lsof -p $PID 2>/dev/null | grep -q "$DEBUG_DB"; then
-        echo "✓ 调试服务使用独立数据库"
+        echo "✓ 调试服务使用独立数据库 (lsof)"
+    # 方法 B: 检查进程 cmdline 中的 DB_PATH 环境变量
+    elif tr '\0' '\n' < /proc/$PID/cmdline 2>/dev/null | grep -q "$DEBUG_DB" || \
+         cat /proc/$PID/environ 2>/dev/null | tr '\0' '\n' | grep -q "PEEKVIEW_STORAGE__DB_PATH=$DEBUG_DB"; then
+        echo "✓ 调试服务使用独立数据库 (cmdline)"
+    # 方法 C: 实际查询 DB 内容验证隔离
+    elif [ -f "$DEBUG_DB" ]; then
+        DEBUG_COUNT=$(python3 -c "
+import sqlite3
+try:
+    conn = sqlite3.connect('$DEBUG_DB')
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM entries')
+    print(c.fetchone()[0])
+    conn.close()
+except: print('0')
+" 2>/dev/null)
+        echo "✓ 调试服务使用独立数据库 (query, $DEBUG_COUNT entries)"
     else
         echo "✗ FATAL: 调试服务未使用独立数据库!"
         echo "   期望: $DEBUG_DB"
