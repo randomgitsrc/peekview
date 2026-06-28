@@ -1,7 +1,7 @@
 task_id: T025-user-page
 task_name: user-page
-phase: P7
-status: in_progress
+phase: READY
+status: ready
 retries:
   P2:
     - round: 1
