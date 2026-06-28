@@ -1,5 +1,5 @@
 /**
- * MCP Server Integration Tests (v0.2.0 multi-user)
+ * MCP Server Integration Tests
  *
  * Tests MCP Server tools with REAL PeekView backend
  * Requires PeekView backend running and PEEKVIEW_API_KEY set
@@ -93,7 +93,7 @@ const itIfReady = (name: string, fn: () => Promise<void>) => {
   });
 };
 
-describe('Integration: MCP Server v0.2.0 + PeekView Backend', () => {
+describe('Integration: MCP Server + PeekView Backend', () => {
   // Pre-flight
   describe('Pre-flight', () => {
     it('should verify PeekView backend is accessible', async () => {

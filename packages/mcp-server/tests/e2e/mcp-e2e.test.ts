@@ -1,5 +1,5 @@
 /**
- * MCP Server E2E Tests (v0.8.0 Streamable HTTP)
+ * MCP Server E2E Tests (Streamable HTTP)
  *
  * Tests the full Streamable HTTP flow: initialize → session → tool invocation → response
  * Requires real PeekView backend running

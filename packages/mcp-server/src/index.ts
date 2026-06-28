@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PeekView MCP Server - Entry Point (v0.3.0 with config file support)
+ * PeekView MCP Server - Entry Point
  */
 import { Command } from 'commander';
 import { readFileSync } from 'fs';
@@ -23,7 +23,7 @@ function getVersion(): string {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     return pkg.version;
   } catch {
-    return '0.3.0';
+    return '0.9.2';
   }
 }
 
