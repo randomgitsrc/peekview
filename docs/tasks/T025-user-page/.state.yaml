@@ -1,7 +1,27 @@
 task_id: T025-user-page
 task_name: user-page
-phase: P2
+phase: P3
 status: in_progress
-retries: {}
-retry_count: {}
+retries:
+  P2:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: null
+retry_count:
+  P2: 1
+review_scores:
+  P2:
+    - round: 1
+      reviewer: plan-eng-review
+      status: rejected
+    - round: 1
+      reviewer: plan-design-review
+      status: needs-revision
+    - round: 2
+      reviewer: plan-eng-review
+      status: approved
+    - round: 2
+      reviewer: plan-design-review
+      status: approved
 updated: 2026-06-28

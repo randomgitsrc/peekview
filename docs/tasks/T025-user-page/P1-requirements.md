@@ -134,6 +134,24 @@ When  匿名调用 list_entries(owner="alice")
 Then  返回 2 个 entry（只有公开的）
 ```
 
+**BDD-BE-8: FTS 搜索与 owner filter 组合（结果非空）** [SCOPE+ from P2]
+```
+Given 用户 alice 有 3 个公开 entry
+When  调用 list_entries(owner="alice", q="keyword")
+  And 关键词匹配其中 2 个 entry
+Then  返回 2 个 entry
+  And owner_found == true
+```
+
+**BDD-BE-9: FTS 搜索与 owner filter 组合（结果为空）** [SCOPE+ from P2]
+```
+Given 用户 alice 有 3 个公开 entry
+When  调用 list_entries(owner="alice", q="NoSuchKeyword")
+  And 关键词不匹配任何 entry
+Then  返回 items=[], total=0
+  And owner_found == true（用户存在但 FTS 无命中）
+```
+
 ### 前端 BDD
 
 **BDD-FE-1: 用户页加载 + banner 显示**
