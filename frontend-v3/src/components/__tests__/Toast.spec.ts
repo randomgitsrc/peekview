@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import Toast from '@/components/Toast.vue'
 import { useToast } from '@/composables/useToast'
 
-const { messages, show, remove } = useToast()
+const { messages, show } = useToast()
 
 describe('Toast.vue', () => {
   beforeEach(() => {
