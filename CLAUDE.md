@@ -111,11 +111,11 @@ VISION_API_FORMAT=anthropic
 4. make debug-stop                               # 停止
 ```
 
-**运行单个 E2E spec**（`make debug-test` 只跑 `debug-server.spec.ts`，新 spec 需带 guard 单独跑）：
+**运行单个 E2E spec**（`make debug-test` 默认跑 `debug-server.spec.ts`，可通过 `E2E_SPEC` 覆盖）：
 
 ```bash
-E2E_GUARD_ENABLED=1 npx playwright test e2e/search.spec.ts   # 单 spec（带隔离 guard）
-make debug-test                                               # 标准回归（debug-server.spec.ts）
+E2E_SPEC=e2e/search.spec.ts make debug-test                     # 单 spec（标准流程+隔离 guard）
+E2E_GUARD_ENABLED=1 npx playwright test e2e/search.spec.ts      # 备选：直接跑（确保 debug backend 运行）
 ```
 
 ### Environment Isolation Mechanism (v0.1.57+)

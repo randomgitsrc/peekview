@@ -75,8 +75,9 @@ cd frontend-v3
 export BASE_URL=$BASE_URL
 
 echo ""
-echo "→ 运行 E2E 测试 (debug-server.spec.ts)..."
-npx playwright test e2e/debug-server.spec.ts --reporter=line || {
+spec="${E2E_SPEC:-e2e/debug-server.spec.ts}"
+echo "→ 运行 E2E 测试 ($spec)..."
+npx playwright test "$spec" --reporter=line || {
     echo ""
     echo "✗ E2E 测试失败"
     echo "   查看截图: /tmp/e2e-results/"
