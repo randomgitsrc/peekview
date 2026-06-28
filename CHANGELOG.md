@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-06-28
+
+### 新增
+
+- **Landing Page** (`/`)：未登录用户看到产品介绍页（Hero + 示例 entry + Login CTA + SEO meta），已登录用户自动跳 `/explore`
+- **路由迁移**：EntryListView 从 `/` 移至 `/explore`，EntryDetailView 返回/删除按钮同步修正
+- **404 兜底页**：多级不匹配路径显示友好 404 页（"Page not found" + 返回首页），`/:pathMatch(.*)*` catch-all 路由
+- **清理僵尸文件**：删除 `views/HomeView.vue`（17 行未引用的占位欢迎页）
+- **测试覆盖**：新增 11 个组件单元测试（Toast/ThemeToggle/ConfirmDialog/Pagination/CodeViewer/TocNav/TreeNodeItem/ActionBar/ImageViewer/LoginDialog/MarkdownViewer），总测试数 370
+- **useDebounce composable**：通用 debounce 工具函数
+
+### 流程
+
+- **Subagent 派发指南**：基于 14 次系统对照实验的证据驱动规范（`docs/process/subagent-dispatch-guide.md`）
+- **Agate 流程实战**：T023/T024 通过 agate 子 Agent 编排完成（P1→P4→P6）
+
+
 ## [0.2.4] - 2026-06-27
 
 ### 重构
