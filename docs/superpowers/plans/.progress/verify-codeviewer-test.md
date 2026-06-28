@@ -6,4 +6,4 @@
 | 创建测试文件 | ✅ |
 | 运行测试验证通过 | ✅ |
 | 运行全量测试确认无 regression | ✅ |
-| git add + commit | ⬜ |
+| git add + commit | ✅ |
