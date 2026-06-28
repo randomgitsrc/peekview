@@ -205,11 +205,11 @@ watch(authState, (state) => { if (state === 'authenticated') router.replace('/ex
 onMounted(() => { injectMeta() })
 onUnmounted(() => { removeMeta() })
 
-const codeFmt = `<div style="font-family:var(--font-mono);font-size:12px;line-height:1.95;color:var(--c-muted)"><span class="kw">export</span> <span class="kw">async function</span> <span class="fn">run</span>() {<br/>&nbsp;&nbsp;<span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(url);<br/>&nbsp;&nbsp;<span class="kw">return</span> res.<span class="fn">json</span>();<br/>}</div>`
-const mdFmt = `<div><div class="bar hd"></div>${new Array(3).fill('<div class="bar"></div>').join('')}<div class="md-bullet"><span class="md-bullet-dot"/><div class="bar"/></div><div class="md-bullet"><span class="md-bullet-dot"/><div class="bar" style="width:52%"/></div></div>`
-const diagramFmt = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px"><span class="node" style="font-size:11px;padding:7px 13px">Start</span><span style="width:2px;height:13px;background:var(--c-border2);display:block"></span><span class="node" style="font-size:11px;padding:7px 13px">Decide</span><span style="width:2px;height:13px;background:var(--c-border2);display:block"></span><span class="node" style="font-size:11px;padding:7px 13px">Ship</span></div>`
-const htmlFmt = `<div style="display:flex;flex-direction:column;gap:11px;justify-content:center"><div class="bar hd"></div><div style="height:36px;border-radius:8px;border:1px solid var(--c-border);background:var(--c-panel)"></div><span style="display:inline-flex;align-self:flex-start;height:27px;padding:0 15px;align-items:center;border-radius:7px;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600">Button</span></div>`
-const svgFmt = `<div style="display:flex;align-items:center;justify-content:center"><div style="width:100%;height:100%;border-radius:9px;border:1px solid var(--c-border);background-image:repeating-linear-gradient(45deg,var(--c-border) 0 1px,transparent 1px 10px);display:flex;align-items:center;justify-content:center"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent2)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></div></div>`
+const codeFmt = `<div style="font-family:var(--font-mono);font-size:12.5px;line-height:1.85;color:var(--c-muted)"><div><span class="kw">import</span> { chromium } <span class="kw">from</span> <span class="st">'playwright'</span>;</div><div style="margin-top:6px"><span class="kw">const</span> page = <span class="kw">await</span> browser.<span class="fn">newPage</span>();</div><div><span class="kw">await</span> page.<span class="fn">goto</span>(<span class="st">'https://peekview.dev'</span>);</div><div style="margin-top:6px"><span class="cm">// Take a full-page screenshot</span></div><div><span class="kw">await</span> page.<span class="fn">screenshot</span>({ path: <span class="st">'view.png'</span>, fullPage: <span class="kw">true</span> });</div></div>`
+const mdFmt = `<div style="font-size:13px;line-height:1.65;color:var(--c-muted)"><div style="color:var(--c-text);font-size:16px;font-weight:700;margin-bottom:10px">Agent Runbook</div><div style="margin-bottom:6px">Every <b style="color:var(--c-text)">plan → act → observe</b> cycle is logged.</div><div style="margin-bottom:3px">• Rendered in real time</div><div>• Shareable by URL</div></div>`
+const diagramFmt = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:12px"><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent2);font-weight:500">Plan</span><span style="color:var(--c-faint);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent2);font-weight:500">Act</span><span style="color:var(--c-faint);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(119,166,255,.15);border:1px solid rgba(119,166,255,.4);color:#76a6ff;font-weight:600">Ship ✓</span></div>`
+const htmlFmt = `<div style="display:flex;flex-direction:column;gap:10px;justify-content:center"><div style="height:32px;border-radius:8px;border:1px solid var(--c-border2);background:var(--c-panel);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--c-faint)">peekview.dev/p/agent-runbook</div><div style="display:flex;gap:8px"><span style="padding:6px 14px;border-radius:7px;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600">Open</span><span style="padding:6px 14px;border-radius:7px;border:1px solid var(--c-border2);color:var(--c-muted);font-size:12px">Copy link</span></div></div>`
+const svgFmt = `<div style="display:flex;align-items:center;justify-content:center;gap:16px"><svg width="52" height="52" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="25" r="18" stroke="var(--c-accent2)" stroke-width="3" fill="rgba(77,141,255,.08)"/><circle cx="50" cy="75" r="18" stroke="var(--c-accent2)" stroke-width="3" fill="rgba(77,141,255,.08)"/><line x1="50" y1="43" x2="50" y2="57" stroke="var(--c-accent2)" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="25" r="5" fill="var(--c-accent2)"/><circle cx="50" cy="75" r="5" fill="var(--c-accent2)"/></svg><span style="font-size:13px;color:var(--c-muted);font-family:var(--font-mono)">dependency<br/>graph</span></div>`
 const dataFmt = `<div style="display:flex;align-items:center;justify-content:center"><div style="width:100%;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:1px;border:1px solid var(--c-border);border-radius:7px;overflow:hidden;font-family:var(--font-mono);font-size:11px"><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">name</div><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">runs</div><div style="background:rgba(77,141,255,.12);color:var(--c-accent2);padding:7px 9px;font-weight:600">ok</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">plan</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">128</div><div style="background:var(--c-panel2);color:#7ee787;padding:7px 9px">✓</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">act</div><div style="background:var(--c-panel2);color:var(--c-muted);padding:7px 9px">96</div><div style="background:var(--c-panel2);color:#7ee787;padding:7px 9px">✓</div></div></div>`
 </script>
 
@@ -222,6 +222,19 @@ const dataFmt = `<div style="display:flex;align-items:center;justify-content:cen
   --c-hero-grad:linear-gradient(180deg,#ffffff 30%,#b9c6d4 100%);
   --c-cta-grad:linear-gradient(180deg,#fff 40%,#aebccb 100%);
   --glow-color:rgba(77,141,255,.20);
+  --pw-bg:#0d1117;--pw-bar:#161b22;--pw-tree:#11161e;--pw-border:rgba(255,255,255,.08);
+  --pw-text:#e9eef4;--pw-meta:#6a7682;--pw-muted:#9aa7b4;
+}
+[data-theme="light"] .stage {
+  --c-bg:#f6f8fa;--c-panel:#ffffff;--c-panel2:#eef0f3;
+  --c-border:rgba(0,0,0,.08);--c-border2:rgba(0,0,0,.13);
+  --c-text:#1f2328;--c-muted:#656d76;--c-faint:#8c959f;
+  --c-accent:#0969da;--c-accent2:#0550ae;
+  --c-hero-grad:linear-gradient(180deg,#1f2328 30%,#656d76 100%);
+  --c-cta-grad:linear-gradient(180deg,#1f2328 40%,#656d76 100%);
+  --glow-color:rgba(9,105,218,.10);
+  --pw-bg:#ffffff;--pw-bar:#f3f4f6;--pw-tree:#f9fafb;--pw-border:rgba(0,0,0,.08);
+  --pw-text:#1f2328;--pw-meta:#8c959f;--pw-muted:#656d76;
 }
 </style>
 
@@ -265,27 +278,27 @@ h1 { margin:0;font-size:76px;line-height:1.02;font-weight:700;letter-spacing:-.0
 .hero-note a { color:var(--c-accent2);border-bottom:1px solid transparent;transition:border-color .15s }
 .hero-note a:hover { border-color:var(--c-accent2) }
 
-/* preview window — always dark */
+/* preview window — theme-aware */
 .preview-wrap { margin:68px auto 0;max-width:980px;perspective:1600px }
-.window { border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.13);background:#0d1117;box-shadow:0 40px 90px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.02) }
-.titlebar { display:flex;align-items:center;gap:14px;height:44px;padding:0 16px;background:#161b22;border-bottom:1px solid rgba(255,255,255,.08) }
+.window { border-radius:13px;overflow:hidden;border:1px solid var(--c-border2);background:var(--pw-bg);box-shadow:0 40px 90px -30px rgba(0,0,0,.3) }
+.titlebar { display:flex;align-items:center;gap:14px;height:44px;padding:0 16px;background:var(--pw-bar);border-bottom:1px solid var(--pw-border) }
 .dots { display:flex;gap:8px }
 .dots i { width:12px;height:12px;border-radius:50%;display:block }
-.urlbar { flex:1;max-width:360px;margin:0 auto;height:26px;border-radius:6px;background:#0d1117;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-mono);font-size:12px;color:#6a7682 }
+.urlbar { flex:1;max-width:360px;margin:0 auto;height:26px;border-radius:6px;background:var(--pw-bg);border:1px solid var(--pw-border);display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-mono);font-size:12px;color:var(--pw-meta) }
 .viewer { display:grid;grid-template-columns:200px 1fr;min-height:340px }
-.filetree { background:#11161e;border-right:1px solid rgba(255,255,255,.08);padding:14px 10px }
-.ft-h { font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6a7682;padding:0 8px 10px;font-weight:600 }
-.ft-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-family:var(--font-mono);font-size:13px;color:#9aa7b4 }
-.ft-row.active { background:rgba(77,141,255,.14);color:#76a6ff }
+.filetree { background:var(--pw-tree);border-right:1px solid var(--pw-border);padding:14px 10px }
+.ft-h { font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--pw-meta);padding:0 8px 10px;font-weight:600 }
+.ft-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-family:var(--font-mono);font-size:13px;color:var(--pw-muted) }
+.ft-row.active { background:rgba(77,141,255,.14);color:var(--c-accent2) }
 .doc { padding:26px 30px;overflow:hidden }
-.doc .md-h1 { font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;color:#e9eef4 }
-.doc .md-meta { font-family:var(--font-mono);font-size:11.5px;color:#6a7682;margin-bottom:18px }
-.doc .md-p { font-size:14px;line-height:1.65;color:#9aa7b4;margin:0 0 18px;max-width:54ch }
-.diagram { border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0d1117;padding:22px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;margin-bottom:16px }
-.node { padding:9px 15px;border-radius:8px;border:1px solid rgba(77,141,255,.35);background:rgba(77,141,255,.1);color:#76a6ff;font-family:var(--font-mono);font-size:12.5px;white-space:nowrap }
-.arrow { width:38px;height:2px;background:rgba(255,255,255,.13);position:relative }
-.arrow::after { content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);border-left:6px solid rgba(255,255,255,.13);border-top:4px solid transparent;border-bottom:4px solid transparent }
-.md-code { border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0d1117;padding:13px 16px;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:#9aa7b4;white-space:pre-wrap }
+.doc .md-h1 { font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;color:var(--pw-text) }
+.doc .md-meta { font-family:var(--font-mono);font-size:11.5px;color:var(--pw-meta);margin-bottom:18px }
+.doc .md-p { font-size:14px;line-height:1.65;color:var(--pw-muted);margin:0 0 18px;max-width:54ch }
+.diagram { border:1px solid var(--pw-border);border-radius:10px;background:var(--pw-bg);padding:22px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;margin-bottom:16px }
+.node { padding:9px 15px;border-radius:8px;border:1px solid rgba(77,141,255,.35);background:rgba(77,141,255,.1);color:var(--c-accent2);font-family:var(--font-mono);font-size:12.5px;white-space:nowrap }
+.arrow { width:38px;height:2px;background:var(--c-border2);position:relative }
+.arrow::after { content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);border-left:6px solid var(--c-border2);border-top:4px solid transparent;border-bottom:4px solid transparent }
+.md-code { border:1px solid var(--pw-border);border-radius:10px;background:var(--pw-bg);padding:13px 16px;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:var(--pw-muted);white-space:pre-wrap }
 .cm { color:#586573 } .kw { color:#ff7b9c } .fn { color:#6cd0ff }
 
 /* access */
@@ -308,7 +321,7 @@ h1 { margin:0;font-size:76px;line-height:1.02;font-weight:700;letter-spacing:-.0
 .fmt-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px }
 .fmt { border:1px solid var(--c-border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,var(--c-panel) 0%,var(--c-panel2) 100%);transition:border-color .2s,transform .2s;display:flex;flex-direction:column }
 .fmt:hover { border-color:var(--c-border2);transform:translateY(-3px) }
-.fmt .render { height:156px;padding:18px;background:#0d1117;border-bottom:1px solid var(--c-border);overflow:hidden }
+.fmt .render { height:156px;padding:18px;background:var(--pw-bg);border-bottom:1px solid var(--c-border);overflow:hidden }
 .fmt .render .bar { border-radius:3px;background:var(--c-border) }
 .fmt .render .bar.hd { background:var(--c-border2);width:52%;height:11px;margin-bottom:13px }
 .fmt .render .bar:not(.hd) { width:100%;height:7px;margin-bottom:7px }
