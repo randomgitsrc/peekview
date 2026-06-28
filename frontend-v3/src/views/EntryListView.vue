@@ -1,7 +1,7 @@
 <template>
   <div class="entry-list">
     <header class="list-header">
-      <h1>PeekView</h1>
+      <router-link to="/" class="logo-link">PeekView</router-link>
       <div class="header-actions">
         <template v-if="authState === 'anonymous'">
           <button class="btn btn-login" @click="showLogin = true">Login</button>
@@ -321,7 +321,8 @@ function formatRelativeTime(dateStr: string): string {
 <style scoped>
 .entry-list { min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
 .list-header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-.list-header h1 { font-size: var(--font-xl); font-weight: 700; }
+.logo-link { font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); text-decoration: none }
+.logo-link:hover { color: var(--accent-color) }
 
 .header-actions {
   display: flex;

@@ -443,7 +443,7 @@ const tocHeadings = computed<TocHeading[]>(() => {
 
 // Methods
 function goBack() {
-  router.push('/explore')
+  router.push(authStore.authState === 'authenticated' ? '/explore' : '/')
 }
 
 function selectFileAndCloseDrawer(file: { id: number }) {
