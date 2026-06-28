@@ -1,63 +1,14 @@
 task_id: T020
 task_name: svg-codeblock-viewer
-phase: READY
-status: ready
+phase: DONE
+status: completed
+note: |
+  P0-P8 完整走完。实际发布通过 v0.2.4 redo 完成（不在 T020 task number 下）。
+  T022 为失败尝试（已回退），v0.2.4 为 Claude Code 上的 superpowers TDD 重做。
+  T020 目录保留完整 agate 流程追溯（P0→P8），实际代码交付见 git log v0.2.3→v0.2.4。
 retries:
-  P2:
-    - round: 1
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: add_navigation
-  P3:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: false
-      adjustment: null
-    - round: 2
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-    - round: 3
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: switch_type
-  P4:
-    - round: 1
-      failure_mode: empty_return
-      prompt_changed: false
-      adjustment: null
-    - round: 2
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: add_navigation
-  P6:
-    - round: 1
-      failure_mode: quality
-      prompt_changed: false
-      adjustment: null
-    - round: 2
-      failure_mode: quality
-      prompt_changed: false
-      adjustment: null
-    - round: 3
-      failure_mode: empty_return
-      prompt_changed: true
-      adjustment: split_task
-      note: "PAUSED 恢复后重跑（recovery_bonus=1）。空返回：任务过重（写脚本+跑16BDD+写报告+截图）。调整：拆分跑BDD与写报告"
-recovery_bonus:
-  P3: 0
-  P6: 1
-retry_count:
-  P2: 1
-  P3: 3
-  P4: 2
-  P6: 3
-updated: 2026-06-25
-recovery_note: |
-  PAUSED 恢复（2026-06-25 新会话）：
-  1. 核实前端路由 history 模式，正确 URL http://127.0.0.1:8888/{slug}
-  2. playwright-vision skill 已加载（CDP 18800, NODE_PATH 必设, try/finally, 三层超时）
-  3. P6 截图造假已坐实（6张=3对md5相同），原报告作废
-  4. P5 gate 亲自复验通过（vitest 104/104）
-  5. 测试数据 g1orbb 完好（8个svg围栏块+mermaid+plantuml+内联svg）
-  6. 主 Agent 模型不支持图像输入，验证模型：断言值stdout为主 + vision-analyst交叉验证 + md5去重防造假
+  P2: [{round: 1, failure_mode: quality, prompt_changed: true, adjustment: add_navigation}]
+  P3: [{round: 1, failure_mode: empty_return, prompt_changed: false, adjustment: null}, {round: 2, failure_mode: empty_return, prompt_changed: true, adjustment: split_task}, {round: 3, failure_mode: empty_return, prompt_changed: true, adjustment: switch_type}]
+  P4: [{round: 1, failure_mode: empty_return, prompt_changed: false, adjustment: null}, {round: 2, failure_mode: empty_return, prompt_changed: true, adjustment: add_navigation}]
+  P6: [{round: 1, failure_mode: quality, prompt_changed: false, adjustment: null}, {round: 2, failure_mode: quality, prompt_changed: false, adjustment: null}, {round: 3, failure_mode: empty_return, prompt_changed: true, adjustment: split_task}]
+updated: 2026-06-28
