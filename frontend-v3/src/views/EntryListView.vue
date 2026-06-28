@@ -31,7 +31,7 @@
       <div v-if="showTabs" class="owner-tabs">
         <button
           class="owner-tab"
-          :class="{ active: currentOwner !== 'me' }"
+          :class="{ active: currentOwner === null }"
           @click="setOwner(null)"
         >All</button>
         <button
@@ -397,6 +397,8 @@ onMounted(() => {
   }
   if (!props.owner) {
     loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value })
+  } else {
+    loadEntries({ page: 1, perPage: perPage.value, owner: props.owner })
   }
 })
 

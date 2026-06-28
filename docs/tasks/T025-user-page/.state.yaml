@@ -8,8 +8,14 @@ retries:
       failure_mode: quality
       prompt_changed: true
       adjustment: null
+  P6:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: false
+      adjustment: null
 retry_count:
   P2: 1
+  P6: 1
 review_scores:
   P2:
     - round: 1

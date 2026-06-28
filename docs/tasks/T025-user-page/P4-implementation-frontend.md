@@ -96,6 +96,18 @@ created: 2026-06-28
 | `vue-tsc --noEmit` | 0 errors ✅ |
 | `npm run build` | 成功 ✅ |
 
+## P6 回归修复（2026-06-28）
+
+P6 验收发现 3 个 BDD FAIL，已修复：
+
+| BDD | 根因 | 修复 |
+|-----|------|------|
+| FE-1 | `onMounted` banner 模式不调用 `loadEntries` | `onMounted` else 分支加 `loadEntries({ page: 1, perPage: perPage.value, owner: props.owner })` |
+| FE-2 | 同上，连带导致 `ownerFound` 为 null、`isBannerMode` 误判 | 同上修复连带解决 |
+| FE-7 | All tab `active` 条件 `currentOwner !== 'me'` 在 chip 模式误激活 | 改为 `currentOwner === null`（仅无 filter 时激活 All tab） |
+
+修复后全量 vitest (429) + vue-tsc + build 均通过。
+
 ## 未改动文件
 
 - `frontend-v3/src/api/types.ts` — `owner_found` 字段已存在（P3 阶段埋入）
