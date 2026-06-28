@@ -2,6 +2,7 @@
 
 > 基于 T020 重构实战 + 14 次系统对照实验的验证结论。
 > OpenCode + agate dispatch prompt 格式。
+> 实验记录：`docs/experiments/2026-06-28-dispatch-test/`
 
 ## 核心结论
 
