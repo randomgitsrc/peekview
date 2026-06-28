@@ -5,7 +5,6 @@ import {
   resolveSearchKeyAction,
   createDebouncedSearch,
 } from '../searchUrl.logic'
-import type { RestoredQuery, SearchKeyAction } from '../searchUrl.logic'
 import { useDebounce } from '@/composables/useDebounce'
 
 // ============================================================
