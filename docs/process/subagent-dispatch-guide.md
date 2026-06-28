@@ -23,32 +23,47 @@ OpenCode 的 subagent 有两个结构性约束（无法在协议层消除）：
 | MermaidRenderer 实现（有测试做参考） | 小 | ✅ |
 | PlantUml/Svg Renderer（有 Mermaid 做模板） | 小 | ✅ |
 | useMarkdown blocks（6 个子任务挤一起） | 大 | ❌ 空返回 |
-| DiagramBlock 完整版（5 个行为） | 大 | ❌ 连续 3 次空返回 |
+| DiagramBlock 完整版（5 个行为 × 3 分支） | 大 | ❌ 连续 3 次空返回 |
 
-### 成功/失败的分界线
+### 对照实验（2026-06-28）
 
-**成功条件（全部满足）**：
-- 产出 ≤ 1 个文件
-- 产出行数 ≤ 300 行
-- prompt 步骤 ≤ 8 个
-- 有参考模板（"基于 X 文件简化"）
+| 组别 | 任务 | 文件数 | 认知负荷 | 结果 |
+|------|------|--------|---------|------|
+| 对照组 | Pagination + CodeViewer 测试 | 2 | 两个独立组件，无交叉分支 | ✅ 37 测试 |
+| 实验组 | Pagination 测试 | 1 | 单一组件 | ✅ 25 测试 |
+| 实验组 | CodeViewer 测试 | 1 | 单一组件 | ✅ 7 测试 |
 
-**失败信号（任一命中）**：
-- 要同时写测试 + 实现 + 类型定义
-- 要理解"为什么"而不是只"做什么"
-- prompt 里出现"参考 spec §3.5"（依赖对话历史）
-- 一个 prompt 里有 5+ 个"步骤"
+**实验结论**：文件数量不是根因。对照组 2 文件也可成功，因为两个组件互不依赖——subagent 可以顺序处理，不存在认知交叉。
+
+### 真正的失败根因：认知负荷
+
+T020 的 DiagramBlock 失败不是因为"一个组件"，而是因为**5 个行为 × 3 语言分支 = 15 个决策点**交叉嵌套。subagent 要同时理解 toggle/mermaid=改文字、toggle/plantuml=不改文字、dropdown/mermaid=close-others、dropdown/plantuml=无……每个行为都有 3 种表现。
+
+**失败信号（任一命中就可能失败）**：
+- 一个 prompt 里出现 3+ 个独立的"if X 则 A，if Y 则 B"分支需要同时处理
+- 需要理解 spec 或计划里定义的多个行为差异并一次性实现
+- prompt 里出现"参考 spec §x"（依赖对话历史，压缩摘要可能丢失）
+- 要同时写测试 + 实现（两种推理模式切换）
 
 ## 四条铁律
 
-### 铁律 1：一个 subagent 只产出一个文件
+### 铁律 1：一个 subagent 只处理一个认知单元
 
-**不要**：一个 subagent 同时写 `types/index.ts` + `useMarkdown.ts` + 两个测试文件
+**不是"一个文件"——是"一个决策树"**。对照组实验证明了 subagent 可以处理 2 个独立文件（Pagination + CodeViewer），因为两个组件不交叉。真正会失败的是多个行为分支嵌套在一起（如 DiagramBlock 的 5 个行为 × 3 语言分支）。
 
-**要**：
-- subagent A：写 `types/index.ts`（类型定义）→ commit
-- subagent B：写 `useMarkdown.blocks.spec.ts`（测试）→ commit
-- subagent C：改 `useMarkdown.ts`（实现）→ commit
+判断标准：
+- 如果 subagent 完成任务需要同时考虑 3+ 个"If A 则 X，If B 则 Y"分支 → 拆分
+- 如果任务可以线性完成（先做完 A 再做 B，A 和 B 不互相影响）→ 可以合并
+
+**不要**：一个 subagent 同时实现"toggle 在 mermaid 改文字、在 plantuml 不改、在 svg 改文字 + dropdown 在 mermaid close-others、在 plantuml 不关……"
+
+**可以**：一个 subagent 同时给两个独立组件写测试（它们不交叉）
+
+**但是**：
+- 拆分总是更安全——2 个 1 文件任务 > 1 个 2 文件任务
+- 如果不能确定两个子任务是否独立，拆
+
+**实用阈值**：单 subagent 产出 ≤ 300 行，超过就拆。
 
 ### 铁律 2：测试和实现分开派发
 
