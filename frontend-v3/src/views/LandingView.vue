@@ -168,7 +168,7 @@
           <a href="https://www.npmjs.com/package/@peekview/mcp-server" target="_blank" rel="noopener">npm</a>
           <a href="https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
         </div>
-        <div class="meta"><span class="v">v0.2.5</span><span>·</span><span>© 2026 PeekView</span></div>
+        <div class="meta"><span class="v">v{{ appVersion }}</span><span>·</span><span>© 2026 PeekView</span></div>
       </div>
     </footer>
 
@@ -190,6 +190,9 @@ const showLogin = ref(false)
 
 const SEO_TITLE = 'PeekView — Read the machine'
 const SEO_DESC = 'Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link.'
+
+declare const __APP_VERSION__: string
+const appVersion = ref(__APP_VERSION__)
 
 function injectMeta() {
   document.title = SEO_TITLE
