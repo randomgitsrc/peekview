@@ -20,13 +20,15 @@
 
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
-| T029 | frontend-ux-improvements | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T029 | card-list-layout-polish | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-29 | 2026-06-29 |
 | T030 | frontend-interaction-enhancements | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
-| T032 | entry-read-tracking | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
-| T033 | share-security-fixes | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T034 | max-views-semantic-fix | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T032 | entry-read-tracking | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T033 | share-semantic-security-fixes | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T036 | detail-info-completeness | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-29 | 2026-06-29 |
+| T037 | search-content-expansion | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T038 | csharp-highlight-description-api | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 
 ### 已完成
 
