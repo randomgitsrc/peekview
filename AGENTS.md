@@ -129,6 +129,8 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 
 **开始前必读 `docs/tasks/active-tasks.md`**，无进行中任务再启动新任务。
 
+**启动 Task 前必须完成环境自检**：`docs/process/env-check-protocol.md`（工具链 / 调试服务 / Playwright CDP / Vision 分析 / 端到端截图验证，5 项全 PASS 才进 P1）
+
 非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。
 
 **阶段链 P0-P8（默认全走，裁剪须有理由）**：
