@@ -23,6 +23,10 @@
 | T029 | frontend-ux-improvements | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T030 | frontend-interaction-enhancements | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
+| T032 | entry-read-tracking | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
+| T033 | share-security-fixes | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T034 | max-views-semantic-fix | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 
 ### 已完成
 
