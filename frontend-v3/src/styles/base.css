@@ -14,8 +14,8 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
   font-size: var(--font-md);
   line-height: 1.5;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--c-bg);
+  color: var(--c-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,22 +32,22 @@ code, pre {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--c-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--c-border);
   border-radius: var(--radius-md);
-  border: 2px solid var(--bg-secondary);
+  border: 2px solid var(--c-surface);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+  background: var(--c-text-tertiary);
 }
 
 /* ===== Links ===== */
 a {
-  color: var(--accent-color);
+  color: var(--c-accent);
   text-decoration: none;
 }
 
@@ -63,32 +63,32 @@ a:hover {
   gap: var(--space-2);
   height: 32px;
   padding: 0 var(--space-3);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-md);
   font-size: var(--font-sm);
   font-weight: 500;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  background: transparent;
+  color: var(--c-text);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
+  background: var(--c-border);
+  border-color: var(--c-text-tertiary);
+  color: var(--c-text);
 }
 
 .btn-primary {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
   color: var(--text-on-accent);
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--c-accent-secondary);
+  border-color: var(--c-accent-secondary);
 }
 
 .btn-ghost {
@@ -97,7 +97,7 @@ a:hover {
 }
 
 .btn-ghost:hover {
-  background: var(--bg-tertiary);
+  background: var(--c-border);
 }
 
 .btn-icon {
@@ -107,9 +107,9 @@ a:hover {
 }
 
 .btn.active {
-  background: var(--accent-light);
-  color: var(--accent-color);
-  border-color: var(--accent-color);
+  background: var(--c-tag-bg);
+  color: var(--c-accent);
+  border-color: var(--c-accent);
 }
 
 /* ===== Utility Classes ===== */

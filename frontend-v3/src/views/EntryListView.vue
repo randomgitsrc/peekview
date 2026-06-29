@@ -1,21 +1,17 @@
 <template>
   <div class="entry-list">
-    <header class="list-header">
-      <router-link to="/" class="logo-link">PeekView</router-link>
-      <div class="search-box" role="search">
-        <input
+    <PageHeader title="PeekView" back-to="/">
+      <template #meta>
+        <SearchInput
           v-model="searchQuery"
-          type="search"
-          class="search-input"
-          aria-label="Search entries"
           placeholder="Search entries..."
-          @input="onSearchInput"
           @keydown="onSearchKeydown"
+          @clear="clearSearch"
         />
-      </div>
-      <div class="header-actions">
+      </template>
+      <template #actions>
         <template v-if="authState === 'anonymous'">
-          <button class="btn btn-login" @click="showLogin = true">Login</button>
+          <BaseButton variant="ghost" @click="showLogin = true">Login</BaseButton>
         </template>
         <template v-else-if="authState === 'authenticated'">
           <div class="user-menu-wrapper">
@@ -33,8 +29,8 @@
           </div>
         </template>
         <ThemeToggle />
-      </div>
-    </header>
+      </template>
+    </PageHeader>
 
     <div class="list-content">
       <BannerBar v-if="isBannerMode" :username="props.owner!" />
@@ -67,85 +63,36 @@
         <template v-else>{{ entries.length }} result{{ entries.length === 1 ? '' : 's' }}</template>
       </div>
 
-      <div v-if="loading" class="loading">Loading...</div>
+      <div v-if="loading" class="loading-state">
+        <span>Loading...</span>
+      </div>
 
       <div v-else-if="ownerFound === false && props.owner" class="user-not-found">
         User <strong>@{{ props.owner }}</strong> not found
       </div>
 
-      <div v-else-if="error" class="error">{{ error }}</div>
-
-      <div v-else-if="entries.length === 0" class="empty">
-        <template v-if="ownerFound === true">
-          No entries from @{{ props.owner }}
-        </template>
-        <template v-else>
-          No entries found
-        </template>
+      <div v-else-if="error" class="error-state">
+        <span>{{ error }}</span>
       </div>
 
-      <div v-else>
-        <div class="entry-grid">
-          <div
+      <EmptyState
+        v-else-if="entries.length === 0"
+        icon="Search"
+        :heading="ownerFound === true ? `No entries from @${props.owner}` : 'No entries found'"
+      />
+
+      <template v-else>
+        <div class="entry-panel">
+          <EntryListRow
             v-for="entry in entries"
             :key="entry.id"
-            class="entry-card"
-          >
-            <!-- Owner actions (visibility toggle + delete) -->
-            <div v-if="authStore.isOwner(entry.ownerId)" class="card-actions">
-              <button
-                class="card-action-btn"
-                :title="entry.isPublic ? 'Make private' : 'Make public'"
-                @click.stop="handleToggleVisibility(entry)"
-              >
-                {{ entry.isPublic ? '🌐' : '🔒' }}
-              </button>
-              <button
-                class="card-action-btn card-action-btn--danger"
-                title="Delete"
-                @click.stop="confirmDeleteEntry(entry)"
-              >
-                🗑️
-              </button>
-            </div>
-
-            <!-- Card body (clickable, navigates to detail) -->
-            <div
-              class="card-body"
-              role="link"
-              tabindex="0"
-              @click="navigateToEntry(entry)"
-              @keydown.enter.prevent="navigateToEntry(entry)"
-              @keydown.space.prevent="navigateToEntry(entry)"
-            >
-              <h3 class="entry-title">{{ entry.summary }}</h3>
-              <div class="entry-meta">
-                <span class="meta-item">{{ entry.fileCount ?? entry.files?.length ?? 0 }} files</span>
-                <span v-if="entry.username" class="meta-item meta-creator" @click.stop>
-                  <span class="creator-text">@</span>
-                  <template v-if="entry.username === currentUserUsername">
-                    <router-link :to="{ path: '/explore', query: { owner: 'me' } }" class="username-link">
-                      {{ entry.username }}
-                    </router-link>
-                  </template>
-                  <template v-else>
-                    <router-link :to="`/users/${entry.username}`" class="username-link">
-                      {{ entry.username }}
-                    </router-link>
-                  </template>
-                </span>
-                <span class="meta-item meta-time">{{ formatRelativeTime(entry.createdAt) }}</span>
-                <span v-if="!entry.isPublic" class="meta-item meta-private">private</span>
-                <span v-if="entry.expiresAt" class="meta-item meta-expires"
-                      :class="{ 'meta-expires-soon': isExpiringSoon(entry.expiresAt) }">
-                  {{ formatExpiresIn(entry.expiresAt) }}
-                </span>
-                <span v-if="entry.tags.length" class="meta-tags">
-                  {{ entry.tags.join(', ') }}
-                </span>
-              </div>
-            </div>
-          </div>
+            :entry="entry"
+            :is-owner="authStore.isOwner(entry.ownerId)"
+            :current-username="currentUserUsername"
+            @navigate="navigateToEntry"
+            @toggle-visibility="handleToggleVisibility"
+            @delete="confirmDeleteEntry"
+          />
         </div>
 
         <Pagination
@@ -154,7 +101,7 @@
           :per-page="perPage"
           :total="total"
         />
-      </div>
+      </template>
     </div>
 
     <!-- Footer -->
@@ -225,6 +172,11 @@ import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { storeToRefs } from 'pinia'
+import PageHeader from '@/components/PageHeader.vue'
+import SearchInput from '@/components/SearchInput.vue'
+import EntryListRow from '@/components/EntryListRow.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import BaseButton from '@/components/BaseButton.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
@@ -232,7 +184,6 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BannerBar from '@/components/BannerBar.vue'
 import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
-import { formatExpiresIn, isExpiringSoon } from '@/utils/expires'
 import { useDebounce } from '@/composables/useDebounce'
 import { mergeQuery, parseRestoreQuery } from '@/views/searchUrl.logic'
 
@@ -251,7 +202,6 @@ const props = defineProps<{
   owner?: string
 }>()
 
-// Owner filter (All/Mine)
 const currentOwner = ref<string | null>(null)
 
 const isBannerMode = computed(() =>
@@ -270,7 +220,6 @@ const effectiveOwner = computed(() => props.owner || currentOwner.value || undef
 
 const currentUserUsername = computed(() => user.value?.username ?? null)
 
-// Search state
 const searchQuery = ref('')
 let suppressRouteUpdate = false
 
@@ -308,18 +257,17 @@ function clearSearch() {
 
 const debouncedSearch = useDebounce(flushSearch, 300)
 
-function onSearchInput() {
-  debouncedSearch()
-}
-
 function onSearchKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     flushSearch()
-    ;(e.target as HTMLInputElement)?.blur()
   } else if (e.key === 'Escape') {
     clearSearch()
   }
 }
+
+watch(() => searchQuery.value, () => {
+  debouncedSearch()
+})
 
 function setOwner(owner: string | null) {
   currentOwner.value = owner
@@ -344,10 +292,8 @@ function navigateToApiKeys() {
   router.push('/settings/apikeys')
 }
 
-// Login dialog
 const showLogin = ref(false)
 
-// User menu dropdown
 const showUserMenu = ref(false)
 
 const userInitial = computed(() => {
@@ -379,7 +325,6 @@ function handleLogout() {
   toast.show('Logged out', 'success')
 }
 
-// Delete confirmation
 const showConfirmDelete = ref(false)
 const deleteTarget = ref<Entry | null>(null)
 const deleteMessage = computed(() =>
@@ -408,7 +353,6 @@ function cancelDelete() {
   deleteTarget.value = null
 }
 
-// Visibility toggle
 async function handleToggleVisibility(entry: Entry) {
   const success = await entryStore.toggleVisibility(entry)
   if (success) {
@@ -418,7 +362,6 @@ async function handleToggleVisibility(entry: Entry) {
   }
 }
 
-// Pagination
 const currentPage = ref(1)
 const totalPages = computed(() => Math.ceil(total.value / perPage.value))
 
@@ -469,7 +412,6 @@ onMounted(() => {
   loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, q: searchQuery.value || undefined })
 })
 
-// Browser back/forward: restore state from URL query
 onBeforeRouteUpdate((to) => {
   if (suppressRouteUpdate) return
   if (to.path !== '/explore' && !to.path.startsWith('/users/')) return
@@ -484,64 +426,20 @@ onBeforeRouteUpdate((to) => {
 
   loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, q: newQ || undefined })
 })
-
-// Relative time formatter
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSec = Math.floor(diffMs / 1000)
-  const diffMin = Math.floor(diffSec / 60)
-  const diffHour = Math.floor(diffMin / 60)
-  const diffDay = Math.floor(diffHour / 24)
-  const diffWeek = Math.floor(diffDay / 7)
-  const diffMonth = Math.floor(diffDay / 30)
-  const diffYear = Math.floor(diffDay / 365)
-
-  if (diffSec < 60) return 'just now'
-  if (diffMin < 60) return `${diffMin}m ago`
-  if (diffHour < 24) return `${diffHour}h ago`
-  if (diffDay < 7) return `${diffDay}d ago`
-  if (diffWeek < 5) return `${diffWeek}w ago`
-  if (diffMonth < 12) return `${diffMonth}mo ago`
-  return `${diffYear}y ago`
-}
 </script>
 
 <style scoped>
-.entry-list { min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
-.list-header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-.logo-link { font-size: var(--font-xl); font-weight: 700; color: var(--text-primary); text-decoration: none; flex-shrink: 0 }
-.logo-link:hover { color: var(--accent-color) }
+.entry-list { min-height: 100vh; background: var(--c-bg); display: flex; flex-direction: column; }
 
-/* Search box */
-.search-box {
+.entry-list :deep(.page-header-meta) {
   flex: 1;
   max-width: 400px;
-  margin: 0 var(--space-4);
 }
 
-.search-input {
+.entry-list :deep(.page-header-meta .search-input-wrapper) {
   width: 100%;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: var(--font-sm);
-  outline: none;
-  transition: border-color var(--transition-fast);
 }
 
-.search-input:focus {
-  border-color: var(--accent-color);
-}
-
-.search-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-/* Screen reader only utility */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -554,31 +452,6 @@ function formatRelativeTime(dateStr: string): string {
   border-width: 0;
 }
 
-.header-actions {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.btn-login {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  transition: all var(--transition-fast);
-}
-
-.btn-login:hover {
-  background: var(--accent-light);
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-/* User menu */
 .user-menu-wrapper { position: relative; }
 
 .user-menu-trigger {
@@ -587,15 +460,15 @@ function formatRelativeTime(dateStr: string): string {
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  border: 1px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text);
   cursor: pointer;
   font-size: var(--font-sm);
   transition: all var(--transition-fast);
 }
 
-.user-menu-trigger:hover { background: var(--bg-tertiary); }
+.user-menu-trigger:hover { background: var(--c-surface-lower); }
 
 .user-avatar {
   display: inline-flex;
@@ -604,8 +477,8 @@ function formatRelativeTime(dateStr: string): string {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent-color);
-  color: var(--text-on-accent);
+  background: var(--c-accent);
+  color: #fff;
   font-size: var(--font-xs);
   font-weight: 600;
 }
@@ -620,8 +493,8 @@ function formatRelativeTime(dateStr: string): string {
   position: absolute;
   top: calc(100% + var(--space-1));
   right: 0;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-md);
   padding: var(--space-1);
   min-width: 120px;
@@ -633,8 +506,8 @@ function formatRelativeTime(dateStr: string): string {
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 3px;
-  background: var(--accent-color);
-  color: var(--text-on-accent);
+  background: var(--c-accent);
+  color: #fff;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -646,7 +519,7 @@ function formatRelativeTime(dateStr: string): string {
   padding: var(--space-2) var(--space-3);
   border: none;
   background: none;
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   cursor: pointer;
   font-size: var(--font-sm);
   text-align: left;
@@ -654,8 +527,8 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 .dropdown-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--c-surface-lower);
+  color: var(--c-text);
 }
 
 .dropdown-enter-active { transition: opacity 0.15s ease; }
@@ -663,38 +536,44 @@ function formatRelativeTime(dateStr: string): string {
 .dropdown-enter-from { opacity: 0; }
 .dropdown-leave-to { opacity: 0; }
 
-/* Content */
 .list-content { padding: var(--space-4); max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
-.loading, .error, .empty { text-align: center; padding: var(--space-7); color: var(--text-secondary); }
-.error { color: var(--error-color); }
 
-/* Owner tabs (All/Mine) */
+.loading-state {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--c-text-secondary);
+}
+
+.error-state {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--c-error);
+}
+
+.user-not-found {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--c-text-secondary);
+  font-size: var(--font-md);
+}
+
 .owner-tabs {
   display: flex;
   gap: var(--space-1);
   margin-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--c-border);
   padding-bottom: var(--space-1);
 }
 
-/* Filter chip bar */
 .filter-chip-bar {
   margin-bottom: var(--space-3);
-}
-
-/* User not found */
-.user-not-found {
-  text-align: center;
-  padding: var(--space-7);
-  color: var(--text-secondary);
-  font-size: var(--font-md);
 }
 
 .owner-tab {
   padding: var(--space-1) var(--space-3);
   border: none;
   background: none;
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   cursor: pointer;
   font-size: var(--font-sm);
   font-weight: 500;
@@ -703,105 +582,28 @@ function formatRelativeTime(dateStr: string): string {
   transition: all var(--transition-fast);
 }
 
-.owner-tab:hover { color: var(--text-primary); }
-.owner-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+.owner-tab:hover { color: var(--c-text); }
+.owner-tab.active { color: var(--c-accent); border-bottom-color: var(--c-accent); }
 
-/* Entry grid & cards */
-.entry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
-
-.entry-card {
-  position: relative;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
+.entry-panel {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-.entry-card:hover { border-color: var(--accent-color); box-shadow: var(--shadow-md); }
-
-.card-actions {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  display: flex;
-  gap: var(--space-1);
-  z-index: 1;
-}
-
-.card-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.card-action-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
-}
-
-.card-action-btn--danger:hover {
-  background: var(--error-bg);
-  border-color: var(--error-border);
-  color: var(--error-text);
-}
-
-.card-body {
-  display: block;
-  padding: var(--space-4);
-  text-decoration: none;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.entry-title { font-size: var(--font-md); font-weight: 600; margin-bottom: var(--space-2); }
-
-.entry-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  font-size: var(--font-xs);
-  color: var(--text-secondary);
-}
-
-.meta-item { display: inline-flex; align-items: center; }
-.meta-creator { color: var(--accent-color); }
-.creator-text { color: var(--accent-color); }
-.username-link {
-  color: var(--accent-color);
-  text-decoration: none;
-  font-weight: 500;
-}
-.username-link:hover {
-  text-decoration: underline;
-}
-.meta-private { color: var(--warning-color); font-weight: 500; }
-.meta-tags { color: var(--accent-color); }
-.meta-expires { color: var(--text-secondary); }
-.meta-expires-soon { color: var(--warning-color); font-weight: 500; }
-
-/* Footer */
 .list-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-5);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--c-border);
   font-size: var(--font-xs);
-  color: var(--text-tertiary);
+  color: var(--c-text-tertiary);
   flex-shrink: 0;
   flex-wrap: wrap;
-  background: color-mix(in srgb, var(--bg-color, var(--color-canvas-default, transparent)) 60%, transparent);
+  background: color-mix(in srgb, var(--c-surface) 60%, transparent);
 }
 
 .footer-links {
@@ -816,7 +618,7 @@ function formatRelativeTime(dateStr: string): string {
   gap: var(--space-2);
   padding: 4px 10px;
   border-radius: var(--radius-md);
-  color: var(--text-tertiary);
+  color: var(--c-text-tertiary);
   text-decoration: none;
   font-size: var(--font-xs);
   font-weight: 500;
@@ -825,8 +627,8 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 .footer-link:hover {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--text-primary, currentColor) 8%, transparent);
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-text) 8%, transparent);
 }
 
 .footer-icon {
@@ -850,7 +652,7 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 .footer-tagline {
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
@@ -859,12 +661,12 @@ function formatRelativeTime(dateStr: string): string {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--text-tertiary);
+  color: var(--c-text-tertiary);
 }
 
 .footer-meta .version {
   font-family: var(--font-mono);
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
 }
 
 .footer-meta .separator {
@@ -876,16 +678,6 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 @media (max-width: 640px) {
-  .list-header {
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-  .search-box {
-    flex: 1 1 100%;
-    max-width: none;
-    margin: var(--space-1) 0;
-    order: 3;
-  }
   .list-footer {
     flex-direction: column;
     align-items: stretch;

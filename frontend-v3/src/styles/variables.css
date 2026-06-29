@@ -32,84 +32,108 @@
   --toc-width: 240px;
 }
 
-/* Light Theme (GitHub Primer) */
-[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fa;
-  --bg-tertiary: #f3f4f6;
-  --bg-code: #f6f8fa;
-  --bg-overlay: rgba(0, 0, 0, 0.5);
+/* Dark Theme */
+[data-theme="dark"] {
+  --c-bg: #0a0d13;
+  --c-surface: #121822;
+  --c-surface-lower: #0e131b;
+  --c-border: rgba(255,255,255,.08);
+  --c-border-strong: rgba(255,255,255,.13);
+  --c-text: #e9eef4;
+  --c-text-secondary: #9aa7b4;
+  --c-text-tertiary: #6a7682;
+  --c-accent: #4d8dff;
+  --c-accent-secondary: #76a6ff;
+  --c-glow: rgba(77,141,255,.20);
+  --c-success: #7ee787;
+  --c-warning: #febc2e;
+  --c-error: #ff7b72;
+  --c-tag-bg: rgba(77,141,255,.14);
+  --c-badge-public-bg: rgba(126,231,135,.15);
+  --c-badge-private-bg: rgba(255,123,114,.15);
+  --c-badge-shared-bg: rgba(254,188,46,.15);
 
-  --border-color: #d0d7de;
-  --border-hover: #8c959f;
-
-  --text-primary: #1f2328;
-  --text-secondary: #656d76;
-  --text-tertiary: #8c959f;
+  --bg-primary: var(--c-bg);
+  --bg-secondary: var(--c-surface);
+  --bg-tertiary: var(--c-surface-lower);
+  --bg-code: var(--c-surface-lower);
+  --bg-overlay: rgba(0,0,0,.5);
+  --border-color: var(--c-border);
+  --border-hover: var(--c-text-tertiary);
+  --text-primary: var(--c-text);
+  --text-secondary: var(--c-text-secondary);
+  --text-tertiary: var(--c-text-tertiary);
   --text-on-accent: #ffffff;
-
-  --accent-color: #0969da;
-  --accent-hover: #0550ae;
-  --accent-light: rgba(9, 105, 218, 0.1);
-
-  --success-color: #1a7f37;
-  --warning-color: #9a6700;
-  --error-color: #cf222e;
-
-  --success-bg: rgba(26, 127, 55, 0.1);
-  --success-text: #1a7f37;
-  --success-border: rgba(26, 127, 55, 0.3);
-  --warning-bg: rgba(154, 103, 0, 0.1);
-  --warning-text: #9a6700;
-  --warning-border: rgba(154, 103, 0, 0.3);
-  --error-bg: rgba(207, 34, 46, 0.1);
-  --error-text: #cf222e;
-  --error-border: rgba(207, 34, 46, 0.3);
-
-  --tag-bg: rgba(9, 105, 218, 0.1);
-  --tag-text: #0969da;
-
-  --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.04);
-  --shadow-md: 0 3px 6px rgba(31, 35, 40, 0.08);
+  --accent-color: var(--c-accent);
+  --accent-hover: var(--c-accent-secondary);
+  --accent-light: var(--c-tag-bg);
+  --success-color: var(--c-success);
+  --success-bg: var(--c-badge-public-bg);
+  --success-text: var(--c-success);
+  --success-border: rgba(126,231,135,.3);
+  --warning-color: var(--c-warning);
+  --warning-bg: var(--c-badge-shared-bg);
+  --warning-text: var(--c-warning);
+  --warning-border: rgba(254,188,46,.3);
+  --error-color: var(--c-error);
+  --error-bg: var(--c-badge-private-bg);
+  --error-text: var(--c-error);
+  --error-border: rgba(255,123,114,.3);
+  --tag-bg: var(--c-tag-bg);
+  --tag-text: var(--c-accent-secondary);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
 }
 
-/* Dark Theme (GitHub Dark) */
-[data-theme="dark"] {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --bg-code: #161b22;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
+/* Light Theme */
+[data-theme="light"] {
+  --c-bg: #f6f8fa;
+  --c-surface: #ffffff;
+  --c-surface-lower: #eef0f3;
+  --c-border: rgba(0,0,0,.08);
+  --c-border-strong: rgba(0,0,0,.13);
+  --c-text: #1f2328;
+  --c-text-secondary: #656d76;
+  --c-text-tertiary: #8c959f;
+  --c-accent: #0969da;
+  --c-accent-secondary: #0550ae;
+  --c-glow: rgba(9,105,218,.10);
+  --c-success: #1a7f37;
+  --c-warning: #9a6700;
+  --c-error: #cf222e;
+  --c-tag-bg: rgba(9,105,218,.1);
+  --c-badge-public-bg: rgba(26,127,55,.1);
+  --c-badge-private-bg: rgba(207,34,46,.1);
+  --c-badge-shared-bg: rgba(154,103,0,.1);
 
-  --border-color: #30363d;
-  --border-hover: #8b949e;
-
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-tertiary: #6e7681;
+  --bg-primary: var(--c-bg);
+  --bg-secondary: var(--c-surface);
+  --bg-tertiary: var(--c-surface-lower);
+  --bg-code: var(--c-surface-lower);
+  --bg-overlay: rgba(0,0,0,.5);
+  --border-color: var(--c-border);
+  --border-hover: var(--c-text-tertiary);
+  --text-primary: var(--c-text);
+  --text-secondary: var(--c-text-secondary);
+  --text-tertiary: var(--c-text-tertiary);
   --text-on-accent: #ffffff;
-
-  --accent-color: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-light: rgba(59, 130, 246, 0.15);
-
-  --success-color: #3fb950;
-  --warning-color: #d29922;
-  --error-color: #f85149;
-
-  --success-bg: rgba(63, 185, 80, 0.15);
-  --success-text: #3fb950;
-  --success-border: rgba(63, 185, 80, 0.4);
-  --warning-bg: rgba(210, 153, 34, 0.15);
-  --warning-text: #d29922;
-  --warning-border: rgba(210, 153, 34, 0.4);
-  --error-bg: rgba(248, 81, 73, 0.15);
-  --error-text: #f85149;
-  --error-border: rgba(248, 81, 73, 0.4);
-
-  --tag-bg: rgba(59, 130, 246, 0.2);
-  --tag-text: #58a6ff;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --accent-color: var(--c-accent);
+  --accent-hover: var(--c-accent-secondary);
+  --accent-light: var(--c-tag-bg);
+  --success-color: var(--c-success);
+  --success-bg: var(--c-badge-public-bg);
+  --success-text: var(--c-success);
+  --success-border: rgba(26,127,55,.3);
+  --warning-color: var(--c-warning);
+  --warning-bg: var(--c-badge-shared-bg);
+  --warning-text: var(--c-warning);
+  --warning-border: rgba(154,103,0,.3);
+  --error-color: var(--c-error);
+  --error-bg: var(--c-badge-private-bg);
+  --error-text: var(--c-error);
+  --error-border: rgba(207,34,46,.3);
+  --tag-bg: var(--c-tag-bg);
+  --tag-text: var(--c-accent-secondary);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 3px 6px rgba(0,0,0,.08);
 }

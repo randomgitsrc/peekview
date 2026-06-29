@@ -9,26 +9,29 @@
         <!-- Owner controls (visibility + delete) -->
         <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
           <div class="owner-actions desktop-only">
-            <button
-              class="btn btn-sm visibility-btn"
+            <BaseButton
+              size="small"
+              :variant="entryStore.currentEntry.isPublic ? 'secondary' : 'secondary'"
               :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
               @click="handleToggleVisibility"
             >
               {{ entryStore.currentEntry.isPublic ? '🌐 Public' : '🔒 Private' }}
-            </button>
-            <button
+            </BaseButton>
+            <BaseButton
               v-if="showShareButton"
-              class="btn btn-sm share-btn"
+              size="small"
+              variant="secondary"
               @click="showShareDialog = true"
             >
               Share
-            </button>
-            <button
-              class="btn btn-sm btn-danger delete-btn"
+            </BaseButton>
+            <BaseButton
+              size="small"
+              variant="danger"
               @click="confirmDeleteEntry"
             >
               Delete
-            </button>
+            </BaseButton>
           </div>
         </template>
 
@@ -47,33 +50,35 @@
         </span>
 
         <div class="actions desktop-only" v-if="entryStore.currentEntry">
-          <button
+          <BaseButton
             v-if="entryStore.canWrap"
-            class="btn btn-sm"
-            :class="{ active: entryStore.wrapEnabled }"
+            size="small"
+            :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
             @click="entryStore.toggleWrap()"
           >
             Wrap
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             v-if="entryStore.canCopy"
-            class="btn btn-sm"
+            size="small"
+            variant="secondary"
             :title="isHtml ? 'Copy HTML source' : 'Copy'"
             :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
             @click="copyContent"
           >
             Copy
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             v-if="entryStore.canDownload"
-            class="btn btn-sm"
+            size="small"
+            variant="secondary"
             @click="downloadFile"
           >
             Download
-          </button>
+          </BaseButton>
           <a
             v-if="entryStore.currentEntry"
-            class="btn btn-sm"
+            class="raw-link"
             :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
             target="_blank"
             rel="noopener noreferrer"
@@ -81,21 +86,24 @@
           >
             Raw
           </a>
-          <button
+          <BaseButton
             v-if="entryStore.canPack && entryStore.currentEntry"
-            class="btn btn-sm"
+            size="small"
+            variant="secondary"
             @click="downloadPack"
           >
             Pack
-          </button>
+          </BaseButton>
         </div>
-        <button
+        <BaseButton
           v-if="showTocButton"
-          class="btn btn-sm toc-btn"
+          size="small"
+          variant="secondary"
+          class="toc-btn"
           @click="showTocDrawer = true"
         >
           TOC
-        </button>
+        </BaseButton>
         <ThemeToggle />
       </div>
     </header>
@@ -188,61 +196,68 @@
     <div class="mobile-actions" v-if="entryStore.currentEntry">
       <!-- Owner actions on mobile -->
       <template v-if="authStore.isOwner(entryStore.currentEntry.ownerId)">
-        <button
-          class="btn btn-sm visibility-btn"
+        <BaseButton
+          size="small"
+          variant="secondary"
           :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
           @click="handleToggleVisibility"
         >
           {{ entryStore.currentEntry.isPublic ? '🌐' : '🔒' }}
-        </button>
-        <button
+        </BaseButton>
+        <BaseButton
           v-if="showShareButton"
-          class="btn btn-sm share-btn"
+          size="small"
+          variant="secondary"
           @click="showShareDialog = true"
         >
           Share
-        </button>
-        <button
-          class="btn btn-sm btn-danger delete-btn"
+        </BaseButton>
+        <BaseButton
+          size="small"
+          variant="danger"
           @click="confirmDeleteEntry"
         >
           🗑️
-        </button>
+        </BaseButton>
       </template>
-      <button
+      <BaseButton
         v-if="entryStore.isMultiFile"
-        class="btn btn-sm menu-btn"
+        size="small"
+        variant="secondary"
+        class="menu-btn"
         @click="showFileDrawer = true"
       >
         Files ({{ entryStore.currentEntry?.files.length || 0 }})
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="entryStore.canWrap"
-        class="btn btn-sm"
-        :class="{ active: entryStore.wrapEnabled }"
+        size="small"
+        :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
         @click="entryStore.toggleWrap()"
       >
         Wrap
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="entryStore.canCopy"
-        class="btn btn-sm"
+        size="small"
+        variant="secondary"
         :title="isHtml ? 'Copy HTML source' : 'Copy'"
         :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
         @click="copyContent"
       >
         Copy
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="entryStore.canDownload"
-        class="btn btn-sm"
+        size="small"
+        variant="secondary"
         @click="downloadFile"
       >
         Download
-      </button>
+      </BaseButton>
       <a
         v-if="entryStore.currentEntry"
-        class="btn btn-sm"
+        class="raw-link"
         :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
         target="_blank"
         rel="noopener noreferrer"
@@ -250,20 +265,22 @@
       >
         Raw
       </a>
-      <button
+      <BaseButton
         v-if="entryStore.canPack && entryStore.currentEntry"
-        class="btn btn-sm"
+        size="small"
+        variant="secondary"
         @click="downloadPack"
       >
         Pack
-      </button>
-      <button
+      </BaseButton>
+      <BaseButton
         v-if="showTocButton"
-        class="btn btn-sm"
+        size="small"
+        variant="secondary"
         @click="showTocDrawer = true"
       >
         TOC
-      </button>
+      </BaseButton>
     </div>
 
     <!-- File Drawer (mobile) -->
@@ -335,6 +352,7 @@ import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
 import { useToast } from '@/composables/useToast'
+import BaseButton from '@/components/BaseButton.vue'
 import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import HtmlViewer from '@/components/HtmlViewer.vue'
@@ -362,11 +380,9 @@ const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
 
-// Drawer state
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
 
-// Share dialog state
 const showShareDialog = ref(false)
 const shareErrorState = ref(false)
 
@@ -382,7 +398,6 @@ const showShareButton = computed(() => {
   return !currentEntry.value.isPublic
 })
 
-// Zen mode state
 const zenMode = ref(false)
 const zenAriaText = ref('')
 
@@ -408,7 +423,6 @@ function handleZenKeydown(event: KeyboardEvent) {
   }
 }
 
-// Sibling file IDs for HTML render route injection
 const siblingFileIds = computed<number[]>(() => {
   if (!currentEntry.value || !activeFile.value) return []
   if (activeFile.value.language !== 'html') return []
@@ -417,7 +431,6 @@ const siblingFileIds = computed<number[]>(() => {
     .map(f => f.id)
 })
 
-// Delete confirmation
 const showConfirmDelete = ref(false)
 const deleteMessage = computed(() =>
   currentEntry.value
@@ -441,17 +454,14 @@ async function handleDelete() {
 }
 
 function cancelDelete() {
-  // ConfirmDialog already sets visible=false
 }
 
-// Visibility toggle
 async function handleToggleVisibility() {
   if (!currentEntry.value) return
   const wasPublic = currentEntry.value.isPublic
   const success = await entryStore.toggleVisibility(currentEntry.value)
   if (success) {
     if (!wasPublic) {
-      // Private -> public, shares revoked (toast shown by store)
     } else {
       toast.show('Entry made private', 'success')
     }
@@ -465,10 +475,8 @@ function handleShareCreated() {
 }
 
 function handleShareRevoked() {
-  // Panel already refreshes internally
 }
 
-// Computed properties
 const entryTitle = computed(() => {
   return currentEntry.value?.summary || props.slug
 })
@@ -485,7 +493,6 @@ const isImage = computed(() => {
   const file = activeFile.value
   if (!file) return false
   const mime = guessMimeType(file.filename)
-  // SVG is text format, others are binary
   if (mime === 'image/svg+xml') return true
   return file.isBinary && (mime?.startsWith('image/') ?? false)
 })
@@ -509,7 +516,6 @@ const tocHeadings = computed<TocHeading[]>(() => {
   return extractHeadings(entryStore.fileContent)
 })
 
-// Methods
 function goBack() {
   router.push(authStore.authState === 'authenticated' ? '/explore' : '/')
 }
@@ -610,7 +616,6 @@ function extractHeadings(content: string): TocHeading[] {
   return headings
 }
 
-// Relative time formatter
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
@@ -632,7 +637,6 @@ function formatRelativeTime(dateStr: string): string {
   return `${diffYear}y ago`
 }
 
-// Load entry on mount and when slug changes
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined
   shareErrorState.value = false
@@ -654,7 +658,6 @@ watch(() => props.slug, (newSlug) => {
   entryStore.loadEntry(newSlug)
 })
 
-// Inject <link rel="alternate"> for machine-readable raw access
 watch(() => entryStore.currentEntry, (entry) => {
   document.querySelectorAll('link[data-peekview-raw]').forEach(el => el.remove())
   if (entry) {
@@ -670,42 +673,6 @@ watch(() => entryStore.currentEntry, (entry) => {
 
 <style scoped>
 @import '@/styles/layout.css';
-
-.btn {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  transition: all var(--transition-fast);
-}
-
-.btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-hover);
-}
-
-.btn.active {
-  background: var(--accent-color);
-  color: var(--text-on-accent);
-  border-color: var(--accent-color);
-}
-
-.btn-sm {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-xs);
-}
-
-.btn-danger {
-  color: var(--error-text);
-  border-color: var(--error-border);
-}
-
-.btn-danger:hover {
-  background: var(--error-bg);
-}
 
 .header-right {
   display: flex;
@@ -728,29 +695,48 @@ watch(() => entryStore.currentEntry, (entry) => {
 
 .entry-owner {
   font-size: var(--font-xs);
-  color: var(--accent-color);
+  color: var(--c-accent);
 }
 
 .entry-time {
   font-size: var(--font-xs);
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
 }
 
 .entry-expires {
   font-size: var(--font-xs);
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
 }
 
 .entry-expires-never {
-  color: var(--text-tertiary);
+  color: var(--c-text-tertiary);
+}
+
+.raw-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--c-text);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-xs);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.raw-link:hover {
+  background: var(--c-border);
+  border-color: var(--c-text-tertiary);
 }
 
 .share-watermark {
   position: fixed;
   bottom: 16px;
   right: 16px;
-  background: var(--bg-secondary, rgba(0, 0, 0, 0.75));
-  color: var(--text-secondary, #aaa);
+  background: var(--c-surface);
+  color: var(--c-text-secondary);
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 12px;
@@ -760,7 +746,7 @@ watch(() => entryStore.currentEntry, (entry) => {
 }
 
 .share-error {
-  color: var(--error-text);
+  color: var(--c-error);
   font-size: 15px;
   text-align: center;
   padding: 40px 16px;
@@ -768,23 +754,6 @@ watch(() => entryStore.currentEntry, (entry) => {
 </style>
 
 <style>
-/* Global styles for detail header */
-.detail-header .back-btn {
-  font-size: 24px;
-  cursor: pointer;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-md);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.detail-header .back-btn:hover {
-  background: var(--bg-tertiary);
-}
-
-/* Hide desktop-only elements on mobile */
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;

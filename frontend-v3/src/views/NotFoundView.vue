@@ -2,13 +2,15 @@
   <div class="not-found">
     <h1>Page not found</h1>
     <p class="path">{{ route.path }}</p>
-    <router-link to="/" class="home-link">返回首页</router-link>
+    <BaseButton variant="secondary" @click="router.push('/')">返回首页</BaseButton>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import BaseButton from '@/components/BaseButton.vue'
 const route = useRoute()
+const router = useRouter()
 </script>
 
 <style scoped>
@@ -20,30 +22,17 @@ const route = useRoute()
   min-height: 100vh;
   padding: var(--space-4);
   text-align: center;
+  background: var(--c-bg);
 }
 .not-found h1 {
   font-size: var(--font-xl);
-  color: var(--text-primary);
+  color: var(--c-text);
   margin-bottom: var(--space-2);
 }
 .path {
   font-size: var(--font-md);
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   font-family: var(--font-mono);
   margin-bottom: var(--space-6);
-}
-.home-link {
-  color: var(--accent-color);
-  text-decoration: none;
-  font-size: var(--font-md);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  transition: all var(--transition-fast);
-}
-
-.home-link:hover {
-  background: var(--accent-light);
-  border-color: var(--accent-color);
 }
 </style>

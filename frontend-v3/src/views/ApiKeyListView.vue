@@ -1,19 +1,26 @@
 <template>
   <div class="apikey-page">
-    <header class="page-header">
-      <div class="header-left">
-        <router-link to="/" class="back-link">&larr; Back</router-link>
-        <h1>API Keys</h1>
-      </div>
-      <button class="btn btn-primary" @click="showCreate = true">Create Key</button>
-    </header>
+    <PageHeader title="API Keys" back-to="/" back-label="← Back">
+      <template #actions>
+        <BaseButton variant="primary" @click="showCreate = true">Create Key</BaseButton>
+      </template>
+    </PageHeader>
 
     <div class="page-content">
-      <div v-if="loading" class="loading">Loading...</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-      <div v-else-if="keys.length === 0" class="empty">
-        No API keys yet. Create one to automate entry creation.
+      <div v-if="loading" class="loading-state">
+        <span>Loading...</span>
       </div>
+      <div v-else-if="error" class="error-state">
+        <span>{{ error }}</span>
+      </div>
+      <EmptyState
+        v-else-if="keys.length === 0"
+        icon="Database"
+        heading="No API keys yet"
+        description="Create one to automate entry creation."
+        cta-label="Create Key"
+        @cta="showCreate = true"
+      />
       <div v-else class="key-list">
         <div v-for="key in keys" :key="key.id" class="key-card">
           <div class="key-info">
@@ -21,7 +28,10 @@
             <div class="key-meta">
               <span class="key-prefix">{{ key.keyPrefix }}...</span>
               <span v-if="key.expiresAt" class="key-expiry" :class="{ 'expired': isExpired(key.expiresAt) }">
-                {{ isExpired(key.expiresAt) ? 'Expired' : `Expires ${formatDate(key.expiresAt)}` }}
+                <template v-if="isExpired(key.expiresAt)">
+                  <BaseBadge status="private" />
+                </template>
+                <template v-else>Expires {{ formatDate(key.expiresAt) }}</template>
               </span>
               <span v-else class="key-expiry">No expiry</span>
               <span class="key-last-used">
@@ -31,14 +41,19 @@
             <div class="key-created">Created {{ formatDate(key.createdAt) }}</div>
           </div>
           <div class="key-actions">
-            <button class="btn btn-danger btn-sm" @click="confirmRevoke(key)">Revoke</button>
+            <BaseButton size="small" variant="danger" @click="confirmRevoke(key)">Revoke</BaseButton>
           </div>
         </div>
       </div>
 
-      <button v-if="keys.some(k => k.expiresAt && isExpired(k.expiresAt))" class="btn btn-secondary cleanup-btn" @click="handleCleanup">
+      <BaseButton
+        v-if="keys.some(k => k.expiresAt && isExpired(k.expiresAt))"
+        variant="secondary"
+        class="cleanup-btn"
+        @click="handleCleanup"
+      >
         Cleanup Expired Keys
-      </button>
+      </BaseButton>
     </div>
 
     <!-- Create Key Dialog -->
@@ -72,12 +87,12 @@
                   <option value="90d">90 days</option>
                 </select>
               </div>
-              <div v-if="createError" class="error">{{ createError }}</div>
+              <div v-if="createError" class="error-state">{{ createError }}</div>
               <div class="dialog-actions">
-                <button class="btn btn-secondary" @click="showCreate = false" :disabled="creating">Cancel</button>
-                <button class="btn btn-primary" @click="handleCreate" :disabled="creating || !newKeyName.trim()">
+                <BaseButton variant="secondary" :disabled="creating" @click="showCreate = false">Cancel</BaseButton>
+                <BaseButton variant="primary" :disabled="creating || !newKeyName.trim()" @click="handleCreate">
                   {{ creating ? 'Creating...' : 'Create' }}
-                </button>
+                </BaseButton>
               </div>
             </div>
 
@@ -87,12 +102,12 @@
               </p>
               <div class="key-display">
                 <code class="key-value">{{ createdKey.key }}</code>
-                <button class="btn btn-secondary btn-sm" @click="copyKey" :title="copied ? 'Copied!' : 'Copy'">
+                <BaseButton size="small" variant="secondary" @click="copyKey" :title="copied ? 'Copied!' : 'Copy'">
                   {{ copied ? 'Copied!' : 'Copy' }}
-                </button>
+                </BaseButton>
               </div>
               <div class="dialog-actions">
-                <button class="btn btn-primary" @click="dismissCreated">I've Saved It</button>
+                <BaseButton variant="primary" @click="dismissCreated">I've Saved It</BaseButton>
               </div>
             </div>
 
@@ -120,6 +135,10 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { api } from '@/api/client'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import PageHeader from '@/components/PageHeader.vue'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseBadge from '@/components/BaseBadge.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import type { ApiKey, ApiKeyCreateResult } from '@/types'
 
@@ -130,7 +149,6 @@ const keys = ref<ApiKey[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-// Create dialog
 const showCreate = ref(false)
 const newKeyName = ref('')
 const newKeyExpiry = ref('')
@@ -140,7 +158,6 @@ const createdKey = ref<ApiKeyCreateResult | null>(null)
 const nameInput = ref<HTMLInputElement | null>(null)
 const copied = ref(false)
 
-// Revoke dialog
 const showRevokeConfirm = ref(false)
 const revokeTarget = ref<ApiKey | null>(null)
 const revokeMessage = computed(() =>
@@ -160,13 +177,11 @@ watch(showCreate, async (v) => {
 })
 
 onMounted(() => {
-  // Load keys immediately if already authenticated, or watch for auth state
   if (authStore.authState === 'authenticated') {
     loadKeys()
   }
 })
 
-// Watch auth state — load keys once authenticated
 watch(() => authStore.authState, (state) => {
   if (state === 'authenticated' && keys.value.length === 0 && !loading.value && !error.value) {
     loadKeys()
@@ -207,7 +222,6 @@ async function copyKey() {
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
-    // Fallback: select text for manual copy
   }
 }
 
@@ -219,7 +233,6 @@ function dismissCreated() {
 
 function handleCloseCreate() {
   if (createdKey.value) {
-    // Warn user they haven't confirmed saving the key
     if (confirm("Have you saved your API key? It won't be shown again.")) {
       dismissCreated()
     }
@@ -281,50 +294,22 @@ function formatRelativeTime(dateStr: string): string {
 </script>
 
 <style scoped>
-.apikey-page { min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; }
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.header-left { display: flex; align-items: center; gap: var(--space-3); }
-.header-left h1 { font-size: var(--font-xl); font-weight: 700; }
-
-.back-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: var(--font-sm);
-  transition: color var(--transition-fast);
-}
-.back-link:hover { color: var(--accent-color); }
+.apikey-page { min-height: 100vh; background: var(--c-bg); display: flex; flex-direction: column; }
 
 .page-content { padding: var(--space-4); max-width: 800px; margin: 0 auto; width: 100%; flex: 1; }
-.loading, .error, .empty { text-align: center; padding: var(--space-7); color: var(--text-secondary); }
-.error { color: var(--error-color); }
 
-/* Buttons */
-.btn {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  transition: all var(--transition-fast);
+.loading-state {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--c-text-secondary);
 }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--accent-color); color: var(--text-on-accent); border-color: var(--accent-color); }
-.btn-primary:hover:not(:disabled) { opacity: 0.9; }
-.btn-secondary { background: var(--bg-secondary); color: var(--text-primary); }
-.btn-secondary:hover:not(:disabled) { background: var(--bg-tertiary); }
-.btn-danger { background: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
-.btn-danger:hover:not(:disabled) { opacity: 0.9; }
-.btn-sm { padding: 2px 8px; font-size: var(--font-xs); }
 
-/* Key list */
+.error-state {
+  text-align: center;
+  padding: var(--space-7);
+  color: var(--c-error);
+}
+
 .key-list { display: flex; flex-direction: column; gap: var(--space-3); }
 
 .key-card {
@@ -332,35 +317,34 @@ function formatRelativeTime(dateStr: string): string {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
   gap: var(--space-3);
 }
 
-.key-name { font-weight: 600; font-size: var(--font-md); }
+.key-name { font-weight: 600; font-size: var(--font-md); color: var(--c-text); }
 
 .key-meta {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: var(--font-xs);
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   margin-top: 2px;
 }
 
-.key-prefix { font-family: var(--font-mono); color: var(--text-tertiary); }
+.key-prefix { font-family: var(--font-mono); color: var(--c-text-tertiary); }
 .key-expiry { }
-.key-expiry.expired { color: var(--error-text); font-weight: 500; }
-.key-created { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 2px; }
+.key-expiry.expired { color: var(--c-error); font-weight: 500; }
+.key-created { font-size: var(--font-xs); color: var(--c-text-tertiary); margin-top: 2px; }
 
 .cleanup-btn { margin-top: var(--space-4); }
 
-/* Dialog */
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: var(--bg-overlay);
+  background: rgba(0,0,0,.5);
   z-index: 9997;
   display: flex;
   align-items: center;
@@ -368,34 +352,34 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 .dialog {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
   padding: 24px;
   max-width: 480px;
   width: 90%;
   position: relative;
 }
 
-.dialog h2 { margin: 0 0 20px; font-size: 20px; color: var(--text-primary); }
+.dialog h2 { margin: 0 0 20px; font-size: 20px; color: var(--c-text); }
 
 .form-field { margin-bottom: 16px; }
-.form-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.form-field label { display: block; font-size: 13px; color: var(--c-text-secondary); margin-bottom: 4px; }
 
 .form-field input,
 .form-field select {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-lower);
+  color: var(--c-text);
   font-size: 14px;
 }
 
 .form-field input:focus,
 .form-field select:focus {
-  outline: 2px solid var(--accent-color);
+  outline: 2px solid var(--c-accent);
   outline-offset: -1px;
 }
 
@@ -408,13 +392,13 @@ function formatRelativeTime(dateStr: string): string {
   background: none;
   border: none;
   font-size: 20px;
-  color: var(--text-secondary);
+  color: var(--c-text-secondary);
   cursor: pointer;
   padding: 4px;
 }
 
 .warning-text {
-  color: var(--warning-color);
+  color: var(--c-warning);
   font-weight: 500;
   font-size: var(--font-sm);
   margin-bottom: var(--space-3);
@@ -425,8 +409,8 @@ function formatRelativeTime(dateStr: string): string {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
+  background: var(--c-surface-lower);
+  border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
 }
 
@@ -436,6 +420,7 @@ function formatRelativeTime(dateStr: string): string {
   font-size: var(--font-sm);
   word-break: break-all;
   user-select: all;
+  color: var(--c-text);
 }
 
 .dialog-enter-active { transition: opacity 0.2s ease; }
