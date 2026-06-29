@@ -65,15 +65,14 @@ curl -sf http://localhost:18800/json/version | python3 -c "import sys,json; d=js
 
 #### 4b. Playwright 截图
 
-**方式 A：playwright-vision skill**（推荐，Claude Code / OpenCode 均可用）
+**方式 A：playwright-vision skill**（Claude Code 专用）
 
 调用 `Skill("playwright-vision")`，按 skill 模板写 CDP 截图脚本：
 - 连接 `http://localhost:18800`（CDP）
 - 导航到 `http://127.0.0.1:8888/explore`
 - 截图保存到 `/tmp/env-check/desktop.png` + `/tmp/env-check/mobile.png`
-- 用 `npx tsx` 执行脚本
 
-**方式 B：手写脚本**（skill 不可用时的备选）
+**方式 B：手写脚本**（OpenCode / 通用）
 
 ```typescript
 // 保存到 /tmp/env-check/capture.ts
@@ -111,7 +110,7 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx /tmp/e
 
 #### 4c. Vision 分析
 
-**方式 A：vision-analyzer skill**（推荐，Claude Code / OpenCode 均可用）
+**方式 A：vision-analyze CLI**（Claude Code / 通用）
 
 ```bash
 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py \
@@ -121,7 +120,7 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx /tmp/e
 
 验证输出含有效 YAML 且 `summary` 字段非空。
 
-**方式 B：MCP vision-helper 子 Agent**（OpenCode 专用备选）
+**方式 B：vision-helper subagent**（OpenCode 专用）
 
 ```
 Task 工具调用：
