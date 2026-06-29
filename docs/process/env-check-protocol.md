@@ -90,14 +90,24 @@ curl -sf http://localhost:18800/json/version | python3 -c "import sys,json; d=js
 
 #### 4b. Playwright 截图
 
-**方式 A：playwright-vision skill**（Claude Code 专用）
+**方式 A：playwright-vision skill**（Claude Code / OpenCode 通用，推荐）
 
-调用 `Skill("playwright-vision")`，按 skill 模板写 CDP 截图脚本：
-- 连接 `http://localhost:18800`（CDP）
-- 导航到 `http://127.0.0.1:8888/explore`
-- 截图保存到 `/tmp/env-check/desktop.png` + `/tmp/env-check/mobile.png`
+1. 调用 `Skill("playwright-vision")` 加载 skill
+2. 按 skill 模板写 CDP 截图脚本，保存到 `/tmp/env-check/capture.ts`：
+   - 连接 `http://localhost:18800`（CDP）
+   - 导航到 `http://127.0.0.1:8888/explore`
+   - Desktop 截图保存到 `/tmp/env-check/desktop.png`
+   - Mobile 截图（CDP Emulation）保存到 `/tmp/env-check/mobile.png`
+3. 执行：
+```bash
+mkdir -p /tmp/env-check
+NODE_PATH=$(npm root -g) npx tsx /tmp/env-check/capture.ts
+```
 
-**方式 B：手写脚本**（OpenCode / 通用）
+> ⚠️ 全局安装的 playwright 需要 `NODE_PATH=$(npm root -g)` 前缀，否则 tsx 找不到模块。
+> 如果前端项目有本地 playwright（`frontend-v3/node_modules/playwright`），也可从该目录执行：`cd frontend-v3 && npx tsx /tmp/env-check/capture.ts`
+
+**方式 B：手写脚本**（skill 不可用时的备选）
 
 ```typescript
 // 保存到 /tmp/env-check/capture.ts
