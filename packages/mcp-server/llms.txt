@@ -1,0 +1,39 @@
+# @peekview/mcp-server
+
+> MCP bridge for PeekView. Streamable HTTP transport, dual mode (local/remote), multi-user auth.
+
+Connect PeekView to Claude Code, Cursor, OpenCode, or any MCP client. Agents call tools to publish output — no human running a command, no copy-paste. Local mode reads files directly from disk (bypasses LLM context). Remote mode accepts file content over MCP.
+
+## Setup
+
+- [MCP Server README](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): Install, configure, run, connect to clients
+
+## Tools
+
+- [Tool reference](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): publish_files (local), create_entry (remote), get_entry, list_entries, delete_entry — parameters, return values, usage notes
+
+## Modes
+
+- [Dual mode](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): Local (direct file read, Agent passes paths) vs Remote (Agent sends content over MCP), when to use each
+
+## Configuration
+
+- [Config reference](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): Environment variables, config file, allowed_paths, trust_all_paths, PeekView URL, API key
+
+## Client Setup
+
+- [Claude Code](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): claude mcp add command with Streamable HTTP transport
+- [Cursor / OpenCode / other MCP clients](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): JSON config with URL and headers
+
+## Security
+
+- [Security model](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): Path allowlist, symlink handling, denylist for sensitive files, API key auth
+
+## Deploy
+
+- [Agent deployment guide](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/agent-deployment-guide.md): VPS deployment, systemd, Docker, reverse proxy for PeekView + MCP Server
+
+## Optional
+
+- [PeekView README](https://github.com/randomgitsrc/peekview/blob/main/README.md): Backend service quick start, rendering capabilities
+- [CHANGELOG](https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md): Version history

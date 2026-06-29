@@ -1,0 +1,36 @@
+# PeekView
+
+> Agent writes, humans view, agents can also read. Publish agent output, get a link — rendered in browser, readable via /raw endpoint.
+
+PeekView is a self-hosted rendering service for AI agent output. Agents publish via MCP, CLI, or REST API. Humans open the link in a browser. Other agents read the raw content back via GET /api/v1/entries/{slug}/raw.
+
+Two packages: **peekview** (Python, pipx install) provides the backend + frontend + CLI. **@peekview/mcp-server** (Node.js, npm install) provides the MCP bridge.
+
+## Setup
+
+- [Deployment guide](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md): Install, configure, run, systemd, reverse proxy, uninstall
+- [README](https://github.com/randomgitsrc/peekview/blob/main/README.md): Quick start, rendering capabilities, CLI cheat sheet, env vars
+
+## MCP Integration
+
+- [MCP Server README](https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/README.md): Tool reference, local/remote dual mode, security model, client config
+- [Agent deployment guide](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/agent-deployment-guide.md): VPS deployment for MCP + PeekView
+
+## Configuration
+
+- [Deployment guide — config section](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md): 33 env vars (PEEKVIEW_* prefix), config.yaml, priority order
+
+## API
+
+- [Agent read path](https://github.com/randomgitsrc/peekview/blob/main/README.md): GET /api/v1/entries/{slug}/raw — structured JSON, public entries no auth, private entries need API key
+- [REST endpoints](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md): CRUD entries, files, auth, apikeys (TODO: dedicated API reference)
+
+## CLI
+
+- [CLI cheat sheet](https://github.com/randomgitsrc/peekview/blob/main/README.md): create, get, list, delete, serve, user, apikey
+- [CLI full reference](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md): All commands with flags (TODO: dedicated CLI reference)
+
+## Optional
+
+- [Debugging guide](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEBUGGING.md): Local source build, dev environment
+- [CHANGELOG](https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md): Version history
