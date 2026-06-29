@@ -17,6 +17,13 @@ export interface EntryListItemResponse {
 }
 
 // For get entry endpoint - full response with files
+export interface ReadStatsResponse {
+  total_count: number
+  unique_readers: number
+  by_channel: Record<string, number>
+  last_read_at: string | null
+}
+
 export interface EntryResponse {
   id: number
   slug: string
@@ -35,6 +42,7 @@ export interface EntryResponse {
     shared_by: string | null
   } | null
   revoked_shares?: number | null
+  read_stats?: ReadStatsResponse | null
 }
 
 export interface FileResponse {

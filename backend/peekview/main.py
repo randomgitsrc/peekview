@@ -107,6 +107,7 @@ def create_app(
     from peekview.services.admin_service import AdminService
     from peekview.services.apikey_service import ApiKeyService
     from peekview.services.entry_service import EntryService
+    from peekview.services.read_tracking_service import ReadTrackingService
     from peekview.services.share_service import ShareService
     from peekview.storage import StorageManager
     storage = StorageManager(config=config)
@@ -114,10 +115,12 @@ def create_app(
     apikey_service = ApiKeyService(engine=engine)
     admin_service = AdminService(engine=engine, storage=storage, config=config)
     share_service = ShareService(engine=engine, config=config)
+    read_tracking_service = ReadTrackingService(engine=engine)
     app.state.entry_service = entry_service
     app.state.apikey_service = apikey_service
     app.state.admin_service = admin_service
     app.state.share_service = share_service
+    app.state.read_tracking_service = read_tracking_service
 
     # Setup CORS - use config or default
     cors_origins = getattr(config, 'cors_origins', ["http://localhost:5173"])

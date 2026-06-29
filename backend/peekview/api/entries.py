@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
+import logging
 import zipfile
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -10,7 +12,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from peekview.api.files import _sanitize_filename
-from peekview.auth import get_current_user
+from peekview.auth import get_current_user, require_auth
 from peekview.exceptions import AuthenticationError, NotFoundError
 from peekview.models import (
     API_KEY_PREFIX,
@@ -22,12 +24,45 @@ from peekview.models import (
 )
 from peekview.services.entry_service import EntryService, get_entry_service
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 
 
 def _get_service(request: Request) -> EntryService:
     """Get EntryService from app state."""
     return get_entry_service(request.app)
+
+
+def _detect_channel(request: Request) -> str:
+    source = request.headers.get("X-PeekView-Source", "").lower()
+    if source == "mcp":
+        return "mcp"
+    if "share=" in str(request.url.query):
+        return "share"
+    return "api"
+
+
+async def _record_read_async(
+    app_state,
+    entry_id: int,
+    entry_owner_id: int | None,
+    action: str,
+    channel: str,
+    reader_id: int | None,
+    reader_ip: str | None,
+) -> None:
+    try:
+        app_state.read_tracking_service.record_read(
+            entry_id=entry_id,
+            entry_owner_id=entry_owner_id,
+            action=action,
+            channel=channel,
+            reader_id=reader_id,
+            reader_ip=reader_ip,
+        )
+    except Exception as e:
+        logger.warning("Failed to record read event: %s", e)
 
 
 def _check_share_cookie(request: Request, slug: str, service: EntryService):
@@ -162,10 +197,25 @@ async def list_entries(
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
-    return service.list_entries(
+    result = service.list_entries(
         q=q, tags=tag_list, status=status, page=page, per_page=per_page,
         current_user_id=current_user_id, is_admin=is_admin, owner=owner,
     )
+
+    channel = _detect_channel(request)
+    reader_ip = request.client.host if request.client else None
+    for item in result.items:
+        asyncio.create_task(_record_read_async(
+            request.app.state,
+            entry_id=item.id,
+            entry_owner_id=item.owner_id,
+            action="discover",
+            channel=channel,
+            reader_id=current_user_id,
+            reader_ip=reader_ip,
+        ))
+
+    return result
 
 
 @router.get("/{slug}")
@@ -196,7 +246,14 @@ async def get_entry(
                 raise NotFoundError(f"Entry not found: {slug}")
 
             if entry.is_public or (current_user_id is not None and (is_admin or entry.owner_id == current_user_id)):
-                return service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+                resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin,
+                                        include_read_stats=(current_user_id is not None and (is_admin or entry.owner_id == current_user_id)))
+                asyncio.create_task(_record_read_async(
+                    request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
+                    action="read", channel="api", reader_id=current_user_id,
+                    reader_ip=request.client.host if request.client else None,
+                ))
+                return resp
 
         result = service.get_entry_with_share(slug, share, share_service)
         if result is None:
@@ -212,6 +269,12 @@ async def get_entry(
             is_secure=is_secure,
         )
 
+        asyncio.create_task(_record_read_async(
+            request.app.state, entry_id=entry_response.id, entry_owner_id=entry_response.owner_id,
+            action="read", channel="share", reader_id=current_user_id,
+            reader_ip=request.client.host if request.client else None,
+        ))
+
         content = entry_response.model_dump(mode="json")
         response = JSONResponse(content=content)
         response.set_cookie(**cookie_params)
@@ -220,9 +283,54 @@ async def get_entry(
 
     cookie_result = _check_share_cookie(request, slug, service)
     if cookie_result is not None:
+        with Session(request.app.state.engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if entry:
+                asyncio.create_task(_record_read_async(
+                    request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
+                    action="read", channel="share", reader_id=current_user_id,
+                    reader_ip=request.client.host if request.client else None,
+                ))
         return cookie_result
 
-    return service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
+    with Session(request.app.state.engine) as session:
+        entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+        if not entry:
+            raise NotFoundError(f"Entry not found: {slug}")
+
+    include_stats = current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
+    resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin, include_read_stats=include_stats)
+
+    channel = _detect_channel(request)
+    asyncio.create_task(_record_read_async(
+        request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
+        action="read", channel=channel, reader_id=current_user_id,
+        reader_ip=request.client.host if request.client else None,
+    ))
+
+    return resp
+
+
+@router.get("/{slug}/reads")
+async def get_entry_reads(
+    slug: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(require_auth),
+):
+    with Session(request.app.state.engine) as session:
+        entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+        if not entry:
+            raise NotFoundError(f"Entry not found: {slug}")
+
+    is_admin = current_user.is_admin
+    if not is_admin and entry.owner_id != current_user.id:
+        raise NotFoundError(f"Entry not found: {slug}")
+
+    return request.app.state.read_tracking_service.get_read_events(
+        entry_id=entry.id, page=page, per_page=per_page,
+    )
 
 
 @router.patch("/{slug}")

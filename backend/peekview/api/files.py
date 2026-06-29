@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import re
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -20,6 +22,30 @@ from peekview.services.html_render_service import (
     parse_inject_ids,
 )
 from peekview.storage import StorageManager
+
+logger = logging.getLogger(__name__)
+
+
+async def _record_read_async(
+    app_state,
+    entry_id: int,
+    entry_owner_id: int | None,
+    action: str,
+    channel: str,
+    reader_id: int | None,
+    reader_ip: str | None,
+) -> None:
+    try:
+        app_state.read_tracking_service.record_read(
+            entry_id=entry_id,
+            entry_owner_id=entry_owner_id,
+            action=action,
+            channel=channel,
+            reader_id=reader_id,
+            reader_ip=reader_ip,
+        )
+    except Exception as e:
+        logger.warning("Failed to record read event: %s", e)
 
 RENDER_CSP = (
     "default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; "
@@ -356,6 +382,7 @@ async def get_entry_raw(
 
     # Auth + visibility — reuse existing logic (returns 404 for private/missing)
     global_key_auth = _is_global_api_key_auth(request, current_user)
+    entry_owner_id: int | None = None
     if global_key_auth:
         with Session(engine) as session:
             entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
@@ -366,6 +393,7 @@ async def get_entry_raw(
             entry_summary = entry.summary
             entry_tags = entry.tags or []
             entry_created_at = entry.created_at
+            entry_owner_id = entry.owner_id
     else:
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
@@ -382,6 +410,7 @@ async def get_entry_raw(
         entry_summary = entry_resp.summary
         entry_tags = entry_resp.tags
         entry_created_at = entry_resp.created_at
+        entry_owner_id = entry_resp.owner_id
 
     # Build base URL for file_url and raw_url
     base = str(request.base_url).rstrip("/")
@@ -438,6 +467,15 @@ async def get_entry_raw(
         ensure_ascii=False,
         default=str,
     ).replace("</", "<\\/")
+
+    current_user_id_raw = current_user.id if current_user else None
+    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    reader_ip = request.client.host if request.client else None
+    asyncio.create_task(_record_read_async(
+        request.app.state, entry_id=entry_id, entry_owner_id=entry_owner_id,
+        action="read", channel=channel, reader_id=current_user_id_raw,
+        reader_ip=reader_ip,
+    ))
 
     return Response(
         content=serialized,

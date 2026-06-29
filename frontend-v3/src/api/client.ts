@@ -78,6 +78,14 @@ class PeekAPI {
           }
         : null,
       revokedShares: entry.revoked_shares ?? undefined,
+      readStats: entry.read_stats
+        ? {
+            totalCount: entry.read_stats.total_count,
+            uniqueReaders: entry.read_stats.unique_readers,
+            byChannel: entry.read_stats.by_channel,
+            lastReadAt: entry.read_stats.last_read_at,
+          }
+        : null,
     }
   }
 

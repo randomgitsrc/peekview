@@ -1,4 +1,11 @@
 // Entry types
+export interface ReadStats {
+  totalCount: number
+  uniqueReaders: number
+  byChannel: Record<string, number>
+  lastReadAt: string | null
+}
+
 export interface Entry {
   id: number
   slug: string
@@ -18,6 +25,7 @@ export interface Entry {
     sharedBy: string | null
   } | null
   revokedShares?: number | null
+  readStats?: ReadStats | null
 }
 
 export interface File {

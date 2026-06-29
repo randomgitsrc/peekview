@@ -259,7 +259,7 @@ class EntryService:
             files=file_responses,
         )
 
-    def get_entry(self, slug: str, current_user_id: int | None = None, is_admin: bool = False) -> EntryResponse:
+    def get_entry(self, slug: str, current_user_id: int | None = None, is_admin: bool = False, include_read_stats: bool = False) -> EntryResponse:
         """Get entry details by slug.
 
         Private entries are only visible to their owner (or admin).
@@ -283,7 +283,7 @@ class EntryService:
             # Resolve username for owner
             username = self._resolve_username(session, entry.owner_id)
 
-            return self._build_response(entry, list(files), username)
+            return self._build_response(entry, list(files), username, include_read_stats=include_read_stats)
 
     def list_entries(
         self,
@@ -633,7 +633,7 @@ class EntryService:
             session.delete(entry)
             session.commit()
 
-        # Delete files (best-effort after DB commit)
+        self._cleanup_reads(entry_id)
         self.storage.delete_entry_files(entry_id)
 
     def delete_entry_by_api_key(self, slug: str) -> None:
@@ -653,28 +653,17 @@ class EntryService:
             session.delete(entry)
             session.commit()
 
-        # Delete files (best-effort after DB commit)
+        self._cleanup_reads(entry_id)
         self.storage.delete_entry_files(entry_id)
 
-    def delete_entry_by_api_key(self, slug: str) -> None:
-        """Delete entry via API Key (service-level auth).
-
-        This bypasses owner checks — API Key holders can delete any entry,
-        including owner_id=NULL legacy entries.
-        """
+    def _cleanup_reads(self, entry_id: int) -> None:
+        from peekview.models import EntryRead
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
-            if not entry:
-                raise NotFoundError(f"Entry not found: {slug}")
-
-            entry_id = entry.id
-            session.delete(entry)
+            for r in session.exec(
+                select(EntryRead).where(EntryRead.entry_id == entry_id)
+            ).all():
+                session.delete(r)
             session.commit()
-
-        # Delete files (best-effort after DB commit)
-        self.storage.delete_entry_files(entry_id)
 
     def _retry_with_slug_suffix(
         self,
@@ -817,7 +806,7 @@ class EntryService:
         user = session.exec(select(User).where(User.id == owner_id)).first()
         return user.username if user else None
 
-    def _build_response(self, entry: Entry, files: list[File], username: str | None = None) -> EntryResponse:
+    def _build_response(self, entry: Entry, files: list[File], username: str | None = None, include_read_stats: bool = False) -> EntryResponse:
         """Build EntryResponse from Entry + File records."""
         file_responses = []
         for f in files:
@@ -833,6 +822,12 @@ class EntryService:
                 )
             )
 
+        read_stats = None
+        if include_read_stats:
+            from peekview.services.read_tracking_service import ReadTrackingService
+            tracking_service = ReadTrackingService(engine=self.engine)
+            read_stats = tracking_service.get_read_stats(entry.id)
+
         return EntryResponse(
             id=entry.id,
             slug=entry.slug,
@@ -846,6 +841,7 @@ class EntryService:
             expires_at=entry.expires_at,
             created_at=entry.created_at,
             updated_at=entry.updated_at,
+            read_stats=read_stats,
         )
 
     def _get_share_service(self):

@@ -253,6 +253,56 @@ class EntryShare(SQLModel, table=True):
         return f"<EntryShare(id={self.id}, prefix={self.token_prefix!r})>"
 
 
+class EntryRead(SQLModel, table=True):
+    __tablename__ = "entry_reads"
+    __table_args__ = (
+        Index("idx_entry_reads_entry_id", "entry_id"),
+        Index("idx_entry_reads_entry_channel", "entry_id", "channel"),
+        Index("idx_entry_reads_reader", "reader_id"),
+        Index("idx_entry_reads_read_at", "read_at"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    entry_id: int = Field(index=True)
+    action: str = Field(default="read", max_length=20)
+    channel: str = Field(default="api", max_length=20)
+    reader_type: str = Field(default="anonymous", max_length=20)
+    reader_id: int | None = Field(default=None)
+    is_self_read: bool = Field(default=False)
+    count: int = Field(default=1)
+    window_key: str = Field(unique=True, max_length=200)
+    reader_fingerprint: str = Field(default="", max_length=50)
+    read_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
+class ReadStatsResponse(SQLModel):
+    total_count: int = 0
+    unique_readers: int = 0
+    by_channel: dict[str, int] = {}
+    last_read_at: datetime | None = None
+
+
+class ReadEventResponse(SQLModel):
+    id: int
+    action: str
+    channel: str
+    reader_type: str
+    reader_id: int | None
+    is_self_read: bool
+    count: int
+    read_at: datetime
+    updated_at: datetime
+
+
+class ReadEventListResponse(SQLModel):
+    items: list[ReadEventResponse]
+    total: int
+    page: int
+    per_page: int
+
+
 class FileBase(SQLModel):
     """Base model for File."""
 
@@ -423,6 +473,7 @@ class EntryResponse(SQLModel):
     updated_at: datetime
     share_context: EntryShareContext | None = None
     revoked_shares: int | None = None
+    read_stats: ReadStatsResponse | None = None
 
 
 class EntryListItem(SQLModel):

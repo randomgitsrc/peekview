@@ -28,6 +28,7 @@ export class PeekViewClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${userToken}`,
+      'X-PeekView-Source': 'mcp',
     };
 
     const controller = new AbortController();

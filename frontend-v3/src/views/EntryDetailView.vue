@@ -50,6 +50,12 @@
         <span v-if="currentEntry?.createdAt" class="entry-time desktop-only" :title="fullTime">
           {{ relativeTime }}
         </span>
+        <span v-if="currentEntry?.readStats" class="entry-read-stats desktop-only">
+          {{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}
+          <template v-if="Object.keys(currentEntry.readStats.byChannel).length > 1">
+            (API {{ currentEntry.readStats.byChannel.api ?? 0 }}, MCP {{ currentEntry.readStats.byChannel.mcp ?? 0 }})
+          </template>
+        </span>
         <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires desktop-only">
           Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
         </span>
@@ -707,6 +713,11 @@ watch(() => entryStore.currentEntry, (entry) => {
 }
 
 .entry-expires {
+  font-size: var(--font-xs);
+  color: var(--c-text-secondary);
+}
+
+.entry-read-stats {
   font-size: var(--font-xs);
   color: var(--c-text-secondary);
 }
