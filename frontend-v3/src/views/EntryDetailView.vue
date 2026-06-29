@@ -6,7 +6,13 @@
       <router-link to="/" class="detail-logo" title="Back to home">
         <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </router-link>
-      <h1 class="title">{{ entryTitle }}</h1>
+      <div class="title-group">
+        <h1 class="title">{{ entryTitle }}</h1>
+        <div v-if="currentEntry?.tags?.length" class="header-tags">
+          <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
+          <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
+        </div>
+      </div>
       <div class="header-right">
         <!-- Owner controls (visibility + delete) -->
         <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
@@ -41,8 +47,8 @@
         <span v-if="entryStore.currentEntry?.username" class="entry-owner desktop-only">
           @{{ entryStore.currentEntry.username }}
         </span>
-        <span v-if="entryStore.currentEntry?.createdAt" class="entry-time desktop-only">
-          {{ formatRelativeTime(entryStore.currentEntry.createdAt) }}
+        <span v-if="currentEntry?.createdAt" class="entry-time desktop-only" :title="fullTime">
+          {{ relativeTime }}
         </span>
         <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires desktop-only">
           Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
@@ -305,7 +311,9 @@ import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { guessMimeType } from '@/utils/mime'
 import { formatExpiresIn } from '@/utils/expires'
+import { useRelativeTime } from '@/composables/useRelativeTime'
 import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
+import BaseTag from '@/components/BaseTag.vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -422,6 +430,15 @@ function handleShareCreated() {
 
 function handleShareRevoked() {
 }
+
+const TAG_LIMIT = 3
+
+const visibleTags = computed(() => (currentEntry.value?.tags ?? []).slice(0, TAG_LIMIT))
+
+const remainingTagCount = computed(() => Math.max(0, (currentEntry.value?.tags?.length ?? 0) - TAG_LIMIT))
+
+const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
+const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
 
 const entryTitle = computed(() => {
   return currentEntry.value?.summary || props.slug
@@ -596,27 +613,6 @@ function extractHeadings(content: string): TocHeading[] {
   return headings
 }
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSec = Math.floor(diffMs / 1000)
-  const diffMin = Math.floor(diffSec / 60)
-  const diffHour = Math.floor(diffMin / 60)
-  const diffDay = Math.floor(diffHour / 24)
-  const diffWeek = Math.floor(diffDay / 7)
-  const diffMonth = Math.floor(diffDay / 30)
-  const diffYear = Math.floor(diffDay / 365)
-
-  if (diffSec < 60) return 'just now'
-  if (diffMin < 60) return `${diffMin}m ago`
-  if (diffHour < 24) return `${diffHour}h ago`
-  if (diffDay < 7) return `${diffDay}d ago`
-  if (diffWeek < 5) return `${diffWeek}w ago`
-  if (diffMonth < 12) return `${diffMonth}mo ago`
-  return `${diffYear}y ago`
-}
-
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined
   shareErrorState.value = false
@@ -681,6 +677,33 @@ watch(() => entryStore.currentEntry, (entry) => {
 .entry-time {
   font-size: var(--font-xs);
   color: var(--c-text-secondary);
+  cursor: default;
+}
+
+.title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.header-tags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tag-overflow {
+  display: inline-flex;
+  align-items: center;
+  background: var(--c-tag-bg);
+  color: var(--c-text-tertiary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
 }
 
 .entry-expires {

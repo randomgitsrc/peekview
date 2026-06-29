@@ -40,10 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
+import { useRelativeTime } from '@/composables/useRelativeTime'
 
 const props = withDefaults(defineProps<{
   entry: Entry
@@ -66,11 +67,13 @@ const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
 
 const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
+const createdAtRef = toRef(() => props.entry.createdAt)
+const { relative: relativeTime } = useRelativeTime(createdAtRef)
+
 const metaText = computed(() => {
   const parts: string[] = []
   if (props.entry.username) parts.push(`@${props.entry.username}`)
-  const date = new Date(props.entry.createdAt)
-  parts.push(date.toLocaleDateString())
+  parts.push(relativeTime.value)
   if (props.entry.fileCount) parts.push(`${props.entry.fileCount} file${props.entry.fileCount !== 1 ? 's' : ''}`)
   return parts.join(' · ')
 })
