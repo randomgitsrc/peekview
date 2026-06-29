@@ -21,7 +21,7 @@
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
 | T029 | card-list-layout-polish | ✅ 已完成 | READY | 🟠 | 无 | 2026-06-29 | 2026-06-30 |
-| T030 | frontend-interaction-enhancements | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T030 | frontend-interaction-enhancements | 🔄 进行中 | P2 | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T032 | entry-read-tracking | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T033 | share-semantic-security-fixes | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
