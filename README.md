@@ -1,281 +1,135 @@
-# PeekView
+# PeekView — 读取机器
 
-> Lightweight code & document formatting service — Agent creates, human views
+> Agent 可写的高质量可分享渲染器。Agent 发布 → 人看。
 
-**Agent (AI) → PeekView formats → Human views in browser**
-
-**One-liner:** `pipx install peekview && peekview serve && peekview create file.py -s "Hello"`
+```
+Agent 产出 ──▶ PeekView 渲染 ──▶ 人看（浏览器）
+ (MCP/CLI/API)                ──▶ Agent 读（/raw 原始内容）
+```
 
 [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Vue 3](https://img.shields.io/badge/vue-3.4+-green.svg)](https://vuejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+## 两个包
 
-## What is PeekView?
+| 包 | 安装 | 作用 |
+|---|------|------|
+| **peekview** | `pipx install peekview` | 后端 + 前端 + CLI — 提供渲染服务、REST API |
+| **@peekview/mcp-server** | `npm install -g @peekview/mcp-server` | MCP 桥接 — 让 Agent 通过 MCP 协议调用 PeekView |
 
-PeekView is a self-hosted service that formats code and documents for human viewing. AI agents (Claude Code, Cursor, Codex, etc.) create entries via CLI, REST API, or MCP protocol — humans view them in a browser with syntax highlighting, file trees, and more.
-
-**Two components:**
-
-| Component | Package | Purpose |
-|-----------|---------|---------|
-| **PeekView** (Backend+Frontend) | `pipx install peekview` | Web service: serves formatted entries, REST API, CLI |
-| **PeekView MCP Server** | `npm install -g @peekview/mcp-server` | AI Agent bridge: lets agents call PeekView via MCP protocol |
-
----
-
-## Quick Start
-
-### 1. Install and start PeekView
+## 快速开始
 
 ```bash
+# 1. 安装并启动
 pipx install peekview
-peekview serve                    # Start on http://localhost:8080
-```
+peekview serve                          # http://localhost:8080
 
-### 2. Create your first entry
+# 2. 创建一个条目
+peekview create file.py -s "我的代码"   # → http://localhost:8080/wo-de-dai-ma
 
-```bash
-peekview create file.py -s "My code"              # Returns: http://localhost:8080/my-code
-peekview create src/*.py -s "Project" -t python    # Multi-file with file tree
-peekview create index.html style.css -s "Demo"     # HTML renders in sandbox
-```
-
-### 3. Connect your AI agent (optional)
-
-```bash
+# 3. 接入 Agent（可选）
 npm install -g @peekview/mcp-server
-
-# Configure MCP Server
 peekview-mcp config set peekview.url http://localhost:8080
-peekview-mcp serve &
-
-# Add to Claude Code
-claude mcp add peekview \
-  --transport http http://localhost:33333/mcp \
-  --header "Authorization: Bearer pv_your_api_key"
+peekview-mcp serve
 ```
 
----
+## 给人看：浏览条目
 
-## PeekView MCP Server
+浏览器打开任意条目链接，PeekView 渲染：
 
-The MCP Server (`@peekview/mcp-server`) lets AI agents interact with PeekView via the MCP protocol (Streamable HTTP transport). It supports two modes:
+- **代码** — Shiki 语法高亮，100+ 语言，行号定位
+- **Markdown** — GFM 渲染，自动目录，DOMPurify 净化
+- **图表** — Mermaid、PlantUML
+- **HTML** — 沙箱 iframe，支持 CSS/JS/图片注入（Three.js、Canvas、WebGL）
+- **图片** — PNG/JPG/GIF/WebP/SVG，缩放查看
+- **多文件** — 文件树导航，ZIP 下载
+- **搜索** — 全文检索
 
-### Remote Mode (default)
+暗色/亮色主题、移动端适配、自定义 slug、私有条目、用户认证、API Key 管理。
 
-Agent and PeekView on different machines. Agent sends file **content** to PeekView API.
+## 给 Agent 用：MCP 集成
 
-```
-Agent (machine A) → HTTP POST → MCP Server (machine B) → HTTP → PeekView (machine C)
-```
+### 工具列表
 
-**Tools:** `create_entry`, `get_entry`, `list_entries`, `delete_entry`
+| 工具 | 模式 | 签名 | 返回 |
+|------|------|------|------|
+| `publish_files` | local | `(paths: string[], summary: string, slug?, tags?, is_public?, expires_in?, include_patterns?, exclude_patterns?)` | 条目 URL |
+| `create_entry` | remote | `(files: {filename, content, path?}[], summary: string, slug?, tags?, is_public?, expires_in?)` | 条目 URL |
+| `get_entry` | both | `(slug: string)` | 条目详情 + 文件列表 |
+| `list_entries` | both | `(query?, tags?, page?, per_page?)` | 条目列表 |
+| `delete_entry` | both | `(slug: string, confirm: boolean)` | 确认 |
 
-### Local Mode
+### Local vs Remote
 
-Agent and MCP Server on the same machine. MCP Server reads files **directly from disk**.
+- **Local**（默认）：MCP Server 直接读本地文件，Agent 只传路径不传内容，绕过 LLM 上下文
+- **Remote**：Agent 通过 MCP 发送文件内容，适用于跨机器部署
 
-```
-Agent + MCP Server (same machine) → reads local files → HTTP → PeekView
-```
+完整配置、安全模型、部署拓扑：[packages/mcp-server/README.md](packages/mcp-server/README.md)
 
-**Tools:** `publish_files`, `get_entry`, `list_entries`, `delete_entry`
+### 接入 Agent
 
-### MCP Server Setup
-
+**Claude Code：**
 ```bash
-npm install -g @peekview/mcp-server
-
-# Configure
-peekview-mcp config set peekview.url http://localhost:8080       # PeekView address
-peekview-mcp config set peekview.public_url https://peek.example.com  # Public URL for view links
-peekview-mcp config set server.mode local     # or "remote" (default)
-peekview-mcp config set server.allowed_paths /home/user/projects:/tmp  # Local mode: paths allowed to read
-
-# Start
-peekview-mcp serve                              # Foreground
-peekview-mcp service install --user             # Systemd user service
-peekview-mcp service start
-
-# Add to Claude Code
 claude mcp add peekview \
   --transport http http://localhost:33333/mcp \
   --header "Authorization: Bearer pv_your_api_key"
+```
 
-# Add to Cursor / other MCP clients
-# In MCP config file:
+**Cursor / OpenCode / 其他 MCP 客户端：**
+```json
 {
   "peekview": {
     "url": "http://localhost:33333/mcp",
-    "headers": {
-      "Authorization": "Bearer pv_your_api_key"
-    }
+    "headers": { "Authorization": "Bearer pv_your_api_key" }
   }
 }
 ```
 
-### Local Mode Security
-
-`publish_files` uses a three-layer security model:
-1. **Sensitive path denylist** — blocks `.env`, `.ssh`, `.kube`, `.npmrc`, credentials, etc.
-2. **Allowed paths** — `server.allowed_paths` config or cwd+tmpdir fallback
-3. **`trust_all_paths`** — dangerous option, still protected by denylist (best-effort)
-
----
-
-## CLI vs MCP: When to Use Which
-
-PeekView offers two ways to create entries — CLI and MCP. They serve different purposes:
-
-| Scenario | Use | Why |
-|----------|-----|-----|
-| You explicitly want to share files | **CLI** (`peekview create`) | Fast, zero config, files don't go through LLM context |
-| Agent decides on its own to publish | **MCP** (`publish_files` / `create_entry`) | No human needed — agent acts autonomously |
-| Agent publishes local files | **MCP local mode** (`publish_files`) | MCP reads files directly, agent only passes paths |
-| CI/CD pipeline automation | **MCP** | Unattended, runs in headless environments |
-| Agent-to-agent content sharing | **MCP** | Agents use PeekView as a shared content hub |
-
-**Key difference:** CLI is for when *you* tell the agent what to do. MCP is for when the *agent* decides on its own. CLI is faster (files go directly to API), MCP is autonomous (no human in the loop).
-
----
-
-## CLI Usage
+## CLI 速查
 
 ```bash
-# Create entries
-peekview create file.py -s "Summary"
-peekview create src/*.py -s "Project" -t python -t cli
-echo "content" | peekview create -s "From stdin" --from-stdin
-peekview create file.py -s "Private" --visibility private
-
-# View & manage
-peekview get my-entry
-peekview list
-peekview list -q "search terms"
-peekview list -t python -t cli
-peekview delete my-entry
-
-# Users
-peekview user create <username>
-peekview user promote <username>
-
-# API Keys
-peekview apikey create "CI Bot"
-peekview apikey create "Temp" --expires 30d
-peekview apikey list
-peekview apikey revoke <key_id>
-
-# System service
-peekview service install --user
-peekview service start
-peekview service status
-
-# Remote CLI
-peekview login --remote-url <url> --username <user>
+peekview create <文件...> -s "摘要"        # 创建条目（支持通配符、stdin、--visibility private）
+peekview get <slug>                         # 查看条目信息
+peekview list [-q "搜索"] [-t 标签]         # 列出/搜索条目
+peekview delete <slug>                      # 删除条目
+peekview serve                              # 启动服务
+peekview user create <用户名>               # 创建用户
+peekview apikey create "标签"               # 创建 API Key
 ```
 
----
+完整 CLI 参考：`peekview --help` | [部署指南](docs/guides/DEPLOYMENT.md)
 
-## Features
+## 配置
 
-- **Code highlighting** — Shiki-based, 100+ languages
-- **Markdown rendering** — GitHub-flavored, auto TOC
-- **Full-text search** — SQLite FTS5
-- **Multi-file entries** — File tree with nested directories, ZIP download
-- **HTML rendering** — iframe sandbox with CSS/JS/image injection
-- **Image preview** — PNG/JPG/GIF/WebP/SVG with zoom
-- **REST API** — Full CRUD with API Key auth
-- **User auth** — JWT registration/login, private entries, owner controls
-- **API Key management** — User-level `pv_` prefix keys, expiration, CLI management
-- **Theme** — Dark/light mode, auto system follow
-- **Mobile** — Responsive design, bottom toolbar
-- **URL-friendly** — Custom slugs, file params, line highlighting
-- **Security** — Path traversal protection, API auth, XSS filtering, iframe sandbox
+主要环境变量（前缀 `PEEKVIEW_`，`__` 分隔嵌套）：
 
----
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `SERVER__HOST` | `0.0.0.0` | 绑定地址（`127.0.0.1` 仅本地） |
+| `SERVER__PORT` | `8080` | 服务端口 |
+| `SERVER__API_KEY` | `""` | 全局 API Key（空=无需认证） |
+| `STORAGE__DATA_DIR` | `~/.peekview/data` | 文件存储目录 |
+| `STORAGE__DB_PATH` | `~/.peekview/peekview.db` | SQLite 数据库路径 |
+| `AUTH__SECRET_KEY` | `""` | JWT 签名密钥（空=自动生成） |
+| `AUTH__ALLOW_REGISTRATION` | `true` | 允许新用户注册 |
+| `LIMITS__MAX_FILE_SIZE` | `10485760` | 单文件最大体积（10MB） |
 
-## Remote CLI Mode
+完整列表（33 项）：[CLAUDE.md](CLAUDE.md) · 配置文件：`~/.peekview/config.yaml` · 优先级：环境变量 > 配置文件 > 默认值
 
-Operate PeekView from a different machine:
+## 技术栈
 
-```bash
-# Config file (~/.peekview/config.yaml)
-remote:
-  url: https://peek.example.com
-  api_key: pv_your-api-key
-  timeout: 60
-  verify_ssl: true
+FastAPI + SQLModel + SQLite (WAL + FTS5) · Vue 3 + Vite + TypeScript + Shiki · Node.js/TypeScript MCP Server · Click + Rich CLI
 
-# Or environment variables
-export PEEKVIEW_REMOTE__URL=https://peek.example.com
-export PEEKVIEW_REMOTE__API_KEY=pv_your-api-key
-```
+## 文档
 
-**Limitations:** Text files only (binary skipped), no `local_path`, directory scan done client-side.
-
----
-
-## Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | Bind address (`127.0.0.1` for local-only) |
-| `PEEKVIEW_SERVER__PORT` | `8080` | Server port |
-| `PEEKVIEW_SERVER__BASE_URL` | `""` | External URL (auto-detect if empty) |
-| `PEEKVIEW_SERVER__API_KEY` | `""` | Global API key (empty = no auth) |
-| `PEEKVIEW_STORAGE__DATA_DIR` | `~/.peekview/data` | File storage directory |
-| `PEEKVIEW_STORAGE__DB_PATH` | `~/.peekview/peekview.db` | SQLite database path |
-| `PEEKVIEW_STORAGE__ALLOWED_PATHS` | `[]` | Allowlist for local_path reads |
-| `PEEKVIEW_AUTH__SECRET_KEY` | `""` | JWT signing key (auto-generate if empty) |
-| `PEEKVIEW_AUTH__ALLOW_REGISTRATION` | `true` | Allow new user registration |
-| `PEEKVIEW_LIMITS__MAX_FILE_SIZE` | `10485760` | Max single file size (10MB) |
-| `PEEKVIEW_LIMITS__MAX_ENTRY_FILES` | `50` | Max files per entry |
-| `PEEKVIEW_CLEANUP__INTERVAL_SECONDS` | `3600` | Cleanup interval (0 = disabled) |
-| `PEEKVIEW_LOGGING__LEVEL` | `INFO` | Log level |
-
-Full list: see [CLAUDE.md](CLAUDE.md) Configuration section (33 variables).
-
-**Priority:** Environment variables > Config file > Defaults
-
-**Config file:** `~/.peekview/config.yaml`
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend | FastAPI + SQLModel + SQLite (WAL + FTS5) |
-| Frontend | Vue 3 + Vite + TypeScript + Shiki |
-| MCP Server | Node.js/TypeScript + Streamable HTTP transport |
-| CLI | Click + Rich |
-| Testing | pytest + Vitest + Playwright |
-
----
-
-## Documentation
-
-- [Deployment Guide](docs/guides/DEPLOYMENT.md) — Install, configure, deploy
-- [Agent Deployment Guide](docs/guides/agent-deployment-guide.md) — VPS deployment for AI agents
-- [Debug Guide](docs/guides/DEBUGGING.md) — Local development
-- [Changelog](CHANGELOG.md) — Version history
-- [Project Index](INDEX.md) — Implementation progress & doc inventory
-
----
-
-## Development
-
-```bash
-make dev && cd backend && .venv/bin/python -m pytest tests/
-cd frontend-v3 && npm install && npm run dev
-cd packages/mcp-server && npm ci && npm run test:unit
-```
-
----
+- [部署指南](docs/guides/DEPLOYMENT.md) — 安装、配置、部署
+- [Agent 部署指南](docs/guides/agent-deployment-guide.md) — VPS 部署 AI Agent
+- [调试指南](docs/guides/DEBUGGING.md) — 本地开发
+- [MCP Server README](packages/mcp-server/README.md) — 完整 MCP 配置与安全说明
+- [更新日志](CHANGELOG.md) — 版本历史
 
 ## License
 
-MIT License
+MIT
