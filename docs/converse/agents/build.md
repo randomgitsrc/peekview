@@ -39,6 +39,7 @@ permission:
 make debug                  # 完整调试流程
 cd backend && make test     # 后端测试
 cd backend && make lint     # 后端 lint
-cd frontend-v3 && npm run build  # 前端构建（含 typecheck）
+cd frontend-v3 && npx vue-tsc --noEmit  # 前端类型检查（CI 强制）
+cd frontend-v3 && npm run build         # 前端构建
 cd packages/mcp-server && npm run build && npm run test:unit  # MCP 构建+测试
 ```

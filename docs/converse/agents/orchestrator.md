@@ -75,6 +75,7 @@ permission:
 
 - `AGENTS.md` — 铁律、命令速览
 - `CLAUDE.md` — 项目约定、架构
+- `DESIGN.md` — 前端设计系统（颜色、字体、组件规范）
 - `INDEX.md` — 实现进度
 - `docs/tasks/active-tasks.md` — 任务看板
 

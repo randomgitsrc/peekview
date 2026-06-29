@@ -31,7 +31,9 @@ permission:
 
 ## 规范
 
-- 新组件参考现有组件风格（`src/components/`、`src/views/`）
+- 所有 UI 必须遵循项目根目录 `DESIGN.md` 的设计系统（colors、typography、spacing、components）
+- 优先使用共享组件；新增组件前先确认是否可复用
+- 新组件风格以 `DESIGN.md` 为准，现有组件仅作实现参考
 - Shiki 做语法高亮，Mermaid 做图表，DOMPurify 清理 markdown
 - CSP `unsafe-eval` 为 Mermaid/d3 必需，不可移除
 - 构建产物自动复制到 `backend/peekview/static/`
@@ -39,4 +41,7 @@ permission:
 
 ## 完成后
 
-跑 `npm run build` 验证构建通过
+```bash
+cd frontend-v3 && npx vue-tsc --noEmit   # CI 强制 typecheck
+cd frontend-v3 && npm run build          # 构建验证
+```
