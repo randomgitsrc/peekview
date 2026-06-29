@@ -7,6 +7,31 @@
 
 按顺序执行，每项输出 ✅ PASS 或 ❌ FAIL + 原因。
 
+### 0. 平台检测
+
+Agent 启动时不知道自己在哪个平台，通过试探工具可用性判断：
+
+```bash
+# 检测是否在 OpenCode 环境
+# OpenCode 有 Task 工具（subagent），Claude Code 有 Skill 工具
+# 两个平台都有 Bash/Read/Write/Edit，无法区分
+# 可靠判断方式：尝试调用各自特有的工具，看是否报错
+```
+
+**判断方法**：
+
+| 试探 | OpenCode | Claude Code |
+|------|----------|-------------|
+| 调用 `skill` 工具加载 `playwright-vision` | ❌ 无此工具 | ✅ 有 Skill 工具 |
+| 调用 `Task` 工具（subagent_type: vision-helper） | ✅ 有 Task 工具 | ❌ 无此工具 |
+
+**判断逻辑**：
+1. 尝试 `Task` 工具 → 成功 → **OpenCode** → 后续用方式 B（手写脚本 + vision-helper subagent）
+2. 尝试 `Skill` 工具 → 成功 → **Claude Code** → 后续用方式 A（playwright-vision skill + vision-analyze CLI）
+3. 都失败 → 报告 ❌ FAIL + "无法判断平台，手动指定"
+
+**记录结果**：在自检输出中记录 `平台: OpenCode` 或 `平台: Claude Code`，后续步骤 4 根据此结果选择方式。
+
 ### 1. 工具链可用性
 
 ```bash
