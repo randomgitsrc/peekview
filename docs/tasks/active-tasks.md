@@ -26,7 +26,7 @@
 | T032 | entry-read-tracking | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T033 | share-semantic-security-fixes | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T036 | detail-info-completeness | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-29 | 2026-06-29 |
+| T036 | detail-info-completeness | 🔄 进行中 | P4 | 🟠 | 无 | 2026-06-29 | 2026-06-30 |
 | T037 | search-content-expansion | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T038 | csharp-highlight-description-api | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 

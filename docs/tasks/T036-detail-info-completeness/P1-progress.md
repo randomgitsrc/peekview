@@ -1,0 +1,5 @@
+=== P1 analyst start ===
+Read P0-brief.md: 3 changes (tags, relative time, timezone unification), known_risks: header space, mobile collapse
+Read source files: EntryDetailView.vue (has formatRelativeTime inline, no tags, no tooltip), EntryCard.vue (tags + TAG_LIMIT=3 + +N overflow), EntryListRow.vue (tags + TAG_LIMIT=3 + +N overflow), BaseTag.vue (simple slot wrapper). Time formatting: EntryCard/EntryListRow use toLocaleDateString(), DetailView uses custom formatRelativeTime(), ApiKeyListView uses formatDate→toLocaleDateString()
+Key findings: (1) Entry type has tags:string[] — data available in detail view via entryStore.currentEntry.tags. (2) formatRelativeTime is inline in EntryDetailView (not shared utils). (3) EntryCard/EntryListRow already use TAG_LIMIT=3 + '+N' overflow. (4) EntryCard/EntryListRow use toLocaleDateString() for date, DetailView uses custom formatRelativeTime(). (5) expires.ts is a shared util for expiry formatting. (6) No shared time-utils file exists yet.
+P1-requirements.md written. 6 BDD conditions, 0 NEED_CONFIRM, 0 GAP. Phases: [P1,P4,P5,P6], skipped P2/P3/P7/P8 with reasons.
