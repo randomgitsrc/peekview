@@ -140,7 +140,7 @@ const hardTimer = setTimeout(() => process.exit(1), 30000);
 
 ```bash
 mkdir -p /tmp/env-check
-NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx /tmp/env-check/capture.ts
+NODE_PATH=$(npm root -g) npx tsx /tmp/env-check/capture.ts
 ```
 
 #### 4c. Vision 分析
