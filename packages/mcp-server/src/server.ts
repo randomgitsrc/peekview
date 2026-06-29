@@ -222,6 +222,11 @@ export function createExpressApp(
     res.status(200).json({ ok: true });
   });
 
+  // llms.txt redirect to GitHub raw (for remote Agent discovery)
+  app.get('/llms.txt', async (_req, res) => {
+    res.redirect('https://github.com/randomgitsrc/peekview/blob/main/packages/mcp-server/llms.txt?raw=true');
+  });
+
   // Health check
   app.get('/health', async (_req, res) => {
     const isPeekViewHealthy = await client.ping();

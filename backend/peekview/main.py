@@ -369,6 +369,14 @@ def create_app(
     async def raw_shortlink(slug: str):
         return RedirectResponse(url=f"/api/v1/entries/{slug}/raw", status_code=302)
 
+    # llms.txt redirect to GitHub raw (for remote Agent discovery)
+    @app.get("/llms.txt")
+    async def llms_txt():
+        return RedirectResponse(
+            url="https://github.com/randomgitsrc/peekview/blob/main/llms.txt?raw=true",
+            status_code=302,
+        )
+
     # Static file serving for production SPA build
     _setup_static_files(app)
 
