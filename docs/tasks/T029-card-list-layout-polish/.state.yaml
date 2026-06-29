@@ -1,0 +1,9 @@
+task_id: T029-card-list-layout-polish
+phase: P4
+status: in_progress
+
+pruned_phases: [P2, P3, P7, P8]
+
+retries: {}
+retry_count: {}
+updated: 2026-06-30
