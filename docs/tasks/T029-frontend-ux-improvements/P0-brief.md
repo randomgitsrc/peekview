@@ -17,7 +17,7 @@ task: 前端体验改进 — 8 个改进项
 5. 卡片/列表 meta 信息位置调整：meta（@user · 日期 · file数）放在 title 下方，tags 限数折叠，布局顺序 title → meta → tags → badge
 6. 详情页 tags + 时间显示：详情页加 tags 显示（标题下方），时间用相对时间 + tooltip 显示完整日期，前端统一用 toLocaleDateString() 走浏览器时区
 7. 搜索内容扩展：当前 FTS5 只索引 summary + tags，扩展为可搜文件内容（需后端 FTS5 索引扩展 + 前端搜索 UI 提示搜索范围）
-8. 详情页长标题 tooltip：详情页标题截断时（line-clamp: 1），hover 显示 tooltip 完整标题
+8. 详情页标题 2 行显示：详情页标题从 1 行截断改为 2 行（line-clamp: 2），header 高度从固定 56px 改为 min-height 自适应
 
 known_risks:
   - Shiki 语言别名修改可能影响其他语言的注册
@@ -26,7 +26,7 @@ known_risks:
   - Tag 折叠交互需要设计 +N 的 tooltip/popover 展开方式
   - 详情页 header 空间有限，加 tags 可能需要折叠区域
   - FTS5 索引扩展到文件内容会增大索引体积，需评估性能影响；已有 entry 的文件内容需回填索引
-  - tooltip 显示长标题需确认各浏览器兼容性（title attribute vs 自定义 tooltip 组件）
+  - 详情页 header 标题 2 行后高度自适应，需确认不挤压右侧按钮布局
 
 executor_env:
   platform: opencode
