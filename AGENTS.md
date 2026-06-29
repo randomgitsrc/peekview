@@ -82,7 +82,11 @@ make publish-npm          # 发布 MCP Server 到 npm
 
 # Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
 NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
-scripts/vision-analyze -i /tmp/screenshot.png -p "描述这张截图"     # vision-analyzer skill
+# Vision 分析（3 种方式，优先用 ①）
+# ① vision-helper subagent（推荐，最方便）：Task 工具，subagent_type: vision-helper，prompt 传截图路径
+# ② vision-analyzer skill：skill 工具加载后，按 SKILL.md 说明使用
+# ③ vision-analyze CLI：python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i /tmp/screenshot.png -p "描述"
+# 配置在 ~/.env（VISION_API_KEY / VISION_API_BASE_URL / VISION_MODEL / VISION_API_FORMAT）
 ```
 
 ## 技术要点
@@ -103,7 +107,7 @@ scripts/vision-analyze -i /tmp/screenshot.png -p "描述这张截图"     # visi
 - **双包发布**：peekview (PyPI) + @peekview/mcp-server (npm)，版本独立管理
 - **数据库**：SQLite WAL + FTS5，时间戳 naive UTC
 - **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key
-- **Playwright/Vision 验证**：Chrome CDP `localhost:18800`（Windows GPU），Playwright `connectOverCDP` 模式。脚本必须：`NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`、`hardTimer`。不要 `browser.close()`（会杀 Chrome）。移动端模拟用 CDP `Emulation.setDeviceMetricsOverride`。截图后用 `vision-helper` subagent 或 `scripts/vision-analyze` 分析
+- **Playwright/Vision 验证**：Chrome CDP `localhost:18800`（Windows GPU），Playwright `connectOverCDP` 模式。脚本必须：`NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`、`hardTimer`。不要 `browser.close()`（会杀 Chrome）。移动端模拟用 CDP `Emulation.setDeviceMetricsOverride`。截图后用 vision-helper subagent（Task 工具，subagent_type: vision-helper）分析，或 `python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i <path> -p <prompt>` CLI
 - **`make debug-verify-isolation`**：依赖生产 :8080 在线——若生产服务未运行会超时。此时可用 `sqlite3 /tmp/peekview-debug/peekview.db "SELECT COUNT(*) FROM entries"` 手动验证隔离
 - **`make debug` E2E**：完整 E2E suite 在 CDP 模式下可能超时（>5min）。Agent 派发时优先用自定义 Playwright 脚本逐项验证，避免触发完整 suite 超时
 

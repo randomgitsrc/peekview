@@ -1,5 +1,19 @@
 <template>
+  <a
+    v-if="href"
+    :href="href"
+    :target="target"
+    :rel="rel"
+    :class="[
+      'base-button',
+      `btn-${variant}`,
+      `btn-${size === 'small' ? 'small' : 'default'}`,
+    ]"
+  >
+    <slot />
+  </a>
   <button
+    v-else
     :type="type"
     :disabled="disabled"
     :class="[
@@ -20,11 +34,17 @@ withDefaults(defineProps<{
   size?: 'default' | 'small'
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
+  href?: string
+  target?: string
+  rel?: string
 }>(), {
   variant: 'secondary',
   size: 'default',
   disabled: false,
   type: 'button',
+  href: '',
+  target: '',
+  rel: '',
 })
 
 defineEmits<{
@@ -46,6 +66,7 @@ defineEmits<{
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .btn-default {

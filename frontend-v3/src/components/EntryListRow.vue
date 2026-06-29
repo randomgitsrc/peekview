@@ -8,7 +8,7 @@
     @keydown.space.prevent="$emit('navigate', entry)"
   >
     <div class="entry-content">
-      <div class="entry-title">{{ entry.slug }}</div>
+      <div class="entry-title">{{ entry.summary || entry.slug }}</div>
       <div v-if="entry.summary" class="entry-summary">{{ entry.summary }}</div>
       <div class="entry-meta-row">
         <BaseTag v-for="tag in entry.tags" :key="tag">{{ tag }}</BaseTag>

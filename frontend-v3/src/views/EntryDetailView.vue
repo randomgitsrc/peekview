@@ -3,7 +3,9 @@
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Header -->
     <header class="detail-header">
-      <span class="back-btn" @click="goBack" title="Back to list">⌂</span>
+      <router-link to="/" class="detail-logo" title="Back to home">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </router-link>
       <h1 class="title">{{ entryTitle }}</h1>
       <div class="header-right">
         <!-- Owner controls (visibility + delete) -->
@@ -76,16 +78,17 @@
           >
             Download
           </BaseButton>
-          <a
+          <BaseButton
             v-if="entryStore.currentEntry"
-            class="raw-link"
+            size="small"
+            variant="secondary"
             :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
             target="_blank"
             rel="noopener noreferrer"
             title="Raw content — for Agent/API access"
           >
             Raw
-          </a>
+          </BaseButton>
           <BaseButton
             v-if="entryStore.canPack && entryStore.currentEntry"
             size="small"
@@ -255,16 +258,17 @@
       >
         Download
       </BaseButton>
-      <a
+      <BaseButton
         v-if="entryStore.currentEntry"
-        class="raw-link"
+        size="small"
+        variant="secondary"
         :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
         target="_blank"
         rel="noopener noreferrer"
         title="Raw content — for Agent/API access"
       >
         Raw
-      </a>
+      </BaseButton>
       <BaseButton
         v-if="entryStore.canPack && entryStore.currentEntry"
         size="small"
@@ -516,10 +520,6 @@ const tocHeadings = computed<TocHeading[]>(() => {
   return extractHeadings(entryStore.fileContent)
 })
 
-function goBack() {
-  router.push(authStore.authState === 'authenticated' ? '/explore' : '/')
-}
-
 function selectFileAndCloseDrawer(file: { id: number }) {
   entryStore.selectFile(file as { id: number; path: string; filename: string; language: string | null; isBinary: boolean; size: number; lineCount: number })
   showFileDrawer.value = false
@@ -710,25 +710,6 @@ watch(() => entryStore.currentEntry, (entry) => {
 
 .entry-expires-never {
   color: var(--c-text-tertiary);
-}
-
-.raw-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: var(--c-text);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-xs);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--radius-md);
-  background: transparent;
-  transition: all var(--transition-fast);
-}
-
-.raw-link:hover {
-  background: var(--c-border);
-  border-color: var(--c-text-tertiary);
 }
 
 .share-watermark {

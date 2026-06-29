@@ -18,15 +18,15 @@
   flex-shrink: 0;
 }
 
-.detail-header .back-btn {
-  font-size: 20px;
-  cursor: pointer;
-  padding: var(--space-1);
-  border-radius: var(--radius-md);
+.detail-header .detail-logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
-.detail-header .back-btn:hover {
-  background: var(--c-surface-lower);
+.detail-header .detail-logo:hover {
+  opacity: 0.8;
 }
 
 .detail-header .title {

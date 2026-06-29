@@ -1,15 +1,11 @@
 <template>
   <div class="entry-list">
-    <PageHeader title="PeekView" back-to="/">
-      <template #meta>
-        <SearchInput
-          v-model="searchQuery"
-          placeholder="Search entries..."
-          @keydown="onSearchKeydown"
-          @clear="clearSearch"
-        />
-      </template>
-      <template #actions>
+    <header class="explore-header">
+      <router-link to="/" class="explore-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="explore-logo-word">PeekView</span>
+      </router-link>
+      <div class="explore-actions">
         <template v-if="authState === 'anonymous'">
           <BaseButton variant="ghost" @click="showLogin = true">Login</BaseButton>
         </template>
@@ -29,27 +25,59 @@
           </div>
         </template>
         <ThemeToggle />
-      </template>
-    </PageHeader>
+      </div>
+    </header>
 
     <div class="list-content">
-      <BannerBar v-if="isBannerMode" :username="props.owner!" />
+      <div class="content-toolbar">
+        <div class="toolbar-left">
+          <BannerBar v-if="isBannerMode" :username="props.owner!" />
 
-      <div v-if="showTabs" class="owner-tabs">
-        <button
-          class="owner-tab"
-          :class="{ active: currentOwner === null }"
-          @click="setOwner(null)"
-        >All</button>
-        <button
-          class="owner-tab"
-          :class="{ active: currentOwner === 'me' }"
-          @click="setOwner('me')"
-        >Mine</button>
-      </div>
+          <div v-if="showTabs" class="owner-tabs">
+            <button
+              class="owner-tab"
+              :class="{ active: currentOwner === null }"
+              @click="setOwner(null)"
+            >All</button>
+            <button
+              class="owner-tab"
+              :class="{ active: currentOwner === 'me' }"
+              @click="setOwner('me')"
+            >Mine</button>
+          </div>
 
-      <div v-if="showChip" class="filter-chip-bar">
-        <FilterChip :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+          <div v-if="showChip" class="filter-chip-bar">
+            <FilterChip :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <div class="explore-search">
+            <SearchInput
+              v-model="searchQuery"
+              placeholder="Search entries..."
+              @keydown="onSearchKeydown"
+              @clear="clearSearch"
+            />
+          </div>
+          <div class="view-toggle">
+            <button
+              class="view-toggle-btn"
+              :class="{ active: viewMode === 'grid' }"
+              title="Grid view"
+              @click="viewMode = 'grid'"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+            <button
+              class="view-toggle-btn"
+              :class="{ active: viewMode === 'list' }"
+              title="List view"
+              @click="viewMode = 'list'"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
@@ -82,7 +110,19 @@
       />
 
       <template v-else>
-        <div class="entry-panel">
+        <div v-if="viewMode === 'grid'" class="entry-grid">
+          <EntryCard
+            v-for="entry in entries"
+            :key="entry.id"
+            :entry="entry"
+            :is-owner="authStore.isOwner(entry.ownerId)"
+            :current-username="currentUserUsername"
+            @navigate="navigateToEntry"
+            @toggle-visibility="handleToggleVisibility"
+            @delete="confirmDeleteEntry"
+          />
+        </div>
+        <div v-else class="entry-panel">
           <EntryListRow
             v-for="entry in entries"
             :key="entry.id"
@@ -172,9 +212,9 @@ import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { storeToRefs } from 'pinia'
-import PageHeader from '@/components/PageHeader.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import EntryListRow from '@/components/EntryListRow.vue'
+import EntryCard from '@/components/EntryCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -221,6 +261,7 @@ const effectiveOwner = computed(() => props.owner || currentOwner.value || undef
 const currentUserUsername = computed(() => user.value?.username ?? null)
 
 const searchQuery = ref('')
+const viewMode = ref<'grid' | 'list'>('grid')
 let suppressRouteUpdate = false
 
 function updateURL(params: Record<string, string | undefined>): void {
@@ -431,13 +472,47 @@ onBeforeRouteUpdate((to) => {
 <style scoped>
 .entry-list { min-height: 100vh; background: var(--c-bg); display: flex; flex-direction: column; }
 
-.entry-list :deep(.page-header-meta) {
-  flex: 1;
-  max-width: 400px;
+.explore-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0 var(--space-5);
+  height: var(--header-height);
+  flex-shrink: 0;
 }
 
-.entry-list :deep(.page-header-meta .search-input-wrapper) {
-  width: 100%;
+.explore-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.explore-logo-word {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+}
+
+.explore-logo:hover .explore-logo-word {
+  color: var(--c-accent);
+}
+
+.explore-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.explore-search {
+  max-width: 280px;
+  min-width: 0;
 }
 
 .sr-only {
@@ -560,13 +635,11 @@ onBeforeRouteUpdate((to) => {
 .owner-tabs {
   display: flex;
   gap: var(--space-1);
-  margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--c-border);
   padding-bottom: var(--space-1);
 }
 
 .filter-chip-bar {
-  margin-bottom: var(--space-3);
 }
 
 .owner-tab {
@@ -585,11 +658,70 @@ onBeforeRouteUpdate((to) => {
 .owner-tab:hover { color: var(--c-text); }
 .owner-tab.active { color: var(--c-accent); border-bottom-color: var(--c-accent); }
 
+.content-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
 .entry-panel {
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 14px;
   overflow: hidden;
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.view-toggle-btn:hover {
+  background: var(--c-surface-lower);
+  color: var(--c-text);
+}
+
+.view-toggle-btn.active {
+  background: var(--c-accent-surface);
+  color: var(--c-accent);
 }
 
 .list-footer {
@@ -678,6 +810,17 @@ onBeforeRouteUpdate((to) => {
 }
 
 @media (max-width: 640px) {
+  .explore-search {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+  .content-toolbar {
+    flex-wrap: wrap;
+  }
+  .toolbar-right {
+    flex: 1 1 100%;
+    justify-content: stretch;
+  }
   .list-footer {
     flex-direction: column;
     align-items: stretch;
