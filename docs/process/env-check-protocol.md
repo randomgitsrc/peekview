@@ -53,7 +53,9 @@ git status --porcelain | head -5
 
 ### 4. Playwright CDP + 截图 + Vision 分析（合并验证）
 
-这一步验证完整的 Playwright 截图 → Vision 分析链路。
+这一步验证完整的 Playwright 截图 → Vision 分析链路。**按 Agent 平台分两套流程**：
+
+#### 4-OpenCode（MCP vision-helper 子 Agent）
 
 **4a. Chrome CDP 端口可达**：
 ```bash
@@ -113,6 +115,47 @@ grep VISION_API_KEY ~/.env 2>/dev/null && echo "Vision config exists" || echo "M
 |----|----|----|------|
 | ✅ | ✅ | ✅ | 完整视觉验收能力可用 |
 | ✅ | ✅ | ❌ | Vision API 问题，尝试 CLI 备选：`python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i /tmp/env-check/desktop.png -p "test"` |
+| ✅ | ❌ | — | Playwright 问题，报告 FAIL |
+| ❌ | — | — | CDP 不可用，检查 Chrome 是否在 Windows GPU 运行；P6 降级为 DOM 验证 |
+
+#### 4-Claude-Code（playwright-vision skill + vision-analyzer skill）
+
+Claude Code 用全局 skill 代替 MCP 子 Agent，流程更简洁。
+
+**4a. Chrome CDP 端口可达**：
+```bash
+curl -sf http://localhost:18800/json/version | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Chrome {d[\"Browser\"]}')"
+```
+
+如果 4a FAIL：报告 ❌ FAIL + "Chrome CDP 不可用"，跳到 4d。
+
+**4b. Playwright 截图**（使用 playwright-vision skill）：
+
+调用 `Skill("playwright-vision")`，按 skill 模板写 CDP 截图脚本：
+- 连接 `http://localhost:18800`（CDP）
+- 导航到 `http://127.0.0.1:8888/explore`
+- 截图保存到 `/tmp/env-check/desktop.png` + `/tmp/env-check/mobile.png`
+- 用 `npx tsx` 执行脚本
+
+**4c. Vision 分析**（使用 vision-analyzer skill）：
+
+```bash
+~/.claude/skills/vision-analyzer/scripts/vision-analyze.py \
+  -i /tmp/env-check/desktop.png \
+  -p "描述页面内容。能看到 PeekView 页面元素则输出 PASS，否则输出 FAIL"
+```
+
+验证输出含有效 YAML 且 `summary` 字段非空。
+
+**4d. Vision 降级检查**（仅 4a FAIL 时执行）：
+```bash
+grep VISION_API_KEY ~/.env 2>/dev/null && echo "Vision config exists" || echo "MISSING"
+```
+
+| 4a | 4b | 4c | 结果 |
+|----|----|----|------|
+| ✅ | ✅ | ✅ | 完整视觉验收能力可用 |
+| ✅ | ✅ | ❌ | Vision API 问题，检查 ~/.env 配置（VISION_API_KEY / VISION_API_BASE_URL / VISION_MODEL） |
 | ✅ | ❌ | — | Playwright 问题，报告 FAIL |
 | ❌ | — | — | CDP 不可用，检查 Chrome 是否在 Windows GPU 运行；P6 降级为 DOM 验证 |
 
