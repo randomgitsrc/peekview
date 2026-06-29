@@ -173,6 +173,9 @@ def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
         if journal_mode != "wal":
             logger.warning(f"WAL mode not enabled (current: {journal_mode})")
 
+    # Ensure models are registered before create_all
+    import peekview.models  # noqa: F401
+
     # Create tables
     SQLModel.metadata.create_all(engine)
 
