@@ -9,10 +9,10 @@
 
 .detail-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
-  padding: 0 var(--space-4);
-  height: var(--header-height);
+  padding: var(--space-3) var(--space-4);
+  min-height: var(--header-height);
   background: var(--c-surface);
   border-bottom: 1px solid var(--c-border);
   flex-shrink: 0;
@@ -22,6 +22,7 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  align-self: center;
   text-decoration: none;
 }
 
@@ -33,13 +34,17 @@
   flex: 1;
   font-size: var(--font-md);
   font-weight: 600;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  padding: var(--space-1) 0;
 }
 
 .detail-header .actions {
   display: none;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .detail-content {

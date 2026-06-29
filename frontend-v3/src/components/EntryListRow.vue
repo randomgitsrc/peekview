@@ -11,8 +11,11 @@
       <div class="entry-title">{{ entry.summary || entry.slug }}</div>
       <div v-if="entry.summary" class="entry-summary">{{ entry.summary }}</div>
       <div class="entry-meta-row">
-        <BaseTag v-for="tag in entry.tags" :key="tag">{{ tag }}</BaseTag>
         <span class="entry-meta">{{ metaText }}</span>
+      </div>
+      <div v-if="entry.tags.length" class="entry-tags-row">
+        <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
+        <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
       </div>
     </div>
     <div class="entry-right">
@@ -62,6 +65,12 @@ defineEmits<{
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
+
+const TAG_LIMIT = 3
+
+const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
+
+const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
 const metaText = computed(() => {
   const parts: string[] = []
@@ -118,6 +127,12 @@ const metaText = computed(() => {
 .entry-meta-row {
   display: flex;
   align-items: center;
+  margin-top: var(--space-1);
+}
+
+.entry-tags-row {
+  display: flex;
+  align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-1);
   flex-wrap: wrap;
@@ -126,6 +141,17 @@ const metaText = computed(() => {
 .entry-meta {
   font-size: 13px;
   color: var(--c-text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.tag-overflow {
+  display: inline-flex;
+  align-items: center;
+  background: var(--c-tag-bg);
+  color: var(--c-text-tertiary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-xs);
   font-family: var(--font-mono);
 }
 

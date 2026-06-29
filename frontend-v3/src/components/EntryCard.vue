@@ -27,9 +27,10 @@
       @keydown.space.prevent="$emit('navigate', entry)"
     >
       <h3 class="card-title">{{ entry.summary || entry.slug }}</h3>
-      <div class="card-meta">
-        <BaseTag v-for="tag in entry.tags" :key="tag">{{ tag }}</BaseTag>
-        <span class="card-meta-text">{{ metaText }}</span>
+      <div class="card-meta-text">{{ metaText }}</div>
+      <div v-if="entry.tags.length" class="card-tags">
+        <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
+        <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
       </div>
       <div class="card-footer">
         <BaseBadge :status="entry.isPublic ? 'public' : 'private'" />
@@ -58,6 +59,12 @@ defineEmits<{
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
+
+const TAG_LIMIT = 3
+
+const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
+
+const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
 const metaText = computed(() => {
   const parts: string[] = []
@@ -160,7 +167,14 @@ const metaText = computed(() => {
   overflow: hidden;
 }
 
-.card-meta {
+.card-meta-text {
+  font-size: 13px;
+  color: var(--c-text-tertiary);
+  font-family: var(--font-mono);
+  margin-bottom: var(--space-2);
+}
+
+.card-tags {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -168,9 +182,14 @@ const metaText = computed(() => {
   margin-bottom: var(--space-3);
 }
 
-.card-meta-text {
-  font-size: 13px;
+.tag-overflow {
+  display: inline-flex;
+  align-items: center;
+  background: var(--c-tag-bg);
   color: var(--c-text-tertiary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-xs);
   font-family: var(--font-mono);
 }
 
