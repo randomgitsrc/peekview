@@ -81,7 +81,7 @@ make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 make publish-npm          # 发布 MCP Server 到 npm
 
 # Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
-NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
+NODE_PATH=$(npm root -g) npx tsx script.ts
 # Vision 分析（3 种方式，优先用 ①）
 # ① vision-helper subagent（推荐，最方便）：Task 工具，subagent_type: vision-helper，prompt 传截图路径
 # ② vision-analyzer skill：skill 工具加载后，按 SKILL.md 说明使用
