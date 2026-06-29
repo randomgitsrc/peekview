@@ -187,7 +187,7 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
-            cookie_name = f"peekview_share_{entry.id}"
+            cookie_name = f"peekview_share_{slug}"
             cookie_value = request.cookies.get(cookie_name)
             if cookie_value:
                 from peekview.services.share_service import ShareService

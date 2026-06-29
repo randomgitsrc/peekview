@@ -16,7 +16,7 @@
         </label>
         <span class="prefix">{{ share.tokenPrefix }}...</span>
         <span class="status">{{ statusLabel(share) }}</span>
-        <span class="views">{{ share.viewCount }}{{ share.maxViews ? '/' + share.maxViews : '' }} views</span>
+        <span class="views">{{ share.viewCount }}{{ share.maxViews ? '/' + share.maxViews : '' }} uses</span>
         <span class="expires">{{ expiresLabel(share) }}</span>
         <button v-if="share.revokedAt === null && !isExpired(share)" class="revoke-btn" @click="revokeOne(share.id)">Revoke</button>
       </div>

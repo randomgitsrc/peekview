@@ -1,0 +1,14 @@
+Evidence for B03: Cookie name uses slug, not entry ID
+
+Test: Access private entry via share token, check Set-Cookie header
+
+Command: curl -s -D - "http://127.0.0.1:8888/api/v1/entries/p6-test-entry?share=x56JRdj0SoPwkISW"
+Result header: set-cookie: peekview_share_p6-test-entry=x56JRdj0; HttpOnly; Max-Age=604788; Path=/; SameSite=lax
+
+Cookie name is "peekview_share_p6-test-entry" (uses slug "p6-test-entry"), NOT "peekview_share_1" (entry ID=1).
+
+Code verification (all 4 backend locations use slug):
+  share_service.py:299: "key": f"peekview_share_{slug}",
+  share_service.py:310: "key": f"peekview_share_{slug}",
+  entries.py:82: cookie_name = f"peekview_share_{slug}"
+  files.py:190: cookie_name = f"peekview_share_{slug}"

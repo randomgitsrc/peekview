@@ -1,0 +1,16 @@
+Evidence for B02: Token validation still works correctly
+
+Test: Invalid token → 404, Valid token → 200
+
+Invalid token test:
+  curl -s -w "%{http_code}" "http://127.0.0.1:8888/api/v1/entries/p6-test-entry?share=INVALIDTOKEN123"
+  Result: 404 {"error":{"code":"NOT_FOUND","message":"Entry not found: p6-test-entry"}}
+
+Valid token test:
+  curl -s -w "%{http_code}" "http://127.0.0.1:8888/api/v1/entries/p6-test-entry?share=x56JRdj0SoPwkISW"
+  Result: 200 (full entry JSON with share_context)
+
+pytest results (test_share_security.py):
+  test_b30_token_verification_rejects_invalid_token PASSED
+  test_b30_token_verification_accepts_valid_token PASSED
+  6 passed in 2.09s

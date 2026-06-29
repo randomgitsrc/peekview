@@ -694,7 +694,7 @@ class TestAPIReadTracking:
         await _wait_for_async_write()
 
         client.cookies.clear()
-        cookie_name = f"peekview_share_{entry['id']}"
+        cookie_name = f"peekview_share_{slug}"
         client.cookies.set(cookie_name, share_token)
         await client.get(f"/api/v1/entries/{slug}")
         await _wait_for_async_write()

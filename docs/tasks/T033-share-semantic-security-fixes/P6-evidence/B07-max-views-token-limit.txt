@@ -1,0 +1,10 @@
+Evidence for B07: max_views=3, token access 3 times succeeds, 4th returns 404
+
+Test: Created entry "maxviews-test" with share link max_views=3, token DhVvOQ6sXtC10TAR
+
+Access 1: HTTP:200 (view_count: 0→1)
+Access 2: HTTP:200 (view_count: 1→2)
+Access 3: HTTP:200 (view_count: 2→3)
+Access 4: HTTP:404 (view_count=3 >= max_views=3, rejected)
+
+Each request used -c /dev/null to prevent cookie reuse, ensuring each went through verify_share_token.

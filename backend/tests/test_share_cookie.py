@@ -79,7 +79,7 @@ async def _get_share_token(client, auth_token, slug, **kwargs):
 class TestShareCookieSetting:
 
     async def test_b17_share_token_sets_cookie(self, client_and_app):
-        """B17: Valid share token sets peekview_share_{entry_id} cookie."""
+        """B17: Valid share token sets peekview_share_{slug} cookie."""
         client, app = client_and_app
         alice = await _register(client, "alice")
         entry = await _create_private_entry(client, alice["access_token"], slug="cookie-test")
@@ -89,8 +89,7 @@ class TestShareCookieSetting:
         resp = await client.get(f"/api/v1/entries/cookie-test?share={token}")
         assert resp.status_code == 200
 
-        entry_id = entry["id"]
-        cookie_name = f"peekview_share_{entry_id}"
+        cookie_name = "peekview_share_cookie-test"
 
         set_cookie_headers = resp.headers.get_list("set-cookie")
         cookie_found = False
@@ -116,8 +115,7 @@ class TestShareCookieSetting:
         assert resp.status_code == 200
 
         set_cookie_headers = resp.headers.get_list("set-cookie")
-        entry_id = entry["id"]
-        cookie_name = f"peekview_share_{entry_id}"
+        cookie_name = "peekview_share_permanent-cookie"
         for header in set_cookie_headers:
             if cookie_name in header:
                 assert "max-age" in header.lower(), "Permanent share cookie must have Max-Age"

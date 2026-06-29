@@ -1,0 +1,9 @@
+Evidence for B01: compare_digest removed from share_service.py
+
+Command: grep -n "compare_digest" backend/peekview/services/share_service.py
+Result: No matches found
+
+The only remaining compare_digest in the codebase is in captcha_engine.py (unrelated):
+  captcha_engine.py:84: if not hmac.compare_digest(sig, _b64url_decode(parts[2]))
+
+This confirms compare_digest has been completely removed from share_service.py.

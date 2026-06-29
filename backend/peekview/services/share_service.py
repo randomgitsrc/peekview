@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import logging
 import secrets
 from datetime import datetime, timezone
@@ -204,9 +203,6 @@ class ShareService:
             if not share:
                 return None
 
-            if not hmac.compare_digest(computed_hash, share.token_hash):
-                return None
-
             if share.entry_id != entry_id:
                 return None
 
@@ -285,7 +281,7 @@ class ShareService:
 
     def build_share_cookie_params(
         self,
-        entry_id: int,
+        slug: str,
         token_prefix: str,
         expires_at: datetime | None,
         is_secure: bool = False,
@@ -300,7 +296,7 @@ class ShareService:
             max_age = PERMANENT_COOKIE_MAX_AGE
 
         return {
-            "key": f"peekview_share_{entry_id}",
+            "key": f"peekview_share_{slug}",
             "value": token_prefix,
             "path": "/",
             "httponly": True,
@@ -309,9 +305,9 @@ class ShareService:
             "secure": is_secure,
         }
 
-    def clear_share_cookie_params(self, entry_id: int) -> dict:
+    def clear_share_cookie_params(self, slug: str) -> dict:
         return {
-            "key": f"peekview_share_{entry_id}",
+            "key": f"peekview_share_{slug}",
             "value": "",
             "path": "/",
             "httponly": True,

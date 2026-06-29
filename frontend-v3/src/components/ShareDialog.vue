@@ -19,7 +19,7 @@
               </select>
             </div>
             <div class="share__field">
-              <label for="share-max-views">Max views (optional)</label>
+              <label for="share-max-views">Max uses (optional)</label>
               <input
                 id="share-max-views"
                 v-model.number="maxViews"

@@ -1,0 +1,14 @@
+Evidence for B06: Cookie name does not expose entry count
+
+Observed cookie name: peekview_share_p6-test-entry
+Contains numeric ID pattern: NO
+Contains slug: peekview_share_p6-test-entry
+
+Analysis: The cookie name uses the entry slug (user-chosen string) instead of the auto-increment entry ID.
+An observer seeing "peekview_share_p6-test-entry" cannot infer the total number of entries in the system,
+unlike the old format "peekview_share_1" which would reveal the entry ID and allow enumeration.
+
+All 4 backend code locations confirmed using slug:
+  share_service.py:299,310 - build_share_cookie_params / clear_share_cookie_params
+  entries.py:82 - _check_share_cookie
+  files.py:190 - file content access

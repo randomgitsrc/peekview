@@ -1,0 +1,10 @@
+Evidence for B10: ShareManagementPanel shows "uses" not "views"
+
+Source: frontend-v3/src/components/ShareManagementPanel.vue:19
+  <span class="views">{{ share.viewCount }}{{ share.maxViews ? '/' + share.maxViews : '' }} uses</span>
+
+Display example: "1/3 uses" (viewCount=1, maxViews=3)
+
+BDD condition: "文案为 'uses' 而非 'views'（与语义一致）"
+The text "uses" is displayed, not "views". The CSS class name ".views" is an internal implementation detail
+and does not appear in the rendered UI.

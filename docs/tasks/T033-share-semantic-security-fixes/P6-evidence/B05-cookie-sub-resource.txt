@@ -1,0 +1,12 @@
+Evidence for B05: Cookie works for sub-resource (file content) access
+
+Test: Access file content of private entry using only cookie
+
+Setup: Created entry "p6-file-test" (id=2) with file test.txt (id=1), share token VBMHKHcBb_-M0NWF
+
+Step 1: Get cookie via share token
+  Cookie: peekview_share_p6-file-test=VBMHKHcB
+
+Step 2: Access file content via cookie
+  curl -s -w "%{http_code}" -b "peekview_share_p6-file-test=VBMHKHcB" "http://127.0.0.1:8888/api/v1/entries/p6-file-test/files/1/content"
+  Result: 200, body: "hello world"

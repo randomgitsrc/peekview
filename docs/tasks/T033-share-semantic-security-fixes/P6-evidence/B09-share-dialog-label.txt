@@ -1,0 +1,8 @@
+Evidence for B09: ShareDialog label uses "Max uses" (equivalent to "Max token uses")
+
+Source: frontend-v3/src/components/ShareDialog.vue:22
+  <label for="share-max-views">Max uses (optional)</label>
+
+BDD condition: "文案为 'Max token uses' 或等价表述（与'验证 N 次'语义一致）"
+"Max uses" is an equivalent expression that clearly communicates the token verification count limit.
+The "(optional)" suffix indicates the field is not required, which is appropriate UX.

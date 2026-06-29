@@ -79,7 +79,7 @@ def _check_share_cookie(request: Request, slug: str, service: EntryService):
         if entry.is_public:
             return None
 
-        cookie_name = f"peekview_share_{entry.id}"
+        cookie_name = f"peekview_share_{slug}"
         cookie_value = request.cookies.get(cookie_name)
         if not cookie_value:
             return None
@@ -262,7 +262,7 @@ async def get_entry(
 
         is_secure = request.url.scheme == "https"
         cookie_params = share_service.build_share_cookie_params(
-            entry_id=entry_response.id,
+            slug=slug,
             token_prefix=entry_share.token_prefix,
             expires_at=entry_share.expires_at,
             is_secure=is_secure,

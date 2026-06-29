@@ -1,0 +1,19 @@
+Evidence for B08: Cookie access does not increment view_count
+
+Test: Created entry "cookie-count-test" with share link max_views=3, token YveAUgBrFG5hKhrX
+
+Step 1: Token access (1 time) → view_count becomes 1
+  HTTP 200, Set-Cookie: peekview_share_cookie-count-test=YveAUgBr
+
+Step 2: Cookie-only access (5 times)
+  Access 1: HTTP:200
+  Access 2: HTTP:200
+  Access 3: HTTP:200
+  Access 4: HTTP:200
+  Access 5: HTTP:200
+
+Step 3: Verify view_count via API
+  GET /api/v1/entries/cookie-count-test/shares
+  Result: view_count=1 (unchanged after 5 cookie accesses)
+
+This confirms verify_share_cookie does NOT increment view_count, consistent with 方案B semantics.

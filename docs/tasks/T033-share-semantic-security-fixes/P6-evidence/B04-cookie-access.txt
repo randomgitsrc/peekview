@@ -1,0 +1,11 @@
+Evidence for B04: Cookie-only access returns 200
+
+Test: Access private entry using only cookie (no ?share= parameter)
+
+Step 1: Get cookie via share token
+  curl -s -D - "http://127.0.0.1:8888/api/v1/entries/p6-test-entry?share=x56JRdj0SoPwkISW"
+  Set-Cookie: peekview_share_p6-test-entry=x56JRdj0
+
+Step 2: Access with cookie only
+  curl -s -w "%{http_code}" -b "peekview_share_p6-test-entry=x56JRdj0" "http://127.0.0.1:8888/api/v1/entries/p6-test-entry"
+  Result: 200 (full entry JSON with share_context)
