@@ -264,7 +264,7 @@ class EntryRead(SQLModel, table=True):
     )
 
     id: int | None = Field(default=None, primary_key=True)
-    entry_id: int = Field(index=True)
+    entry_id: int | None = Field(default=None, index=True)
     action: str = Field(default="read", max_length=20)
     channel: str = Field(default="api", max_length=20)
     reader_type: str = Field(default="anonymous", max_length=20)

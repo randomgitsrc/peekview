@@ -23,7 +23,7 @@ class ReadTrackingService:
 
     def record_read(
         self,
-        entry_id: int,
+        entry_id: int | None,
         entry_owner_id: int | None,
         action: str,
         channel: str,
@@ -37,11 +37,14 @@ class ReadTrackingService:
         else:
             fingerprint = "a:unknown"
 
-        is_self_read = reader_id is not None and reader_id == entry_owner_id
+        is_self_read = False
+        if entry_owner_id is not None and reader_id is not None:
+            is_self_read = reader_id == entry_owner_id
 
         now = datetime.now(timezone.utc)
         window_ts = now.strftime("%Y-%m-%dT%H:%M")
-        window_key = f"{entry_id}:{fingerprint}:{channel}:{window_ts}"
+        eid_part = str(entry_id) if entry_id is not None else "discover"
+        window_key = f"{eid_part}:{fingerprint}:{channel}:{window_ts}"
 
         reader_type = "authenticated" if reader_id is not None else "anonymous"
 

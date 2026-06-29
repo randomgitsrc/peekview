@@ -45,7 +45,7 @@ def _detect_channel(request: Request) -> str:
 
 async def _record_read_async(
     app_state,
-    entry_id: int,
+    entry_id: int | None,
     entry_owner_id: int | None,
     action: str,
     channel: str,
@@ -204,16 +204,15 @@ async def list_entries(
 
     channel = _detect_channel(request)
     reader_ip = request.client.host if request.client else None
-    for item in result.items:
-        asyncio.create_task(_record_read_async(
-            request.app.state,
-            entry_id=item.id,
-            entry_owner_id=item.owner_id,
-            action="discover",
-            channel=channel,
-            reader_id=current_user_id,
-            reader_ip=reader_ip,
-        ))
+    asyncio.create_task(_record_read_async(
+        request.app.state,
+        entry_id=None,
+        entry_owner_id=None,
+        action="discover",
+        channel=channel,
+        reader_id=current_user_id,
+        reader_ip=reader_ip,
+    ))
 
     return result
 

@@ -1,6 +1,8 @@
 task_id: T032-entry-read-tracking
-phase: P4
-status: in_progress
+phase: READY
+status: completed
+
+pruned_phases: [P8]
 
 retries: {}
 retry_count: {}
