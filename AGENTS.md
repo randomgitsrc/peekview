@@ -1,6 +1,6 @@
 # PeekView
 
-轻量级代码/文档格式化服务：Agent 通过 API/CLI/MCP 创建条目 → 浏览器查看格式化内容。
+读取机器：Agent 可写的高质量可分享渲染器。Agent 发布 → 人看（浏览器）/ Agent 读（/raw 原始内容）。
 
 ## 架构
 
@@ -98,6 +98,7 @@ make publish-npm          # 发布 MCP Server 到 npm
 - **MCP 双模式**：`remote`（A→B→C，暴露 create_entry/get/list/delete）| `local`（A=B→C，暴露 publish_files/get/list/delete）
 - **双包发布**：peekview (PyPI) + @peekview/mcp-server (npm)，版本独立管理
 - **数据库**：SQLite WAL + FTS5，时间戳 naive UTC
+- **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key
 
 ## 安全要点
 

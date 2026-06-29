@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PeekView** is a lightweight code and document formatting service. Core purpose: Agent (AI) creates entries via API/CLI/MCP → humans view formatted content in browser.
+**PeekView** is a reading machine for AI agents. Core purpose: Agent publishes entries via API/CLI/MCP → humans view formatted content in browser, and agents read raw content back via `/raw` endpoint.
 
 - **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.2 (Streamable HTTP transport) has been released to npm.
 - **Current Version:** v0.3.0 (Backend/Frontend) | MCP Server v0.9.2
@@ -222,6 +222,7 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
 - FTS5 virtual table `entries_fts` for full-text search; query sanitization only escapes quotes, complex syntax errors are silently caught (returns empty results)
 - Files stored in `~/.peekview/data/default/{entry_id}/`
 - Timestamps are naive UTC
+- **Agent read path**: `GET /api/v1/entries/{slug}/raw` returns structured JSON (text files include `content` field; binary files have `content=null` + `file_url`). Public entries need no auth; private entries require API key.
 
 ### Security (Critical)
 1. **local_path allowlist**: Only paths under configured allowed directories permitted
