@@ -262,24 +262,26 @@ class ShareService:
             return share
 
     def revoke_all_for_entry(self, entry_id: int, session: Session | None = None) -> int:
-        own_session = session is None
-        if own_session:
-            session = Session(self.engine)
-        now = datetime.now(timezone.utc)
-        active_shares = session.exec(
-            select(EntryShare).where(
-                EntryShare.entry_id == entry_id,
-                EntryShare.revoked_at == None,  # noqa: E711
-            )
-        ).all()
+        def _do(s: Session) -> int:
+            now = datetime.now(timezone.utc)
+            active_shares = s.exec(
+                select(EntryShare).where(
+                    EntryShare.entry_id == entry_id,
+                    EntryShare.revoked_at == None,  # noqa: E711
+                )
+            ).all()
+            for share in active_shares:
+                share.revoked_at = now
+                s.add(share)
+            return len(active_shares)
 
-        for s in active_shares:
-            s.revoked_at = now
-            session.add(s)
+        if session is not None:
+            return _do(session)
 
-        if own_session:
-            session.commit()
-        return len(active_shares)
+        with Session(self.engine) as s:
+            result = _do(s)
+            s.commit()
+            return result
 
     def build_share_cookie_params(
         self,
