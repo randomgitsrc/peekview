@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PeekView** is a reading machine for AI agents. Core purpose: Agent publishes entries via API/CLI/MCP → humans view formatted content in browser, and agents read raw content back via `/raw` endpoint.
+**PeekView**: Agent writes, humans view, agents can also read. Agent publishes entries via API/CLI/MCP → humans view formatted content in browser, and agents read raw content back via `/raw` endpoint.
 
 - **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.2 (Streamable HTTP transport) has been released to npm.
 - **Current Version:** v0.3.0 (Backend/Frontend) | MCP Server v0.9.2

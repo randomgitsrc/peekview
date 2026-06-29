@@ -1,6 +1,6 @@
 # PeekView
 
-读取机器：Agent 可写的高质量可分享渲染器。Agent 发布 → 人看（浏览器）/ Agent 读（/raw 原始内容）。
+Agent 写，人看，Agent 也能读。
 
 ## 架构
 

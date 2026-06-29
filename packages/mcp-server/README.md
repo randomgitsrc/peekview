@@ -2,7 +2,7 @@
 
 PeekView 的 MCP 桥接层 — 让 Agent 通过 Model Context Protocol 调用 PeekView。Streamable HTTP transport，多用户认证。
 
-PeekView 是读取机器：Agent 发布 → 人看（浏览器）/ Agent 读（/raw 原始内容）。MCP Server 负责其中的「Agent 发布」环节。
+PeekView：Agent 写，人看，Agent 也能读。MCP Server 负责其中的「Agent 发布」环节。
 
 ## 核心概念：Dual Mode
 
