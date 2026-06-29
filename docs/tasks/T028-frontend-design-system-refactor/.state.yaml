@@ -1,6 +1,6 @@
 task_id: T028
 task_name: frontend-design-system-refactor
-current_phase: P6
+current_phase: P8
 status: in_progress
 created: 2026-06-29
 updated: 2026-06-29
@@ -24,4 +24,11 @@ phase_history:
   - phase: P5
     entered: 2026-06-29
     gate: passed
-    note: vue-tsc 0, vitest 559/559, pytest 635/635, 无 PROD_TOUCHED
+  - phase: P6
+    entered: 2026-06-29
+    gate: passed
+    note: 12 BDD PASS, dark/light token 值正确, 559 vitest, 635 pytest, build OK
+  - phase: P7
+    entered: 2026-06-29
+    gate: skipped
+    note: 单包(frontend-v3 only)，无跨包一致性问题
