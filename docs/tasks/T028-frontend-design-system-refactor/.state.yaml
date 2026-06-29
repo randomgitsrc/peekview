@@ -1,6 +1,6 @@
 task_id: T028
 task_name: frontend-design-system-refactor
-current_phase: P3
+current_phase: P4
 status: in_progress
 created: 2026-06-29
 updated: 2026-06-29
@@ -17,4 +17,8 @@ phase_history:
   - phase: P2
     entered: 2026-06-29
     gate: passed
-    note: 方案 approved, Token 全局化+别名映射+7 组件 API+4 页面重构方案
+    note: 方案 approved, Token全局化+别名映射+7组件API+4页面重构方案
+  - phase: P3
+    entered: 2026-06-29
+    gate: passed
+    note: 49 测试用例覆盖 12 BDD 场景, 8 测试文件, B类红灯
