@@ -17,7 +17,6 @@
         </div>
         <div class="nav-cta">
           <button class="btn btn-ghost btn-sm" @click="showLogin = true">Sign in</button>
-          <router-link to="/explore" class="btn btn-primary btn-sm">Explore</router-link>
           <ThemeToggle />
         </div>
       </nav>
@@ -28,7 +27,7 @@
         <h1>Read the machine.</h1>
         <p class="sub">Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link — readable by humans and agents alike.</p>
         <div class="hero-cta">
-          <router-link to="/explore" class="btn btn-primary">Start viewing</router-link>
+          <router-link to="/explore" class="btn btn-primary">Explore</router-link>
           <span class="cmd"><span><span class="pr">$</span> pipx install peekview</span>
             <span class="copy" title="Copy" @click="copyCmd('pipx install peekview')">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
