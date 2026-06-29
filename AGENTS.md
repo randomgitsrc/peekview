@@ -48,7 +48,7 @@ packages/mcp-server/src/
 10. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
 11. 改代码前先读周围上下文，理解代码风格和现有库选择
 12. 不加注释（除非被要求）
-13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
+13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑；⚠️ ruff 不在 venv 时 `make lint` 会因找不到 `ruff` 命令失败，用 `cd backend && python3 -m ruff check peekview/ tests/` 代替）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
 14. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
 
 ## 环境隔离机制（代码层面保障）
@@ -79,6 +79,10 @@ make build-mcp            # MCP 构建
 
 make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 make publish-npm          # 发布 MCP Server 到 npm
+
+# Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
+NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
+scripts/vision-analyze -i /tmp/screenshot.png -p "描述这张截图"     # vision-analyzer skill
 ```
 
 ## 技术要点
@@ -99,6 +103,9 @@ make publish-npm          # 发布 MCP Server 到 npm
 - **双包发布**：peekview (PyPI) + @peekview/mcp-server (npm)，版本独立管理
 - **数据库**：SQLite WAL + FTS5，时间戳 naive UTC
 - **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key
+- **Playwright/Vision 验证**：Chrome CDP `localhost:18800`（Windows GPU），Playwright `connectOverCDP` 模式。脚本必须：`NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`、`hardTimer`。不要 `browser.close()`（会杀 Chrome）。移动端模拟用 CDP `Emulation.setDeviceMetricsOverride`。截图后用 `vision-helper` subagent 或 `scripts/vision-analyze` 分析
+- **`make debug-verify-isolation`**：依赖生产 :8080 在线——若生产服务未运行会超时。此时可用 `sqlite3 /tmp/peekview-debug/peekview.db "SELECT COUNT(*) FROM entries"` 手动验证隔离
+- **`make debug` E2E**：完整 E2E suite 在 CDP 模式下可能超时（>5min）。Agent 派发时优先用自定义 Playwright 脚本逐项验证，避免触发完整 suite 超时
 
 ## 安全要点
 
@@ -141,6 +148,7 @@ make publish-npm          # 发布 MCP Server 到 npm
 ## 详细参考
 
 - 完整配置和规范：`CLAUDE.md`
+- 前端设计系统：`DESIGN.md`
 - 开发流程：`~/.agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agate)）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`

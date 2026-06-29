@@ -37,7 +37,7 @@ permission:
 - Shiki 做语法高亮，Mermaid 做图表，DOMPurify 清理 markdown
 - CSP `unsafe-eval` 为 Mermaid/d3 必需，不可移除
 - 构建产物自动复制到 `backend/peekview/static/`
-- E2E 测试用 Playwright
+- E2E 测试用 Playwright — Chrome CDP `localhost:18800`（`connectOverCDP` 模式）。脚本必须 `NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`。不要 `browser.close()`。截图后用 `vision-helper` subagent 或 `scripts/vision-analyze` 分析。完整 E2E suite (`make debug-test`) 在 CDP 模式下可能超时，逐项验证更可靠
 
 ## 完成后
 

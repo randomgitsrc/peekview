@@ -37,9 +37,11 @@ permission:
 
 ```bash
 make debug                  # 完整调试流程
-cd backend && make test     # 后端测试
-cd backend && make lint     # 后端 lint
+cd backend && .venv/bin/python -m pytest tests/  # 后端测试（必须用 venv）
+cd backend && python3 -m ruff check peekview/ tests/  # 后端 lint（ruff 不在 venv）
+cd frontend-v3 && ./node_modules/.bin/vitest run  # 前端单测（不是 npm run test）
 cd frontend-v3 && npx vue-tsc --noEmit  # 前端类型检查（CI 强制）
 cd frontend-v3 && npm run build         # 前端构建
 cd packages/mcp-server && npm run build && npm run test:unit  # MCP 构建+测试
+NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts  # Playwright CDP
 ```

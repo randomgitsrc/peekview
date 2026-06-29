@@ -42,4 +42,7 @@ permission:
 
 ## 完成后
 
-跑 `make lint && make test`
+```bash
+cd backend && python3 -m ruff check peekview/ tests/  # lint（ruff 不在 venv，用 python3 -m ruff）
+cd backend && .venv/bin/python -m pytest tests/ -v --tb=short  # 测试（必须用 venv）
+```
