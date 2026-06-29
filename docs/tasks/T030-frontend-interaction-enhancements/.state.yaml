@@ -1,6 +1,8 @@
 task_id: T030-frontend-interaction-enhancements
-phase: P6
-status: in_progress
+phase: READY
+status: completed
+
+pruned_phases: [P7, P8]
 
 retries: {}
 retry_count: {}
