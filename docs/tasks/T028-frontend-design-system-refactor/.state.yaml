@@ -1,6 +1,6 @@
 task_id: T028
 task_name: frontend-design-system-refactor
-current_phase: P0
+current_phase: P2
 status: in_progress
 created: 2026-06-29
 updated: 2026-06-29
@@ -9,4 +9,8 @@ phase_history:
   - phase: P0
     entered: 2026-06-29
     gate: passed
-    note: P0-brief 五字段非空，executor_env 已声明
+    note: P0-brief 五字段非空
+  - phase: P1
+    entered: 2026-06-29
+    gate: passed
+    note: 12 条 BDD, 4 NEED_CONFIRM 已全部确认, 无 CAPABILITY_GAP
