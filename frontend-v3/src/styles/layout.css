@@ -93,17 +93,10 @@
   border-top: 1px solid var(--c-border);
   height: var(--header-height);
   flex-shrink: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
 }
 
 .mobile-actions .menu-btn {
   margin-right: auto;
-}
-
-.mobile-actions::-webkit-scrollbar {
-  display: none;
 }
 
 @media (min-width: 1024px) {

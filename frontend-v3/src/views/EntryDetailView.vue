@@ -197,32 +197,6 @@
 
     <!-- Mobile Actions -->
     <div class="mobile-actions" v-if="entryStore.currentEntry">
-      <!-- Owner actions on mobile -->
-      <template v-if="authStore.isOwner(entryStore.currentEntry.ownerId)">
-        <BaseButton
-          size="small"
-          variant="secondary"
-          :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
-          @click="handleToggleVisibility"
-        >
-          {{ entryStore.currentEntry.isPublic ? '🌐' : '🔒' }}
-        </BaseButton>
-        <BaseButton
-          v-if="showShareButton"
-          size="small"
-          variant="secondary"
-          @click="showShareDialog = true"
-        >
-          Share
-        </BaseButton>
-        <BaseButton
-          size="small"
-          variant="danger"
-          @click="confirmDeleteEntry"
-        >
-          🗑️
-        </BaseButton>
-      </template>
       <BaseButton
         v-if="entryStore.isMultiFile"
         size="small"
@@ -250,41 +224,7 @@
       >
         Copy
       </BaseButton>
-      <BaseButton
-        v-if="entryStore.canDownload"
-        size="small"
-        variant="secondary"
-        @click="downloadFile"
-      >
-        Download
-      </BaseButton>
-      <BaseButton
-        v-if="entryStore.currentEntry"
-        size="small"
-        variant="secondary"
-        :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Raw content — for Agent/API access"
-      >
-        Raw
-      </BaseButton>
-      <BaseButton
-        v-if="entryStore.canPack && entryStore.currentEntry"
-        size="small"
-        variant="secondary"
-        @click="downloadPack"
-      >
-        Pack
-      </BaseButton>
-      <BaseButton
-        v-if="showTocButton"
-        size="small"
-        variant="secondary"
-        @click="showTocDrawer = true"
-      >
-        TOC
-      </BaseButton>
+      <OverflowMenu :items="overflowItems" />
     </div>
 
     <!-- File Drawer (mobile) -->
@@ -357,6 +297,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/BaseButton.vue'
+import OverflowMenu from '@/components/OverflowMenu.vue'
+import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
 import CodeViewer from '@/components/CodeViewer.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import HtmlViewer from '@/components/HtmlViewer.vue'
@@ -511,6 +453,44 @@ const showTocSidebar = computed(() => {
 
 const showTocButton = computed(() => {
   return isMarkdown.value && tocHeadings.value.length > 0
+})
+
+const overflowItems = computed(() => {
+  const items: OverflowMenuItem[] = []
+  if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
+    items.push({
+      label: currentEntry.value.isPublic ? 'Make Private' : 'Make Public',
+      icon: currentEntry.value.isPublic ? '🔒' : '🌐',
+      action: handleToggleVisibility,
+    })
+    if (showShareButton.value) {
+      items.push({ label: 'Share', action: () => { showShareDialog.value = true } })
+    }
+    items.push({
+      label: 'Delete',
+      icon: '🗑️',
+      variant: 'danger',
+      action: confirmDeleteEntry,
+    })
+  }
+  if (entryStore.canDownload) {
+    items.push({ label: 'Download', action: downloadFile })
+  }
+  if (currentEntry.value) {
+    items.push({
+      label: 'Raw',
+      href: `/api/v1/entries/${currentEntry.value.slug}/raw`,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    })
+  }
+  if (entryStore.canPack && currentEntry.value) {
+    items.push({ label: 'Pack', action: downloadPack })
+  }
+  if (showTocButton.value) {
+    items.push({ label: 'TOC', action: () => { showTocDrawer.value = true } })
+  }
+  return items
 })
 
 const tocHeadings = computed<TocHeading[]>(() => {

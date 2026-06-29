@@ -333,6 +333,10 @@ defineExpose({
   background: var(--bg-secondary);
 }
 
+.diagram-block .diagram-code .line:nth-child(even) {
+  background-color: var(--bg-code-even);
+}
+
 
 /* Resize handle (spec #63-65) */
 .diagram-block .diagram-resize-handle {

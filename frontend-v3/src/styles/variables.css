@@ -57,6 +57,8 @@
   --bg-secondary: var(--c-surface);
   --bg-tertiary: var(--c-surface-lower);
   --bg-code: var(--c-surface-lower);
+  --bg-code-odd: var(--bg-code);
+  --bg-code-even: #131920;
   --bg-overlay: rgba(0,0,0,.5);
   --border-color: var(--c-border);
   --border-hover: var(--c-text-tertiary);
@@ -110,6 +112,8 @@
   --bg-secondary: var(--c-surface);
   --bg-tertiary: var(--c-surface-lower);
   --bg-code: var(--c-surface-lower);
+  --bg-code-odd: var(--bg-code);
+  --bg-code-even: #e8ebef;
   --bg-overlay: rgba(0,0,0,.5);
   --border-color: var(--c-border);
   --border-hover: var(--c-text-tertiary);

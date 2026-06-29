@@ -106,6 +106,10 @@
   background: var(--accent-light);
 }
 
+.code-body :deep(.line:nth-child(even)) {
+  background-color: var(--bg-code-even);
+}
+
 /* Wrap mode */
 .code-body.wrap-enabled :deep(pre) {
   white-space: pre-wrap;

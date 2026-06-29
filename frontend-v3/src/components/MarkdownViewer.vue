@@ -248,6 +248,15 @@ watch(() => [props.content, theme.value], async () => {
   background: transparent !important;
 }
 
+/* Zebra stripe for code blocks (must override pre * transparent) */
+.markdown-body .code-block-wrapper .line:nth-child(even) {
+  background-color: var(--bg-code-even);
+}
+
+[data-theme='dark'] .markdown-body .code-block-wrapper .line:nth-child(even) {
+  background-color: var(--bg-code-even) !important;
+}
+
 /* Code block wrapper with copy button */
 .markdown-body .code-block-wrapper {
   position: relative;

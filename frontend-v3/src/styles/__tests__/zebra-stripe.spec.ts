@@ -112,7 +112,6 @@ describe('Zebra stripe — MarkdownViewer CSS compatibility', () => {
           unscopedStyle.includes('background-color') &&
           unscopedStyle.match(/\.line[^-]/) !== null
 
-        const hasNthChildZebra = /\.line:nth-child\(even\)/.test(unscopedStyle)
         const zebraHasImportant = /nth-child\(even\)[^}]*background-color[^}]*!important/.test(unscopedStyle)
 
         expect(
