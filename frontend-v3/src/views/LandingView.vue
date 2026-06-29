@@ -24,7 +24,7 @@
       <!-- HERO -->
       <section class="hero">
         <span class="eyebrow"><span class="dot"></span>Code · Docs · Data · HTML</span>
-        <h1>Read the machine.</h1>
+        <h1>Agent writes. You read. Agents read too.</h1>
         <p class="sub">Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link — readable by humans and agents alike.</p>
         <div class="hero-cta">
           <router-link to="/explore" class="btn btn-primary">Explore</router-link>
@@ -187,7 +187,7 @@ const router = useRouter()
 const { authState } = storeToRefs(useAuthStore())
 const showLogin = ref(false)
 
-const SEO_TITLE = 'PeekView — Read the machine'
+const SEO_TITLE = 'PeekView — Agent writes. You read. Agents read too.'
 const SEO_DESC = 'Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link.'
 
 declare const __APP_VERSION__: string
