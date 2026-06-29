@@ -7,6 +7,30 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-30
+
+### 新增
+
+- **Entry 读取埋点**（T032）：`entry_reads` 表记录读取事件（reader 身份、channel、时间），1 分钟窗口聚合 UPSERT，`asyncio.create_task` 异步写入不阻塞 API 响应；`read_stats` 字段（total_count / unique_readers / by_channel）仅 owner/admin 可见；`GET /entries/{slug}/reads` 端点查询读取历史；MCP client 传 `X-PeekView-Source: mcp` header；list 请求记录单条 `discover` 事件（entry_id=null）
+- **代码行交替色**（T030）：CodeViewer / MarkdownViewer 代码块 / DiagramBlock 代码视图奇偶行不同背景色，dark/light 双主题 `--bg-code-even` / `--bg-code-odd` CSS 变量驱动，`!important` 覆盖 MarkdownViewer `pre * { background-color: transparent }`
+- **OverflowMenu 组件**（T030）：dropdown 菜单 + click-outside / Escape 关闭 + 44px touch targets，集成到 EntryDetailView 移动端 actions
+- **Tag 折叠**（T029）：EntryCard / EntryListRow / EntryDetailView 中 tag 数量超过 3 个时只显示前 3 个，剩余折叠为 `+N`（BaseTag 样式，纯静态无交互）
+- **相对时间 + tooltip**（T036）：`useRelativeTime` composable 统一 EntryCard / EntryListRow / EntryDetailView 三处时间格式化，hover 显示完整日期（`title` 属性）
+- **`useRelativeTime` composable**（T036）：统一三处时间格式化逻辑，替代各自手写的 `formatRelativeTime` / `toLocaleDateString`
+
+### 变更
+
+- **卡片/列表 Meta 信息重排**（T029）：布局顺序调整为 `title → meta（@user · 日期 · file数） → tags（折叠） → badge`，tags 与 meta 分离为独立行
+- **详情页标题 2 行截断**（T029）：`line-clamp: 2` 替代 `white-space:nowrap; text-overflow:ellipsis`，header 高度从固定 56px 改为 `min-height` 自适应
+- **详情页 tags 位置**（T036）：tags 从顶栏右侧移到标题下方独立一行（title-group flex column）
+- **Share cookie 改名**（T033）：`peekview_share_{entry.id}` → `peekview_share_{slug}`，防止 cookie 名称暴露内部 ID 推断 entry 总量
+- **Share UI 文案**（T033）：`Max views` → `Max uses`，`N/M views` → `N/M uses`，语义统一为"最多验证 N 次 token"
+
+### 修复
+
+- **删除无效 hmac.compare_digest**（T033）：`share_service.py` 的 `hmac.compare_digest(computed_hash, share.token_hash)` 比较同一值永远为真，误导维护者，已删除；`test_share_security` 重写为验证 token 验证安全性语义而非特定函数调用
+
+
 ## [0.3.1] - 2026-06-29
 
 ### 新增
