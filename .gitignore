@@ -69,6 +69,7 @@ ffmpeg
 ffmpeg-master-latest-linux64-gpl/
 ffmpeg.tar.xz
 FEATURES.json
+FEATURES.md
 
 # MCP Server
 packages/mcp-server/dist/
@@ -83,4 +84,3 @@ packages/mcp-server/coverage/
 /tmp/
 *.log
 .DS_Store
-FEATURES.md
