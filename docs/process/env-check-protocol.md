@@ -118,10 +118,7 @@ main().catch((e) => { console.error(e); process.exit(1); });
 
 ```bash
 mkdir -p /tmp/env-check
-# NODE_PATH：优先 nvm 全局目录，其次 npm root -g
-NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx /tmp/env-check/capture.ts
-# 如果上面报 "Cannot find module 'playwright'"，尝试：
-# NODE_PATH=$(npm root -g) npx tsx /tmp/env-check/capture.ts
+NODE_PATH=$(npm root -g) npx tsx /tmp/env-check/capture.ts
 ```
 
 ### 4c. Vision 分析
