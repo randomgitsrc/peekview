@@ -10,203 +10,82 @@
 
 | # | 事项 | 类别 | 优先级 | 状态 |
 |---|------|------|--------|------|
-| 1 | SSE → Streamable HTTP 迁移 | 技术债/传输 | 🔴 立即 | ✅ 完成 (v0.8.0) |
-| 2 | rate limiting 配置化真正落地 | 技术债 | 🟠 近期 | ✅ 完成 (v0.1.45) |
-| 3 | MCP/CLI 定位写进用户文档 | 产品/文档 | 🟠 近期 | ✅ 完成 |
-| 4 | JWT → httpOnly Cookie | 安全 | 🟡 中期 | ✅ 完成 (v0.1.45) |
-| 5 | 前端页面 CSP | 安全 | 🟡 中期 | ✅ 完成 (v0.1.45) |
-| 6 | publish_files 二进制文件 base64 支持 | 功能 | 🟡 中期 | ✅ 完成 (v0.1.44) |
-| 7 | package-lock.json 版本元数据同步 | 技术债 | 🟡 中期 | ✅ 完成 (v0.1.44) |
-| 8 | StorageBackend 接口抽象 | 架构 | 🔵 长期 | 待办 |
-| 9 | 嵌入式 iframe 分享 (/embed/{slug}) | 产品 | 🔵 长期 | 待办 |
-| 10 | SQLite 并发写边界文档化 | 架构/文档 | 🔵 长期 | 待办 |
-| 11 | publish_files 大目录扫描进度反馈 | 体验 | 🔵 长期 | 待办 |
-| 12 | health check 503 vs 200 决策复审 | 运维 | 🔵 长期 | ✅ 决策完成 (保持200) |
-| 13 | 登录/注册 Cap captcha 集成 | 安全 | 🟠 近期 | ✅ 完成 (v0.1.49) |
-| 14 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
-| 15 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
-| 16 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
-| 17 | 链式上溯拦截规则 | 流程 | 🔵 长期 | 待实战验证 |
-| 18 | 发布通道统一到 CI（本地 publish 降级为验证） | 流程/CI | 🟡 中期 | 待办 |
-| 19 | UI 重构验收必须包含视觉级验证（Playwright 截图） | 流程/质量 | 🔴 立即 | 待办 |
+| 1 | UI 重构验收必须包含视觉级验证（Playwright 截图） | 流程/质量 | 🔴 立即 | 待办 |
+| 2 | 冷打开链接体验打磨（加载速度/移动端/元信息一眼清） | 产品/体验 | 🔴 立即 | 待办 |
+| 3 | entry 读取路径埋点（谁在读、读频率、是否非创建者） | 产品/探针 | 🔴 立即 | 待办 |
+| 4 | `verify_share_token` 的 `compare_digest` 永真，误导维护者 | 安全意图噪音 | 🟡 中期 | 待办 |
+| 5 | `max_views` 语义模糊（"最多发 N 个" vs "最多看 N 次"） | 产品语义 | 🟡 中期 | 待办 |
+| 6 | 发布通道统一到 CI（本地 publish 降级为验证） | 流程/CI | 🟡 中期 | 待办 |
+| 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | 待办 |
+| 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | 待办 |
+| 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | 待办 |
+| 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔵 长期 | 待办 |
+| 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
+| 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
+| 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
+| 14 | StorageBackend 接口抽象 | 架构 | 🔵 长期 | 待办 |
+| 15 | publish_files 大目录扫描进度反馈 | 体验 | 🔵 长期 | 待办 |
+| 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
+| 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
+| 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
+| 19 | 链式上溯拦截规则 | 流程 | 🔵 长期 | 待实战验证 |
+| 20 | Live 更新 / 实时推送 | 产品 | ❌ 不做 | — |
 
 ---
 
 ## 详细说明
 
-### 🔴 1. SSE → Streamable HTTP 迁移（✅ 已完成 v0.8.0）
+### 🔴 1. UI 重构验收必须包含视觉级验证（Playwright 截图）
 
-**问题**：PeekView MCP 用 HTTP+SSE 传输，该传输在 MCP 规范 2025-03-26 中已被废弃。
+**来源**：多次 UI 改动在 CI 类型检查通过但视觉回归未被发现
 
-**已完成**：MCP Server v0.9.2 已迁移至 Streamable HTTP，端点从 `/sse` + `/messages` 改为 `/mcp`，SDK 升级至 1.29.0。详见已归档的 `docs/archived/plans/sse-migration/mcp-sse-to-streamable-http-migration.md`。
+**问题**：CSS/布局改动无法被 vue-tsc 或 vitest 覆盖。纯代码级验证对 UI 改动有盲区，导致上线后才发现样式问题。
 
----
-
-### 🟠 2. rate limiting 配置化真正落地（✅ 已完成 v0.1.45）
-
-**问题**：`@limiter.limit()` 是编译时装饰器，无法从 config 读值。当前实现硬编码 `"10/minute"`，但 config 里的 `rate_limit_login_per_minute` 字段形同虚设——用户配了不生效。
-
-**已完成方案**：`create_app()` 新增 `rate_limit_login_per_minute` / `rate_limit_per_minute` 参数，captcha 端点限速从硬编码改为可配置，`limiter.default_limits` 兜底保护所有 API 端点。
+**方案**：任何涉及视图组件改动的任务，P6 验收必须包含 Playwright 截图对比。CI 流水线可选集成。
 
 ---
 
-### 🟠 3. MCP/CLI 定位写进用户文档
+### 🔴 2. 冷打开链接体验打磨
 
-**问题**：内部决策文档（`mcp-vs-cli-positioning.md`）已厘清 MCP 适合 Agent 自主决策、CLI 适合用户主动操作。但面向用户的文档没有体现，用户装上 MCP 发现"不如 CLI 顺手"会困惑。
+**来源**：2026-06-29 定位评审（docs/reviews/review-position-02-20260629.md §6 地板层）
 
-**方案**：README 增加"何时用 CLI / 何时用 MCP"的指引章节。
+**问题**：冷打开一个 PeekView 链接是用户接触产品的第一路径，也是最高频路径。"这是什么 / 谁发的 / 什么时候"应该一眼清楚。当前体验未打磨：加载速度、移动端适配、元信息呈现都有提升空间。
 
----
-
-### 🟡 4. JWT → httpOnly Cookie（✅ 已完成 v0.1.44）
-
-**问题**：前端 JWT 存在 `localStorage['peekview_token']`，Markdown 渲染若有 XSS 绕过可直接窃取 token。
-
-**已完成方案**：迁移到 httpOnly Cookie（浏览器 JS 无法读取）。后端 `/auth/login` `/auth/register` 改为 Set-Cookie，前端 client.ts 移除 localStorage 改用 withCredentials，auth.ts 重构为 user ref 模式。Cookie 优先级：Authorization header JWT > Cookie JWT > API key。
+**方案**：作为地板层持续打磨。具体包括：entry 详情页元信息优化、移动端响应式、首屏加载性能。
 
 ---
 
-### 🟡 5. 前端页面 CSP（✅ 已完成 v0.1.44）
+### 🔴 3. entry 读取路径埋点
 
-**问题**：后端 CSP 头只加在 `/api/*` 和 `/health`（`default-src 'none'`），前端页面没有 CSP。Markdown 渲染、HTML iframe 是 XSS 主要攻击面，缺纵深防御。
+**来源**：2026-06-29 定位评审（docs/reviews/review-position-02-20260629.md §6 探针层）
 
-**已完成方案**：
-- 后端：SPA 页面添加 CSP 头（`script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src blob:; frame-ancestors 'none'; form-action 'none'`）
-- 前端：移除 index.html 内联脚本（theme-init.ts 替代）
-- 前端：useMarkdown.ts 8 个内联 onclick/onmousedown → data-action 属性 + 事件委托
-- 前端：MarkdownViewer.vue 移除 7 个 window.* 全局函数，改为事件委托处理
-- 前端：DOMPurify 集成，清理 markdown 渲染输出
-- 前端：HtmlViewer iframe 添加 csp 属性限制 blob 内容的 CSP
+**问题**：MCP `getEntry` / `listEntries` 路径技术上已存在，但没有任何读取埋点。T027 的 `view_count` 只服务分享链接，不区分人/agent，也不在 MCP/API 读取路径上。所以无法知道"有没有 agent 真的去读另一个 agent 的产出"——这是判断多 Agent 总线愿景是否成立的唯一信号源。
+
+**方案**：给 entry 的读取路径（API `GET /entries/{slug}` + MCP `getEntry`/`listEntries`）加最小探针——记录读取者身份（是否非创建者 / 是否不同 API key）、读取频率、读取方式（API vs MCP vs share）。数据用于驱动方向 1（多 Agent 总线）的优先级决策：半年零信号 → 总线降级；出现信号 → 按真实形状加强。
 
 ---
 
-### 🟡 6. publish_files 二进制文件 base64 支持（✅ 已完成 v0.1.44）
+### 🟡 4. `verify_share_token` 的 `compare_digest` 永真
 
-**问题**：图片、PDF 被直接跳过。后端已支持 base64 上传，能力未利用。发布含截图的项目时图片全丢。
+**来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #1）
 
-**已完成方案**：publish_files 对二进制文件用 content_base64 上传。后端 MAX_FILE_SIZE 10MB→20MB，MCP 分离 MAX_TEXT_FILE_BYTES (7MB) / MAX_BINARY_FILE_BYTES (20MB)，types.ts 添加 content_base64 字段。
+**问题**：`share_service.py:207` 的 `hmac.compare_digest(computed_hash, share.token_hash)` 永远为真——share 是用 `WHERE token_hash = computed_hash` 从 DB 查出的，两个 hash 都由自己计算，不存在 timing attack 面。保留会误导后续维护者以为这里有安全考量。
 
----
-
-### 🟡 7. package-lock.json 版本元数据同步（✅ 已完成 v0.1.44）
-
-**问题**：MCP Server package-lock.json 顶层 version 字段长期落后于 package.json。bump-mcp-version 只改 package.json 不跑 npm install。
-
-**已完成方案**：bump-mcp-version 加 `npm install --package-lock-only`，Makefile 添加 lockfile 版本验证。
+**方案**：删除该比对，或加注释说明保留意图。
 
 ---
 
-### 🔵 8. StorageBackend 接口抽象
+### 🟡 5. `max_views` 语义模糊
 
-**问题**：`~/.peekview/data/{entry_id}/` 路径耦合在 storage.py、entry_service.py、CLI 多处。未来支持 S3/对象存储改动面广。
+**来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #2）
 
-**方案**：抽 `StorageBackend` 接口，现实现为 `LocalStorageBackend`。
+**问题**：`verify_share_cookie` 不递增 `view_count`，只有 `verify_share_token` 递增。导致 `max_views` 实际语义是"最多发给 N 个人"（最多 N 个 token 被使用），但 UI 的 `views` 标签暗示"最多被看 N 次"。
 
----
-
-### 🔵 9. 嵌入式 iframe 分享
-
-**问题**：`<iframe src=".../embed/{slug}">` 是内容传播核心路径，长期在 backlog 未做。
-
-**方案**：加 `/embed/{slug}` 路由（去掉顶部导航）。
+**方案**：在 P1 需求文档明确边界。若需求是"最多看 N 次"则 cookie 路径也递增 view_count；若是"最多发 N 个"则 UI 文案对齐。
 
 ---
 
-### 🔵 10. SQLite 并发写边界文档化
-
-**问题**：SQLite 并发写串行，多账号/多 Agent 并发 publish 会写争用。边界未文档化。
-
-**方案**：README 明确"单机低并发"适用边界 + 未来 PostgreSQL 迁移路径。
-
----
-
-### 🔵 11. publish_files 大目录扫描进度反馈
-
-**问题**：扫描大目录静默无反馈。MCP 协议支持 progress notification 未用。
-
-**方案**：扫描时推送 progress notification。
-
----
-
-### 🔵 12. health check 503 vs 200 决策复审
-
-**问题**：DB 故障时 health check 返回 200（status: degraded），理由"避免负载均衡器误判"。但业界标准是 503 让流量切走，degraded 信息在 body 里监控难感知。
-
-**方案**：复审决策，考虑 DB/存储错误返回 503，磁盘低返回 200+warning。
-
----
-
-## 评审盲区教训
-
-历次 gstack 评审盯实现细节（sessionId、认证、安全边界），但从未质疑**技术选型的时效性**——SSE 在 2025-03 已废弃，评审中无人发现。
-
-**新增评审清单第一项：选型时效性检查。** 涉及协议/框架/库/传输方式时，先查证"当前时间点是否仍是推荐做法"，再审实现细节。AI/Agent 领域标准演进以季度计，训练数据里的常识可能几个月就过时。
-
----
-
-### 🟠 13. 登录/注册 Cap captcha 集成（✅ 已完成 v0.1.43）
-
-**问题**：自托管 PeekView 缺乏登录/注册的人机验证层，易被脚本刷账号。
-
-**已完成方案**：
-- 集成 [Cap](https://github.com/tiagozip/cap)（Apache 2.0 自托管 captcha）
-- 新增 `peekview.auth.captcha.*` 配置段（`enabled` / `site_key` / `secret_key` / `verify_url` / `exempt_first_user`）
-- `register` / `login` 在 captcha 启用时验证 `cap-token`
-- 公开端点 `GET /api/v1/config/captcha` 返回公开字段
-- 第一个用户（admin）可豁免
-- 15 个新测试覆盖 verify_captcha 单元、register/login 集成、exempt 场景、公开端点
-
-**部署**：用户需自行启动 Cap standalone（Docker），详见 `docs/archived/plans/captcha-integration.md`。
-
----
-
----
-
-### 🔵 14. SCOPE+ 影响范围决策矩阵
-
-**来源**：workflow-v4 评审 Fix-8（docs/reviews/expert-review-wf-v4-fixes-2026-06-12.md 分歧 2）
-
-**问题**：SCOPE+ 定向回补的核心步骤"主 Agent 判断哪些阶段需要跟着改"缺少判断规则，完全靠临场判断。但当前无实战数据证明这条规则是必要的——可能 P1 基线增补后各阶段自然消费最新基线即可，不需要显式矩阵。
-
-**方案**：待 5-10 个真实 SCOPE+ 场景积累后，分析是否存在"回补不足"或"回补过度"的实际失败，再决定是否矩阵化。
-
----
-
-### 🔵 15. BDD 验收条件可量化门槛
-
-**来源**：workflow-v4 评审 Fix-9（docs/reviews/expert-review-wf-v4-fixes-2026-06-12.md 分歧 2）
-
-**问题**：P1 分析师可能写出"伪 BDD"（Then 子句含模糊词如"体验良好""正常工作"），全流程无质检。但增加 BDD 质量规则会增加长期认知负担，且"伪 BDD"是否真的导致过 P6 验收失败尚无数据。
-
-**方案**：待 5-10 个真实任务执行后，统计 P6 验收失败中因 BDD 模糊导致的比例，再决定是否加门槛。
-
----
-
-### 🔵 16. P7 一致性检查覆盖度门槛
-
-**来源**：workflow-v4 评审 Fix-10（docs/reviews/expert-review-wf-v4-fixes-2026-06-12.md 分歧 2）
-
-**问题**：P7 gate 只检查"有无 BLOCKER"，空壳 P7-consistency.md（无 BLOCKER 但也没做检查）可过 gate。但增加覆盖度计数规则增加认知负担，且空壳 P7 是否真的导致过上线问题尚无数据。
-
-**方案**：待 5-10 个真实任务执行后，检查 P7 产出质量是否与 P5 回归测试结果关联，再决定是否加门槛。
-
----
-
-### 🔵 17. 链式上溯拦截规则
-
-**来源**：workflow-v4 评审 Fix-12（docs/reviews/expert-review-wf-v4-fixes-2026-06-12.md B2）
-
-**问题**：L2 上溯每次只跳一个阶段，但多次上溯可能链式组合（如 P5→P4→P2），等效跨多阶段回退。Fix-12 原方案用"非相邻即 PAUSED"拦截，但这与 L2 上溯表中的合法非相邻跳转（P4→P2、P6→P4、P7→P2）冲突。
-
-**方案**：待真实链式上溯场景出现后，基于实际数据设计拦截条件（如：检测链内是否有阶段 retry 已耗尽、限制链总步数等），而非预设规则。
-
----
-
-*维护：随评审持续更新*
-
----
-
-### 🔵 18. 发布通道统一到 CI（本地 `make publish` 降级为验证）
+### 🟡 6. 发布通道统一到 CI
 
 **来源**：2026-06-26 发布流程复盘
 
@@ -218,4 +97,159 @@
 - 发布流程标准化为：`bump-version → 填 CHANGELOG → commit → push tag → 等 CI 绿`
 - PyPI 用 OIDC Trusted Publishing（CI 已配置），npm 用 `secrets.NPM_TOKEN`（CI 已配置）
 
-**优先级**：🟡 中期（不影响当前开发，CI 已经是正确路径，本地发布是冗余）
+---
+
+### 🔵 7. `MAX_SHARES` 查询风格不一致 + `entry.id` type safety
+
+**来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #4）
+
+**问题**：`MAX_SHARES_PER_ENTRY` 检查用原始 `text()` SQL（`SELECT COUNT(*) FROM entry_shares WHERE ...`），与同文件其他 `select(EntryShare)` 风格不一致。`entry.id` 类型为 `int | None` 直传 SQL 参数有 type safety 缝隙（实际路径不可能为 None）。
+
+**方案**：统一为 ORM 查询，或对 `entry.id` 做 None guard。
+
+---
+
+### 🔵 8. `entry_shares` 表无独立 migration
+
+**来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #3）
+
+**问题**：`entry_shares` 表完全依赖 `SQLModel.metadata.create_all()`，无显式 migration。对已运行进程需重启才建表。
+
+**方案**：升级文档注明"新表在下次启动时创建"。长期考虑引入 Alembic 管理迁移。
+
+---
+
+### 🔵 9. share cookie 用 `entry_id` 命名可枚举
+
+**来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.4）
+
+**问题**：`peekview_share_{entry_id}` 中的 entry_id 是自增整数，外部可枚举 cookie 名推断系统 entry 总量和 ID 范围。低危但可改进。
+
+**方案**：改用 `peekview_share_{slug}`。注意 trade-off：slug 若支持 rename 则 cookie 会失效。需评估是否值得改。
+
+---
+
+### 🔵 10. SQLite 并发写边界文档化
+
+**问题**：SQLite 并发写串行，多账号/多 Agent 并发 publish 会写争用。`view_count + 1` 在 SQLite 单写者模型下原子安全，但未来多 worker 部署时 WAL 单写者锁会让并发分享访问串行化。这是"SQLite 适用边界"的具体实例。
+
+**方案**：README 明确"单机低并发"适用边界 + 未来 PostgreSQL 迁移路径。
+
+---
+
+### 🔵 11. 嵌入式 iframe 分享 (`/embed/{slug}`)
+
+**问题**：`<iframe src=".../embed/{slug}">` 让内容内联进宿主页面。
+
+**决策**：⏸️ **数据触发，不主动推进**。底层问题未定——agent 产出是"瞥一眼就丢"还是"沉淀进知识库"。用 `view_count` 观察：若访问曲线为创建后几次访问归零 → 永久搁置；若出现持续回访 → 等宿主场景自己浮现再做。
+
+**方案**：加 `/embed/{slug}` 路由（去掉顶部导航）。仅在数据信号出现后启动。
+
+---
+
+### 🔵 12. 版本化 / 时间契约
+
+**来源**：2026-06-29 定位评审（docs/reviews/review-position-02-20260629.md §4.1）
+
+**问题**：`update_entry` 覆盖式更新不留版本，URL 语义不明确——改了旧内容就没了。理论上存在"分享出去后内容若被改，对方看到的和我不一样"的一致性问题，但当前实践中几乎没有更新。
+
+**决策**：⏸️ **数据触发**。前序评审曾建议"补版本化 + 时间契约"，用"行为是否存在"的尺子衡量后降级——内容不被改写则引用稳定性问题不发生，多 Agent 引用是设想需求。唯一勉强成立的角落：分享后内容被改的一致性问题，但更新本就罕见，低风险。
+
+**触发条件**：出现"内容被改写"或"多 agent 引用"的真实行为。
+
+---
+
+### 🔵 13. OG 预览卡片
+
+**来源**：2026-06-29 两轮评审
+
+**问题**：链接被传播到任何聊天/邮件时，渲染成标题+摘要+来源的预览卡片。对分享场景（T027）有用——但 T027 让分享变得**可能**，不等于分享正在**发生**。
+
+**决策**：⏸️ **数据触发**。先看分享链接的 view_count 和 referrer 数据，确认链接是否在"被传出去"。是则做（对所有送达渠道都有用，不绑定任何厂商）；否则等。
+
+---
+
+### 🔵 14. StorageBackend 接口抽象
+
+**问题**：`~/.peekview/data/{entry_id}/` 路径耦合在 storage.py、entry_service.py、CLI 多处。未来支持 S3/对象存储改动面广。
+
+**方案**：抽 `StorageBackend` 接口，现实现为 `LocalStorageBackend`。
+
+---
+
+### 🔵 15. publish_files 大目录扫描进度反馈
+
+**问题**：扫描大目录静默无反馈。MCP 协议支持 progress notification 未用。
+
+**方案**：扫描时推送 progress notification。
+
+---
+
+### 🔵 16. SCOPE+ 影响范围决策矩阵
+
+**来源**：workflow-v4 评审 Fix-8
+
+**问题**：SCOPE+ 定向回补的核心步骤"主 Agent 判断哪些阶段需要跟着改"缺少判断规则。但当前无实战数据证明这条规则是必要的。
+
+**方案**：待 5-10 个真实 SCOPE+ 场景积累后，分析是否存在"回补不足"或"回补过度"的实际失败，再决定是否矩阵化。
+
+---
+
+### 🔵 17. BDD 验收条件可量化门槛
+
+**来源**：workflow-v4 评审 Fix-9
+
+**问题**：P1 分析师可能写出"伪 BDD"（Then 子句含模糊词如"体验良好""正常工作"），全流程无质检。
+
+**方案**：待 5-10 个真实任务执行后，统计 P6 验收失败中因 BDD 模糊导致的比例，再决定是否加门槛。
+
+---
+
+### 🔵 18. P7 一致性检查覆盖度门槛
+
+**来源**：workflow-v4 评审 Fix-10
+
+**问题**：P7 gate 只检查"有无 BLOCKER"，空壳 P7-consistency.md（无 BLOCKER 但也没做检查）可过 gate。
+
+**方案**：待 5-10 个真实任务执行后，检查 P7 产出质量是否与 P5 回归测试结果关联，再决定是否加门槛。
+
+---
+
+### 🔵 19. 链式上溯拦截规则
+
+**来源**：workflow-v4 评审 Fix-12
+
+**问题**：L2 上溯每次只跳一个阶段，但多次上溯可能链式组合（如 P5→P4→P2），等效跨多阶段回退。
+
+**方案**：待真实链式上溯场景出现后，基于实际数据设计拦截条件，而非预设规则。
+
+---
+
+### ❌ 20. Live 更新 / 实时推送
+
+**来源**：2026-06-29 定位评审
+
+**决策**：❌ **不做**。Artifact 是"活进程的窗口"，PeekView 是"发布记录"。追"活"是去 Artifact 主场正面打，没胜算。
+
+---
+
+## 已完成归档
+
+以下事项已完成，详情见 git history：
+
+| # | 事项 | 完成版本 |
+|---|------|----------|
+| A1 | SSE → Streamable HTTP 迁移 | MCP v0.9.2 |
+| A2 | rate limiting 配置化真正落地 | v0.1.45 |
+| A3 | MCP/CLI 定位写进用户文档 | v0.1.46 |
+| A4 | JWT → httpOnly Cookie | v0.1.45 |
+| A5 | 前端页面 CSP | v0.1.45 |
+| A6 | publish_files 二进制文件 base64 支持 | v0.1.44 |
+| A7 | package-lock.json 版本元数据同步 | v0.1.44 |
+| A8 | 登录/注册 Cap captcha 集成 | v0.1.49 |
+| A9 | health check 503 vs 200 决策复审 | 决策完成（保持 200） |
+| A10 | `revoke_all_for_entry` session 泄漏 | 656ca5a8 |
+
+---
+
+*维护：随评审持续更新*
