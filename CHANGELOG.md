@@ -7,6 +7,33 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-29
+
+### 新增
+
+- **设计系统 Token 全局化**：`--c-*` CSS 变量体系（surface/text/border/accent/shadow/radius/space/font）提升到 `variables.css` 全局声明，29 个旧 token 通过别名映射兼容
+- **7 个共享组件**：BaseButton/BaseBadge/BaseTag/PageHeader/SearchInput/EmptyState/ThemeToggle，统一 `--c-*` token 驱动
+- **EntryCard 组件**：卡片视图专用组件，2 行标题截断（`-webkit-line-clamp: 2`）、flex 等高布局、badge 靠底
+- **卡片/列表双视图**：Explore 页面默认卡片 grid 布局，可切换为列表视图，切换按钮在内容区顶部右侧
+- **BaseButton href 支持**：`href` prop 存在时渲染为 `<a>`，不存在时渲染为 `<button>`，统一视觉风格
+
+### 变更
+
+- **Explore 页面 header 重构**：去掉 PageHeader 组件，自写 header（logo + actions 靠右），搜索框移至内容区顶部与 entry 列表同宽
+- **全页面 logo 统一**：Explore/API Keys 页面使用 LandingView 同款 SVG logo + "PeekView" 文字；Detail 页面 `⌂` 回退按钮替换为 logo 图标（无文字）
+- **API Keys 页面 header 统一**：去掉 `← Back` 链接，改为 logo header + 页面标题"API Keys"在内容区顶部
+- **Detail 页面 Raw 按钮**：从 `<a class="raw-link">` 改为 `<BaseButton variant="secondary">`，与 Copy/Download/Pack 按钮风格统一
+- **EntryListRow 标题**：从硬编码 `entry.slug` 改为 `entry.summary || entry.slug`，与 EntryCard 一致
+- **SearchInput 高度**：padding 从 `10px` 缩减为 `6px`，与 header actions 按钮高度对齐
+- **移动端搜索框**：从 header 内挤压改为内容区全宽独占一行
+
+### 修复
+
+- **Explore 页面 Back 按钮回归**：T028 重构误加 `← Back` 链接，已移除
+- **搜索框位置回归**：T028 将搜索框塞入 PageHeader `#meta` slot 导致位置不合理，已移至内容区
+- **移动端搜索框变形回归**：header 空间不足导致搜索框变方块，已移至内容区全宽
+- **卡片 grid 布局丢失回归**：T028 用 EntryListRow 替换了 entry-grid，已恢复卡片布局并增加切换按钮
+
 ## [0.3.0] - 2026-06-29
 
 ### 新增

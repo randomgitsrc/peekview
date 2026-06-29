@@ -1,12 +1,20 @@
 <template>
   <div class="apikey-page">
-    <PageHeader title="API Keys" back-to="/" back-label="← Back">
-      <template #actions>
-        <BaseButton variant="primary" @click="showCreate = true">Create Key</BaseButton>
-      </template>
-    </PageHeader>
+    <header class="apikey-header">
+      <router-link to="/" class="apikey-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="apikey-logo-word">PeekView</span>
+      </router-link>
+      <div class="apikey-actions">
+        <ThemeToggle />
+      </div>
+    </header>
 
     <div class="page-content">
+      <div class="page-title-bar">
+        <h1 class="page-title">API Keys</h1>
+        <BaseButton variant="primary" @click="showCreate = true">Create Key</BaseButton>
+      </div>
       <div v-if="loading" class="loading-state">
         <span>Loading...</span>
       </div>
@@ -135,11 +143,11 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { api } from '@/api/client'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import PageHeader from '@/components/PageHeader.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import type { ApiKey, ApiKeyCreateResult } from '@/types'
 
 const authStore = useAuthStore()
@@ -296,7 +304,60 @@ function formatRelativeTime(dateStr: string): string {
 <style scoped>
 .apikey-page { min-height: 100vh; background: var(--c-bg); display: flex; flex-direction: column; }
 
+.apikey-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0 var(--space-5);
+  height: var(--header-height);
+  flex-shrink: 0;
+}
+
+.apikey-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.apikey-logo-word {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+}
+
+.apikey-logo:hover .apikey-logo-word {
+  color: var(--c-accent);
+}
+
+.apikey-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
 .page-content { padding: var(--space-4); max-width: 800px; margin: 0 auto; width: 100%; flex: 1; }
+
+.page-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin: 0;
+}
 
 .loading-state {
   text-align: center;

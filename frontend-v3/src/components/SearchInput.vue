@@ -61,7 +61,7 @@ defineEmits<{
 
 .search-input {
   width: 100%;
-  padding: 10px 12px 10px 36px;
+  padding: 6px 12px 6px 36px;
   border: none;
   background: transparent;
   color: var(--c-text);

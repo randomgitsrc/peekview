@@ -43,8 +43,8 @@ describe('EntryListRow', () => {
     expect(wrapper.text()).toContain('A test entry')
   })
 
-  it('renders entry slug', () => {
-    const wrapper = createWrapper()
+  it('renders entry slug as fallback when no summary', () => {
+    const wrapper = createWrapper({ entry: { ...mockEntry, summary: '' } })
     expect(wrapper.text()).toContain('test-entry')
   })
 
