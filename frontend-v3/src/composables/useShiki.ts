@@ -40,7 +40,7 @@ const commonLangs = [
   xml
 ]
 
-const LANG_IMPORT_MAP: Record<string, () => Promise<any>> = {
+export const LANG_IMPORT_MAP: Record<string, () => Promise<any>> = {
   csharp: () => import('shiki/langs/csharp.mjs'),
   ruby: () => import('shiki/langs/ruby.mjs'),
   php: () => import('shiki/langs/php.mjs'),
@@ -105,7 +105,7 @@ const LANG_IMPORT_MAP: Record<string, () => Promise<any>> = {
   dotenv: () => import('shiki/langs/dotenv.mjs'),
 }
 
-const LEGACY_LANG_MAP: Record<string, string> = {
+export const LEGACY_LANG_MAP: Record<string, string> = {
   mathematica: 'wolfram',
   registry: 'reg',
 }
@@ -122,10 +122,6 @@ export async function ensureLanguage(
     return resolvedLang
   }
 
-  if (commonLangs.some(l => l.name === resolvedLang || l.aliases?.includes(resolvedLang))) {
-    return resolvedLang
-  }
-
   let promise = loadingLangs.get(resolvedLang)
   if (!promise) {
     const importer = LANG_IMPORT_MAP[resolvedLang]
@@ -133,7 +129,6 @@ export async function ensureLanguage(
     promise = importer()
       .then(async (mod) => {
         await highlighter.loadLanguage(mod.default)
-        loadingLangs.delete(resolvedLang)
         return true
       })
       .catch(() => {
