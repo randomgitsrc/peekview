@@ -1,8 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shouldHandleZenShortcut, redirectFocusIfHidden } from '../zen-shortcut'
 
-function makeKeyboardEvent(key: string): KeyboardEvent {
-  return new KeyboardEvent('keydown', { key, bubbles: true })
+interface KeyboardEventInit {
+  key: string
+  ctrlKey?: boolean
+  metaKey?: boolean
+  altKey?: boolean
+  shiftKey?: boolean
+}
+
+function makeKeyboardEvent(key: string, init?: Partial<KeyboardEventInit>): KeyboardEvent {
+  return new KeyboardEvent('keydown', {
+    key,
+    bubbles: true,
+    ctrlKey: init?.ctrlKey ?? false,
+    metaKey: init?.metaKey ?? false,
+    altKey: init?.altKey ?? false,
+    shiftKey: init?.shiftKey ?? false,
+  })
 }
 
 describe('shouldHandleZenShortcut', () => {
@@ -114,6 +129,49 @@ describe('shouldHandleZenShortcut', () => {
     const event = makeKeyboardEvent('f')
     expect(shouldHandleZenShortcut(event)).toBe(true)
     spy.mockRestore()
+  })
+
+  it('TC-15: Ctrl+F does not trigger zen mode (B01)', () => {
+    const event = makeKeyboardEvent('f', { ctrlKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(false)
+  })
+
+  it('TC-16: Cmd+F (macOS) does not trigger zen mode (B01)', () => {
+    const event = makeKeyboardEvent('f', { metaKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(false)
+  })
+
+  it('TC-17: plain F key still triggers zen mode (B02)', () => {
+    const event = makeKeyboardEvent('f')
+    expect(shouldHandleZenShortcut(event)).toBe(true)
+  })
+
+  it('TC-18: Ctrl+Shift+F does not trigger zen mode (B03)', () => {
+    const event = makeKeyboardEvent('f', { ctrlKey: true, shiftKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(false)
+  })
+
+  it('TC-19: Alt+F does not trigger zen mode (B04)', () => {
+    const event = makeKeyboardEvent('f', { altKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(false)
+  })
+
+  it('TC-20: Escape with Ctrl still triggers zen mode (B05)', () => {
+    const event = makeKeyboardEvent('Escape', { ctrlKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(true)
+  })
+
+  it('TC-21: Escape with Alt still triggers zen mode (B05)', () => {
+    const event = makeKeyboardEvent('Escape', { altKey: true })
+    expect(shouldHandleZenShortcut(event)).toBe(true)
+  })
+
+  it('TC-22: F key + input focus still does not trigger (B06)', () => {
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    const event = makeKeyboardEvent('f')
+    expect(shouldHandleZenShortcut(event)).toBe(false)
   })
 })
 
