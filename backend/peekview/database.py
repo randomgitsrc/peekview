@@ -475,8 +475,9 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
 
         entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
         fts_count = session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
+        content_count = session.exec(text("SELECT COUNT(*) FROM entries_fts WHERE content IS NOT NULL AND content != ''")).scalar()
 
-        if fts_count >= entry_count and entry_count > 0:
+        if content_count >= entry_count and entry_count > 0:
             logger.debug("FTS content already backfilled")
             return
 

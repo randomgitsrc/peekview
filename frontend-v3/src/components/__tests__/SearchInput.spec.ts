@@ -6,7 +6,7 @@ describe('SearchInput', () => {
   it('renders with default placeholder', () => {
     const wrapper = mount(SearchInput)
     const input = wrapper.find('input')
-    expect(input.attributes('placeholder')).toBe('Search...')
+    expect(input.attributes('placeholder')).toBe('搜索标题、标签和文件内容...')
   })
 
   it('renders with custom placeholder', () => {
