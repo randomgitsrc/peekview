@@ -1,6 +1,7 @@
 export function shouldHandleZenShortcut(event: KeyboardEvent): boolean {
   if (event.key !== 'f' && event.key !== 'F' && event.key !== 'Escape') return false
   if (event.key === 'Escape') return true
+  if (event.ctrlKey || event.metaKey || event.altKey) return false
   const active = document.activeElement
   if (!active) return true
   const tag = active.tagName

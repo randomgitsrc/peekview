@@ -226,6 +226,7 @@ import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
 import { useDebounce } from '@/composables/useDebounce'
 import { mergeQuery, parseRestoreQuery } from '@/views/searchUrl.logic'
+import { loadViewMode, saveViewMode } from '@/composables/useViewMode'
 
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
@@ -261,7 +262,7 @@ const effectiveOwner = computed(() => props.owner || currentOwner.value || undef
 const currentUserUsername = computed(() => user.value?.username ?? null)
 
 const searchQuery = ref('')
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'grid' | 'list'>(loadViewMode())
 let suppressRouteUpdate = false
 
 function updateURL(params: Record<string, string | undefined>): void {
@@ -405,6 +406,10 @@ async function handleToggleVisibility(entry: Entry) {
 
 const currentPage = ref(1)
 const totalPages = computed(() => Math.ceil(total.value / perPage.value))
+
+watch(viewMode, (mode) => {
+  saveViewMode(mode)
+})
 
 watch(currentPage, (newPage) => {
   updateURL({ page: newPage > 1 ? String(newPage) : undefined })
