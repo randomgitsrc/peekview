@@ -8,7 +8,7 @@
     >
       <span class="warning-icon">⚠️</span>
       <span class="warning-text">
-        此 HTML 含 {{ relativePathWarningCount }} 个本地资源引用，PeekView 当前不支持多文件相对路径，这些资源不会加载。
+        此 HTML 含 {{ relativePathWarningCount }} 个本地资源引用，PeekView 将尝试自动注入。部分引用可能无法注入（如动态加载、嵌套 iframe 等）。
       </span>
       <button
         data-testid="relative-path-warning-close"
@@ -61,7 +61,7 @@
       <iframe
         v-if="renderUrl"
         :src="renderUrl"
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-forms"
         referrerpolicy="no-referrer"
         class="html-frame"
         @load="onIframeLoad"

@@ -1,9 +1,10 @@
 """Tests for HTML render endpoint: GET /api/v1/entries/{slug}/files/{file_id}/render
 
-TDD RED — route not yet implemented, all tests expected to fail.
-Covers: route basics, access control, CSP directives, sibling injection.
+Covers: route basics, access control, CSP directives, sibling injection,
+module script injection, CSS internal refs, SVG-as-img, path normalization.
 """
 
+import base64
 import shutil
 import tempfile
 from pathlib import Path
@@ -12,6 +13,15 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from peekview.main import create_app
+from peekview.services.html_render_service import (
+    SiblingFileData,
+    _is_svg_file,
+    _lookup_key,
+    _process_css_refs,
+    _sibling_keys,
+    inject_resources,
+    normalize_ref,
+)
 
 
 @pytest.fixture(scope="function")
@@ -216,3 +226,317 @@ class TestRenderSiblingInject:
         resp = await client.get(_render_url(slug, files[0]["id"], inject=999999))
         assert resp.status_code == 200
         assert "<h1>Hi</h1>" in resp.text
+
+
+# ── Group 5: Module script injection (BDD-2a, BDD-2b) ──────────────────
+
+
+class TestModuleScriptInjection:
+    def test_module_script_inlined_with_type_preserved(self):
+        html = '<html><head></head><body><script type="module" src="app.js"></script></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="app.js", path=None,
+                content='import { x } from "./dep.js"; console.log(x);',
+                language="javascript", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert 'type="module"' in result
+        assert 'import { x }' in result
+        assert 'src="app.js"' not in result
+
+    def test_module_script_not_duplicated_in_unreferenced(self):
+        html = '<html><head></head><body><script type="module" src="app.js"></script></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="app.js", path=None,
+                content="console.log('mod');",
+                language="javascript", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        count = result.count("console.log('mod')")
+        assert count == 1
+
+    def test_importmap_preserved_module_inlined(self):
+        html = (
+            '<html><head></head><body>'
+            '<script type="importmap">{"imports": {"./dep.js": "./dep.js"}}</script>'
+            '<script type="module" src="app.js"></script>'
+            '</body></html>'
+        )
+        siblings = [
+            SiblingFileData(
+                filename="app.js", path=None,
+                content="console.log('mod');",
+                language="javascript", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert 'type="importmap"' in result
+        assert '{"imports"' in result
+        assert 'type="module"' in result
+        assert "console.log('mod')" in result
+
+    def test_text_javascript_script_still_works(self):
+        html = '<html><head></head><body><script type="text/javascript" src="app.js"></script></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="app.js", path=None,
+                content="console.log('classic');",
+                language="javascript", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "console.log('classic')" in result
+        assert 'src="app.js"' not in result
+
+    def test_other_type_script_skipped(self):
+        html = '<html><head></head><body><script type="application/json" src="data.js"></script></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="data.js", path=None,
+                content='{"key": "val"}',
+                language="json", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert 'type="application/json"' in result
+        assert 'src="data.js"' in result
+
+
+# ── Group 6: CSS internal reference injection (BDD-4a, BDD-4b, BDD-4c) ─
+
+
+class TestCssInternalRefs:
+    def test_process_css_refs_import_replaced(self):
+        css = '@import url("theme.css");\nbody { color: blue; }'
+        text_map = {"theme.css": "body { background: #eee; }"}
+        result = _process_css_refs(css, text_map, {})
+        assert "@import" not in result
+        assert "background: #eee" in result
+        assert "color: blue" in result
+
+    def test_process_css_refs_import_with_single_quotes(self):
+        css = "@import 'theme.css';\nbody { color: blue; }"
+        text_map = {"theme.css": "body { background: #eee; }"}
+        result = _process_css_refs(css, text_map, {})
+        assert "@import" not in result
+        assert "background: #eee" in result
+
+    def test_process_css_refs_url_binary_replaced(self):
+        css = 'body { background-image: url("bg.png"); }'
+        text_map: dict[str, str] = {}
+        binary_map: dict[str, SiblingFileData] = {
+            "bg.png": SiblingFileData(
+                filename="bg.png", path=None,
+                content=base64.b64encode(b"\x89PNG").decode(),
+                language=None, is_binary=True, mime_type="image/png",
+            ),
+        }
+        result = _process_css_refs(css, text_map, binary_map)
+        assert "data:image/png;base64," in result
+        assert 'url("bg.png")' not in result
+
+    def test_process_css_refs_url_svg_text_replaced(self):
+        css = 'body { background-image: url("icon.svg"); }'
+        text_map = {"icon.svg": '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>'}
+        svg_keys = {"icon.svg"}
+        result = _process_css_refs(css, text_map, {}, svg_keys)
+        assert "data:image/svg+xml;charset=utf-8," in result
+        assert 'url("icon.svg")' not in result
+
+    def test_process_css_refs_circular_import_terminates(self):
+        css_a = '@import url("b.css");\n.a { color: red; }'
+        css_b = '@import url("a.css");\n.b { color: blue; }'
+        text_map = {"a.css": css_a, "b.css": css_b}
+        result = _process_css_refs(css_a, text_map, {})
+        assert ".a { color: red; }" in result
+        assert ".b { color: blue; }" in result
+
+    def test_process_css_refs_depth_limit(self):
+        css_a = '@import url("b.css");\n.a {}'
+        css_b = '@import url("c.css");\n.b {}'
+        css_c = '@import url("d.css");\n.c {}'
+        css_d = '.d {}'
+        text_map = {"a.css": css_a, "b.css": css_b, "c.css": css_c, "d.css": css_d}
+        result = _process_css_refs(css_a, text_map, {})
+        assert ".a {}" in result
+        assert ".b {}" in result
+        assert ".c {}" in result
+
+    def test_process_css_refs_external_url_left_alone(self):
+        css = '@import url("https://cdn.example.com/reset.css");\nbody { color: red; }'
+        result = _process_css_refs(css, {}, {})
+        assert '@import url("https://cdn.example.com/reset.css")' in result
+
+    def test_process_css_refs_url_not_found_left_alone(self):
+        css = 'body { background: url("missing.png"); }'
+        result = _process_css_refs(css, {}, {})
+        assert 'url("missing.png")' in result
+
+    def test_render_inject_css_with_import(self):
+        html = '<html><head><link rel="stylesheet" href="main.css"></head><body></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="main.css", path=None,
+                content='@import url("theme.css");\nbody { color: red; }',
+                language="css", is_binary=False, mime_type=None,
+            ),
+            SiblingFileData(
+                filename="theme.css", path=None,
+                content="body { background: #eee; }",
+                language="css", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "background: #eee" in result
+        assert "@import" not in result
+
+
+# ── Group 7: SVG-as-img injection (BDD-5a, BDD-5b) ────────────────────
+
+
+class TestSvgAsImg:
+    def test_svg_img_inlined_as_data_uri(self):
+        html = '<html><head></head><body><img src="diagram.svg"></body></html>'
+        svg_content = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>'
+        siblings = [
+            SiblingFileData(
+                filename="diagram.svg", path=None,
+                content=svg_content,
+                language="xml", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert 'data:image/svg+xml;charset=utf-8,' in result
+        assert 'src="diagram.svg"' not in result
+
+    def test_svg_img_by_extension(self):
+        html = '<html><head></head><body><img src="icon.svg"></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="icon.svg", path=None,
+                content="<svg></svg>",
+                language=None, is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "data:image/svg+xml;charset=utf-8," in result
+
+    def test_binary_img_still_base64(self):
+        html = '<html><head></head><body><img src="photo.png"></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="photo.png", path=None,
+                content=base64.b64encode(b"\x89PNG\r\n").decode(),
+                language=None, is_binary=True, mime_type="image/png",
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "data:image/png;base64," in result
+
+    def test_non_svg_text_img_not_replaced(self):
+        html = '<html><head></head><body><img src="data.txt"></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="data.txt", path=None,
+                content="hello world",
+                language="text", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert 'src="data.txt"' in result
+
+    def test_is_svg_file_by_language(self):
+        f = SiblingFileData(filename="d.xml", path=None, content="", language="xml", is_binary=False, mime_type=None)
+        assert _is_svg_file(f) is True
+
+    def test_is_svg_file_by_extension(self):
+        f = SiblingFileData(filename="d.svg", path=None, content="", language=None, is_binary=False, mime_type=None)
+        assert _is_svg_file(f) is True
+
+    def test_is_svg_file_by_language_svg(self):
+        f = SiblingFileData(filename="d", path=None, content="", language="svg", is_binary=False, mime_type=None)
+        assert _is_svg_file(f) is True
+
+    def test_is_svg_file_negative(self):
+        f = SiblingFileData(filename="d.js", path=None, content="", language="javascript", is_binary=False, mime_type=None)
+        assert _is_svg_file(f) is False
+
+
+# ── Group 8: Path normalization (BDD-6a, BDD-6b) ──────────────────────
+
+
+class TestPathNormalization:
+    def test_sibling_keys_basename_fallback(self):
+        f = SiblingFileData(
+            filename="app.js", path="js/app.js",
+            content="", language="javascript", is_binary=False, mime_type=None,
+        )
+        keys = _sibling_keys(f)
+        assert "app.js" in keys
+        assert "js/app.js" in keys
+
+    def test_sibling_keys_no_duplicate_basename(self):
+        f = SiblingFileData(
+            filename="style.css", path="style.css",
+            content="", language="css", is_binary=False, mime_type=None,
+        )
+        keys = _sibling_keys(f)
+        assert keys.count("style.css") == 1
+
+    def test_lookup_key_direct_match(self):
+        m = {"style.css": "content"}
+        assert _lookup_key("style.css", m) == "style.css"
+
+    def test_lookup_key_basename_fallback(self):
+        m = {"style.css": "content"}
+        assert _lookup_key("../style.css", m) == "style.css"
+
+    def test_lookup_key_no_match(self):
+        m = {"other.css": "content"}
+        assert _lookup_key("../style.css", m) is None
+
+    def test_lookup_key_basename_same_as_key(self):
+        m = {"style.css": "content"}
+        assert _lookup_key("style.css", m) == "style.css"
+
+    def test_relative_path_css_injected(self):
+        html = '<html><head><link rel="stylesheet" href="../style.css"></head><body></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="style.css", path=None,
+                content="body { color: red; }",
+                language="css", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "color: red" in result
+        assert 'href="../style.css"' not in result
+
+    def test_relative_path_js_injected(self):
+        html = '<html><head></head><body><script src="../js/app.js"></script></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="app.js", path="js/app.js",
+                content="console.log('app');",
+                language="javascript", is_binary=False, mime_type=None,
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "console.log('app')" in result
+        assert 'src="../js/app.js"' not in result
+
+    def test_relative_path_img_injected(self):
+        html = '<html><head></head><body><img src="../images/photo.png"></body></html>'
+        siblings = [
+            SiblingFileData(
+                filename="photo.png", path="images/photo.png",
+                content=base64.b64encode(b"\x89PNG").decode(),
+                language=None, is_binary=True, mime_type="image/png",
+            ),
+        ]
+        result = inject_resources(html, siblings)
+        assert "data:image/png;base64," in result
