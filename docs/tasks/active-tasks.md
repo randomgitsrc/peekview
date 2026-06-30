@@ -12,9 +12,7 @@
 
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|----------|----------|
-| T026 | search-url | ✅✅ 已完成 | READY | 🟡 | 2026-06-25 | 2026-06-28 |
-| T027 | share-link | ✅✅ 已完成 | READY | 🟠 | 2026-06-25 | 2026-06-29 |
-| T028 | frontend-design-system-refactor | ✅✅ 已完成 | P8→v0.3.1 | 🟠 | 2026-06-29 | 2026-06-29 |
+| (无) | | | | | | |
 
 ### 待开始
 
@@ -23,12 +21,14 @@
 | T029 | card-list-layout-polish | ✅ 已完成 | READY | 🟠 | 无 | 2026-06-29 | 2026-06-30 |
 | T030 | frontend-interaction-enhancements | ✅ 已完成 | READY | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
-| T032 | entry-read-tracking | ✅ 已完成 | READY | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
-| T033 | share-semantic-security-fixes | ✅ 已完成 | READY | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T036 | detail-info-completeness | ✅ 已完成 | READY | 🟠 | 无 | 2026-06-29 | 2026-06-30 |
-| T037 | search-content-expansion | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T038 | csharp-highlight-description-api | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T037 | search-content-expansion | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
+| T038 | csharp-highlight-description-api | 🔀 已合并 | →T040 | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
+| T039 | explore-ui-polish | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-30 | 2026-06-30 |
+| T040 | shiki-language-coverage | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-30 | 2026-06-30 |
+| T041 | html-sandbox-allow-forms | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-30 | 2026-06-30 |
+| T042 | html-module-script-inject | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-30 | 2026-06-30 |
+| T043 | html-inject-ux-polish | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-30 | 2026-06-30 |
 
 ### 已完成
 
@@ -38,6 +38,14 @@
 | T023 | page-basics | ✅✅ 已完成 | P6 | 🟠 | 2026-06-28 |
 | T025 | user-page | ✅✅ 已完成 | P7 | 🟠 | 2026-06-28 |
 | T024 | landing-page | ✅✅ 已完成 | P8→v0.2.5 | 🟠 | 2026-06-28 |
+| T026 | search-url | ✅✅ 已完成 | P8→v0.3.0 | 🟡 | 2026-06-28 |
+| T027 | share-link | ✅✅ 已完成 | P8→v0.3.0 | 🟠 | 2026-06-29 |
+| T028 | frontend-design-system-refactor | ✅✅ 已完成 | P8→v0.3.1 | 🟠 | 2026-06-29 |
+| T029 | card-list-layout-polish | ✅✅ 已完成 | P8→v0.4.0 | 🟠 | 2026-06-30 |
+| T030 | frontend-interaction-enhancements | ✅✅ 已完成 | P8→v0.4.0 | 🟡 | 2026-06-30 |
+| T032 | entry-read-tracking | ✅✅ 已完成 | P8→v0.4.0 | 🟡 | 2026-06-30 |
+| T033 | share-semantic-security-fixes | ✅✅ 已完成 | P8→v0.4.0 | 🟡 | 2026-06-30 |
+| T036 | detail-info-completeness | ✅✅ 已完成 | P8→v0.4.0 | 🟠 | 2026-06-30 |
 | T001 | mcp-namespace-map | ✅✅ 已完成 | P8 | 🟠 | 2026-06-15 |
 | T002 | fix-db-migration | ✅✅ 已完成 | P7 | 🔴 | 2026-06-12 |
 | T003 | csp-captcha-wasm | ❌ 已取消 | P1 | 🟠 | 2026-06-12 |
@@ -226,6 +234,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-06-30 | 创建 T039-T043 | 问题重组：T038→T040（Shiki 语言覆盖）；T037 HTML 部分拆出→T041/T042/T043；新增 T039（Explore UI 修正）。实测发现 sandbox 缺 allow-forms（🔴）+ module script 注入失效（🔴） |
 | 2026-06-26 | 完成 T022 | diagram-renderer-refactor v0.2.0 发布到 PyPI（frontend-only 重构 + 行为保真 9 维度） |
 | 2026-06-25 | 创建 T024-T027 | 路由/页面/分享批任务 P0 全部立项完成（T024 Landing / T025 用户公开页 / T026 搜索 URL 化 / T027 临时分享链接） |
 | 2026-06-25 | 创建 T023 | page-basics 立项，P0-brief 已写（删 HomeView 僵尸 + 404 兜底，路由/页面批任务依赖链根） |
