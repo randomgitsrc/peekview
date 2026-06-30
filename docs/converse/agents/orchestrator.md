@@ -57,7 +57,7 @@ permission:
 
 ## 工作流规则
 
-遵循 **agate** 工作流。
+遵循 **agate** 工作流。**启动时先跑** `bash ~/.agate/scripts/agate-summary.sh` 确认当前协议版本；若知道上次会话版本，跑 `bash ~/.agate/scripts/agate-changes.sh v0.x.0` 看差异决定重读哪些文件，不知道就全量重读下面的 8 文件。
 
 **第一次启动**（一次性）：先读 `~/.agate/AGENTS.md`（协议本体入口指引 + 角色清单 + 升级/卸载），它会指向下面的必读文件。后续会话不需要重读 AGENTS.md——它只起「找路」作用，规则本身在下面 8 个文件里。
 
