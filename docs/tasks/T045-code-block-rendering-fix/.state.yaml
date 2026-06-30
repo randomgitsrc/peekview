@@ -1,6 +1,6 @@
 task_id: T045-code-block-rendering-fix
-phase: P6
-status: in_progress
+phase: READY
+status: completed
 
 retries:
   P1: []

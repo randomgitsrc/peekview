@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 变更
+
+- **Markdown/Diagram 代码块补行号**（T045）：`highlightCode()` 复用 `highlight()` 的行号逻辑，Markdown 代码块和 Diagram code mode 均显示行号列；DiagramBlock 的 Mermaid/PlantUML code mode 改走 Shiki 高亮（不再用 `escapeHtml`）
+- **Zebra stripe 整行背景**（T045）：MarkdownViewer 代码块 `.line` 设 `display: block`，zebra 背景铺满整行宽度（不再只衬文字下方）
+- **Zebra 配色对比度提升**（T045）：dark 主题 `--bg-code-even` 调整为 `#161b22`（HSL 亮度差 8.04%），light 主题调整为 `#e2e5ea`（HSL 亮度差 8.43%），肉眼可辨识
+
 ### 修复
 
 - **Ctrl+F 不再触发全屏模式**（T044）：`zen-shortcut.ts` 的 `shouldHandleZenShortcut` 增加修饰键过滤（Ctrl/Meta/Alt），按 Ctrl+F 时浏览器搜索正常弹出，单独 F 键仍触发 zen mode

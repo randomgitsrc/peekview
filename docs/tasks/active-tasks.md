@@ -19,7 +19,7 @@
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T044 | frontend-interaction-fixes | ✅✅ 已完成 | P6 | 🟠 | 无 | 2026-06-30 | 2026-07-01 |
-| T045 | code-block-rendering-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-30 | 2026-06-30 |
+| T045 | code-block-rendering-fix | ✅✅ 已完成 | P6 | 🟠 | 无 | 2026-06-30 | 2026-07-01 |
 
 ### 已完成
 
