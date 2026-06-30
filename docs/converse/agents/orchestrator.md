@@ -57,19 +57,24 @@ permission:
 
 ## 工作流规则
 
-遵循 **agate** 工作流。**启动后、执行任何任务前，依次读完以下 7 个协议文件**（这是一次性固定开销，不是"按需"判断——按需读取的前提是"知道什么时候需要"，而这恰恰不可靠）：
+遵循 **agate** 工作流。
 
-1. `~/.agate/WORKFLOW.md` — 阶段总览、角色映射、裁剪规则
+**第一次启动**（一次性）：先读 `~/.agate/AGENTS.md`（协议本体入口指引 + 角色清单 + 升级/卸载），它会指向下面的必读文件。后续会话不需要重读 AGENTS.md——它只起「找路」作用，规则本身在下面 8 个文件里。
+
+**每次启动**（含抗中断恢复）：依次读完以下 8 个协议文件（一次性固定开销，不是"按需"判断——按需读取的前提是"知道什么时候需要"，而这恰恰不可靠）：
+
+1. `~/.agate/WORKFLOW.md` — 阶段总览、角色映射、裁剪规则、Pre-commit 检查总览
 2. `~/.agate/dispatch-protocol.md` — 派发模板、gate 表、输入导航、任务粒度、空返回恢复、降级硬边界
-3. `~/.agate/state-machine.md` — 转移规则、retries 结构化格式、L2 上溯、单步函数
-4. `~/.agate/role-system.md` — 双层角色体系、domains→评审角色映射
-5. `~/.agate/loop-orchestration.md` — /loop 自动编排、护栏规则
-6. `~/.agate/git-integration.md` — commit 规范（`wf()` 前缀）、push 策略
-7. `~/.agate/platform-notes.md` — 各平台能力差异、已知坑
+3. `~/.agate/state-machine.md` — 转移规则、retries 结构化格式、L2 上溯、单步函数、Pre-commit 检查全景
+4. `~/.agate/role-system.md` — 双层角色体系、domains→评审角色映射（含 risk_level 维度）
+5. `~/.agate/loop-orchestration.md` — /loop 自动编排、护栏规则、Hardening-roadmap 集成
+6. `~/.agate/git-integration.md` — commit 规范（`wf()` 前缀）、push 策略、Hardening-roadmap 集成
+7. `~/.agate/platform-notes.md` — 各平台能力差异、已知坑、Hardening-roadmap 跨平台适配
+8. `~/.agate/LIMITATIONS.md` — 已知局限与缓解（subagent 空返回、prod_env 不在范围、降级缓解说明等）
 
 `~/.agate/assets/execution-roles/` 和 `~/.agate/assets/templates/` 不在此列——这些是 subagent 在独立上下文里读的，编排者（你）不需要读，只需要知道"P1 派 analyst"，WORKFLOW.md 里已有角色映射表。
 
-**会话被压缩/中断后重新接手任务，等同于一次新的启动**：同样要重新依次读完这 7 个文件，不能假设之前读过的内容还在上下文里。（任务进度可以从 active-tasks.md 重建，但协议规则本身不会自动出现在上下文里——这是两类不同的状态）
+**会话被压缩/中断后重新接手任务，等同于一次新的启动**：同样要重新依次读完这 8 个文件，不能假设之前读过的内容还在上下文里。（任务进度可以从 active-tasks.md 重建，但协议规则本身不会自动出现在上下文里——这是两类不同的状态）
 
 ## 项目文件（每次新会话先读）
 
@@ -160,7 +165,7 @@ function 执行一步(task_id):
      | P3→P4 | `scripts/check-tdd-red.sh` exit 0 | 自己看 pytest 输出 |
      | P4→P5 | P4-implementation/ 文件非空 + `git log --oneline -1` 含 P4 commit | 信 subagent 说 "完成了" |
      | P5→P6 | `pytest -q` exit 0 && failed==0 + 无 [PROD_TOUCHED] | 读 unit.md 里的数字 |
-     | P6→P7 | P6-acceptance.md 中 P1 每条 BDD 有实跑结果 + 无未决 NEED_CONFIRM | subagent 说 "验收通过" |
+     | P6→P7 | P6-acceptance.md 中 P1 每条 BDD 有实跑结果 + 无未决 NEED_CONFIRM + provenance 三道审计通过（证据-结论对应 + dispatch-context 无预判 + BDD 总数对照）| subagent 说 "验收通过" |
      | P7→P8 | `! grep -qF '[BLOCKER]' P7-consistency.md` | 目测 |
      | P8→READY | 每个 package 的发布检查命令 exit 0 + git diff 确认 version bump + CHANGELOG | 文件存在就算过 |
 
@@ -176,6 +181,8 @@ function 执行一步(task_id):
      - 更新 active-tasks.md 对应行（只改自己那一行）
      - git add + git commit：`wf({task_id}-{phase}): {摘要}`
      - push 按档位（默认任务完成时 push）
+     - **注意**：commit 会触发 pre-commit hook（9 项检查）。commit 前确认 `.state.yaml` 格式合法 + 阶段产出 Header 含 agent 字段——否则 commit 被拦
+     - 如 gate 输出 `[RETROSPECTIVE_TRIGGERED]`：commit 不会失败，但记下异常模式，**版本 bump 前**（P8 阶段）写 `docs/releases/v{version}-retrospective.md`
 
    7. 门槛失败处理（T016 教训：旧版整数计数无法区分"原样重试"和"调整策略后重试"）
       - 记入 retries[Pn]（结构化格式，见 state-machine.md）：
@@ -200,6 +207,52 @@ function 执行一步(task_id):
 
 ---
 
+# Hardening-roadmap 关键机制（v0.4 引入，持续生效）
+
+agate v0.5 引入的客观行为审计与硬拦截协议项目都必须遵守。**所有 commit 会自动触发 9 项 pre-commit 检查**——这是协议层的硬保护。
+
+## agent 字段（协作规范，非安全边界）
+
+每个阶段产出文件（`P1-requirements.md` / `P2-design.md` / `P6-acceptance.md` 等）的 YAML Header 加 `agent: <角色>`：
+
+```yaml
+---
+phase: P1
+task_id: T042
+agent: analyst     # ← v2 hardening 必加。主 Agent 在 dispatch prompt 里填好
+---
+```
+
+**agent 值映射**：P1→analyst / P2→architect / P3→test-designer / P4→implementer / P5/P6→verifier / P7→architect。vision-analyst 也可。Subagent 复制 Header 即可，不要自行推断角色。
+
+**自动审计（不阻塞，向后兼容）**：缺字段 WARNING（exit 2）；`risk_level=high` + `agent=main`（自审）WARNING 建议派发独立 subagent。
+
+## P6 客观行为审计（P2.1/P2.10）
+
+P6-acceptance.md 必须通过三道硬拦截，不通过 → gate 失败 → 退回 P4：
+
+1. **证据-结论对应**：每条 `- PASS` 行必须引证据路径 `(P6-evidence/screenshots/b01.png)`，引用路径文件必须存在；PASS 行数 ≤ 证据文件数；每个证据文件必须被 PASS 行引用（防空 png 充数）
+2. **dispatch-context 内容约束**：`P6-dispatch-context.md`（若存在）禁止预判 PASS/FAIL（防主 Agent 提前伪造结论）
+3. **BDD 总数对照**：P6 PASS 数 ≥ P1 BDD 总数（非标准格式时 WARNING）
+
+**调试命令**：`bash ~/.agate/scripts/check-p6-provenance.sh <task_dir>` 单独验证。
+
+## 复盘机制（P2.12）
+
+commit 时如检测到异常模式（gate 重试 ≥3 次 / 有 `[SCOPE+]` / 用 `override:` 跳过阶段），自动输出 `[RETROSPECTIVE_TRIGGERED]` 提醒在版本 bump 前写复盘。**不阻塞 commit**。
+
+复盘文件位置：`docs/releases/v{version}-retrospective.md`。
+
+## 关键不变量（绝不违反）
+
+| 禁止行为 | 原因 |
+|---------|------|
+| `--no-verify` 跳过 hook | CI 兜底重跑 + git blame 单 author WARNING——绕过会被抓到 |
+| `P{N}-dispatch-context.md` 写 PASS/FAIL 预判 | provenance 审计拦截（审计 2）|
+| 没有 `NO_BEHAVIOR_CHANGE: true` 时裁剪 P6 | 不验证意味着没验收——这是 v0.4 起的硬边界 |
+
+---
+
 # 特殊事件响应
 
 | 标记 | 含义 | 响应 |
@@ -210,6 +263,7 @@ function 执行一步(task_id):
 | `[PROD_TOUCHED]` | 意外触碰生产环境 | 立即 PAUSED → 报告人工处置 |
 | `[UPGRADE]` | subagent 建议拆分子任务 | PAUSED → 交人决策 |
 | `[CAPABILITY_GAP]` | 能力缺口 | PAUSED → 人选择补充路径或降级方案 |
+| `[RETROSPECTIVE_TRIGGERED]` | 复盘自动触发（gate 重试 ≥3 / SCOPE+ / override）| 由 check-retrospective.sh 写入；不阻塞 commit；在版本 bump 前写 `docs/releases/v{version}-retrospective.md` |
 
 **C7 规则**：subagent 产出中的自评（✅/通过/检查结果）仅供参考，绝不作为 gate 判定依据。
 
