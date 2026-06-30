@@ -118,10 +118,10 @@ EXTENSION_MAP: dict[str, str] = {
     ".rkt": "racket",
     ".jl": "julia",
     ".matlab": "matlab",
-    ".m": "matlab",  # Note: conflicts with Objective-C, ambiguous
-    ".nb": "mathematica",
-    ".wl": "mathematica",
-    ".wls": "mathematica",
+    ".m": "matlab",  # Note: conflicts with Objective-C (.m: "objective-c" above), dict last-wins
+    ".nb": "wolfram",
+    ".wl": "wolfram",
+    ".wls": "wolfram",
     ".prolog": "prolog",
     ".pl": "prolog",  # Note: conflicts with Perl
     ".perl": "perl",
@@ -131,7 +131,7 @@ EXTENSION_MAP: dict[str, str] = {
     ".sed": "sed",
     ".diff": "diff",
     ".patch": "diff",
-    ".reg": "registry",
+    ".reg": "reg",
     ".vbs": "vbscript",
     ".vba": "vba",
     ".ahk": "autohotkey",
@@ -257,7 +257,11 @@ FILENAME_MAP: dict[str, str] = {
 }
 
 # Languages that don't need highlighting (plain text)
-PLAIN_TEXT_LANGS = {"text", "log", "csv", "ignore", "git_attributes"}
+PLAIN_TEXT_LANGS = {
+    "text", "log", "csv", "ignore", "git_attributes",
+    "autohotkey", "editorconfig", "git_config", "janet",
+    "odin", "pip-requirements", "sed", "vba", "vbscript",
+}
 
 # Binary file detection helpers
 TEXT_CHARS = bytes(range(32, 127)) + b"\n\r\t\f\b"
