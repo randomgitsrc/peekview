@@ -437,11 +437,9 @@ function handleShareCreated() {
 function handleShareRevoked() {
 }
 
-const TAG_LIMIT = 3
+const visibleTags = computed(() => currentEntry.value?.tags ?? [])
 
-const visibleTags = computed(() => (currentEntry.value?.tags ?? []).slice(0, TAG_LIMIT))
-
-const remainingTagCount = computed(() => Math.max(0, (currentEntry.value?.tags?.length ?? 0) - TAG_LIMIT))
+const remainingTagCount = computed(() => 0)
 
 const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)

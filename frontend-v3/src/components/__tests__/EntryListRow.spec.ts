@@ -54,15 +54,21 @@ describe('EntryListRow', () => {
     expect(tags.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders public badge for public entry', () => {
-    const wrapper = createWrapper()
+  it('renders public badge for public entry when owner', () => {
+    const wrapper = createWrapper({ isOwner: true })
     const badge = wrapper.find('.base-badge')
     expect(badge.exists()).toBe(true)
     expect(badge.classes()).toContain('badge-public')
   })
 
-  it('renders private badge for private entry', () => {
-    const wrapper = createWrapper({ entry: mockPrivateEntry })
+  it('hides badge when not owner', () => {
+    const wrapper = createWrapper({ isOwner: false })
+    const badge = wrapper.find('.base-badge')
+    expect(badge.exists()).toBe(false)
+  })
+
+  it('renders private badge for private entry when owner', () => {
+    const wrapper = createWrapper({ entry: mockPrivateEntry, isOwner: true })
     const badge = wrapper.find('.base-badge')
     expect(badge.exists()).toBe(true)
     expect(badge.classes()).toContain('badge-private')

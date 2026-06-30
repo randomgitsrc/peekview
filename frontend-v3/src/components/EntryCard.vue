@@ -32,7 +32,7 @@
         <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
         <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
       </div>
-      <div class="card-footer">
+      <div v-if="isOwner" class="card-footer">
         <BaseBadge :status="entry.isPublic ? 'public' : 'private'" />
       </div>
     </div>

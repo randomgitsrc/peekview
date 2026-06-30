@@ -9,7 +9,6 @@
   >
     <div class="entry-content">
       <div class="entry-title">{{ entry.summary || entry.slug }}</div>
-      <div v-if="entry.summary" class="entry-summary">{{ entry.summary }}</div>
       <div class="entry-meta-row">
         <span class="entry-meta">{{ metaText }}</span>
       </div>
@@ -19,7 +18,7 @@
       </div>
     </div>
     <div class="entry-right">
-      <BaseBadge :status="entry.isPublic ? 'public' : 'private'" />
+        <BaseBadge v-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
       <div v-if="isOwner" class="entry-actions" @click.stop>
         <button
           type="button"
@@ -67,11 +66,9 @@ defineEmits<{
   delete: [entry: Entry]
 }>()
 
-const TAG_LIMIT = 3
+const visibleTags = computed(() => props.entry.tags)
 
-const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
-
-const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
+const remainingTagCount = computed(() => 0)
 
 const createdAtRef = toRef(() => props.entry.createdAt)
 const { relative: relativeTime } = useRelativeTime(createdAtRef)
@@ -116,15 +113,6 @@ const metaText = computed(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.entry-summary {
-  font-size: var(--font-sm);
-  color: var(--c-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
 }
 
 .entry-meta-row {
