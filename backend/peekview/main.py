@@ -111,6 +111,10 @@ def create_app(
     from peekview.services.share_service import ShareService
     from peekview.storage import StorageManager
     storage = StorageManager(config=config)
+
+    from peekview.database import backfill_fts_content
+    backfill_fts_content(engine, storage)
+
     entry_service = EntryService(engine=engine, storage=storage, config=config)
     apikey_service = ApiKeyService(engine=engine)
     admin_service = AdminService(engine=engine, storage=storage, config=config)

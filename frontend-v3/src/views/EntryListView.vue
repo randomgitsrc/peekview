@@ -54,7 +54,7 @@
           <div class="explore-search">
             <SearchInput
               v-model="searchQuery"
-              placeholder="Search entries..."
+              placeholder="搜索标题、标签和文件内容..."
               @keydown="onSearchKeydown"
               @clear="clearSearch"
             />

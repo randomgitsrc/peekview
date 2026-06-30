@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from peekview.config import PeekConfig
-from peekview.database import get_engine
+from peekview.database import FTS_CONTENT_MAX_PER_ENTRY, FTS_CONTENT_TRUNCATE, get_engine
 from peekview.exceptions import (
     InvalidSlugError,
     NotFoundError,
@@ -78,6 +78,55 @@ class EntryService:
         self.engine = engine
         self.storage = storage
         self.config = config
+
+    def _update_fts_content(self, entry_id: int) -> None:
+        """Aggregate text file content for an entry and update FTS content column.
+
+        Called after create_entry and update_entry to keep FTS content in sync.
+        """
+        with Session(self.engine) as session:
+            entry = session.exec(select(Entry).where(Entry.id == entry_id)).first()
+            if not entry:
+                return
+
+            files = session.exec(
+                select(File).where(File.entry_id == entry_id, File.is_binary == False)
+            ).all()
+
+            content_parts: list[str] = []
+            total_len = 0
+
+            for f in files:
+                try:
+                    disk_path = self.storage.get_disk_path(entry_id, f.filename, f.path)
+                    if disk_path and disk_path.exists():
+                        raw = disk_path.read_bytes()
+                        text_content = raw.decode('utf-8', errors='replace')[:FTS_CONTENT_TRUNCATE]
+                        if total_len + len(text_content) > FTS_CONTENT_MAX_PER_ENTRY:
+                            remaining = FTS_CONTENT_MAX_PER_ENTRY - total_len
+                            if remaining > 0:
+                                content_parts.append(text_content[:remaining])
+                            break
+                        content_parts.append(text_content)
+                        total_len += len(text_content)
+                except Exception:
+                    continue
+
+            aggregated = ' '.join(content_parts)
+
+            session.exec(text("DELETE FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id))
+
+            session.exec(text(
+                "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                "VALUES (:id, :summary, :tags, :content)"
+            ).bindparams(
+                id=entry_id,
+                summary=entry.summary,
+                tags=' '.join(entry.tags or []),
+                content=aggregated,
+            ))
+
+            session.commit()
 
     def create_entry(
         self,
@@ -243,10 +292,11 @@ class EntryService:
                     raise
 
         except IntegrityError:
-            # Slug conflict — TOCTOU protection: retry with suffix
             return self._retry_with_slug_suffix(
                 summary, slug, tags, files_data, dirs_data, expires_in, is_public, current_user_id
             )
+
+        self._update_fts_content(entry_id)
 
         return CreateEntryResponse(
             id=entry_id,
@@ -575,6 +625,8 @@ class EntryService:
 
             session.commit()
             session.refresh(entry)
+
+            self._update_fts_content(entry_id)
 
             # Get all remaining files
             files = session.exec(

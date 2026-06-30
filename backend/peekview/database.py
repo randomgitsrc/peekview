@@ -10,14 +10,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Engine, event, text
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 
 from peekview.exceptions import SchemaMismatchError
 
 if TYPE_CHECKING:
     from peekview.config import PeekConfig
+    from peekview.storage import StorageManager
 
 logger = logging.getLogger(__name__)
+
+FTS_CONTENT_TRUNCATE = 100_000
+FTS_CONTENT_MAX_PER_ENTRY = 1_000_000
 
 
 # Default SQLite pragmas for performance and safety
@@ -99,6 +103,20 @@ def _run_migrations(engine: Engine) -> None:
             )
             conn.commit()
             logger.info("Migration: added idx_entries_is_public_status_created index")
+
+        # FTS5 migration: check if entries_fts has 'content' column
+        try:
+            fts_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(entries_fts)"))}
+        except Exception:
+            fts_columns = set()
+
+        if 'content' not in fts_columns:
+            conn.execute(text("DROP TABLE IF EXISTS entries_fts"))
+            conn.execute(text("DROP TRIGGER IF EXISTS entries_ai"))
+            conn.execute(text("DROP TRIGGER IF EXISTS entries_ad"))
+            conn.execute(text("DROP TRIGGER IF EXISTS entries_au"))
+            conn.commit()
+            logger.info("Migration: dropped old FTS5 table for content column expansion")
 
 
 def check_schema(engine: Engine) -> None:
@@ -193,11 +211,11 @@ def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
 def setup_fts5(engine: Engine) -> None:
     """Setup FTS5 virtual table for full-text search.
 
-    Creates the entries_fts virtual table and triggers to keep it
-    synchronized with the entries table.
+    Creates the entries_fts virtual table in contentless+contentless_delete mode
+    with summary, tags, and content columns. Triggers only sync summary/tags;
+    content is managed by the application layer (entry_service).
     """
     with engine.connect() as conn:
-        # Check if FTS5 table exists
         result = conn.execute(
             text(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
@@ -207,55 +225,50 @@ def setup_fts5(engine: Engine) -> None:
             logger.debug("FTS5 table already exists")
             return
 
-        # Create FTS5 virtual table
         conn.execute(
             text("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
                     summary,
                     tags,
-                    content='entries',
-                    content_rowid='id'
+                    content,
+                    content='',
+                    contentless_delete=1
                 )
             """)
         )
 
-        # Create trigger to insert into FTS on entry creation
         conn.execute(
             text("""
                 CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries
                 BEGIN
-                    INSERT INTO entries_fts(rowid, summary, tags)
-                    VALUES (NEW.id, NEW.summary, NEW.tags);
+                    INSERT INTO entries_fts(rowid, summary, tags, content)
+                    VALUES (NEW.id, NEW.summary, NEW.tags, '');
                 END
             """)
         )
 
-        # Create trigger to delete from FTS on entry deletion
         conn.execute(
             text("""
                 CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries
                 BEGIN
-                    INSERT INTO entries_fts(entries_fts, rowid, summary, tags)
-                    VALUES ('delete', OLD.id, OLD.summary, OLD.tags);
+                    DELETE FROM entries_fts WHERE rowid = OLD.id;
                 END
             """)
         )
 
-        # Create trigger to update FTS on entry update
         conn.execute(
             text("""
                 CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries
                 BEGIN
-                    INSERT INTO entries_fts(entries_fts, rowid, summary, tags)
-                    VALUES ('delete', OLD.id, OLD.summary, OLD.tags);
-                    INSERT INTO entries_fts(rowid, summary, tags)
-                    VALUES (NEW.id, NEW.summary, NEW.tags);
+                    DELETE FROM entries_fts WHERE rowid = OLD.id;
+                    INSERT INTO entries_fts(rowid, summary, tags, content)
+                    VALUES (NEW.id, NEW.summary, NEW.tags, '');
                 END
             """)
         )
 
         conn.commit()
-        logger.info("FTS5 virtual table and triggers created")
+        logger.info("FTS5 virtual table and triggers created (contentless mode)")
 
 
 def get_engine(config_or_path: PeekConfig | Path | str | None = None) -> Engine:
@@ -328,13 +341,13 @@ def search_entries(session: Session, query: str, limit: int = 100) -> list[int]:
     return [row[0] for row in result]
 
 
-def rebuild_fts_index(engine: Engine) -> None:
+def rebuild_fts_index(engine: Engine, storage: StorageManager | None = None) -> None:
     """Rebuild the FTS5 index from scratch.
 
     Useful if the FTS index gets out of sync.
+    If storage is provided, file content is also indexed.
     """
     with engine.connect() as conn:
-        # Check if FTS5 table exists first
         result = conn.execute(
             text(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
@@ -344,22 +357,36 @@ def rebuild_fts_index(engine: Engine) -> None:
             logger.warning("FTS5 table does not exist, skipping rebuild")
             return
 
-        # Delete all entries from FTS
         try:
             conn.execute(text("DELETE FROM entries_fts"))
         except Exception as e:
             logger.warning(f"Could not delete from entries_fts: {e}")
 
-        # Reinsert all entries
-        try:
-            conn.execute(
-                text("""
-                INSERT INTO entries_fts(rowid, summary, tags)
-                SELECT id, summary, tags FROM entries
-            """)
-            )
-        except Exception as e:
-            logger.warning(f"Could not repopulate entries_fts: {e}")
+        if storage:
+            with Session(engine) as session:
+                from peekview.models import Entry
+                entries = session.exec(select(Entry)).all()
+                for entry in entries:
+                    content = _aggregate_entry_content(entry.id, storage, session)
+                    conn.execute(text(
+                        "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                        "VALUES (:id, :summary, :tags, :content)"
+                    ).bindparams(
+                        id=entry.id,
+                        summary=entry.summary,
+                        tags=' '.join(entry.tags or []),
+                        content=content,
+                    ))
+        else:
+            try:
+                conn.execute(
+                    text("""
+                    INSERT INTO entries_fts(rowid, summary, tags, content)
+                    SELECT id, summary, tags, '' FROM entries
+                """)
+                )
+            except Exception as e:
+                logger.warning(f"Could not repopulate entries_fts: {e}")
 
         conn.commit()
         logger.info("FTS5 index rebuilt")
@@ -404,6 +431,72 @@ def get_db_stats(engine: Engine) -> dict:
             "db_size_bytes": db_size,
             "db_size_mb": round(db_size / (1024 * 1024), 2),
         }
+
+
+def _aggregate_entry_content(
+    entry_id: int, storage: StorageManager, session: Session
+) -> str:
+    """Aggregate text file content for an entry, with truncation."""
+    from peekview.models import File
+
+    files = session.exec(
+        select(File).where(File.entry_id == entry_id, File.is_binary == False)
+    ).all()
+
+    content_parts: list[str] = []
+    total_len = 0
+
+    for f in files:
+        try:
+            disk_path = storage.get_disk_path(entry_id, f.filename, f.path)
+            if disk_path and disk_path.exists():
+                raw = disk_path.read_bytes()
+                text_content = raw.decode('utf-8', errors='replace')[:FTS_CONTENT_TRUNCATE]
+                if total_len + len(text_content) > FTS_CONTENT_MAX_PER_ENTRY:
+                    remaining = FTS_CONTENT_MAX_PER_ENTRY - total_len
+                    if remaining > 0:
+                        content_parts.append(text_content[:remaining])
+                    break
+                content_parts.append(text_content)
+                total_len += len(text_content)
+        except Exception:
+            continue
+
+    return ' '.join(content_parts)
+
+
+def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
+    """Backfill FTS content column for existing entries (idempotent).
+
+    Called from application startup after StorageManager is available.
+    """
+    with Session(engine) as session:
+        from peekview.models import Entry
+
+        entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
+        fts_count = session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
+
+        if fts_count >= entry_count and entry_count > 0:
+            logger.debug("FTS content already backfilled")
+            return
+
+        session.exec(text("DELETE FROM entries_fts"))
+
+        entries = session.exec(select(Entry)).all()
+        for entry in entries:
+            content = _aggregate_entry_content(entry.id, storage, session)
+            session.exec(text(
+                "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                "VALUES (:id, :summary, :tags, :content)"
+            ).bindparams(
+                id=entry.id,
+                summary=entry.summary,
+                tags=' '.join(entry.tags or []),
+                content=content,
+            ))
+
+        session.commit()
+        logger.info(f"Backfilled FTS content for {len(entries)} entries")
 
 
 # Event listeners for debugging (optional)

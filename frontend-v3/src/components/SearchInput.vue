@@ -27,7 +27,7 @@ withDefaults(defineProps<{
   placeholder?: string
 }>(), {
   modelValue: '',
-  placeholder: 'Search...',
+  placeholder: '搜索标题、标签和文件内容...',
 })
 
 defineEmits<{
