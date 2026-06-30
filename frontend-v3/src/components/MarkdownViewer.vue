@@ -249,11 +249,11 @@ watch(() => [props.content, theme.value], async () => {
 }
 
 /* Zebra stripe for code blocks (must override pre * transparent) */
-.markdown-body .code-block-wrapper .line:nth-child(even) {
-  background-color: var(--bg-code-even);
+.markdown-body .code-block-wrapper pre .line:nth-child(even) {
+  background-color: var(--bg-code-even) !important;
 }
 
-[data-theme='dark'] .markdown-body .code-block-wrapper .line:nth-child(even) {
+[data-theme='dark'] .markdown-body .code-block-wrapper pre .line:nth-child(even) {
   background-color: var(--bg-code-even) !important;
 }
 
@@ -339,6 +339,59 @@ watch(() => [props.content, theme.value], async () => {
   margin: 0 !important;
   border-radius: 0 !important;
   border: none !important;
+}
+
+.markdown-body .code-block-wrapper .code-container {
+  display: flex;
+  background: var(--bg-code);
+}
+
+.markdown-body .code-block-wrapper .line-numbers {
+  flex-shrink: 0;
+  padding: var(--space-4) 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  text-align: right;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.markdown-body .code-block-wrapper .line-number {
+  display: block;
+  padding: 0 var(--space-3);
+  color: var(--text-tertiary);
+  min-width: 3ch;
+  height: 1.6em;
+}
+
+.markdown-body .code-block-wrapper .line {
+  display: block;
+}
+
+[data-theme='dark'] .markdown-body .code-block-wrapper .line-numbers {
+  background: #161b22;
+  border-right-color: #30363d;
+}
+
+.markdown-body .code-block-wrapper .code-container pre {
+  flex: 1;
+  margin: 0;
+  padding: var(--space-4);
+  background: transparent !important;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.markdown-body .code-block-wrapper .code-container code {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
 }
 
 /* === Front Matter Styles === */

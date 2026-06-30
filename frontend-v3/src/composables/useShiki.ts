@@ -199,10 +199,13 @@ export function useShiki() {
     const highlighter = await getHighlighter()
     const effectiveLang = await ensureLanguage(highlighter, lang)
 
-    return highlighter.codeToHtml(code, {
+    const html = highlighter.codeToHtml(code, {
       lang: effectiveLang,
       theme
     })
+
+    const lineNumbersHtml = renderLineNumbers(code)
+    return `<div class="code-container">${lineNumbersHtml}${html}</div>`
   }
 
   return {

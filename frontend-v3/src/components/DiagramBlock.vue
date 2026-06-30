@@ -326,11 +326,53 @@ defineExpose({
   aspect-ratio: auto;
 }
 
+.diagram-block .diagram-code .code-container {
+  display: flex;
+  background: var(--bg-code);
+}
+
+.diagram-block .diagram-code .line-numbers {
+  flex-shrink: 0;
+  padding: var(--space-3) 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  text-align: right;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.diagram-block .diagram-code .line-number {
+  display: block;
+  padding: 0 var(--space-3);
+  color: var(--text-tertiary);
+  min-width: 3ch;
+  height: 1.6em;
+}
+
 .diagram-block .diagram-code pre {
+  flex: 1;
   margin: 0;
   padding: var(--space-3);
+  background: transparent !important;
   overflow-x: auto;
-  background: var(--bg-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.diagram-block .diagram-code code {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+}
+
+.diagram-block .diagram-code .line {
+  display: block;
+  height: 1.6em;
 }
 
 .diagram-block .diagram-code .line:nth-child(even) {

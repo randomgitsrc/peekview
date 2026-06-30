@@ -271,9 +271,11 @@ export function useMarkdown() {
         if (codeBlock.lang === 'mermaid' || codeBlock.lang === 'plantuml' || codeBlock.lang === 'svg') {
           let codeViewHtml: string
           if (codeBlock.lang === 'svg') {
-            codeViewHtml = '<pre class="shiki"><code>' + await highlightCode(codeBlock.code, 'xml', theme) + '</code></pre>'
+            codeViewHtml = await highlightCode(codeBlock.code, 'xml', theme)
+          } else if (codeBlock.lang === 'mermaid') {
+            codeViewHtml = await highlightCode(codeBlock.code, 'mermaid', theme)
           } else {
-            codeViewHtml = '<pre class="shiki"><code>' + escapeHtml(codeBlock.code) + '</code></pre>'
+            codeViewHtml = await highlightCode(codeBlock.code, 'text', theme)
           }
           blocks.push({
             type: 'diagram',
