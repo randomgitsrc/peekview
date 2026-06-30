@@ -368,6 +368,7 @@ watch(() => [props.content, theme.value], async () => {
 
 .markdown-body .code-block-wrapper .line {
   display: block;
+  min-width: 100%;
 }
 
 [data-theme='dark'] .markdown-body .code-block-wrapper .line-numbers {

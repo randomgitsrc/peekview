@@ -372,6 +372,7 @@ defineExpose({
 
 .diagram-block .diagram-code .line {
   display: block;
+  min-width: 100%;
   height: 1.6em;
 }
 
