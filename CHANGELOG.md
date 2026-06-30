@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-30
+
 ### 新增
 
 - **Shiki 按需动态加载**（T040）：前端 `useShiki.ts` 新增 `LANG_IMPORT_MAP`（62 种语言动态 import）+ `ensureLanguage()` 按需加载 + `LEGACY_LANG_MAP` 语言 ID 映射，首屏 16 种静态 import 不变，未注册语言首次查看时动态加载（并发去重），后端 `language.py` 语言 ID 对齐（mathematica→wolfram、registry→reg）
