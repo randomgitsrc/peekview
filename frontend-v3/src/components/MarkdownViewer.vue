@@ -369,6 +369,8 @@ watch(() => [props.content, theme.value], async () => {
 .markdown-body .code-block-wrapper .line {
   display: block;
   min-width: 100%;
+  padding-right: var(--space-4);
+  margin-right: calc(-1 * var(--space-4));
 }
 
 [data-theme='dark'] .markdown-body .code-block-wrapper .line-numbers {
@@ -385,6 +387,7 @@ watch(() => [props.content, theme.value], async () => {
   font-family: var(--font-mono);
   font-size: var(--font-sm);
   line-height: 1.6;
+  display: flex;
 }
 
 .markdown-body .code-block-wrapper .code-container code {
@@ -393,6 +396,8 @@ watch(() => [props.content, theme.value], async () => {
   line-height: 1.6;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 /* === Front Matter Styles === */

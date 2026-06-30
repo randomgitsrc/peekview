@@ -366,13 +366,14 @@ defineExpose({
   font-family: var(--font-mono);
   font-size: var(--font-sm);
   line-height: 1.6;
-  display: flex;
-  flex-direction: column;
+  display: block;
 }
 
 .diagram-block .diagram-code .line {
   display: block;
   min-width: 100%;
+  padding-right: var(--space-3);
+  margin-right: calc(-1 * var(--space-3));
   height: 1.6em;
 }
 

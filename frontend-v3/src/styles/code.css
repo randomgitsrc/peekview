@@ -93,13 +93,14 @@
   font-family: var(--font-mono);
   font-size: var(--font-sm);
   line-height: 1.6;
-  display: flex;
-  flex-direction: column;
+  display: block;
 }
 
 .code-body :deep(.line) {
   display: block;
   min-width: 100%;
+  padding-right: var(--space-4);
+  margin-right: calc(-1 * var(--space-4));
   height: 1.6em;
 }
 
