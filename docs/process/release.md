@@ -20,7 +20,11 @@ make publish && git tag -a v$(cd backend && python3 -c "from peekview import __v
 
 ### 何时写入
 
-**每个任务 P5（技术验证）通过后，立刻写入 `[Unreleased]`**，不要等到 bump 时补写。
+**任何产生用户可见改动的任务完成后，立刻写入 `[Unreleased]`**，不要等到 bump 时补写。
+
+- 走 agate 流程的任务：P5（技术验证）通过后立刻写
+- 非 agate 任务（热修、小改动等）：完成后立刻写
+- 判断标准：只要改动对用户可见（功能、行为、UI、API），就写。纯内部重构不影响用户的不写
 
 ```
 ## [Unreleased]
