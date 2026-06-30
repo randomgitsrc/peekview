@@ -170,7 +170,7 @@ describe('renderUrl 拼接', () => {
 
 // ─── iframe sandbox 属性（凭据隔离）──────────────────────────────────────────
 describe('iframe sandbox 属性', () => {
-  it('sandbox 仅含 allow-scripts，不含危险权限', async () => {
+  it('sandbox 含 allow-scripts 和 allow-forms，不含危险权限', async () => {
     const wrapper = mount(HtmlViewer, {
       props: { ...DEFAULT_PROPS },
     })
@@ -178,10 +178,10 @@ describe('iframe sandbox 属性', () => {
 
     const sandbox = wrapper.find('iframe').attributes('sandbox') ?? ''
     expect(sandbox).toContain('allow-scripts')
+    expect(sandbox).toContain('allow-forms')
     // 关键：无 allow-same-origin → iframe content 在 opaque origin 运行，
     // 无法访问父页面 cookie/localStorage（BDD-8 凭据隔离）
     expect(sandbox).not.toContain('allow-same-origin')
-    expect(sandbox).not.toContain('allow-forms')
     expect(sandbox).not.toContain('allow-popups')
     expect(sandbox).not.toContain('allow-top-navigation')
   })
