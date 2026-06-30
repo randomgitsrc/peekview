@@ -217,6 +217,64 @@ class TestPlainTextLanguages:
         """Contains 'csv'."""
         assert "csv" in PLAIN_TEXT_LANGS
 
+    def test_contains_all_no_grammar_langs(self):
+        """All languages without Shiki grammar are in PLAIN_TEXT_LANGS."""
+        no_grammar_langs = {
+            "autohotkey", "editorconfig", "git_attributes", "git_config",
+            "ignore", "janet", "odin", "pip-requirements", "sed", "vba",
+            "vbscript",
+        }
+        for lang in no_grammar_langs:
+            assert lang in PLAIN_TEXT_LANGS, f"Missing no-grammar language: {lang}"
+
+    def test_plain_text_langs_count(self):
+        """PLAIN_TEXT_LANGS has expected size (5 original + 9 new = 14)."""
+        assert len(PLAIN_TEXT_LANGS) == 14
+
+
+class TestShikiLanguageIdAlignment:
+    """Test that backend language IDs align with Shiki BundledLanguage IDs."""
+
+    def test_wl_maps_to_wolfram(self):
+        assert detect_language("script.wl") == "wolfram"
+
+    def test_wls_maps_to_wolfram(self):
+        assert detect_language("script.wls") == "wolfram"
+
+    def test_nb_maps_to_wolfram(self):
+        assert detect_language("notebook.nb") == "wolfram"
+
+    def test_reg_maps_to_reg(self):
+        assert detect_language("fix.reg") == "reg"
+
+    def test_no_mathematica_in_extension_map(self):
+        from peekview.language import EXTENSION_MAP
+        assert "mathematica" not in EXTENSION_MAP.values()
+
+    def test_no_registry_in_extension_map(self):
+        from peekview.language import EXTENSION_MAP
+        assert "registry" not in EXTENSION_MAP.values()
+
+    def test_no_mathematica_in_filename_map(self):
+        from peekview.language import FILENAME_MAP
+        assert "mathematica" not in FILENAME_MAP.values()
+
+    def test_no_registry_in_filename_map(self):
+        from peekview.language import FILENAME_MAP
+        assert "registry" not in FILENAME_MAP.values()
+
+    def test_wolfram_in_language_list(self):
+        assert "wolfram" in get_language_list()
+
+    def test_reg_in_language_list(self):
+        assert "reg" in get_language_list()
+
+    def test_mathematica_not_in_language_list(self):
+        assert "mathematica" not in get_language_list()
+
+    def test_registry_not_in_language_list(self):
+        assert "registry" not in get_language_list()
+
 
 class TestExtensionMapCompleteness:
     """Test that extension map is comprehensive."""
