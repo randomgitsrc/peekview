@@ -18,10 +18,6 @@
 |------|----------|------|------|--------|------|----------|----------|
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T037 | search-content-expansion | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-30 |
-| T039 | explore-ui-polish | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-06-30 | 2026-06-30 |
-| T040 | shiki-language-coverage | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-30 | 2026-06-30 |
-| T041 | html-sibling-inject-fix | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-30 | 2026-06-30 |
 
 ### 已完成
 
@@ -39,7 +35,11 @@
 | T032 | entry-read-tracking | ✅✅ 已完成 | P8→v0.4.0 | 🟡 | 2026-06-30 |
 | T033 | share-semantic-security-fixes | ✅✅ 已完成 | P8→v0.4.0 | 🟡 | 2026-06-30 |
 | T036 | detail-info-completeness | ✅✅ 已完成 | P8→v0.4.0 | 🟠 | 2026-06-30 |
+| T037 | search-content-expansion | ✅✅ 已完成 | P6→v0.5.0 | 🟡 | 2026-06-30 |
 | T038 | csharp-highlight-description-api | 🔀 已合并 | →T040 | 🟡 | 2026-06-30 |
+| T039 | explore-ui-polish | ✅✅ 已完成 | P6→v0.5.0 | 🟠 | 2026-06-30 |
+| T040 | shiki-language-coverage | ✅✅ 已完成 | P6→v0.5.0 | 🟡 | 2026-06-30 |
+| T041 | html-sibling-inject-fix | ✅✅ 已完成 | P6→v0.5.0 | 🟡 | 2026-06-30 |
 | T042 | html-module-script-inject | 🔀 已合并 | →T041 | 🔴 | 2026-06-30 |
 | T043 | html-inject-ux-polish | 🔀 已合并 | →T041 | 🟡 | 2026-06-30 |
 | T001 | mcp-namespace-map | ✅✅ 已完成 | P8 | 🟠 | 2026-06-15 |

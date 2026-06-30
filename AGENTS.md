@@ -45,7 +45,7 @@ packages/mcp-server/src/
 7. **严禁** 用 CLI（`peekview create`）创建测试 entry——CLI 可能加载非 debug 配置导致误写生产 DB。测试 entry 只通过 debug backend HTTP API 创建：`curl -X POST http://127.0.0.1:8888/api/v1/entries ...`，创建后验证数据落在 debug DB
 8. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
 9. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。访问 entry 页面用 `http://127.0.0.1:8888/{slug}`（如 `/t022-test`），不要拼 `/entries/{slug}`。创建 entry 的 API 路径是 `/api/v1/entries`，但前端页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败，务必记住
-10. 发布流程必须先读 `docs/process/release.md` — 特别是 `bump-version` 后必须手动填 CHANGELOG 再 `--amend`
+10. **CHANGELOG 及时记录**：每个任务 P5（技术验证）通过后，必须立刻将改动写入 `CHANGELOG.md` 的 `[Unreleased]` 区域（分类：新增/变更/修复/安全），不可延后到 bump 时补写。`bump-version` 时 `[Unreleased]` 内容归集到新版本号下。发布流程详见 `docs/process/release.md`
 11. 改代码前先读周围上下文，理解代码风格和现有库选择
 12. 不加注释（除非被要求）
 13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑；⚠️ ruff 不在 venv 时 `make lint` 会因找不到 `ruff` 命令失败，用 `cd backend && python3 -m ruff check peekview/ tests/` 代替）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁

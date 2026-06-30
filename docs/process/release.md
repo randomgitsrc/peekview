@@ -14,6 +14,51 @@
 make publish && git tag -a v$(cd backend && python3 -c "from peekview import __version__; print(__version__)") -m "Release" && git push origin --tags
 ```
 
+## CHANGELOG 暂存区规范
+
+`[Unreleased]` 是 CHANGELOG 的暂存区，遵循 [Keep a Changelog](https://keepachangelog.com/) 实践：
+
+### 何时写入
+
+**每个任务 P5（技术验证）通过后，立刻写入 `[Unreleased]`**，不要等到 bump 时补写。
+
+```
+## [Unreleased]
+
+### 新增
+- **功能描述**（Txxx）：简要说明
+
+### 变更
+- **变更描述**（Txxx）：简要说明
+
+### 修复
+- **修复描述**（Txxx）：简要说明
+
+### 安全
+- **安全修复**（Txxx）：简要说明
+```
+
+### bump 时归集
+
+`make bump-version` 后，将 `[Unreleased]` 内容移到新版本号下：
+
+```
+## [0.5.1] - 2026-06-30
+
+### 新增
+- **功能描述**（Txxx）：简要说明
+
+## [Unreleased]   ← 清空，等待下一个任务
+```
+
+### 为什么
+
+- 避免遗漏：任务完成时记忆最清晰，延后补写容易漏条目
+- 避免重复：多个任务累积在 `[Unreleased]`，bump 时一次性归集，不需要逐个回忆
+- 可追溯：任何时候看 `[Unreleased]` 就知道"自上次发布以来改了什么"
+
+---
+
 ## 标准发布流程（推荐）
 
 ### 1. 自动更新版本号
@@ -22,7 +67,7 @@ make publish && git tag -a v$(cd backend && python3 -c "from peekview import __v
 # 一键更新所有版本文件
 make bump-version NEW_VERSION=0.1.22
 
-# 手动更新 CHANGELOG.md 和 INDEX.md
+# 将 [Unreleased] 内容归集到新版本号下（CHANGELOG.md）
 # 然后提交
 ```
 
@@ -62,7 +107,7 @@ make update-docs
 
 **手动检查清单**:
 - [ ] README.md 版本号已更新
-- [ ] CHANGELOG.md 包含当前版本
+- [ ] CHANGELOG.md `[Unreleased]` 内容已归集到新版本号下，`[Unreleased]` 区域为空
 - [ ] API 路径示例正确 (`/api/v1/entries`)
 - [ ] 环境变量名使用 `__` 分隔符
 
