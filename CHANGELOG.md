@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **Shiki 按需动态加载**（T040）：前端 `useShiki.ts` 新增 `LANG_IMPORT_MAP`（62 种语言动态 import）+ `ensureLanguage()` 按需加载 + `LEGACY_LANG_MAP` 语言 ID 映射，首屏 16 种静态 import 不变，未注册语言首次查看时动态加载（并发去重），后端 `language.py` 语言 ID 对齐（mathematica→wolfram、registry→reg）
+- **HTML sibling 注入增强**（T041）：`sandbox` 加 `allow-forms` 允许表单交互（CSP `form-action 'none'` 兜底安全）；`<script type="module">` 保留 type 属性注入；CSS `@import` / `url()` 递归替换（深度限制 3 层）；`<img src>` 匹配 SVG 文件自动内联为 `data:image/svg+xml`；`../style.css` 路径归一化（basename fallback 双向匹配）
+- **FTS5 文件内容搜索**（T037）：FTS5 索引从只搜 summary+tags 扩展为也搜文件内容（文本文件），`contentless+contentless_delete=1` 模式由应用层管理 content 列，启动时回填已有 entry，二进制文件不进索引，大文件截断到 10000 字符/文件，前端搜索 placeholder 改为"搜索标题、标签和文件内容..."
+
+### 变更
+
+- **Public badge 智能显隐**（T039）：EntryCard / EntryListRow 的 public/private badge 改为仅 owner 可见（`v-if="isOwner"`），非 owner 不再看到废信息的 "Public" badge
+- **列表 summary 去重**（T039）：EntryListRow 删除 `.entry-summary` 重复行（title 已显示 `summary || slug`），消除两行完全相同内容
+- **标签折叠上下文感知**（T039）：卡片模式保留 `TAG_LIMIT = 3` + `+N` 折叠，列表模式和详情页不限制标签数量
+- **HTML viewer 警告文案**（T041）：从"不支持多文件相对路径，这些资源不会加载"改为中性描述"此 HTML 含 N 个本地资源引用，PeekView 将尝试自动注入。部分引用可能无法注入（如动态加载、嵌套 iframe 等）"
+
 ## [0.4.0] - 2026-06-30
 
 ### 新增
