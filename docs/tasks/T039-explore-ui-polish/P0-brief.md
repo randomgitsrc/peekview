@@ -33,7 +33,7 @@ task: Explore 页面三项 UI 修正 — Public badge 智能显隐 + summary 去
 - 卡片模式：无此问题（已只显示一行）
 - 详情页：无此问题（只用 summary 作 h1）
 
-**改动域**: `EntryListRow.vue`（删除第 12 行 `.entry-summary` 及相关 CSS）
+**改动域**: `EntryListRow.vue`（删除 `.entry-summary` 行及其 `v-if` 条件 + 相关 CSS）
 
 ## 3. 标签折叠上下文感知
 
@@ -46,9 +46,9 @@ task: Explore 页面三项 UI 修正 — Public badge 智能显隐 + summary 去
 - 卡片模式：保留 `TAG_LIMIT = 3`
 - 列表模式：不限制，全部显示（`flex-wrap: wrap` 已有）
 - 详情页：不限制，全部显示
-- 提取标签折叠逻辑为共享 composable（`useTagLimit`），按组件传入不同 limit
+- 实现：各组件内设不同 `TAG_LIMIT` 常量（卡片=3，列表和详情不设上限），简单直接
 
-**改动域**: `EntryCard.vue`, `EntryListRow.vue`, `EntryDetailView.vue`, 新建 `composables/useTagLimit.ts`
+**改动域**: `EntryCard.vue`, `EntryListRow.vue`, `EntryDetailView.vue`
 
 known_risks:
   - 删除 summary 行可能让列表行信息密度降低，但重复信息更差
