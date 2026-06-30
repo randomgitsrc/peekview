@@ -1,5 +1,5 @@
 task_id: T040-shiki-language-coverage
-phase: P1
+phase: P6
 status: gate_passed
 
 retries:
