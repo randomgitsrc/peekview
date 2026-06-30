@@ -9,57 +9,55 @@ status: draft
 parent: T038 (合并扩展)
 ---
 
-task: 前端 Shiki 语言注册覆盖后端 language.py 全部映射
+task: Shiki 语言按需加载 — 首屏 16 种 + 动态 loadLanguage 覆盖后端全部映射
 
 ## 问题
 
-后端 `language.py` 声明支持 89 种语言（通过扩展名和文件名映射），但前端 `useShiki.ts` 只注册了 16 种语言。未注册的语言文件在查看时回退为纯文本（无高亮）。
+后端 `language.py` 声明支持 89 种语言，前端 `useShiki.ts` 只注册 16 种。未注册语言回退为纯文本。
 
-**当前注册的 16 种**：python, javascript, typescript, markdown, json, html, css, bash, yaml, rust, go, java, cpp, c, sql, xml
+## 方案：按需动态加载
 
-**缺失的高频语言**（按影响排序）：
+**首屏**：保持现有 16 种静态 import（python, javascript, typescript, markdown, json, html, css, bash, yaml, rust, go, java, cpp, c, sql, xml），零增量启动时间。
 
-| 缺失语言 | 后端已映射 | Shiki 文件 | 影响面 |
-|----------|-----------|-----------|--------|
-| csharp | ✅ .cs | ✅ cs.mjs / csharp.mjs | C# 完全无高亮 |
-| tsx | ✅ .tsx | ✅ tsx.mjs | React 生态核心 |
-| ruby | ✅ .rb, Gemfile 等 | ✅ | Ruby 生态全灭 |
-| php | ✅ .php | ✅ | PHP 无高亮 |
-| swift | ✅ .swift | ✅ | iOS 无高亮 |
-| kotlin | ✅ .kt, .kts | ✅ | Android 无高亮 |
-| scss | ✅ .scss | ✅ | 前端样式 |
-| sass | ✅ .sass | ✅ | 前端样式 |
-| less | ✅ .less | ✅ | 前端样式 |
-| shellscript/zsh/fish | ✅ | ✅ | 脚本无高亮 |
-| toml | ✅ pyproject.toml 等 | ✅ | 配置文件 |
-| dockerfile | ✅ | ✅ | DevOps |
-| vue | ✅ .vue | ✅ | 本项目技术栈 |
-| graphql | ✅ .graphql | ✅ | API schema |
-| diff | ✅ .diff/.patch | ✅ | PR review |
-| docker | ✅ | ✅ | 容器 |
-| powershell | ✅ .ps1 | ✅ | 运维 |
-| jsonc | ✅ tsconfig.json | ✅ | 配置 |
+**动态加载**：遇到未注册语言时，调用 `highlighter.loadLanguage(lang)` 按需加载。Shiki 的 `loadLanguage()` 接受 grammar 对象，需动态 import 对应的 `.mjs` 文件。
 
-**Shiki 包含 316 个语言文件**，后端映射了 89 种。需要注册后端已映射且 Shiki 有文件的全部语言。
+实现方式：
+1. 维护一个 `LANG_IMPORT_MAP: Record<string, () => Promise<any>>`，key 为语言 ID，value 为动态 import 函数
+2. `highlight()` 遇到未注册语言时，查 map → 动态 import → `loadLanguage()` → 再 highlight
+3. 加载过的语言缓存到 highlighter 实例，下次不再加载
 
-## 方案方向
+```typescript
+// 伪代码
+const LANG_IMPORT_MAP: Record<string, () => Promise<any>> = {
+  csharp: () => import('shiki/dist/langs/csharp.mjs'),
+  tsx: () => import('shiki/dist/langs/tsx.mjs'),
+  ruby: () => import('shiki/dist/langs/ruby.mjs'),
+  // ... 后端映射的全部语言
+}
 
-1. **静态注册**：在 `useShiki.ts` 的 `commonLangs` 数组中补充所有缺失语言的 import（约 30-50 个）
-2. **按需加载**（优化）：使用 `highlighter.loadLanguage()` 动态加载，减少首屏包体积。但这增加代码复杂度，首屏可能延迟
+async function ensureLanguage(highlighter: Highlighter, lang: string): Promise<boolean> {
+  if (highlighter.getLoadedLanguages().includes(lang as BundledLanguage)) return true
+  const importer = LANG_IMPORT_MAP[lang]
+  if (!importer) return false
+  const grammar = await importer()
+  highlighter.loadLanguage(grammar)
+  return true
+}
+```
 
-**建议先走方案 1**（静态注册），简单可靠。包体积增量可接受（Shiki 语言文件均为 JSON grammar，单文件 5-30KB，gzip 后更小）。
+## 语言 ID 对齐
 
-**注意**：后端 language.py 中的语言 ID 与 Shiki 的 BundledLanguage ID 可能不完全一致（如后端 `objective-c` vs Shiki `objective-c`、后端 `dockerfile` vs Shiki `dockerfile`），需逐一核对映射关系。不一致的需在后端 language.py 或前端加别名映射。
+后端 `language.py` 的语言 ID 与 Shiki 的 `BundledLanguage` ID 需逐一核对。不一致的在后端修正（如 `objective-c` → `objc` 等，视 Shiki 实际 ID 而定）。
 
 ## 改动域
 
-- `frontend-v3/src/composables/useShiki.ts` — 补充语言 import + 注册
-- `backend/peekview/language.py` — 核对/修正语言 ID 与 Shiki 的映射一致性
+- `frontend-v3/src/composables/useShiki.ts` — 动态加载逻辑 + LANG_IMPORT_MAP
+- `backend/peekview/language.py` — 语言 ID 与 Shiki 对齐
 
 known_risks:
-  - 大量静态 import 可能增加首次 highlighter 初始化时间（需测量）
-  - 部分语言 ID 在后端和 Shiki 间不一致，需逐一核对
-  - 新增语言 import 不影响已有语言，回归风险低
+  - 动态 import 路径 `shiki/dist/langs/xxx.mjs` 可能随 Shiki 版本变化
+  - 部分语言 ID 后端与 Shiki 不一致，需逐一核对
+  - 首次查看未注册语言时有短暂加载延迟（可接受）
 
 executor_env:
   platform: opencode
@@ -70,4 +68,4 @@ executor_env:
 env_constraints:
   debug_env: make debug (127.0.0.1:8888, /tmp/peekview-debug/)
 
-pruning_tendency: 可裁剪 — 方案明确，P3 可跳过（Shiki 注册本身不需要 TDD），P7 可合并到下次发布
+pruning_tendency: 可适度裁剪 — 方案明确，P3 可跳过（动态加载逻辑用集成测试覆盖），P7 可合并到下次发布
