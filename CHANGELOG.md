@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **Ctrl+F 不再触发全屏模式**（T044）：`zen-shortcut.ts` 的 `shouldHandleZenShortcut` 增加修饰键过滤（Ctrl/Meta/Alt），按 Ctrl+F 时浏览器搜索正常弹出，单独 F 键仍触发 zen mode
+- **Explore 视图模式持久化**（T044）：`EntryListView.vue` 的 viewMode 切换后写入 localStorage（key: `peekview-view-mode`），页面重载后恢复上次选择，首次访问默认 grid，非法值 fallback 到 grid
+
 ## [0.5.0] - 2026-06-30
 
 ### 新增
