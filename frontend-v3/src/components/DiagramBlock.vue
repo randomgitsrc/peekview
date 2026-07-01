@@ -366,7 +366,8 @@ defineExpose({
   font-family: var(--font-mono);
   font-size: var(--font-sm);
   line-height: 1.6;
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 .diagram-block .diagram-code .line {
