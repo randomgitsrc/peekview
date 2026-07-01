@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-07-01
+
 ### 修复
 
 - **v0.5.1 回归：代码行间出现空白行**（hotfix）：T045 将 `code`/`.diagram-code code` 从 `display:flex;flex-direction:column` 改为 `display:block`，导致 `<pre>` 的 `white-space:pre` 让 Shiki 输出中 `.line` 元素间的 `\n` 变成可见空行。改回 `display:flex` 修复
