@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **v0.5.1 回归：代码行间出现空白行**（hotfix）：T045 将 `code`/`.diagram-code code` 从 `display:flex;flex-direction:column` 改为 `display:block`，导致 `<pre>` 的 `white-space:pre` 让 Shiki 输出中 `.line` 元素间的 `\n` 变成可见空行。改回 `display:flex` 修复
+- **Zebra stripe 配色优化**（hotfix）：`--bg-code-even` 从灰度色（`#1c2536`/`#d4d9e2`）改为品牌蓝色 5% 透明度（`rgba(77,141,255,0.05)`/`rgba(9,105,218,0.05)`），消除灰+灰的丑感
+
 ## [0.5.1] - 2026-07-01
 
 ### 变更
