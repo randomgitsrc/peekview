@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-01
+
 ### 变更
 
 - **Markdown/Diagram 代码块补行号**（T045）：`highlightCode()` 复用 `highlight()` 的行号逻辑，Markdown 代码块和 Diagram code mode 均显示行号列；DiagramBlock 的 Mermaid/PlantUML code mode 改走 Shiki 高亮（不再用 `escapeHtml`）
