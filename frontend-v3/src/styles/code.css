@@ -113,6 +113,10 @@
   background-color: var(--bg-code-even);
 }
 
+.code-body :deep(.line:empty) {
+  background-color: transparent;
+}
+
 /* Wrap mode */
 .code-body.wrap-enabled :deep(pre) {
   white-space: pre-wrap;

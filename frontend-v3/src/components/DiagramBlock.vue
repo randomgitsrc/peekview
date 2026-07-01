@@ -382,6 +382,10 @@ defineExpose({
   background-color: var(--bg-code-even);
 }
 
+.diagram-block .diagram-code .line:empty {
+  background-color: transparent;
+}
+
 
 /* Resize handle (spec #63-65) */
 .diagram-block .diagram-resize-handle {

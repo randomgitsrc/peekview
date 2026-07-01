@@ -257,6 +257,16 @@ watch(() => [props.content, theme.value], async () => {
   background-color: var(--bg-code-even) !important;
 }
 
+/* Empty lines (no content) should not show zebra background -
+   otherwise they look like colored blocks and confuse line counting */
+.markdown-body .code-block-wrapper pre .line:empty {
+  background-color: transparent !important;
+}
+
+[data-theme='dark'] .markdown-body .code-block-wrapper pre .line:empty {
+  background-color: transparent !important;
+}
+
 /* Code block wrapper with copy button */
 .markdown-body .code-block-wrapper {
   position: relative;
@@ -371,6 +381,7 @@ watch(() => [props.content, theme.value], async () => {
   min-width: 100%;
   padding-right: var(--space-4);
   margin-right: calc(-1 * var(--space-4));
+  height: 1.6em;
 }
 
 [data-theme='dark'] .markdown-body .code-block-wrapper .line-numbers {
