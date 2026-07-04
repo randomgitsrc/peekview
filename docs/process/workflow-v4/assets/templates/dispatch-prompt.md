@@ -37,7 +37,7 @@ trace_id: {Txxx}-{Pn}-{YYYYMMDD}
 
 ## 能力补充说明（若 P1 有 supplementable 条目，此节必填）
 本任务需要以下补充能力：
-- {能力名}：使用 {补充方式}（如：派发 vision-analyst / 注入 playwright-vision skill）
+- {能力名}：使用 {补充方式}（如：派发 vision-analyst / 注入 playwright-cdp skill）
 
 ## 门槛（什么算完成）
 {可判定的完成条件，能从文件读出明确值}

@@ -27,7 +27,7 @@ cd backend && python3 -m ruff --version
 # 1d. MCP node_modules
 ls packages/mcp-server/node_modules/.package-lock.json 2>/dev/null && echo "OK" || echo "npm ci needed"
 
-# 1e. 全局 skill 目录（playwright-vision / vision-analyzer 等）
+# 1e. 全局 skill 目录（playwright-cdp / vision-analyzer 等）
 ls ~/.config/opencode/skills/ 2>/dev/null || echo "no global skills"
 ls .opencode/skills/ 2>/dev/null || echo "no project skills"
 ```
@@ -75,10 +75,10 @@ curl -sf http://localhost:18800/json/version | python3 -c "import sys,json; d=js
 
 ### 4b. Playwright 截图
 
-先加载 `playwright-vision` skill（获取规范和模板），再按规范写脚本执行：
+先加载 `playwright-cdp` skill（获取规范和模板），再按规范写脚本执行：
 
 ```
-Skill 工具调用：skill("playwright-vision")
+Skill 工具调用：skill("playwright-cdp")
 ```
 
 按 skill 规范写截图脚本（hardTimer + lastStep + try/finally + process.exit(0)），保存到 `/tmp/env-check/capture.ts`：
@@ -158,7 +158,7 @@ grep VISION_API_KEY ~/.env 2>/dev/null && echo "Vision config exists" || echo "M
 ls -la /tmp/env-check/mobile.png
 ```
 
-如需 CDP `Emulation.setDeviceMetricsOverride` 精细模拟（touch、userAgent），参考 playwright-vision skill 的 Mobile Emulation 章节。
+如需 CDP `Emulation.setDeviceMetricsOverride` 精细模拟（touch、userAgent），参考 playwright-cdp skill 的 Mobile Emulation 章节。
 
 ## 自检结果处理
 

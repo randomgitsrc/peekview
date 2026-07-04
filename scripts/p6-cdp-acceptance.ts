@@ -1,7 +1,7 @@
 /**
  * P6 BDD Acceptance — T026 search-url
  * 通过 Chrome CDP 真实浏览器，完整验收 16 条 BDD。
- * 遵循 playwright-vision skill 标准模式。
+ * 遵循 playwright-cdp skill 标准模式。
  */
 import { chromium } from 'playwright';
 

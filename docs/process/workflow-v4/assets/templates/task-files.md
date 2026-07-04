@@ -123,7 +123,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 UI 交互
     available:
-      - playwright-vision skill（已注入）
+      - playwright-cdp skill（已注入）
     status: available          # available / supplementable / GAP
 
   - need: external-network

@@ -1,7 +1,7 @@
 /**
  * P6 BDD Acceptance — T026 search-url
  * 通过 Chrome CDP 直连真实浏览器，验证搜索 URL 化功能。
- * 使用 playwright-vision skill 标准模式。
+ * 使用 playwright-cdp skill 标准模式。
  */
 import { chromium } from 'playwright';
 
