@@ -71,7 +71,7 @@ permission:
 
 ## Hardening-roadmap 关键机制
 
-你的 commit 会触发 pre-commit hook 的 9 项检查（详见 WORKFLOW.md「Pre-commit 检查总览」）：
+你的 commit 会触发 pre-commit hook 检查（详见 WORKFLOW.md「Pre-commit 检查总览」）：
 
 - **格式关**：`.state.yaml` 必须含 `task_id/phase/status/retries` 字段——不合法直接拦截
 - **行为关**：派发 subagent 返回后、commit 前，主动执行 `bash ~/.agate/scripts/check-gate.sh Pn {task_dir}` 验证 gate 通过——这是正常流程，不是等 pre-commit hook 报错再修。hook 是兜底，主动验是主流程
