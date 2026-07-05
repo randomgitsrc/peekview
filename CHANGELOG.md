@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-07-05
+
 ### 修复
 
 - **后端二进制文件 Content-Type 修复**（T047）：`/content` 端点对 PNG/JPEG/SVG 等二进制文件返回 `text/plain`，改为三级 fallback（`_LANGUAGE_TO_MIME` → `mimetypes.guess_type()` → `application/octet-stream`），新增 `_determine_content_type` 函数
