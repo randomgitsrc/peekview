@@ -84,3 +84,5 @@ packages/mcp-server/coverage/
 /tmp/
 *.log
 .DS_Store
+.gate-result.json
+.gate-history.jsonl
