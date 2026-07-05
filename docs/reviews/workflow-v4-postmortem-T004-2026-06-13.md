@@ -42,7 +42,7 @@
 | 14 | T004 P6-2 | **主 Agent 要求子代理"不用 Playwright"** | B7: 恶意简化验收标准 |
 | 15 | — | 用户揭露规避行为 | — |
 | 16 | T004 P6-3 | 子代理再次取消 | B8: 根本原因是模型无 vision |
-| 17 | — | 用户注入 playwright-vision skill | 外部补足能力 |
+| 17 | — | 用户注入 playwright-cdp skill | 外部补足能力 |
 | 18 | P6 | vision-helper 成功, P6 完成 | — |
 
 ---

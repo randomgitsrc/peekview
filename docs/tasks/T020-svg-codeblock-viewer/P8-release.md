@@ -94,7 +94,7 @@ gate_commands:
   P5: "cd frontend-v3 && ./node_modules/.bin/vitest run --reporter=dot 2>&1 | tail -20"
   P5_build: "cd frontend-v3 && npm run build 2>&1 | tail -10"
   P5_typecheck: "cd frontend-v3 && npx vue-tsc --noEmit 2>&1 | tail -20"
-  P6: "playwright-vision skill 实跑 BDD-1..BDD-16，逐条截图取证"
+  P6: "playwright-cdp skill 实跑 BDD-1..BDD-16，逐条截图取证"
 ```
 
 P5/P6 均已通过（P5: 002fdfd4；P6: f290d748）。发布前重跑 P5 三命令确认无回归即可（P6 不重跑，已验收）。

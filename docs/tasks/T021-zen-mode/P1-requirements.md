@@ -255,14 +255,14 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需 Playwright 截图验证 zen 模式下 UI 元素可见性、退出后状态恢复、滚动位置保持
     available:
-      - playwright-vision skill（已注入，首选）
+      - playwright-cdp skill（已注入，首选）
       - vision-analyst（agate 内置执行角色，作为补充）
     status: available
 
   - need: browser-keyboard-simulation
     why: P6 验收需 Playwright 模拟键盘事件（f 键、Esc 键、在 input 中输入 f）
     available:
-      - Playwright keyboard API（playwright-vision skill 内置）
+      - Playwright keyboard API（playwright-cdp skill 内置）
     status: available
 
   - need: minimal-validation

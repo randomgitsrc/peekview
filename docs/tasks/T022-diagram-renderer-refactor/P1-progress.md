@@ -98,7 +98,7 @@ useMarkdown.ts 代码块差异:
 ## [7] 结论：无 [NEED_CONFIRM]，无 [CAPABILITY_GAP] (2026-06-25)
 - user_decisions 已确认，方向明确
 - 三胞胎差异矩阵已详尽识别（15%差异点）
-- 能力：P6 需浏览器视觉验证，playwright-vision skill + Chrome CDP:18800 可用 → supplementable/available，非GAP
+- 能力：P6 需浏览器视觉验证，playwright-cdp skill + Chrome CDP:18800 可用 → supplementable/available，非GAP
 - T021 时序约束已解除（v0.1.67发布），P4可直启
 - 开始撰写 P1-requirements.md
 

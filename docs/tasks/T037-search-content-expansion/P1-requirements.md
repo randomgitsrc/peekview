@@ -249,7 +249,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收 BDD-5 需截图验证搜索框提示文案
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyst (agate)
     status: available
     requires_minimal_validation: true

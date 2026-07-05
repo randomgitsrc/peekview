@@ -200,7 +200,7 @@ capability_requirements:
     why: P6 验收需要 Playwright 截图 + vision-helper 确认图片实际渲染
     available:
       - vision-analyst（agate 内置执行角色）
-      - playwright-vision skill（已注入）
+      - playwright-cdp skill（已注入）
       - vision-helper subagent（可调用）
     status: supplementable
 
@@ -213,7 +213,7 @@ capability_requirements:
   - need: playwright-cdp
     why: P5/P6 端到端验证需 Playwright 连接 Chrome CDP
     available:
-      - playwright-vision skill（已注入，含 CDP 连接）
+      - playwright-cdp skill（已注入，含 CDP 连接）
     status: supplementable
 ```
 

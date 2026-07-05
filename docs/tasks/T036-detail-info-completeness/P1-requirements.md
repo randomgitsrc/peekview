@@ -134,7 +134,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证详情页 tags 显示和 tooltip 行为
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 ```

@@ -431,7 +431,7 @@ capability_requirements:
     why: P6 验收需 Playwright 截图验证渲染输出、toggle 交互、fullscreen modal、主题切换视觉一致性（9 维度行为保真）
     available:
       - vision-analyst（agate 内置执行角色，首选）
-      - playwright-vision skill（已注入，Chrome CDP :18800，作为补充）
+      - playwright-cdp skill（已注入，Chrome CDP :18800，作为补充）
     status: available
 
   - need: frontend-unit-test
@@ -447,4 +447,4 @@ capability_requirements:
     status: available
 ```
 
-三态判定：全部 `available`，无能力缺口。浏览器视觉验证虽主力模型自身不直接具备，但环境中 playwright-vision skill + Chrome CDP:18800 提供补充路径 → `available`（非 supplementable，因 skill 已注入可直接调用）。
+三态判定：全部 `available`，无能力缺口。浏览器视觉验证虽主力模型自身不直接具备，但环境中 playwright-cdp skill + Chrome CDP:18800 提供补充路径 → `available`（非 supplementable，因 skill 已注入可直接调用）。

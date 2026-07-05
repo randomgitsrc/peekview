@@ -183,7 +183,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收须在真实浏览器实跑 XSS 净化、工具栏交互、PNG 透明像素采样、全屏缩放
     available:
-      - playwright-vision skill（已注入，本地 Chrome CDP 18800）
+      - playwright-cdp skill（已注入，本地 Chrome CDP 18800）
     status: available
 ```
 

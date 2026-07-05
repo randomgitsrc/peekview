@@ -145,7 +145,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 Ctrl+F 恢复和 viewMode 持久化
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyst（agate 内置执行角色）
     status: available
   - need: vitest-unit-test

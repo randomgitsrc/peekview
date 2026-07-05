@@ -19,7 +19,7 @@ created: 2026-06-24
 |----|------|---------|------|
 | 单元 (vitest, jsdom) | `frontend-v3/node_modules/.bin/vitest` | BDD-13、BDD-14 净化逻辑、useShiki xml 加载、useMarkdown fence 分支、尺寸回退纯函数 | 快速反馈，不依赖真实浏览器 |
 | 组件 (vitest + @vue/test-utils, jsdom) | 同上 | BDD-1/2/3/4/15 的 DOM 结构与 toggle 行为（SvgDiagram stub） | SvgDiagram.vue 在 P4 实现，P3 测试用 stub 占位 |
-| E2E (Playwright, 真实 Chrome CDP 18800) | playwright-vision skill | BDD-1/2/3/4/5/6/7/8/9/12/16 | XSS 类、PNG 透明像素采样、全屏缩放、主题切换必须真实浏览器实跑 |
+| E2E (Playwright, 真实 Chrome CDP 18800) | playwright-cdp skill | BDD-1/2/3/4/5/6/7/8/9/12/16 | XSS 类、PNG 透明像素采样、全屏缩放、主题切换必须真实浏览器实跑 |
 
 ### Stub 策略
 
@@ -300,7 +300,7 @@ cd frontend-v3 && ./node_modules/.bin/vitest run --reporter=dot 2>&1 | tail -20
 cd frontend-v3 && npx vue-tsc --noEmit 2>&1 | tail -20
 # 构建
 cd frontend-v3 && npm run build 2>&1 | tail -10
-# E2E（P6 验收用，playwright-vision skill 实跑 BDD-1..16）
+# E2E（P6 验收用，playwright-cdp skill 实跑 BDD-1..16）
 ```
 
 ## 4. 交付说明

@@ -153,7 +153,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 ShareDialog 文案和 ShareManagementPanel 显示
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
     requires_minimal_validation: false

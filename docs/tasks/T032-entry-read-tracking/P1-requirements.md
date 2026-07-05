@@ -252,7 +252,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 read_stats 在 entry 详情页的展示
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyst（agate 内置执行角色）
     status: available
 

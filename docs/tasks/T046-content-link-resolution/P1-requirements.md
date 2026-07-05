@@ -205,7 +205,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证图片重写渲染和链接点击文件切换
     available:
-      - playwright-vision skill（已注入）
+      - playwright-cdp skill（已注入）
       - vision-analyst（agate 内置执行角色）
     status: available
 

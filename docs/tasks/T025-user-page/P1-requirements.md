@@ -304,7 +304,7 @@ capability_requirements:
   - need: playwright-e2e
     why: P6 验收需要 Playwright 实跑 UI 验证（用户页加载、banner、card click、tab URL 同步）
     available:
-      - playwright-vision skill（已注入）
+      - playwright-cdp skill（已注入）
       - make debug-test 命令（AGENTS.md 已声明）
     status: available
 

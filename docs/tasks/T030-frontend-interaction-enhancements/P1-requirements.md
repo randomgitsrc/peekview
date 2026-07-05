@@ -169,13 +169,13 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需要截图验证 zebra stripe 配色效果和 overflow menu 交互行为
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 
   - need: mobile-emulation
     why: P6 验收 B-AC1/B-AC2/B-AC6 需要移动端视口模拟
     available:
-      - playwright-vision skill (CDP Emulation.setDeviceMetricsOverride)
+      - playwright-cdp skill (CDP Emulation.setDeviceMetricsOverride)
     status: available
 ```

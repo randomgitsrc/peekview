@@ -93,7 +93,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 badge 显隐、summary 行消失、标签全量显示的视觉效果
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 ```

@@ -53,10 +53,10 @@ gate_commands:
   P5: "cd frontend-v3 && ./node_modules/.bin/vitest run --reporter=dot 2>&1 | tail -20"
   P5_build: "cd frontend-v3 && npm run build 2>&1 | tail -10"
   P5_typecheck: "cd frontend-v3 && npx vue-tsc --noEmit 2>&1 | tail -20"
-  P6: "playwright-vision skill 实跑 BDD-1..BDD-16（XSS/工具栏/透明 PNG/全屏/三管线共存/主题切换重挂载），逐条截图取证"
+  P6: "playwright-cdp skill 实跑 BDD-1..BDD-16（XSS/工具栏/透明 PNG/全屏/三管线共存/主题切换重挂载），逐条截图取证"
 env_constraints:
   debug_env: "继承 P0-brief：后端 make debug（127.0.0.1:8888，/tmp/peekview-debug/）；前端 vitest 用 frontend-v3/node_modules/.bin/vitest；构建 npm run build"
-  isolation_check: "测试 entry 仅经 debug backend HTTP API 创建（铁律 7）；vitest 默认 jsdom 隔离；Playwright 连本地 Chrome CDP 18800（playwright-vision skill），不触碰生产"
+  isolation_check: "测试 entry 仅经 debug backend HTTP API 创建（铁律 7）；vitest 默认 jsdom 隔离；Playwright 连本地 Chrome CDP 18800（playwright-cdp skill），不触碰生产"
 ```
 
 ## 1. 影响域分析

@@ -178,7 +178,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收阶段需要 Playwright 实跑浏览器验证 BDD 条件
     available:
-      - playwright-vision skill（已注入，端口 18800）
+      - playwright-cdp skill（已注入，端口 18800）
       - @playwright/test (devDependency, 已安装)
     status: available
 ```

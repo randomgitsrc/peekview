@@ -177,7 +177,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需 Playwright 模拟系统黑夜（emulateMedia colorScheme:'dark'）并截图验证内容区主题表现
     available:
-      - playwright-vision skill（已注入，连本地 Chrome CDP :18800）
+      - playwright-cdp skill（已注入，连本地 Chrome CDP :18800）
       - "@vision-helper subagent（截图分析）"
     status: available
 

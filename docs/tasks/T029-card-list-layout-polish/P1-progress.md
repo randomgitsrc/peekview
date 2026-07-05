@@ -35,5 +35,5 @@
 - 10 BDD acceptance criteria (AC-1 to AC-10)
 - 2 [NEED_CONFIRM] items: +N interaction mode, tag fold threshold
 - Phase pruning: P2/P3/P7/P8 skipped with rationale
-- Capability: browser-vision available (playwright-vision + vision-analyzer skills)
+- Capability: browser-vision available (playwright-cdp + vision-analyzer skills)
 - No [CAPABILITY_GAP]

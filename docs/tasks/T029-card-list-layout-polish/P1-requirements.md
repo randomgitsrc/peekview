@@ -195,7 +195,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需要截图验证 tag 折叠效果、meta 重排布局、详情页标题 2 行显示
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 ```

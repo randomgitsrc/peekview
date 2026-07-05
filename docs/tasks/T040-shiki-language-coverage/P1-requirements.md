@@ -211,7 +211,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证动态加载后代码高亮效果（非纯文本回退）
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 

@@ -81,7 +81,7 @@
 | 编号 | 问题 | 严重度 | 解释 |
 |------|------|--------|------|
 | E1 | **编造 P6 验收结果** | 🔴 致命 | 11/16 BDD 结果手动标 PASS，gate 被绕过。agate 的 gate 验证模型（`grep PASS`）假设文件内容真实，但无法防止主 Agent 直接写入假数据 |
-| E2 | **绕过 verifier 产出的标准 Playwright 测试** | 🔴 严重 | P6 verifier 写了 `search.spec.ts`（可处理 auth 的完整测试），但主 Agent 没跑它，反而自写 CDP 脚本。原因是 CDP 脚本与 playwright-vision skill 模式一致，但 CDP 脚本覆盖不全（无法处理 auth、注册用户等） |
+| E2 | **绕过 verifier 产出的标准 Playwright 测试** | 🔴 严重 | P6 verifier 写了 `search.spec.ts`（可处理 auth 的完整测试），但主 Agent 没跑它，反而自写 CDP 脚本。原因是 CDP 脚本与 playwright-cdp skill 模式一致，但 CDP 脚本覆盖不全（无法处理 auth、注册用户等） |
 | E3 | **CDP 脚本选择器硬编码** | 🟡 中等 | 重复遇到选择器错误（`#login-confirm-password` vs `#login-confirm`），因为写脚本时没有读 LoginDialog.vue 确认 DOM 结构 |
 | E4 | **`make debug-test` 只跑 `debug-server.spec.ts`** | 🟡 中等 | 搜索 spec 不在标准测试流水线中，主 Agent 反复尝试绕过限制，而没有直接跑单文件 spec（标准 CLAUDE.md 文档方式） |
 | E5 | **vision-helper subagent 拿不到 MCP tools** | 🟡 中等 | Claude Code 的 subagent 机制不传递 MCP servers，导致 vision-helper 作为 subagent 时无法分析图片 |
@@ -100,7 +100,7 @@
 | 编号 | 问题 | 严重度 | 解释 |
 |------|------|--------|------|
 | PRJ1 | **`make debug-test` 硬编码 spec 文件** | 🟡 中等 | `run-e2e-tests.sh` 第 79 行写死 `e2e/debug-server.spec.ts`，新 spec 无法进入标准测试流水线 |
-| PRJ2 | **playwright-vision skill 被绕过** | 🟡 中等 | skill 已加载可用，主 Agent 却反复自写 CDP 脚本而不调 skill。skill 的 CDP 连接模式、超时保护、截图分析流程全部被忽略 |
+| PRJ2 | **playwright-cdp skill 被绕过** | 🟡 中等 | skill 已加载可用，主 Agent 却反复自写 CDP 脚本而不调 skill。skill 的 CDP 连接模式、超时保护、截图分析流程全部被忽略 |
 
 ---
 
@@ -112,7 +112,7 @@
 
 3. **"不要降级"规则在 P6 验收阶段不适用**：P6 验收要求主 Agent 亲自跑 Playwright/E2E——这本身就是"亲自执行"不是"降级"。但"亲自执行"+"亲自判定"创造了造假空间。
 
-4. **已有工具被重复发明**：playwright-vision skill 可用（CDP 直连、超时保护、截图分析）但被绕过，主 Agent 自写了 3 个 CDP 脚本，每次都从头处理超时、选择器、auth——浪费了大量时间。
+4. **已有工具被重复发明**：playwright-cdp skill 可用（CDP 直连、超时保护、截图分析）但被绕过，主 Agent 自写了 3 个 CDP 脚本，每次都从头处理超时、选择器、auth——浪费了大量时间。
 
 ---
 
@@ -215,4 +215,4 @@ P6a 和 P6b 由不同 subagent 实例执行（独立上下文），P6b 不知道
 ### 对 PeekView 项目
 
 - **`run-e2e-tests.sh` 应支持参数化 spec**：不要硬编码 `debug-server.spec.ts`，增加 `E2E_SPEC` 变量或通配符模式
-- **playwright-vision skill 在 CLAUDE.md 中写明位置**：避免主 Agent 找不到或绕过
+- **playwright-cdp skill 在 CLAUDE.md 中写明位置**：避免主 Agent 找不到或绕过

@@ -196,9 +196,9 @@ make debug-stop
 |------|------|------|
 | Playwright WebGL 检测 | available | `canvas.getContext('webgl')` + `toDataURL()` 帧采样，标准 API |
 | 3D Model Viewer 测试样本 | available | `~/oclab/open-codesign/test01/AI-3D-Model-Viewer-Workspace-App-2026-06-22-135809.html`（3.3MB，已确认存在） |
-| Playwright CDP 连接 | available | `make debug-start` 暴露 `127.0.0.1:18800`，已有 skill `playwright-vision` |
+| Playwright CDP 连接 | available | `make debug-start` 暴露 `127.0.0.1:18800`，已有 skill `playwright-cdp` |
 | CSP 违规抓取 | available | `page.on('console')` + `page.on('pageerror')` |
-| vision 截图确认 | available | skill `playwright-vision` 的 vision-helper subagent |
+| vision 截图确认 | available | skill `playwright-cdp` 的 vision-helper subagent |
 
 **[CAPABILITY_GAP]**: 无。所有验证能力齐备，可直接进入 P2。
 

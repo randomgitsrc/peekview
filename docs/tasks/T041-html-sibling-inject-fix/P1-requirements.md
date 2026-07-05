@@ -199,7 +199,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需截图验证 iframe 内表单交互 + module script 执行 + SVG 渲染
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
       - vision-analyzer skill
     status: available
 

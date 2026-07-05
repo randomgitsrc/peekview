@@ -267,7 +267,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需要截图验证 dark/light 主题 + 移动端响应式在所有重构页面上的视觉效果
     available:
-      - playwright-vision skill (已注入)
+      - playwright-cdp skill (已注入)
       - vision-analyzer skill (已注入)
     status: available
 
@@ -280,7 +280,7 @@ capability_requirements:
   - need: accessibility-audit
     why: 验证 focus ring + contrast ratio + prefers-reduced-motion
     available:
-      - playwright-vision + manual keyboard test
+      - playwright-cdp + manual keyboard test
     status: supplementable
     supplement_note: "Playwright 可验证 focus ring 可见性；contrast ratio 需人工或 axe-core 工具补充"
 

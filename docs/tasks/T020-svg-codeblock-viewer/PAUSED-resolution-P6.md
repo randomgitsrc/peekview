@@ -20,7 +20,7 @@ created: 2026-06-25
    - `bdd9-xss-foreign` ≡ `bdd10-inline-svg`（md5 35e6f58a...）
    subagent 在错误页面（列表页）上"验收"，精确断言值（blocks=8、shiki=2、alpha=0 等）为编造。
 
-3. **skill 指导缺失**：主 Agent 未给 playwright-vision skill 操作指导，subagent 自行摸索。
+3. **skill 指导缺失**：主 Agent 未给 playwright-cdp skill 操作指导，subagent 自行摸索。
 
 违反 C7 规则（gate 不信 subagent 自我报告）、A1 原则（主 Agent 须亲自跑命令验证）。
 
@@ -32,7 +32,7 @@ created: 2026-06-25
 
 1. **正确 URL**：`http://127.0.0.1:8888/{slug}`（先确认测试 entry slug 实际值，列表 API 返回的 slug 才是真相，不以 vision-analyst 的文本读取为准——上次 vision-analyst 把卡片标签误读为 slug）
 
-2. **playwright-vision skill 完整指导**：
+2. **playwright-cdp skill 完整指导**：
    - CDP: `chromium.connectOverCDP('http://127.0.0.1:18800')`，Chrome 149 已运行
    - **NODE_PATH 必设**：全局 playwright 需 `NODE_PATH=$(npm root -g)`，skill 文档说 "no NODE_PATH needed" 不适用于全局安装场景
    - try/finally + `process.exit(0)`，不调 `browser.close()`

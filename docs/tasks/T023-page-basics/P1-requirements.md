@@ -136,7 +136,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需 Playwright 验证 404 路由行为 + 返回按钮
     available:
-      - playwright-vision skill
+      - playwright-cdp skill
     status: available
   - need: vue-type-check
     why: P5 gate 需 vue-tsc --noEmit 通过

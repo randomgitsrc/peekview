@@ -573,7 +573,7 @@ capability_requirements:
   - need: browser-vision
     why: P6 验收需要截图验证分享链接水印、ShareDialog、ShareManagementPanel 的交互行为
     available:
-      - playwright-vision skill（项目已配置）
+      - playwright-cdp skill（项目已配置）
       - vision-analyzer skill（项目已配置，~/.claude/skills/vision-analyzer）
     status: available
 
