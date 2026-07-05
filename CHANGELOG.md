@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **后端二进制文件 Content-Type 修复**（T047）：`/content` 端点对 PNG/JPEG/SVG 等二进制文件返回 `text/plain`，改为三级 fallback（`_LANGUAGE_TO_MIME` → `mimetypes.guess_type()` → `application/octet-stream`），新增 `_determine_content_type` 函数
+- **前端 Markdown 图片/链接路径重写恢复**（T047）：从 T046 patch 恢复 path-map.ts + useMarkdown.ts + MarkdownViewer.vue + EntryDetailView.vue 改动，Markdown 中 `![alt](image.png)` 和 `[doc](guide.md)` 引用自动重写为 API URL
+
 ## [0.5.2] - 2026-07-01
 
 ### 修复

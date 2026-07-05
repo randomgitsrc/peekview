@@ -1,6 +1,6 @@
 task_id: T047
-phase: P0
-status: pending
+phase: P1
+status: completed
 
 retries:
   P1: []

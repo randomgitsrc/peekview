@@ -1,0 +1,7 @@
+- [P0-brief.md] 核心问题：后端Content-Type对二进制文件返回text/plain，浏览器不解码为图片；前端路径重写逻辑正确但后端前提不成立
+- [t046-postmortem.md] 失败根因：后端/content端点对二进制文件返回text/plain，浏览器不解码为图片；P6被gate格式带偏2小时，vision-helper三次报告被无视
+- [t046-retrospective.md] 五层防御全失效：P2未验证外部行为→P4只跑单测→P5缺e2e命令→P6凑格式→根因定位反驳视觉证据；改进建议G1-G5和P1-P3
+- [files.py] _language_to_content_type(91-113)只映射文本语言，二进制fallback到text/plain;charset=utf-8；_build_sibling_data(266-296)有正确三级fallback：_LANGUAGE_TO_MIME→mimetypes.guess_type→octet-stream；get_file_content(232-263)用了错误的_language_to_content_type
+- [WORKFLOW.md] P1需求基线是活基线，后续SCOPE+可增补；BDD条件必须可二值判定
+- [dispatch-protocol.md] 派发三铁律确认；subagent返回校验规则确认
+- [P1-requirements.md] 产出完成：14条BDD(AC-1到AC-14)，8条隐含需求(IR-1到IR-8)，0个NEED_CONFIRM，risk_level=medium，保留P1-P8全阶段
