@@ -16,16 +16,19 @@
 
 | 序号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
-| T047 | content-link-fix | ⬜ 待开始 | P0 | 🔴 | T046(复盘) | 2026-07-05 | 2026-07-05 |
-| T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
-| T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T044 | frontend-interaction-fixes | ✅✅ 已完成 | P6 | 🟠 | 无 | 2026-06-30 | 2026-07-01 |
 | T045 | code-block-rendering-fix | ✅✅ 已完成 | P6 | 🟠 | 无 | 2026-06-30 | 2026-07-01 |
+| T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
+| T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 
 ### 已完成
 
 | 序号 | 任务名称 | 状态 | 最终阶段 | 优先级 | 完成日期 |
 |------|----------|------|----------|--------|----------|
+| T047 | content-link-fix | ✅✅ 已完成 | P8→v0.5.3 | 🔴 | 2026-07-05 |
+| T046 | content-link-resolution | ❌ 失败 | P8→FAILED | 🔴 | 2026-07-05 |
+| T044 | frontend-interaction-fixes | ✅✅ 已完成 | P6→v0.5.1 | 🟠 | 2026-07-01 |
+| T045 | code-block-rendering-fix | ✅✅ 已完成 | P6→v0.5.2 | 🟠 | 2026-07-01 |
 | T020 | svg-codeblock-viewer | ✅✅ 已完成 | P8→v0.2.4 | 🟠 | 2026-06-28 |
 | T023 | page-basics | ✅✅ 已完成 | P6 | 🟠 | 2026-06-28 |
 | T025 | user-page | ✅✅ 已完成 | P7 | 🟠 | 2026-06-28 |
@@ -233,6 +236,8 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-05 | 完成 T047 | content-link-fix v0.5.3 发布到 PyPI（后端 Content-Type 三级 fallback + 前端 path-map 路径重写） |
+| 2026-07-05 | T046 失败 | content-link-resolution 宣告失败，后端 Content-Type 返回 text/plain 导致图片不渲染 |
 | 2026-07-05 | 创建 T047 | content-link-fix P0-brief — 从 T046 失败复盘中恢复：修复后端 Content-Type + 恢复前端重写 |
 | 2026-06-30 | 合并精简 | T042+T043→T041（html-sibling-inject-fix）；T040 改为按需动态加载；删除 T038/T042/T043 目录 |
 | 2026-06-30 | 创建 T039-T043 | 问题重组：T038→T040（Shiki 语言覆盖）；T037 HTML 部分拆出→T041/T042/T043；新增 T039（Explore UI 修正）。实测发现 sandbox 缺 allow-forms（🔴）+ module script 注入失效（🔴） |

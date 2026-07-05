@@ -1,6 +1,6 @@
 task_id: T046
-phase: P5
-status: in_progress
+phase: FAILED
+status: failed
 
 retries:
   P1: []
@@ -20,4 +20,4 @@ retry_count:
   P2: 1
   P3: 1
 
-updated: 2026-07-04
+updated: 2026-07-05
