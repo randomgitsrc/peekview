@@ -1,0 +1,2 @@
+✅ link-click: "Guide doc" link switched file successfully
+bodyText includes "guide document"

@@ -1,0 +1,2 @@
+Full Playwright console output in p6-console-output.txt
+All 3 local images loaded, all 3 local links rewritten, click switch works

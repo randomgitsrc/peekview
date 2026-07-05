@@ -1,0 +1,6 @@
+- [读取review和design] 识别B1: Map<string,number>存fileId但与priority比较，逻辑完全失效
+- [修复PathMap类型] Map<string,number> → Map<string,{fileId,priority}>
+- [修复resolvePath] map.get()!.fileId 提取fileId
+- [修夏resolvePath] map.get()→map.get()!.fileId 提取fileId
+- [修夏§5完成标志] 新增PathMapEntry导出+priority测试覆盖声明
+- [验证一致性] 全文grep确认无残留Map<string,number>和裸map.get()调用

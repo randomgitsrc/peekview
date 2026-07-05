@@ -1,0 +1,2 @@
+10 buildPathMap + 18 normalizeRef + 10 resolvePath = 38 tests PASS
+source: frontend-v3/src/utils/path-map.test.ts

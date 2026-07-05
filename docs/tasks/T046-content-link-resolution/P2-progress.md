@@ -1,0 +1,16 @@
+- [P0-brief.md] 环境约束: make debug 127.0.0.1:8888; 推荐前端重写(A+B组合); 4级优先级P0-P3
+- [P1-requirements.md] 16条BDD(AC-P0-1~7, AC-P1-1~6, AC-P2-1~2); 跳P7保留P2-P6+P8; 前端重写确认; 链接点击需selectFile无刷新切换
+- [useMarkdown.ts] md.render()产出HTML→按CODE_BLOCK分割→DOMPurify sanitize每个block→返回blocks数组; renderer rules覆写点: md.renderer.rules.image/link_open; DOMPurify在L308-313
+- [MarkdownViewer.vue] props仅content; v-html渲染blocks; 事件委托handleCodeBlockCopy; 无pathMap/slug props
+- [EntryDetailView.vue] entryStore.currentEntry.files含id/filename/path/isBinary/language; selectFile方法; siblingFileIds computed; MarkdownViewer只传content
+- [html_render_service.py] normalize_ref/_sibling_keys/_lookup_key可复用; inject_resources只处理sibling; 不处理<a href>/<iframe src>; 需扩展传入完整文件映射
+- [entry.ts store] selectFile(file: File)接受完整File对象含id; currentEntry.files含完整文件列表; loadEntry时自动选第一个文件
+- [types/index.ts] File interface: {id, path:string|null, filename, language, isBinary, size, lineCount}; Entry: {id, slug, files:File[], ...}
+- [HtmlViewer.vue] 使用后端render路由; siblingFileIds传inject参数; 非前端渲染; P2 HTML引用重写只需改后端
+- [router.ts] /:slug路由, 无query参数处理; selectFile走store不走router
+- [files.py render端点] inject_resources只接收sibling列表; 需扩展传入entry所有文件映射才能处理<a href>/<iframe src>
+- [最小验证] markdown-it image token: tokens[idx].attrs含src; link_open token: attrs含href; DOMPurify ADD_ATTR已含target/rel; 需确认DOMPurify不删除重写后的src/href(API URL是合法值)
+- [markdown-it验证] image token: attrs=[['src','path']]; link_open: attrs=[['href','path']]; raw HTML: html_inline/html_block token, content=原始HTML字符串; 确认方案A+B组合正确
+- [DOMPurify验证] 无法在Node.js跑(缺JSDOM); 但分析确认: /api/v1/entries/... URL是合法href/src值, DOMPurify默认不删除; 结论: confirmed(分析而非运行)
+- [FileTree.vue] emit('select', file: File); File完整对象传给selectFile; 对齐方案: MarkdownViewer内链点击→emit事件→EntryDetailView调用entryStore.selectFile
+- [P2-design.md] 完成: 3个候选方案(A前端重写/B后端render/MCP预处理); 推荐A; 16条BDD全覆盖; 权衡表8项决策点

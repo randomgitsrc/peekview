@@ -1,0 +1,2 @@
+BROKEN alt="External" src="https://httpbin.org/image/png"
+(URL preserved as external, httpbin unreachable not our problem)

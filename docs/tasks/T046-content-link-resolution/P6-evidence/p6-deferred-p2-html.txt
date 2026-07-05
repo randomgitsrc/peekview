@@ -1,0 +1,2 @@
+P2 HTML reference rewriting deferred to future iteration
+P2-design.md §5.3 outlines the approach

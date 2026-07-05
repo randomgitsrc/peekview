@@ -1,0 +1,17 @@
+- [analyst.md] 角色定义：先质疑再定义，5维度隐含需求检查，BDD可二值判定
+- [P0-brief.md] 核心问题：Markdown/HTML内链路径未重写→404。4级优先级：P0图片→P1链接→P2 HTML未覆盖→P3低频标签。推荐前端重写（A+B组合）
+- [useMarkdown.ts] markdown-it配置html:true+linkify+typographer，已有自定义renderer rules(code_inline/fence/heading_open)，DOMPurify在block级别sanitize，post-render扩展点存在
+- [MarkdownViewer.vue] props只有content，无pathMap/slug。DOMPurify配置在useMarkdown.ts内部render()里。copy-code-block事件通过冒泡处理
+- [EntryDetailView.vue] entryStore.currentEntry.files有完整文件列表。MarkdownViewer不传pathMap/slug。siblingFileIds仅给HtmlViewer用。文件切换通过entryStore.selectFile
+- [html_render_service.py] 后端sibling injection：BS4处理，有normalize_ref/sibling_keys/lookup_key/binary_map/text_map/svg_keys。仅处理CSS/JS/img/video/audio/source/track/favicon。不处理<a href>/<iframe src>/srcset/inline style url()
+- [types/index.ts] File接口：id/path/filename/language/isBinary/size/lineCount。path可为null。前端Entry.files已有完整文件列表
+- [models.py] File模型：path(相对路径,nullable),filename,is_binary。entry_id外键。path是相对路径如src/main.py
+- [HtmlViewer.vue] HTML走后端render路由（iframe src=/api/v1/entries/{slug}/files/{id}/render?inject=...），sibling injection由后端inject_resources()处理。前端只传siblingFileIds
+- [entry store] selectFile接受File对象(id/path/filename/language/isBinary/size/lineCount)，activeFile是ref。文件切换逻辑完善
+- [task-files.md] P1-requirements.md结构：需求复述→隐含需求→BDD验收→待确认→裁剪→范围→能力需求。Header必须含phase/task_id/type/parent/trace_id/status/agent/created
+- [方案质疑] 后端重写真的更复杂吗？后端已有html_render_service.py的normalize_ref/sibling_keys/lookup_key，Markdown渲染路由只需：1.读MD文件 2.用python-markdown渲染 3.做路径重写 4.返回HTML。但python-markdown的渲染质量(markdown-it对GFM/footnote等)和Shiki高亮是前端独有的，后端没有。所以P0-brief判断正确——后端重写需要搬markdown-it+Shiki，复杂度确实极高
+- [隐含需求-关键] 1.Markdown raw HTML块里的路径（md html:true→<img src>不被markdown-it rules覆盖，需post-DOMPurify walk）2.代码块中的路径不应重写（markdown-it rules天然不触及代码块token，安全）3.Frontmatter中可能有image/banner引用→不应重写（frontmatter是元数据不是渲染内容）4.Markdown内嵌HTML的<a href>→P1链接重写也要覆盖raw HTML里的链接
+- [隐含需求-DOMPurify交互] DOMPurify可能删除重写后的属性！如含-->的属性。但重写目标是/api/v1/entries/{slug}/files/{id}/content，不含-->，安全。另外DOMPurify的ADD_ATTR需包含重写后可能产生的属性？不需要——重写只改现有src/href的值，不新增属性
+- [隐含需求-文件切换] Markdown链接重写后，点击链接应触发entryStore.selectFile而非Vue Router导航。需要拦截<a>点击事件，判断是否为内部文件链接。类似HtmlViewer的iframe机制，但MarkdownViewer是直接DOM渲染
+- [隐含需求-隐私] 私有entry的文件内容URL需要认证。当前/api/v1/entries/{slug}/files/{id}/content走cookie认证，浏览器请求会自动带cookie，OK。但srcset也需要带cookie→没问题，同源请求
+- [P1-requirements.md] 完成：8条P0 BDD + 6条P1 BDD + 2条P2 BDD = 16条，无NEED_CONFIRM，risk_level=medium，裁剪跳过P7

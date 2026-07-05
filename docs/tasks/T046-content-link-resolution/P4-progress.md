@@ -1,0 +1,4 @@
+- [Step 1] path-map.ts: 38/38 tests green (normalizeRef, buildPathMap, resolvePath)
+- [Step 2] useMarkdown.ts: added pathMap/slug params, image/link_open rule overrides, post-DOMPurify DOM walk
+- [Step 3] MarkdownViewer.vue: added pathMap/slug props, navigate-file emit, link-click handler
+- [Step 4] EntryDetailView.vue: buildPathMap computed, pass to MarkdownViewer, handleNavigateFile
