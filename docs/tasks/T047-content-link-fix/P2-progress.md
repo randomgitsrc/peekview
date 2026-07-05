@@ -1,0 +1,6 @@
+- [读取输入] P0-brief, P1-requirements, files.py, T046-P2-design 已读取
+- [读取前端文件] useMarkdown.ts, MarkdownViewer.vue, EntryDetailView.vue, mime.ts 已读取
+- [最小验证] PNG 当前返回 text/plain (bug 确认); mimetypes.guess_type 覆盖范围验证通过; JSON 文件已通过 _LANGUAGE_TO_MIME 返回 application/json
+- [关键发现] mimetypes.guess_type 对 .rs/.ts/.sh/.sql 返回错误 MIME; _language_to_content_type 必须保留用于文本文件; _determine_content_type 需要区分文本/二进制路径
+- [P2-design.md 写入] 方案 A(分流策略) vs 方案 B(统一 fallback); 选择方案 A; minimal_validation confirmed
+- [门槛验证] 全部 PASS: Header/packages/domains/ui_affected/gate_commands/2方案/选择理由/minimal_validation confirmed/files_to_read/env_constraints
