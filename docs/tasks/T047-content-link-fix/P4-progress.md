@@ -1,0 +1,8 @@
+- [后端] 新增 _determine_content_type 函数 + 修改 get_file_content 调用
+- [后端] test_content_type.py 23/23 绿灯 + 全量回归 764 passed
+- [前端] path-map.ts + path-map.test.ts 38/38 绿灯
+- [前端] useMarkdown.ts 修改完成 (pathMap/slug + image/link_open rules + DOM walk)
+- [前端] MarkdownViewer.vue 修改完成 (pathMap/slug props + link-click + watch)
+- [前端] EntryDetailView.vue 修改完成 (pathMap + handleNavigateFile)
+- [前端] 全量 vitest 675 passed + vue-tsc 无错误 + MarkdownViewer.spec.ts 适配
+- [产出] P4-implementation.md 写入完成

@@ -2,6 +2,8 @@ import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
 import type { TocHeading, MarkdownBlock, MarkdownBlocksResult } from '@/types'
 import { useShiki } from './useShiki'
+import { resolvePath } from '@/utils/path-map'
+import type { PathMap } from '@/utils/path-map'
 
 // Compat type for MarkdownViewer (removed in Task 7)
 export interface MarkdownRenderResult extends MarkdownBlocksResult {
@@ -96,7 +98,37 @@ export function useMarkdown() {
     code: string
   }
 
-  async function render(content: string, theme: 'github-dark' | 'github-light'): Promise<MarkdownRenderResult> {
+  function rewriteHtmlRefs(html: string, pathMap: PathMap, slug: string): string {
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+
+    for (const img of doc.querySelectorAll('img[src]')) {
+      const src = img.getAttribute('src')
+      if (!src) continue
+      const fileId = resolvePath(src, pathMap)
+      if (fileId !== null) {
+        img.setAttribute('src', `/api/v1/entries/${slug}/files/${fileId}/content`)
+      }
+    }
+
+    for (const a of doc.querySelectorAll('a[href]')) {
+      const href = a.getAttribute('href')
+      if (!href) continue
+      const fileId = resolvePath(href, pathMap)
+      if (fileId !== null) {
+        a.setAttribute('href', `/${slug}?file=${fileId}`)
+        a.setAttribute('data-peekview-file-id', String(fileId))
+      }
+    }
+
+    return doc.body.innerHTML
+  }
+
+  async function render(
+    content: string,
+    theme: 'github-dark' | 'github-light',
+    pathMap: PathMap | null = null,
+    slug: string = '',
+  ): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
     const codeBlocks: CodeBlock[] = []
     let frontMatterHtml = ''
@@ -247,8 +279,55 @@ export function useMarkdown() {
       return originalHeading ? originalHeading(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options)
     }
 
+    // Override image renderer for path resolution
+    const originalImage = md.renderer.rules.image
+    if (pathMap && slug) {
+      md.renderer.rules.image = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        const srcAttr = token.attrGet('src')
+        if (srcAttr) {
+          const fileId = resolvePath(srcAttr, pathMap)
+          if (fileId !== null) {
+            token.attrSet('src', `/api/v1/entries/${slug}/files/${fileId}/content`)
+          }
+        }
+        return originalImage
+          ? originalImage(tokens, idx, options, env, self)
+          : self.renderToken(tokens, idx, options)
+      }
+    }
+
+    // Override link_open renderer for path resolution
+    const originalLinkOpen = md.renderer.rules.link_open
+    if (pathMap && slug) {
+      md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        const hrefAttr = token.attrGet('href')
+        if (hrefAttr) {
+          const fileId = resolvePath(hrefAttr, pathMap)
+          if (fileId !== null) {
+            token.attrSet('href', `/${slug}?file=${fileId}`)
+            token.attrSet('data-peekview-file-id', String(fileId))
+          }
+        }
+        return originalLinkOpen
+          ? originalLinkOpen(tokens, idx, options, env, self)
+          : self.renderToken(tokens, idx, options)
+      }
+    }
+
     // Render markdown (with placeholders) - use processedContent (without front matter)
     let html = md.render(processedContent)
+
+    // Restore link_open renderer
+    if (pathMap && slug) {
+      md.renderer.rules.link_open = originalLinkOpen
+    }
+
+    // Restore image renderer
+    if (pathMap && slug) {
+      md.renderer.rules.image = originalImage
+    }
 
     // Restore heading renderer
     md.renderer.rules.heading_open = originalHeading
@@ -306,9 +385,18 @@ export function useMarkdown() {
     for (const block of blocks) {
       if (block.type === 'html') {
         block.html = DOMPurify.sanitize(block.html, {
-          ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'target', 'rel'],
+          ADD_ATTR: ['data-action', 'data-code', 'data-line', 'data-block-id', 'data-index', 'data-mode', 'data-peekview-file-id', 'target', 'rel'],
           ADD_TAGS: ['button'],
         })
+      }
+    }
+
+    // Post-DOMPurify DOM walk for raw HTML refs
+    if (pathMap && slug) {
+      for (const block of blocks) {
+        if (block.type === 'html') {
+          block.html = rewriteHtmlRefs(block.html, pathMap, slug)
+        }
       }
     }
 

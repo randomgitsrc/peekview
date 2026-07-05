@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import mimetypes
 import re
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -111,6 +112,28 @@ def _language_to_content_type(language: str | None) -> str:
     if language and language in _TYPE_MAP:
         return _TYPE_MAP[language]
     return "text/plain; charset=utf-8"
+
+
+def _determine_content_type(file_record: File) -> str:
+    """Determine Content-Type for /content endpoint.
+
+    Text files: use _language_to_content_type (existing behavior).
+    Binary files or language-less files: three-level fallback.
+    """
+    if file_record.language and not file_record.is_binary:
+        return _language_to_content_type(file_record.language)
+
+    if file_record.language:
+        mime = _LANGUAGE_TO_MIME.get(file_record.language)
+        if mime:
+            return mime
+
+    actual_path = file_record.path or file_record.filename
+    guessed, _ = mimetypes.guess_type(actual_path)
+    if guessed:
+        return guessed
+
+    return "application/octet-stream"
 
 
 def _looks_like_jwt(token: str) -> bool:
@@ -256,7 +279,7 @@ async def get_file_content(
 
     content = storage.read_file(entry_id, file_record.filename, file_record.path)
 
-    content_type = _language_to_content_type(file_record.language)
+    content_type = _determine_content_type(file_record)
     return Response(
         content=content,
         media_type=content_type,

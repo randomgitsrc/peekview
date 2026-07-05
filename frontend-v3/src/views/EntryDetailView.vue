@@ -166,8 +166,11 @@
           <MarkdownViewer
             v-else-if="isMarkdown"
             :content="entryStore.fileContent"
+            :path-map="pathMap"
+            :slug="slug"
             :headings="tocHeadings"
             @select-heading="scrollToHeading"
+            @navigate-file="handleNavigateFile"
           />
 
           <!-- Image File -->
@@ -316,6 +319,8 @@ import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { guessMimeType } from '@/utils/mime'
+import { buildPathMap } from '@/utils/path-map'
+import type { PathMap } from '@/utils/path-map'
 import { formatExpiresIn } from '@/utils/expires'
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
@@ -463,6 +468,18 @@ const isImage = computed(() => {
   if (mime === 'image/svg+xml') return true
   return file.isBinary && (mime?.startsWith('image/') ?? false)
 })
+
+const pathMap = computed<PathMap | null>(() => {
+  if (!currentEntry.value) return null
+  return buildPathMap(currentEntry.value.files, currentEntry.value.slug)
+})
+
+function handleNavigateFile(fileId: number) {
+  const file = currentEntry.value?.files.find(f => f.id === fileId)
+  if (file) {
+    entryStore.selectFile(file)
+  }
+}
 
 const showFileSidebar = computed(() => {
   return entryStore.isMultiFile

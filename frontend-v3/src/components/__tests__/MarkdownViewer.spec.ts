@@ -115,7 +115,7 @@ describe('MarkdownViewer', () => {
     })
     await flushPromises()
 
-    expect(mocks.mockRender).toHaveBeenCalledWith('# Test', 'github-dark')
+    expect(mocks.mockRender).toHaveBeenCalledWith('# Test', 'github-dark', null, '')
   })
 
   it('uses github-light for light theme', async () => {
@@ -126,7 +126,7 @@ describe('MarkdownViewer', () => {
     })
     await flushPromises()
 
-    expect(mocks.mockRender).toHaveBeenCalledWith('# Test', 'github-light')
+    expect(mocks.mockRender).toHaveBeenCalledWith('# Test', 'github-light', null, '')
   })
 
   it('re-renders when content changes', async () => {
@@ -137,12 +137,12 @@ describe('MarkdownViewer', () => {
     })
     await flushPromises()
     expect(mocks.mockRender).toHaveBeenCalledTimes(1)
-    expect(mocks.mockRender).toHaveBeenLastCalledWith('first', 'github-light')
+    expect(mocks.mockRender).toHaveBeenLastCalledWith('first', 'github-light', null, '')
 
     await wrapper.setProps({ content: 'second' })
     await flushPromises()
     expect(mocks.mockRender).toHaveBeenCalledTimes(2)
-    expect(mocks.mockRender).toHaveBeenLastCalledWith('second', 'github-light')
+    expect(mocks.mockRender).toHaveBeenLastCalledWith('second', 'github-light', null, '')
   })
 
   it('handles empty content', async () => {
@@ -154,7 +154,7 @@ describe('MarkdownViewer', () => {
     await flushPromises()
 
     expect(wrapper.find('.markdown-body').exists()).toBe(true)
-    expect(mocks.mockRender).toHaveBeenCalledWith('', 'github-light')
+    expect(mocks.mockRender).toHaveBeenCalledWith('', 'github-light', null, '')
   })
 
   it('passes theme prop to DiagramBlock', async () => {

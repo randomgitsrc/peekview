@@ -16,10 +16,18 @@ import { useMarkdown } from '@/composables/useMarkdown'
 import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
 import type { TocHeading, MarkdownBlock } from '@/types'
+import type { PathMap } from '@/utils/path-map'
 import DiagramBlock from '@/components/DiagramBlock.vue'
 
-const props = defineProps<{ content: string }>()
-const emit = defineEmits<{ headings: [headings: TocHeading[]] }>()
+const props = defineProps<{
+  content: string
+  pathMap?: PathMap | null
+  slug?: string
+}>()
+const emit = defineEmits<{
+  headings: [headings: TocHeading[]]
+  'navigate-file': [fileId: number]
+}>()
 
 const { render } = useMarkdown()
 const themeStore = useThemeStore()
@@ -55,12 +63,23 @@ function handleCodeBlockCopy(e: MouseEvent) {
   copyCodeBlock(target)
 }
 
+function handleLinkClick(e: MouseEvent) {
+  const target = (e.target as Element).closest('a[data-peekview-file-id]')
+  if (!target) return
+  const fileId = parseInt(target.getAttribute('data-peekview-file-id') || '', 10)
+  if (!fileId) return
+  e.preventDefault()
+  emit('navigate-file', fileId)
+}
+
 onMounted(() => {
   contentRef.value?.addEventListener('click', handleCodeBlockCopy)
+  contentRef.value?.addEventListener('click', handleLinkClick)
 })
 
 onBeforeUnmount(() => {
   contentRef.value?.removeEventListener('click', handleCodeBlockCopy)
+  contentRef.value?.removeEventListener('click', handleLinkClick)
 })
 
 async function renderContent() {
@@ -68,7 +87,7 @@ async function renderContent() {
   isLoading.value = true
   try {
     const themeName = theme.value === 'dark' ? 'github-dark' : 'github-light'
-    const result = await render(props.content, themeName)
+    const result = await render(props.content, themeName, props.pathMap ?? null, props.slug ?? '')
     if (myToken !== renderToken) return
     headings.value = result.headings
     blocks.value = result.blocks
@@ -80,7 +99,7 @@ async function renderContent() {
   }
 }
 
-watch(() => [props.content, theme.value], async () => {
+watch(() => [props.content, theme.value, props.pathMap, props.slug], async () => {
   await renderContent()
 }, { immediate: true })
 </script>
