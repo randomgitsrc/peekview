@@ -115,7 +115,7 @@
 - **Share cookie 隔离**：独立命名空间的 HTTPOnly cookie，与登录 cookie 不冲突
 - **Referrer-Policy: no-referrer**：share 访问时防止 token 通过 Referer 泄露
 - **`make setup-local`**：新 clone 后快速初始化 `.claude/`/`.opencode/` agents symlink
-- **playwright-vision / vision-analyzer 全局 skills**：从项目 symlink 改为全局独立目录，任何会话可直接调用
+- **playwright-cdp / vision-analyzer 全局 skills**：从项目 symlink 改为全局独立目录，任何会话可直接调用
 - **搜索 URL 化**（T026）：`/explore?q=关键词&owner=me` 搜索条件同步到 URL，可分享/书签
 
 ### 变更
@@ -126,7 +126,7 @@
 
 ### 修复
 
-- **vision-analyzer 全局独立**：从项目 symlink 改为全局目录，playwright-vision 同步独立
+- **vision-analyzer 全局独立**：从项目 symlink 改为全局目录，playwright-cdp 同步独立
 
 
 ## [0.2.7] - 2026-06-28
