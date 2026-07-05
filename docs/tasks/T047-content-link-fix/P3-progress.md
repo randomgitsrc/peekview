@@ -1,0 +1,5 @@
+- [读取输入] P0-brief, P1-requirements, P2-design, files.py, models.py, conftest.py, P4-code-diff.patch
+- [读取参考] factories.py, test_api.py 测试模式
+- [完成] P3-test-cases.md 写入
+- [完成] test_content_type.py 写入 (20 个测试)
+- [完成] path-map.test.ts 写入 (38 个测试)
