@@ -1,6 +1,6 @@
 task_id: T047
-phase: P8
-status: in_progress
+phase: READY
+status: completed
 
 retries:
   P1: []
