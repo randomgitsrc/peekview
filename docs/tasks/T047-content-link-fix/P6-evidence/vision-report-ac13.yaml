@@ -1,0 +1,21 @@
+bdd: AC-13
+screenshot: screenshots/ac13-entry-page.png
+timestamp: 2026-07-05T22:07:00Z
+summary:
+  blocker_count: 0
+  pass_count: 3
+  fail_count: 0
+bdd_results:
+  - id: AC-13
+    description: "Image visible in markdown rendering area"
+    result: PASS
+    evidence: "Vision-helper confirmed: blue outer rectangle with yellow/orange inner box labeled TEST visible. No broken image icon."
+  - id: AC-9
+    description: "Image src points to /api/v1/entries/{slug}/files/{file_id}/content"
+    result: PASS
+    evidence: "Playwright: img src=/api/v1/entries/t047-acceptance/files/2/content, naturalWidth=200"
+  - id: AC-14
+    description: "Network request Content-Type is image/png for PNG file"
+    result: PASS
+    evidence: "Playwright network monitoring: Content-Type=image/png for /files/2/content"
+anomalies: []
