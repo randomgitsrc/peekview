@@ -106,7 +106,32 @@ permission:
 
 ### 每个新会话启动（含中断恢复）
 
-**协议文件**（8 个协议文件，依次读完，不可跳过）：
+按当前任务阶段，**只读一张阶段卡片**——卡片自包含该阶段的完整执行信息（前置条件 / 派发 / 产出 / gate / 推进条件 / 常见错误 / 下游影响）。卡片查不到的信息再回退到本文件末尾的 Fallback reference 节：
+
+| 当前阶段 | 优先读 |
+|---------|-------|
+| 启动/无任务 | `~/.agate/phase-cards/P0-orchestrator.md` |
+| P1 | `~/.agate/phase-cards/P1-requirements.md` |
+| P2 | `~/.agate/phase-cards/P2-design.md` |
+| P3 | `~/.agate/phase-cards/P3-tdd.md` |
+| P4 | `~/.agate/phase-cards/P4-implementation.md` |
+| P5 | `~/.agate/phase-cards/P5-verification.md` |
+| P6 | `~/.agate/phase-cards/P6-acceptance.md` |
+| P7 | `~/.agate/phase-cards/P7-consistency.md` |
+| P8 | `~/.agate/phase-cards/P8-release.md` |
+| 跨阶段规则 | `~/.agate/rules/state-transitions.md`（推进/重试时）或 `~/.agate/rules/review-mapping.md`（派评审时） |
+
+每张卡片末尾指向下一张卡片。中断恢复时：读 `.state.yaml` → 查 phase → 按 mapping 表读对应卡片。
+
+`~/.agate/assets/execution-roles/` 和 `~/.agate/assets/templates/` 不在此列——这些是 subagent 在独立上下文里读的，编排者（你）不需要读，只需要知道"P1 派 analyst"，WORKFLOW.md 里已有角色映射表。
+
+### 版本感知
+
+先跑 `bash ~/.agate/scripts/agate-summary.sh` 确认当前协议版本；若知道上次会话版本，跑 `bash ~/.agate/scripts/agate-changes.sh v0.x.0` 看差异决定重读哪些文件。
+
+### Fallback：完整协议文件列表（reference，非必读）
+
+如果 phase-cards 查不到需要的细节，按需查阅下列文件——**这些是 reference，不要求每轮必读**：
 
 1. `~/.agate/WORKFLOW.md` — 阶段总览、角色映射、裁剪规则
 2. `~/.agate/dispatch-protocol.md` — 派发模板、gate 表、特殊事件处理
@@ -116,12 +141,6 @@ permission:
 6. `~/.agate/git-integration.md` — commit 规范（`wf()` 前缀）、push 策略
 7. `~/.agate/platform-notes.md` — 各平台能力差异、已知坑
 8. `~/.agate/LIMITATIONS.md` — 已知限制与缓解（subagent 空返回、prod_env 不在范围等）
-
-**版本感知**：先跑 `bash ~/.agate/scripts/agate-summary.sh` 确认当前协议版本；若知道上次会话版本，跑 `bash ~/.agate/scripts/agate-changes.sh v0.x.0` 看差异决定重读哪些文件，不知道就全量重读。
-
-**中断恢复 = 新会话**：会话被压缩/中断后重新接手，等同于一次新的启动——重新读完上述文件。任务进度可以从 active-tasks.md 重建，但协议规则本身不会自动出现在上下文里（这是两类不同的状态，见 state-machine.md「为什么这样能抗中断」）。
-
-`~/.agate/assets/execution-roles/` 和 `~/.agate/assets/templates/` 不在此列——这些是 subagent 在独立上下文里读的，编排者（你）不需要读，只需要知道"P1 派 analyst"，WORKFLOW.md 里已有角色映射表。
 
 ### 每个任务开始
 
