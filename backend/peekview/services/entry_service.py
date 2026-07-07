@@ -27,6 +27,7 @@ from peekview.models import (
     EntryListItem,
     EntryListResponse,
     EntryResponse,
+    EntryStatus,
     File,
     FileResponse,
     User,
@@ -327,7 +328,7 @@ class EntryService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             # Archived access control: non-owner non-admin cannot view archived
-            if entry.status == "archived":
+            if entry.status == EntryStatus.ARCHIVED:
                 if current_user_id is None and not is_admin:
                     raise NotFoundError(f"Entry not found: {slug}")
                 if not is_admin and entry.owner_id != current_user_id:
@@ -374,7 +375,7 @@ class EntryService:
             if status:
                 query = query.where(Entry.status == status)
                 count_query = count_query.where(Entry.status == status)
-                if status == "archived":
+                if status == EntryStatus.ARCHIVED.value:
                     if is_admin:
                         pass
                     elif current_user_id:
@@ -387,16 +388,16 @@ class EntryService:
             else:
                 if current_user_id and not is_admin:
                     query = query.where(
-                        (Entry.status != "archived") | (Entry.owner_id == current_user_id)
+                        (Entry.status != EntryStatus.ARCHIVED) | (Entry.owner_id == current_user_id)
                     )
                     count_query = count_query.where(
-                        (Entry.status != "archived") | (Entry.owner_id == current_user_id)
+                        (Entry.status != EntryStatus.ARCHIVED) | (Entry.owner_id == current_user_id)
                     )
                 elif is_admin:
                     pass
                 else:
-                    query = query.where(Entry.status != "archived")
-                    count_query = count_query.where(Entry.status != "archived")
+                    query = query.where(Entry.status != EntryStatus.ARCHIVED)
+                    count_query = count_query.where(Entry.status != EntryStatus.ARCHIVED)
 
             # === Phase 1: Resolve owner to user_id ===
             # owner_found tri-state: None (N/A or "me") | True (user exists) | False (user not found)
@@ -554,7 +555,7 @@ class EntryService:
                     raise NotFoundError(f"Entry not found: {slug}")
 
             # Archived access control: non-owner non-admin cannot update archived
-            if entry.status == "archived":
+            if entry.status == EntryStatus.ARCHIVED:
                 if not is_admin and entry.owner_id != current_user_id:
                     raise NotFoundError(f"Entry not found: {slug}")
 
@@ -565,8 +566,8 @@ class EntryService:
             # Handle expires_in (reactivate archived or update active expiry)
             if expires_in is not None:
                 delta = parse_expires_in(expires_in)
-                if entry.status == "archived":
-                    entry.status = "active"
+                if entry.status == EntryStatus.ARCHIVED:
+                    entry.status = EntryStatus.ACTIVE
                     entry.archived_at = None
                     if delta is not None:
                         entry.expires_at = datetime.now(timezone.utc) + delta
