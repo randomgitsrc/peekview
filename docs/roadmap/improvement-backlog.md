@@ -12,13 +12,13 @@
 |---|------|------|--------|------|
 | 1 | UI 重构验收必须包含视觉级验证（Playwright 截图） | 流程/质量 | 🔴 立即 | ✅ 已实践(T028) |
 | 2 | 冷打开链接体验打磨（加载速度/移动端/元信息一眼清） | 产品/体验 | 🔴 立即 | 🔄 T031 |
-| 3 | entry 读取路径埋点（谁在读、读频率、是否非创建者） | 产品/探针 | 🔴 立即 | 🔄 T032 |
-| 4 | `verify_share_token` 的 `compare_digest` 永真，误导维护者 | 安全意图噪音 | 🟡 中期 | 🔄 T033 |
-| 5 | `max_views` 语义模糊（"最多发 N 个" vs "最多看 N 次"） | 产品语义 | 🟡 中期 | 🔄 T033 |
+| 3 | entry 读取路径埋点（谁在读、读频率、是否非创建者） | 产品/探针 | 🔴 立即 | ✅ v0.4.0(T032) |
+| 4 | `verify_share_token` 的 `compare_digest` 永真，误导维护者 | 安全意图噪音 | 🟡 中期 | ✅ v0.4.0(T033) |
+| 5 | `max_views` 语义模糊（"最多发 N 个" vs "最多看 N 次"） | 产品语义 | 🟡 中期 | ✅ v0.4.0(T033) |
 | 6 | 发布通道统一到 CI（本地 publish 降级为验证） | 流程/CI | 🟡 中期 | 🔄 T035 |
 | 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | 待办 |
 | 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | 待办 |
-| 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | 待办 |
+| 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | ✅ v0.4.0(T033) |
 | 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔵 长期 | 待办 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
@@ -55,7 +55,7 @@
 
 ---
 
-### 🔴 3. entry 读取路径埋点
+### 🔴 3. entry 读取路径埋点 ✅
 
 **来源**：2026-06-29 定位评审（docs/reviews/review-position-02-20260629.md §6 探针层）
 
@@ -63,9 +63,11 @@
 
 **方案**：给 entry 的读取路径（API `GET /entries/{slug}` + MCP `getEntry`/`listEntries`）加最小探针——记录读取者身份（是否非创建者 / 是否不同 API key）、读取频率、读取方式（API vs MCP vs share）。数据用于驱动方向 1（多 Agent 总线）的优先级决策：半年零信号 → 总线降级；出现信号 → 按真实形状加强。
 
+**完成**：v0.4.0 T032 — `entry_reads` 表 + 1 分钟窗口聚合 + `read_stats` 字段 + MCP `X-PeekView-Source` header。
+
 ---
 
-### 🟡 4. `verify_share_token` 的 `compare_digest` 永真
+### 🟡 4. `verify_share_token` 的 `compare_digest` 永真 ✅
 
 **来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #1）
 
@@ -73,15 +75,19 @@
 
 **方案**：删除该比对，或加注释说明保留意图。
 
+**完成**：v0.4.0 T033 — 已删除 `compare_digest`，测试重写为验证语义而非特定函数调用。
+
 ---
 
-### 🟡 5. `max_views` 语义模糊
+### 🟡 5. `max_views` 语义模糊 ✅
 
 **来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.3 #2）
 
 **问题**：`verify_share_cookie` 不递增 `view_count`，只有 `verify_share_token` 递增。导致 `max_views` 实际语义是"最多发给 N 个人"（最多 N 个 token 被使用），但 UI 的 `views` 标签暗示"最多被看 N 次"。
 
 **方案**：在 P1 需求文档明确边界。若需求是"最多看 N 次"则 cookie 路径也递增 view_count；若是"最多发 N 个"则 UI 文案对齐。
+
+**完成**：v0.4.0 T033 — UI 文案改为 `Max uses` / `N/M uses`，语义统一为"最多验证 N 次 token"。
 
 ---
 
@@ -119,13 +125,15 @@
 
 ---
 
-### 🔵 9. share cookie 用 `entry_id` 命名可枚举
+### 🔵 9. share cookie 用 `entry_id` 命名可枚举 ✅
 
 **来源**：2026-06-29 专家评审（docs/reviews/review-peekview-expert-2026-06-29.md §1.4）
 
 **问题**：`peekview_share_{entry_id}` 中的 entry_id 是自增整数，外部可枚举 cookie 名推断系统 entry 总量和 ID 范围。低危但可改进。
 
 **方案**：改用 `peekview_share_{slug}`。注意 trade-off：slug 若支持 rename 则 cookie 会失效。需评估是否值得改。
+
+**完成**：v0.4.0 T033 — cookie 改名为 `peekview_share_{slug}`。
 
 ---
 
@@ -249,6 +257,10 @@
 | A8 | 登录/注册 Cap captcha 集成 | v0.1.49 |
 | A9 | health check 503 vs 200 决策复审 | 决策完成（保持 200） |
 | A10 | `revoke_all_for_entry` session 泄漏 | 656ca5a8 |
+| A11 | #3 entry 读取路径埋点 | v0.4.0(T032) |
+| A12 | #4 `compare_digest` 永真删除 | v0.4.0(T033) |
+| A13 | #5 `max_views` → `Max uses` 文案对齐 | v0.4.0(T033) |
+| A14 | #9 share cookie `entry_id` → `slug` | v0.4.0(T033) |
 
 ---
 

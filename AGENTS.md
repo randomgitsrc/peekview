@@ -12,19 +12,19 @@ Agent 写，人看，Agent 也能读。
 
 ```
 backend/peekview/
-├── main.py           # App factory, DI via app.state
+├── main.py           # App factory (create_app/get_app), DI via app.state
 ├── models.py         # SQLModel Entry/File/User/ApiKey + Pydantic schemas
 ├── config.py         # Pydantic Settings (PEEKVIEW_* env vars)
 ├── database.py       # SQLite init, WAL, FTS5, migrations
 ├── auth.py           # JWT + bcrypt + API key verification
 ├── storage.py        # Filesystem operations (atomic writes)
 ├── cli.py            # Click CLI (serve/create/get/list/delete/user/login/apikey/admin)
-├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config
-└── services/         # Business logic: entry_service, file_service, apikey_service, admin_service
+├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config, shares
+└── services/         # entry_service, file_service, apikey_service, admin_service, share_service, read_tracking_service, html_render_service
 
 frontend-v3/src/
 ├── router.ts         # 路由（不是 src/router/index.ts）
-├── views/            # EntryListView, EntryDetailView, ApiKeyListView
+├── views/            # LandingView, EntryListView, EntryDetailView, ApiKeyListView, NotFoundView
 └── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
 
 packages/mcp-server/src/
@@ -53,7 +53,7 @@ packages/mcp-server/src/
 
 ## 环境隔离机制（代码层面保障）
 
-- **`PEEKVIEW_DEBUG_MODE=1`**：`PeekConfig()` 无参调用且无 `PEEKVIEW_STORAGE__*` env 时，自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用（config.py:374）。`make debug-start` 额外显式设了 STORAGE env，走更直接路径
+- **`PEEKVIEW_DEBUG_MODE=1`**：`PeekConfig()` 无参调用且无 `PEEKVIEW_STORAGE__*` env 时，自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。`make debug-start` 额外显式设了 STORAGE env，走更直接路径
 - **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` 是 `autouse=True`，每个测试自动设 `PEEKVIEW_STORAGE__DATA_DIR`/`DB_PATH` 指向 tmp_path（不依赖 DEBUG_MODE）
 - **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
 - **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
@@ -64,7 +64,7 @@ packages/mcp-server/src/
 make dev                  # 创建/更新 backend/.venv（开发隔离，不影响 pipx 生产环境）
 make debug                # 构建+启动+E2E（完整调试流程）
 make debug-start          # 仅启动调试服务（自动用 .venv Python）
-make debug-stop           # 停止调试服务
+make debug-stop           # 停止调试服务 + 清理 /tmp/peekview-debug/（数据会丢失）
 
 cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv；pyproject 已设 -v --tb=short）
 cd backend && make lint   # 后端 lint (ruff check + format --check；CI 不跑，本地约定)
@@ -81,7 +81,7 @@ make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
 make publish-npm          # 发布 MCP Server 到 npm
 
 # Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
-NODE_PATH=$(npm root -g) npx tsx script.ts
+NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
 # Vision 分析（3 种方式，优先用 ①）
 # ① vision-helper subagent（推荐，最方便）：Task 工具，subagent_type: vision-helper，prompt 传截图路径
 # ② vision-analyzer skill：skill 工具加载后，按 SKILL.md 说明使用
@@ -106,7 +106,7 @@ NODE_PATH=$(npm root -g) npx tsx script.ts
 - **MCP 双模式**：`remote`（A→B→C，暴露 create_entry/get/list/delete）| `local`（A=B→C，暴露 publish_files/get/list/delete）
 - **双包发布**：peekview (PyPI) + @peekview/mcp-server (npm)，版本独立管理
 - **数据库**：SQLite WAL + FTS5，时间戳 naive UTC
-- **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key
+- **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key。另有短链接 `/{slug}/raw` → 302 重定向到完整 API 路径
 - **Playwright/Vision 验证**：Chrome CDP `localhost:18800`（Windows GPU），Playwright `connectOverCDP` 模式。脚本必须：`NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`、`hardTimer`。不要 `browser.close()`（会杀 Chrome）。移动端模拟用 CDP `Emulation.setDeviceMetricsOverride`。截图后用 vision-helper subagent（Task 工具，subagent_type: vision-helper）分析，或 `python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i <path> -p <prompt>` CLI
 - **`make debug-verify-isolation`**：依赖生产 :8080 在线——若生产服务未运行会超时。此时可用 `sqlite3 /tmp/peekview-debug/peekview.db "SELECT COUNT(*) FROM entries"` 手动验证隔离
 - **`make debug` E2E**：完整 E2E suite 在 CDP 模式下可能超时（>5min）。Agent 派发时优先用自定义 Playwright 脚本逐项验证，避免触发完整 suite 超时
