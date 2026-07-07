@@ -1,6 +1,7 @@
 <template>
   <div
     class="entry-list-row"
+    :class="{ 'entry-list-row--archived': entry.status === 'archived' }"
     role="button"
     tabindex="0"
     @click="$emit('navigate', entry)"
@@ -18,7 +19,8 @@
       </div>
     </div>
     <div class="entry-right">
-        <BaseBadge v-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
+        <BaseBadge v-if="entry.status === 'archived'" status="archived" />
+        <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
       <div v-if="isOwner" class="entry-actions" @click.stop>
         <button
           type="button"
@@ -184,6 +186,14 @@ const metaText = computed(() => {
 .action-btn:hover {
   background: var(--c-border);
   color: var(--c-text);
+}
+
+.entry-list-row--archived {
+  opacity: 0.6;
+}
+
+.entry-list-row--archived:hover {
+  opacity: 0.8;
 }
 
 @media (max-width: 640px) {

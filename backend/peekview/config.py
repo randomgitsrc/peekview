@@ -207,6 +207,17 @@ class PeekCleanup(BaseSettings):
         default=3600,
         description="Cleanup interval (0 = disabled)",
     )
+    archive_retention_days: int = Field(
+        default=90,
+        description="Days to retain archived entries before permanent deletion (0 = never delete)",
+    )
+
+    @field_validator("archive_retention_days")
+    @classmethod
+    def validate_non_negative(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("archive_retention_days must be >= 0")
+        return v
 
 
 class PeekLogging(BaseSettings):

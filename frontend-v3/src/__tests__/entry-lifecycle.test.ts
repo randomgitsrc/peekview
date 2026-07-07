@@ -10,7 +10,7 @@
  * API client contracts that the UI depends on.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { Entry } from '@/types'
 
 function makeEntry(overrides: Partial<Entry> = {}): Entry {
@@ -25,6 +25,7 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
     ownerId: 1,
     username: 'testuser',
     expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+    archivedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
@@ -45,8 +46,8 @@ describe('B11: Entry expiry edit — API contract', () => {
     const entry: Entry = makeEntry({
       status: 'archived',
       archivedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    } as Entry & { archivedAt: string | null })
-    expect((entry as Entry & { archivedAt: string | null }).archivedAt).toBeTruthy()
+    })
+    expect(entry.archivedAt).toBeTruthy()
   })
 
   it('TC-B11-03: updateEntry API method exists on client', async () => {
@@ -68,6 +69,7 @@ describe('B11: Entry expiry edit — API contract', () => {
         owner_id: 1,
         username: 'testuser',
         expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
+        archived_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -115,6 +117,7 @@ describe('B12: Archived entry — type contract', () => {
         owner_id: 1,
         username: 'testuser',
         expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+        archived_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -158,8 +161,8 @@ describe('B13: List archived visual distinction — type contract', () => {
     const mockGet = vi.fn().mockResolvedValue({
       data: {
         items: [
-          { id: 1, slug: 'active-1', summary: 'Active', tags: [], status: 'active', file_count: 0, is_public: true, owner_id: 1, username: 'u', expires_at: null, created_at: '', updated_at: '' },
-          { id: 2, slug: 'archived-1', summary: 'Archived', tags: [], status: 'archived', file_count: 0, is_public: true, owner_id: 1, username: 'u', expires_at: null, created_at: '', updated_at: '' },
+          { id: 1, slug: 'active-1', summary: 'Active', tags: [], status: 'active', file_count: 0, is_public: true, owner_id: 1, username: 'u', expires_at: null, archived_at: null, created_at: '', updated_at: '' },
+          { id: 2, slug: 'archived-1', summary: 'Archived', tags: [], status: 'archived', file_count: 0, is_public: true, owner_id: 1, username: 'u', expires_at: null, archived_at: '2026-06-01T00:00:00Z', created_at: '', updated_at: '' },
         ],
         total: 2,
         page: 1,

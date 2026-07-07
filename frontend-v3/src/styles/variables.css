@@ -52,6 +52,7 @@
   --c-badge-public-bg: rgba(126,231,135,.15);
   --c-badge-private-bg: rgba(255,123,114,.15);
   --c-badge-shared-bg: rgba(254,188,46,.15);
+  --c-badge-archived-bg: rgba(128,128,128,.15);
 
   --bg-primary: var(--c-bg);
   --bg-secondary: var(--c-surface);
@@ -107,6 +108,7 @@
   --c-badge-public-bg: rgba(26,127,55,.1);
   --c-badge-private-bg: rgba(207,34,46,.1);
   --c-badge-shared-bg: rgba(154,103,0,.1);
+  --c-badge-archived-bg: rgba(128,128,128,.1);
 
   --bg-primary: var(--c-bg);
   --bg-secondary: var(--c-surface);

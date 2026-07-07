@@ -326,6 +326,13 @@ class EntryService:
             if not entry.is_public and not is_admin and entry.owner_id != current_user_id:
                 raise NotFoundError(f"Entry not found: {slug}")
 
+            # Archived access control: non-owner non-admin cannot view archived
+            if entry.status == "archived":
+                if current_user_id is None and not is_admin:
+                    raise NotFoundError(f"Entry not found: {slug}")
+                if not is_admin and entry.owner_id != current_user_id:
+                    raise NotFoundError(f"Entry not found: {slug}")
+
             files = session.exec(
                 select(File).where(File.entry_id == entry.id)
             ).all()
@@ -363,13 +370,33 @@ class EntryService:
             query = select(Entry)
             count_query = select(func.count()).select_from(Entry)
 
-            # Status filter (default: show active + published, hide archived)
+            # Status filter (default: show active, hide archived; owner sees own archived)
             if status:
                 query = query.where(Entry.status == status)
                 count_query = count_query.where(Entry.status == status)
+                if status == "archived":
+                    if is_admin:
+                        pass
+                    elif current_user_id:
+                        query = query.where(Entry.owner_id == current_user_id)
+                        count_query = count_query.where(Entry.owner_id == current_user_id)
+                    else:
+                        return EntryListResponse(
+                            items=[], total=0, page=page, per_page=per_page,
+                        )
             else:
-                query = query.where(Entry.status != "archived")
-                count_query = count_query.where(Entry.status != "archived")
+                if current_user_id and not is_admin:
+                    query = query.where(
+                        (Entry.status != "archived") | (Entry.owner_id == current_user_id)
+                    )
+                    count_query = count_query.where(
+                        (Entry.status != "archived") | (Entry.owner_id == current_user_id)
+                    )
+                elif is_admin:
+                    pass
+                else:
+                    query = query.where(Entry.status != "archived")
+                    count_query = count_query.where(Entry.status != "archived")
 
             # === Phase 1: Resolve owner to user_id ===
             # owner_found tri-state: None (N/A or "me") | True (user exists) | False (user not found)
@@ -479,6 +506,7 @@ class EntryService:
                         owner_id=e.owner_id,
                         username=username,
                         expires_at=e.expires_at,
+                        archived_at=e.archived_at,
                         created_at=e.created_at,
                         updated_at=e.updated_at,
                     )
@@ -499,6 +527,7 @@ class EntryService:
         add_files: list[dict[str, Any]] | None = None,
         remove_file_ids: list[int] | None = None,
         add_dirs: list[dict[str, str]] | None = None,
+        expires_in: str | None = None,
         current_user_id: int | None = None,
         is_admin: bool = False,
         is_api_key_auth: bool = False,
@@ -524,9 +553,30 @@ class EntryService:
                 if not is_admin and entry.owner_id != current_user_id:
                     raise NotFoundError(f"Entry not found: {slug}")
 
+            # Archived access control: non-owner non-admin cannot update archived
+            if entry.status == "archived":
+                if not is_admin and entry.owner_id != current_user_id:
+                    raise NotFoundError(f"Entry not found: {slug}")
+
             entry_id = entry.id
 
             was_private = not entry.is_public
+
+            # Handle expires_in (reactivate archived or update active expiry)
+            if expires_in is not None:
+                delta = parse_expires_in(expires_in)
+                if entry.status == "archived":
+                    entry.status = "active"
+                    entry.archived_at = None
+                    if delta is not None:
+                        entry.expires_at = datetime.now(timezone.utc) + delta
+                    else:
+                        entry.expires_at = None
+                else:
+                    if delta is not None:
+                        entry.expires_at = datetime.now(timezone.utc) + delta
+                    else:
+                        entry.expires_at = None
 
             # Update fields
             if summary is not None:
@@ -891,6 +941,7 @@ class EntryService:
             owner_id=entry.owner_id,
             username=username,
             expires_at=entry.expires_at,
+            archived_at=entry.archived_at,
             created_at=entry.created_at,
             updated_at=entry.updated_at,
             read_stats=read_stats,

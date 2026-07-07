@@ -100,6 +100,7 @@ describe('entry store: loadEntries ownerFound storage', () => {
       ownerId: 1,
       username: 'alice',
       expiresAt: null,
+      archivedAt: null,
       createdAt: '2026-01-01T00:00:00Z',
     }
 

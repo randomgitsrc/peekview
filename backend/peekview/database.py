@@ -62,6 +62,11 @@ def _run_migrations(engine: Engine) -> None:
             conn.commit()
             logger.info("Migration: added owner_id column to entries")
 
+        if "archived_at" not in columns:
+            conn.execute(text("ALTER TABLE entries ADD COLUMN archived_at DATETIME DEFAULT NULL"))
+            conn.commit()
+            logger.info("Migration: added archived_at column to entries")
+
         # Check existing columns in users table
         user_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
 

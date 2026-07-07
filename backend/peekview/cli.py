@@ -2021,6 +2021,8 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
         if json_output:
             if isinstance(result, AdminCleanupResponse):
                 data = {
+                    "archived_count": result.archived_count,
+                    "archived_slugs": result.archived_slugs,
                     "deleted_count": result.deleted_count,
                     "deleted_slugs": result.deleted_slugs,
                     "freed_mb": result.freed_mb,
@@ -2030,11 +2032,16 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
             click.echo(json.dumps(data, indent=2))
         else:
             if isinstance(result, AdminCleanupResponse):
-                click.echo(
-                    f"Cleaned up {result.deleted_count} expired entry(ies), freed {result.freed_mb} MB"
-                )
-                if result.deleted_slugs:
-                    click.echo(f"  Deleted: {', '.join(result.deleted_slugs)}")
+                if result.archived_count:
+                    click.echo(f"  Archived: {result.archived_count} entry(ies)")
+                    if result.archived_slugs:
+                        click.echo(f"  Archived: {', '.join(result.archived_slugs)}")
+                if result.deleted_count:
+                    click.echo(f"  Deleted: {result.deleted_count} entry(ies), freed {result.freed_mb} MB")
+                    if result.deleted_slugs:
+                        click.echo(f"  Deleted: {', '.join(result.deleted_slugs)}")
+                if not result.archived_count and not result.deleted_count:
+                    click.echo("No expired entries found")
             else:
                 count = result.get("deleted_count", 0)
                 freed = result.get("freed_mb", 0)

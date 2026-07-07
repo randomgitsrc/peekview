@@ -56,12 +56,21 @@
             (API {{ currentEntry.readStats.byChannel.api ?? 0 }}, MCP {{ currentEntry.readStats.byChannel.mcp ?? 0 }})
           </template>
         </span>
-        <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires desktop-only">
-          Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
-        </span>
-        <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never desktop-only">
-          Never expires
-        </span>
+        <template v-if="entryStore.currentEntry?.status === 'archived'">
+          <span class="entry-archived-badge">
+            <BaseBadge status="archived" />
+          </span>
+        </template>
+        <template v-else>
+          <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires">
+            Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
+            <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
+          </span>
+          <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never">
+            Never expires
+            <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
+          </span>
+        </template>
 
         <div class="actions desktop-only" v-if="entryStore.currentEntry">
           <BaseButton
@@ -122,6 +131,12 @@
         <ThemeToggle />
       </div>
     </header>
+
+    <!-- Archived banner -->
+    <div v-if="entryStore.currentEntry?.status === 'archived'" class="archived-banner">
+      <span class="archived-banner-text">This entry has expired</span>
+      <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="reactivate-btn" @click="showExpiresInDialog = true">Reactivate</button>
+    </div>
 
     <!-- Content -->
     <div class="detail-content">
@@ -288,6 +303,14 @@
       @share-created="handleShareCreated"
     />
 
+    <!-- Expires In Dialog -->
+    <ExpiresInDialog
+      v-model:visible="showExpiresInDialog"
+      :entry-slug="slug"
+      :is-archived="currentEntry?.status === 'archived'"
+      @updated="handleExpiresInUpdated"
+    />
+
     <!-- Share Management Panel (owner, private entry only) -->
     <ShareManagementPanel
       v-if="showShareButton && currentEntry"
@@ -331,6 +354,7 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ShareDialog from '@/components/ShareDialog.vue'
 import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
+import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
 import type { TocHeading } from '@/types'
 
 const props = defineProps<{
@@ -350,6 +374,7 @@ const showTocDrawer = ref(false)
 
 const showShareDialog = ref(false)
 const shareErrorState = ref(false)
+const showExpiresInDialog = ref(false)
 
 const isShareAccess = computed(() => {
   if (!currentEntry.value) return false
@@ -360,6 +385,7 @@ const isShareAccess = computed(() => {
 const showShareButton = computed(() => {
   if (!currentEntry.value) return false
   if (!authStore.isOwner(currentEntry.value.ownerId)) return false
+  if (currentEntry.value.status === 'archived') return false
   return !currentEntry.value.isPublic
 })
 
@@ -440,6 +466,11 @@ function handleShareCreated() {
 }
 
 function handleShareRevoked() {
+}
+
+async function handleExpiresInUpdated() {
+  await entryStore.loadEntry(props.slug)
+  toast.show('Entry updated', 'success')
 }
 
 const visibleTags = computed(() => currentEntry.value?.tags ?? [])
@@ -730,6 +761,57 @@ watch(() => entryStore.currentEntry, (entry) => {
 .entry-expires {
   font-size: var(--font-xs);
   color: var(--c-text-secondary);
+}
+
+.entry-archived-badge {
+  display: inline-flex;
+}
+
+.expires-edit-btn {
+  background: none;
+  border: none;
+  color: var(--c-accent);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  padding: 0 0 0 var(--space-1);
+  text-decoration: underline;
+}
+
+.expires-edit-btn:hover {
+  color: var(--c-accent-secondary);
+}
+
+.archived-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-error-surface);
+  border-bottom: 1px solid var(--c-error);
+  width: 100%;
+}
+
+.archived-banner-text {
+  font-size: var(--font-sm);
+  color: var(--c-error);
+  font-weight: 600;
+}
+
+.reactivate-btn {
+  padding: var(--space-1) var(--space-3);
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.reactivate-btn:hover {
+  opacity: 0.9;
 }
 
 .entry-read-stats {

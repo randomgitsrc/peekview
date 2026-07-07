@@ -27,6 +27,34 @@ async def lifecycle_client(tmp_path, monkeypatch):
         yield ac
 
 
+@pytest.fixture
+async def cleanup_client(tmp_path, monkeypatch):
+    monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "30")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    db_path = tmp_path / "test.db"
+    app = create_app(data_dir=data_dir, db_path=db_path)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        ac.cookies.clear()
+        ac._app = app
+        yield ac
+
+
+@pytest.fixture
+async def retention_zero_client(tmp_path, monkeypatch):
+    monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "0")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    db_path = tmp_path / "test.db"
+    app = create_app(data_dir=data_dir, db_path=db_path)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        ac.cookies.clear()
+        ac._app = app
+        yield ac
+
+
 async def _register_user(client, username, password="testpass123"):
     resp = await client.post("/api/v1/auth/register", json={
         "username": username,
@@ -176,20 +204,19 @@ class TestCleanupArchivePhase:
 
 class TestCleanupDeletePhase:
     @pytest.mark.asyncio
-    async def test_cleanup_deletes_archived_entry_past_retention(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "30")
-        admin_token = await _register_user(lifecycle_client, "admin6")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_deletes_archived_entry_past_retention(self, cleanup_client):
+        admin_token = await _register_user(cleanup_client, "admin6")
+        engine = cleanup_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin6")
+            _make_admin(cleanup_client._app, session, "admin6")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                cleanup_client._app, session,
                 slug="old-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
             )
 
-        resp = await lifecycle_client.post(
+        resp = await cleanup_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -199,20 +226,19 @@ class TestCleanupDeletePhase:
         assert "old-archived" in data.get("deleted_slugs", [])
 
     @pytest.mark.asyncio
-    async def test_cleanup_deleted_entry_removed_from_db(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "30")
-        admin_token = await _register_user(lifecycle_client, "admin7")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_deleted_entry_removed_from_db(self, cleanup_client):
+        admin_token = await _register_user(cleanup_client, "admin7")
+        engine = cleanup_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin7")
+            _make_admin(cleanup_client._app, session, "admin7")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                cleanup_client._app, session,
                 slug="db-remove-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
             )
 
-        await lifecycle_client.post(
+        await cleanup_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -222,20 +248,19 @@ class TestCleanupDeletePhase:
             assert entry is None
 
     @pytest.mark.asyncio
-    async def test_cleanup_deleted_entry_freed_mb_positive(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "30")
-        admin_token = await _register_user(lifecycle_client, "admin8")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_deleted_entry_freed_mb_positive(self, cleanup_client):
+        admin_token = await _register_user(cleanup_client, "admin8")
+        engine = cleanup_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin8")
+            _make_admin(cleanup_client._app, session, "admin8")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                cleanup_client._app, session,
                 slug="freed-mb-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
             )
 
-        resp = await lifecycle_client.post(
+        resp = await cleanup_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -245,25 +270,24 @@ class TestCleanupDeletePhase:
         assert data["freed_mb"] >= 0
 
     @pytest.mark.asyncio
-    async def test_cleanup_both_phases_in_single_call(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "30")
-        admin_token = await _register_user(lifecycle_client, "admin9")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_both_phases_in_single_call(self, cleanup_client):
+        admin_token = await _register_user(cleanup_client, "admin9")
+        engine = cleanup_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin9")
+            _make_admin(cleanup_client._app, session, "admin9")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                cleanup_client._app, session,
                 slug="to-archive",
                 expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                cleanup_client._app, session,
                 slug="to-delete",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
             )
 
-        resp = await lifecycle_client.post(
+        resp = await cleanup_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -282,20 +306,19 @@ class TestCleanupDeletePhase:
 
 class TestCleanupRetentionZero:
     @pytest.mark.asyncio
-    async def test_cleanup_retention_zero_preserves_archived(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "0")
-        admin_token = await _register_user(lifecycle_client, "admin10")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_retention_zero_preserves_archived(self, retention_zero_client):
+        admin_token = await _register_user(retention_zero_client, "admin10")
+        engine = retention_zero_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin10")
+            _make_admin(retention_zero_client._app, session, "admin10")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                retention_zero_client._app, session,
                 slug="keep-forever",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=120),
             )
 
-        resp = await lifecycle_client.post(
+        resp = await retention_zero_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -308,20 +331,19 @@ class TestCleanupRetentionZero:
             assert entry is not None
 
     @pytest.mark.asyncio
-    async def test_cleanup_retention_zero_deleted_count_zero(self, lifecycle_client, monkeypatch):
-        monkeypatch.setenv("PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS", "0")
-        admin_token = await _register_user(lifecycle_client, "admin11")
-        engine = lifecycle_client._app.state.engine
+    async def test_cleanup_retention_zero_deleted_count_zero(self, retention_zero_client):
+        admin_token = await _register_user(retention_zero_client, "admin11")
+        engine = retention_zero_client._app.state.engine
         with Session(engine) as session:
-            _make_admin(lifecycle_client._app, session, "admin11")
+            _make_admin(retention_zero_client._app, session, "admin11")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                retention_zero_client._app, session,
                 slug="retention-zero-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=200),
             )
 
-        resp = await lifecycle_client.post(
+        resp = await retention_zero_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -348,7 +370,7 @@ class TestPatchExpiresIn:
                 owner_id=user.id,
             )
 
-        before = datetime.now(timezone.utc)
+        before = datetime.utcnow()
         resp = await lifecycle_client.patch(
             "/api/v1/entries/extend-expiry",
             json={"expires_in": "30d"},
@@ -356,7 +378,7 @@ class TestPatchExpiresIn:
         )
         assert resp.status_code == 200
         data = resp.json()
-        new_expires = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+        new_expires = datetime.fromisoformat(data["expires_at"].replace("Z", ""))
         expected = before + timedelta(days=30)
         assert abs((new_expires - expected).total_seconds()) < 10
 
@@ -517,14 +539,14 @@ class TestPatchReactivate:
                 owner_id=user.id,
             )
 
-        before = datetime.now(timezone.utc)
+        before = datetime.utcnow()
         resp = await lifecycle_client.patch(
             "/api/v1/entries/react-exp-set",
             json={"expires_in": "7d"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
-        new_expires = datetime.fromisoformat(resp.json()["expires_at"].replace("Z", "+00:00"))
+        new_expires = datetime.fromisoformat(resp.json()["expires_at"].replace("Z", ""))
         expected = before + timedelta(days=7)
         assert abs((new_expires - expected).total_seconds()) < 10
 

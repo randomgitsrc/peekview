@@ -46,13 +46,14 @@ class PeekAPI {
       slug: entry.slug,
       summary: entry.summary,
       tags: entry.tags,
-      status: entry.status as 'active' | 'expired',
+      status: entry.status as 'active' | 'archived',
       files: [],
       fileCount: entry.file_count,
       isPublic: entry.is_public ?? true,
       ownerId: entry.owner_id ?? null,
       username: entry.username,
       expiresAt: entry.expires_at,
+      archivedAt: entry.archived_at ?? null,
       createdAt: entry.created_at,
     }
   }
@@ -63,12 +64,13 @@ class PeekAPI {
       slug: entry.slug,
       summary: entry.summary,
       tags: entry.tags,
-      status: entry.status as 'active' | 'expired',
+      status: entry.status as 'active' | 'archived',
       files: entry.files.map(f => this.transformFile(f)),
       isPublic: entry.is_public ?? true,
       ownerId: entry.owner_id ?? null,
       username: entry.username,
       expiresAt: entry.expires_at,
+      archivedAt: entry.archived_at ?? null,
       createdAt: entry.created_at,
       updatedAt: entry.updated_at,
       shareContext: entry.share_context
@@ -133,6 +135,11 @@ class PeekAPI {
     const response = await this.client.patch<EntryResponse>(`/entries/${slug}`, {
       is_public: isPublic,
     })
+    return this.transformEntry(response.data)
+  }
+
+  async updateEntry(slug: string, data: { expires_in?: string; is_public?: boolean; summary?: string; tags?: string[] }): Promise<Entry> {
+    const response = await this.client.patch<EntryResponse>(`/entries/${slug}`, data)
     return this.transformEntry(response.data)
   }
 

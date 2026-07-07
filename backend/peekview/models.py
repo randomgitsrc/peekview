@@ -95,6 +95,7 @@ class EntryBase(SQLModel):
         sa_column=Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True),
     )
     expires_at: datetime | None = Field(default=None)
+    archived_at: datetime | None = Field(default=None)
 
 
 class UserBase(SQLModel):
@@ -416,6 +417,7 @@ class EntryUpdate(SQLModel):
     status: EntryStatus | None = Field(default=None)
     tags: list[str] | None = Field(default=None)
     is_public: bool | None = Field(default=None)
+    expires_in: str | None = Field(default=None, description="Duration like '7d', '1h', '0' for never. Reactivates archived entries.")
     add_files: list[FileCreate] | None = Field(default=None)
     remove_file_ids: list[int] | None = Field(default=None)
     add_dirs: list[DirCreate] | None = Field(default=None)
@@ -469,6 +471,7 @@ class EntryResponse(SQLModel):
     owner_id: int | None
     username: str | None
     expires_at: datetime | None
+    archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     share_context: EntryShareContext | None = None
@@ -489,6 +492,7 @@ class EntryListItem(SQLModel):
     owner_id: int | None
     username: str | None
     expires_at: datetime | None
+    archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -689,9 +693,11 @@ class AdminStatsResponse(SQLModel):
 
 
 class AdminCleanupResponse(SQLModel):
-    deleted_count: int
-    deleted_slugs: list[str]
-    freed_mb: float
+    archived_count: int = 0
+    archived_slugs: list[str] = Field(default_factory=list)
+    deleted_count: int = 0
+    deleted_slugs: list[str] = Field(default_factory=list)
+    freed_mb: float = 0.0
 
 
 class ResetPasswordRequest(SQLModel):

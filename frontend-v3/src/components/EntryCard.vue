@@ -1,5 +1,5 @@
 <template>
-  <div class="entry-card" :class="{ 'entry-card--own': isOwner }">
+  <div class="entry-card" :class="{ 'entry-card--own': isOwner, 'entry-card--archived': entry.status === 'archived' }">
     <div v-if="isOwner" class="card-actions" @click.stop>
       <button
         type="button"
@@ -33,7 +33,8 @@
         <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
       </div>
       <div v-if="isOwner" class="card-footer">
-        <BaseBadge :status="entry.isPublic ? 'public' : 'private'" />
+        <BaseBadge v-if="entry.status === 'archived'" status="archived" />
+        <BaseBadge v-else :status="entry.isPublic ? 'public' : 'private'" />
       </div>
     </div>
   </div>
@@ -200,5 +201,13 @@ const metaText = computed(() => {
   display: flex;
   align-items: center;
   margin-top: auto;
+}
+
+.entry-card--archived {
+  opacity: 0.6;
+}
+
+.entry-card--archived:hover {
+  opacity: 0.8;
 }
 </style>

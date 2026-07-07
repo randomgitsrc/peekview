@@ -56,6 +56,9 @@ class ShareService:
             if entry.is_public:
                 raise ValidationError("Public entries don't need share links")
 
+            if entry.status == "archived":
+                raise ValidationError("Cannot create share for archived entry")
+
             now = datetime.now(timezone.utc)
             if entry.expires_at:
                 entry_exp = entry.expires_at.replace(tzinfo=timezone.utc) if entry.expires_at.tzinfo is None else entry.expires_at

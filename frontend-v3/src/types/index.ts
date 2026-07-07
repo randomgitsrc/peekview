@@ -11,13 +11,14 @@ export interface Entry {
   slug: string
   summary: string
   tags: string[]
-  status: 'active' | 'expired'
+  status: 'active' | 'archived'
   files: File[]
   fileCount?: number
   isPublic: boolean
   ownerId: number | null
   username: string | null
   expiresAt: string | null
+  archivedAt: string | null
   createdAt: string
   updatedAt?: string
   shareContext?: {

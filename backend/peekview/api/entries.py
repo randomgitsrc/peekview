@@ -375,6 +375,7 @@ async def update_entry(
         status=data.status,
         tags=data.tags,
         is_public=data.is_public,
+        expires_in=data.expires_in,
         add_files=add_files,
         remove_file_ids=data.remove_file_ids,
         add_dirs=add_dirs,

@@ -318,15 +318,17 @@ class TestAdminCleanup:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["deleted_count"] == 3
-        assert len(data["deleted_slugs"]) == 3
-        assert data["freed_mb"] >= 0
+        assert data["archived_count"] == 3
+        assert len(data["archived_slugs"]) == 3
+        assert data["deleted_count"] == 0
 
         with Session(engine) as session:
             remaining = session.exec(
                 select(Entry).where(Entry.slug.like("expired-cleanup-%"))
             ).all()
-            assert len(remaining) == 0
+            assert len(remaining) == 3
+            for e in remaining:
+                assert e.status == "archived"
 
 
 # --- CLEANUP-2: No expired entries → idempotent zero --- #
@@ -346,6 +348,7 @@ class TestCleanupNoExpired:
         )
         assert resp.status_code == 200
         data = resp.json()
+        assert data["archived_count"] == 0
         assert data["deleted_count"] == 0
         assert data["deleted_slugs"] == []
         assert data["freed_mb"] == 0.0
@@ -376,14 +379,14 @@ class TestCleanupIdempotent:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert resp1.status_code == 200
-        assert resp1.json()["deleted_count"] == 2
+        assert resp1.json()["archived_count"] == 2
 
         resp2 = await admin_client.post(
             "/api/v1/admin/cleanup",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert resp2.status_code == 200
-        assert resp2.json()["deleted_count"] == 0
+        assert resp2.json()["archived_count"] == 0
 
 
 # --- CLEANUP-4: Non-admin rejected from cleanup (403) --- #
@@ -431,7 +434,7 @@ class TestCLIAdminCleanupLocal:
         runner = CliRunner()
         result = runner.invoke(cli, ["admin", "cleanup"])
         assert result.exit_code == 0
-        assert "Cleaned up" in result.output or "0 expired" in result.output.lower().replace("entry(ies)", "entries")
+        assert "No expired" in result.output or "Archived:" in result.output or result.output.strip() == ""
 
 
 # --- CLEANUP-7: CLI admin cleanup remote mode --- #
@@ -488,9 +491,9 @@ class TestCleanupPreservesActive:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["deleted_count"] == 1
-        assert "expired-remove" in data["deleted_slugs"]
-        assert "active-keep" not in data["deleted_slugs"]
+        assert data["archived_count"] == 1
+        assert "expired-remove" in data["archived_slugs"]
+        assert "active-keep" not in data["archived_slugs"]
 
         with Session(engine) as session:
             active = session.exec(

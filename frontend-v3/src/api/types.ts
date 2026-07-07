@@ -12,10 +12,11 @@ export interface EntryListItemResponse {
   owner_id: number | null
   username: string | null
   expires_at: string | null
+  archived_at: string | null
   created_at: string
   updated_at: string
 }
-
+ 
 // For get entry endpoint - full response with files
 export interface ReadStatsResponse {
   total_count: number
@@ -35,6 +36,7 @@ export interface EntryResponse {
   owner_id: number | null
   username: string | null
   expires_at: string | null
+  archived_at: string | null
   created_at: string
   updated_at: string
   share_context?: {

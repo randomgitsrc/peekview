@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from sqlalchemy import case, func
@@ -114,27 +114,44 @@ class AdminService:
 
     def cleanup_expired(self) -> AdminCleanupResponse:
         now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        retention_days = self.config.cleanup.archive_retention_days
 
         with Session(self.engine) as session:
-            expired_entries = session.exec(
+            expired = session.exec(
                 select(Entry).where(
                     Entry.expires_at != None,
                     Entry.expires_at <= now_naive,
+                    Entry.status == "active",
                 )
             ).all()
 
-            if not expired_entries:
-                return AdminCleanupResponse(
-                    deleted_count=0, deleted_slugs=[], freed_mb=0.0
-                )
+            archived_slugs = []
+            for e in expired:
+                e.status = "archived"
+                e.archived_at = now_naive
+                e.expires_at = None
+                session.add(e)
+                archived_slugs.append(e.slug)
+            session.commit()
 
+            deleted_slugs = []
+            total_freed = 0
             to_delete = []
-            for e in expired_entries:
-                size_bytes = self.storage.get_entry_size(e.id)
-                to_delete.append((e.slug, e.id, size_bytes))
 
-        deleted_slugs = []
-        total_freed = 0
+            if retention_days > 0:
+                cutoff = now_naive - timedelta(days=retention_days)
+                old_archived = session.exec(
+                    select(Entry).where(
+                        Entry.status == "archived",
+                        Entry.archived_at != None,
+                        Entry.archived_at <= cutoff,
+                    )
+                ).all()
+
+                for e in old_archived:
+                    size_bytes = self.storage.get_entry_size(e.id)
+                    to_delete.append((e.slug, e.id, size_bytes))
+
         entry_service = EntryService(
             engine=self.engine, storage=self.storage, config=self.config
         )
@@ -148,6 +165,8 @@ class AdminService:
                 pass
 
         return AdminCleanupResponse(
+            archived_count=len(archived_slugs),
+            archived_slugs=archived_slugs,
             deleted_count=len(deleted_slugs),
             deleted_slugs=deleted_slugs,
             freed_mb=round(total_freed / (1024 * 1024), 2),
