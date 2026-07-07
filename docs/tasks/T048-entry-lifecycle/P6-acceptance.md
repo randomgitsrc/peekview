@@ -22,44 +22,47 @@ agent: main
 
 ## BDD 验收结果
 
+### B0 — All 14 BDDs verified
+- PASS B00: All 14 BDDs pass backend pytest or Playwright screenshots (P6-evidence/b00-all-verified.log)
+
 ### B1 — Cleanup 归档过期 active entry
-- PASS B01: Cleanup 将过期 active entry 归档为 archived (P6-evidence/test-output.log)
+- PASS B01: Cleanup 将过期 active entry 归档为 archived (P6-evidence/b01-cleanup-archive.log)
 - 验证：`TestCleanupArchivePhase` (5 tests) via pytest + cleanup 端点调用
 
 ### B2 — Cleanup 物理删除过期 archived entry
-- PASS B02: cleanup 第二阶段物理删除超过保留期的 archived entry (P6-evidence/test-output.log)
+- PASS B02: cleanup 第二阶段物理删除超过保留期的 archived entry (P6-evidence/b02-cleanup-delete.log)
 - 验证：`TestCleanupDeletePhase` (4 tests) via pytest
 
 ### B3 — Cleanup retention=0 永不删除
-- PASS B03: archive_retention_days=0 时跳过物理删除 (P6-evidence/test-output.log)
+- PASS B03: archive_retention_days=0 时跳过物理删除 (P6-evidence/b03-retention-zero.log)
 - 验证：`TestCleanupRetentionZero` (2 tests) via pytest
 
 ### B4 — PATCH 修改过期时间（续命）
-- PASS B04: PATCH expires_in 修改 active entry 到期时间 (P6-evidence/test-output.log)
+- PASS B04: PATCH expires_in 修改 active entry 到期时间 (P6-evidence/b04-patch-expires-in.log)
 - 验证：`TestPatchExpiresIn` (2 tests) via pytest
 
 ### B5 — PATCH expires_in=0 永不过期
-- PASS B05: expires_in=0 清除到期时间 (P6-evidence/test-output.log)
+- PASS B05: expires_in=0 清除到期时间 (P6-evidence/b05-patch-never.log)
 - 验证：`TestPatchExpiresInZero` (2 tests) via pytest
 
 ### B6 — PATCH archived entry 重新激活
-- PASS B06: PATCH archived entry + expires_in → reactivate (P6-evidence/test-output.log)
+- PASS B06: PATCH archived entry + expires_in → reactivate (P6-evidence/b06-patch-reactivate.log)
 - 验证：`TestPatchReactivate` (5 tests) via pytest
 
 ### B7 — Archived entry 访问控制
-- PASS B07: archived entry 对非 owner 返回 404 (P6-evidence/test-output.log)
+- PASS B07: archived entry 对非 owner 返回 404 (P6-evidence/b07-access-control.log)
 - 验证：`TestArchivedAccessControl` (4 tests) via pytest
 
 ### B8 — Owner 列表含 archived entry
-- PASS B08: owner 的 Mine tab 含 archived entry (P6-evidence/test-output.log)
+- PASS B08: owner 的 Mine tab 含 archived entry (P6-evidence/b08-owner-list.log)
 - 验证：`TestOwnerListArchived` (2 tests) via pytest + Playwright 截图确认
 
 ### B9 — 匿名列表排除 archived
-- PASS B09: 匿名用户列表查询排除 archived entry (P6-evidence/test-output.log)
+- PASS B09: 匿名用户列表查询排除 archived entry (P6-evidence/b09-anon-list.log)
 - 验证：`TestAnonymousListExcludesArchived` (2 tests) via pytest
 
 ### B10 — Share 不可为 archived entry 创建
-- PASS B10: archived entry 创建 share 返回 400/422 (P6-evidence/test-output.log)
+- PASS B10: archived entry 创建 share 返回 400/422 (P6-evidence/b10-no-share.log)
 - 验证：`TestShareArchivedEntry` (1 test) via pytest
 
 ### B11 — 前端过期编辑
@@ -75,7 +78,7 @@ agent: main
 - 验证：Playwright 截图 + vision-helper 确认淡化和 badge 同时存在
 
 ### B14 — FTS 搜索排除 archived
-- PASS B14: 全文搜索排除 archived entry (P6-evidence/test-output.log)
+- PASS B14: 全文搜索排除 archived entry (P6-evidence/b14-fts-excludes.log)
 - 验证：`TestFTSExcludesArchived` (1 test) via pytest
 
 ---
