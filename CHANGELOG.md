@@ -7,9 +7,25 @@
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-07-07
+
+### 新增
+
+- **Entry 生命周期管理**（T048）：过期 entry 从直接物理删除改为两阶段生命周期（active→archived→物理删除），`POST /admin/cleanup` 第一阶段归档、第二阶段物理删除
+- **PATCH expires_in**（T048）：entry 续命/设永不过期，archived entry 传 `expires_in` 自动重新激活
+- **可配置归档保留期**（T048）：`PEEKVIEW_CLEANUP__ARCHIVE_RETENTION_DAYS`（默认 90 天，0=永不删除）
+- **前端过期编辑**（T048）：ExpiresInDialog 组件 + EntryDetailView 过期时间 Edit 按钮 + archived banner + Reactivate 按钮
+- **Archived entry 列表展示**（T048）：Mine tab 含 archived entry（灰色淡化 + "Archived" badge）
+- **AdminCleanupResponse 扩展**（T048）：新增 `archived_count`/`archived_slugs` 字段，向后兼容
+
 ### 变更
 
-- **Entry 生命周期管理**（T048 进行中）：过期 entry 从直接物理删除改为两阶段（active→archived→物理删除），支持续命/重新激活/可配置归档保留期
+- cleanup 行为从物理删除→归档（破坏性变更，已有 entry 不可恢复）
+- 前端 `Entry.status` 类型从 `'active' | 'expired'` 改为 `'active' | 'archived'`
+
+### 修复
+
+- list_entries owner 查询现在包含 archived entry（之前被静默过滤）
 
 ## [0.5.3] - 2026-07-05
 
