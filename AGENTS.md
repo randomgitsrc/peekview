@@ -6,9 +6,9 @@ Agent 写，人看，Agent 也能读。
 
 | 组件 | 路径 | 栈 |
 |------|------|----|
-| Backend | `backend/peekview/` | FastAPI + SQLite (WAL+FTS5) |
+| Backend | `backend/peekview/` | FastAPI + SQLite (WAL+FTS5), Python ≥3.10 |
 | Frontend | `frontend-v3/` | Vue 3 + Vite + TypeScript + Shiki |
-| MCP Server | `packages/mcp-server/` | Node.js/TS + Streamable HTTP |
+| MCP Server | `packages/mcp-server/` | Node.js ≥18/TS + Streamable HTTP |
 
 ```
 backend/peekview/
@@ -19,20 +19,27 @@ backend/peekview/
 ├── auth.py           # JWT + bcrypt + API key verification
 ├── storage.py        # Filesystem operations (atomic writes)
 ├── cli.py            # Click CLI (serve/create/get/list/delete/user/login/apikey/admin)
-├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config, shares
-└── services/         # entry_service, file_service, apikey_service, admin_service, share_service, read_tracking_service, html_render_service
+├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config, shares, rate_limit
+└── services/         # entry, file, apikey, admin, share, read_tracking, html_render
 
 frontend-v3/src/
 ├── router.ts         # 路由（不是 src/router/index.ts）
-├── views/            # LandingView, EntryListView, EntryDetailView, ApiKeyListView, NotFoundView
-└── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
+├── views/            # Landing, EntryList, EntryDetail, ApiKeyList, NotFound
+├── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
+├── stores/           # Pinia: auth, entry, share, theme
+├── composables/      # useShiki, useMermaid, useMarkdown, useToast, useViewMode, ...
+├── api/              # Axios HTTP client wrappers
+└── types/            # TypeScript interfaces
 
 packages/mcp-server/src/
 ├── server.ts         # MCP Server setup, Streamable HTTP transport
 ├── client.ts         # PeekView API client
-├── tools/            # create_entry, publish_files, get/list/delete_entry
-└── config/           # Env > file > default, merge logic
+├── tools/            # createEntry, publishFiles, get/list/deleteEntry
+├── config/           # file.ts, merge.ts, validators.ts (Env > file > default)
+└── cli/              # config.ts, service.ts (service install/verify)
 ```
+
+**版本源**：`VERSIONS.json` 是唯一版本源，`bump-version`/`bump-mcp-version` 通过 `scripts/sync_versions.py` 同步到所有文件。
 
 ## 铁律（违反必出事）
 
@@ -44,14 +51,14 @@ packages/mcp-server/src/
 6. **严禁** 直接用 sqlite3 操作生产数据库（`~/.peekview/peekview.db`）。如发现测试数据误入生产 DB，报告给用户决定清理方式，不自行 DELETE。如必须清理，用 `peekview delete <slug>` CLI 命令（走应用逻辑，清理 DB + 存储 + FTS），清理后验证 `PRAGMA integrity_check` + `foreign_key_check`
 7. **严禁** 用 CLI（`peekview create`）创建测试 entry——CLI 可能加载非 debug 配置导致误写生产 DB。测试 entry 只通过 debug backend HTTP API 创建：`curl -X POST http://127.0.0.1:8888/api/v1/entries ...`，创建后验证数据落在 debug DB
 8. 前端路由：`src/router.ts`（不是 `src/router/index.ts`）
-9. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。访问 entry 页面用 `http://127.0.0.1:8888/{slug}`（如 `/t022-test`），不要拼 `/entries/{slug}`。创建 entry 的 API 路径是 `/api/v1/entries`，但前端页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败，务必记住
-10. **CHANGELOG 及时记录**：任何产生用户可见改动的任务完成后（agate 流程的 P5 通过后，或非 agate 任务完成后），必须立刻将改动写入 `CHANGELOG.md` 的 `[Unreleased]` 区域（分类：新增/变更/修复/安全），不可延后到 bump 时补写。`bump-version` 时 `[Unreleased]` 内容归集到新版本号下。发布流程详见 `docs/process/release.md`
+9. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。访问 entry 页面用 `http://127.0.0.1:8888/{slug}`，不要拼 `/entries/{slug}`。创建 entry 的 API 路径是 `/api/v1/entries`，但前端页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败，务必记住
+10. **CHANGELOG 及时记录**：任何产生用户可见改动的任务完成后，必须立刻将改动写入 `CHANGELOG.md` 的 `[Unreleased]` 区域（分类：新增/变更/修复/安全），不可延后到 bump 时补写。`bump-version` 时 `[Unreleased]` 内容归集到新版本号下
 11. 改代码前先读周围上下文，理解代码风格和现有库选择
 12. 不加注释（除非被要求）
-13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && make lint`（ruff，本地约定，CI 不跑；⚠️ ruff 不在 venv 时 `make lint` 会因找不到 `ruff` 命令失败，用 `cd backend && python3 -m ruff check peekview/ tests/` 代替）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进任何 target / 默认 venv，非门禁
+13. 完成任务后必须跑 lint/typecheck：后端 `cd backend && python3 -m ruff check peekview/ tests/`（ruff 不在 venv，`make lint` 可能失败）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。后端 mypy strict 配置在 pyproject 但未进 venv，非门禁
 14. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。命令超时后检查实际执行状态（版本号？文件？commit？），不盲目重试或绕过
 
-## 环境隔离机制（代码层面保障）
+## 环境隔离机制
 
 - **`PEEKVIEW_DEBUG_MODE=1`**：`PeekConfig()` 无参调用且无 `PEEKVIEW_STORAGE__*` env 时，自动隔离到 `/tmp/peekview-debug/`，captcha 自动禁用。`make debug-start` 额外显式设了 STORAGE env，走更直接路径
 - **pytest 全局隔离**：`conftest.py` 的 `isolate_config_file` 是 `autouse=True`，每个测试自动设 `PEEKVIEW_STORAGE__DATA_DIR`/`DB_PATH` 指向 tmp_path（不依赖 DEBUG_MODE）
@@ -67,8 +74,8 @@ make debug-start          # 仅启动调试服务（自动用 .venv Python）
 make debug-stop           # 停止调试服务 + 清理 /tmp/peekview-debug/（数据会丢失）
 
 cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv；pyproject 已设 -v --tb=short）
-cd backend && make lint   # 后端 lint (ruff check + format --check；CI 不跑，本地约定)
-cd backend && make format # 后端自动修复 (ruff check --fix + format)
+cd backend && python3 -m ruff check peekview/ tests/  # 后端 lint（ruff 不在 venv，make lint 可能失败）
+cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/  # 后端自动修复
 
 make build-frontend          # 前端构建 + 复制 dist/* → backend/peekview/static/（关键：npm run build 只产出 frontend-v3/dist/，不复制；dev-server.sh 启动前检查 backend/peekview/static/index.html 存在，缺失直接退出）
 cd frontend-v3 && ./node_modules/.bin/vitest run   # 前端单测一次性运行（⚠️ npm run test = vitest 无参 = watch 模式，会挂住 agent）
@@ -105,11 +112,20 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 - **MCP 版本独立**：由 `bump-mcp-version` 管理，主线 `bump-version` 不会碰。doc-sync 脚本已移除了 MCP package.json 同步条目
 - **MCP 双模式**：`remote`（A→B→C，暴露 create_entry/get/list/delete）| `local`（A=B→C，暴露 publish_files/get/list/delete）
 - **双包发布**：peekview (PyPI) + @peekview/mcp-server (npm)，版本独立管理
-- **数据库**：SQLite WAL + FTS5，时间戳 naive UTC
+- **数据库**：SQLite WAL + FTS5，时间戳 timezone-aware UTC（`datetime.now(timezone.utc)`）
 - **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content 字段；二进制文件 content=null + file_url）。公开条目免认证，私有条目需 API key。另有短链接 `/{slug}/raw` → 302 重定向到完整 API 路径
 - **Playwright/Vision 验证**：Chrome CDP `localhost:18800`（Windows GPU），Playwright `connectOverCDP` 模式。脚本必须：`NODE_PATH=... npx tsx script.ts`、`try/finally { page.close() }`、`process.exit(0)`、`hardTimer`。不要 `browser.close()`（会杀 Chrome）。移动端模拟用 CDP `Emulation.setDeviceMetricsOverride`。截图后用 vision-helper subagent（Task 工具，subagent_type: vision-helper）分析，或 `python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i <path> -p <prompt>` CLI
 - **`make debug-verify-isolation`**：依赖生产 :8080 在线——若生产服务未运行会超时。此时可用 `sqlite3 /tmp/peekview-debug/peekview.db "SELECT COUNT(*) FROM entries"` 手动验证隔离
 - **`make debug` E2E**：完整 E2E suite 在 CDP 模式下可能超时（>5min）。Agent 派发时优先用自定义 Playwright 脚本逐项验证，避免触发完整 suite 超时
+
+## 测试注意事项
+
+- **后端**：pytest 用 venv Python（`.venv/bin/python -m pytest`），conftest autouse 隔离，`factories.py` 提供测试数据构建器
+- **前端单测**：vitest + jsdom 环境，排除 `e2e/` 目录。`npm run test` 是 watch 模式会挂住 agent，必须用 `vitest run`
+- **前端 E2E**：Playwright，spec 文件在 `frontend-v3/e2e/`。无 `npm run test:e2e` 脚本，用 `make debug-test` 或直接 `npx playwright test e2e/<spec>.ts`
+- **MCP 单测**：vitest + node 环境，`fileParallelism: false`（config 测试会 mutate process.env/HOME，串行避免竞态）。`npm test` = `npm run test:unit`
+- **MCP 集成/E2E**：需要 debug backend 在 `127.0.0.1:8888`，绝不能指向生产 `:8080`
+- **CI 门禁**：后端 pytest + 前端 `vue-tsc --noEmit` + 前端 `npm run build` + 文档版本一致性。ruff 不在 CI
 
 ## 安全要点
 
@@ -118,7 +134,7 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 - Entry 私有访问对非 owner 返回 404（非 403），防止 slug 枚举
 - Global API key 中间件跳过 auth 端点，数据端点受保护
 - FTS5 查询净化仅转义引号，复杂语法错误被 try/except 静默吞掉返回空结果
-- HTML render 路由：`sandbox="allow-scripts"`（无 `allow-same-origin`）使 iframe 在 opaque origin 运行，无法访问主页面 cookie/localStorage。初始 fetch 携带 cookie（private entry 可加载），但 iframe内 JS 无法读取凭据
+- HTML render 路由：`sandbox="allow-scripts allow-forms"`（无 `allow-same-origin`）使 iframe 在 opaque origin 运行，无法访问主页面 cookie/localStorage。初始 fetch 携带 cookie（private entry 可加载），但 iframe内 JS 无法读取凭据
 
 ## 发布注意事项
 
