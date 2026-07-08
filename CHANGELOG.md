@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-07-08
+
+### 新增
+
+- **移动端 Header 智能滚动**（T049）：header-tags 在手机端自动截断显示 "+N" 溢出指示器，向下滚动时隐藏 header 以释放内容空间，向上滚动时恢复，桌面端不受影响
+- **Diagram 源码自动清洗**（T049）：前端 diagramSanitize 管线（register 架构），两阶段清洗（确定性 + 启发式），支持 mermaid/plantuml/svg 源码自动修正
+- **统一错误 UI**（T049）：Mermaid/PlantUML/SVG 渲染失败的统一错误面板，含引擎名 + 可折叠详情 + 查看源码按钮
+- **可配置清洗开关**（T049）：`PEEKVIEW_DIAGRAM__SANITIZE_ENABLED` 环境变量 + `GET /api/v1/config/diagram` 端点 + CLI `peekview config set diagram.sanitize_enabled`
+
+### 变更
+
+- 后端 CLI bool key 输入校验加强：无效值报错退出（之前静默接受）
+
+### 修复
+
+- PlantUML 渲染失败不再自动切到 code mode，改用统一错误 UI
+
 ## [0.5.4] - 2026-07-07
 
 ### 新增

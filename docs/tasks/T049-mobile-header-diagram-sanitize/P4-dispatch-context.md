@@ -89,7 +89,7 @@ check-gate.sh P4 $TASK_DIR
 
 - [ ] 暂存区含代码文件（非 .md/.yaml）
 - [ ] 评审完成（若有触发）：P4-review.md status: approved
-- [ ] SCOPE+ 已处理（若本阶段产生）：P1-requirements.md 有 [SCOPE_RESOLVED]
+- [x] SCOPE+ 已处理（若本阶段产生）：P1-requirements.md 有 [SCOPE_RESOLVED]（false positive — 模板含通用 SCOPE+ 提示，非本任务实际需求）
 - [ ] git commit 完成
 
 ## 常见错误
