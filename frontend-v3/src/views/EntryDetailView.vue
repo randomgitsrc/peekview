@@ -672,13 +672,17 @@ function recomputeOverflow() {
 
 function checkScrollPosition() {
   if (window.innerWidth > 768) return
-  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  // Scroll container is .markdown-viewer (overflow:auto), not window
+  const scrollEl = document.querySelector('.entry-detail .markdown-viewer')
+  const scrollTop = scrollEl ? scrollEl.scrollTop : (window.scrollY || document.documentElement.scrollTop)
   if (scrollTop > 50) {
     headerHidden.value = true
   } else if (scrollTop <= 20) {
     headerHidden.value = false
   }
 }
+
+let scrollContainer: EventTarget | null = null
 
 function onScroll() {
   if (window.innerWidth > 768) return
@@ -736,13 +740,15 @@ onMounted(async () => {
   await nextTick()
   recomputeOverflow()
   checkScrollPosition()
-  window.addEventListener('scroll', onScroll, { passive: true })
+  // Attach scroll listener to .markdown-viewer (not window — inner scroll container)
+  scrollContainer = document.querySelector('.entry-detail .markdown-viewer') || window
+  scrollContainer?.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', recomputeOverflow)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleZenKeydown)
-  window.removeEventListener('scroll', onScroll)
+  if (scrollContainer) scrollContainer.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', recomputeOverflow)
   if (scrollRafId) cancelAnimationFrame(scrollRafId)
 })
@@ -751,7 +757,7 @@ watch(() => props.slug, (newSlug) => {
   entryStore.loadEntry(newSlug)
 })
 
-watch(() => entryStore.currentEntry, (entry) => {
+watch(() => entryStore.currentEntry, async (entry) => {
   document.querySelectorAll('link[data-peekview-raw]').forEach(el => el.remove())
   if (entry) {
     const link = document.createElement('link')
@@ -761,11 +767,36 @@ watch(() => entryStore.currentEntry, (entry) => {
     link.setAttribute('data-peekview-raw', '1')
     document.head.appendChild(link)
   }
+  await nextTick()
+  recomputeOverflow()
 }, { immediate: true })
 </script>
 
 <style scoped>
 @import '@/styles/layout.css';
+
+/* Mobile header scroll shrink — inlined from layout.css (scoped fix) */
+@media (max-width: 768px) {
+  .detail-header .header-tags {
+    max-height: 2.5em;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    opacity: 1;
+  }
+
+  .detail-header.header-tags-hidden .header-tags {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-header .header-tags {
+    transition: none;
+  }
+}
 
 .header-right {
   display: flex;

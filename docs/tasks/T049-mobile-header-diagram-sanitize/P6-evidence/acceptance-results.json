@@ -1,0 +1,79 @@
+[
+  {
+    "bdd": "A-BDD-1",
+    "status": "PASS",
+    "detail": "height=40.0px, overflow=\"+8\"",
+    "screenshot": "a01-mobile-tags-truncated.png"
+  },
+  {
+    "bdd": "A-BDD-2",
+    "status": "PASS",
+    "detail": "overflow indicator hidden",
+    "screenshot": "a02-single-tag-no-overflow.png"
+  },
+  {
+    "bdd": "A-BDD-3",
+    "status": "PASS",
+    "detail": "header tags hidden after scroll down",
+    "screenshot": "a03-scroll-down-header-hidden.png"
+  },
+  {
+    "bdd": "A-BDD-4",
+    "status": "PASS",
+    "detail": "header tags restored after scroll up",
+    "screenshot": "a04-scroll-up-header-restored.png"
+  },
+  {
+    "bdd": "A-BDD-5",
+    "status": "PASS",
+    "detail": "desktop: header tags remain visible after scroll",
+    "screenshot": "a05-desktop-no-scroll-effect.png"
+  },
+  {
+    "bdd": "A-BDD-6",
+    "status": "PASS",
+    "detail": "body tags not truncated (entry has no body tags to display)",
+    "screenshot": "a06-body-tags-unaffected.png"
+  },
+  {
+    "bdd": "C-BDD-1",
+    "status": "PASS",
+    "detail": "dmermaid count=0, error UI visible",
+    "screenshot": "c01-mermaid-error-no-svg-residue.png"
+  },
+  {
+    "bdd": "C-BDD-2",
+    "status": "PASS",
+    "detail": "suppressErrors confirmed: no error SVG in DOM (dmermaid count=0)"
+  },
+  {
+    "bdd": "C-BDD-3+5",
+    "status": "PASS",
+    "detail": "engine name visible, details collapsed: \"Failed to render MERMAID▼查看源码Error: Parse error on line 2:\ng\"",
+    "screenshot": "c03-error-ui-collapsed.png"
+  },
+  {
+    "bdd": "C-BDD-4",
+    "status": "PASS",
+    "detail": "view source switches to code mode",
+    "screenshot": "c04-view-source-code-mode.png"
+  },
+  {
+    "bdd": "C-BDD-6",
+    "status": "PASS",
+    "detail": "details expanded, length=200 chars",
+    "screenshot": "c06-error-details-expanded.png"
+  },
+  {
+    "bdd": "C-BDD-7",
+    "status": "PASS",
+    "detail": "dmermaid count=0 (after export attempt)",
+    "screenshot": "c07-export-error-clean.png"
+  },
+  {
+    "bdd": "C-BDD-8",
+    "status": "PASS",
+    "detail": "unified diagram block: header=\"PLANTUML\", viewer=true, fullscreen=true, menu=true",
+    "screenshot": "c08-plantuml-unified-ui.png"
+  }
+]
