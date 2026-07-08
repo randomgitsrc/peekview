@@ -198,7 +198,7 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 **阶段链 P0-P8（默认全走，裁剪须有理由）**：
 - **P0** 主 Agent 亲自写 `P0-brief.md`：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向
 - **P1** 需求基线：质疑需求、识别隐含依赖、BDD 验收条件（Given/When/Then）
-- **P2** 方案设计：必须声明 `packages:` `domains:` `ui_affected:` `gate_commands:`（**方案明确才可跳 P2，不是方案不明确才做**）
+- **P2** 方案设计：**不可裁剪**，必经阶段。`design_trivial`/`follows_existing_pattern` 可简化（1 个候选方案），不可省略。默认 ≥2 候选方案
 - **P3** TDD 测试：**默认保留**，仅纯文档/配置或 ≤3 行且有现成覆盖时才跳
 - **P4** 代码实现
 - **P5** 技术验证：pytest 全绿 + 测试环境隔离正常
