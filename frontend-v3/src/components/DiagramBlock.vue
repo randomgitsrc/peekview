@@ -4,6 +4,8 @@ import MermaidRenderer from "@/components/renderers/MermaidRenderer.vue"
 import PlantUmlRenderer from "@/components/renderers/PlantUmlRenderer.vue"
 import SvgRenderer from "@/components/renderers/SvgRenderer.vue"
 import type { DiagramBlockData } from "@/types"
+import { sanitize, sanitizeWithRetry } from "@/utils/diagramSanitize"
+import { api } from "@/api/client"
 
 const props = defineProps<{
   block: DiagramBlockData
@@ -12,11 +14,16 @@ const props = defineProps<{
 
 const isCodeMode = ref(false)
 const isMenuOpen = ref(false)
-const hasError = ref(false) // Spec #66
-const copyButtonText = ref("⧉ Copy Code") // Spec #59-60
+const hasError = ref(false)
+const copyButtonText = ref("⧉ Copy Code")
 const copyTimeout = ref<number>()
 const rendererRef = ref()
 const dropdownRef = ref<HTMLElement>()
+const errorMessage = ref<string>("")
+const errorDetailsOpen = ref(false)
+const sanitizeEnabled = ref(true)
+const sanitizedCode = ref("")
+const retrying = ref(false)
 
 const toggleText = computed(() => {
   return isCodeMode.value ? "Code" : "Diagram"
@@ -95,6 +102,13 @@ onMounted(() => {
   if (props.block.lang !== "plantuml") {
     document.addEventListener("click", handleClickOutside)
   }
+  api.getDiagramConfig().then(config => {
+    sanitizeEnabled.value = config.sanitize_enabled
+  }).catch(() => {
+    console.warn('[diagram] config fetch failed, default to sanitize enabled')
+    sanitizeEnabled.value = true
+  })
+  applySanitize()
 })
 
 onUnmounted(() => {
@@ -104,15 +118,41 @@ onUnmounted(() => {
   if (copyTimeout.value) clearTimeout(copyTimeout.value)
 })
 
-// Error handling (spec §5.12 #66)
-function onRenderError() {
-  if (props.block.lang === "plantuml") {
-    // PlantUML: switch to code mode
-    isCodeMode.value = true
-  } else {
-    // Mermaid/SVG: show error div
-    hasError.value = true
+function applySanitize() {
+  if (!sanitizeEnabled.value) {
+    sanitizedCode.value = props.block.code
+    return
   }
+  sanitizedCode.value = sanitize(props.block.code, props.block.lang)
+}
+
+const truncatedError = computed(() => {
+  const msg = errorMessage.value || ''
+  return msg.substring(0, 200)
+})
+
+function toggleErrorDetails() {
+  errorDetailsOpen.value = !errorDetailsOpen.value
+}
+
+function switchToCodeMode() {
+  isCodeMode.value = true
+}
+
+// Error handling
+function onRenderError(err: unknown) {
+  errorMessage.value = String(err ?? '')
+  if (sanitizeEnabled.value && !retrying.value) {
+    retrying.value = true
+    const result = sanitizeWithRetry(props.block.code, props.block.lang)
+    if (result.code !== sanitizedCode.value) {
+      sanitizedCode.value = result.code
+      retrying.value = false
+      return
+    }
+  }
+  retrying.value = false
+  hasError.value = true
 }
 
 defineExpose({
@@ -148,21 +188,21 @@ defineExpose({
       <MermaidRenderer
         v-if="block.lang === 'mermaid'"
         ref="rendererRef"
-        :code="block.code"
+        :code="sanitizedCode || block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
       <PlantUmlRenderer
         v-else-if="block.lang === 'plantuml'"
         ref="rendererRef"
-        :code="block.code"
+        :code="sanitizedCode || block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
       <SvgRenderer
         v-else-if="block.lang === 'svg'"
         ref="rendererRef"
-        :code="block.code"
+        :code="sanitizedCode || block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
@@ -172,8 +212,24 @@ defineExpose({
     <div class="diagram-code" v-show="isCodeMode">
       <div v-html="block.codeViewHtml"></div>
     </div>
-    <div v-if="hasError && block.lang !== 'plantuml'" class="diagram-error">
-      Failed to render {{ block.lang === 'svg' ? 'SVG' : 'diagram' }}
+    <div v-if="hasError" class="diagram-error" role="alert">
+      <div class="diagram-error-header">
+        <span class="diagram-error-title">Failed to render {{ block.lang === 'svg' ? 'SVG' : block.lang.toUpperCase() }}</span>
+        <button
+          class="diagram-error-toggle"
+          @click="toggleErrorDetails"
+          :aria-expanded="errorDetailsOpen"
+          :aria-controls="`diagram-error-details-${block.index}`"
+        >
+          {{ errorDetailsOpen ? '▲' : '▼' }}
+        </button>
+        <button class="diagram-error-source-btn" @click="switchToCodeMode">查看源码</button>
+      </div>
+      <div
+        v-show="errorDetailsOpen"
+        :id="`diagram-error-details-${block.index}`"
+        class="diagram-error-details"
+      >{{ truncatedError }}</div>
     </div>
   </div>
 </template>
@@ -425,18 +481,68 @@ defineExpose({
 
 /* Error state (spec #66) */
 .diagram-block .diagram-error {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background: #ffeaea;
   border: 1px solid #ff6b6b;
   border-radius: 6px;
   color: #c92a2a;
-  text-align: center;
+  margin: 0.5rem 0;
 }
 
 [data-theme='dark'] .diagram-block .diagram-error {
   background: #3d1f1f;
   border-color: #ff6b6b;
   color: #ff8787;
+}
+
+.diagram-block .diagram-error-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.diagram-block .diagram-error-title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+
+.diagram-block .diagram-error-toggle {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 11px;
+  color: inherit;
+}
+
+.diagram-block .diagram-error-source-btn {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.diagram-block .diagram-error-details {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+[data-theme='dark'] .diagram-block .diagram-error-details {
+  background: rgba(255,255,255,0.05);
 }
 
 /* Mobile responsive (spec #71-74) */

@@ -16,6 +16,9 @@
   background: var(--c-surface);
   border-bottom: 1px solid var(--c-border);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .detail-header .detail-logo {
@@ -187,4 +190,27 @@
 .zen-mode .toc-sidebar,
 .zen-mode .mobile-actions {
   display: none;
+}
+
+/* Mobile header scroll shrink */
+@media (max-width: 768px) {
+  .detail-header .header-tags {
+    max-height: 2.5em;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    opacity: 1;
+  }
+
+  .detail-header.header-tags-hidden .header-tags {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-header .header-tags {
+    transition: none;
+  }
 }

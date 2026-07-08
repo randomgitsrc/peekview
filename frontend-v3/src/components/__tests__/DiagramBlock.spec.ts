@@ -278,27 +278,22 @@ describe("DiagramBlock error handling", () => {
     expect(wrapper.find(".diagram-error").text()).toContain("Failed to render SVG")
   })
 
-  it("plantuml: render-error switches to code mode", async () => {
+  it("plantuml: render-error shows unified error UI", async () => {
     const wrapper = mount(DiagramBlock, {
       props: { block: makeBlock("plantuml"), theme: "dark" },
     })
 
-    // Get initial state - diagram-viewer should be visible (no style display:none)
-    const viewer = wrapper.find(".diagram-viewer")
-    const code = wrapper.find(".diagram-code")
-
-    // Emit render-error from renderer
     const renderer = wrapper.findComponent({ name: "PlantUmlRenderer" })
     await renderer.vm.$emit("renderError")
     await wrapper.vm.$nextTick()
 
-    // After error: viewer hidden, code shown
-    // v-show toggles display, check the actual style attribute
+    // After error: viewer hidden
+    const viewer = wrapper.find(".diagram-viewer")
     expect((viewer.element as HTMLElement).style.display).toBe("none")
-    expect((code.element as HTMLElement).style.display).toBe("")
 
-    // Error div should NOT appear for plantuml
-    expect(wrapper.find(".diagram-error").exists()).toBe(false)
+    // Unified error UI should appear
+    expect(wrapper.find(".diagram-error").exists()).toBe(true)
+    expect(wrapper.find(".diagram-error").text()).toContain("Failed to render")
   })
 })
 

@@ -57,6 +57,21 @@ class PublicLimitsConfig(BaseModel):
     max_summary_length: int
 
 
+class PublicDiagramConfig(BaseModel):
+    """Public diagram config — safe to expose (no secrets)."""
+
+    sanitize_enabled: bool
+
+
+@router.get("/diagram", response_model=PublicDiagramConfig)
+async def get_diagram_config(request: Request) -> PublicDiagramConfig:
+    """Return public diagram config for frontend."""
+    config = request.app.state.config
+    return PublicDiagramConfig(
+        sanitize_enabled=config.diagram.sanitize_enabled,
+    )
+
+
 @router.get("/limits", response_model=PublicLimitsConfig)
 async def get_limits_config(request: Request) -> PublicLimitsConfig:
     """Return public limits configuration for frontend/MCP consumption.

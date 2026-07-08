@@ -12,7 +12,8 @@ export function useMermaid() {
       theme: theme === 'dark' ? 'dark' : 'default',
       securityLevel: 'strict',
       fontFamily: 'inherit',
-    })
+      suppressErrors: true,
+    } as any)
 
     isInitialized.value = true
   }

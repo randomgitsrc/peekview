@@ -2,15 +2,15 @@
   <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Header -->
-    <header class="detail-header">
+    <header class="detail-header" :class="{ 'header-tags-hidden': headerHidden }">
       <router-link to="/" class="detail-logo" title="Back to home">
         <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </router-link>
       <div class="title-group">
         <h1 class="title">{{ entryTitle }}</h1>
-        <div v-if="currentEntry?.tags?.length" class="header-tags">
+        <div v-if="currentEntry?.tags?.length" class="header-tags" ref="headerTagsRef" :aria-hidden="headerHidden ? 'true' : undefined">
           <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
-          <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
+          <span v-if="remainingTagCount > 0" class="tag-overflow" :aria-label="`还有 ${remainingTagCount} 个标签被隐藏`">+{{ remainingTagCount }}</span>
         </div>
       </div>
       <div class="header-right">
@@ -327,7 +327,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
@@ -473,9 +473,25 @@ async function handleExpiresInUpdated() {
   toast.show('Entry updated', 'success')
 }
 
-const visibleTags = computed(() => currentEntry.value?.tags ?? [])
+const headerTagsRef = ref<HTMLElement>()
+const visibleTagCount = ref(0)
+const headerHidden = ref(false)
+let scrollRafId = 0
 
-const remainingTagCount = computed(() => 0)
+const visibleTags = computed(() => {
+  const tags = currentEntry.value?.tags ?? []
+  const count = visibleTagCount.value
+  if (count > 0 && count < tags.length) {
+    return tags.slice(0, count)
+  }
+  return tags
+})
+
+const remainingTagCount = computed(() => {
+  const tags = currentEntry.value?.tags ?? []
+  const visible = visibleTags.value.length
+  return Math.max(0, tags.length - visible)
+})
 
 const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
@@ -632,6 +648,47 @@ async function downloadPack() {
   }
 }
 
+function recomputeOverflow() {
+  const container = headerTagsRef.value
+  if (!container) return
+  const tags = currentEntry.value?.tags ?? []
+  if (tags.length === 0) {
+    visibleTagCount.value = 0
+    return
+  }
+  const containerWidth = container.clientWidth
+  let accumulatedWidth = 0
+  let visible = 0
+  const children = Array.from(container.children) as HTMLElement[]
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    if (child.classList.contains('tag-overflow')) break
+    accumulatedWidth += child.offsetWidth + 4
+    if (accumulatedWidth > containerWidth) break
+    visible++
+  }
+  visibleTagCount.value = visible
+}
+
+function checkScrollPosition() {
+  if (window.innerWidth > 768) return
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  if (scrollTop > 50) {
+    headerHidden.value = true
+  } else if (scrollTop <= 20) {
+    headerHidden.value = false
+  }
+}
+
+function onScroll() {
+  if (window.innerWidth > 768) return
+  if (scrollRafId) return
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = 0
+    checkScrollPosition()
+  })
+}
+
 function extractHeadings(content: string): TocHeading[] {
   const headings: TocHeading[] = []
   const lines = content.split('\n')
@@ -676,10 +733,18 @@ onMounted(async () => {
     router.replace({ path: route.path, query: {} })
   }
   document.addEventListener('keydown', handleZenKeydown)
+  await nextTick()
+  recomputeOverflow()
+  checkScrollPosition()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', recomputeOverflow)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleZenKeydown)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', recomputeOverflow)
+  if (scrollRafId) cancelAnimationFrame(scrollRafId)
 })
 
 watch(() => props.slug, (newSlug) => {

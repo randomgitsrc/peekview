@@ -88,6 +88,7 @@ async function renderDiagram() {
     svgContent.value = svg
   } catch (err) {
     console.error('Mermaid render failed:', err)
+    document.getElementById(`dmermaid-${renderId}`)?.remove()
     emit('renderError', err)
   }
 }
@@ -105,7 +106,15 @@ function closeFullscreen() {
 }
 
 async function exportPng(): Promise<Blob> {
-  const { svg: svgString } = await mermaid.render(`export-${crypto.randomUUID()}`, props.code)
+  const exportId = `export-${crypto.randomUUID()}`
+  let svgString: string | undefined
+  try {
+    const result = await mermaid.render(exportId, props.code)
+    svgString = result.svg
+  } catch (err) {
+    document.getElementById(`dmermaid-${exportId}`)?.remove()
+    throw err
+  }
   if (!svgString) {
     throw new Error('No SVG content available')
   }

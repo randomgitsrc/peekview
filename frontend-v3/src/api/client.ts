@@ -296,6 +296,11 @@ class PeekAPI {
     const response = await this.client.post(`/entries/${slug}/shares/revoke`, data)
     return response.data
   }
+
+  async getDiagramConfig(): Promise<import('./types').DiagramConfigResponse> {
+    const response = await this.client.get('/config/diagram')
+    return response.data
+  }
 }
 
 export const api = new PeekAPI()

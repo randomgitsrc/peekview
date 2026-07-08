@@ -42,7 +42,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  renderError: []
+  renderError: [err: unknown]
 }>()
 
 const containerRef = ref<HTMLElement>()
@@ -78,7 +78,7 @@ async function renderDiagram() {
   } catch (err) {
     console.error('PlantUML render failed:', err)
     if (cancelled.value) return
-    emit('renderError')
+    emit('renderError', err)
   }
 }
 

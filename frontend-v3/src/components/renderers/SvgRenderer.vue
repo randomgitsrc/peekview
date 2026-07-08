@@ -42,7 +42,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  renderError: []
+  renderError: [err: unknown]
 }>()
 
 const containerRef = ref<HTMLElement>()
@@ -76,7 +76,7 @@ function doSanitize() {
   })
   if (!result || result.trim() === '') {
     hasError.value = true
-    emit('renderError')
+    emit('renderError', new Error('DOMPurify returned empty SVG'))
   } else {
     sanitized.value = result
     hasError.value = false

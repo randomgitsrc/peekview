@@ -284,15 +284,17 @@ Then emit('renderError') 被触发
 |------|------|----------|
 | — | 无未决待确认项 | 需求方向明确，无需暂停等待 |
 
+`[SCOPE_RESOLVED]`: false-positive — P4-dispatch-context.md 引用的 phase card 模板包含通用 SCOPE+ 提示，非本任务实际 SCOPE+ 需求
+
 ---
 
 ## 裁剪说明
 
 裁剪遵循 P0-brief 的声明并独立判断如下：
 risk_level: medium
-phases: [P1, P2, P3, P4, P5, P6, P8]
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
+跳过风险: P7 不可裁剪 — 实际改动 16 个源文件，需一致性检查
 coupling_checklist: [api-schema: not-applicable, data-model: not-applicable, cross-component-state: checked]
-跳过风险: P7 裁剪仅跳过跨文件一致性检查，各端改动独立无共享状态，遗漏影响低
 
 | 阶段 | 保留/裁剪 | 理由 |
 |------|-----------|------|
@@ -302,7 +304,7 @@ coupling_checklist: [api-schema: not-applicable, data-model: not-applicable, cro
 | P4 | ✅ 保留 | 代码实现 |
 | P5 | ✅ 保留 | pytest/vitest/typecheck 全绿 |
 | P6 | ✅ 保留 | 移动端 header 动画需 Playwright CDP + Emulation 截图验证；错误 UI 需 vision 验证 |
-| P7 | 🔲 裁剪 | 改动涉及 backend/frontend/CLI 三端，但各端改动独立无交叉共享状态；一致性风险低 |
+| P7 | ✅ 保留 | 实际改动 16 个源文件（跨前后端+CLI），需通过 P7 一致性检查验证实现与设计一致 |
 | P8 | ✅ 保留 | CHANGELOG 记录 + bump（视是否有版本号更改需求） |
 
 ---

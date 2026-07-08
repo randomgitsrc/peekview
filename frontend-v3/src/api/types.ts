@@ -104,6 +104,11 @@ export interface ApiKeyListApiResponse {
   items: ApiKeyResponse[]
 }
 
+// Diagram config response types
+export interface DiagramConfigResponse {
+  sanitize_enabled: boolean
+}
+
 // Share API response types
 export interface ShareResponse {
   id: number

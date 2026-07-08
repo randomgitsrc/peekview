@@ -343,6 +343,20 @@ DEBUG_DATA_DIR = Path("/tmp/peekview-debug/data")
 DEBUG_DB_PATH = Path("/tmp/peekview-debug/peekview.db")
 
 
+class PeekDiagram(BaseSettings):
+    """Diagram rendering configuration."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="PEEKVIEW_DIAGRAM__",
+        extra="ignore",
+    )
+
+    sanitize_enabled: bool = Field(
+        default=True,
+        description="Enable diagram source sanitization before rendering",
+    )
+
+
 class PeekConfig(BaseSettings):
     """Main configuration class.
 
@@ -372,6 +386,7 @@ class PeekConfig(BaseSettings):
     logging: PeekLogging = Field(default_factory=PeekLogging)
     remote: PeekRemote = Field(default_factory=PeekRemote)
     auth: PeekAuth = Field(default_factory=PeekAuth)
+    diagram: PeekDiagram = Field(default_factory=PeekDiagram)
     debug_mode: bool = Field(
         default=False,
         description="Debug mode: isolates storage to /tmp/peekview-debug/ to protect production data",

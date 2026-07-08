@@ -551,6 +551,8 @@ SUPPORTED_CONFIG_KEYS = (
     "logging.level", "logging.log_file",
     # Remote
     "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
+    # Diagram
+    "diagram.sanitize_enabled",
 )
 
 CONFIG_KEYS_HELP = """
@@ -566,6 +568,7 @@ limits.max_summary_length, limits.max_per_page, limits.default_expires_in,
 cleanup.check_on_start, cleanup.interval_seconds,
 logging.level, logging.log_file,
 remote.url, remote.api_key, remote.timeout, remote.verify_ssl,
+diagram.sanitize_enabled,
 base_url (alias for server.base_url)
 """
 
@@ -612,7 +615,11 @@ def config_set(key: str, value: str) -> None:
             sys.exit(1)
     elif key_name in ("allow_registration", "allow_anonymous_create",
                       "rate_limit_enabled", "check_on_start", "verify_ssl",
-                      "captcha_enabled", "captcha_exempt_first_user"):
+                      "captcha_enabled", "captcha_exempt_first_user",
+                      "sanitize_enabled"):
+        if value.lower() not in ("true", "1", "yes", "on", "false", "0", "no", "off"):
+            click.echo(f"Error: {key} must be a boolean (true/false, 1/0, yes/no, on/off)", err=True)
+            sys.exit(1)
         value = value.lower() in ("true", "1", "yes", "on")
     elif key_name == "cors_origins" or key_name == "allowed_paths":
         value = [v.strip() for v in value.split(",")]
@@ -703,6 +710,8 @@ def config_list() -> None:
                 return getattr(defaults.logging, k)
             elif section == "remote":
                 return getattr(defaults.remote, k)
+            elif section == "diagram":
+                return getattr(defaults.diagram, k)
         except AttributeError:
             pass
         return ""
@@ -758,10 +767,11 @@ def config_list() -> None:
         ("remote", "api_key"): "# 远程 API Key",
         ("remote", "timeout"): "# 远程请求超时秒数",
         ("remote", "verify_ssl"): "# 验证 SSL 证书",
+        ("diagram", "sanitize_enabled"): "# 图表源码自动清洗开关（mermaid/plantuml/svg 渲染前预处理）",
     }
 
     # Section order
-    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote"]
+    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote", "diagram"]
 
     click.echo("Configuration:")
     click.echo("")
@@ -780,7 +790,7 @@ def config_list() -> None:
             if isinstance(val, list):
                 val = ", ".join(str(v) for v in val)
             elif isinstance(val, bool):
-                val = "true" if val else "false"
+                val = "True" if val else "False"
             desc = _DESC.get((section, key_name), "")
             click.echo(f"  {key_name}: {val}  {desc}")
         click.echo("")
