@@ -65,34 +65,80 @@ packages/mcp-server/src/
 - **生产数据库**：`~/.peekview/peekview.db`，**调试数据库**：`/tmp/peekview-debug/peekview.db`
 - **发布 token**：PyPI 在 `~/.bash_env`，npm 在 `~/.npmrc`，`make publish` 自动读取，不需要手动 export
 
+## 标准流程
+
+### 调试流程（改动后验证）
+
+```
+make build-frontend          # 1. 前端构建 → static/（改了前端必须跑，改了后端可跳）
+make debug-start              # 2. 启动 :8888 调试服务（自动用 .venv Python）
+make debug-verify-isolation   # 3. 验证数据隔离（依赖 :8080 在线；不在线就用 sqlite3 /tmp/peekview-debug/peekview.db 手动查）
+make debug-test               # 4. E2E 测试（或指定单个 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
+# 5. 人工验证 http://127.0.0.1:8888
+make debug-stop               # 6. 停止 + 清理 /tmp/peekview-debug/
+```
+
+一键版：`make debug`（= build + start + verify-isolation + test + test-mcp）
+
+### 发布流程（调试通过后）
+
+```
+# 1. 版本 bump
+make bump-version NEW_VERSION=x.y.z    # 更新 VERSIONS.json + 同步所有文件 + commit + tag
+
+# 2. 填 CHANGELOG（bump 后必须做）
+#    将 [Unreleased] 内容移到 [x.y.z] 下，然后 git add CHANGELOG.md && git commit --amend --no-edit
+
+# 3. 预发布检查
+make pre-publish-quick                 # 快速（不 rebuild）：check-version + check-changelog + test-quick + verify-wheel
+# 或
+make pre-publish                       # 完整（clean build + test）
+
+# 4. 发布
+make publish                           # PyPI（token 从 ~/.bash_env 读）
+git push && git push origin vx.y.z     # 推送代码 + tag
+
+# 5. 升级生产（⚠️ 必须人工）
+pipx upgrade peekview && sudo systemctl restart peekview
+curl -s http://127.0.0.1:8080/health   # 确认 version 字段
+```
+
+MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGELOG → `make pre-publish-npm` → `make publish-npm`
+
+### 快速验证（代码修复后，不 rebuild）
+
+```bash
+cd backend && .venv/bin/python -m pytest tests/  # 后端测试
+make test-quick                                    # = pytest（用系统 python3）
+make verify-local                                  # = build-fast + test-quick + check-version + check-changelog
+```
+
 ## 常用命令
 
 ```bash
-make dev                  # 创建/更新 backend/.venv（开发隔离，不影响 pipx 生产环境）
-make debug                # 构建+启动+E2E（完整调试流程）
-make debug-start          # 仅启动调试服务（自动用 .venv Python）
-make debug-stop           # 停止调试服务 + 清理 /tmp/peekview-debug/（数据会丢失）
+# 开发环境
+make dev                  # 创建/更新 backend/.venv（不影响 pipx）
 
-cd backend && .venv/bin/python -m pytest tests/  # 后端测试（用 venv；pyproject 已设 -v --tb=short）
-cd backend && python3 -m ruff check peekview/ tests/  # 后端 lint（ruff 不在 venv，make lint 可能失败）
-cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/  # 后端自动修复
+# 后端
+cd backend && .venv/bin/python -m pytest tests/                     # 测试（用 venv）
+cd backend && python3 -m ruff check peekview/ tests/                # lint（ruff 不在 venv）
+cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/  # 自动修复
 
-make build-frontend          # 前端构建 + 复制 dist/* → backend/peekview/static/（关键：npm run build 只产出 frontend-v3/dist/，不复制；dev-server.sh 启动前检查 backend/peekview/static/index.html 存在，缺失直接退出）
-cd frontend-v3 && ./node_modules/.bin/vitest run   # 前端单测一次性运行（⚠️ npm run test = vitest 无参 = watch 模式，会挂住 agent）
-cd frontend-v3 && npx vue-tsc --noEmit             # 前端类型检查（CI 强制；npm run build 内含此步）
+# 前端
+make build-frontend                                                     # 构建 + 复制到 static/（⚠️ npm run build 只产出 dist/，不复制）
+cd frontend-v3 && ./node_modules/.bin/vitest run                        # 单测（⚠️ npm run test = watch 模式，会挂住 agent）
+cd frontend-v3 && npx vue-tsc --noEmit                                  # 类型检查（CI 强制）
 
-make test-mcp-unit        # MCP 单元测试
-make build-mcp            # MCP 构建
-
-make publish              # 发布到 PyPI（自动从 ~/.bash_env 读 token）
-make publish-npm          # 发布 MCP Server 到 npm
+# MCP
+make build-mcp            # 构建
+make test-mcp-unit        # 单元测试
 
 # Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
 NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
 # Vision 分析（3 种方式，优先用 ①）
-# ① vision-helper subagent（推荐，最方便）：Task 工具，subagent_type: vision-helper，prompt 传截图路径
-# ② vision-analyzer skill：skill 工具加载后，按 SKILL.md 说明使用
-# ③ vision-analyze CLI：python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i /tmp/screenshot.png -p "描述"
+# ① vision-helper subagent（推荐）：Task 工具，subagent_type: vision-helper
+# ② vision-analyzer skill：skill 工具加载后按 SKILL.md 使用
+# ③ vision-analyze CLI：python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i <path> -p "描述"
 # 配置在 ~/.env（VISION_API_KEY / VISION_API_BASE_URL / VISION_MODEL / VISION_API_FORMAT）
 ```
 
