@@ -12,6 +12,7 @@
 
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
+| T050 | mobile-header-diagram-sanitize-fix | 🔄 进行中 | P0 | 🔴 | T049 | 2026-07-08 | 2026-07-08 |
 
 ### 待开始
 
@@ -242,6 +243,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-08 | 创建 T050 | T049 问题归零修复（config_get bug + 规则系统补充 + 移动端 header 布局） |
 | 2026-07-08 | 完成 T049 | mobile-header-diagram-sanitize → v0.5.5 发布到 PyPI（移动端 header 滚动 + Diagram 源码清洗 + 统一错误 UI） |
 | 2026-07-08 | 创建 T049 | mobile-header-diagram-sanitize 立项 — 移动端 header 滚动收缩 + 图表源码自动清洗 |
 | 2026-07-07 | 完成 T048 | entry-lifecycle v0.5.4 发布到 PyPI（两阶段生命周期+PATCH expires_in+archived UI） |
