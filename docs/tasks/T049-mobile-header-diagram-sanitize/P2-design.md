@@ -318,7 +318,48 @@ class PeekDiagram(BaseSettings):
 
 ---
 
-## 6. 完成标志
+## 6. 评审反馈（Review Response）
+
+> 响应 plan-design-review 的 needs-revision 结论。2 个 CRITICAL + 6 个需补充已全部修复。
+
+### 6.1 桌面端 scroll 监听隔离（CRITICAL）
+scroll handler 首行加 `if (window.innerWidth > 768) return;`。与 `@media (max-width: 768px)` 一致，确保 A-BDD-5 不违反。
+
+### 6.2 PlantUML 行为变更流程（CRITICAL）
+§5.4 补充：PlantUML 渲染失败 → `emit('renderError', err)` → DiagramBlock 中 `onRenderError` 设 `hasError=true` + `errorMessage=err`，展示统一错误 UI。"查看源码"按钮触发 `isCodeMode=true`。不再自动切 code mode。
+
+### 6.3 溢出数量计算
+采用逐 child 遍历 `offsetTop > container.clientHeight` 计算实际可见标签数作为 visibleTags。`remainingTagCount = tags.length - visibleTags.length`。CSS `overflow: hidden` 自然截断视觉溢出。
+
+### 6.4 Config 获取失败 fallback
+`api.getDiagramConfig()` 请求超时或 500 → 默认启用清洗（`sanitize_enabled=true`）+ `console.warn('[diagram] config fetch failed, default to sanitize enabled')`。
+
+### 6.5 初始 scrollTop 检查
+`onMounted` 中主动调用一次 `checkScrollPosition()`：`const scrollTop = window.scrollY || document.documentElement.scrollTop; if (scrollTop > 50) addHeaderHidden()`。
+
+### 6.6 Resize 后溢出重算
+`onMounted` 加 `window.addEventListener('resize', recomputeOverflow)`，`onUnmounted` 移除。recomputeOverflow 中重新计算 visibleTags。
+
+### 6.7 重试渲染闪烁
+`sanitizeWithRetry` 重试期间不更新 `hasError`（保持现有渲染状态）。仅当最终结果失败时才设 `hasError=true`。
+
+### 6.8 空错误消息
+`truncatedError` 计算中加守卫：`const msg = err ? String(err) : ''; this.truncatedError = msg.substring(0, 200);`
+
+### 6.9 a11y 基础（建议已采纳）
+- `.header-tags` 收缩时 `aria-hidden="true"`
+- `+N` 指示器 `aria-label="还有 N 个标签被隐藏"`
+- 错误容器 `role="alert"`
+- 折叠详情按钮 `aria-expanded` + 详情 `aria-controls`
+- `CSS transition` 配合 `prefers-reduced-motion: reduce` media query 禁用动画
+- 动画 timing: `transition: max-height 0.3s ease, opacity 0.3s ease`
+
+### 6.10 引擎不支持的 sanitize 边界
+`sanitize(code, 'unknown')` → 返回原 code。`registerRule` 注册已存在的引擎/规则名 → `console.warn` 不覆写。
+
+---
+
+## 7. 完成标志
 
 1. ✅ 移动端 ≤768px：header-tags 单行截断，+N 指示器正确
 2. ✅ 移动端向下滚动 >50px：header-tags 收缩隐藏动画执行
