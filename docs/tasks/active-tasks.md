@@ -18,6 +18,7 @@
 |------|----------|------|------|--------|------|----------|----------|
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
+| T049 | mobile-header-diagram-sanitize | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-08 | 2026-07-08 |
 | T048 | entry-lifecycle | ✅✅ 已完成 | P8→v0.5.4 | 🟠 | 2026-07-07 |
 
 ### 已完成
@@ -235,6 +236,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-08 | 创建 T049 | mobile-header-diagram-sanitize 立项 — 移动端 header 滚动收缩 + 图表源码自动清洗 |
 | 2026-07-07 | 完成 T048 | entry-lifecycle v0.5.4 发布到 PyPI（两阶段生命周期+PATCH expires_in+archived UI） |
 | 2026-07-05 | 完成 T047 | content-link-fix v0.5.3 发布到 PyPI（后端 Content-Type 三级 fallback + 前端 path-map 路径重写） |
 | 2026-07-05 | T046 失败 | content-link-resolution 宣告失败，后端 Content-Type 返回 text/plain 导致图片不渲染 |
