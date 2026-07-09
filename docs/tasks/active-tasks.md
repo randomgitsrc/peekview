@@ -26,7 +26,7 @@
 |------|----------|------|----------|--------|----------|
 | T048 | entry-lifecycle | ✅✅ 已完成 | P8→v0.5.4 | 🟠 | 2026-07-07 |
 | T049 | mobile-header-diagram-sanitize | ✅✅ 已完成 | P8→v0.5.5 | 🟠 | 2026-07-08 |
-| T050 | mobile-header-diagram-sanitize-fix | ✅✅ 已完成 | P8→未发布 | 🟠 | 2026-07-08 |
+| T050 | mobile-header-diagram-sanitize-fix | ✅✅ 已完成 | P8→v0.5.6 | 🟠 | 2026-07-08 |
 
 ### 已完成
 
