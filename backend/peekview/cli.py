@@ -663,6 +663,8 @@ def config_get(key: str) -> None:
             return getattr(defaults.logging, k, "")
         elif section == "remote":
             return getattr(defaults.remote, k, "")
+        elif section == "diagram":
+            return getattr(defaults.diagram, k, "")
         return ""
 
     # Handle all keys with defaults

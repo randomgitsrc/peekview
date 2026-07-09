@@ -777,6 +777,23 @@ watch(() => entryStore.currentEntry, async (entry) => {
 
 /* Mobile header scroll shrink — inlined from layout.css (scoped fix) */
 @media (max-width: 768px) {
+  .detail-header {
+    flex-wrap: wrap;
+  }
+
+  .title-group {
+    flex-basis: calc(100% - 28px - var(--space-3));
+    max-width: calc(100% - 28px - var(--space-3));
+  }
+
+  .header-right {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-top: 0;
+    gap: var(--space-1);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
   .detail-header .header-tags {
     max-height: 2.5em;
     overflow: hidden;

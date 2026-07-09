@@ -123,3 +123,18 @@ class TestDiagramConfigCLI:
         result = runner.invoke(cli, ["config", "set", "diagram.nonexistent", "true"])
         assert result.exit_code != 0
         assert "Unknown config key" in result.output
+
+    def test_config_get_diagram_default(self, runner, isolated_fs):
+        """config get diagram.sanitize_enabled shows default value (B-BDD-1)."""
+        result = runner.invoke(cli, ["config", "get", "diagram.sanitize_enabled"])
+        assert result.exit_code == 0
+        assert "default: True" in result.output
+
+    def test_config_get_list_consistency(self, runner, isolated_fs):
+        """config get and config list show same default for diagram keys (B-BDD-1)."""
+        get_result = runner.invoke(cli, ["config", "get", "diagram.sanitize_enabled"])
+        list_result = runner.invoke(cli, ["config", "list"])
+        assert get_result.exit_code == 0
+        assert list_result.exit_code == 0
+        assert "default: True" in get_result.output
+        assert "diagram.sanitize_enabled" in list_result.output
