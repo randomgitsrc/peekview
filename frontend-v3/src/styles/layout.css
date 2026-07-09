@@ -194,6 +194,22 @@
 
 /* Mobile header scroll shrink */
 @media (max-width: 768px) {
+  .detail-header {
+    flex-wrap: wrap;
+  }
+
+  .detail-header .title-group {
+    flex-basis: calc(100% - 44px);
+    max-width: calc(100% - 44px);
+  }
+
+  .detail-header .header-right {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-top: 0;
+    gap: var(--space-1);
+  }
+
   .detail-header .header-tags {
     max-height: 2.5em;
     overflow: hidden;

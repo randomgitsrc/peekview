@@ -1,0 +1,3 @@
+PASS config_get_diagram_default: curl GET /api/v1/config/diagram → 200 {"sanitize_enabled":true}
+PASS config_get_list_consistency: peekview config get diagram.sanitize_enabled → (not set, default: True) (test backend)
+PASS config_get_list_consistency: peekview config list → sanitize_enabled: True

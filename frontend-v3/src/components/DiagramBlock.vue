@@ -22,7 +22,7 @@ const dropdownRef = ref<HTMLElement>()
 const errorMessage = ref<string>("")
 const errorDetailsOpen = ref(false)
 const sanitizeEnabled = ref(true)
-const sanitizedCode = ref("")
+const sanitizedCode = ref<string | null>(null)
 const retrying = ref(false)
 
 const toggleText = computed(() => {
@@ -188,21 +188,21 @@ defineExpose({
       <MermaidRenderer
         v-if="block.lang === 'mermaid'"
         ref="rendererRef"
-        :code="sanitizedCode || block.code"
+        :code="sanitizedCode !== null ? sanitizedCode : block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
       <PlantUmlRenderer
         v-else-if="block.lang === 'plantuml'"
         ref="rendererRef"
-        :code="sanitizedCode || block.code"
+        :code="sanitizedCode !== null ? sanitizedCode : block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
       <SvgRenderer
         v-else-if="block.lang === 'svg'"
         ref="rendererRef"
-        :code="sanitizedCode || block.code"
+        :code="sanitizedCode !== null ? sanitizedCode : block.code"
         :theme="theme"
         @render-error="onRenderError"
       />
