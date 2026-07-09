@@ -1,0 +1,16 @@
+- [P0-brief.md] 4 gaps: A(lifespan cleanup task), B(filter bar redesign), C(expired warning banner), D(header layout). env: make debug :8888
+- [P1-requirements.md] 18 BDD conditions (A:4, B:6, C:4, D:4). risk_level: medium. No schema changes, no security changes.
+- [P2-dispatch-context.md] Key code locations confirmed. Backend API already supports owner/status params. cleanup_expired() is sync method.
+- [main.py] lifespan() at :26-43, only init_db on startup + log on shutdown. No background task. admin_service on app.state at :125.
+- [EntryDetailView.vue] Header :5-133, meta line :46-58 (owner+time+reads all inline), archived banner :136-139 (red/error), mobile-actions :229-258 (buttons only, no info). relativeTime via useRelativeTime composable.
+- [EntryCard.vue] metaText :74-80 uses @username (card has @), EntryListRow :78-83 uses username without @. Both use useRelativeTime. No hover/title for absolute time.
+- [layout.css] mobile-actions :89-99 (buttons only, no info). desktop-only class hides meta on mobile. layout.css imported in EntryDetailView scoped style.
+- [router.ts] /users/:username route exists (:18-22), maps to EntryListView with owner prop. /explore also EntryListView. /:slug is detail view.
+- [searchUrl.logic.ts] mergeQuery/parseRestoreQuery handle q/owner/page. No status param handling. parseRestoreQuery doesn't parse status.
+- [EmptyState/BannerBar/FilterChip] Existing components. BannerBar uses old CSS vars (--bg-secondary etc). FilterChip uses old vars too. BaseBadge has archived/public/private/shared statuses.
+- [test_admin_stats_cleanup.py] Uses create_app + ASGITransport + AsyncClient pattern. cleanup tests exist for API endpoint. No lifespan tests.
+- [types/index.ts] Entry has status: active|archived, expiresAt, archivedAt, username. ListEntriesParams has status?: string and owner?: string.
+- [variables.css] Has --c-warning (amber/yellow), --c-error (red), --c-badge-archived-bg (gray). No --c-error-surface or --c-warning-surface yet. Need to add warning-surface for expired banner.
+- [--c-error-surface] Used in 3 Vue files but NOT defined in variables.css. Must be defined elsewhere or inherited. Need to add --c-warning-surface similarly.
+- [--c-error-surface] Not defined in any CSS file! Used in Vue scoped styles but never declared. Likely falls back to unset/transparent. Need to define both --c-error-surface and --c-warning-surface in variables.css.
+- [P2-design.md] Written. A:1方案, B:2方案(B1 selected), C:2方案(C1 selected), D:3方案(D1 selected). Four fields declared. gate_commands declared.
