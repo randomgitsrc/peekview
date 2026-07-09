@@ -1,0 +1,19 @@
+- [analyst.md] 角色定义：先质疑再定义，隐含需求是重点，5维度清单（数据/前端/多端/边界/兼容），BDD可二值判定
+- [P0-brief.md] 4缺口：A后台清理(lifespan无task) B筛选栏(无status/用户链接) C过期警告(无视觉区分) D头部布局(时间格式/信息层级/移动端)
+- [P1-dispatch-context.md] 关键代码位置已确认：lifespan:26-43, config:202-206, admin_service:115, EntryListView:34-49, entry.ts:53, EntryDetailView:59-73
+- [WORKFLOW.md] P1门槛：BDD条件>=1/缺口, 无NEED_CONFIRM, 无GAP, domains/packages/risk_level/phases已声明
+- [main.py] lifespan:26-43 只有startup(init_db)+shutdown(log), 无后台task, yield后直接shutdown
+- [EntryCard.vue:76] 卡片用@前缀, [EntryListRow.vue:80] 列表无@前缀——确认不一致
+- [router.ts] /users/:username路由已存在, EntryListView接收owner prop, updateURL已处理query参数
+- [expires.ts] formatExpiresIn返回'expired'字符串(无视觉区分), isExpiringSoon判断<3天
+- [entry_service.py:497] 匿名entry(owner_id=None)的username=None, 前端需处理null用户名显示
+- [admin_service.py:115-173] cleanup_expired是同步方法, 两阶段: expired→archived, archived+retention→deleted, 需在async lifespan中调用
+- [EntryDetailView.vue:59-73] archived显示badge, 非archived显示expires信息, 但expired+active无视觉警告
+- [EntryDetailView.vue:136-139] archived-banner已存在(灰色), 过期警告需与它视觉区分
+- [layout.css:89-121] mobile-actions在<1024px显示, 桌面端隐藏, 移动端底部bar只有操作按钮无信息展示
+- [types/index.ts:19] username: string | null, 匿名entry的username为null, 前端需处理
+- [EntryListView.vue:439-474] restoreFromURL只处理owner参数, 不处理status参数, onBeforeRouteUpdate同理
+- [EntryListView.vue:268-284] updateURL用router.replace, 不push history, 浏览器前进后退可能不保留筛选状态
+- [BaseBadge] 已有archived/public/private状态, 缺口C需新增expired状态badge或banner
+- [代码审查完成] 4缺口隐含需求已识别, 开始写P1-requirements.md
+- [P1-requirements.md] 已写入, 4缺口共16条BDD, 0个NEED_CONFIRM, 无GAP
