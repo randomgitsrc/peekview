@@ -7,13 +7,26 @@
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-07-09
+
+### 修复
+
+- **`config get` 默认值修复**（T050）：`peekview config get diagram.sanitize_enabled` 正确显示 `(not set, default: True)`，不再返回 `(not set)`
+- **extractLabels 无限递归 OOM**（T050）：`fix-fullwidth-syntax` 规则的标签提取函数在含嵌套括号的 label（如 `A[(text)]`）时进入无限循环导致内存耗尽——改为 right-to-left 扫描 + 完整括号对替换
+- **生产构建清洗不生效**（T050）：`DiagramBlock.vue` 中 `sanitizedCode` 初始值 `''` 导致 Vue watch 立即触发时拿到空字符串，fallback 到未清洗的原始代码——改为 `null`
+- **fix-arrows 破坏已正确箭头**（T050）：graph 上下文中 `A --> B` 被误改为 `A ---> B`——使用 sentinel 保护后再做归一化
+
+### 变更
+
 - **清洗规则系统补充**（T050）：从 7 条规则扩展至 13 条，基于 130 用例 P1 数据分析
-  - 新增：关键字大小写修正（17 种映射）、缺换行修正、全角符号语法位置替换、上下文感知箭头修正、PlantUML 标记移除、空字节移除
-  - 删除：有 bug 的 normalize-arrows 规则（`->>` → `-->>` 在 graph 中依然无效）
-  - 修复：`extractLabels` 嵌套括号无限递归 OOM 问题
-  - 修复：DiagramBlock sanitizedCode 初始值 '' → null 导致生产构建中清洗不生效
-- **`config get` 默认值修复**（T050）：`peekview config get diagram.sanitize_enabled` 正确显示 `(not set, default: True)`
-- **移动端 Header 换行布局**（T050）：`header-right` 在 <768px 时 flex-wrap 换行，title-group 宽度使用 calc 不硬编码 44px
+  - 确定性规则新增 6 条：关键字大小写修正（17 种映射）、缺换行修正（TB/TD/LR/RL/BT+subgraph）、全角符号语法位置替换（提取标签→替换→还原）、上下文感知箭头修正、PlantUML 标记移除、空字节移除
+  - PlantUML/SVG 各增 `fix-fullwidth-syntax` 规则
+  - 删除有 bug 的 `normalize-arrows`（`->>` → `-->>` 在 graph 中依然无效）
+- **移动端 Header 换行布局**（T050）：`header-right` 在 <768px 时 `flex-wrap` 换行到下一行，不再挤压 tags 区域；修复硬编码间距 `44px` → `calc(100% - 28px - var(--space-3))`；适配 iOS safe-area
+
+### 新增
+
+- **客观错误模式分析管线**（T050）：`frontend-v3/scripts/mermaid-error-patterns.cjs` 数据驱动测试脚本，130 用例 + mermaid.parse() 验证，可扩展为持续集成用 regression
 
 ## [0.5.5] - 2026-07-08
 
