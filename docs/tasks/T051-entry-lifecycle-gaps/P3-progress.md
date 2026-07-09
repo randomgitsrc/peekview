@@ -1,0 +1,16 @@
+- [test-designer.md] 角色定义：TDD行为契约设计，BDD→测试映射，ui_affected需Playwright，P6二值规则
+- [P0-brief.md] 4缺口(A后台清理/B筛选栏/C过期警告/D头部布局)，ui_affected=true，debug_env=make debug :8888
+- [P1-requirements.md] 18条BDD(A-AC1~4, B-AC1~6, C-AC1~4, D-AC1~4)，隐含需求A1~A6/B1~B6/C1~C4/D1~D4/X1~X2
+- [P2-design.md] 选定方案A1/B1/C1/D1，ui_affected=true，7个交互点，files_to_read完整
+- [P3-dispatch-context.md] 框架确认(pytest-asyncio/vitest-jsdom/Playwright-CDP)，隔离机制确认，P2方案A1/B1/C1/D1
+- [conftest.py] autouse隔离(monkeypatch env)，pytest-asyncio auto mode，app/client fixture模式
+- [factories.py] EntryFactory/FileFactory，create_batch/create_expired便捷方法
+- [entry-lifecycle.test.ts] 前端TDD模式：makeEntry工厂+类型契约测试+API mock，vitest+jsdom
+- [expires.ts/useRelativeTime.ts] 已有formatExpiresIn/isExpiringSoon/formatRelativeTime/formatFullDate，需新增isExpired()
+- [main.py] 当前lifespan无后台task，仅init_db+yield+shutdown日志，需插入cleanup_task逻辑
+- [admin_service.py] cleanup_expired()同步方法，返回AdminCleanupResponse(archived_count/deleted_count/freed_mb)
+- [EntryDetailView.vue] header-right单行平铺(owner/time/reads/expires/actions)，archived-banner灰色，无expired-warning
+- [EntryListView.vue] owner-tabs只有All/Mine，无Archived tab，无status URL同步
+- [searchUrl.logic.ts] parseRestoreQuery只解析q/owner/page，缺status字段；mergeQuery通用无需改
+- [entry.ts store] loadEntries已支持ListEntriesParams(含status)，API层已就绪
+- [P3-test-cases.md] 完成：56个测试用例，4缺口全覆盖，BDD映射完整，含Playwright E2E规划
