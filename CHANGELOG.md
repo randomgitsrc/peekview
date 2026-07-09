@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-09
+
 ### 新增
 
 - T051: 后台定时清理任务（lifespan background cleanup）

@@ -1,6 +1,6 @@
 {
   "name": "peekview-frontend-v3",
-  "version": "0.5.6",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
