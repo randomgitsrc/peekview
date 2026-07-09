@@ -11,6 +11,25 @@ parent: T048 发布后发现的多个缺口 + 用户反馈
 
 # T051: T048 生命周期遗留缺口修复 + 头部信息布局
 
+## 五字段
+
+```yaml
+task: "修复 T048 生命周期 4 个遗留缺口（后台清理/筛选栏/过期警告/头部布局）"
+known_risks:
+  - "跨越后端（lifespan）+ 前端（3 个 view + 2 个 component + store），改动端多"
+  - "header 重设计涉及桌面+移动端双适配，需 P2 多方案比较"
+  - "URL 状态同步（筛选 tab ↔ 路由）需考虑浏览器前进后退"
+executor_env:
+  platform: opencode
+  has_task_tool: true
+  has_local_runtime: true
+  network: full
+env_constraints:
+  debug_env: "make debug（:8888 隔离数据 /tmp/peekview-debug/），后端测试 cd backend && .venv/bin/python -m pytest tests/，前端测试 cd frontend-v3 && ./node_modules/.bin/vitest run"
+pruning_tendency: "保守——4 个缺口中 3 个涉及 UI 重设计，P2/P3/P6 不可裁剪"
+phase_hint: [P1, P2, P3, P4, P5, P6, P7, P8]
+```
+
 ## 任务简报
 
 T048（两阶段生命周期）发布后，用户发现多个缺口。各缺口都是已有功能的遗漏，不是新需求。

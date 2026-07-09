@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### 新增
+
+- T051: 后台定时清理任务（lifespan background cleanup）
+- T051: 列表页筛选栏重设计（All/Mine/Archived + @用户跳转）
+- T051: 过期未归档视觉警告 banner
+- T051: 详情页/列表页头部信息布局重设计
+
 ## [0.5.6] - 2026-07-09
 
 ### 修复
