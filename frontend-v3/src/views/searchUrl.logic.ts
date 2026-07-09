@@ -31,6 +31,7 @@ export function mergeQuery(
 export interface RestoredQuery {
   q: string
   owner: string | null
+  status: string | null
   page: number
 }
 
@@ -39,6 +40,7 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
 
   const q = params.get('q') ?? ''
   const owner = params.get('owner') ?? null
+  const status = params.get('status') ?? null
 
   let page = 1
   const pageParam = params.get('page')
@@ -49,7 +51,7 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
     }
   }
 
-  return { q, owner, page }
+  return { q, owner, status, page }
 }
 
 export type SearchKeyAction = 'flush' | 'clear' | 'none'

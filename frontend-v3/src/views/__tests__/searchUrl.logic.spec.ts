@@ -131,6 +131,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('q=keyword&page=2&owner=me')).toEqual({
       q: 'keyword',
       owner: 'me',
+      status: null,
       page: 2,
     })
   })
@@ -140,6 +141,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('q=hello')).toEqual({
       q: 'hello',
       owner: null,
+      status: null,
       page: 1,
     })
   })
@@ -149,6 +151,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('owner=me')).toEqual({
       q: '',
       owner: 'me',
+      status: null,
       page: 1,
     })
   })
@@ -158,6 +161,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('')).toEqual({
       q: '',
       owner: null,
+      status: null,
       page: 1,
     })
   })
@@ -167,6 +171,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('page=abc')).toEqual({
       q: '',
       owner: null,
+      status: null,
       page: 1,
     })
   })
@@ -191,6 +196,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('q=notes')).toEqual({
       q: 'notes',
       owner: null,
+      status: null,
       page: 1,
     })
   })
@@ -210,6 +216,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
     expect(parseRestoreQuery('q=test&page=xyz&owner=alice')).toEqual({
       q: 'test',
       owner: 'alice',
+      status: null,
       page: 1,
     })
   })

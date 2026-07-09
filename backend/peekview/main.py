@@ -1,10 +1,11 @@
 """FastAPI application factory and main entry point."""
 
+import asyncio
 import logging
 import os
 import shutil
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -28,18 +29,66 @@ async def lifespan(app: FastAPI):
 
     Handles startup and shutdown events.
     """
-    # Startup
     config: PeekConfig = app.state.config
     logger.info(f"Starting PeekView server v{app.version}")
     logger.info(f"Data directory: {config.data_dir}")
     logger.info(f"Database: {config.db_path}")
 
-    # Initialize database
     init_db(config.db_path)
+
+    cleanup_task: asyncio.Task | None = None
+    interval = config.cleanup.interval_seconds
+
+    if interval > 0:
+        admin_service = app.state.admin_service
+        check_on_start = config.cleanup.check_on_start
+
+        async def cleanup_loop():
+            if check_on_start:
+                logger.info("Cleanup: running initial check (check_on_start=True)")
+                try:
+                    loop = asyncio.get_running_loop()
+                    result = await loop.run_in_executor(
+                        None, admin_service.cleanup_expired
+                    )
+                    logger.info(
+                        "Cleanup: archived=%d, deleted=%d, freed=%.2fMB",
+                        result.archived_count,
+                        result.deleted_count,
+                        result.freed_mb,
+                    )
+                except Exception:
+                    logger.exception("Cleanup: initial check failed")
+
+            while True:
+                await asyncio.sleep(interval)
+                try:
+                    loop = asyncio.get_running_loop()
+                    result = await loop.run_in_executor(
+                        None, admin_service.cleanup_expired
+                    )
+                    logger.info(
+                        "Cleanup: archived=%d, deleted=%d, freed=%.2fMB",
+                        result.archived_count,
+                        result.deleted_count,
+                        result.freed_mb,
+                    )
+                except Exception:
+                    logger.exception("Cleanup: periodic check failed")
+
+        cleanup_task = asyncio.create_task(cleanup_loop())
+        logger.info("Cleanup background task started (interval=%ds)", interval)
+    else:
+        logger.info("Cleanup background task disabled (interval=0)")
 
     yield
 
-    # Shutdown
+    if cleanup_task and not cleanup_task.done():
+        cleanup_task.cancel()
+        with suppress(asyncio.CancelledError, asyncio.TimeoutError):
+            await asyncio.wait_for(cleanup_task, timeout=30)
+        logger.info("Cleanup background task cancelled")
+
     logger.info("Shutting down PeekView server")
 
 
@@ -76,10 +125,7 @@ def create_app(
     )
 
     # Load configuration
-    if config is not None:
-        loaded_config = config
-    else:
-        loaded_config = PeekConfig()
+    loaded_config = config if config is not None else PeekConfig()
     if data_dir:
         loaded_config.storage.data_dir = data_dir
     if db_path:

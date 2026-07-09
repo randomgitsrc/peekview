@@ -14,9 +14,40 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- Owner controls (visibility + delete) -->
-        <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
-          <div class="owner-actions desktop-only">
+        <div class="header-meta-row desktop-only">
+          <router-link
+            v-if="entryStore.currentEntry?.username"
+            :to="`/users/${entryStore.currentEntry.username}`"
+            class="entry-owner-link"
+          >@{{ entryStore.currentEntry.username }}</router-link>
+          <span v-if="currentEntry?.createdAt" class="entry-time" :title="fullTime">
+            {{ relativeTime }}
+          </span>
+          <span v-if="currentEntry?.readStats" class="entry-read-stats">
+            {{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}
+          </span>
+          <template v-if="entryStore.currentEntry?.status === 'archived'">
+            <span class="entry-archived-badge">
+              <BaseBadge status="archived" />
+            </span>
+          </template>
+          <template v-else>
+            <span v-if="isExpiredButActive" class="entry-expires entry-expires-expired">
+              Expired
+              <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
+            </span>
+            <span v-else-if="entryStore.currentEntry?.expiresAt" class="entry-expires">
+              Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
+              <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
+            </span>
+            <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never">
+              Never expires
+              <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
+            </span>
+          </template>
+        </div>
+        <div class="header-actions-row desktop-only" v-if="entryStore.currentEntry">
+          <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
             <BaseButton
               size="small"
               :variant="entryStore.currentEntry.isPublic ? 'secondary' : 'secondary'"
@@ -40,39 +71,7 @@
             >
               Delete
             </BaseButton>
-          </div>
-        </template>
-
-        <!-- Entry meta (owner + time) -->
-        <span v-if="entryStore.currentEntry?.username" class="entry-owner desktop-only">
-          @{{ entryStore.currentEntry.username }}
-        </span>
-        <span v-if="currentEntry?.createdAt" class="entry-time desktop-only" :title="fullTime">
-          {{ relativeTime }}
-        </span>
-        <span v-if="currentEntry?.readStats" class="entry-read-stats desktop-only">
-          {{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}
-          <template v-if="Object.keys(currentEntry.readStats.byChannel).length > 1">
-            (API {{ currentEntry.readStats.byChannel.api ?? 0 }}, MCP {{ currentEntry.readStats.byChannel.mcp ?? 0 }})
           </template>
-        </span>
-        <template v-if="entryStore.currentEntry?.status === 'archived'">
-          <span class="entry-archived-badge">
-            <BaseBadge status="archived" />
-          </span>
-        </template>
-        <template v-else>
-          <span v-if="entryStore.currentEntry?.expiresAt" class="entry-expires">
-            Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
-            <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
-          </span>
-          <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never">
-            Never expires
-            <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
-          </span>
-        </template>
-
-        <div class="actions desktop-only" v-if="entryStore.currentEntry">
           <BaseButton
             v-if="entryStore.canWrap"
             size="small"
@@ -118,19 +117,25 @@
           >
             Pack
           </BaseButton>
+          <BaseButton
+            v-if="showTocButton"
+            size="small"
+            variant="secondary"
+            class="toc-btn"
+            @click="showTocDrawer = true"
+          >
+            TOC
+          </BaseButton>
         </div>
-        <BaseButton
-          v-if="showTocButton"
-          size="small"
-          variant="secondary"
-          class="toc-btn"
-          @click="showTocDrawer = true"
-        >
-          TOC
-        </BaseButton>
         <ThemeToggle />
       </div>
     </header>
+
+    <!-- Expired warning banner -->
+    <div v-if="isExpiredButActive" class="expired-warning-banner">
+      <span class="expired-warning-text">此条目已过期，等待清理</span>
+      <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expired-edit-btn" @click="showExpiresInDialog = true">重新设置过期时间</button>
+    </div>
 
     <!-- Archived banner -->
     <div v-if="entryStore.currentEntry?.status === 'archived'" class="archived-banner">
@@ -227,34 +232,45 @@
 
     <!-- Mobile Actions -->
     <div class="mobile-actions" v-if="entryStore.currentEntry">
-      <BaseButton
-        v-if="entryStore.isMultiFile"
-        size="small"
-        variant="secondary"
-        class="menu-btn"
-        @click="showFileDrawer = true"
-      >
-        Files ({{ entryStore.currentEntry?.files.length || 0 }})
-      </BaseButton>
-      <BaseButton
-        v-if="entryStore.canWrap"
-        size="small"
-        :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
-        @click="entryStore.toggleWrap()"
-      >
-        Wrap
-      </BaseButton>
-      <BaseButton
-        v-if="entryStore.canCopy"
-        size="small"
-        variant="secondary"
-        :title="isHtml ? 'Copy HTML source' : 'Copy'"
-        :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
-        @click="copyContent"
-      >
-        Copy
-      </BaseButton>
-      <OverflowMenu :items="overflowItems" />
+      <div class="mobile-info">
+        <router-link
+          v-if="entryStore.currentEntry.username"
+          :to="`/users/${entryStore.currentEntry.username}`"
+          class="mobile-owner"
+        >@{{ entryStore.currentEntry.username }}</router-link>
+        <span v-if="isExpiredButActive" class="mobile-expired-indicator">expired</span>
+        <span v-else-if="entryStore.currentEntry.status === 'archived'" class="mobile-archived-indicator">archived</span>
+      </div>
+      <div class="mobile-buttons">
+        <BaseButton
+          v-if="entryStore.isMultiFile"
+          size="small"
+          variant="secondary"
+          class="menu-btn"
+          @click="showFileDrawer = true"
+        >
+          Files ({{ entryStore.currentEntry?.files.length || 0 }})
+        </BaseButton>
+        <BaseButton
+          v-if="entryStore.canWrap"
+          size="small"
+          :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
+          @click="entryStore.toggleWrap()"
+        >
+          Wrap
+        </BaseButton>
+        <BaseButton
+          v-if="entryStore.canCopy"
+          size="small"
+          variant="secondary"
+          :title="isHtml ? 'Copy HTML source' : 'Copy'"
+          :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
+          @click="copyContent"
+        >
+          Copy
+        </BaseButton>
+        <OverflowMenu :items="overflowItems" />
+      </div>
     </div>
 
     <!-- File Drawer (mobile) -->
@@ -344,7 +360,7 @@ import ImageViewer from '@/components/ImageViewer.vue'
 import { guessMimeType } from '@/utils/mime'
 import { buildPathMap } from '@/utils/path-map'
 import type { PathMap } from '@/utils/path-map'
-import { formatExpiresIn } from '@/utils/expires'
+import { formatExpiresIn, isExpired } from '@/utils/expires'
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
 import BaseTag from '@/components/BaseTag.vue'
@@ -387,6 +403,11 @@ const showShareButton = computed(() => {
   if (!authStore.isOwner(currentEntry.value.ownerId)) return false
   if (currentEntry.value.status === 'archived') return false
   return !currentEntry.value.isPublic
+})
+
+const isExpiredButActive = computed(() => {
+  if (!currentEntry.value) return false
+  return isExpired(currentEntry.value)
 })
 
 const zenMode = ref(false)
@@ -817,15 +838,24 @@ watch(() => entryStore.currentEntry, async (entry) => {
 
 .header-right {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
-.header-right .actions {
+.header-meta-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.header-actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .owner-actions {
@@ -834,9 +864,14 @@ watch(() => entryStore.currentEntry, async (entry) => {
   gap: var(--space-2);
 }
 
-.entry-owner {
+.entry-owner-link {
   font-size: var(--font-xs);
   color: var(--c-accent);
+  text-decoration: none;
+}
+
+.entry-owner-link:hover {
+  text-decoration: underline;
 }
 
 .entry-time {
@@ -894,6 +929,39 @@ watch(() => entryStore.currentEntry, async (entry) => {
   color: var(--c-accent-secondary);
 }
 
+.expired-warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-warning-surface);
+  border-bottom: 1px solid var(--c-warning);
+  width: 100%;
+}
+
+.expired-warning-text {
+  font-size: var(--font-sm);
+  color: var(--c-warning);
+  font-weight: 600;
+}
+
+.expired-edit-btn {
+  padding: var(--space-1) var(--space-3);
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.expired-edit-btn:hover {
+  opacity: 0.9;
+}
+
 .archived-banner {
   display: flex;
   align-items: center;
@@ -936,6 +1004,11 @@ watch(() => entryStore.currentEntry, async (entry) => {
   color: var(--c-text-tertiary);
 }
 
+.entry-expires-expired {
+  color: var(--c-warning);
+  font-weight: 600;
+}
+
 .share-watermark {
   position: fixed;
   bottom: 16px;
@@ -955,6 +1028,45 @@ watch(() => entryStore.currentEntry, async (entry) => {
   font-size: 15px;
   text-align: center;
   padding: 40px 16px;
+}
+
+.mobile-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  min-width: 0;
+}
+
+.mobile-owner {
+  font-size: var(--font-xs);
+  color: var(--c-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mobile-owner:hover {
+  text-decoration: underline;
+}
+
+.mobile-expired-indicator {
+  font-size: var(--font-xs);
+  color: var(--c-warning);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mobile-archived-indicator {
+  font-size: var(--font-xs);
+  color: var(--c-text-tertiary);
+  white-space: nowrap;
+}
+
+.mobile-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 </style>
 

@@ -1,0 +1,10 @@
+- [utils/expires.ts] Added isExpired() helper function
+- [styles/variables.css] Added --c-warning-surface, --c-error-surface, --c-badge-expired-bg CSS variables
+- [searchUrl.logic.ts] Added status field to RestoredQuery and parseRestoreQuery
+- [BaseBadge.vue] Added 'expired' status with amber styling
+- [EntryCard.vue] @username clickable (router-link), time hover (title), expired badge
+- [EntryListRow.vue] @username clickable (router-link), time hover (title), expired badge
+- [EntryListView.vue] Gap B: All/Mine/Archived tabs, status filter, URL push, empty state
+- [EntryDetailView.vue] Gap C: expired warning banner (yellow). Gap D: dual-row header, mobile bar with owner+expired
+- [layout.css] Mobile actions bar height 48px, justify-content space-between
+- [Tests] All vitest tests pass (789 passed), vue-tsc --noEmit passes

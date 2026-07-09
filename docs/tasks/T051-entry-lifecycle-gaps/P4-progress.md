@@ -1,0 +1,4 @@
+- [lifespan修改] main.py: 添加 cleanup_loop + lifespan startup/shutdown 逻辑
+- [测试文件] test_lifespan_cleanup.py: 13 个测试用例覆盖 A-AC1~A-AC4
+- [自查] 11/11 测试通过，818/819 全套通过（1 skipped），lint 仅 I001 已修复
+- [DESIGN_GAP] P2 使用 try/except/pass，ruff SIM105 建议 contextlib.suppress；保持与 P2 一致

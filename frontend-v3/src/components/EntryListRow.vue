@@ -11,7 +11,20 @@
     <div class="entry-content">
       <div class="entry-title">{{ entry.summary || entry.slug }}</div>
       <div class="entry-meta-row">
-        <span class="entry-meta">{{ metaText }}</span>
+        <span class="entry-meta">
+          <router-link
+            v-if="entry.username"
+            :to="`/users/${entry.username}`"
+            class="meta-username"
+            @click.stop
+          >@{{ entry.username }}</router-link>
+          <span v-if="entry.username" class="meta-sep"> · </span>
+          <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
+          <template v-if="entry.fileCount">
+            <span class="meta-sep"> · </span>
+            <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
+          </template>
+        </span>
       </div>
       <div v-if="entry.tags.length" class="entry-tags-row">
         <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
@@ -19,7 +32,8 @@
       </div>
     </div>
     <div class="entry-right">
-        <BaseBadge v-if="entry.status === 'archived'" status="archived" />
+        <BaseBadge v-if="isExpiredButActive" status="expired" />
+        <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
       <div v-if="isOwner" class="entry-actions" @click.stop>
         <button
@@ -52,6 +66,7 @@ import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import { useRelativeTime } from '@/composables/useRelativeTime'
+import { isExpired } from '@/utils/expires'
 
 const props = withDefaults(defineProps<{
   entry: Entry
@@ -73,15 +88,9 @@ const visibleTags = computed(() => props.entry.tags)
 const remainingTagCount = computed(() => 0)
 
 const createdAtRef = toRef(() => props.entry.createdAt)
-const { relative: relativeTime } = useRelativeTime(createdAtRef)
+const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
 
-const metaText = computed(() => {
-  const parts: string[] = []
-  if (props.entry.username) parts.push(props.entry.username)
-  parts.push(relativeTime.value)
-  if (props.entry.fileCount) parts.push(`${props.entry.fileCount} file${props.entry.fileCount !== 1 ? 's' : ''}`)
-  return parts.join(' · ')
-})
+const isExpiredButActive = computed(() => isExpired(props.entry))
 </script>
 
 <style scoped>
@@ -135,6 +144,23 @@ const metaText = computed(() => {
   font-size: 13px;
   color: var(--c-text-tertiary);
   font-family: var(--font-mono);
+}
+
+.meta-username {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+.meta-username:hover {
+  text-decoration: underline;
+}
+
+.meta-sep {
+  color: var(--c-text-tertiary);
+}
+
+.meta-time {
+  cursor: default;
 }
 
 .tag-overflow {

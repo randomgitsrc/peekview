@@ -27,13 +27,27 @@
       @keydown.space.prevent="$emit('navigate', entry)"
     >
       <h3 class="card-title">{{ entry.summary || entry.slug }}</h3>
-      <div class="card-meta-text">{{ metaText }}</div>
+      <div class="card-meta-text">
+        <router-link
+          v-if="entry.username"
+          :to="`/users/${entry.username}`"
+          class="meta-username"
+          @click.stop
+        >@{{ entry.username }}</router-link>
+        <span v-if="entry.username" class="meta-sep"> · </span>
+        <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
+        <template v-if="entry.fileCount">
+          <span class="meta-sep"> · </span>
+          <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
+        </template>
+      </div>
       <div v-if="entry.tags.length" class="card-tags">
         <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
         <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
       </div>
-      <div v-if="isOwner" class="card-footer">
-        <BaseBadge v-if="entry.status === 'archived'" status="archived" />
+      <div v-if="isOwner || isExpiredButActive" class="card-footer">
+        <BaseBadge v-if="isExpiredButActive" status="expired" />
+        <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else :status="entry.isPublic ? 'public' : 'private'" />
       </div>
     </div>
@@ -46,6 +60,7 @@ import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import { useRelativeTime } from '@/composables/useRelativeTime'
+import { isExpired } from '@/utils/expires'
 
 const props = withDefaults(defineProps<{
   entry: Entry
@@ -69,15 +84,9 @@ const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
 const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
 const createdAtRef = toRef(() => props.entry.createdAt)
-const { relative: relativeTime } = useRelativeTime(createdAtRef)
+const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
 
-const metaText = computed(() => {
-  const parts: string[] = []
-  if (props.entry.username) parts.push(`@${props.entry.username}`)
-  parts.push(relativeTime.value)
-  if (props.entry.fileCount) parts.push(`${props.entry.fileCount} file${props.entry.fileCount !== 1 ? 's' : ''}`)
-  return parts.join(' · ')
-})
+const isExpiredButActive = computed(() => isExpired(props.entry))
 </script>
 
 <style scoped>
@@ -176,6 +185,23 @@ const metaText = computed(() => {
   color: var(--c-text-tertiary);
   font-family: var(--font-mono);
   margin-bottom: var(--space-2);
+}
+
+.meta-username {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+.meta-username:hover {
+  text-decoration: underline;
+}
+
+.meta-sep {
+  color: var(--c-text-tertiary);
+}
+
+.meta-time {
+  cursor: default;
 }
 
 .card-tags {

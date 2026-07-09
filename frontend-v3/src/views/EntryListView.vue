@@ -36,14 +36,19 @@
           <div v-if="showTabs" class="owner-tabs">
             <button
               class="owner-tab"
-              :class="{ active: currentOwner === null }"
-              @click="setOwner(null)"
+              :class="{ active: currentOwner === null && currentStatus === null }"
+              @click="setFilter(null, null)"
             >All</button>
             <button
               class="owner-tab"
               :class="{ active: currentOwner === 'me' }"
-              @click="setOwner('me')"
+              @click="setFilter('me', null)"
             >Mine</button>
+            <button
+              class="owner-tab"
+              :class="{ active: currentStatus === 'archived' }"
+              @click="setFilter(null, 'archived')"
+            >Archived</button>
           </div>
 
           <div v-if="showChip" class="filter-chip-bar">
@@ -106,7 +111,7 @@
       <EmptyState
         v-else-if="entries.length === 0"
         icon="Search"
-        :heading="ownerFound === true ? `No entries from @${props.owner}` : 'No entries found'"
+        :heading="emptyStateHeading"
       />
 
       <template v-else>
@@ -244,6 +249,7 @@ const props = defineProps<{
 }>()
 
 const currentOwner = ref<string | null>(null)
+const currentStatus = ref<string | null>(null)
 
 const isBannerMode = computed(() =>
   !!(props.owner) && props.owner !== 'me' && ownerFound.value !== false
@@ -259,6 +265,14 @@ const showChip = computed(() =>
 
 const effectiveOwner = computed(() => props.owner || currentOwner.value || undefined)
 
+const effectiveStatus = computed(() => currentStatus.value || undefined)
+
+const emptyStateHeading = computed(() => {
+  if (ownerFound.value === true && props.owner) return `No entries from @${props.owner}`
+  if (currentStatus.value === 'archived') return '暂无已归档条目'
+  return 'No entries found'
+})
+
 const currentUserUsername = computed(() => user.value?.username ?? null)
 
 const searchQuery = ref('')
@@ -272,13 +286,13 @@ function updateURL(params: Record<string, string | undefined>): void {
 
   suppressRouteUpdate = true
   if (!newQuery) {
-    router.replace({ path })
+    router.push({ path })
   } else {
     const queryObj: Record<string, string> = {}
     new URLSearchParams(newQuery).forEach((value, key) => {
       queryObj[key] = value
     })
-    router.replace({ path, query: queryObj })
+    router.push({ path, query: queryObj })
   }
   nextTick(() => { suppressRouteUpdate = false })
 }
@@ -287,14 +301,14 @@ function flushSearch() {
   const q = searchQuery.value.trim()
   updateURL({ q: q || undefined, page: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, q: q || undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: q || undefined })
 }
 
 function clearSearch() {
   searchQuery.value = ''
   updateURL({ q: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value })
 }
 
 const debouncedSearch = useDebounce(flushSearch, 300)
@@ -311,18 +325,20 @@ watch(() => searchQuery.value, () => {
   debouncedSearch()
 })
 
-function setOwner(owner: string | null) {
+function setFilter(owner: string | null, status: string | null) {
   currentOwner.value = owner
+  currentStatus.value = status
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, q: searchQuery.value || undefined })
-  updateURL({ owner: owner || undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, status: status || undefined, q: searchQuery.value || undefined })
+  updateURL({ owner: owner || undefined, status: status || undefined, page: undefined })
 }
 
 function clearOwnerFilter() {
   currentOwner.value = null
+  currentStatus.value = null
   currentPage.value = 1
   loadEntries({ page: 1, perPage: perPage.value, q: searchQuery.value || undefined })
-  updateURL({ owner: undefined, page: undefined })
+  updateURL({ owner: undefined, status: undefined, page: undefined })
 }
 
 function navigateToEntry(entry: Entry) {
@@ -413,12 +429,13 @@ watch(viewMode, (mode) => {
 
 watch(currentPage, (newPage) => {
   updateURL({ page: newPage > 1 ? String(newPage) : undefined })
-  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, q: searchQuery.value || undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
 })
 
 watch(() => props.owner, (newOwner) => {
   if (newOwner) {
     currentOwner.value = null
+    currentStatus.value = null
     currentPage.value = 1
     loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, q: searchQuery.value || undefined })
   }
@@ -430,6 +447,7 @@ watch(authState, (newState) => {
     const ownerParam = urlParams.get('owner')
     if (ownerParam === 'me' && currentOwner.value !== 'me') {
       currentOwner.value = 'me'
+      currentStatus.value = null
       currentPage.value = 1
       loadEntries({ page: 1, perPage: perPage.value, owner: 'me', q: searchQuery.value || undefined })
     }
@@ -445,6 +463,11 @@ function restoreFromURL() {
     currentOwner.value = 'me'
   }
 
+  const statusParam = urlParams.get('status')
+  if (statusParam) {
+    currentStatus.value = statusParam
+  }
+
   const restored = parseRestoreQuery(window.location.search.slice(1))
   searchQuery.value = restored.q
   currentPage.value = restored.page
@@ -455,7 +478,7 @@ onMounted(() => {
     currentOwner.value = null
   }
   restoreFromURL()
-  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, q: searchQuery.value || undefined })
+  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
 })
 
 onBeforeRouteUpdate((to) => {
@@ -464,13 +487,15 @@ onBeforeRouteUpdate((to) => {
 
   const newQ = (to.query.q as string) || ''
   const newOwner = (to.query.owner as string) || null
+  const newStatus = (to.query.status as string) || null
   const newPage = parseInt(to.query.page as string) || 1
 
   searchQuery.value = newQ
   currentOwner.value = newOwner
+  currentStatus.value = newStatus
   currentPage.value = Math.max(1, newPage)
 
-  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, q: newQ || undefined })
+  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, status: newStatus || undefined, q: newQ || undefined })
 })
 </script>
 

@@ -17,3 +17,9 @@ export function isExpiringSoon(dateStr: string): boolean {
   const diffDay = Math.ceil(diffMs / 86400000)
   return diffDay > 0 && diffDay < 3
 }
+
+export function isExpired(entry: { status: string; expiresAt: string | null }): boolean {
+  if (entry.status !== 'active') return false
+  if (!entry.expiresAt) return false
+  return new Date(entry.expiresAt).getTime() < Date.now()
+}

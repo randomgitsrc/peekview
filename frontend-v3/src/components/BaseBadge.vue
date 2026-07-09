@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 withDefaults(defineProps<{
-  status?: 'public' | 'private' | 'shared' | 'archived'
+  status?: 'public' | 'private' | 'shared' | 'archived' | 'expired'
 }>(), {
   status: 'public',
 })
@@ -39,5 +39,10 @@ withDefaults(defineProps<{
 .badge-archived {
   background: var(--c-badge-archived-bg);
   color: var(--c-text-tertiary);
+}
+
+.badge-expired {
+  background: var(--c-badge-expired-bg);
+  color: var(--c-warning);
 }
 </style>
