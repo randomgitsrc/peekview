@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+- **清洗规则系统补充**（T050）：从 7 条规则扩展至 13 条，基于 130 用例 P1 数据分析
+  - 新增：关键字大小写修正（17 种映射）、缺换行修正、全角符号语法位置替换、上下文感知箭头修正、PlantUML 标记移除、空字节移除
+  - 删除：有 bug 的 normalize-arrows 规则（`->>` → `-->>` 在 graph 中依然无效）
+  - 修复：`extractLabels` 嵌套括号无限递归 OOM 问题
+  - 修复：DiagramBlock sanitizedCode 初始值 '' → null 导致生产构建中清洗不生效
+- **`config get` 默认值修复**（T050）：`peekview config get diagram.sanitize_enabled` 正确显示 `(not set, default: True)`
+- **移动端 Header 换行布局**（T050）：`header-right` 在 <768px 时 flex-wrap 换行，title-group 宽度使用 calc 不硬编码 44px
+
 ## [0.5.5] - 2026-07-08
 
 ### 新增
