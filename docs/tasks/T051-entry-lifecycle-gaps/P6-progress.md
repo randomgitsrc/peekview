@@ -1,0 +1,9 @@
+- [init] 开始 P6 验收，读取 P1 和 P6-dispatch-context
+- [Gap A] 后端测试 11/11 passed
+- [Gap B/C/D] Playwright UI 验证完成，大部分通过
+- [Gap A] A-AC1~AC4: 4/4 PASS (backend tests)
+- [Gap B] B-AC1~AC6: 6/6 PASS (Playwright CDP)
+- [Gap C] C-AC1~AC4: 4/4 PASS (Playwright CDP)
+- [Gap D] D-AC1~AC4: 4/4 PASS (Playwright CDP)
+- [完成] 18/18 BDD PASS, P6-acceptance.md 已写入
+- [完成] 18/18 BDD PASS, 0 FAIL, 所有截图 MD5 唯一, 所有证据文件 >1KB
