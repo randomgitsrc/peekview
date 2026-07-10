@@ -6,7 +6,7 @@ function createItems(overrides: Partial<OverflowMenuItem>[] = []) {
   const defaults: OverflowMenuItem[] = [
     { label: 'Download', action: vi.fn() },
     { label: 'Raw', href: '/api/v1/entries/test/raw', target: '_blank', rel: 'noopener noreferrer' },
-    { label: 'Delete', icon: '🗑️', variant: 'danger', action: vi.fn() },
+    { label: 'Delete', icon: 'trash-2', hint: 'Permanently', variant: 'danger', action: vi.fn() },
   ]
   return overrides.length > 0
     ? overrides.map((o, i) => ({ ...defaults[i], ...o }))
@@ -16,10 +16,12 @@ function createItems(overrides: Partial<OverflowMenuItem>[] = []) {
 interface OverflowMenuItem {
   label: string
   icon?: string
+  hint?: string
   href?: string
   target?: string
   rel?: string
   variant?: 'default' | 'danger'
+  divider?: boolean
   action?: () => void
 }
 
@@ -47,7 +49,7 @@ describe('OverflowMenu', () => {
       const wrapper = mountOverflowMenu()
       const trigger = wrapper.find('.overflow-trigger')
       expect(trigger.exists()).toBe(true)
-      expect(trigger.text()).toContain('⋯')
+      expect(trigger.find('svg').exists()).toBe(true)
     })
 
     it('trigger has aria-haspopup attribute', () => {
@@ -122,8 +124,7 @@ describe('OverflowMenu', () => {
       const wrapper = mountOverflowMenu()
       await wrapper.find('.overflow-trigger').trigger('click')
       const deleteItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Delete'))
-      expect(deleteItem!.find('.item-icon').exists()).toBe(true)
-      expect(deleteItem!.find('.item-icon').text()).toBe('🗑️')
+      expect(deleteItem!.find('svg').exists()).toBe(true)
     })
 
     it('does not render icon element when item has no icon', async () => {

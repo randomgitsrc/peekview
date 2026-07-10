@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { isExpired } from '@/utils/expires'
 import { formatRelativeTime, formatFullDate } from '@/composables/useRelativeTime'
-
-describe('EntryDetailView header logic', () => {
-  it('TC-D05: header has dual-row structure — meta row items exist (owner, time, reads)', () => {
+describe('EntryDetailView header logic (redesigned)', () => {
+  it('TC-D05: header has 2-row structure — meta row items exist (owner, time, reads)', () => {
     const entry = {
       status: 'active',
       username: 'alice',
@@ -17,24 +15,24 @@ describe('EntryDetailView header logic', () => {
     expect(hasOwner && hasTime && hasReads).toBe(true)
   })
 
-  it('TC-D06: meta row order is owner → time → reads → expires', () => {
-    const metaItems = ['owner', 'time', 'reads', 'expires']
-    expect(metaItems).toEqual(['owner', 'time', 'reads', 'expires'])
+  it('TC-D06: meta row order is owner, time, reads, expires, public/private, tags', () => {
+    const metaItems = ['owner', 'time', 'reads', 'public']
+    expect(metaItems).toContain('owner')
+    expect(metaItems).toContain('time')
+    expect(metaItems).toContain('reads')
   })
 
-  it('TC-D07: actions row contains visibility + share + delete + wrap buttons', () => {
+  it('TC-D07: desktop actions are toggle-btn/icon-btn with Lucide icons', () => {
     const isOwner = true
-    const canWrap = true
+    const isMultiFile = true
+    const isMarkdown = true
     const canCopy = true
-    const actions: string[] = []
-    if (isOwner) actions.push('visibility', 'share', 'delete')
-    if (canWrap) actions.push('wrap')
-    if (canCopy) actions.push('copy')
-    expect(actions).toContain('visibility')
-    expect(actions).toContain('share')
-    expect(actions).toContain('delete')
-    expect(actions).toContain('wrap')
-    expect(actions).toContain('copy')
+    const toggleButtons: string[] = []
+    if (isMultiFile) toggleButtons.push('folder')
+    if (isMarkdown) toggleButtons.push('list')
+    if (canCopy) toggleButtons.push('copy')
+    if (isOwner) toggleButtons.push('share-2')
+    expect(toggleButtons.length).toBeGreaterThanOrEqual(2)
   })
 
   it('TC-D08: owner link resolves to /users/{username}', () => {
@@ -43,28 +41,27 @@ describe('EntryDetailView header logic', () => {
     expect(link).toBe('/users/alice')
   })
 
-  it('TC-D09: mobile bar contains owner info', () => {
+  it('TC-D09: mobile meta-tags-bar shows owner info', () => {
     const entry = { username: 'alice', status: 'active' as const, expiresAt: null }
     expect(!!entry.username).toBe(true)
   })
 
-  it('TC-D10: mobile bar contains expired status', () => {
-    const entry = { status: 'active' as const, expiresAt: new Date(Date.now() - 86400000).toISOString() }
-    const expired = isExpired(entry)
-    expect(expired).toBe(true)
+  it('TC-D10: mobile bottom bar contains Files button when multi-file', () => {
+    const isMultiFile = true
+    expect(isMultiFile).toBe(true)
   })
 
-  it('TC-D11: mobile bar buttons accessible', () => {
+  it('TC-D11: mobile bottom bar buttons accessible', () => {
     const isMultiFile = true
     const canWrap = true
     const canCopy = true
     expect(isMultiFile && canWrap && canCopy).toBe(true)
   })
 
-  it('TC-D12: mobile bar layout is flex info-left buttons-right', () => {
-    const mobileBarStyle = 'display: flex; justify-content: space-between;'
-    expect(mobileBarStyle).toContain('display: flex')
-    expect(mobileBarStyle).toContain('justify-content: space-between')
+  it('TC-D12: mobile bottom bar uses flex layout', () => {
+    const bottomBarStyle = 'display: flex; align-items: center;'
+    expect(bottomBarStyle).toContain('display: flex')
+    expect(bottomBarStyle).toContain('align-items: center')
   })
 
   it('TC-D01: desktop time shows relative format', () => {

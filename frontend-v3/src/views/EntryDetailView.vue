@@ -1,133 +1,94 @@
 <template>
   <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
-    <!-- Header -->
-    <header class="detail-header" :class="{ 'header-tags-hidden': headerHidden }">
-      <router-link to="/" class="detail-logo" title="Back to home">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <!-- Mobile sticky header -->
+    <div v-if="!isDesktop" class="mobile-sticky-header">
+      <router-link to="/" class="back-btn" aria-label="Back">
+        <ChevronLeftIcon :size="20" />
       </router-link>
-      <div class="title-group">
-        <h1 class="title">{{ entryTitle }}</h1>
-        <div v-if="currentEntry?.tags?.length" class="header-tags" ref="headerTagsRef" :aria-hidden="headerHidden ? 'true' : undefined">
-          <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
-          <span v-if="remainingTagCount > 0" class="tag-overflow" :aria-label="`还有 ${remainingTagCount} 个标签被隐藏`">+{{ remainingTagCount }}</span>
+      <span class="sticky-title">{{ entryTitle }}</span>
+    </div>
+
+    <!-- Desktop/Tablet header -->
+    <header v-if="isDesktop" class="detail-header">
+      <div class="title-row">
+        <router-link to="/" class="detail-logo" title="Back to home">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </router-link>
+        <div class="title-group">
+          <h1 class="title">{{ entryTitle }}</h1>
+        </div>
+        <div class="actions-area">
+          <button
+            v-if="entryStore.isMultiFile"
+            :class="['toggle-btn', { active: isFileTreeOpen }]"
+            @click="isFileTreeOpen = !isFileTreeOpen"
+            aria-label="Toggle file tree"
+            :aria-expanded="isFileTreeOpen"
+          >
+            <FolderIcon :size="16" />
+          </button>
+          <button
+            v-if="isMarkdown && tocHeadings.length > 0"
+            :class="['toggle-btn', { active: isTocOpen }]"
+            @click="isTocOpen = !isTocOpen"
+            aria-label="Table of Contents"
+            :aria-expanded="isTocOpen"
+          >
+            <ListIcon :size="16" />
+          </button>
+          <span class="action-sep"></span>
+          <button
+            v-if="entryStore.canCopy"
+            class="icon-btn"
+            @click="copyContent"
+            aria-label="Copy"
+          >
+            <CopyIcon :size="16" />
+          </button>
+          <button
+            v-if="showShareButton"
+            class="icon-btn"
+            @click="showShareDialog = true"
+            aria-label="Share"
+          >
+            <Share2Icon :size="16" />
+          </button>
+          <span class="action-sep"></span>
+          <OverflowMenu :items="overflowItems" variant="dropdown" />
+          <ThemeToggle />
         </div>
       </div>
-      <div class="header-right">
-        <div class="header-meta-row desktop-only">
-          <router-link
-            v-if="entryStore.currentEntry?.username"
-            :to="`/users/${entryStore.currentEntry.username}`"
-            class="entry-owner-link"
-          >@{{ entryStore.currentEntry.username }}</router-link>
-          <span v-if="currentEntry?.createdAt" class="entry-time" :title="fullTime">
-            {{ relativeTime }}
-          </span>
-          <span v-if="currentEntry?.readStats" class="entry-read-stats">
-            {{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}
-          </span>
-          <template v-if="entryStore.currentEntry?.status === 'archived'">
-            <span class="entry-archived-badge">
-              <BaseBadge status="archived" />
-            </span>
-          </template>
-          <template v-else>
-            <span v-if="isExpiredButActive" class="entry-expires entry-expires-expired">
-              Expired
-              <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
-            </span>
-            <span v-else-if="entryStore.currentEntry?.expiresAt" class="entry-expires">
-              Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}
-              <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
-            </span>
-            <span v-else-if="entryStore.currentEntry" class="entry-expires entry-expires-never">
-              Never expires
-              <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="expires-edit-btn" @click="showExpiresInDialog = true">Edit</button>
-            </span>
-          </template>
-        </div>
-        <div class="header-actions-row desktop-only" v-if="entryStore.currentEntry">
-          <template v-if="entryStore.currentEntry && authStore.isOwner(entryStore.currentEntry.ownerId)">
-            <BaseButton
-              size="small"
-              :variant="entryStore.currentEntry.isPublic ? 'secondary' : 'secondary'"
-              :title="entryStore.currentEntry.isPublic ? 'Make private' : 'Make public'"
-              @click="handleToggleVisibility"
-            >
-              {{ entryStore.currentEntry.isPublic ? '🌐 Public' : '🔒 Private' }}
-            </BaseButton>
-            <BaseButton
-              v-if="showShareButton"
-              size="small"
-              variant="secondary"
-              @click="showShareDialog = true"
-            >
-              Share
-            </BaseButton>
-            <BaseButton
-              size="small"
-              variant="danger"
-              @click="confirmDeleteEntry"
-            >
-              Delete
-            </BaseButton>
-          </template>
-          <BaseButton
-            v-if="entryStore.canWrap"
-            size="small"
-            :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
-            @click="entryStore.toggleWrap()"
-          >
-            Wrap
-          </BaseButton>
-          <BaseButton
-            v-if="entryStore.canCopy"
-            size="small"
-            variant="secondary"
-            :title="isHtml ? 'Copy HTML source' : 'Copy'"
-            :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
-            @click="copyContent"
-          >
-            Copy
-          </BaseButton>
-          <BaseButton
-            v-if="entryStore.canDownload"
-            size="small"
-            variant="secondary"
-            @click="downloadFile"
-          >
-            Download
-          </BaseButton>
-          <BaseButton
-            v-if="entryStore.currentEntry"
-            size="small"
-            variant="secondary"
-            :href="`/api/v1/entries/${entryStore.currentEntry.slug}/raw`"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Raw content — for Agent/API access"
-          >
-            Raw
-          </BaseButton>
-          <BaseButton
-            v-if="entryStore.canPack && entryStore.currentEntry"
-            size="small"
-            variant="secondary"
-            @click="downloadPack"
-          >
-            Pack
-          </BaseButton>
-          <BaseButton
-            v-if="showTocButton"
-            size="small"
-            variant="secondary"
-            class="toc-btn"
-            @click="showTocDrawer = true"
-          >
-            TOC
-          </BaseButton>
-        </div>
-        <ThemeToggle />
+      <div class="meta-row">
+        <router-link
+          v-if="entryStore.currentEntry?.username"
+          :to="`/users/${entryStore.currentEntry.username}`"
+          class="entry-owner-link"
+        >@{{ entryStore.currentEntry.username }}</router-link>
+        <span class="meta-dot"></span>
+        <span :title="fullTime">{{ relativeTime }}</span>
+        <template v-if="entryStore.currentEntry?.status === 'archived'">
+          <span class="meta-dot"></span>
+          <span class="status-tag">Archived</span>
+        </template>
+        <template v-else-if="isExpiredButActive">
+          <span class="meta-dot"></span>
+          <span class="status-tag" style="color:var(--c-warning)">Expired</span>
+        </template>
+        <template v-else-if="entryStore.currentEntry?.expiresAt">
+          <span class="meta-dot"></span>
+          <span>Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}</span>
+        </template>
+        <span class="meta-sep"></span>
+        <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
+        <span class="meta-dot"></span>
+        <span :class="['status-tag', entryStore.currentEntry?.isPublic ? 'public' : 'private']">
+          {{ entryStore.currentEntry?.isPublic ? 'Public' : 'Private' }}
+        </span>
+        <template v-for="tag in currentEntry?.tags ?? []" :key="tag">
+          <span class="meta-dot"></span>
+          <span class="meta-tag">{{ tag }}</span>
+        </template>
       </div>
     </header>
 
@@ -146,7 +107,7 @@
     <!-- Content -->
     <div class="detail-content">
       <!-- File Sidebar (desktop) -->
-      <aside v-if="showFileSidebar" class="file-sidebar">
+      <aside v-if="isFileTreeOpen && entryStore.isMultiFile" class="file-sidebar">
         <FileTree
           :files="entryStore.currentEntry?.files || []"
           :activeFileId="entryStore.activeFile?.id ?? null"
@@ -221,7 +182,7 @@
       </main>
 
       <!-- TOC Sidebar (desktop) -->
-      <aside v-if="showTocSidebar" class="toc-sidebar">
+      <aside v-if="isTocOpen && isMarkdown && tocHeadings.length > 0" class="toc-sidebar">
         <TocNav
           :headings="tocHeadings"
           :activeId="null"
@@ -230,47 +191,47 @@
       </aside>
     </div>
 
-    <!-- Mobile Actions -->
-    <div class="mobile-actions" v-if="entryStore.currentEntry">
-      <div class="mobile-info">
-        <router-link
-          v-if="entryStore.currentEntry.username"
-          :to="`/users/${entryStore.currentEntry.username}`"
-          class="mobile-owner"
-        >@{{ entryStore.currentEntry.username }}</router-link>
-        <span v-if="isExpiredButActive" class="mobile-expired-indicator">expired</span>
-        <span v-else-if="entryStore.currentEntry.status === 'archived'" class="mobile-archived-indicator">archived</span>
-      </div>
-      <div class="mobile-buttons">
-        <BaseButton
-          v-if="entryStore.isMultiFile"
-          size="small"
-          variant="secondary"
-          class="menu-btn"
-          @click="showFileDrawer = true"
-        >
-          Files ({{ entryStore.currentEntry?.files.length || 0 }})
-        </BaseButton>
-        <BaseButton
-          v-if="entryStore.canWrap"
-          size="small"
-          :variant="entryStore.wrapEnabled ? 'primary' : 'secondary'"
-          @click="entryStore.toggleWrap()"
-        >
+    <!-- Mobile meta-tags-bar (scroll-hide) -->
+    <div v-if="!isDesktop" ref="metaTagsSentinel" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
+      <router-link
+        v-if="entryStore.currentEntry?.username"
+        :to="`/users/${entryStore.currentEntry.username}`"
+        class="owner-link"
+      >@{{ entryStore.currentEntry.username }}</router-link>
+      <span class="meta-dot"></span>
+      <span>{{ relativeTime }}</span>
+      <span class="meta-sep"></span>
+      <span>{{ currentEntry?.readStats?.totalCount ?? 0 }} reads</span>
+      <span class="meta-dot"></span>
+      <span :class="['status-tag', entryStore.currentEntry?.isPublic ? 'public' : 'private']">
+        {{ entryStore.currentEntry?.isPublic ? 'Public' : 'Private' }}
+      </span>
+      <template v-for="tag in currentEntry?.tags ?? []" :key="tag">
+        <span class="meta-dot"></span>
+        <span class="meta-tag">{{ tag }}</span>
+      </template>
+    </div>
+
+    <!-- Mobile bottom bar -->
+    <div v-if="!isDesktop && entryStore.currentEntry" class="mobile-bottom-bar">
+      <button v-if="entryStore.isMultiFile" class="files-btn" @click="showFileDrawer = true" aria-label="Files">
+        <FolderIcon :size="14" /> Files <span class="badge">{{ currentEntry?.files.length ?? 0 }}</span>
+      </button>
+      <div class="flex-spacer"></div>
+      <template v-if="isMarkdown && tocHeadings.length > 0">
+        <button class="bottom-btn primary" @click="showTocDrawer = true" aria-label="Table of Contents">
+          <ListIcon :size="14" /> TOC
+        </button>
+      </template>
+      <template v-else-if="!isBinary">
+        <button v-if="entryStore.canWrap" :class="['bottom-btn', entryStore.wrapEnabled && 'primary']" @click="entryStore.toggleWrap()">
           Wrap
-        </BaseButton>
-        <BaseButton
-          v-if="entryStore.canCopy"
-          size="small"
-          variant="secondary"
-          :title="isHtml ? 'Copy HTML source' : 'Copy'"
-          :aria-label="isHtml ? 'Copy HTML source' : 'Copy'"
-          @click="copyContent"
-        >
-          Copy
-        </BaseButton>
-        <OverflowMenu :items="overflowItems" />
-      </div>
+        </button>
+        <button v-if="entryStore.canCopy" class="bottom-btn primary" @click="copyContent" aria-label="Copy">
+          <CopyIcon :size="14" /> Copy
+        </button>
+      </template>
+      <OverflowMenu :items="overflowItems" variant="sheet" />
     </div>
 
     <!-- File Drawer (mobile) -->
@@ -349,8 +310,8 @@ import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
+import { useThemeStore } from '@/stores/theme'
 import { useToast } from '@/composables/useToast'
-import BaseButton from '@/components/BaseButton.vue'
 import OverflowMenu from '@/components/OverflowMenu.vue'
 import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
 import CodeViewer from '@/components/CodeViewer.vue'
@@ -363,7 +324,6 @@ import type { PathMap } from '@/utils/path-map'
 import { formatExpiresIn, isExpired } from '@/utils/expires'
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
-import BaseTag from '@/components/BaseTag.vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
@@ -372,6 +332,13 @@ import ShareDialog from '@/components/ShareDialog.vue'
 import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
 import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
 import type { TocHeading } from '@/types'
+import {
+  ChevronLeft as ChevronLeftIcon,
+  Folder as FolderIcon,
+  List as ListIcon,
+  Copy as CopyIcon,
+  Share2 as Share2Icon,
+} from 'lucide-vue-next'
 
 const props = defineProps<{
   slug: string
@@ -391,6 +358,22 @@ const showTocDrawer = ref(false)
 const showShareDialog = ref(false)
 const shareErrorState = ref(false)
 const showExpiresInDialog = ref(false)
+
+const isFileTreeOpen = ref(false)
+const isTocOpen = ref(false)
+
+const isDesktop = ref(window.innerWidth >= 768)
+let resizeTimer = 0
+function handleResize() {
+  if (resizeTimer) cancelAnimationFrame(resizeTimer)
+  resizeTimer = requestAnimationFrame(() => {
+    isDesktop.value = window.innerWidth >= 768
+  })
+}
+
+const metaTagsSentinel = ref<HTMLElement>()
+const metaTagsHidden = ref(false)
+let tagsObserver: IntersectionObserver | null = null
 
 const isShareAccess = computed(() => {
   if (!currentEntry.value) return false
@@ -494,26 +477,6 @@ async function handleExpiresInUpdated() {
   toast.show('Entry updated', 'success')
 }
 
-const headerTagsRef = ref<HTMLElement>()
-const visibleTagCount = ref(0)
-const headerHidden = ref(false)
-let scrollRafId = 0
-
-const visibleTags = computed(() => {
-  const tags = currentEntry.value?.tags ?? []
-  const count = visibleTagCount.value
-  if (count > 0 && count < tags.length) {
-    return tags.slice(0, count)
-  }
-  return tags
-})
-
-const remainingTagCount = computed(() => {
-  const tags = currentEntry.value?.tags ?? []
-  const visible = visibleTags.value.length
-  return Math.max(0, tags.length - visible)
-})
-
 const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
 
@@ -549,52 +512,77 @@ function handleNavigateFile(fileId: number) {
   }
 }
 
-const showFileSidebar = computed(() => {
-  return entryStore.isMultiFile
-})
-
-const showTocSidebar = computed(() => {
-  return isMarkdown.value && tocHeadings.value.length > 0
-})
-
-const showTocButton = computed(() => {
-  return isMarkdown.value && tocHeadings.value.length > 0
+const isBinary = computed(() => {
+  return activeFile.value?.isBinary ?? false
 })
 
 const overflowItems = computed(() => {
   const items: OverflowMenuItem[] = []
+  const themeStore = useThemeStore()
+  // Group 1: Display
+  items.push({
+    label: themeStore.theme === 'dark' ? 'Light theme' : 'Dark theme',
+    icon: themeStore.theme === 'dark' ? 'sun' : 'moon',
+    hint: 'Tap to toggle',
+    divider: false,
+    action: () => themeStore.toggle(),
+  })
+  // Group 2: Owner-only
   if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
     items.push({
       label: currentEntry.value.isPublic ? 'Make Private' : 'Make Public',
-      icon: currentEntry.value.isPublic ? '🔒' : '🌐',
+      icon: currentEntry.value.isPublic ? 'lock' : 'globe',
+      hint: currentEntry.value.isPublic ? 'Currently Public' : 'Currently Private',
+      divider: true,
       action: handleToggleVisibility,
     })
     if (showShareButton.value) {
-      items.push({ label: 'Share', action: () => { showShareDialog.value = true } })
+      items.push({
+        label: 'Share',
+        icon: 'share-2',
+        hint: 'Create share link',
+        action: () => { showShareDialog.value = true },
+      })
     }
-    items.push({
-      label: 'Delete',
-      icon: '🗑️',
-      variant: 'danger',
-      action: confirmDeleteEntry,
-    })
   }
+  // Group 3: File actions
   if (entryStore.canDownload) {
-    items.push({ label: 'Download', action: downloadFile })
+    items.push({
+      label: 'Download',
+      icon: 'download',
+      hint: activeFile.value?.filename ?? '',
+      divider: !!(currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)),
+      action: downloadFile,
+    })
   }
   if (currentEntry.value) {
     items.push({
       label: 'Raw',
+      icon: 'file-text',
+      hint: 'Structured JSON',
       href: `/api/v1/entries/${currentEntry.value.slug}/raw`,
       target: '_blank',
       rel: 'noopener noreferrer',
     })
   }
   if (entryStore.canPack && currentEntry.value) {
-    items.push({ label: 'Pack', action: downloadPack })
+    items.push({
+      label: 'Download as Pack',
+      icon: 'package',
+      hint: `${currentEntry.value.files.length} files`,
+      action: downloadPack,
+    })
   }
-  if (showTocButton.value) {
-    items.push({ label: 'TOC', action: () => { showTocDrawer.value = true } })
+  // Group 4: Danger
+  if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
+    items.push({
+      label: 'Delete entry',
+      icon: 'trash-2',
+      hint: 'Permanently',
+      variant: 'danger',
+      divider: true,
+      action: confirmDeleteEntry,
+    })
   }
   return items
 })
@@ -669,51 +657,6 @@ async function downloadPack() {
   }
 }
 
-function recomputeOverflow() {
-  const container = headerTagsRef.value
-  if (!container) return
-  const tags = currentEntry.value?.tags ?? []
-  if (tags.length === 0) {
-    visibleTagCount.value = 0
-    return
-  }
-  const containerWidth = container.clientWidth
-  let accumulatedWidth = 0
-  let visible = 0
-  const children = Array.from(container.children) as HTMLElement[]
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]
-    if (child.classList.contains('tag-overflow')) break
-    accumulatedWidth += child.offsetWidth + 4
-    if (accumulatedWidth > containerWidth) break
-    visible++
-  }
-  visibleTagCount.value = visible
-}
-
-function checkScrollPosition() {
-  if (window.innerWidth > 768) return
-  // Scroll container is .markdown-viewer (overflow:auto), not window
-  const scrollEl = document.querySelector('.entry-detail .markdown-viewer')
-  const scrollTop = scrollEl ? scrollEl.scrollTop : (window.scrollY || document.documentElement.scrollTop)
-  if (scrollTop > 50) {
-    headerHidden.value = true
-  } else if (scrollTop <= 20) {
-    headerHidden.value = false
-  }
-}
-
-let scrollContainer: EventTarget | null = null
-
-function onScroll() {
-  if (window.innerWidth > 768) return
-  if (scrollRafId) return
-  scrollRafId = requestAnimationFrame(() => {
-    scrollRafId = 0
-    checkScrollPosition()
-  })
-}
-
 function extractHeadings(content: string): TocHeading[] {
   const headings: TocHeading[] = []
   const lines = content.split('\n')
@@ -758,20 +701,23 @@ onMounted(async () => {
     router.replace({ path: route.path, query: {} })
   }
   document.addEventListener('keydown', handleZenKeydown)
+  window.addEventListener('resize', handleResize)
   await nextTick()
-  recomputeOverflow()
-  checkScrollPosition()
-  // Attach scroll listener to .markdown-viewer (not window — inner scroll container)
-  scrollContainer = document.querySelector('.entry-detail .markdown-viewer') || window
-  scrollContainer?.addEventListener('scroll', onScroll, { passive: true })
-  window.addEventListener('resize', recomputeOverflow)
+  // Set up IntersectionObserver for meta-tags-bar scroll hide
+  if (metaTagsSentinel.value) {
+    tagsObserver = new IntersectionObserver(
+      ([entry]) => { metaTagsHidden.value = !entry.isIntersecting },
+      { threshold: 0 }
+    )
+    tagsObserver.observe(metaTagsSentinel.value)
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleZenKeydown)
-  if (scrollContainer) scrollContainer.removeEventListener('scroll', onScroll)
-  window.removeEventListener('resize', recomputeOverflow)
-  if (scrollRafId) cancelAnimationFrame(scrollRafId)
+  window.removeEventListener('resize', handleResize)
+  if (resizeTimer) cancelAnimationFrame(resizeTimer)
+  if (tagsObserver) tagsObserver.disconnect()
 })
 
 watch(() => props.slug, (newSlug) => {
@@ -788,145 +734,33 @@ watch(() => entryStore.currentEntry, async (entry) => {
     link.setAttribute('data-peekview-raw', '1')
     document.head.appendChild(link)
   }
-  await nextTick()
-  recomputeOverflow()
 }, { immediate: true })
 </script>
 
 <style scoped>
 @import '@/styles/layout.css';
 
-/* Mobile header scroll shrink — inlined from layout.css (scoped fix) */
-@media (max-width: 768px) {
-  .detail-header {
-    flex-wrap: wrap;
-  }
-
-  .title-group {
-    flex-basis: calc(100% - 28px - var(--space-3));
-    max-width: calc(100% - 28px - var(--space-3));
-  }
-
-  .header-right {
-    flex-basis: 100%;
-    justify-content: flex-end;
-    padding-top: 0;
-    gap: var(--space-1);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-
-  .detail-header .header-tags {
-    max-height: 2.5em;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
-    opacity: 1;
-  }
-
-  .detail-header.header-tags-hidden .header-tags {
-    max-height: 0;
-    opacity: 0;
-    margin: 0;
-    overflow: hidden;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .detail-header .header-tags {
-    transition: none;
-  }
-}
-
-.header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
-.header-meta-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.header-actions-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.owner-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .entry-owner-link {
-  font-size: var(--font-xs);
+  font-size: 12px;
   color: var(--c-accent);
   text-decoration: none;
+  font-family: var(--font-mono);
 }
 
 .entry-owner-link:hover {
   text-decoration: underline;
 }
 
-.entry-time {
-  font-size: var(--font-xs);
-  color: var(--c-text-secondary);
-  cursor: default;
-}
-
 .title-group {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   min-width: 0;
 }
 
-.header-tags {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.tag-overflow {
-  display: inline-flex;
-  align-items: center;
-  background: var(--c-tag-bg);
-  color: var(--c-text-tertiary);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: var(--font-xs);
-  font-family: var(--font-mono);
-}
-
-.entry-expires {
-  font-size: var(--font-xs);
-  color: var(--c-text-secondary);
-}
-
-.entry-archived-badge {
-  display: inline-flex;
-}
-
-.expires-edit-btn {
-  background: none;
-  border: none;
-  color: var(--c-accent);
-  font-size: var(--font-xs);
-  cursor: pointer;
-  padding: 0 0 0 var(--space-1);
-  text-decoration: underline;
-}
-
-.expires-edit-btn:hover {
-  color: var(--c-accent-secondary);
+.title-group .title {
+  margin: 0;
+  padding: 0;
 }
 
 .expired-warning-banner {
@@ -995,20 +829,6 @@ watch(() => entryStore.currentEntry, async (entry) => {
   opacity: 0.9;
 }
 
-.entry-read-stats {
-  font-size: var(--font-xs);
-  color: var(--c-text-secondary);
-}
-
-.entry-expires-never {
-  color: var(--c-text-tertiary);
-}
-
-.entry-expires-expired {
-  color: var(--c-warning);
-  font-weight: 600;
-}
-
 .share-watermark {
   position: fixed;
   bottom: 16px;
@@ -1030,50 +850,14 @@ watch(() => entryStore.currentEntry, async (entry) => {
   padding: 40px 16px;
 }
 
-.mobile-info {
-  display: flex;
+.meta-tag {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-right: auto;
-  min-width: 0;
-}
-
-.mobile-owner {
-  font-size: var(--font-xs);
-  color: var(--c-accent);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.mobile-owner:hover {
-  text-decoration: underline;
-}
-
-.mobile-expired-indicator {
-  font-size: var(--font-xs);
-  color: var(--c-warning);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.mobile-archived-indicator {
-  font-size: var(--font-xs);
+  background: var(--c-tag-bg);
   color: var(--c-text-tertiary);
-  white-space: nowrap;
-}
-
-.mobile-buttons {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
 }
 </style>
-
-<style>
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
 </style>

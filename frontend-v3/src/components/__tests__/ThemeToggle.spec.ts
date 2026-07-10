@@ -21,16 +21,16 @@ describe('ThemeToggle', () => {
     mocks.toggle.mockReset()
   })
 
-  it('light 模式显示 🌙', () => {
+  it('light 模式显示 SVG icon', () => {
     mocks.currentTheme = 'light'
     const wrapper = mount(ThemeToggle)
-    expect(wrapper.find('button').text()).toContain('🌙')
+    expect(wrapper.find('button').html()).toContain('<svg')
   })
 
-  it('dark 模式显示 ☀️', () => {
+  it('dark 模式显示 SVG icon', () => {
     mocks.currentTheme = 'dark'
     const wrapper = mount(ThemeToggle)
-    expect(wrapper.find('button').text()).toContain('☀️')
+    expect(wrapper.find('button').html()).toContain('<svg')
   })
 
   it('点击 button 调用 toggle', async () => {
