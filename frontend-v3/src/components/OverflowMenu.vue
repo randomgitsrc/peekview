@@ -9,7 +9,8 @@
       :aria-expanded="isOpen"
       :aria-label="variant === 'sheet' ? 'More actions' : 'More'"
     >
-      <MoreHorizontalIcon :size="18" />
+      <MoreHorizontalIcon :size="16" />
+      <ChevronDownIcon :size="12" />
     </button>
 
     <!-- Dropdown variant -->
@@ -99,6 +100,7 @@ import { ref, onMounted, onUnmounted, h } from 'vue'
 import {
   MoreHorizontal as MoreHorizontalIcon,
   X as XIcon,
+  ChevronDown as ChevronDownIcon,
   Moon as MoonIcon,
   Sun as SunIcon,
   Globe as GlobeIcon,
@@ -239,7 +241,11 @@ onUnmounted(() => {
 }
 
 .overflow-item:hover {
-  background: var(--bg-secondary);
+  background: var(--c-border);
+}
+.overflow-item:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
 }
 
 .overflow-item.item-danger {
@@ -358,7 +364,11 @@ onUnmounted(() => {
 }
 
 .sheet-item:hover {
-  background: var(--bg-secondary);
+  background: var(--c-border);
+}
+.sheet-item:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
 }
 
 .sheet-item.item-danger {

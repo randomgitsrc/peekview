@@ -27,6 +27,7 @@
             :aria-expanded="isFileTreeOpen"
           >
             <FolderIcon :size="16" />
+            <span class="tooltip">Toggle file tree</span>
           </button>
           <button
             v-if="isMarkdown && tocHeadings.length > 0"
@@ -36,6 +37,7 @@
             :aria-expanded="isTocOpen"
           >
             <ListIcon :size="16" />
+            <span class="tooltip">Table of Contents</span>
           </button>
           <span class="action-sep"></span>
           <button
@@ -45,6 +47,7 @@
             aria-label="Copy"
           >
             <CopyIcon :size="16" />
+            <span class="tooltip">Copy</span>
           </button>
           <button
             v-if="showShareButton"
@@ -53,6 +56,7 @@
             aria-label="Share"
           >
             <Share2Icon :size="16" />
+            <span class="tooltip">Share</span>
           </button>
           <span class="action-sep"></span>
           <OverflowMenu :items="overflowItems" variant="dropdown" />
