@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>s2 — Mobile: Dynamic Bottom Bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#0a0d13;--c-surface:#121822;--c-surface-lower:#0e131b;
+  --c-border:rgba(255,255,255,.08);--c-border-strong:rgba(255,255,255,.13);
+  --c-text:#e9eef4;--c-text-secondary:#9aa7b4;--c-text-tertiary:#6a7682;
+  --c-accent:#4d8dff;--c-accent-secondary:#76a6ff;
+  --c-success:#7ee787;--c-warning:#febc2e;--c-error:#ff7b72;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code','SF Mono',Consolas,monospace;
+}
+body{background:#060810;color:var(--c-text);font-family:var(--font-ui);padding:32px 24px;max-width:1200px;margin:0 auto}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:var(--c-text-secondary);margin-bottom:24px;font-family:var(--font-mono);line-height:1.5}
+.sub strong{color:var(--c-accent)}
+.nav{margin-bottom:28px;font-family:var(--font-mono);font-size:12px;color:var(--c-text-tertiary)}
+.nav a{color:var(--c-accent);text-decoration:none}
+
+/* ─── Phone frame ─── */
+.phone-frame{width:375px;border-radius:28px;overflow:hidden;border:2px solid var(--c-border-strong);background:var(--c-bg);position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.03),0 24px 80px rgba(0,0,0,.5)}
+.phone-notch{height:32px;background:var(--c-surface);display:flex;align-items:center;justify-content:center}
+.phone-notch span{width:68px;height:4px;border-radius:2px;background:var(--c-text-tertiary);opacity:.3}
+.phone-home-indicator{height:5px;display:flex;align-items:center;justify-content:center;background:var(--c-surface);padding:6px 0}
+.phone-home-indicator span{width:134px;height:5px;border-radius:3px;background:var(--c-text-tertiary);opacity:.2}
+
+.desktop-compare{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.desktop-compare .phone-label{text-align:center;margin-bottom:8px;font-size:12px;font-family:var(--font-mono);color:var(--c-text-tertiary)}
+.desktop-compare .phone-label strong{color:var(--c-text-secondary)}
+
+/* ─── Sticky header ─── */
+.sticky-header{height:52px;background:rgba(18,24,34,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--c-border);display:flex;align-items:center;padding:0 10px;gap:8px;position:sticky;top:0;z-index:10}
+.back-btn{width:34px;height:34px;border-radius:8px;border:none;background:transparent;color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0}
+.back-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sticky-title{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── Content area ─── */
+.mobile-content{padding:16px;position:relative}
+
+/* Page title (in content, full) */
+.page-title{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:8px;letter-spacing:-.02em}
+
+/* Meta + tags bar — scroll-hide zone */
+.meta-tags-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:12px;color:var(--c-text-tertiary);font-family:var(--font-mono);transition:opacity .2s}
+.meta-tags-bar .owner-link{color:var(--c-accent);text-decoration:none;font-weight:500;font-size:12px}
+.meta-dot{width:3px;height:3px;border-radius:50%;background:var(--c-text-tertiary);flex-shrink:0}
+.mobile-tag{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(77,141,255,.1);color:var(--c-accent-secondary);font-family:var(--font-mono)}
+.mobile-status{font-size:10px;padding:2px 7px;border-radius:4px}
+.mobile-status.public{background:rgba(126,231,135,.12);color:var(--c-success)}
+.mobile-status.private{background:rgba(255,114,207,.12);color:#ff72cf}
+
+/* Files count badge (in bottom bar) */
+.files-btn-mobile{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 10px 0 8px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);font-size:12px;font-weight:500;font-family:var(--font-ui);cursor:default;transition:all .12s;white-space:nowrap}
+.files-btn-mobile svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.files-btn-mobile:hover{background:var(--c-border);color:var(--c-text);border-color:var(--c-border-strong)}
+.files-btn-mobile .files-count{font-family:var(--font-mono);font-size:10px;color:var(--c-text-tertiary);background:var(--c-border);padding:1px 6px;border-radius:4px}
+
+/* Content lines */
+.content-block{padding:0;margin-bottom:12px}
+.content-block .line{height:11px;border-radius:4px;background:var(--c-border);margin-bottom:9px}
+.content-block .line:nth-child(1){width:92%}
+.content-block .line:nth-child(2){width:78%}
+.content-block .line:nth-child(3){width:85%}
+.content-block .line:nth-child(4){width:62%}
+.content-block > .line:last-child{margin-bottom:0}
+
+/* Scroll hint */
+.scroll-hint{display:flex;align-items:center;gap:6px;margin:16px 0 20px;padding:10px 14px;border-radius:8px;background:var(--c-surface-lower);border:1px dashed var(--c-border);font-size:12px;color:var(--c-text-tertiary);font-family:var(--font-mono)}
+.scroll-hint svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.5}
+.scroll-hint code{color:var(--c-accent-secondary);background:rgba(77,141,255,.08);padding:1px 6px;border-radius:3px}
+
+/* ─── Bottom bar ─── */
+.bottom-bar{height:48px;border-top:1px solid var(--c-border);background:var(--c-surface);display:flex;align-items:center;padding:0 8px;gap:2px}
+.meta-sep{width:1px;height:14px;background:var(--c-border-strong);flex-shrink:0;margin:0 2px}
+.bottom-btn{height:38px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);font-family:var(--font-ui);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:default;transition:all .12s}
+.bottom-btn:hover{background:var(--c-border);color:var(--c-text);border-color:var(--c-border-strong)}
+.bottom-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.bottom-btn.primary{background:rgba(77,141,255,.12);color:var(--c-accent);border-color:rgba(77,141,255,.2)}
+.bottom-btn.primary:hover{background:rgba(77,141,255,.2)}
+.overflow-btn-mobile{width:38px;height:38px;border-radius:8px;border:none;background:transparent;color:var(--c-text-secondary);display:flex;align-items:center;justify-content:center;cursor:default;transition:all .12s}
+.overflow-btn-mobile:hover{background:var(--c-border);color:var(--c-text)}
+.overflow-btn-mobile svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ─── FAB ─── */
+
+
+/* ─── File type badges for bottom bar ─── */
+.file-type-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--c-surface-lower);color:var(--c-text-tertiary);margin-left:auto}
+.file-type-badge code{color:var(--c-accent-secondary)}
+
+/* ─── Legend ─── */
+.legend{display:flex;gap:20px;margin-bottom:24px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--c-text-secondary);font-family:var(--font-mono)}
+.legend-color{width:12px;height:12px;border-radius:3px}
+.legend-color.md{background:rgba(126,231,135,.2);border:1px solid rgba(126,231,135,.3)}
+.legend-color.code{background:rgba(77,141,255,.2);border:1px solid rgba(77,141,255,.3)}
+.legend-color.bin{background:rgba(255,123,114,.15);border:1px solid rgba(255,123,114,.25)}
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="index.html">&larr; Index</a></div>
+
+<h1>s2 &mdash; Mobile: Dynamic Bottom Bar</h1>
+<p class="sub">
+  <strong>底部栏按文件类型动态变化</strong>：.md → [TOC] [...], 文本/代码 → [Wrap] [Copy] [...], 其他 → [...]<br>
+  <strong>Files 按钮</strong>：回到底部栏左侧，不挤占顶部空间<br>
+  <strong>User + Tags</strong>：在内容区顶部（meta-tags-bar），随滚动可隐藏<br>
+  <strong>ThemeToggle</strong>：移到 overflow [...] 底部弹窗中，不占屏幕空间
+</p>
+
+<div class="legend">
+  <span class="legend-item"><span class="legend-color md"></span> .md file</span>
+  <span class="legend-item"><span class="legend-color code"></span> text/code file</span>
+  <span class="legend-item"><span class="legend-color bin"></span> other file (image/binary)</span>
+</div>
+
+<div class="desktop-compare">
+
+<!-- ═══ Phone 1: .md file with TOC ═══ -->
+<div>
+  <div class="phone-label"><strong>.md file</strong> — shows <strong>TOC</strong> + [...]</div>
+  <div class="phone-frame">
+    <div class="phone-notch"><span></span></div>
+    <div class="sticky-header">
+      <span class="back-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></span>
+      <span class="sticky-title">Architecture Decision Records</span>
+    </div>
+    <div class="mobile-content">
+      <div class="page-title">Architecture Decision Records — Q3 2026</div>
+      <div class="meta-tags-bar">
+        <a class="owner-link">@alice</a><span class="meta-dot"></span><span>3h ago</span><span class="meta-sep"></span><span>42 reads</span><span class="meta-dot"></span><span class="mobile-status public">Public</span><span class="meta-dot"></span><span class="mobile-tag">architecture</span><span class="mobile-tag">decisions</span><span class="mobile-tag">backend</span>
+      </div>
+      <div class="content-block">
+        <div class="line" style="width:78%"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line" style="width:35%;height:7px;background:rgba(77,141,255,.2);border-radius:4px"></div>
+        <div class="line"></div>
+        <div class="line" style="width:65%"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line" style="width:45%;height:7px;background:rgba(77,141,255,.2);border-radius:4px"></div>
+        <div class="line"></div>
+        <div class="line" style="width:88%"></div>
+        <div class="line"></div>
+        <div class="line" style="width:55%"></div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <span class="files-btn-mobile"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Files <span class="files-count">5</span></span>
+      <span style="flex:1"></span>
+      <span class="bottom-btn primary"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> TOC</span>
+      <span class="overflow-btn-mobile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div class="phone-home-indicator"><span></span></div>
+  </div>
+</div>
+
+<!-- ═══ Phone 2: text/code file with Wrap + Copy ═══ -->
+<div>
+  <div class="phone-label"><strong>text/code file</strong> — shows <strong>Wrap</strong> + <strong>Copy</strong> + [...]</div>
+  <div class="phone-frame">
+    <div class="phone-notch"><span></span></div>
+    <div class="sticky-header">
+      <span class="back-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></span>
+      <span class="sticky-title">app.ts — main entry point</span>
+    </div>
+    <div class="mobile-content">
+      <div class="page-title">app.ts</div>
+      <div class="meta-tags-bar">
+        <a class="owner-link">@bob</a><span class="meta-dot"></span><span>5d ago</span><span class="meta-dot"></span><span>356 reads</span><span class="meta-dot"></span><span class="mobile-status public">Public</span><span class="meta-dot"></span><span class="mobile-tag">typescript</span><span class="mobile-tag">frontend</span>
+      </div>
+      <div class="content-block">
+        <div class="line"></div>
+        <div class="line" style="width:72%"></div>
+        <div class="line" style="width:35%;height:7px;background:rgba(77,141,255,.2);border-radius:4px"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line" style="width:90%"></div>
+        <div class="line"></div>
+        <div class="line" style="width:58%"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line" style="width:80%"></div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <span class="files-btn-mobile"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Files <span class="files-count">3</span></span>
+      <span style="flex:1"></span>
+      <span class="bottom-btn"><svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg> Wrap</span>
+      <span class="bottom-btn primary"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</span>
+      <span class="overflow-btn-mobile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div class="phone-home-indicator"><span></span></div>
+  </div>
+</div>
+
+<!-- ═══ Phone 3: other file (binary/image) — only [...] ═══ -->
+<div>
+  <div class="phone-label"><strong>other file</strong> (image/binary) — shows only <strong>[...]</strong></div>
+  <div class="phone-frame">
+    <div class="phone-notch"><span></span></div>
+    <div class="sticky-header">
+      <span class="back-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></span>
+      <span class="sticky-title">screenshot.png</span>
+    </div>
+    <div class="mobile-content">
+      <div class="page-title">screenshot.png</div>
+      <div class="meta-tags-bar">
+        <a class="owner-link">@alice</a><span class="meta-dot"></span><span>1h ago</span><span class="meta-dot"></span><span>8 reads</span><span class="meta-dot"></span><span class="mobile-status private">Private</span>
+      </div>
+      <div style="width:100%;height:200px;border-radius:8px;background:linear-gradient(135deg,var(--c-surface-lower),var(--c-surface));border:1px solid var(--c-border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--c-text-tertiary);font-family:var(--font-mono)">
+        <svg viewBox="0 0 24 24" style="width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin-right:8px;opacity:.4"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Image preview
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <span class="files-btn-mobile"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Files <span class="files-count">2</span></span>
+      <span style="flex:1"></span>
+      <span class="overflow-btn-mobile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div class="phone-home-indicator"><span></span></div>
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>

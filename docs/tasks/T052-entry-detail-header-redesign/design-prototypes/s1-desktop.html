@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>s1 — Desktop Compact 2-Row Header</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#0a0d13;--c-surface:#121822;--c-surface-lower:#0e131b;
+  --c-border:rgba(255,255,255,.08);--c-border-strong:rgba(255,255,255,.13);
+  --c-text:#e9eef4;--c-text-secondary:#9aa7b4;--c-text-tertiary:#6a7682;
+  --c-accent:#4d8dff;--c-accent-secondary:#76a6ff;
+  --c-success:#7ee787;--c-warning:#febc2e;--c-error:#ff7b72;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code','SF Mono',Consolas,monospace;
+}
+body{background:#060810;color:var(--c-text);font-family:var(--font-ui);padding:32px 24px;max-width:1200px;margin:0 auto}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:var(--c-text-secondary);margin-bottom:24px;font-family:var(--font-mono);line-height:1.5}
+.sub strong{color:var(--c-accent)}
+.nav{margin-bottom:28px;font-family:var(--font-mono);font-size:12px;color:var(--c-text-tertiary)}
+.nav a{color:var(--c-accent);text-decoration:none}
+
+/* ─── Viewport chrome ─── */
+.viewport{border-radius:12px;overflow:hidden;border:1px solid var(--c-border-strong);background:var(--c-bg);margin-bottom:20px}
+.chrome-bar{height:36px;background:var(--c-surface-lower);border-bottom:1px solid var(--c-border);display:flex;align-items:center;padding:0 14px;gap:8px}
+.chrome-dots{display:flex;gap:6px}
+.chrome-dots span{width:9px;height:9px;border-radius:50%}
+.chrome-dots span:nth-child(1){background:#ff5f57}
+.chrome-dots span:nth-child(2){background:#febc2e}
+.chrome-dots span:nth-child(3){background:#28c840}
+.chrome-title{font-size:11px;color:var(--c-text-tertiary);margin-left:8px;font-family:var(--font-mono)}
+.chrome-badge{font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--font-mono);margin-left:auto}
+.chrome-badge.owner{background:rgba(126,231,135,.15);color:var(--c-success)}
+.chrome-badge.guest{background:rgba(255,255,255,.08);color:var(--c-text-tertiary)}
+.chrome-badge.long{background:rgba(254,188,46,.15);color:var(--c-warning)}
+
+/* ─── Detail header ─── */
+.detail-header{padding:12px 20px 10px;border-bottom:1px solid var(--c-border);background:var(--c-surface)}
+.logo{width:28px;height:28px;border-radius:6px;background:var(--c-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:13px}
+
+/* Title row */
+.title-row{display:flex;align-items:center;gap:10px}
+.title-group{flex:1;min-width:0}
+.title-group h1{font-size:16px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--c-text)}
+
+/* Action buttons — icon-only, compact */
+.actions-area{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.icon-btn,.toggle-btn{width:32px;height:32px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);cursor:default;display:flex;align-items:center;justify-content:center;position:relative;transition:all .15s}
+.icon-btn:hover,.toggle-btn:hover{background:var(--c-border);color:var(--c-text);border-color:var(--c-border-strong)}
+.icon-btn svg,.toggle-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn .tooltip,.toggle-btn .tooltip{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--c-bg);color:var(--c-text);font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--c-border-strong);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:10}
+.icon-btn:hover .tooltip,.toggle-btn:hover .tooltip{opacity:1}
+.toggle-btn.active{background:rgba(77,141,255,.12);color:var(--c-accent-secondary);border-color:rgba(77,141,255,.2)}
+.icon-btn:hover .tooltip{opacity:1}
+
+/* Overflow toggle */
+.overflow-toggle{display:flex;align-items:center;gap:2px;padding:0 8px 0 6px;height:32px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);cursor:default;font-size:12px;font-weight:500;font-family:var(--font-ui);transition:all .15s}
+.overflow-toggle:hover{background:var(--c-border);color:var(--c-text);border-color:var(--c-border-strong)}
+.overflow-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.overflow-toggle .arrow-down{margin-left:1px}
+.overflow-toggle .arrow-down svg{width:12px;height:12px}
+
+/* ThemeToggle */
+.theme-btn{width:32px;height:32px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);cursor:default;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-left:2px}
+.theme-btn:hover{background:var(--c-border);color:var(--c-warning);border-color:var(--c-border-strong)}
+.theme-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* Separator */
+.action-sep{width:1px;height:20px;background:var(--c-border);margin:0 4px;flex-shrink:0}
+
+/* Meta row */
+.meta-row{display:flex;align-items:center;gap:8px;padding-left:38px;margin-top:5px;flex-wrap:wrap;font-size:12px;color:var(--c-text-tertiary);font-family:var(--font-mono);line-height:1}
+.meta-dot{width:4px;height:4px;border-radius:50%;background:var(--c-text-tertiary);flex-shrink:0;opacity:.35}
+.meta-sep{width:1px;height:14px;background:var(--c-border-strong);flex-shrink:0}
+.meta-row .owner-link{color:var(--c-accent);text-decoration:none;font-weight:500}
+.meta-row .owner-link:hover{text-decoration:underline}
+.status-tag{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:500;cursor:default}
+.status-tag.public{background:rgba(126,231,135,.12);color:var(--c-success)}
+.status-tag.private{background:rgba(255,114,207,.12);color:#ff72cf;border:1px solid rgba(255,114,207,.2)}
+.status-tag.expires{background:rgba(77,141,255,.12);color:var(--c-accent-secondary)}
+.status-tag.expired{background:rgba(254,188,46,.12);color:var(--c-warning)}
+.status-tag.never{background:rgba(255,255,255,.06);color:var(--c-text-tertiary)}
+.meta-tag{font-size:11px;padding:2px 7px;border-radius:4px;background:rgba(77,141,255,.1);color:var(--c-accent-secondary);font-family:var(--font-mono)}
+
+/* ─── Content placeholder ─── */
+.content-area{padding:20px;min-height:180px}
+.content-area .line{height:12px;border-radius:4px;background:var(--c-border);margin-bottom:10px}
+.content-area .line:nth-child(1){width:92%}
+.content-area .line:nth-child(2){width:78%}
+.content-area .line:nth-child(3){width:85%}
+.content-area .line:nth-child(4){width:62%}
+.content-area .line:nth-child(5){width:48%}
+
+/* ─── Overflow dropdown ─── */
+.overflow-menu{position:relative;display:inline-block}
+.overflow-dropdown{position:absolute;top:calc(100% + 4px);right:0;min-width:200px;background:var(--c-bg);border:1px solid var(--c-border-strong);border-radius:10px;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:50;display:none}
+.overflow-dropdown.open{display:block}
+.overflow-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;color:var(--c-text);font-size:13px;font-weight:500;cursor:default;transition:background .1s}
+.overflow-item:hover{background:var(--c-border)}
+.overflow-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.overflow-item .item-label{flex:1}
+.overflow-item.danger{color:var(--c-error)}
+.overflow-item.danger:hover{background:rgba(255,123,114,.1)}
+.overflow-divider{height:1px;background:var(--c-border);margin:4px 8px}
+
+/* ─── Specs callout ─── */
+.specs{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.spec{background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:12px 16px;flex:1;min-width:180px}
+.spec .label{font-size:11px;color:var(--c-text-tertiary);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.spec .value{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.spec .value.old{color:var(--c-error);text-decoration:line-through;font-size:16px;margin-right:8px}
+.spec .value.new{color:var(--c-success)}
+.spec .note{font-size:11px;color:var(--c-text-secondary);margin-top:2px;font-family:var(--font-mono)}
+
+/* ─── States grid ─── */
+.states{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.states-full{grid-column:1/-1}
+@media(max-width:900px){.states{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="index.html">&larr; Index</a></div>
+
+<h1>s1 &mdash; Desktop: Compact 2-Row Header</h1>
+<p class="sub">
+  第一行：<strong>Logo + Title + [Copy] [Share] [More▾] [🌙]</strong><br>
+  第二行：<strong>@alice · 3h ago · 42 reads · Public · #api #tutorial</strong>（meta + tags + 状态 inline）<br>
+  总高 ~78px（旧布局 ~116px），icon-only 按钮 32px，overflow 收纳次要操作。
+</p>
+
+<!-- Specs comparison -->
+<div class="specs">
+  <div class="spec">
+    <div class="label">Header Height</div>
+    <div><span class="value old">116px</span><span class="value new">78px</span></div>
+    <div class="note">↓ 33% vertical space saved</div>
+  </div>
+  <div class="spec">
+    <div class="label">Action Buttons</div>
+    <div class="value">3 visible · 6 in overflow</div>
+    <div class="note">icon-only 32px vs labeled 34px</div>
+  </div>
+  <div class="spec">
+    <div class="label">Layout Rows</div>
+    <div><span class="value old">4</span><span class="value new">2</span></div>
+    <div class="note">title + meta (tags/status inline)</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- STATE 1: Short title, owner view -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="viewport">
+  <div class="chrome-bar"><span class="chrome-dots"><span></span><span></span><span></span></span><span class="chrome-title">Short title · Owner view</span><span class="chrome-badge owner">Owner</span></div>
+  <div class="detail-header">
+    <div class="title-row">
+      <div class="logo">P</div>
+      <div class="title-group"><h1>How to use the API</h1></div>
+      <div class="actions-area">
+        <span class="toggle-btn active"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="tooltip">Toggle file tree</span></span>
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="tooltip">Table of Contents</span></span>
+        <span class="action-sep"></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="tooltip">Copy</span></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span class="tooltip">Share</span></span>
+        <span class="action-sep"></span>
+        <div class="overflow-menu">
+          <span class="overflow-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <span class="arrow-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </span>
+          <div class="overflow-dropdown">
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="item-label">Make Private</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="item-label">Download</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span class="item-label">Download as Pack</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="item-label">Table of Contents</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="item-label">Raw</span></div>
+            <div class="overflow-divider"></div>
+            <div class="overflow-item danger"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="item-label">Delete entry</span></div>
+          </div>
+        </div>
+        <span class="theme-btn"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <a class="owner-link">@alice</a><span class="meta-dot"></span><span>3h ago</span><span class="meta-dot"></span><span class="status-tag expires">Expires in 12d</span><span class="meta-sep"></span><span>42 reads</span><span class="meta-dot"></span><span class="status-tag public">Public</span><span class="meta-dot"></span><span class="meta-tag">api</span><span class="meta-tag">tutorial</span>
+    </div>
+  </div>
+  <div class="content-area"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- STATE 2: Long title — no squeeze -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="viewport">
+  <div class="chrome-bar"><span class="chrome-dots"><span></span><span></span><span></span></span><span class="chrome-title">Long title · No squeeze</span><span class="chrome-badge long">STRESS TEST</span></div>
+  <div class="detail-header">
+    <div class="title-row">
+      <div class="logo">P</div>
+      <div class="title-group"><h1>A comprehensive guide to building full-stack web applications with FastAPI, React, and Docker Compose for production deployment</h1></div>
+      <div class="actions-area">
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="tooltip">Toggle file tree</span></span>
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="tooltip">Table of Contents</span></span>
+        <span class="action-sep"></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="tooltip">Copy</span></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span class="tooltip">Share</span></span>
+        <span class="action-sep"></span>
+        <div class="overflow-menu">
+          <span class="overflow-toggle">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <span class="arrow-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </span>
+        </div>
+        <span class="theme-btn"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <a class="owner-link">@alice</a><span class="meta-dot"></span><span>2h ago</span><span class="meta-dot"></span><span class="status-tag expires">Expires in 7d</span><span class="meta-sep"></span><span>128 reads</span><span class="meta-dot"></span><span class="status-tag public">Public</span><span class="meta-dot"></span><span class="meta-tag">fastapi</span><span class="meta-tag">react</span><span class="meta-tag">docker</span><span class="meta-tag">fullstack</span>
+    </div>
+  </div>
+  <div class="content-area"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- STATE 3: Guest view -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="viewport">
+  <div class="chrome-bar"><span class="chrome-dots"><span></span><span></span><span></span></span><span class="chrome-title">Guest view</span><span class="chrome-badge guest">Guest</span></div>
+  <div class="detail-header">
+    <div class="title-row">
+      <div class="logo">P</div>
+      <div class="title-group"><h1>Getting started with Vue 3 Composition API</h1></div>
+      <div class="actions-area">
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="tooltip">Toggle file tree</span></span>
+        <span class="action-sep"></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="tooltip">Copy</span></span>
+        <span class="action-sep"></span>
+        <div class="overflow-menu">
+          <span class="overflow-toggle">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <span class="arrow-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </span>
+        </div>
+        <span class="theme-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+        </div>
+      </div>
+      <div class="meta-row">
+        <a class="owner-link">@bob</a><span class="meta-dot"></span><span>5d ago</span><span class="meta-sep"></span><span>356 reads</span><span class="meta-dot"></span><span class="status-tag public">Public</span><span class="meta-dot"></span><span class="meta-tag">vue</span><span class="meta-tag">frontend</span>
+      </div>
+    </div>
+  </div>
+  <div class="content-area"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- STATE 4: Private entry -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="viewport">
+  <div class="chrome-bar"><span class="chrome-dots"><span></span><span></span><span></span></span><span class="chrome-title">Private entry</span><span class="chrome-badge owner">Owner</span></div>
+  <div class="detail-header">
+    <div class="title-row">
+      <div class="logo">P</div>
+      <div class="title-group"><h1>Internal engineering design docs — Q3 planning</h1></div>
+      <div class="actions-area">
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="tooltip">Toggle file tree</span></span>
+        <span class="toggle-btn active"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="tooltip">Table of Contents</span></span>
+        <span class="action-sep"></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="tooltip">Copy</span></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span class="tooltip">Share</span></span>
+        <span class="action-sep"></span>
+        <div class="overflow-menu">
+          <span class="overflow-toggle">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <span class="arrow-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </span>
+        </div>
+        <span class="theme-btn"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <a class="owner-link">@alice</a><span class="meta-dot"></span><span>1h ago</span><span class="meta-dot"></span><span class="status-tag never">Never expires</span><span class="meta-sep"></span><span>3 reads</span><span class="meta-dot"></span><span class="status-tag private">Private</span><span class="meta-dot"></span><span class="meta-tag">internal</span><span class="meta-tag">engineering</span>
+    </div>
+  </div>
+  <div class="content-area"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- STATE 5: Overflow dropdown open -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="viewport">
+  <div class="chrome-bar"><span class="chrome-dots"><span></span><span></span><span></span></span><span class="chrome-title">Overflow dropdown · Open</span><span class="chrome-badge owner">Owner</span></div>
+  <div class="detail-header">
+    <div class="title-row">
+      <div class="logo">P</div>
+      <div class="title-group"><h1>How to use the API</h1></div>
+      <div class="actions-area">
+        <span class="toggle-btn active"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="tooltip">Toggle file tree</span></span>
+        <span class="toggle-btn"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="tooltip">Table of Contents</span></span>
+        <span class="action-sep"></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="tooltip">Copy</span></span>
+        <span class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span class="tooltip">Share</span></span>
+        <span class="action-sep"></span>
+        <div class="overflow-menu">
+          <span class="overflow-toggle" style="background:var(--c-border);color:var(--c-text);border-color:var(--c-border-strong)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <span class="arrow-down"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </span>
+          <div class="overflow-dropdown" style="display:block">
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span class="item-label">Make Private</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="item-label">Download</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span class="item-label">Download as Pack</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="item-label">Table of Contents</span></div>
+            <div class="overflow-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="item-label">Raw content</span></div>
+            <div class="overflow-divider"></div>
+            <div class="overflow-item danger"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="item-label">Delete entry</span></div>
+          </div>
+        </div>
+        <span class="theme-btn"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <a class="owner-link">@alice</a><span class="meta-dot"></span><span>3h ago</span><span class="meta-sep"></span><span>42 reads</span><span class="meta-dot"></span><span class="status-tag public">Public</span><span class="meta-dot"></span><span class="meta-tag">api</span><span class="meta-tag">tutorial</span>
+    </div>
+  </div>
+  <div class="content-area"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+</div>
+
+</body>
+</html>

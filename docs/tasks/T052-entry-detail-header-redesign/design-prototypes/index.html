@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Header Redesign v3 — Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#0a0d13;--c-surface:#121822;--c-surface-lower:#0e131b;
+  --c-border:rgba(255,255,255,.08);--c-border-strong:rgba(255,255,255,.13);
+  --c-text:#e9eef4;--c-text-secondary:#9aa7b4;--c-text-tertiary:#6a7682;
+  --c-accent:#4d8dff;--c-accent-secondary:#76a6ff;
+  --c-success:#7ee787;--c-warning:#febc2e;--c-error:#ff7b72;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code','SF Mono',Consolas,monospace;
+}
+body{background:#060810;color:var(--c-text);font-family:var(--font-ui);padding:48px 32px;max-width:800px;margin:0 auto}
+h1{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px}
+.subtitle{font-size:15px;color:var(--c-text-secondary);margin-bottom:40px;line-height:1.6}
+.card{display:block;text-decoration:none;border:1px solid var(--c-border-strong);border-radius:12px;padding:24px;margin-bottom:16px;background:var(--c-surface);transition:border-color .2s,transform .15s}
+.card:hover{border-color:var(--c-accent);transform:translateY(-2px)}
+.card h2{font-size:17px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card .badge{font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500}
+.card .badge.primary{background:rgba(126,231,135,.15);color:var(--c-success)}
+.card .badge.mobile{background:rgba(77,141,255,.15);color:var(--c-accent-secondary)}
+.card .badge.drawer{background:rgba(254,188,46,.15);color:var(--c-warning)}
+.card p{font-size:13px;color:var(--c-text-secondary);line-height:1.5;font-family:var(--font-mono)}
+.arrow{color:var(--c-text-tertiary);font-size:14px;margin-left:auto}
+</style>
+</head>
+<body>
+
+<h1>Header Redesign v3</h1>
+<p class="subtitle">
+完全重新设计。核心改动：Desktop 从 4 行→2 行（78px），按钮用 icon-only + overflow 下拉菜单。<br>
+Mobile 底部栏动态适配文件类型，用户+标签移到顶部随滚动隐藏，Files 回到 info 区左侧。<br>
+<strong style="color:var(--c-accent)">思路来源</strong>：GitHub 文件头、Linear issue 详情、Notion 页面栏——都是紧凑 header + overflow 下拉。
+</p>
+
+<a class="card" href="s1-desktop.html">
+  <h2>s1 — Desktop: 紧凑 2 行 header <span class="badge primary">PRIMARY</span><span class="arrow">→</span></h2>
+  <p>第一行：Logo + Title + [Copy] [Share] [More▾] [🌙]。第二行：meta + tags + 状态，inline。~78px 总高。</p>
+</a>
+
+<a class="card" href="s2-mobile.html">
+  <h2>s2 — Mobile: 动态底部栏 + FAB <span class="badge mobile">MOBILE</span><span class="arrow">→</span></h2>
+  <p>Sticky header + 内容区 title+meta+tags（随滚动隐藏）+ Files 按钮靠左 + 3 种底部栏状态。</p>
+</a>
+
+<a class="card" href="s3-drawer.html">
+  <h2>s3 — Mobile: Bottom Sheet 抽屉 <span class="badge drawer">DRAWER</span><span class="arrow">→</span></h2>
+  <p>Overflow 展开后的底部弹窗，带 icon + label + 危险操作红色高亮。</p>
+</a>
+
+</body>
+</html>

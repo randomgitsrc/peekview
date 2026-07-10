@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>s3 — Mobile: Bottom Sheet Drawer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#0a0d13;--c-surface:#121822;--c-surface-lower:#0e131b;
+  --c-border:rgba(255,255,255,.08);--c-border-strong:rgba(255,255,255,.13);
+  --c-text:#e9eef4;--c-text-secondary:#9aa7b4;--c-text-tertiary:#6a7682;
+  --c-accent:#4d8dff;--c-accent-secondary:#76a6ff;
+  --c-success:#7ee787;--c-warning:#febc2e;--c-error:#ff7b72;
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code','SF Mono',Consolas,monospace;
+}
+body{background:#060810;color:var(--c-text);font-family:var(--font-ui);padding:32px 24px;max-width:1000px;margin:0 auto}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:var(--c-text-secondary);margin-bottom:24px;font-family:var(--font-mono);line-height:1.5}
+.sub strong{color:var(--c-warning)}
+.nav{margin-bottom:28px;font-family:var(--font-mono);font-size:12px;color:var(--c-text-tertiary)}
+.nav a{color:var(--c-accent);text-decoration:none}
+
+/* ─── Phone frame ─── */
+.phone-frame{width:375px;border-radius:28px;overflow:hidden;border:2px solid var(--c-border-strong);background:var(--c-bg);position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.03),0 24px 80px rgba(0,0,0,.5);margin:0 auto}
+.phone-notch{height:32px;background:var(--c-surface);display:flex;align-items:center;justify-content:center}
+.phone-notch span{width:68px;height:4px;border-radius:2px;background:var(--c-text-tertiary);opacity:.3}
+.phone-home-indicator{height:5px;display:flex;align-items:center;justify-content:center;background:var(--c-surface);padding:6px 0;position:relative;z-index:2}
+.phone-home-indicator span{width:134px;height:5px;border-radius:3px;background:var(--c-text-tertiary);opacity:.2}
+
+/* ─── Sticky header ─── */
+.sticky-header{height:52px;background:rgba(18,24,34,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--c-border);display:flex;align-items:center;padding:0 10px;gap:8px}
+.back-btn{width:34px;height:34px;border-radius:8px;border:none;background:transparent;color:var(--c-text);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.back-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sticky-title{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── Dimmed content (behind drawer) ─── */
+.content-area{padding:16px;opacity:.3;pointer-events:none;user-select:none}
+.content-area .title{font-size:18px;font-weight:700;margin-bottom:8px}
+.content-area .line{height:11px;border-radius:4px;background:var(--c-border);margin-bottom:9px}
+.content-area .line:nth-child(2){width:80%}
+.content-area .line:nth-child(3){width:92%}
+.content-area .line:nth-child(4){width:65%}
+.content-area .line:nth-child(5){width:55%}
+
+/* ─── Drawer overlay ─── */
+.drawer-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:30;backdrop-filter:blur(2px)}
+
+/* ─── Bottom sheet drawer ─── */
+.bottom-sheet{position:absolute;bottom:0;left:0;right:0;z-index:31;background:var(--c-surface);border-radius:16px 16px 0 0;border-top:1px solid var(--c-border-strong);box-shadow:0 -8px 32px rgba(0,0,0,.4);padding-bottom:env(safe-area-inset-bottom,0px);transform:translateY(0);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.sheet-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px}
+.sheet-handle span{width:36px;height:4px;border-radius:2px;background:var(--c-text-tertiary);opacity:.25}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 12px}
+.sheet-header h3{font-size:14px;font-weight:600;color:var(--c-text-secondary)}
+.sheet-close{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--c-text-tertiary);display:flex;align-items:center;justify-content:center;cursor:default}
+.sheet-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ─── Sheet items ─── */
+.sheet-items{padding:0 8px 8px}
+.sheet-item{display:flex;align-items:center;gap:14px;padding:12px 12px;border-radius:10px;color:var(--c-text);font-size:14px;font-weight:500;cursor:default;transition:background .1s}
+.sheet-item:hover{background:var(--c-border)}
+.sheet-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.7}
+.sheet-item .item-label{flex:1}
+.sheet-item .item-hint{font-size:11px;color:var(--c-text-tertiary);font-family:var(--font-mono)}
+.sheet-item.danger{color:var(--c-error)}
+.sheet-item.danger:hover{background:rgba(255,123,114,.1)}
+.sheet-divider{height:1px;background:var(--c-border-strong);margin:6px 12px}
+
+/* ─── Bottom bar ─── */
+.bottom-bar{height:50px;border-top:1px solid var(--c-border);background:var(--c-surface);display:flex;align-items:center;padding:0 12px;gap:4px;position:relative;z-index:2}
+.bottom-fill{flex:1}
+.bottom-btn{height:38px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--c-text-secondary);font-family:var(--font-ui);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:default}
+.bottom-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.bottom-btn.primary{background:rgba(77,141,255,.12);color:var(--c-accent);border-color:rgba(77,141,255,.2)}
+.overflow-btn-mobile{width:38px;height:38px;border-radius:8px;border:none;background:transparent;color:var(--c-text-secondary);display:flex;align-items:center;justify-content:center;cursor:default}
+.overflow-btn-mobile svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ─── FAB ─── */
+
+
+/* ─── Design notes ─── */
+.design-notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+.design-notes .note{background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:14px 16px}
+.design-notes .note h4{font-size:13px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.design-notes .note h4 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.design-notes .note p{font-size:12px;color:var(--c-text-secondary);line-height:1.5;font-family:var(--font-mono)}
+@media(max-width:700px){.design-notes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="index.html">&larr; Index</a></div>
+
+<h1>s3 &mdash; Mobile: Bottom Sheet Drawer</h1>
+<p class="sub">Overflow <strong>[...]</strong> 点击后展开的底部弹窗。  动态展示所有可用操作，<strong>顶部 Dark theme 切换</strong> + <strong>Owner 额外显示 Make Private + Delete</strong>。<br>
+  带 icon + label + hint（快捷键/状态）。危险操作（Delete）红色高亮，divider 分组。</p>
+
+<!-- Phone with drawer open -->
+<div class="phone-frame" style="height:680px;display:flex;flex-direction:column">
+  <div class="phone-notch"><span></span></div>
+  <div class="sticky-header">
+    <span class="back-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></span>
+    <span class="sticky-title">Architecture Decision Records — Q3 2026</span>
+  </div>
+
+  <!-- Dimmed content -->
+  <div class="content-area" style="flex:1;position:relative">
+    <div class="title">Architecture Decision Records — Q3 2026</div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+
+    <!-- Overlay -->
+    <div class="drawer-overlay"></div>
+
+    <!-- Bottom sheet -->
+    <div class="bottom-sheet">
+      <div class="sheet-handle"><span></span></div>
+      <div class="sheet-header">
+        <h3>More actions</h3>
+        <span class="sheet-close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+      </div>
+      <div class="sheet-items">
+        <!-- Display settings -->
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span class="item-label">Dark theme</span>
+          <span class="item-hint">Tap to toggle</span>
+        </div>
+        <div class="sheet-divider"></div>
+
+        <!-- Owner-only section -->
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span class="item-label">Make Private</span>
+          <span class="item-hint">Currently Public</span>
+        </div>
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span class="item-label">Share</span>
+          <span class="item-hint">Create share link</span>
+        </div>
+        <div class="sheet-divider"></div>
+
+        <!-- Common actions -->
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="item-label">Download</span>
+          <span class="item-hint">.md</span>
+        </div>
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span class="item-label">Download as Pack</span>
+          <span class="item-hint">5 files</span>
+        </div>
+        <div class="sheet-item">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="item-label">Raw content</span>
+          <span class="item-hint">Structured JSON</span>
+        </div>
+        <div class="sheet-divider"></div>
+
+        <!-- Danger zone -->
+        <div class="sheet-item danger">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span class="item-label">Delete entry</span>
+          <span class="item-hint">Permanently</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar (dimmed) -->
+  <div class="bottom-bar" style="opacity:.3">
+    <span class="bottom-fill"></span>
+    <span class="bottom-btn primary"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> TOC</span>
+    <span class="overflow-btn-mobile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+  </div>
+  <div class="phone-home-indicator"><span></span></div>
+</div>
+
+<!-- Design notes -->
+<div class="design-notes">
+  <div class="note">
+    <h4><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Context-aware</h4>
+    <p>Overflow 内容按权限/文件类型动态展示。Owner 看到 Make Private + Share + Download + Pack + Raw + Delete。Guest 看到 Download + Raw。文件是 .md 时才展示 TOC。</p>
+  </div>
+  <div class="note">
+    <h4><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Grouping & hierarchy</h4>
+    <p>Divider 分隔 Owner 操作 / 通用操作 / 危险区域。Delete 单独在底部红色高亮，避免误触。</p>
+  </div>
+  <div class="note">
+    <h4><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Desktop overflow dropdown</h4>
+    <p>Desktop 用 More▾ 下拉菜单（同内容），hover 展开。Mobile 用 Bottom Sheet，符合平台习惯，单手可触。</p>
+  </div>
+  <div class="note">
+    <h4><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> No emoji icons</h4>
+    <p>所有操作使用 Lucide SVG 图标（16-18px），符合 DESIGN.md §2 icon 规范。危险操作红色 `--c-error` 高亮。</p>
+  </div>
+</div>
+
+</body>
+</html>
