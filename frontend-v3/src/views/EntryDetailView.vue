@@ -864,4 +864,3 @@ watch(() => entryStore.currentEntry, async (entry) => {
   font-size: 10px;
 }
 </style>
-</style>
