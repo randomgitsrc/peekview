@@ -1,0 +1,28 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+viewport_type: desktop
+icons_found:
+  - folder (lucide-folder)
+  - list (lucide-list)
+  - copy (lucide-copy)
+  - more-horizontal (lucide-ellipsis)
+  - moon (lucide-moon)
+  - download (lucide-download)
+  - file-text (lucide-file-text)
+  - package (lucide-package)
+items_in_dropdown:
+  - label: "Dark theme"
+    hint: "Tap to toggle"
+    icon: moon
+  - label: "Download"
+    hint: "readme.md"
+    icon: download
+  - label: "Raw"
+    hint: "Structured JSON"
+    icon: file-text
+  - label: "Download as Pack"
+    hint: "2 files"
+    icon: package
+all_lucide_svg: true
+any_emoji: false

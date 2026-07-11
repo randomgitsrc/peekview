@@ -196,7 +196,7 @@
     </div>
 
     <!-- Mobile meta-tags-bar (scroll-hide) -->
-    <div v-if="!isDesktop" ref="metaTagsSentinel" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
+    <div v-if="!isDesktop" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
       <router-link
         v-if="entryStore.currentEntry?.username"
         :to="`/users/${entryStore.currentEntry.username}`"
@@ -375,9 +375,9 @@ function handleResize() {
   })
 }
 
-const metaTagsSentinel = ref<HTMLElement>()
 const metaTagsHidden = ref(false)
-let tagsObserver: IntersectionObserver | null = null
+let scrollContainer: HTMLElement | null = null
+let tagsScrollHandler: (() => void) | null = null
 
 const isShareAccess = computed(() => {
   if (!currentEntry.value) return false
@@ -707,13 +707,31 @@ onMounted(async () => {
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
   await nextTick()
-  // Set up IntersectionObserver for meta-tags-bar scroll hide
-  if (metaTagsSentinel.value) {
-    tagsObserver = new IntersectionObserver(
-      ([entry]) => { metaTagsHidden.value = !entry.isIntersecting },
-      { threshold: 0 }
-    )
-    tagsObserver.observe(metaTagsSentinel.value)
+  // Set up scroll listener for meta-tags-bar hide
+  const content = document.querySelector('.content-area')
+  if (content) {
+    // Find the first scrollable child (markdown-viewer, code-viewer, etc.)
+    const findScrollable = (parent: Element): HTMLElement | null => {
+      for (const child of parent.children) {
+        if (child instanceof HTMLElement) {
+          const ov = getComputedStyle(child).overflowY
+          if ((ov === 'auto' || ov === 'scroll') && child.scrollHeight > child.clientHeight) {
+            return child
+          }
+        }
+      }
+      return null
+    }
+    scrollContainer = findScrollable(content)
+    if (!scrollContainer) {
+      // Fallback: listen on content-area itself
+      scrollContainer = content as HTMLElement
+    }
+    const onScroll = () => {
+      metaTagsHidden.value = (scrollContainer?.scrollTop ?? 0) > 10
+    }
+    scrollContainer.addEventListener('scroll', onScroll, { passive: true })
+    tagsScrollHandler = () => scrollContainer?.removeEventListener('scroll', onScroll)
   }
 })
 
@@ -721,7 +739,7 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleZenKeydown)
   window.removeEventListener('resize', handleResize)
   if (resizeTimer) cancelAnimationFrame(resizeTimer)
-  if (tagsObserver) tagsObserver.disconnect()
+  if (tagsScrollHandler) tagsScrollHandler()
 })
 
 watch(() => props.slug, (newSlug) => {
@@ -742,8 +760,6 @@ watch(() => entryStore.currentEntry, async (entry) => {
 </script>
 
 <style scoped>
-@import '@/styles/layout.css';
-
 .entry-owner-link {
   font-size: 12px;
   color: var(--c-accent);

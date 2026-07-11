@@ -1,0 +1,27 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+viewport_type: mobile
+bottom_sheet_present: true
+sheet_structure:
+  has_drag_handle: true
+  has_backdrop: true
+  has_title: "More actions"
+  has_close_button: true
+  rounded_top: true
+items_in_sheet:
+  - label: "Dark theme"
+    hint: "Tap to toggle"
+    icon: moon
+  - label: "Download"
+    hint: "readme.md"
+    icon: download
+  - label: "Raw"
+    hint: "Structured JSON"
+    icon: file-text
+  - label: "Download as Pack"
+    hint: "2 files"
+    icon: package
+theme_item_present: true
+all_lucide_svg: true
+any_emoji: false

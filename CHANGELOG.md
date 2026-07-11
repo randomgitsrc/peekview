@@ -7,6 +7,27 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-07-11
+
+### 新增
+
+-
+
+
+### 新增
+
+- T052: 桌面 entry detail header 重构为 2 行紧凑布局（~78px），icon-only 按钮 32×32
+- T052: 移动端新增 sticky header（52px + backdrop-filter blur(16px)）
+- T052: 移动端底部操作栏（48px），按文件类型动态显示按钮
+- T052: OverflowMenu 双模式（desktop dropdown / mobile bottom sheet）
+- T052: ThemeToggle 桌面端独立显示，移动端在 overflow bottom sheet 中
+- T052: 全部图标替换为 Lucide SVG，移除 emoji
+- T052: 移动端 meta-tags-bar 滚动隐藏
+
+### 修复
+
+- T052: 修复 layout.css scoped scope 导致子组件（OverflowMenu）样式丢失
+
 ## [0.6.0] - 2026-07-09
 
 ### 新增
