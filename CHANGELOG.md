@@ -7,11 +7,20 @@
 
 ## [Unreleased]
 
-## [0.6.1] - 2026-07-11
+## [0.6.2] - 2026-07-11
 
-### 新增
+### 修复
 
--
+- T052: 修复 light 模式下 mobile sticky header 背景色硬编码问题（改用 `--c-glass-bg` CSS 变量）
+- T052: 桌面端 TOC 和 File tree 侧栏默认打开
+
+
+### 修复
+
+- T052: 修复 light 模式下 mobile sticky header 背景色硬编码（改用 `--c-glass-bg` CSS 变量）
+- T052: 桌面端 TOC 和 File tree 侧栏默认打开
+
+## [0.6.1] - 2026-07-11-
 
 
 ### 新增
