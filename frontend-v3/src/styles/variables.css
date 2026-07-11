@@ -56,6 +56,7 @@
   --c-badge-expired-bg: rgba(254,188,46,.15);
   --c-warning-surface: rgba(254,188,46,.1);
   --c-error-surface: rgba(255,123,114,.1);
+  --c-glass-bg: rgba(18, 24, 34, 0.88);
 
   --bg-primary: var(--c-bg);
   --bg-secondary: var(--c-surface);
@@ -115,6 +116,7 @@
   --c-badge-expired-bg: rgba(154,103,0,.1);
   --c-warning-surface: rgba(154,103,0,.08);
   --c-error-surface: rgba(207,34,46,.08);
+  --c-glass-bg: rgba(255, 255, 255, 0.85);
 
   --bg-primary: var(--c-bg);
   --bg-secondary: var(--c-surface);

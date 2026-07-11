@@ -707,6 +707,11 @@ onMounted(async () => {
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
   await nextTick()
+  // Desktop defaults: open TOC and file tree on page load
+  if (isDesktop.value) {
+    if (entryStore.isMultiFile) isFileTreeOpen.value = true
+    if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
+  }
   // Set up scroll listener for meta-tags-bar hide
   const content = document.querySelector('.content-area')
   if (content) {
@@ -742,8 +747,11 @@ onUnmounted(() => {
   if (tagsScrollHandler) tagsScrollHandler()
 })
 
-watch(() => props.slug, (newSlug) => {
-  entryStore.loadEntry(newSlug)
+watch(() => props.slug, async (newSlug) => {
+  // Reset toggles before loading new entry
+  isFileTreeOpen.value = false
+  isTocOpen.value = false
+  await entryStore.loadEntry(newSlug)
 })
 
 watch(() => entryStore.currentEntry, async (entry) => {
@@ -755,6 +763,11 @@ watch(() => entryStore.currentEntry, async (entry) => {
     link.href = `/api/v1/entries/${entry.slug}/raw`
     link.setAttribute('data-peekview-raw', '1')
     document.head.appendChild(link)
+  }
+  // Apply desktop defaults: open TOC and file tree
+  if (isDesktop.value) {
+    if (entryStore.isMultiFile) isFileTreeOpen.value = true
+    if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
   }
 }, { immediate: true })
 </script>
