@@ -22,6 +22,60 @@ from peekview.exceptions import PeekError
 
 logger = logging.getLogger(__name__)
 
+FRONTEND_ROUTES = frozenset({"", "explore", "settings/apikeys", "login"})
+
+
+def _prefers_json(accept_header: str | None) -> bool:
+    if not accept_header:
+        return False
+    html_acceptable = False
+    json_acceptable = False
+    for item in accept_header.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        media = item.split(";")[0].strip()
+        q = 1.0
+        for param in item.split(";")[1:]:
+            param = param.strip()
+            if param.startswith("q="):
+                try:
+                    q = float(param[2:])
+                except ValueError:
+                    q = 1.0
+        if media in ("text/html", "application/xhtml+xml") and q > 0:
+            html_acceptable = True
+        elif media == "application/json" and q > 0:
+            json_acceptable = True
+    return json_acceptable and not html_acceptable
+
+
+def _is_frontend_route(path: str) -> bool:
+    if path in FRONTEND_ROUTES:
+        return True
+    return path.startswith("users/")
+
+
+def _slug_exists(request: Request, slug: str) -> bool:
+    from sqlmodel import Session, select
+
+    from peekview.models import Entry, EntryStatus
+
+    engine = request.app.state.engine
+    with Session(engine) as session:
+        entry = session.exec(
+            select(Entry).where(
+                Entry.slug == slug,
+                Entry.status != EntryStatus.ARCHIVED,
+            )
+        ).first()
+        return entry is not None
+
+
+def _inject_link(html: bytes, slug: str) -> bytes:
+    link_tag = f'<link rel="alternate" type="application/json" href="/api/v1/entries/{slug}/raw" />'
+    return html.replace(b"</head>", f"{link_tag}\n</head>".encode())
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -467,21 +521,35 @@ def _setup_static_files(app: FastAPI) -> None:
 
             @app.get("/{path:path}")
             async def serve_spa_catchall(request: Request, path: str):
-                """Catch-all for SPA routing — serve index.html for unknown paths."""
-                from fastapi.responses import FileResponse
+                from fastapi.responses import FileResponse, HTMLResponse
 
-                # Skip API routes - they should be handled by the API routers
                 if path.startswith("api/") or path.startswith("health"):
-                    # Return 404 so FastAPI continues to try other routes
                     from fastapi import HTTPException
                     raise HTTPException(status_code=404, detail="Not found")
 
-                # First try to serve the actual file
                 file_path = frontend_dist / path
                 if file_path.exists() and file_path.is_file():
                     return FileResponse(file_path)
-                # Otherwise serve index.html for SPA routing
-                return FileResponse(frontend_dist / "index.html")
+
+                if not _is_frontend_route(path) and _prefers_json(request.headers.get("accept")):
+                    from peekview.api.files import resolve_entry_raw
+                    return await resolve_entry_raw(request, path)
+
+                index_path = frontend_dist / "index.html"
+                html = index_path.read_bytes()
+
+                if not _is_frontend_route(path) and _slug_exists(request, path):
+                    html = _inject_link(html, path)
+                    link_value = (
+                        f'</api/v1/entries/{path}/raw>; rel="alternate";'
+                        ' type="application/json"'
+                    )
+                    return HTMLResponse(
+                        content=html,
+                        headers={"Link": link_value},
+                    )
+
+                return HTMLResponse(content=html)
 
             logger.info("Serving frontend SPA from %s", frontend_dist)
     except Exception:

@@ -382,28 +382,15 @@ async def render_html_file(
     )
 
 
-@router.get("/{slug}/raw", response_class=Response)
-async def get_entry_raw(
-    slug: str,
-    request: Request,
-    current_user: User | None = Depends(get_current_user),
-):
-    """Get entry raw content as structured JSON.
-
-    Returns all file contents in a single response.
-    Text files: content field contains UTF-8 string.
-    Binary files: content=null, file_url points to /files/{id}/content.
-
-    Public entries require no auth. Private entries require API Key.
-    """
+async def resolve_entry_raw(request: Request, slug: str) -> Response:
     import json as _json
 
     config = request.app.state.config
     engine = get_engine(config)
     storage = StorageManager(config=config)
     service = _get_service(request)
+    current_user = get_current_user(request)
 
-    # Auth + visibility — reuse existing logic (returns 404 for private/missing)
     global_key_auth = _is_global_api_key_auth(request, current_user)
     entry_owner_id: int | None = None
     if global_key_auth:
@@ -435,11 +422,9 @@ async def get_entry_raw(
         entry_created_at = entry_resp.created_at
         entry_owner_id = entry_resp.owner_id
 
-    # Build base URL for file_url and raw_url
     base = str(request.base_url).rstrip("/")
     raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
 
-    # Read all files
     with Session(engine) as session:
         db_files = session.exec(
             select(File).where(File.entry_id == entry_id)
@@ -461,7 +446,6 @@ async def get_entry_raw(
             ))
         else:
             raw_bytes = storage.read_file(entry_id, f.filename, f.path)
-            # Decode with replace to avoid crashing on edge-case byte sequences
             content_str = raw_bytes.decode("utf-8", errors="replace")
             raw_files.append(RawFileItem(
                 id=f.id,
@@ -484,7 +468,6 @@ async def get_entry_raw(
         raw_url=raw_url,
     )
 
-    # Serialize with </script> defense to prevent XSS if response is ever embedded in HTML
     serialized = _json.dumps(
         result.model_dump(mode="json"),
         ensure_ascii=False,
@@ -504,3 +487,12 @@ async def get_entry_raw(
         content=serialized,
         media_type="application/json; charset=utf-8",
     )
+
+
+@router.get("/{slug}/raw", response_class=Response)
+async def get_entry_raw(
+    slug: str,
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+):
+    return await resolve_entry_raw(request, slug)
