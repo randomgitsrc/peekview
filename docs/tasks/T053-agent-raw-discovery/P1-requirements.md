@@ -11,6 +11,8 @@ agent: analyst
 
 # T053: Agent Raw 端点自动发现 — 需求基线
 
+[SCOPE_RESOLVED] B5 修正：原预期 `application/json;q=0.9, text/html;q=0.8 → JSON`，P2 minimal_validation 确认 GitHub 实际行为为 HTML 胜出（无论 q 值）。已修改 B5 预期为 HTML，对齐 GitHub 行为更安全。
+
 ## 需求复述
 
 Agent 收到 PeekView URL（`https://peek.example.com/xxxx`）后，用 curl/fetch 访问只拿到 SPA 空壳 HTML，无法发现 `/raw` 结构化 JSON 端点。需要三层自动发现机制：
@@ -135,14 +137,16 @@ Then  响应 Content-Type 为 text/html
   And 响应体为 SPA index.html
 ```
 
-### B5: Content Negotiation — JSON 优先级高于 HTML（q 值）
+### B5: Content Negotiation — text/html 存在时 HTML 胜出（无论 q 值）
 
 ```
 Given 存在一个公开 entry "test-slug"
 When  发送 GET /test-slug 且 Accept: application/json;q=0.9, text/html;q=0.8
-Then  响应 Content-Type 为 application/json
-  And 响应体为该 entry 的结构化 JSON
+Then  响应 Content-Type 为 text/html
+  And 响应体为 SPA index.html
 ```
+
+> [SCOPE+ from P2] 原预期为 JSON（q 值排序），但 GitHub 实测确认：当 text/html 和 application/json 都可接受时，HTML 总是胜出（无论 q 值）。对齐 GitHub 行为更安全（浏览器永远不会意外拿到 JSON）。P2 minimal_validation confirmed。
 
 ### B6: Content Negotiation — 私有 entry 未认证返回 404
 

@@ -21,7 +21,7 @@
 | T052 | entry-detail-header-redesign | ✅ 完成 | DONE | 🟠 | T051 | 2026-07-10 | 2026-07-10 |
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
-| T053 | agent-raw-discovery | 🔄 进行中 | P2 | 🔴 | 无 | 2026-07-12 | 2026-07-12 |
+| T053 | agent-raw-discovery | 🔄 进行中 | P3 | 🔴 | 无 | 2026-07-12 | 2026-07-13 |
 
 ### 已完成
 
