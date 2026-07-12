@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- T053: Agent /raw 端点自动发现（Content Negotiation + HTML 自描述 + llms.txt 补充）
+
 ## [0.6.2] - 2026-07-11
 
 ### 修复

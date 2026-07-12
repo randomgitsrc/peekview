@@ -1,0 +1,15 @@
+task_id: T053
+task_name: agent-raw-discovery
+phase: P1
+status: complete
+retries:
+  P0: []
+  P1: []
+  P2: []
+  P3: []
+  P4: []
+  P5: []
+  P6: []
+  P7: []
+  P8: []
+last_updated: 2026-07-12
