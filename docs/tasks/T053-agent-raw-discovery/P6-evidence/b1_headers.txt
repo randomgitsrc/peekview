@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+date: Sun, 12 Jul 2026 17:41:57 GMT
+server: uvicorn
+content-length: 379
+content-type: application/json; charset=utf-8
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; worker-src blob:; frame-ancestors 'none'; form-action 'none'; base-uri 'self'
+
