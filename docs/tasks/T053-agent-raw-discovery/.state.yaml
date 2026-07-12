@@ -1,6 +1,6 @@
 task_id: T053
 task_name: agent-raw-discovery
-phase: P3
+phase: P4
 status: in_progress
 retries:
   P0: []
