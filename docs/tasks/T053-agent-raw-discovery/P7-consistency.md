@@ -4,200 +4,172 @@ task_id: T053
 type: consistency
 parent: P6-acceptance.md
 trace_id: T053-P7-20260713
-status: complete
+status: draft
 created: 2026-07-13
 agent: consistency-reviewer
 ---
 
 # T053 P7 一致性检查
 
-## 方向 1：设计→实现
+## 1. DESIGN_GAP 配对检查
 
-逐项对照 P2-design.md，标注实现是否一致。
+P4-implementation.md 中无 `[DESIGN_GAP]` 声明（0 条）。
 
-### 影响域
+**确认**：P4 §SCOPE+ Items 声明"None discovered during implementation"，P4-implementation.md 全文无 `DESIGN_GAP` 标记。无需配对。✅
 
-| P2 声明 | 实现状态 | 判定 |
-|---------|---------|------|
-| 改 `main.py` catchall + 新增模块级函数 | ✅ `_prefers_json`, `_is_frontend_route`, `_slug_exists`, `_inject_link` 已添加；catchall 已修改 | 一致 |
-| 改 `api/files.py` 提取 `resolve_entry_raw` | ✅ 已提取，`get_entry_raw` 改为薄包装 | 一致 |
-| 不改前端代码 | ✅ 无前端改动 | 一致 |
-| 不改路由注册顺序 | ✅ `/{slug}/raw` 仍在 catchall 之前（main.py L475-477） | 一致 |
-| 不改 auth.py / entry_service.py | ✅ 复用 `get_current_user` 和 `_check_share_cookie` | 一致 |
+## 2. SCOPE+ 闭环检查
 
-### Accept 解析函数 `_prefers_json`
+| SCOPE+ 来源 | 标记 | 纳入基线 | P6 验收 | 判定 |
+|-------------|------|---------|---------|------|
+| P2 §3 B5 修正：`application/json;q=0.9, text/html;q=0.8` → HTML（非 JSON） | P1 L149: `[SCOPE+ from P2]` + `[SCOPE_RESOLVED]` | P1 B5 已修改预期为 HTML | B05 PASS | ✅ 闭环 |
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| 签名 `(accept_header: str \| None) -> bool` | `(accept_header: str \| None) -> bool`（main.py L28） | 一致 |
-| `text/html` 和 `application/xhtml+xml` 都视为 HTML 可接受 | ✅ main.py L46: `media in ("text/html", "application/xhtml+xml")` | 一致 |
-| `*/*` 不触发 JSON | ✅ 无 wildcard 匹配逻辑，只有精确匹配 | 一致 |
-| 空值 → False | ✅ L29-30 | 一致 |
-| q 值解析（float） | ✅ L38-45 | 一致 |
-| q=0 不可接受 | ✅ `q > 0` 条件 | 一致 |
+**确认**：P1 有 1 处 `[SCOPE_RESOLVED]`（B5 SCOPE+ 修正），P2 有 3 处 `[SCOPE+]` 标记（L363/L372/L454，均指向同一 B5 修正）。B5 已纳入 P1 基线（修改预期为 HTML），P6 按修正后验收 PASS。SCOPE+ 闭环完成。✅
 
-### `_is_frontend_route`
+## 3. P1 残留 [NEED_CONFIRM] — DEVIATION
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| `FRONTEND_ROUTES = frozenset({"", "explore", "settings/apikeys", "login"})` | ✅ main.py L25 | 一致 |
-| `users/` 前缀匹配 | ✅ main.py L56 | 一致 |
+P1-requirements.md L64 仍有残留 `[NEED_CONFIRM]` 文本：
 
-### `_slug_exists`
+> "这是 [NEED_CONFIRM] 项——涉及行为变更和实现路径选择。"
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| 直接 DB 查询 `select(Entry).where(Entry.slug == slug)` | ⚠️ 实现增加了 `Entry.status != EntryStatus.ARCHIVED` 过滤（main.py L69） | **偏差** — 见下方分析 |
+此标记对应 NC1（llms.txt 实现路径）。NC1 已在 P1 L281 标记为 `[RESOLVED]` 路径 A（保持 302 重定向到 GitHub），且 P6 B15 验收 PASS。**实质已解决**，但 P1 L64 的 `[NEED_CONFIRM]` 标签未被清理。
 
-**`_slug_exists` ARCHIVED 过滤偏差分析**：
+**判定**：`[DEVIATION]` — P1 文件存在残留 `[NEED_CONFIRM]` 标签未清理。实质已解决（NC1 RESOLVED + P6 PASS），仅为文档清洁度问题。建议清理 P1 L64 的 `[NEED_CONFIRM]` 标签。
 
-P2 设计明确写 `_slug_exists` 的用途是"判断 slug 是否存在（不检查可见性），因为 `<link>` 只是指路不泄露内容（NC2 决议）"。P2 的 SQL 是纯 slug 匹配，无 status 过滤。
+## 4. 跨文件一致性检查
 
-实现增加了 `Entry.status != EntryStatus.ARCHIVED` 过滤。这意味着 ARCHIVED entry 不会触发 `<link>` 注入和 Link header。
+### 4.1 BDD 数量匹配
 
-**偏差合理性评估**：ARCHIVED entry 在 `entry_service.get_entry` 中对非 owner/non-admin 返回 404（entry_service.py L331-335）。如果 `<link>` 指向一个 ARCHIVED slug，Agent 跟踪链接会得到 404——这比没有 `<link>` 更差（虚假引导）。过滤 ARCHIVED 是合理的行为修正，与 Content Negotiation JSON 路径一致（`resolve_entry_raw` 也会对 ARCHIVED 返回 404）。
+| 来源 | 数量 | 明细 |
+|------|------|------|
+| P1 §BDD 验收条件 | 20 | B1, B2, B3, B4, B5, B6, B7, B7b, B8, B9, B10, B10b, B11, B12, B13, B13b, B14, B15, B16, B17 |
+| P6 验收结果 | 20 | B01-B17（含 B07b, B10b, B13b） |
 
-**判定**：`[DEVIATION]` — 实现与 P2 设计有偏差，但偏差方向合理（防止虚假引导），不阻塞。涉及 P2 核心设计目标"HTML 自描述"的边界情况，建议人工确认。
+**判定**：20 = 20，数量匹配。每条 P1 BDD 在 P6 中有对应的 PASS 结果。✅
 
-### Content Negotiation JSON 返回
+### 4.2 Packages 一致性
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| 方式 3：提取 `resolve_entry_raw` 共享函数 | ✅ files.py L385-489 | 一致 |
-| `/raw` 端点改为调用 `resolve_entry_raw` | ✅ files.py L492-498 | 一致 |
-| 认证/可见性逻辑复用 | ✅ 含 global API key + normal auth + share cookie | 一致 |
-| catchall 调用 `resolve_entry_raw` | ✅ main.py L535-536 | 一致 |
-| NotFoundError → 404 JSON | ⚠️ 见下方分析 | 偏差 |
+| 来源 | packages | 判定 |
+|------|----------|------|
+| P0 §packages | `backend/peekview/` | — |
+| P1 §范围声明 | `backend/peekview` | ✅ 一致 |
+| P2 §声明字段 | `backend/peekview` | ✅ 一致 |
+| P4 §implementation_dir | `backend/peekview/` | ✅ 一致 |
+| P8 裁剪 | `internal_only: true, no version bump` | ✅ 与单 package 一致 |
 
-**404 JSON 偏差分析**：
+**判定**：全程单 package `backend/peekview`，P8 裁剪合理（无公共 API 破坏性变更）。✅
 
-P2 设计写 catchall 中 `resolve_entry_raw` 抛 `NotFoundError` 时返回 `JSONResponse(status_code=404, content={"detail": "Entry not found", "code": "NOT_FOUND"})`。
+### 4.3 实现路径与 P2 方案设计吻合性
 
-实际实现（main.py L535-536）直接 `return await resolve_entry_raw(request, path)`，未包裹 try/except。但 `resolve_entry_raw` 本身会 raise `NotFoundError`，由 FastAPI 的 `peek_error_handler`（main.py L443-454）统一捕获，返回 `{"error": {"code": ..., "message": ..., "details": null}}` 格式。
+| P2 设计（P2§§1-2） | P4 实现（P4§implementation） | 代码验证 | 判定 |
+|---------------------|---------------------------|---------|------|
+| 方案 A：catchall 内联实现 | ✅ 在 `serve_spa_catchall` 内实现 | main.py L522-552 | 一致 |
+| `_prefers_json` GitHub-style 规则 | ✅ L28-50，含 `application/xhtml+xml` | main.py L46 | 一致（+扩展） |
+| `FRONTEND_ROUTES` frozenset | ✅ L25 | main.py L25 | 一致 |
+| `_slug_exists` 存在性查询 | ⚠️ 增加 ARCHIVED 过滤 | main.py L66-69 | 偏差（见 §5.1） |
+| 方式 3：提取 `resolve_entry_raw` | ✅ files.py L385-489 | files.py L385 | 一致 |
+| `get_entry_raw` 改为薄包装 | ✅ files.py L492-498 | files.py L492-498 | 一致 |
+| `_inject_link` 字符串替换 | ✅ L75-77 | main.py L75-77 | 一致 |
+| catchall try/except NotFoundError | ⚠️ 未包裹，依赖全局 PeekError handler | main.py L534-536 | 偏差（见 §5.2） |
+| Link header 格式 | ✅ L543-545 | main.py L543-545 | 一致 |
 
-**差异**：P2 设计的 404 响应格式是 `{"detail": ..., "code": ...}`，实际格式是 `{"error": {"code": ..., "message": ..., "details": null}}`。
+**判定**：核心设计路径一致，2 处非核心偏差（见 §5）。✅
 
-**判定**：`[DEVIATION]` — 响应格式与 P2 设计不同，但与全应用统一的 PeekError handler 格式一致。P2 设计的格式是 catchall 局部自定义，实际遵循全局错误格式更合理。非核心设计目标偏差，不阻塞。
+### 4.4 ui_affected 一致性
 
-### `<link>` 注入
+| 来源 | ui_affected | 判定 |
+|------|------------|------|
+| P0 | 无 | — |
+| P1 | 无 | ✅ 一致 |
+| P2 | false | ✅ 一致 |
+| P6 | false | ✅ 一致 |
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| 替换 `</head>` | ✅ main.py L77 | 一致 |
-| href 格式 `/api/v1/entries/{slug}/raw` | ✅ main.py L76 | 一致 |
+✅
 
-### Link header
+### 4.5 P4-backend-review CRITICAL 项修复验证
 
-| P2 设计 | 实际实现 | 判定 |
-|---------|---------|------|
-| `</api/v1/entries/{slug}/raw>; rel="alternate"; type="application/json"` | ✅ main.py L543-545 | 一致 |
+P4-backend-review 标记 2 项 CRITICAL：
 
-### catchall 数据流
+| # | 问题 | 修复验证 | 判定 |
+|---|------|---------|------|
+| 1 | main.py:534-537 404 响应格式不一致 | 代码已改为直接 `return await resolve_entry_raw(request, path)`（L535-536），NotFoundError 由全局 PeekError handler 统一处理，格式一致 | ✅ 已修复 |
+| 2 | `_slug_exists` 未过滤 ARCHIVED entries | 代码已增加 `Entry.status != EntryStatus.ARCHIVED`（L68-69） | ✅ 已修复 |
 
-| P2 设计步骤 | 实际实现 | 判定 |
-|------------|---------|------|
-| 静态文件检查优先 | ✅ main.py L530-532 | 一致 |
-| 非前端路由 + prefers_json → resolve_entry_raw | ✅ main.py L534-536 | 一致 |
-| 非前端路由 + slug_exists → inject_link + Link header | ✅ main.py L541-550 | 一致 |
-| 否则 → 纯 HTMLResponse | ✅ main.py L552 | 一致 |
+**判定**：P4-backend-review 的 2 项 CRITICAL 均已在代码中修复，P6 验收 20/20 PASS 佐证。✅
 
-### BDD 映射检查
+### 4.6 P4-cso-review 安全审查结论
 
-| BDD | P2 覆盖方式 | P6 结果 | 判定 |
-|-----|-----------|---------|------|
-| B1 JSON 优先 | `_prefers_json` + `resolve_entry_raw` | PASS | 一致 |
-| B2 HTML 优先 | `_prefers_json` 返回 False | PASS | 一致 |
-| B3 `*/*` 不触发 JSON | `_prefers_json` 规则 | PASS | 一致 |
-| B4 浏览器 Accept → HTML | `_prefers_json` 规则 | PASS | 一致 |
-| B5 q 值 HTML 优先 | SCOPE+ 修正后 | PASS | 一致 |
-| B6 私有未认证 → 404 | `resolve_entry_raw` | PASS | 一致 |
-| B7 私有已认证 → JSON | `resolve_entry_raw` | PASS | 一致 |
-| B7b admin → JSON | `resolve_entry_raw` | PASS | 一致 |
-| B8 不存在 slug → 404 JSON | `resolve_entry_raw` | PASS | 一致 |
-| B9 不存在 slug → HTML | `_slug_exists` False | PASS | 一致 |
-| B10 有效 slug `<link>` | `_inject_link` | PASS | 一致 |
-| B10b 私有 slug `<link>` | `_slug_exists`（不检查可见性） | PASS | 一致 |
-| B11 不存在 slug 无 `<link>` | `_slug_exists` False | PASS | 一致 |
-| B12 前端路由无 `<link>` | `_is_frontend_route` | PASS | 一致 |
-| B13 有效 slug Link header | HTMLResponse headers | PASS | 一致 |
-| B13b 私有 slug Link header | `_slug_exists` | PASS | 一致 |
-| B14 不存在 slug 无 Link header | `_slug_exists` False | PASS | 一致 |
-| B15 llms.txt | NC1 决议 | PASS | 一致 |
-| B16 端到端 Accept | B1 端到端 | PASS | 一致 |
-| B17 端到端 `<link>` | B10 端到端 | PASS | 一致 |
+P4-cso-review 结论：`status: approved`，0 CRITICAL，2 HIGH（mitigated），0 unmitigated。关键发现：
 
-### 完成标准检查
+- `_prefers_json` 规则安全性：✅ PASS
+- `resolve_entry_raw` 认证/可见性一致性：✅ PASS（与 `/raw` 端点共享同一函数）
+- `<link>` 注入信息泄露：✅ ACCEPTED（LOW，slug 空间足够大）
+- SQL 注入：✅ PASS（参数化查询）
 
-| P2 完成标准 | P6 验证 | 判定 |
-|------------|---------|------|
-| 1. curl Accept:json → JSON | B01 PASS | 一致 |
-| 2. curl HTML 含 `<link>` | B10 PASS | 一致 |
-| 3. curl -I 含 Link header | B13 PASS | 一致 |
-| 4. 浏览器访问 → HTML | B04 PASS | 一致 |
-| 5. curl Accept:json + private → 404 | B06 PASS | 一致 |
-| 6. curl Accept:json + explore → HTML | B12 PASS | 一致 |
-| 7. 所有现有 pytest 通过 | P5 通过 | 一致 |
-| 8. ruff check 通过 | P4 self-check 通过 | 一致 |
+**判定**：安全审查通过，无未缓解风险。✅
 
-## 方向 2：实现→设计
+## 5. 偏差汇总
 
-对照代码变更，检查设计文档中是否有不再适用的要求。
+### 5.1 D1: `_slug_exists` ARCHIVED 过滤偏差
 
-### 检查项
+| 维度 | 内容 |
+|------|------|
+| 源文件节 | P2§2 `_slug_exists` 伪代码 vs main.py L59-72 |
+| 偏差 | P2 设计为纯存在性查询（`Entry.slug == slug`），实现增加 `Entry.status != EntryStatus.ARCHIVED` 过滤 |
+| 原因 | P4-backend-review CRITICAL #2 要求修复，ARCHIVED entry 对匿名用户返回 404，注入 `<link>` 会造成虚假引导 |
+| 方向 | 合理修正（防止虚假引导），与 `resolve_entry_raw` 行为一致 |
+| 影响 | ARCHIVED entry 不注入 `<link>` + Link header，Agent 无法通过自描述发现 ARCHIVED entry（与不可访问一致） |
+| 判定 | `[DEVIATION]` — 偏差方向正确，与安全审查一致，不阻塞 |
 
-| 代码变更 | 设计文档影响 | 判定 |
-|---------|------------|------|
-| `_slug_exists` 增加 ARCHIVED 过滤 | P2 §2 的 `_slug_exists` 伪代码未包含 status 过滤，设计文档描述"存在性检查 only，不检查可见性"已不完全准确 | `[DEVIATION]` — 建议更新 P2 描述为"存在性检查，排除 ARCHIVED 状态" |
-| catchall 未包裹 try/except，依赖全局 PeekError handler | P2 §2 伪代码含 `try: ... except NotFoundError: JSONResponse(...)` ，实际代码由全局 handler 处理 | `[DEVIATION]` — 建议更新 P2 伪代码移除局部 try/except |
-| `_prefers_json` 支持 `application/xhtml+xml` | P2 §2 伪代码只检查 `text/html`，但 P2 §1 Accept 解析规则注释提到"GitHub-style"未明确 xhtml | `[EXTENSION]` — 实现比设计更完善，`application/xhtml+xml` 是合理的 HTML 变体 |
-| `resolve_entry_raw` 未被 catchall 包裹 try/except | P2 伪代码中有 `try: return await resolve_entry_raw(...); except NotFoundError: return JSONResponse(...)` | `[DEVIATION]` — 同上，全局 handler 替代了局部错误处理 |
+### 5.2 D2: catchall 404 由全局 PeekError handler 处理
 
-### 僵尸需求/废弃约束检查
+| 维度 | 内容 |
+|------|------|
+| 源文件节 | P2§2 catchall 伪代码 vs main.py L534-536 |
+| 偏差 | P2 设计 catchall 包裹 try/except 返回自定义 `{"detail":...}` 格式，实际代码不包裹，NotFoundError 由全局 PeekError handler 返回 `{"error":{...}}` 格式 |
+| 原因 | P4-backend-review CRITICAL #1 要求修复，全局格式更一致 |
+| 方向 | 合理修正（统一错误格式），与全应用错误处理一致 |
+| 影响 | Content Negotiation 404 响应格式与 API 404 格式统一 |
+| 判定 | `[DEVIATION]` — 非核心偏差，格式更统一，不阻塞 |
+
+### 5.3 D3: `_prefers_json` 支持 `application/xhtml+xml`
+
+| 维度 | 内容 |
+|------|------|
+| 源文件节 | P2§2 `_prefers_json` 伪代码 vs main.py L46 |
+| 偏差 | P2 伪代码只检查 `text/html`，实现额外检查 `application/xhtml+xml` |
+| 原因 | `application/xhtml+xml` 是 HTML 的标准 MIME 类型，浏览器可能发送 |
+| 方向 | 合理增强，更全面覆盖 HTML 变体 |
+| 判定 | `[EXTENSION]` — 合理增强，不阻塞 |
+
+### 5.4 D4: P1 残留 [NEED_CONFIRM] 标签
+
+| 维度 | 内容 |
+|------|------|
+| 源文件节 | P1-requirements.md L64 |
+| 偏差 | NC1 已 RESOLVED（P1 L281），但 L64 的 `[NEED_CONFIRM]` 标签未清理 |
+| 判定 | `[DEVIATION]` — 文档清洁度问题，实质已解决（NC1 RESOLVED + P6 B15 PASS） |
+
+## 6. 僵尸需求/废弃约束检查
 
 | 检查项 | 判定 |
 |-------|------|
-| P2 方案 B（中间件）的 AC 仍在设计中 | 不存在——P2 明确选了方案 A，方案 B 仅作对比 |
+| P2 方案 B（中间件）的 AC 仍在设计中 | 不存在——P2 明确选了方案 A |
 | P2 B5 原预期（q 值排序 → JSON） | 已通过 SCOPE+ 修正为 HTML 优先——P6 按修正后验收 PASS |
-| llms.txt 动态服务 | P2 NC1 决议明确排除，保持 302 重定向 |
+| llms.txt 动态服务 | NC1 决议排除，保持 302 重定向——P6 B15 PASS |
+| 前端代码改动 | P1 I8 声明无前端改动——实现无前端改动 ✅ |
 
-## P4 [DESIGN_GAP] 配对检查
+## 7. 门槛检查
 
-P4-implementation.md 中无 `[DESIGN_GAP]` 标记。✅ 无需配对。
+- [x] P7-consistency.md 存在且含合法 Header
+- [x] DESIGN_GAP 配对：P4 无 DESIGN_GAP 声明，P7 确认 0 条需配对 ✅
+- [x] SCOPE+ 闭环：P1 有 1 处 `[SCOPE_RESOLVED]`（B5 修正），已纳入基线 + P6 验收 PASS ✅
+- [x] 跨文件一致性：BDD 数量 20=20 匹配、packages 全程 `backend/peekview` 一致、实现路径与 P2 方案 A 吻合（2 处非核心偏差） ✅
+- [x] 未决项：P1 L64 残留 `[NEED_CONFIRM]` 标签标注为 `[DEVIATION]`（D4，实质已解决） ✅
+- [x] 无 `[BLOCKER]` ✅
+- [x] 无 `[DEVIATION-CRITICAL]` ✅
 
-## P6 BDD 二值规则检查
+**P7 门槛状态**：通过
 
-P6 验收结果中所有 BDD 条件均为 PASS（20/20），NEED_CONFIRM 为 0。无中间态（如"调整/跳过/覆盖"）。✅ 二值规则遵守。
+**偏差总计**：4 条（D1 合理修正 + D2 格式统一 + D3 合理增强 + D4 标签残留），均为非阻塞项。
 
-## `_slug_exists` ARCHIVED 过滤专项分析
-
-**P2 设计**：`_slug_exists` 查询为 `select(Entry).where(Entry.slug == slug)`，注释"存在性检查 only，不检查可见性"。
-
-**实际实现**：`select(Entry).where(Entry.slug == slug, Entry.status != EntryStatus.ARCHIVED)`。
-
-**上下文**：
-- ARCHIVED entry 对非 owner/non-admin 在 `entry_service.get_entry` 中返回 404（entry_service.py L331-335）
-- `resolve_entry_raw` 复用 `entry_service.get_entry`，ARCHIVED entry 会得到 404
-- 因此 `<link>` 指向 ARCHIVED slug 时，Agent 跟踪链接只会得到 404——造成虚假引导
-
-**结论**：过滤 ARCHIVED 是合理的安全修正，防止 `<link>` 注入指向不可访问的 entry。但 P2 设计的"不检查可见性"原则被部分违反（ARCHIVED 是一种"不可见"状态）。
-
-**判定**：`[DEVIATION]` — 涉及 P2 核心设计目标"HTML 自描述"的边界情况。偏差方向正确（防止虚假引导），但与 P2 "只检查存在性"的设计意图有张力。需人工确认：是否接受 ARCHIVED entry 不注入 `<link>` 的行为。
-
-## 偏差汇总
-
-| ID | 方向 | 涉及 P2 设计目标 | 类型 | 判定 |
-|----|------|----------------|------|------|
-| D1 | 设计→实现 | `_slug_exists` 存在性检查 | ARCHIVED 过滤偏差 | `[DEVIATION]` + `[NEED_CONFIRM]` |
-| D2 | 设计→实现 | catchall 404 响应格式 | 全局 PeekError handler 替代局部处理 | `[DEVIATION]`（非核心，不阻塞） |
-| D3 | 实现→设计 | `_prefers_json` 支持 xhtml | `application/xhtml+xml` 扩展 | `[EXTENSION]`（合理增强） |
-| D4 | 设计→实现 | catchall try/except 伪代码 | 全局 handler 替代 | `[DEVIATION]`（非核心，不阻塞） |
-
-## 门槛检查
-
-- [x] 双向检查完成
-- [x] 无 `[BLOCKER]`
-- [x] 无 `[DEVIATION-CRITICAL]`
-- [x] 有 1 条 `[DEVIATION]` + `[NEED_CONFIRM]`（D1：ARCHIVED 过滤）——不硬阻塞，需人工确认
-- [x] 无 `[DESIGN_GAP]` 需配对
-
-**P7 门槛状态**：通过（D1 需人工确认但不阻塞 gate）
+**实质锚点引用**：P2§packages, P2§1-2, P4§implementation, P4§SCOPE+ Items, P1§BDD, P6§BDD 验收结果, P4-cso-review§STRIDE, P4-backend-review§CRITICAL

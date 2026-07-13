@@ -1,0 +1,12 @@
+- [P0-brief.md] packages=backend/peekview, internal_only, P8裁剪, ui_affected=无, 三层递进方案
+- [P1-requirements.md] BDD=20条(B1-B17含B5b/B7b/B10b/B13b), SCOPE_RESOLVED=1(B5修正), NEED_CONFIRM残留=1(I5/NC1 llms.txt路径-但NC1已RESOLVED需核实), packages=backend/peekview, internal_only=true, P8裁剪
+- [P2-design.md] 方案A(catchall内联), _prefers_json+resolve_entry_raw(方式3)+_inject_link, packages=backend/peekview, SCOPE+标记3处(B5修正+minimal_validation确认)
+- [P4-implementation.md] DESIGN_GAP=0条, SCOPE+=0, 改动main.py+api/files.py, resolve_entry_raw提取, 33测试通过
+- [P6-acceptance.md] 20/20 BDD PASS, 含B15重验通过(llms.txt GitHub同步), 证据文件40个
+- [P4-cso-review.md] approved, 0 CRITICAL, 2 HIGH(mitigated), STRIDE 10项全安全, resolve_entry_raw认证一致性确认
+- [P4-backend-review.md] needs-revision, 2 CRITICAL(404格式不一致+archived未过滤), 但P6验收20/20 PASS说明CRITICAL已修复
+- [P7-dispatch-context.md] P4 DESIGN_GAP=0, SCOPE_RESOLVED=1, NEED_CONFIRM残留=1, P6=20/20 PASS
+- [code-verify] main.py:534-536 catchall直接return resolve_entry_raw(不再catch NotFoundError), 404格式由PeekError handler统一处理; main.py:67-69 _slug_exists已过滤ARCHIVED状态; 两项CRITICAL已修复
+- [BDD-count] P1=20 BDD sections, P6=20 PASS results, count matches
+- [SCOPE+_闭环] P1 B5有[SCOPE_RESOLVED]标记(P1:149行), P2有3处[SCOPE+]标记(P2:363,372,454行), B5修正已纳入基线, P6按修正后验收PASS
+- [P7-consistency.md] 已写入, 4条DEVIATION(D1 ARCHIVED过滤+D2 404格式+D3 xhtml扩展+D4 NEED_CONFIRM残留), 0 BLOCKER, 0 DEVIATION-CRITICAL, 门槛通过
