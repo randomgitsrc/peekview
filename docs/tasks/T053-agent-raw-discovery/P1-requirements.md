@@ -61,7 +61,7 @@ Agent 收到 PeekView URL（`https://peek.example.com/xxxx`）后，用 curl/fet
 - 补充内容有两种路径：**(a)** 更新 GitHub 上的静态文件（保持 302 重定向）；**(b)** 改为后端直接返回（从静态文件读取内容后补充动态信息）
 - 路径 (a) 改动最小但需要单独发布 llms.txt 文件更新；路径 (b) 改动更大但内容与后端版本同步
 
-**这是 [NEED_CONFIRM] 项**——涉及行为变更和实现路径选择。
+**已决议**：选择路径 (a)——更新 GitHub 上的静态文件（保持 302 重定向），改动最小。
 
 ### I6: Content Negotiation 对不存在的 slug 的行为
 
