@@ -1,1 +1,0 @@
-{"slug": "private-cn", "summary": "Private entry for content negotiation", "tags": [], "created_at": "2026-07-12T17:41:57.827926", "files": [{"id": 2, "filename": "secret.py", "path": null, "language": "python", "is_binary": false, "size": 9, "content": "secret=42", "content_encoding": "utf-8", "file_url": null}], "raw_url": "http://127.0.0.1:8888/api/v1/entries/private-cn/raw"}

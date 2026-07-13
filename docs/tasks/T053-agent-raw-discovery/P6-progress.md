@@ -1,14 +1,10 @@
-# T053 P6 Progress
-
-## 2026-07-13 验证执行
-
-1. 读取输入文档：P1-requirements.md (20 BDD), P2-design.md, P5-test-results.md, P6-dispatch-context.md
-2. 启动 debug backend (:8888)
-3. 创建测试数据：admin 用户 + public entry (test-cn) + private entry (private-cn) + regular user + private-regular entry
-4. 逐条 curl 验证 B01-B17
-5. 编写 verify.sh 验证脚本
-6. 首次运行：B07/B07b FAIL（p6admin 非管理员，private-cn 属于 testuser）
-7. 修复脚本：增加 admin 身份检测 + fallback 到 testuser
-8. 清理 DB 重跑：19/20 PASS，B15 FAIL
-9. B15 根因：GitHub llms.txt 静态文件未更新 Content Negotiation 描述（NC1 路径 A 的遗漏）
-10. 产出 P6-acceptance.md + verify.sh + test-output.log
+- [verifier.md] 角色定义已读：P6模式=验收，逐条BDD实跑，二值PASS/FAIL，需证据文件
+- [P0-brief.md] 20条BDD, debug_env=:8888, ui_affected=false, 纯后端
+- [P1-requirements.md] 20条BDD确认(B1-B17含B5修正,B7b,B10b,B13b), NC1=llms.txt保持302重定向, NC2=私有entry也注入link
+- [P2-design.md] 方案A catchall内联, _prefers_json+_slug_exists+_inject_link, resolve_entry_raw共享函数
+- [P6-dispatch-context.md] 20条BDD清单确认, P5=851pytest全绿, debug=:8888
+- [P6-gate-diagnosis.md] B15之前FAIL, llms.txt已push到GitHub(e32dfc1e), 需重点验证B15
+- [main.py:522-552] catchall实现已读：_prefers_json→resolve_entry_raw, _slug_exists→_inject_link+Link header
+- [main.py:25-77] 辅助函数已读：_prefers_json(GitHub-style), _is_frontend_route, _slug_exists(排除ARCHIVED), _inject_link
+- [verify.sh] 全部20条BDD验收脚本执行完毕，20/20 PASS
+- [P6-acceptance.md] 验收报告已写入，20/20 PASS，证据文件73个

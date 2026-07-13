@@ -1,8 +1,8 @@
 HTTP/1.1 200 OK
-date: Sun, 12 Jul 2026 17:41:57 GMT
+date: Sun, 12 Jul 2026 23:48:29 GMT
 server: uvicorn
-link: </api/v1/entries/private-cn/raw>; rel="alternate"; type="application/json"
-content-length: 791
+link: </api/v1/entries/private-slug/raw>; rel="alternate"; type="application/json"
+content-length: 793
 content-type: text/html; charset=utf-8
 x-content-type-options: nosniff
 x-frame-options: DENY

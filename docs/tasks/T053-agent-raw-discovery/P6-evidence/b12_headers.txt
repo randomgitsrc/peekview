@@ -1,8 +1,7 @@
 HTTP/1.1 200 OK
-date: Sun, 12 Jul 2026 17:41:57 GMT
+date: Sun, 12 Jul 2026 23:48:29 GMT
 server: uvicorn
-link: </api/v1/entries/test-cn/raw>; rel="alternate"; type="application/json"
-content-length: 788
+content-length: 704
 content-type: text/html; charset=utf-8
 x-content-type-options: nosniff
 x-frame-options: DENY

@@ -297,6 +297,7 @@ Then  Agent 获取结构化 JSON
 phases: [P1, P2, P3, P4, P5, P6, P7]
 internal_only: true
 internal_only_reason: 纯后端行为变更，无公共 API 破坏性变更，无版本 bump
+override: P8 pruned (internal_only, no version bump needed)
 ```
 
 - **P1**：需求基线（本文件）

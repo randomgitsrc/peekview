@@ -23,6 +23,8 @@ Two packages: **peekview** (Python, pipx install) provides the backend + fronten
 ## API
 
 - [Agent read path](https://github.com/randomgitsrc/peekview/blob/main/README.md): GET /api/v1/entries/{slug}/raw — structured JSON, public entries no auth, private entries need API key
+- **Content Negotiation**: GET /{slug} with `Accept: application/json` returns JSON (same as /raw); `Accept: text/html` or default returns HTML. JSON only when `application/json` is acceptable AND `text/html` is NOT. `*/*` returns HTML. Matches GitHub behavior.
+- **HTML self-description**: HTML responses for valid slugs include `<link rel="alternate" type="application/json" href="/api/v1/entries/{slug}/raw" />` in `<head>` and `Link` HTTP header, enabling discovery without prior knowledge of /raw.
 - [REST endpoints](https://github.com/randomgitsrc/peekview/blob/main/docs/guides/DEPLOYMENT.md): CRUD entries, files, auth, apikeys (TODO: dedicated API reference)
 
 ## CLI

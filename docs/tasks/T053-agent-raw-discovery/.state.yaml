@@ -1,7 +1,7 @@
 task_id: T053
 task_name: agent-raw-discovery
-phase: READY
-status: complete
+phase: P6
+status: PAUSED
 retries:
   P0: []
   P1: []
@@ -9,7 +9,7 @@ retries:
   P3: []
   P4: []
   P5: []
-  P6: []
+  P6: ["B15-FAIL-pending-fix", "provenance-format-fix"]
   P7: []
   P8: []
-last_updated: 2026-07-12
+last_updated: 2026-07-13
