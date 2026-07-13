@@ -211,6 +211,10 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 - **[SCOPE+]**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补（不全重跑）
 - **[NEED_CONFIRM]**：需求明确就自走；拿不准方向才停下问人
 - **[CAPABILITY_GAP]**：P1 检测能力缺口，三态（available/supplementable/GAP），仅 GAP 才停
+- **P1 评审不可裁**：所有任务都走独立 requirements-review（agent≠main），与 P2 design-review 对称
+- **P6 不可裁剪**：验收是质量最后防线。`no_behavior_change` 可简化 P6（快速验收），不可省略
+- **P2 不可裁剪**：方案设计是必经阶段。`design_trivial`/`follows_existing_pattern` 可简化（1 个候选方案），不可省略
+- **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **裁剪风险**：涉及 schema 变更/安全/多端 → P6 不可跳；「任务简单」不是合法裁剪理由
 
 ## 详细参考

@@ -336,7 +336,8 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
 
 **关键约束**：
 - **P1** 用 BDD（Given/When/Then）建立需求基线，先质疑需求、识别隐含依赖；需求明确则自走，拿不准方向才标 `[NEED_CONFIRM]` 问人
-- **P2** 必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 导致多包发布漏 bump）
+- **P1 评审不可裁**：所有任务都走独立 requirements-review（agent≠main），与 P2 design-review 对称
+- **P2** 必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 导致多包发布漏 bump）。P2 不可裁剪——方案设计是必经阶段，`design_trivial`/`follows_existing_pattern` 可简化（1 个候选方案），不可省略
 - **`[SCOPE+]`**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补（不全重跑）
 - **P6 验收铁律（T026 教训）**：
   - BDD 条件逐条实跑、翻译成人话；UI 必须 Playwright 实跑+截图，不接受"代码看起来对"
@@ -344,6 +345,8 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
   - **优先执行 P6 verifier 产出的测试脚本**（不绕过写 CDP 脚本替代）
   - **禁止编造验收结果**：没有实际跑过的 BDD 标 FAIL 或 PAUSED，绝不填 PASS
   - `P6-acceptance.md` 的 PASS/FAIL 标签 ≠ gate 通过——证据文件存在且数量对才是
+  - P6 不可裁剪——验收是质量最后防线。`no_behavior_change` 可简化 P6（快速验收），不可省略
+- **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告（`[SCOPE_GAP]`/✅ 仅供参考）
 - 微/小任务可裁剪阶段，但裁剪需写理由，P1 需求基线不可跳
 

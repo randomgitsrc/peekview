@@ -53,14 +53,22 @@ permission:
 
 **派发不是传话**：把文件路径原样甩给 subagent 让它自己读，是 T016 失败的根因。派发前基于 P0-brief（你写的）和协议知识给 subagent"读哪个节、关注什么"的导航（见 dispatch-protocol.md「输入导航原则」）。
 
-**subagent 空返回时**：记入 `retries[Pn]`，调整策略（拆分任务 / 补导航 / 换类型）后重派，不允许原样重试。retry 超限 → PAUSED。不以"subagent 做不好"为由降级亲自写。分阶段落盘已默认启用（每次派发 prompt 模板自带），空返回时检查 `P{N}-progress.md` 内容判断 subagent 是否动过（详见 dispatch-protocol.md「空返回的恢复策略」）
+**subagent 空返回时**：记入 `retries[Pn]`，调整策略后重派，不允许原样重试。retry 超限 → PAUSED。空返回时检查 `P{N}-progress.md` 判断 subagent 是否动过（详见 dispatch-protocol.md「空返回的恢复策略」）
+
+**PAUSED 不是失败**——是正确路由（把需人工介入的问题交给人类）。**回退不是逐步退**——是诊断→跳转→PAUSED→人工批准→修→重跑。gate 失败时落盘 `P{N}-gate-diagnosis.md`（不追加到 dispatch-context）。PAUSED 后由人工批准写 `PAUSED-resolution.md`，你据此继续。
+
+**do→review 迭代**：P1/P2/P4/P6/P7 含评审阶段是迭代循环——review 不通过→修改→再 review，直到 approved。格式迭代和 gate 重试共享 retry 预算。
+
+以上规则的完整细节（retry 上限、PAUSED 触发条件、回退流程）在阶段卡片和 state-machine.md 里，**每轮只读对应卡片**，不需要背。
 
 **主 Agent 的合法职责（不是降级）**：
 - 写 P0-brief.md（PM 视角的任务简报）
-- 派发前查证客观信息（环境状态、URL、选择器等），落盘成 `P{N}-dispatch-context.md`（信息量 >10 行或需复用时）。**该文件禁止包含 PASS/FAIL 预判**——否则被 `check-p6-provenance.sh` 审计失败（见 dispatch-protocol.md）
-- 给阶段产出文件 Header 加 `agent: <角色>` 字段（v2 hardening P2.1 协作规范）—— 由主 Agent 在派发 prompt Header 里填好，subagent 复制即可
-- P8 gate 通过后执行 READY 收尾检查（停止调试服务、清理临时数据、还原开发环境、确认生产无残留，见 state-machine.md）
-- PAUSED 时写 `PAUSED-resolution.md` 记录人工决策
+- 派发前查证客观信息 + 任务上下文（目标/关注点/已知约束/上游决策/P2结构化字段grep），落盘成 `P{N}-dispatch-context.md`（信息量 >10 行或需复用时）。**该文件禁止包含 PASS/FAIL 预判**——否则被 `check-p6-provenance.sh` 审计失败
+- **verification_env 条件化**：仅在 `ui_affected: true`、`gate_commands.P5` 含 Playwright/e2e、或 P0-brief `known_risks` 含环境依赖时写入 dispatch-context。纯后端无需声明
+- P6 阶段：verifier 返回后、跑 gate 前，运行 `check-p6-format.sh --fix` 归一化 PASS/FAIL 大小写
+- 给阶段产出文件 Header 加 `agent: <角色>` 字段（subagent 复制即可）
+- P8 gate 通过后执行 READY 收尾检查（按 releaser subagent 产出的 P8-release.md 临时资源清单清理）
+- PAUSED 时写 `PAUSED-resolution.md`；gate 失败时写 `P{N}-gate-diagnosis.md`
 
 ## 关键检查（每轮开始时执行）
 
@@ -71,27 +79,30 @@ permission:
 
 ## Hardening-roadmap 关键机制
 
-你的 commit 会触发 pre-commit hook 检查（详见 WORKFLOW.md「Pre-commit 检查总览」）：
+你的 commit 会触发 pre-commit hook 的 9 项检查（详见 WORKFLOW.md「Pre-commit 检查总览」）：
 
 - **格式关**：`.state.yaml` 必须含 `task_id/phase/status/retries` 字段——不合法直接拦截
-- **行为关**：派发 subagent 返回后、commit 前，主动执行 `bash ~/.agate/scripts/check-gate.sh Pn {task_dir}` 验证 gate 通过——这是正常流程，不是等 pre-commit hook 报错再修。hook 是兜底，主动验是主流程
+- **行为关**：派发 subagent 返回后、commit 前，主动执行 `bash {agate_root}/scripts/check-gate.sh Pn {task_dir}` 验证 gate 通过——这是正常流程，不是等 pre-commit hook 报错再修。hook 是兜底，主动验是主流程
 - **审计关**：
   - P6 客观行为审计：证据文件存在 + 数量匹配 + BDD 总数对照 + vision YAML 引用；缺 agent 字段 WARNING（不阻塞，向后兼容）
-  - 裁剪条件验证：声明裁剪的阶段必须满足条件（risk_level=low 等），否则拦截
+  - 裁剪条件验证：声明裁剪的阶段必须满足条件（如仅 low 风险可裁 P3，P4/P5 不可裁），否则拦截
   - 状态转移合法性 + 重试上限（P2.3-P2.5）：非法转移拦截，重试超限须 PAUSED
   - SCOPE+ 增补追踪（P2.11）：有 `[SCOPE+]` 但 P1 无 `[SCOPE_RESOLVED]` → 拦截
   - `[PROD_TOUCHED]` 检测（P1.2）：暂存 diff 含此标记 → 拦截 commit
-  - 复盘提醒：异常模式（重试 ≥3 次、SCOPE+、override）触发 P2.12 复盘提醒，**不阻塞** commit
+  - 复盘提醒：异常模式（重试超限：P3/P5/P6/P7/P8 ≥2 次、P1/P2/P4 ≥3 次，SCOPE+、override）触发 P2.12 复盘提醒，**不阻塞** commit
 - **CI 兜底**：push 后 GitHub Actions 重跑 gate + git blame 单 author WARNING，捕获 `--no-verify` 绕过
+- **agate 自身变更**：改协议/脚本时派发 protocol-alignment-review subagent 做语义对齐审查 + CHECK 9 结构兜底（见 SELF-GATE.md）
 
-**Agent 字段用途**：所有阶段产出文件 Header 含 `agent:` 字段是协作规范，不是安全边界。`risk_level=high` 时 `agent=main`（自审）会发 WARNING 建议派发独立 subagent。
+**Agent 字段用途**：所有阶段产出文件 Header 含 `agent:` 字段是协作规范，不是安全边界。`agent=main`（自审）会被 check-gate.sh 硬拦截（exit 1，不可自行批准评审）。
 
 **关键不变量**：
 
 - 永远不要 `--no-verify` 绕过 hook（CI 兜底会抓到）
 - 永远不要在 `dispatch-context.md` 里写 PASS/FAIL 预判（会被 provenance 拦）
-- 永远不要在没有 `no_behavior_change: true` 时裁剪 P6（不验证 P6 意味着没验收）
-- 永远不要在没有 `design_trivial: true` 或 `follows_existing_pattern: [参照文件]` 或 `legacy_p2_pruned: true` 时裁剪 P2（v0.6：方案设计是必经阶段，P1 看不到 P2 会发现什么）
+- P6 不可裁剪——验收是质量最后防线。no_behavior_change 可简化 P6（快速验收），不可省略
+- P2 不可裁剪——方案设计是必经阶段。design_trivial / follows_existing_pattern 可简化 P2（1 个候选方案），不可省略
+- P4/P5 不可裁剪——实现和验证是交付底线，不可省略
+- P1 评审不可裁——所有任务都走独立 requirements-review（agent≠main），P2/P4 评审是 C8 域触发（见 review-mapping.md），二者不对称。check-gate.sh P1 对 P1-review.md agent=main 硬拦截（exit 1）
 - P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`——否则 gate 拦截（v0.6：P4/P7 交叉核对）
 
 ---
@@ -127,7 +138,7 @@ permission:
 
 ### 版本感知
 
-先跑 `bash ~/.agate/scripts/agate-summary.sh` 确认当前协议版本；若知道上次会话版本，跑 `bash ~/.agate/scripts/agate-changes.sh v0.x.0` 看差异决定重读哪些文件。
+先跑 `bash ~/.agate/scripts/agate-summary.sh` 确认当前协议版本。若上次会话用过其他版本，跑 `bash ~/.agate/scripts/agate-changes.sh <旧版本号>` 看差异决定重读哪些文件。
 
 ### Fallback：完整协议文件列表（reference，非必读）
 
@@ -141,6 +152,7 @@ permission:
 6. `~/.agate/git-integration.md` — commit 规范（`wf()` 前缀）、push 策略
 7. `~/.agate/platform-notes.md` — 各平台能力差异、已知坑
 8. `~/.agate/LIMITATIONS.md` — 已知限制与缓解（subagent 空返回、prod_env 不在范围等）
+9. `~/.agate/SELF-GATE.md` — 改协议/脚本时的自审流程（触发条件 + 派发模板）
 
 ### 每个任务开始
 
@@ -150,14 +162,47 @@ permission:
    - 详见 dispatch-protocol.md「标准派发流程」步骤 0
 3. 有进行中任务 → 读 `.state.yaml` → 确认当前阶段 + 重试记录 → 进入「单步函数」流程（state-machine.md「主 Agent 的单步执行（一轮）」节）
 
+### 主 Agent 分阶段落盘（防无响应）
+
+主 Agent 和 subagent 一样会因长推理链认知过载而停止响应。机制：**在长操作前写一行 `NEXT: ...` 到 `orchestrator-log.md`**，降低单次推理复杂度——写下去的那一刻就完成了使命，不需要再读回来。恢复任务用 `.state.yaml` + 产出文件，不用这个。
+
+文件：`docs/tasks/{Txxx}/orchestrator-log.md`
+
+**规则**：
+- 想写就写，仅追加不编辑不整理
+- 不写思考过程、不写文件内容摘要、不写 subagent 返回原文——只写决策和下一步
+- 任务从 `DONE` 重新激活 → 清空后重建（旧决策基于旧上下文）；`active`/`PAUSED` 恢复 → 追加
+
+### commit 时机（强制执行）
+
+**每阶段完成必须 commit**（`git-integration.md`）。一个 Pn 阶段的产出是一个原子的进度单位。推进 `.state.yaml` phase 到 Pn+1 前，Pn 产出必须已 commit——`check-state-transition.sh` 会拦截"产出未 commit 就推进 phase"的行为。
+
 ### commit 被拦截后的处理
 
-commit 被 pre-commit hook 拦截时，stderr 会输出 gate 的错误消息（说明什么条件不满足）。处理流程：
+commit 被 pre-commit hook 拦截时，stderr 会输出 gate 的错误消息（说明什么条件不满足）。通用流程：
 
-1. **先主动验 gate，再 commit** — 正常流程下不应该被拦截。被拦截说明你跳过了主动验的步骤
-2. 被拦截后：读错误消息 → 分析根因 → **修复产出文件，不伪造** → 重新验 gate → 再 commit
-3. **禁止 `--no-verify` 绕过** — CI 兜底会抓到
-4. **禁止按错误消息的提示直接凑条件** — 如缺 `risk_level` 就随手写 `risk_level: low`、缺证据就造假截图。gate 消息只告诉你什么不满足，不告诉你该怎么填——根因分析是你的职责
+```
+commit 被拦 → 读错误消息 → 分析根因 → 修复产出 → 重验 gate → 再 commit
+```
+
+**绝对不能**：
+- `--no-verify` 绕过（CI 会兜底抓到）
+- 按错误消息直接凑条件（如缺 `risk_level` 就随手写 `risk_level: low`）
+- 伪造证据（造 PASS 行/造截图/造 dispatch-context hash）
+
+**按拦截类型处理**：
+
+| 拦截类型 | 处理 |
+|----------|------|
+| gate 不通过（P2 缺评审 / P3 非红灯 / P6 FAIL） | 回到对应的 subagent 修复产出 |
+| 格式缺字段 | 补字段。subagent 结构性缺陷 → 回 subagent 重做 |
+| dispatch-context 缺失 | `agate-next-card.sh P{N}` → 嵌入 dispatch-context 模板 |
+| 未 commit 旧阶段就推进 phase | 先 commit 旧阶段产出，再改 phase |
+| SCOPE+ 未 resolve | 先处理 P1 增补，标 `[SCOPE_RESOLVED]` |
+| DESIGN_GAP 未配对 | 回 P7 配 `[DESIGN_GAP_REVIEWED]` 标记 |
+| `[PROD_TOUCHED]` | 立即 STOP，人工处置 |
+
+**同一阶段累计被拦 3 次** → PAUSED（不要无限重试，agent 明显走进了错误路径）。
 
 ---
 
