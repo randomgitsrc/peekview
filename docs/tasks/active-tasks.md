@@ -22,6 +22,9 @@
 | T031 | cold-open-performance | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-06-29 | 2026-06-29 |
 | T035 | ci-publish-pipeline | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-06-29 | 2026-06-29 |
 | T053 | agent-raw-discovery | ✅ READY | READY | 🔴 | P8 裁剪（internal_only） | 2026-07-12 | 2026-07-13 |
+| T054 | api-safety-idempotency | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-14 | 2026-07-14 |
+| T055 | admin-backup-export | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-14 | 2026-07-14 |
+| T056 | prometheus-metrics | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-14 | 2026-07-14 |
 
 ### 已完成
 

@@ -22,7 +22,10 @@
 | 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔵 长期 | 待办 |
 | 10b | entry 生命周期管理：过期→归档+可续命+可配置保留期 | 产品/架构 | 🟠 近期 | ✅ v0.5.4(T048) |
 | 15b | 图表源码自动清洗 + 移动端 header 滚动收缩 | 体验 | 🟠 近期 | ✅ v0.5.5(T049) |
-| 21 | Agent /raw 端点自动发现（Content Negotiation + HTML 自描述） | 产品/Agent | 🔴 立即 | 🔄 T053 |
+| 21 | Agent /raw 端点自动发现（Content Negotiation + HTML 自描述） | 产品/Agent | 🔴 立即 | ✅ T053 |
+| 22 | 后端 API 安全加固（默认 host + 限流 + passlib）+ 幂等 key + 代码风格 | 安全/产品 | 🔴 立即 | 🔄 T054 |
+| 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | 🔄 T055 |
+| 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | 🔄 T056 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
