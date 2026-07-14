@@ -123,9 +123,11 @@ onMounted(() => {
 <style scoped>
 .share-management-panel {
   margin-top: 16px;
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-lg);
   padding: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .panel-header {

@@ -214,13 +214,11 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 4px;
-  min-width: 180px;
-  max-height: calc(100vh - var(--header-height) - 120px);
-  overflow-y: auto;
+  min-width: 200px;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   z-index: 100;
 }
 
