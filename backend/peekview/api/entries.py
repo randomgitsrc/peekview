@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from peekview.api.files import _sanitize_filename
+from peekview.api.rate_limit import entries_rate_limit, limiter
 from peekview.auth import get_current_user, require_auth
 from peekview.exceptions import AuthenticationError, NotFoundError
 from peekview.models import (
@@ -128,6 +129,7 @@ def _is_global_api_key_auth(request: Request, current_user: User | None) -> bool
 
 
 @router.post("", status_code=201)
+@limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
 async def create_entry(
     data: CreateEntryRequest,
     request: Request,
@@ -169,7 +171,7 @@ async def create_entry(
 
     current_user_id = current_user.id if current_user else None
 
-    return service.create_entry(
+    result, is_idempotent = service.create_entry(
         summary=data.summary,
         slug=data.slug,
         tags=data.tags,
@@ -178,7 +180,11 @@ async def create_entry(
         expires_in=data.expires_in,
         is_public=is_public,
         current_user_id=current_user_id,
+        idempotency_key=data.idempotency_key,
     )
+    if is_idempotent:
+        return JSONResponse(status_code=200, content=result.model_dump(mode="json"))
+    return result
 
 
 @router.get("")
@@ -333,6 +339,7 @@ async def get_entry_reads(
 
 
 @router.patch("/{slug}")
+@limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
 async def update_entry(
     slug: str,
     data: EntryUpdate,
@@ -386,6 +393,7 @@ async def update_entry(
 
 
 @router.delete("/{slug}")
+@limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
 async def delete_entry(
     slug: str,
     request: Request,

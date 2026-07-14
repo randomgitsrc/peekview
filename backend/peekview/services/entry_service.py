@@ -15,6 +15,7 @@ from sqlmodel import Session, select
 from peekview.config import PeekConfig
 from peekview.database import FTS_CONTENT_MAX_PER_ENTRY, FTS_CONTENT_TRUNCATE, get_engine
 from peekview.exceptions import (
+    ConflictError,
     InvalidSlugError,
     NotFoundError,
     PayloadTooLargeError,
@@ -139,7 +140,8 @@ class EntryService:
         expires_in: str | None = None,
         is_public: bool = True,
         current_user_id: int | None = None,
-    ) -> CreateEntryResponse:
+        idempotency_key: str | None = None,
+    ) -> tuple[CreateEntryResponse, bool]:
         """Create a new entry with files.
 
         All DB + file operations are wrapped in a transaction. If any file write
@@ -152,10 +154,17 @@ class EntryService:
             files_data: List of file dicts with keys: path, content, content_base64, local_path.
             dirs_data: List of dir dicts with key: path.
             expires_in: Duration string like "7d".
+            idempotency_key: Optional key for idempotent creation.
 
         Returns:
-            CreateEntryResponse with URL.
+            Tuple of (CreateEntryResponse, is_idempotent).
         """
+        if idempotency_key:
+            existing = self._find_by_idempotency_key(idempotency_key)
+            if existing:
+                if existing.owner_id != current_user_id:
+                    raise ConflictError("idempotency_key already used by another user")
+                return existing, True
         # Validate summary
         if not summary or not summary.strip():
             raise ValidationError("Summary is required")
@@ -210,6 +219,7 @@ class EntryService:
             is_public=is_public,
             owner_id=current_user_id,
             expires_at=expires_at,
+            idempotency_key=idempotency_key,
         )
 
         try:
@@ -293,8 +303,14 @@ class EntryService:
                     raise
 
         except IntegrityError:
+            if idempotency_key:
+                existing = self._find_by_idempotency_key(idempotency_key)
+                if existing:
+                    if existing.owner_id != current_user_id:
+                        raise ConflictError("idempotency_key already used by another user") from None
+                    return existing, True
             return self._retry_with_slug_suffix(
-                summary, slug, tags, files_data, dirs_data, expires_in, is_public, current_user_id
+                summary, slug, tags, files_data, dirs_data, expires_in, is_public, current_user_id, idempotency_key
             )
 
         self._update_fts_content(entry_id)
@@ -308,7 +324,7 @@ class EntryService:
             expires_at=expires_at,
             created_at=entry_created_at,
             files=file_responses,
-        )
+        ), False
 
     def get_entry(self, slug: str, current_user_id: int | None = None, is_admin: bool = False, include_read_stats: bool = False) -> EntryResponse:
         """Get entry details by slug.
@@ -768,6 +784,33 @@ class EntryService:
                 session.delete(r)
             session.commit()
 
+    def _find_by_idempotency_key(self, key: str) -> CreateEntryResponse | None:
+        with Session(self.engine) as session:
+            entry = session.exec(
+                select(Entry).where(Entry.idempotency_key == key)
+            ).first()
+            if not entry:
+                return None
+            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            file_responses = [
+                FileResponse(
+                    id=f.id, path=f.path, filename=f.filename,
+                    language=f.language, is_binary=f.is_binary,
+                    size=f.size, line_count=f.line_count,
+                )
+                for f in files
+            ]
+            return CreateEntryResponse(
+                id=entry.id,
+                slug=entry.slug,
+                url=self.config.build_view_url(entry.slug),
+                is_public=entry.is_public,
+                owner_id=entry.owner_id,
+                expires_at=entry.expires_at,
+                created_at=entry.created_at,
+                files=file_responses,
+            )
+
     def _retry_with_slug_suffix(
         self,
         summary: str,
@@ -778,7 +821,8 @@ class EntryService:
         expires_in: str | None,
         is_public: bool = True,
         current_user_id: int | None = None,
-    ) -> CreateEntryResponse:
+        idempotency_key: str | None = None,
+    ) -> tuple[CreateEntryResponse, bool]:
         """Retry entry creation with slug-N suffix on IntegrityError (TOCTOU protection)."""
         for n in range(2, 100):
             new_slug = f"{original_slug}-{n}"
@@ -792,6 +836,7 @@ class EntryService:
                     expires_in=expires_in,
                     is_public=is_public,
                     current_user_id=current_user_id,
+                    idempotency_key=idempotency_key,
                 )
             except IntegrityError:
                 continue

@@ -23,6 +23,7 @@ export interface CreateEntryRequest {
   tags?: string[];
   expires_in?: string;
   is_public?: boolean;
+  idempotency_key?: string;
 }
 
 export interface EntryFileResponse {

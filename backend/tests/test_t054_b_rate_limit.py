@@ -3,6 +3,7 @@
 BDD: B1-B6
 Tests should FAIL (red) until P4 implementation.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -78,14 +79,20 @@ class TestBDDB1CreateRateLimit429:
     async def test_create_entry_returns_429_after_limit(self, rate_client):
         limit = 5
         for i in range(limit):
-            resp = await rate_client.post("/api/v1/entries", json={
-                "summary": f"Entry {i}",
-            })
-            assert resp.status_code in (201, 200), f"Request {i+1} got {resp.status_code}"
+            resp = await rate_client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": f"Entry {i}",
+                },
+            )
+            assert resp.status_code in (201, 200), f"Request {i + 1} got {resp.status_code}"
 
-        resp = await rate_client.post("/api/v1/entries", json={
-            "summary": "Over limit",
-        })
+        resp = await rate_client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Over limit",
+            },
+        )
         assert resp.status_code == 429
 
 
@@ -99,10 +106,13 @@ class TestBDDB2CreateNormalUnderLimit:
     async def test_create_entry_normal_under_limit(self, rate_client):
         limit = 5
         for i in range(limit):
-            resp = await rate_client.post("/api/v1/entries", json={
-                "summary": f"Entry {i}",
-            })
-            assert resp.status_code in (201, 200), f"Request {i+1} should not be 429"
+            resp = await rate_client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": f"Entry {i}",
+                },
+            )
+            assert resp.status_code in (201, 200), f"Request {i + 1} should not be 429"
 
 
 class TestBDDB3UpdateRateLimit429:
@@ -113,24 +123,33 @@ class TestBDDB3UpdateRateLimit429:
 
     @pytest.mark.asyncio
     async def test_update_entry_returns_429_after_limit(self, rate_client):
-        create_resp = await rate_client.post("/api/v1/entries", json={
-            "summary": "To update",
-        })
+        create_resp = await rate_client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "To update",
+            },
+        )
         assert create_resp.status_code in (201, 200)
         slug = create_resp.json()["slug"]
 
         limit = 5
         for i in range(limit):
-            resp = await rate_client.patch(f"/api/v1/entries/{slug}", json={
-                "summary": f"Updated {i}",
-            })
+            resp = await rate_client.patch(
+                f"/api/v1/entries/{slug}",
+                json={
+                    "summary": f"Updated {i}",
+                },
+            )
             if resp.status_code == 429:
                 break
-            assert resp.status_code in (200, 404), f"Update {i+1} got {resp.status_code}"
+            assert resp.status_code in (200, 404), f"Update {i + 1} got {resp.status_code}"
 
-        resp = await rate_client.patch(f"/api/v1/entries/{slug}", json={
-            "summary": "Over limit update",
-        })
+        resp = await rate_client.patch(
+            f"/api/v1/entries/{slug}",
+            json={
+                "summary": "Over limit update",
+            },
+        )
         assert resp.status_code == 429
 
 
@@ -145,9 +164,12 @@ class TestBDDB4DeleteRateLimit429:
         slugs = []
         limit = 6
         for i in range(limit):
-            resp = await rate_client.post("/api/v1/entries", json={
-                "summary": f"To delete {i}",
-            })
+            resp = await rate_client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": f"To delete {i}",
+                },
+            )
             if resp.status_code in (201, 200):
                 slugs.append(resp.json()["slug"])
 
@@ -170,10 +192,13 @@ class TestBDDB5RateLimitDisabled:
     @pytest.mark.asyncio
     async def test_no_429_when_disabled(self, no_limit_client):
         for i in range(10):
-            resp = await no_limit_client.post("/api/v1/entries", json={
-                "summary": f"Entry {i}",
-            })
-            assert resp.status_code != 429, f"Got 429 on request {i+1} with rate limit disabled"
+            resp = await no_limit_client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": f"Entry {i}",
+                },
+            )
+            assert resp.status_code != 429, f"Got 429 on request {i + 1} with rate limit disabled"
 
 
 class TestBDDB6ExplicitDecoratorPriority:
@@ -185,12 +210,14 @@ class TestBDDB6ExplicitDecoratorPriority:
 
     def test_entries_rate_limit_provider_exists(self):
         from peekview.api.rate_limit import entries_rate_limit
+
         limit = entries_rate_limit()
         assert isinstance(limit, str)
         assert "/minute" in limit
 
     def test_entries_rate_limit_setter(self):
         from peekview.api.rate_limit import entries_rate_limit, set_entries_rate_limit
+
         original = entries_rate_limit()
         try:
             set_entries_rate_limit("30/minute")
@@ -200,15 +227,30 @@ class TestBDDB6ExplicitDecoratorPriority:
 
     def test_create_entry_has_limiter_decorator(self):
         from peekview.api.entries import create_entry
-        assert hasattr(create_entry, "__wrapped__") or hasattr(create_entry, "rate_limit_decorator") or _has_limiter_decorator(create_entry)
+
+        assert (
+            hasattr(create_entry, "__wrapped__")
+            or hasattr(create_entry, "rate_limit_decorator")
+            or _has_limiter_decorator(create_entry)
+        )
 
     def test_update_entry_has_limiter_decorator(self):
         from peekview.api.entries import update_entry
-        assert hasattr(update_entry, "__wrapped__") or hasattr(update_entry, "rate_limit_decorator") or _has_limiter_decorator(update_entry)
+
+        assert (
+            hasattr(update_entry, "__wrapped__")
+            or hasattr(update_entry, "rate_limit_decorator")
+            or _has_limiter_decorator(update_entry)
+        )
 
     def test_delete_entry_has_limiter_decorator(self):
         from peekview.api.entries import delete_entry
-        assert hasattr(delete_entry, "__wrapped__") or hasattr(delete_entry, "rate_limit_decorator") or _has_limiter_decorator(delete_entry)
+
+        assert (
+            hasattr(delete_entry, "__wrapped__")
+            or hasattr(delete_entry, "rate_limit_decorator")
+            or _has_limiter_decorator(delete_entry)
+        )
 
 
 def _has_limiter_decorator(func) -> bool:
@@ -219,6 +261,7 @@ def _has_limiter_decorator(func) -> bool:
         return _has_limiter_decorator(func.__wrapped__)
     try:
         from slowapi import Limiter
+
         decorators = getattr(func, "__decorators__", [])
         return any(isinstance(d, Limiter) for d in decorators)
     except Exception:

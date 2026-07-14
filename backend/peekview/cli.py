@@ -138,7 +138,7 @@ Examples:
 
 
 @cli.command(epilog=SERVE_EXAMPLES)
-@click.option("--host", "-h", default=None, help="Server bind address (default: 0.0.0.0, use 127.0.0.1 for local only)")
+@click.option("--host", "-h", default=None, help="Server bind address (default: 127.0.0.1, use 0.0.0.0 for all interfaces)")
 @click.option("--port", "-p", default=None, type=int, help="Server port (default: 8080)")
 @click.option("--base-url", "-b", default=None, help="External base URL (e.g., https://example.com)")
 @click.option("--reload", is_flag=True, help="Enable auto-reload (development)")
@@ -287,7 +287,7 @@ def create(
     is_public = visibility == "public"
 
     try:
-        result = backend.create_entry(
+        create_result = backend.create_entry(
             summary=summary,
             slug=slug,
             tags=list(tag),
@@ -296,6 +296,10 @@ def create(
             expires_in=expires_in,
             is_public=is_public,
         )
+        if _is_remote_mode(backend):
+            result = create_result
+        else:
+            result = create_result[0]
 
         if json_output:
             click.echo(json.dumps({
@@ -736,7 +740,7 @@ def config_list() -> None:
 
     # Descriptions (hardcoded, keyed by (section, key_name))
     _DESC: dict[tuple[str, str], str] = {
-        ("server", "host"): "# 绑定地址 (0.0.0.0 为所有接口)",
+        ("server", "host"): "# 绑定地址 (127.0.0.1 仅本地，0.0.0.0 所有接口)",
         ("server", "port"): "# 服务端口",
         ("server", "base_url"): "# 公开访问地址（为空时自动检测）",
         ("server", "api_key"): "# 全局 API Key（为空时不验证）",

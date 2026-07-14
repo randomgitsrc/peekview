@@ -54,7 +54,7 @@ class TestBDD1TextFileContentSearchable:
     """BDD-1: Text file content is searchable via FTS5."""
 
     def test_search_file_content(self, entry_service):
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Deploy script",
             slug="deploy",
             tags=["ops"],
@@ -69,7 +69,7 @@ class TestBDD1TextFileContentSearchable:
         assert found.items[0].slug == "deploy"
 
     def test_search_file_content_not_summary(self, entry_service):
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Simple script",
             slug="simple",
             tags=["ops"],
@@ -86,7 +86,7 @@ class TestBDD1TextFileContentSearchable:
     def test_search_file_content_with_base64_binary_skipped(self, entry_service):
         import base64
         binary_data = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Logo asset",
             slug="logo",
             files_data=[
@@ -115,7 +115,7 @@ class TestBDD2BinaryFileNotIndexed:
     def test_binary_file_content_not_searchable(self, entry_service):
         import base64
         binary_content = b"\x89PNG\r\n\x1a\n" + b"\x00" * 50 + b"UNIQUEBINARYMARKER"
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Logo asset",
             slug="logo-bin",
             files_data=[
@@ -133,7 +133,7 @@ class TestBDD2BinaryFileNotIndexed:
     def test_text_file_searchable_alongside_binary(self, entry_service):
         import base64
         binary_data = b"\x00" * 100
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Mixed files",
             slug="mixed",
             files_data=[
@@ -175,7 +175,7 @@ class TestBDD3BackfillExistingEntries:
         storage = StorageManager(config=config)
         svc = EntryService(engine=engine, storage=storage, config=config)
 
-        entry_result = svc.create_entry(
+        entry_result, _ = svc.create_entry(
             summary="Legacy entry",
             slug="legacy",
             files_data=[{
@@ -236,7 +236,7 @@ class TestBDD4FTSSyncAfterFileChanges:
     """BDD-4: FTS content syncs after file add/remove via update_entry."""
 
     def test_remove_file_removes_from_fts(self, entry_service):
-        created = entry_service.create_entry(
+        created, _ = entry_service.create_entry(
             summary="Config files",
             slug="config",
             files_data=[{

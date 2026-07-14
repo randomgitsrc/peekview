@@ -8,7 +8,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import func, update
 from sqlmodel import Session, select
 
 from peekview.config import PeekConfig
@@ -65,13 +65,12 @@ class ShareService:
                 if entry_exp <= now:
                     raise ValidationError("Cannot create share for expired entry")
 
-            active_count = session.execute(
-                text(
-                    "SELECT COUNT(*) FROM entry_shares "
-                    "WHERE entry_id = :eid AND revoked_at IS NULL"
-                ),
-                {"eid": entry.id},
-            ).scalar()
+            active_count = session.exec(
+                select(func.count()).select_from(EntryShare).where(
+                    EntryShare.entry_id == entry.id,
+                    EntryShare.revoked_at == None,  # noqa: E711
+                )
+            ).one()
             if active_count >= MAX_SHARES_PER_ENTRY:
                 raise ValidationError(
                     f"Maximum share links reached ({MAX_SHARES_PER_ENTRY})"
@@ -219,13 +218,12 @@ class ShareService:
             if share.max_views is not None and share.view_count >= share.max_views:
                 return None
 
-            session.execute(
-                text(
-                    "UPDATE entry_shares SET view_count = view_count + 1 "
-                    "WHERE id = :sid AND revoked_at IS NULL"
-                ),
-                {"sid": share.id},
+            stmt = (
+                update(EntryShare)
+                .where(EntryShare.id == share.id, EntryShare.revoked_at == None)  # noqa: E711
+                .values(view_count=EntryShare.view_count + 1)
             )
+            session.exec(stmt)
             session.commit()
             session.refresh(share)
 

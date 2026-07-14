@@ -42,6 +42,10 @@ def _run_migrations(engine: Engine) -> None:
     Adds new columns to existing tables without breaking existing data.
     Must be called AFTER SQLModel.metadata.create_all() so that
     referenced tables (e.g., users) already exist.
+
+    Note: SQLModel.metadata.create_all() handles CREATE TABLE (including
+    entry_shares, entry_reads). This function only handles ALTER TABLE
+    migrations for schema evolution on existing databases.
     """
     with engine.connect() as conn:
         # Check existing columns in entries table
@@ -66,6 +70,13 @@ def _run_migrations(engine: Engine) -> None:
             conn.execute(text("ALTER TABLE entries ADD COLUMN archived_at DATETIME DEFAULT NULL"))
             conn.commit()
             logger.info("Migration: added archived_at column to entries")
+
+        if "idempotency_key" not in columns:
+            conn.execute(text(
+                "ALTER TABLE entries ADD COLUMN idempotency_key VARCHAR(128) DEFAULT NULL"
+            ))
+            conn.commit()
+            logger.info("Migration: added idempotency_key column to entries")
 
         # Check existing columns in users table
         user_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
@@ -206,11 +217,37 @@ def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
     if run_migrations:
         _run_migrations(engine)
 
+    # Setup indexes (always run, idempotent)
+    _setup_indexes(engine)
+
     # Setup FTS5
     setup_fts5(engine)
 
     logger.info(f"Database initialized: {db_path}")
     return engine
+
+
+def _setup_indexes(engine: Engine) -> None:
+    """Setup indexes that must always exist, regardless of migration flag.
+
+    create_all() creates tables from SQLModel metadata but does not create
+    partial unique indexes. This function ensures they exist.
+    """
+    with engine.connect() as conn:
+        indexes = {
+            row[0]
+            for row in conn.execute(
+                text("SELECT name FROM sqlite_master WHERE type='index'")
+            )
+        }
+
+        if "idx_entries_idempotency_key" not in indexes:
+            conn.execute(text(
+                "CREATE UNIQUE INDEX idx_entries_idempotency_key ON entries(idempotency_key) "
+                "WHERE idempotency_key IS NOT NULL"
+            ))
+            conn.commit()
+            logger.info("Setup: added unique index on entries.idempotency_key")
 
 
 def setup_fts5(engine: Engine) -> None:

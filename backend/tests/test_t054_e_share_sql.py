@@ -3,11 +3,10 @@
 BDD: E1-E2
 Tests should FAIL (red) until P4 implementation.
 """
+
 from __future__ import annotations
 
 import inspect
-
-import pytest
 
 from peekview.services.share_service import ShareService
 
@@ -26,8 +25,8 @@ class TestBDDE1NoTextStyleQueries:
             if "text(" in line and "PRAGMA" not in line and "comment" not in line.lower():
                 text_lines.append((i + 1, line.strip()))
         assert len(text_lines) == 0, (
-            f"Found text()-style queries in share_service.py:\n"
-            + "\n".join(f"  Line {n}: {l}" for n, l in text_lines)
+            "Found text()-style queries in share_service.py:\n"
+            + "\n".join(f"  Line {num}: {line}" for num, line in text_lines)
         )
 
     def test_select_count_uses_orm(self):
@@ -48,16 +47,18 @@ class TestBDDE2ViewCountAtomicIncrement:
     """
 
     def test_view_count_increments_atomically(self, tmp_path):
+        import hashlib
+        import secrets
+
+        from sqlmodel import Session, select
+
+        from peekview.auth import hash_password
         from peekview.config import PeekConfig
         from peekview.database import init_db
-        from peekview.models import Entry, EntryShare, User
+        from peekview.models import EntryShare, User
         from peekview.services.entry_service import EntryService
         from peekview.services.share_service import ShareService
         from peekview.storage import StorageManager
-        from sqlmodel import Session, select
-        from peekview.auth import hash_password
-        import hashlib
-        import secrets
 
         db_path = tmp_path / "test.db"
         data_dir = tmp_path / "data"
@@ -79,9 +80,11 @@ class TestBDDE2ViewCountAtomicIncrement:
             session.refresh(user)
             owner_id = user.id
 
-        entry = entry_service.create_entry(
-            summary="Share test", slug="share-view-count",
-            is_public=False, current_user_id=owner_id,
+        entry, _ = entry_service.create_entry(
+            summary="Share test",
+            slug="share-view-count",
+            is_public=False,
+            current_user_id=owner_id,
         )
 
         share_create = share_service.create_share(

@@ -198,6 +198,12 @@ class Entry(EntryBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     slug: str = Field(..., index=True, unique=True)
 
+    idempotency_key: str | None = Field(
+        default=None,
+        max_length=128,
+        sa_column_kwargs={"nullable": True, "default": None},
+    )
+
     created_at: datetime = Field(
         default_factory=now_utc,
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
@@ -548,6 +554,18 @@ class CreateEntryRequest(SQLModel):
     )
     files: list[FileCreate] = Field(default_factory=list)
     dirs: list[DirCreate] = Field(default_factory=list)
+    idempotency_key: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Idempotency key for safe retries. Same key + same owner returns existing entry (200). Cross-owner key returns 409.",
+    )
+
+    @field_validator("idempotency_key")
+    @classmethod
+    def validate_idempotency_key(cls, v: str | None) -> str | None:
+        if v is not None and v.strip() == "":
+            raise ValueError("idempotency_key must not be empty")
+        return v
 
 
 class CreateEntryResponse(SQLModel):

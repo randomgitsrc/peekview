@@ -15,6 +15,7 @@ const schema = z.object({
   tags: z.array(z.string()).optional(),
   is_public: z.boolean().optional(),
   expires_in: z.string().optional(),
+  idempotency_key: z.string().optional(),
 });
 
 export const createEntryTool = (client: PeekViewClient, publicUrl: string): ToolDefinition => ({
@@ -67,6 +68,7 @@ Default: If expires_in is omitted, the server's default expiration applies. Chec
       tags: { type: 'array', items: { type: 'string' } },
       is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
+      idempotency_key: { type: 'string', description: 'Idempotency key for safe retries. Same key returns existing entry.' },
     },
     required: ['summary', 'files'],
   },
@@ -93,6 +95,7 @@ Default: If expires_in is omitted, the server's default expiration applies. Chec
         tags: params.tags,
         is_public: params.is_public,
         expires_in: params.expires_in,
+        idempotency_key: params.idempotency_key,
       }, ctx.userToken);
 
       // Build response with optional suggestions

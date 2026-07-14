@@ -105,7 +105,7 @@ class TestPeekServer:
     def test_defaults(self):
         """Default server settings."""
         server = PeekServer()
-        assert server.host == "0.0.0.0"  # Changed from 127.0.0.1 for VPS deployment
+        assert server.host == "127.0.0.1"
         assert server.port == 8080
         assert server.base_url == ""
         assert server.api_key == ""

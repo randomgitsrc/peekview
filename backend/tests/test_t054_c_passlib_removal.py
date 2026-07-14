@@ -3,12 +3,11 @@
 BDD: C1-C2
 Tests should FAIL (red) until P4 implementation.
 """
+
 from __future__ import annotations
 
 import re
 from pathlib import Path
-
-import pytest
 
 from peekview.auth import hash_password, verify_password
 

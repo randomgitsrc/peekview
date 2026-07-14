@@ -34,7 +34,7 @@ def entry_service(tmp_path):
 
 class TestCreateEntry:
     def test_create_with_content(self, entry_service):
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Test entry",
             slug="test",
             files_data=[{"path": "main.py", "content": "print('hello')"}],
@@ -49,7 +49,7 @@ class TestCreateEntry:
         the filename was incorrectly extracted from path, ignoring the
         explicit filename parameter.
         """
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Test entry with path and filename",
             slug="path-filename-test",
             files_data=[
@@ -71,13 +71,13 @@ class TestCreateEntry:
         assert file_paths["main.py"] == "src"
 
     def test_create_auto_slug(self, entry_service):
-        result = entry_service.create_entry(summary="Auto slug")
+        result, _ = entry_service.create_entry(summary="Auto slug")
         assert result.slug is not None
         assert len(result.slug) == 6
 
     def test_create_slug_conflict_suffix(self, entry_service):
-        r1 = entry_service.create_entry(summary="First", slug="my-doc")
-        r2 = entry_service.create_entry(summary="Second", slug="my-doc")
+        r1, _ = entry_service.create_entry(summary="First", slug="my-doc")
+        r2, _ = entry_service.create_entry(summary="Second", slug="my-doc")
         assert r1.slug == "my-doc"
         assert r2.slug.startswith("my-doc-")
 
@@ -86,7 +86,7 @@ class TestCreateEntry:
             entry_service.create_entry(summary="Bad slug", slug="Hello World!")
 
     def test_create_with_tags(self, entry_service):
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Tagged", slug="tagged", tags=["python", "auth"]
         )
         # Tags should be stored
@@ -95,7 +95,7 @@ class TestCreateEntry:
         assert "auth" in entry.tags
 
     def test_create_with_expires(self, entry_service):
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Expiring", slug="expire", expires_in="7d"
         )
         entry = entry_service.get_entry("expire")
@@ -105,7 +105,7 @@ class TestCreateEntry:
         """Without expires_in, expires_at should be ~15 days from now."""
         import datetime
         before = datetime.datetime.now(datetime.timezone.utc)
-        result = entry_service.create_entry(summary="Default expiry")
+        result, _ = entry_service.create_entry(summary="Default expiry")
         after = datetime.datetime.now(datetime.timezone.utc)
         assert result.expires_at is not None
         expected = before + datetime.timedelta(days=15)
@@ -114,14 +114,14 @@ class TestCreateEntry:
 
     def test_create_expires_zero_means_never(self, entry_service):
         """expires_in='0' means never expire — expires_at is None."""
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Permanent", slug="perm", expires_in="0"
         )
         assert result.expires_at is None
 
     def test_create_response_has_expires_at_field(self, entry_service):
         """CreateEntryResponse directly exposes expires_at."""
-        result = entry_service.create_entry(summary="Response check", slug="resp-check")
+        result, _ = entry_service.create_entry(summary="Response check", slug="resp-check")
         assert hasattr(result, "expires_at")
         assert result.expires_at is not None
 
@@ -129,7 +129,7 @@ class TestCreateEntry:
         """expires_in='' should behave like None → use default 15d."""
         import datetime
         before = datetime.datetime.now(datetime.timezone.utc)
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Empty expires_in", slug="empty-exp", expires_in=""
         )
         assert result.expires_at is not None
@@ -141,7 +141,7 @@ class TestCreateEntry:
         """expires_in='   ' should behave like None → use default 15d."""
         import datetime
         before = datetime.datetime.now(datetime.timezone.utc)
-        result = entry_service.create_entry(
+        result, _ = entry_service.create_entry(
             summary="Whitespace expires_in", slug="ws-exp", expires_in="   "
         )
         assert result.expires_at is not None
@@ -174,14 +174,14 @@ class TestCreateEntry:
         svc = EntryService(engine=engine, storage=storage, config=config)
 
         before = datetime.datetime.now(datetime.timezone.utc)
-        result = svc.create_entry(summary="Custom default")
+        result, _ = svc.create_entry(summary="Custom default")
         assert result.expires_at is not None
         expected = before + datetime.timedelta(days=30)
         tolerance = datetime.timedelta(seconds=5)
         assert abs((result.expires_at - expected).total_seconds()) < tolerance.total_seconds()
 
     def test_create_empty_files(self, entry_service):
-        result = entry_service.create_entry(summary="No files", slug="empty")
+        result, _ = entry_service.create_entry(summary="No files", slug="empty")
         entry = entry_service.get_entry("empty")
         assert len(entry.files) == 0
 
@@ -209,7 +209,7 @@ class TestCreateEntry:
 
 class TestGetEntry:
     def test_get_by_slug(self, entry_service):
-        created = entry_service.create_entry(summary="Find me", slug="find")
+        created, _ = entry_service.create_entry(summary="Find me", slug="find")
         result = entry_service.get_entry("find")
         assert result.slug == "find"
 
@@ -260,7 +260,7 @@ class TestUpdateEntry:
         assert result.summary == "Updated"
 
     def test_update_deletes_removed_file_records(self, entry_service):
-        created = entry_service.create_entry(
+        created, _ = entry_service.create_entry(
             summary="Has files",
             slug="with-files",
             files_data=[{"path": "a.py", "content": "a"}],
@@ -275,7 +275,7 @@ class TestUpdateEntry:
 
     def test_update_deletes_removed_file_from_disk(self, entry_service):
         """When a file is removed via update_entry, the disk file should also be deleted."""
-        created = entry_service.create_entry(
+        created, _ = entry_service.create_entry(
             summary="Disk delete",
             slug="disk-del",
             files_data=[{"path": "del.py", "content": "delete me"}],

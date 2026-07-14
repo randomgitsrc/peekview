@@ -3,11 +3,8 @@
 BDD: F1
 Tests should FAIL (red) until P4 implementation.
 """
+
 from __future__ import annotations
-
-import inspect
-
-import pytest
 
 from peekview.database import _run_migrations
 

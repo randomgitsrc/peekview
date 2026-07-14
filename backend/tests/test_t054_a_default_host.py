@@ -3,9 +3,8 @@
 BDD: A1-A4
 Tests should FAIL (red) until P4 implementation.
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from peekview.config import PeekConfig, PeekServer
 
@@ -46,6 +45,7 @@ class TestBDDA3CLIHelpText:
 
     def test_serve_command_host_help(self):
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         runner = CliRunner()
@@ -67,6 +67,7 @@ class TestBDDA4ConfigListDescription:
 
     def test_config_list_host_description(self, monkeypatch):
         from click.testing import CliRunner
+
         from peekview.cli import cli
 
         runner = CliRunner()
@@ -75,9 +76,7 @@ class TestBDDA4ConfigListDescription:
 
         for line in result.output.split("\n"):
             if "host:" in line.lower():
-                assert "127.0.0.1" in line, (
-                    f"Host line should reference 127.0.0.1, got: {line}"
-                )
+                assert "127.0.0.1" in line, f"Host line should reference 127.0.0.1, got: {line}"
                 assert "0.0.0.0 为所有接口" not in line, (
                     f"Host description should not say '0.0.0.0 为所有接口', got: {line}"
                 )

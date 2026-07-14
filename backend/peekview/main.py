@@ -386,6 +386,7 @@ def create_app(
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (
         set_captcha_rate_limit,
+        set_entries_rate_limit,
         set_login_rate_limit,
     )
 
@@ -394,6 +395,9 @@ def create_app(
 
     captcha_limit = f"{config.server.rate_limit_per_minute}/minute"
     set_captcha_rate_limit(captcha_limit)
+
+    entries_limit = f"{config.server.rate_limit_per_minute}/minute"
+    set_entries_rate_limit(entries_limit)
 
     # Global default limit for other API endpoints
     limiter.default_limits = [captcha_limit]
