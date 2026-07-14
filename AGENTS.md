@@ -27,14 +27,14 @@ frontend-v3/src/
 ├── views/            # Landing, EntryList, EntryDetail, ApiKeyList, NotFound
 ├── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
 ├── stores/           # Pinia: auth, entry, share, theme
-├── composables/      # useShiki, useMermaid, useMarkdown, useToast, useViewMode, ...
+├── composables/      # useShiki, useMermaid, useMarkdown, useToast, useViewMode, useDiagramViewer, usePlantUML, useDebounce, useRelativeTime
 ├── api/              # Axios HTTP client wrappers
 └── types/            # TypeScript interfaces
 
 packages/mcp-server/src/
 ├── server.ts         # MCP Server setup, Streamable HTTP transport
 ├── client.ts         # PeekView API client
-├── tools/            # createEntry, publishFiles, get/list/deleteEntry
+├── tools/            # createEntry, publishFiles, get/list/deleteEntry, fileNaming, utils
 ├── config/           # file.ts, merge.ts, validators.ts (Env > file > default)
 └── cli/              # config.ts, service.ts (service install/verify)
 ```
@@ -108,7 +108,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 ### 快速验证（代码修复后，不 rebuild）
 
 ```bash
-cd backend && .venv/bin/python -m pytest tests/  # 后端测试
+cd backend && .venv/bin/python -m pytest tests/  # 后端测试（venv Python）
 make test-quick                                    # = pytest（用系统 python3）
 make verify-local                                  # = build-fast + test-quick + check-version + check-changelog
 ```
@@ -126,6 +126,7 @@ cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff fo
 
 # 前端
 make build-frontend                                                     # 构建 + 复制到 static/（⚠️ npm run build 只产出 dist/，不复制）
+make test-frontend                                                      # 单测（安全，one-shot vitest run）
 cd frontend-v3 && ./node_modules/.bin/vitest run                        # 单测（⚠️ npm run test = watch 模式，会挂住 agent）
 cd frontend-v3 && npx vue-tsc --noEmit                                  # 类型检查（CI 强制）
 
@@ -167,11 +168,11 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 ## 测试注意事项
 
 - **后端**：pytest 用 venv Python（`.venv/bin/python -m pytest`），conftest autouse 隔离，`factories.py` 提供测试数据构建器
-- **前端单测**：vitest + jsdom 环境，排除 `e2e/` 目录。`npm run test` 是 watch 模式会挂住 agent，必须用 `vitest run`
+- **前端单测**：vitest + jsdom 环境，排除 `e2e/` 目录。`npm run test` 是 watch 模式会挂住 agent，必须用 `vitest run` 或 `make test-frontend`
 - **前端 E2E**：Playwright，spec 文件在 `frontend-v3/e2e/`。无 `npm run test:e2e` 脚本，用 `make debug-test` 或直接 `npx playwright test e2e/<spec>.ts`
 - **MCP 单测**：vitest + node 环境，`fileParallelism: false`（config 测试会 mutate process.env/HOME，串行避免竞态）。`npm test` = `npm run test:unit`
 - **MCP 集成/E2E**：需要 debug backend 在 `127.0.0.1:8888`，绝不能指向生产 `:8080`
-- **CI 门禁**：后端 pytest + 前端 `vue-tsc --noEmit` + 前端 `npm run build` + 文档版本一致性。ruff 不在 CI
+- **CI 门禁**（`.github/workflows/ci.yml`）：后端 pytest + 前端 `vue-tsc --noEmit` + 前端 `npm run build` + 文档版本一致性。ruff 不在 CI
 
 ## 安全要点
 

@@ -7,9 +7,27 @@
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-07-14
+
+### 新增
+
+-
+
+
 ### 新增
 
 - T053: Agent /raw 端点自动发现（Content Negotiation + HTML 自描述 + llms.txt 补充）
+- T054: 默认 host 改 127.0.0.1（公网暴露需显式配置）
+- T054: Create entry 端点限流
+- T054: Create entry idempotency key 支持（Agent 重试安全）
+
+### 变更
+
+- T054: 依赖 passlib[bcrypt] → 直接依赖 bcrypt（移除废弃 passlib）
+
+### 修复
+
+- T054: share_service text() SQL 混用统一为 ORM 风格
 
 ## [0.6.2] - 2026-07-11
 
