@@ -1,6 +1,6 @@
 task_id: T054
 task_name: api-safety-idempotency
-phase: P8
+phase: DONE
 status: active
 retries: {}
 created: "2026-07-14"

@@ -26,6 +26,7 @@
 | 22 | 后端 API 安全加固（默认 host + 限流 + passlib）+ 幂等 key + 代码风格 | 安全/产品 | 🔴 立即 | 🔄 T054 |
 | 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | 🔄 T055 |
 | 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | 🔄 T056 |
+| 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | 🔄 T057 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
