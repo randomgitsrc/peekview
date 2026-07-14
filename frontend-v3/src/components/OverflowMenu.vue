@@ -215,7 +215,7 @@ onUnmounted(() => {
   right: 0;
   margin-top: 4px;
   min-width: 200px;
-  background: var(--bg-primary);
+  background: var(--c-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -225,6 +225,7 @@ onUnmounted(() => {
 .overflow-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-2);
   width: 100%;
   min-height: 36px;
@@ -348,6 +349,7 @@ onUnmounted(() => {
 .sheet-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-3);
   width: 100%;
   min-height: 48px;

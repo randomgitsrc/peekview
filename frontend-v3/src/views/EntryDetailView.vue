@@ -49,15 +49,26 @@
             <CopyIcon :size="16" />
             <span class="tooltip">Copy</span>
           </button>
-          <button
+          <div
             v-if="showShareButton"
-            class="icon-btn"
-            @click="showShareDialog = true"
-            aria-label="Share"
+            class="share-trigger-wrap"
+            data-share-trigger
           >
-            <Share2Icon :size="16" />
-            <span class="tooltip">Share</span>
-          </button>
+            <button
+              class="icon-btn"
+              :class="{ active: showSharePopover }"
+              @click.stop="toggleShare"
+              aria-label="Share"
+              :aria-expanded="showSharePopover"
+            >
+              <Share2Icon :size="16" />
+              <span class="tooltip">Share</span>
+            </button>
+            <ShareManagementPanel
+              v-model:visible="showSharePopover"
+              :entry-slug="slug"
+            />
+          </div>
           <span class="action-sep"></span>
           <OverflowMenu :items="overflowItems" variant="dropdown" />
           <ThemeToggle />
@@ -277,27 +288,12 @@
       @cancel="cancelDelete"
     />
 
-    <!-- Share Dialog -->
-    <ShareDialog
-      v-model:visible="showShareDialog"
-      :entry-slug="slug"
-      @share-created="handleShareCreated"
-    />
-
     <!-- Expires In Dialog -->
     <ExpiresInDialog
       v-model:visible="showExpiresInDialog"
       :entry-slug="slug"
       :is-archived="currentEntry?.status === 'archived'"
       @updated="handleExpiresInUpdated"
-    />
-
-    <!-- Share Management Panel (owner, private entry only) -->
-    <ShareManagementPanel
-      v-if="showShareButton && currentEntry"
-      :entry-slug="slug"
-      class="entry-content"
-      @share-revoked="handleShareRevoked"
     />
 
     <!-- Share watermark (non-owner share access only) -->
@@ -313,7 +309,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
-import { useShareStore } from '@/stores/share'
 import { useThemeStore } from '@/stores/theme'
 import { useToast } from '@/composables/useToast'
 import OverflowMenu from '@/components/OverflowMenu.vue'
@@ -332,7 +327,6 @@ import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ShareDialog from '@/components/ShareDialog.vue'
 import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
 import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
 import type { TocHeading } from '@/types'
@@ -352,16 +346,19 @@ const router = useRouter()
 const route = useRoute()
 const entryStore = useEntryStore()
 const authStore = useAuthStore()
-const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
 
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
 
-const showShareDialog = ref(false)
+const showSharePopover = ref(false)
 const shareErrorState = ref(false)
 const showExpiresInDialog = ref(false)
+
+function toggleShare() {
+  showSharePopover.value = !showSharePopover.value
+}
 
 const isFileTreeOpen = ref(false)
 const isTocOpen = ref(false)
@@ -469,13 +466,6 @@ async function handleToggleVisibility() {
   }
 }
 
-function handleShareCreated() {
-  shareStore.fetchShares(props.slug)
-}
-
-function handleShareRevoked() {
-}
-
 async function handleExpiresInUpdated() {
   await entryStore.loadEntry(props.slug)
   toast.show('Entry updated', 'success')
@@ -544,8 +534,8 @@ const overflowItems = computed(() => {
       items.push({
         label: 'Share',
         icon: 'share-2',
-        hint: 'Create share link',
-        action: () => { showShareDialog.value = true },
+        hint: 'Generate share link',
+        action: toggleShare,
       })
     }
   }
@@ -782,6 +772,17 @@ watch(() => entryStore.currentEntry, async (entry) => {
 
 .entry-owner-link:hover {
   text-decoration: underline;
+}
+
+.share-trigger-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.icon-btn.active {
+  background: rgba(77, 141, 255, 0.12);
+  color: var(--c-accent);
+  border-color: rgba(77, 141, 255, 0.2);
 }
 
 .title-group {

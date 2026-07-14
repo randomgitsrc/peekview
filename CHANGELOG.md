@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+### 新增
+
+- T057: ShareManagementPanel 重构为 `.share-popover` 上下文锚定气泡（紧贴 Share 按钮），支持 desktop popover / mobile Teleport 居中模态双模式
+- T057: Share 状态机（loading → createForm / result / activeList），含 done/revoke 自动转换
+
+### 变更
+
+- T057: Share UI 按钮文案 "Create Link" → "Generate Link"
+- T057: OverflowMenu dropdown 菜单项统一 `justify-content: flex-start` 严格左对齐
+
+### 修复
+
+- T057: OverflowMenu Dropdown 背景色从 `--bg-primary` (#f6f8fa) 改为 `--c-surface` (#ffffff)，符合不透明 + 纯白契约
+- T057: 移除冗余的全屏 ShareDialog 模态，改用紧贴 Share 按钮的 Popover；删除废弃组件 `ShareDialog.vue`
+
 ## [0.6.3] - 2026-07-14
 
 ### 新增
