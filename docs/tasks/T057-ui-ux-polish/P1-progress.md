@@ -1,0 +1,7 @@
+- Read /home/kity/.agate/assets/execution-roles/analyst.md to understand execution role guidelines for P1 Analyst.
+- Read /home/kity/oclab/peekview/docs/tasks/T057-ui-ux-polish/P0-brief.md and P1-dispatch-context.md to grasp original requirements, env constraints, known risks, and packages of T057.
+- Read /home/kity/oclab/peekview/frontend-v3/src/components/OverflowMenu.vue and its unit tests to analyze current layout, styles, dropdown background opacity issues, and standard menu paddings.
+- Read /home/kity/oclab/peekview/frontend-v3/src/components/ShareManagementPanel.vue, ShareDialog.vue, and EntryDetailView.vue to understand current sharing state management (active count, revoked count, expires label) and dialog creation flows.
+- Read /home/kity/oclab/peekview/DESIGN.md to confirm visual guidelines, color tokens (like `--c-surface`, `--c-bg`), typography rules, z-index hierarchies, padding spacing grid (4px base grid), and responsiveness breakpoints.
+- Formulated key implicit requirements for the fused Share Popover (copy verification, mobile responsive modals, automatic store re-fetch on trigger, outside click & escape handlers).
+- Formulated binary-decidable BDD test scenarios for OverflowMenu and Share Popover across desktop and mobile screens.
