@@ -257,8 +257,16 @@ onUnmounted(() => {
 
 .item-icon {
   flex-shrink: 0;
-  width: 24px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item-icon :deep(svg) {
+  width: 18px;
   height: 18px;
+  stroke-width: 2;
 }
 
 .item-label {
@@ -387,6 +395,14 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sheet-item-icon :deep(svg) {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .sheet-item-label {
