@@ -214,22 +214,23 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 4px;
-  width: 220px;
-  background: var(--c-surface);
+  min-width: 180px;
+  max-height: calc(100vh - var(--header-height) - 120px);
+  overflow-y: auto;
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
 
 .overflow-item {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: var(--space-2);
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
+  min-height: 36px;
+  padding: 8px 12px;
   font-size: var(--font-sm);
   color: var(--text-primary);
   background: transparent;
@@ -257,24 +258,12 @@ onUnmounted(() => {
 
 .item-icon {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.item-icon :deep(svg) {
   width: 18px;
   height: 18px;
-  stroke-width: 2;
 }
 
 .item-label {
   flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .item-hint {
@@ -361,7 +350,6 @@ onUnmounted(() => {
 .sheet-item {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: var(--space-3);
   width: 100%;
   min-height: 48px;
@@ -395,14 +383,6 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.sheet-item-icon :deep(svg) {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2;
 }
 
 .sheet-item-label {
