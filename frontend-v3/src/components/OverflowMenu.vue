@@ -214,7 +214,7 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 4px;
-  min-width: 200px;
+  min-width: 220px;
   background: var(--c-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -263,6 +263,10 @@ onUnmounted(() => {
 
 .item-label {
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item-hint {
