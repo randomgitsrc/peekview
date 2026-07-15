@@ -214,7 +214,7 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 4px;
-  min-width: 220px;
+  width: 220px;
   background: var(--c-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -228,8 +228,8 @@ onUnmounted(() => {
   justify-content: flex-start;
   gap: var(--space-2);
   width: 100%;
-  min-height: 36px;
-  padding: 8px 12px;
+  height: 40px;
+  padding: 0 12px;
   font-size: var(--font-sm);
   color: var(--text-primary);
   background: transparent;
@@ -257,7 +257,7 @@ onUnmounted(() => {
 
 .item-icon {
   flex-shrink: 0;
-  width: 18px;
+  width: 24px;
   height: 18px;
 }
 
