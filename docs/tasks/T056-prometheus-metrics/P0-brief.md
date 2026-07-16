@@ -34,6 +34,15 @@ Instrumentator().instrument(app).expose(app)
 - debug_env: `make debug-start`（:8888, /tmp/peekview-debug/）
 - 后端 `python3 -m ruff check` + `pytest` CI 强制
 
+## executor_env
+
+```yaml
+platform: "claude-code"
+has_task_tool: false
+has_local_runtime: true
+network: "full"
+```
+
 ## 已知风险
 
 | 风险 | 影响 | 缓解 |

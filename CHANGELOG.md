@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-17
+
+### 新增
+
+- T056: Prometheus /metrics 端点（prometheus-fastapi-instrumentator 集成）
+- T056: `PEEKVIEW_METRICS__ENABLED` 配置项（默认 true，设为 false 关闭 /metrics）
+- T056: /metrics 端点绕过 API key 认证和速率限制（与 /health 同等处理）
+
 ## [0.7.0] - 2026-07-17
 
 ### 新增

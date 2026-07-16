@@ -245,7 +245,7 @@ def create_app(
         path = request.url.path
         is_render_route = path.endswith("/render") and "/files/" in path
         has_share_param = "share=" in request.url.query
-        if path.startswith("/api") or path == "/health":
+        if path.startswith("/api") or path == "/health" or path == "/metrics":
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Cache-Control"] = "no-store"
             if has_share_param:
@@ -286,8 +286,8 @@ def create_app(
     if api_key:
         @app.middleware("http")
         async def api_key_auth(request: Request, call_next):
-            # Skip auth for health check
-            if request.url.path == "/health":
+            # Skip auth for health check and metrics
+            if request.url.path in ("/health", "/metrics"):
                 return await call_next(request)
 
             # Skip auth for static files
@@ -364,6 +364,18 @@ def create_app(
     # Add SlowAPIMiddleware for rate limiting
     from slowapi.middleware import SlowAPIMiddleware
     app.add_middleware(SlowAPIMiddleware)
+
+    # Prometheus instrumentator (middleware must wrap all routes)
+    if config.metrics.enabled:
+        from prometheus_fastapi_instrumentator import Instrumentator
+
+        _instrumentator = Instrumentator()
+        _instrumentator.instrument(app)
+        app.state.instrumentator = _instrumentator
+        logger.info("Prometheus instrumentator middleware added")
+    else:
+        app.state.instrumentator = None
+        logger.info("Prometheus /metrics endpoint disabled via config")
 
     # Register API routes
     from peekview.api.admin import router as admin_router
@@ -487,6 +499,17 @@ def create_app(
             url="https://github.com/randomgitsrc/peekview/blob/main/llms.txt?raw=true",
             status_code=302,
         )
+
+    # Prometheus /metrics endpoint (must be before SPA catch-all)
+    if config.metrics.enabled and app.state.instrumentator is not None:
+        app.state.instrumentator.expose(app, endpoint="/metrics")
+        logger.info("Prometheus /metrics endpoint exposed")
+    else:
+        from fastapi import HTTPException
+
+        @app.get("/metrics")
+        async def metrics_disabled():
+            raise HTTPException(status_code=404, detail="Metrics endpoint is disabled")
 
     # Static file serving for production SPA build
     _setup_static_files(app)
