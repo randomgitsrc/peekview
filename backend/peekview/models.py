@@ -763,3 +763,37 @@ class ShareListResponse(SQLModel):
 
 class ShareRevokeRequest(SQLModel):
     share_ids: list[int] = Field(..., min_length=1)
+
+
+class BackupMetadata(SQLModel):
+    version: str
+    timestamp: str
+    file_checksums: dict[str, str]
+
+
+class ConflictInfo(SQLModel):
+    type: str
+    value: str
+    backup_id: int | None = None
+
+
+class RestorePreview(SQLModel):
+    entry_count: int
+    user_count: int
+    api_key_count: int
+    share_count: int
+    read_count: int
+    conflicts: list[ConflictInfo]
+    version_check: str
+
+
+class RestoreResult(SQLModel):
+    users_imported: int
+    entries_imported: int
+    files_imported: int
+    api_keys_imported: int
+    shares_imported: int
+    reads_imported: int
+    conflicts_resolved: int
+    fts_rebuilt: bool
+    version_check: str = "compatible"

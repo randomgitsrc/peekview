@@ -62,33 +62,115 @@ def _build_backup_tarball(
 ) -> Path:
     """Build a synthetic backup tarball for restore testing.
 
-    Creates a minimal valid backup with DB + data + metadata.
+    Creates a valid backup with DB (full schema) + data + metadata.
     If corrupt_file is set, that file's content is corrupted for integrity tests.
     """
     staging = tmp_path / "staging"
     staging.mkdir()
 
-    # Minimal SQLite DB
     import sqlite3
     db_path = staging / "peekview.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE IF NOT EXISTS entries (id INTEGER PRIMARY KEY, slug TEXT UNIQUE, summary TEXT)")
-    conn.execute("INSERT INTO entries (slug, summary) VALUES ('backup-entry', 'From backup')")
+    conn.executescript("""
+        CREATE TABLE users (
+            username VARCHAR(32) NOT NULL,
+            password_hash VARCHAR(128) NOT NULL,
+            display_name VARCHAR(64),
+            is_active BOOLEAN DEFAULT '1' NOT NULL,
+            is_admin BOOLEAN DEFAULT '0' NOT NULL,
+            id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY (id)
+        );
+        CREATE TABLE entries (
+            summary VARCHAR(500) NOT NULL,
+            status VARCHAR(9) DEFAULT 'active' NOT NULL,
+            tags JSON,
+            user_id VARCHAR DEFAULT 'default' NOT NULL,
+            is_public BOOLEAN DEFAULT '1' NOT NULL,
+            owner_id INTEGER,
+            expires_at DATETIME,
+            archived_at DATETIME,
+            id INTEGER NOT NULL,
+            slug VARCHAR NOT NULL,
+            idempotency_key VARCHAR(128),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY(owner_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+        CREATE TABLE files (
+            path VARCHAR(500),
+            filename VARCHAR(255) NOT NULL,
+            language VARCHAR(50),
+            is_binary BOOLEAN NOT NULL,
+            size INTEGER NOT NULL,
+            sha256 VARCHAR(64),
+            line_count INTEGER,
+            id INTEGER NOT NULL,
+            entry_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY(entry_id) REFERENCES entries (id)
+        );
+        CREATE TABLE api_keys (
+            id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            name VARCHAR(64) NOT NULL,
+            key_prefix VARCHAR(8) NOT NULL,
+            key_hash VARCHAR(64) NOT NULL,
+            expires_at DATETIME,
+            last_used_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY(user_id) REFERENCES users (id),
+            UNIQUE (key_hash)
+        );
+        CREATE TABLE entry_shares (
+            id INTEGER NOT NULL,
+            entry_id INTEGER NOT NULL,
+            token_hash VARCHAR(64) NOT NULL,
+            token_prefix VARCHAR(8) NOT NULL,
+            expires_at DATETIME,
+            max_views INTEGER,
+            view_count INTEGER DEFAULT '0' NOT NULL,
+            created_by INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            revoked_at DATETIME,
+            PRIMARY KEY (id),
+            FOREIGN KEY(entry_id) REFERENCES entries (id),
+            FOREIGN KEY(created_by) REFERENCES users (id)
+        );
+        CREATE TABLE entry_reads (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            entry_id INTEGER,
+            action VARCHAR(20) NOT NULL,
+            channel VARCHAR(20) NOT NULL,
+            reader_type VARCHAR(20) NOT NULL,
+            reader_id INTEGER,
+            is_self_read BOOLEAN NOT NULL,
+            count INTEGER NOT NULL,
+            window_key VARCHAR(200) NOT NULL,
+            reader_fingerprint VARCHAR(50) NOT NULL,
+            read_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE (window_key)
+        );
+        INSERT INTO entries (slug, summary, status, tags, is_public) VALUES ('backup-entry', 'From backup', 'ACTIVE', '[]', 1);
+    """)
     conn.commit()
     conn.close()
 
-    # Data directory
     data_dir = staging / "data" / "default" / "1"
     data_dir.mkdir(parents=True)
     (data_dir / "main.py").write_text("print('hello from backup')")
 
-    # Config
     (staging / "config.yaml").write_text("server:\n  port: 8080\n")
 
-    # Secret key
     (staging / ".secret_key").write_text("test-secret-key-value")
 
-    # Compute checksums
     checksums = {}
     for f in staging.rglob("*"):
         if f.is_file():
@@ -106,7 +188,6 @@ def _build_backup_tarball(
         }
         (staging / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
-    # Pack tar.gz
     tar_path = tmp_path / "test-backup.tar.gz"
     with tarfile.open(str(tar_path), "w:gz") as tar:
         for f in staging.rglob("*"):
@@ -810,6 +891,51 @@ class TestBdd17DebugIsolation:
         # Output should mention a .tar.gz file
         assert ".tar.gz" in result.output, \
             f"Backup output should mention .tar.gz file: {result.output}"
+
+
+# ============================================================
+# BDD-18: Replace mode restore
+# ============================================================
+
+
+class TestBdd18ReplaceMode:
+    """BDD-18: restore --replace should replace all target data with backup."""
+
+    def test_restore_replace_basic(self, runner, isolated_env):
+        """Empty target + --replace + --yes should restore all backup data."""
+        tar_path = _build_backup_tarball(isolated_env)
+        result = runner.invoke(cli, [
+            "admin", "restore", str(tar_path), "--replace", "--yes",
+        ])
+        assert result.exit_code == 0, f"replace restore failed: {result.output}"
+
+        get_result = runner.invoke(cli, ["get", "backup-entry"])
+        assert get_result.exit_code == 0, f"Restored entry not found: {get_result.output}"
+
+    def test_restore_replace_requires_confirmation(self, runner, isolated_env):
+        """--replace without --yes should require confirmation."""
+        tar_path = _build_backup_tarball(isolated_env)
+        result = runner.invoke(cli, [
+            "admin", "restore", str(tar_path), "--replace",
+        ], input="no\n")
+        assert "confirm" in result.output.lower() or "cancel" in result.output.lower() or "warning" in result.output.lower(), \
+            f"Should prompt for confirmation: {result.output}"
+
+    def test_restore_replace_with_existing_data(self, runner, isolated_env):
+        """Target with existing data + --replace should replace old data."""
+        _create_entry_with_files(runner, slug="existing-entry")
+
+        tar_path = _build_backup_tarball(isolated_env)
+        result = runner.invoke(cli, [
+            "admin", "restore", str(tar_path), "--replace", "--yes",
+        ])
+        assert result.exit_code == 0, f"replace restore failed: {result.output}"
+
+        get_backup = runner.invoke(cli, ["get", "backup-entry"])
+        assert get_backup.exit_code == 0, f"Backup entry should exist after replace: {get_backup.output}"
+
+        get_old = runner.invoke(cli, ["get", "existing-entry"])
+        assert get_old.exit_code != 0, f"Old entry should be gone after replace: {get_old.output}"
 
 
 # ============================================================

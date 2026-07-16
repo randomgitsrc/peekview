@@ -305,3 +305,5 @@ capability_requirements:
       - "Python tarfile 标准库（流式写入，不需全量加载到内存）"
     status: available
 ```
+
+[SCOPE_RESOLVED] No scope expansion during P4 implementation — all changes within P1 baseline

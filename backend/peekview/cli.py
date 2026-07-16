@@ -26,9 +26,11 @@ from peekview import __version__
 from peekview.client import PeekClient
 from peekview.config import PeekConfig
 from peekview.database import check_schema, init_db
+from peekview.exceptions import NotFoundError
 from peekview.models import (
     AdminCleanupResponse,
     AdminStatsResponse,
+    RestorePreview,
     User,
 )
 from peekview.services.admin_service import AdminService
@@ -2068,6 +2070,143 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@admin_cmd.command(name="backup")
+@click.option("--output", "-o", default=None, help="Output path for backup tar.gz (default: peekview-backup-YYYYMMDD-HHMMSS.tar.gz in CWD)")
+def admin_backup(output: str | None) -> None:
+    """Create a full backup of PeekView data (DB + files + config + secrets)."""
+    config = PeekConfig()
+    backend = _get_admin_service(config)
+
+    if isinstance(backend, PeekClient):
+        click.echo("Error: backup does not support remote mode", err=True)
+        sys.exit(1)
+
+    try:
+        output_path = Path(output) if output else None
+        if output_path and not output_path.parent.exists():
+            click.echo(f"Error: Output directory not found: {output_path.parent}", err=True)
+            sys.exit(1)
+        result_path = backend.backup(output_path=output_path)
+        click.echo(str(result_path))
+    except FileNotFoundError as e:
+        click.echo(f"Error: Path not found: {e}", err=True)
+        sys.exit(1)
+    except OSError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@admin_cmd.command(name="export")
+@click.option("--slug", "-s", required=True, help="Entry slug to export")
+@click.option("--format", "-f", "fmt", type=click.Choice(["json", "zip"]), default="json", help="Export format (default: json)")
+@click.option("--output", "-o", default=None, help="Output path (for zip format; default: {slug}.zip in CWD)")
+def admin_export(slug: str, fmt: str, output: str | None) -> None:
+    """Export a single entry to JSON or ZIP format."""
+    config = PeekConfig()
+    backend = _get_admin_service(config)
+
+    if isinstance(backend, PeekClient):
+        click.echo("Error: export does not support remote mode", err=True)
+        sys.exit(1)
+
+    try:
+        output_path = Path(output) if output else None
+        result = backend.export_entry(slug=slug, fmt=fmt, output_path=output_path)
+        if isinstance(result, Path):
+            click.echo(str(result))
+        else:
+            click.echo(result)
+    except NotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@admin_cmd.command(name="restore")
+@click.argument("backup_file")
+@click.option("--dry-run", is_flag=True, help="Preview restore without modifying data")
+@click.option("--replace", is_flag=True, help="Replace all target data with backup (destructive)")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt for replace mode")
+def admin_restore(backup_file: str, dry_run: bool, replace: bool, yes: bool) -> None:
+    """Restore PeekView data from a backup tar.gz file."""
+    config = PeekConfig()
+    backend = _get_admin_service(config)
+
+    if isinstance(backend, PeekClient):
+        click.echo("Error: restore does not support remote mode", err=True)
+        sys.exit(1)
+
+    backup_path = Path(backup_file)
+    if not backup_path.exists():
+        click.echo(f"Error: Backup file not found: {backup_file}", err=True)
+        sys.exit(1)
+
+    if replace and not yes:
+        click.echo("WARNING: Replace mode will DELETE ALL existing data and replace with backup contents.")
+        confirm = input("Type 'yes' to confirm: ")
+        if confirm.strip().lower() != "yes":
+            click.echo("Restore cancelled.")
+            return
+
+    try:
+        result = backend.restore(
+            backup_path=backup_path,
+            dry_run=dry_run,
+            replace=replace,
+            yes=yes,
+        )
+
+        if isinstance(result, RestorePreview):
+            click.echo("Dry-run preview:")
+            click.echo(f"  entry_count:  {result.entry_count}")
+            click.echo(f"  user_count:   {result.user_count}")
+            click.echo(f"  api_key_count: {result.api_key_count}")
+            click.echo(f"  share_count:  {result.share_count}")
+            click.echo(f"  read_count:   {result.read_count}")
+            if result.conflicts:
+                click.echo(f"  conflicts:    {len(result.conflicts)}")
+                for c in result.conflicts:
+                    click.echo(f"    - {c.type}: {c.value}")
+            else:
+                click.echo("  conflicts:    none")
+            click.echo(f"  version_check: {result.version_check}")
+        else:
+            if result.version_check == "downgrade_warning":
+                click.echo("Warning: Backup is from a lower version. Some features may not work as expected.")
+            if result.entries_imported > 0 or result.users_imported > 0:
+                click.echo("Restore completed:")
+                click.echo(f"  Users imported:     {result.users_imported}")
+                click.echo(f"  Entries imported:   {result.entries_imported}")
+                click.echo(f"  Files imported:     {result.files_imported}")
+                click.echo(f"  API keys imported:  {result.api_keys_imported}")
+                click.echo(f"  Shares imported:    {result.shares_imported}")
+                click.echo(f"  Reads imported:     {result.reads_imported}")
+                click.echo(f"  Conflicts resolved: {result.conflicts_resolved}")
+                click.echo(f"  FTS rebuilt:        {result.fts_rebuilt}")
+            else:
+                click.echo("Restore completed: no new data imported")
+
+    except ValueError as e:
+        error_msg = str(e).lower()
+        if "version" in error_msg or "incompat" in error_msg:
+            click.echo(f"Error: {e}", err=True)
+            click.echo("No changes were made to the database (rollback/transaction intact).", err=True)
+        elif "checksum" in error_msg or "integrity" in error_msg or "corrupt" in error_msg:
+            click.echo(f"Error: {e}", err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        click.echo("No changes were made to the database (rollback/transaction intact).", err=True)
         sys.exit(1)
 
 
