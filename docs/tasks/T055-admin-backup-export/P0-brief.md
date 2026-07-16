@@ -28,6 +28,15 @@ CLI 有 `admin stats` 和 `admin cleanup`，但**无 backup/export**。用户必
 2. `peekview admin export [--slug SLUG] [--format json|zip]`：单条目导出为 JSON（含 metadata + file contents base64）或 ZIP
 3. `peekview admin restore <backup-file>`：从备份恢复（处理版本兼容和 ID 冲突）
 
+## executor_env
+
+```yaml
+platform: "claude-code"
+has_task_tool: false
+has_local_runtime: true
+network: "full"
+```
+
 ## 环境约束
 
 - debug_env: `make debug-start`（:8888, /tmp/peekview-debug/）
