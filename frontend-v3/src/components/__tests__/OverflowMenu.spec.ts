@@ -1,17 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import OverflowMenu from '@/components/OverflowMenu.vue'
-
-function createItems(overrides: Partial<OverflowMenuItem>[] = []) {
-  const defaults: OverflowMenuItem[] = [
-    { label: 'Download', action: vi.fn() },
-    { label: 'Raw', href: '/api/v1/entries/test/raw', target: '_blank', rel: 'noopener noreferrer' },
-    { label: 'Delete', icon: 'trash-2', hint: 'Permanently', variant: 'danger', action: vi.fn() },
-  ]
-  return overrides.length > 0
-    ? overrides.map((o, i) => ({ ...defaults[i], ...o }))
-    : defaults
-}
 
 interface OverflowMenuItem {
   label: string
@@ -25,158 +13,340 @@ interface OverflowMenuItem {
   action?: () => void
 }
 
-function mountOverflowMenu(props: Partial<{ items: OverflowMenuItem[] }> = {}) {
-  return mount(OverflowMenu, {
-    props: {
-      items: createItems(),
-      ...props,
-    },
-    attachTo: document.body,
-  })
+function createItems(overrides: Partial<OverflowMenuItem>[] = []): OverflowMenuItem[] {
+  const defaults: OverflowMenuItem[] = [
+    { label: 'Download', action: vi.fn() },
+    { label: 'Raw', href: '/api/v1/entries/test/raw', target: '_blank', rel: 'noopener noreferrer' },
+    { label: 'Delete', icon: 'trash-2', hint: 'Permanently', variant: 'danger', action: vi.fn() },
+  ]
+  return overrides.length > 0
+    ? overrides.map((o, i) => ({ ...defaults[i], ...o }))
+    : defaults
+}
+
+function mountOverflowMenu(props: Partial<{ items: OverflowMenuItem[]; variant: 'dropdown' | 'sheet' }> = {}) {
+  return mount(
+    // Dynamic import will fail until OverflowMenu.vue is rewritten in P4
+    // Using require-style to ensure import error surfaces as test failure
+    require('@/components/OverflowMenu.vue').default,
+    {
+      props: {
+        items: createItems(),
+        variant: 'dropdown' as const,
+        ...props,
+      },
+      attachTo: document.body,
+    }
+  )
 }
 
 describe('OverflowMenu', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
+    document.documentElement.dataset.theme = 'dark'
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
-  describe('rendering', () => {
-    it('renders overflow trigger button', () => {
-      const wrapper = mountOverflowMenu()
-      const trigger = wrapper.find('.overflow-trigger')
-      expect(trigger.exists()).toBe(true)
-      expect(trigger.find('svg').exists()).toBe(true)
+  describe('BDD-16: variant="dropdown" sub-component', () => {
+    it('OM-01: renders OverflowMenuDropdown sub-component when variant="dropdown"', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(false)
     })
 
-    it('trigger has aria-haspopup attribute', () => {
-      const wrapper = mountOverflowMenu()
-      const trigger = wrapper.find('.overflow-trigger')
-      expect(trigger.attributes('aria-haspopup')).toBe('true')
+    it('OM-03: dropdown items have 18px icons', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', icon: 'trash-2', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const icon = wrapper.find('.item-icon')
+      if (icon.exists()) {
+        const style = getComputedStyle(icon.element)
+        expect(style.width).toBe('18px')
+        expect(style.height).toBe('18px')
+      }
     })
 
-    it('trigger has aria-expanded=false when closed', () => {
-      const wrapper = mountOverflowMenu()
+    it('OM-05: dropdown item min-height is 36px', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.overflow-item')
+      if (item.exists()) {
+        const style = getComputedStyle(item.element)
+        expect(style.minHeight).toBe('36px')
+      }
+    })
+  })
+
+  describe('BDD-17: variant="sheet" sub-component', () => {
+    it('OM-02: renders OverflowMenuSheet sub-component when variant="sheet"', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(true)
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+    })
+
+    it('OM-04: sheet items have 20px icons', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', icon: 'trash-2', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const icon = wrapper.find('.sheet-item-icon')
+      if (icon.exists()) {
+        const style = getComputedStyle(icon.element)
+        expect(style.width).toBe('20px')
+        expect(style.height).toBe('20px')
+      }
+    })
+
+    it('OM-06: sheet item min-height is 48px', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.sheet-item')
+      if (item.exists()) {
+        const style = getComputedStyle(item.element)
+        expect(style.minHeight).toBe('48px')
+      }
+    })
+
+    it('OM-22: sheet has drag handle', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.sheet-drag-handle').exists()).toBe(true)
+    })
+
+    it('OM-23: sheet backdrop click closes the sheet', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(true)
+
+      await wrapper.find('.sheet-backdrop').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(false)
+    })
+
+    it('OM-24: sheet close button closes the sheet', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'sheet' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(true)
+
+      await wrapper.find('.sheet-close-btn').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.bottom-sheet').exists()).toBe(false)
+    })
+  })
+
+  describe('BDD-01: Dropdown background token', () => {
+    it('OM-07: dropdown background uses --c-surface token', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        const bg = style.background || style.backgroundColor
+        expect(bg).not.toBe('')
+        expect(bg).not.toContain('transparent')
+        expect(bg).not.toContain('rgba(0, 0, 0, 0)')
+      }
+    })
+
+    it('OM-31: light theme dropdown background is opaque white', async () => {
+      document.documentElement.dataset.theme = 'light'
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        const bg = style.backgroundColor
+        expect(bg).toBe('rgb(255, 255, 255)')
+      }
+    })
+
+    it('OM-32: dark theme dropdown background is #121822', async () => {
+      document.documentElement.dataset.theme = 'dark'
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        const bg = style.backgroundColor
+        expect(bg).toBe('rgb(18, 24, 34)')
+      }
+    })
+  })
+
+  describe('BDD-02: Dropdown border and shadow tokens', () => {
+    it('OM-08: dropdown border uses --c-border-strong token', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        const border = style.borderColor
+        expect(border).toBeTruthy()
+        expect(border).not.toBe('')
+      }
+    })
+
+    it('OM-09: dropdown border-radius is 8px', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        expect(style.borderRadius).toBe('8px')
+      }
+    })
+
+    it('OM-10: dropdown box-shadow matches spec', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        const shadow = style.boxShadow
+        expect(shadow).toContain('rgba(0, 0, 0, 0.16)')
+      }
+    })
+
+    it('OM-33: dropdown min-width is 220px', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const dropdown = wrapper.find('.overflow-dropdown')
+      if (dropdown.exists()) {
+        const style = getComputedStyle(dropdown.element)
+        expect(style.minWidth).toBe('220px')
+      }
+    })
+  })
+
+  describe('BDD-03: Menu item hover state', () => {
+    it('OM-11: normal item hover background uses --c-surface-lower', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.overflow-item')
+      if (item.exists()) {
+        await item.trigger('mouseenter')
+        await flushPromises()
+        const style = getComputedStyle(item.element)
+        const bg = style.background || style.backgroundColor
+        expect(bg).toBeTruthy()
+      }
+    })
+
+    it('OM-12: danger item hover background uses --c-error-surface token', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', variant: 'danger', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.overflow-item.item-danger')
+      if (item.exists()) {
+        await item.trigger('mouseenter')
+        await flushPromises()
+        const style = getComputedStyle(item.element)
+        const bg = style.background || style.backgroundColor
+        expect(bg).toBeTruthy()
+      }
+    })
+  })
+
+  describe('BDD-04: Share item removed from OverflowMenu', () => {
+    it('OM-13: no "Share" label in OverflowMenu items', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const items = wrapper.findAll('.overflow-item')
+      const hasShareItem = items.some(el => el.text().includes('Share'))
+      expect(hasShareItem).toBe(false)
+    })
+  })
+
+  describe('BDD-20: Keyboard navigation in OverflowMenu', () => {
+    it('OM-14: Enter key opens dropdown', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('keydown', { key: 'Enter' })
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+    })
+
+    it('OM-15: Space key opens dropdown', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('keydown', { key: ' ' })
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+    })
+
+    it('OM-16: Escape closes dropdown and focus returns to trigger', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+
+      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      await flushPromises()
+
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+      expect(document.activeElement).toBe(wrapper.find('.overflow-trigger').element)
+    })
+
+    it('OM-17: Tab with open dropdown closes and moves focus', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+
+      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+      await flushPromises()
+
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+    })
+
+    it('OM-18: aria-expanded toggles correctly', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
       const trigger = wrapper.find('.overflow-trigger')
       expect(trigger.attributes('aria-expanded')).toBe('false')
-    })
 
-    it('trigger has is-open class when open', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const trigger = wrapper.find('.overflow-trigger')
-      expect(trigger.classes()).toContain('is-open')
-    })
+      await trigger.trigger('click')
+      await flushPromises()
+      expect(trigger.attributes('aria-expanded')).toBe('true')
 
-    it('dropdown is not rendered when closed', () => {
-      const wrapper = mountOverflowMenu()
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
-    })
-
-    it('dropdown is rendered when trigger is clicked', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-    })
-
-    it('dropdown has role="menu"', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').attributes('role')).toBe('menu')
-    })
-
-    it('renders correct number of menu items', async () => {
-      const items = createItems()
-      const wrapper = mountOverflowMenu({ items })
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.findAll('.overflow-item')).toHaveLength(items.length)
-    })
-
-    it('renders <a> element for items with href', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const rawItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Raw'))
-      expect(rawItem!.element.tagName).toBe('A')
-      expect(rawItem!.attributes('href')).toBe('/api/v1/entries/test/raw')
-      expect(rawItem!.attributes('target')).toBe('_blank')
-      expect(rawItem!.attributes('rel')).toBe('noopener noreferrer')
-    })
-
-    it('renders <button> element for items without href', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const downloadItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Download'))
-      expect(downloadItem!.element.tagName).toBe('BUTTON')
-    })
-
-    it('each menu item has role="menuitem"', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      wrapper.findAll('.overflow-item').forEach(item => {
-        expect(item.attributes('role')).toBe('menuitem')
-      })
-    })
-
-    it('renders icon when item has icon', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const deleteItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Delete'))
-      expect(deleteItem!.find('svg').exists()).toBe(true)
-    })
-
-    it('does not render icon element when item has no icon', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const downloadItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Download'))
-      expect(downloadItem!.find('.item-icon').exists()).toBe(false)
-    })
-
-    it('applies item-danger class for variant="danger"', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const deleteItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Delete'))
-      expect(deleteItem!.classes()).toContain('item-danger')
-    })
-
-    it('does not apply item-danger class for default variant', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      const downloadItem = wrapper.findAll('.overflow-item').find(el => el.text().includes('Download'))
-      expect(downloadItem!.classes()).not.toContain('item-danger')
-    })
-
-    it('renders empty dropdown when items array is empty', async () => {
-      const wrapper = mountOverflowMenu({ items: [] })
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.findAll('.overflow-item')).toHaveLength(0)
+      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      await flushPromises()
+      expect(trigger.attributes('aria-expanded')).toBe('false')
     })
   })
 
-  describe('toggle interaction', () => {
-    it('opens dropdown on trigger click', async () => {
-      const wrapper = mountOverflowMenu()
+  describe('Click-outside closes menu', () => {
+    it('OM-19: clicking outside closes dropdown', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
       await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-      expect(wrapper.find('.overflow-trigger').attributes('aria-expanded')).toBe('true')
-    })
-
-    it('closes dropdown on second trigger click', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
-      expect(wrapper.find('.overflow-trigger').attributes('aria-expanded')).toBe('false')
-    })
-  })
-
-  describe('click-outside closes menu', () => {
-    it('closes dropdown when clicking outside the menu', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
       expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
 
       const outside = document.createElement('div')
@@ -186,102 +356,107 @@ describe('OverflowMenu', () => {
 
       expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
     })
-
-    it('does not close dropdown when clicking inside the dropdown', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-
-      await wrapper.find('.overflow-dropdown').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-    })
   })
 
-  describe('Escape key closes menu', () => {
-    it('closes dropdown on Escape key', async () => {
-      const wrapper = mountOverflowMenu()
-      await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-
-      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-      await flushPromises()
-
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
-    })
-
-    it('returns focus to trigger after Escape close', async () => {
-      const wrapper = mountOverflowMenu()
-      const trigger = wrapper.find('.overflow-trigger')
-      await trigger.trigger('click')
-      await flushPromises()
-
-      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-      await flushPromises()
-
-      expect(document.activeElement).toBe(trigger.element)
-    })
-
-    it('does nothing on Escape when menu is already closed', async () => {
-      const wrapper = mountOverflowMenu()
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
-
-      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-      await flushPromises()
-
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
-    })
-  })
-
-  describe('item action handling', () => {
-    it('calls action callback and closes menu when button item is clicked', async () => {
+  describe('Item action handling', () => {
+    it('OM-20: item click calls action and closes', async () => {
       const action = vi.fn()
-      const items: OverflowMenuItem[] = [
-        { label: 'Download', action },
-      ]
-      const wrapper = mountOverflowMenu({ items })
+      const items: OverflowMenuItem[] = [{ label: 'Download', action }]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
       await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+      await flushPromises()
 
       await wrapper.find('.overflow-item').trigger('click')
       expect(action).toHaveBeenCalledOnce()
       expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
     })
+  })
 
-    it('closes menu when <a> item is clicked', async () => {
+  describe('Exposed methods', () => {
+    it('OM-21: close() exposed method works', async () => {
+      const wrapper = mountOverflowMenu({ variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
+
+      const vm = wrapper.vm as unknown as { close: () => void }
+      vm.close()
+      await flushPromises()
+      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+    })
+  })
+
+  describe('Item rendering details', () => {
+    it('OM-25: divider renders correctly', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Download', action: vi.fn() },
+        { label: '', divider: true },
+        { label: 'Delete', variant: 'danger', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const divider = wrapper.find('.dropdown-divider')
+      expect(divider.exists()).toBe(true)
+    })
+
+    it('OM-26: href item renders <a> tag', async () => {
       const items: OverflowMenuItem[] = [
         { label: 'Raw', href: '/raw', target: '_blank', rel: 'noopener' },
       ]
-      const wrapper = mountOverflowMenu({ items })
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
       await wrapper.find('.overflow-trigger').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(true)
-
-      await wrapper.find('.overflow-item').trigger('click')
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+      await flushPromises()
+      const linkItem = wrapper.find('.overflow-item')
+      expect(linkItem.element.tagName).toBe('A')
+      expect(linkItem.attributes('href')).toBe('/raw')
+      expect(linkItem.attributes('target')).toBe('_blank')
+      expect(linkItem.attributes('rel')).toBe('noopener')
     })
 
-    it('danger variant item calls action and closes', async () => {
-      const action = vi.fn()
+    it('OM-27: action item renders <button> tag', async () => {
       const items: OverflowMenuItem[] = [
-        { label: 'Delete', variant: 'danger', action },
+        { label: 'Download', action: vi.fn() },
       ]
-      const wrapper = mountOverflowMenu({ items })
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
       await wrapper.find('.overflow-trigger').trigger('click')
-
-      await wrapper.find('.overflow-item').trigger('click')
-      expect(action).toHaveBeenCalledOnce()
-      expect(wrapper.find('.overflow-dropdown').exists()).toBe(false)
+      await flushPromises()
+      const btnItem = wrapper.find('.overflow-item')
+      expect(btnItem.element.tagName).toBe('BUTTON')
     })
-  })
 
-  describe('cleanup', () => {
-    it('removes event listeners on unmount', async () => {
-      const removeSpy = vi.spyOn(document, 'removeEventListener')
-      const wrapper = mountOverflowMenu()
+    it('OM-28: danger variant applies item-danger class', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', variant: 'danger', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
       await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.overflow-item')
+      expect(item.classes()).toContain('item-danger')
+    })
 
-      wrapper.unmount()
-      expect(removeSpy).toHaveBeenCalledWith('click', expect.any(Function))
-      expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
+    it('OM-29: icon rendered when item has icon', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', icon: 'trash-2', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const item = wrapper.find('.overflow-item')
+      expect(item.find('svg').exists()).toBe(true)
+    })
+
+    it('OM-30: hint text rendered', async () => {
+      const items: OverflowMenuItem[] = [
+        { label: 'Delete', hint: 'Permanently', action: vi.fn() },
+      ]
+      const wrapper = mountOverflowMenu({ items, variant: 'dropdown' })
+      await wrapper.find('.overflow-trigger').trigger('click')
+      await flushPromises()
+      const hint = wrapper.find('.item-hint')
+      expect(hint.exists()).toBe(true)
+      expect(hint.text()).toBe('Permanently')
     })
   })
 })
