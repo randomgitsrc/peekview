@@ -7,8 +7,20 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-17
+
 ### 新增
 
+-
+
+
+### 新增
+
+- T055: Admin backup/export/restore CLI 命令（`peekview admin backup`、`peekview admin export`、`peekview admin restore`）
+- T055: 一致性 SQLite 备份（`.backup()` API + SHA256 完整性校验）
+- T055: Merge 模式恢复（自动 ID/slug 重映射 + FK 链处理）
+- T055: Replace 模式恢复（staging 目录原子替换）
+- T055: `--dry-run` 恢复预览 + `--replace --yes` 全量替换
 - T057: ShareManagementPanel 重构为 `.share-popover` 上下文锚定气泡（紧贴 Share 按钮），支持 desktop popover / mobile Teleport 居中模态双模式
 - T057: Share 状态机（loading → createForm / result / activeList），含 done/revoke 自动转换
 

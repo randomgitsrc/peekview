@@ -240,10 +240,10 @@ And 备份文件默认输出到当前工作目录
 ## 5. 裁剪说明
 
 ```yaml
-phases: [P1, P2, P3, P4, P5, P6, P8]
-skipped: [P7]
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
+skipped: []
 coupling_checklist: [api-schema: checked, data-model: checked, cross-package: checked, config: checked]
-跳过风险: low — 单包纯后端 CLI 改动，无 UI/MCP 变更，无跨包版本同步需求
+跳过风险: n/a — no phases skipped
 # coupling_checklist 说明:
 # - api-schema: 无新增 API 端点，纯 CLI 命令
 # - data-model: 新增 BackupMetadata schema 仅 CLI 内部使用，不影响 API schema
@@ -259,7 +259,7 @@ coupling_checklist: [api-schema: checked, data-model: checked, cross-package: ch
 | P4 | 保留 | 实现阶段 |
 | P5 | 保留 | 需验证备份一致性机制在 WAL 模式下的保证，以及备份期间并发写入的数据一致性 |
 | P6 | 简化 | CLI 命令，pytest 验证即可，无需 Playwright |
-| P7 | 裁剪 | 纯后端 CLI 改动，无前端/MCP 影响，无跨包一致性风险 |
+| P7 | 保留 | 源码文件数 13 > 5 上限，需一致性检查 |
 | P8 | 保留 | 需 bump 版本号 |
 
 ## 6. 范围声明

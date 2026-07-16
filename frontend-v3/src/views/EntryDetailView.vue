@@ -52,7 +52,7 @@
           <button
             v-if="showShareButton"
             class="icon-btn"
-            @click="showShareDialog = true"
+            @click="showShareDialog = !showShareDialog"
             aria-label="Share"
           >
             <Share2Icon :size="16" />
@@ -277,13 +277,6 @@
       @cancel="cancelDelete"
     />
 
-    <!-- Share Dialog -->
-    <ShareDialog
-      v-model:visible="showShareDialog"
-      :entry-slug="slug"
-      @share-created="handleShareCreated"
-    />
-
     <!-- Expires In Dialog -->
     <ExpiresInDialog
       v-model:visible="showExpiresInDialog"
@@ -313,7 +306,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
-import { useShareStore } from '@/stores/share'
 import { useThemeStore } from '@/stores/theme'
 import { useToast } from '@/composables/useToast'
 import OverflowMenu from '@/components/OverflowMenu.vue'
@@ -332,7 +324,6 @@ import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ShareDialog from '@/components/ShareDialog.vue'
 import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
 import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
 import type { TocHeading } from '@/types'
@@ -352,7 +343,6 @@ const router = useRouter()
 const route = useRoute()
 const entryStore = useEntryStore()
 const authStore = useAuthStore()
-const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
 
@@ -467,10 +457,6 @@ async function handleToggleVisibility() {
   } else {
     toast.show('Failed to change visibility', 'error')
   }
-}
-
-function handleShareCreated() {
-  shareStore.fetchShares(props.slug)
 }
 
 function handleShareRevoked() {
