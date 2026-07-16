@@ -178,6 +178,15 @@ ShareDialog.vue (统一入口组件)
 - **链接截断**：monospace 字体，超长链接中间截断显示 `...`
 - **Popover 滚动**：最大高度 `calc(100vh - header高度 - 20px)`，超出可滚动
 
+## executor_env
+
+```yaml
+platform: "claude-code"
+has_task_tool: false
+has_local_runtime: true
+network: "full"
+```
+
 ## 环境约束
 
 - debug_env: `make debug-start`（:8888, /tmp/peekview-debug/）

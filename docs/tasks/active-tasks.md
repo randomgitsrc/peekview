@@ -24,7 +24,7 @@
 | T053 | agent-raw-discovery | ✅ READY | READY | 🔴 | P8 裁剪（internal_only） | 2026-07-12 | 2026-07-13 |
 | T054 | api-safety-idempotency | ✅✅ 已完成 | P8→v0.6.3 | 🔴 | 无 | 2026-07-14 | 2026-07-14 |
 | T055 | admin-backup-export | ✅✅ 已完成 | P8→v0.7.0 | 🔴 | 无 | 2026-07-14 | 2026-07-17 |
-| T056 | prometheus-metrics | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-14 | 2026-07-14 |
+| T056 | prometheus-metrics | ✅✅ 已完成 | P8→v0.8.0 | 🟡 | 无 | 2026-07-14 | 2026-07-17 |
 | T058 | overflow-share-redesign | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-16 | 2026-07-16 |
 
 ### 已完成
