@@ -86,3 +86,5 @@ packages/mcp-server/coverage/
 .DS_Store
 .gate-result.json
 .gate-history.jsonl
+peekview-backup-*.tar.gz
+zip-*-test.zip

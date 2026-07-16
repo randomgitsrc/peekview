@@ -855,66 +855,10 @@ Implementation is complete when:
 9. All existing OverflowMenu.spec.ts tests pass (adapted for new structure)
 10. Light theme: dropdown/Popover backgrounds are opaque white (no transparency)
 11. Dark theme: dropdown/Popover backgrounds are `#121822`
-
-## Review Revision Addenda (P2R fixes)
-
-### R1 [CRITICAL]: Bottom Sheet Swipe-to-Close (BDD-15)
-
-The OverflowMenuSheet and ShareDialog Sheet variants must support swipe-to-close:
-
-- **Touch handlers**: `@touchstart` records initial Y position; `@touchmove` tracks delta; `@touchend` evaluates threshold
-- **Threshold**: If `deltaY > 50px` (downward swipe), close the sheet. Below 50px, snap back to original position
-- **Animation**: During swipe, apply `transform: translateY(deltaY)` with `transition: none`. On release, animate to `translateY(100%)` (close) or `translateY(0)` (snap back) with `transition: transform 0.2s ease`
-- **Overscroll**: If sheet content is scrollable, only trigger close when content `scrollTop === 0` and swipe direction is downward
-
-### R2 [CRITICAL]: Tablet Viewport Breakpoint (BDD-24)
-
-Breakpoint alignment strategy:
-
-- **<= 640px**: Mobile mode (Bottom Sheet for both OverflowMenu and Share)
-- **641px – 1024px**: Desktop mode (Dropdown for OverflowMenu, Popover for Share) — same as > 1024px
-- **> 1024px**: Desktop mode (Dropdown for OverflowMenu, Popover for Share)
-
-Tablet uses Popover because screen width (641+) is sufficient for a 280px floating panel. No separate tablet layout needed.
-
-### R5 [MEDIUM]: Badge Styling Override Declaration
-
-Badge on share button uses a compact size that deviates from DESIGN.md §6 Badge spec (which defines larger badges for list items). Justification: share button badge is a count indicator (not a status badge), compact size (min-width: 18px, height: 18px, font-size: 11px) prevents visual clutter on the action button. Override: `padding: 0 4px; border-radius: 9px;` positioned at top-right corner with `top: -4px; right: -4px`.
-
-### R6 [MEDIUM]: Popover Focus Management (BDD-23)
-
-Focus strategy for Share Popover:
-
-- On open: focus moves to the Popover container (first interactive element)
-- Tab: cycles through interactive elements within the Popover (copy buttons → revoke buttons → create link → close button)
-- Shift+Tab: reverse cycle
-- When last element is reached and Tab is pressed: wrap to first element (focus trap)
-- Escape: close Popover, return focus to share button trigger
-- Bottom Sheet on mobile: same Tab cycle within Sheet body
-
-### R7 [MEDIUM]: Popover Scroll Behavior
-
-When the parent page scrolls while Popover is open, the Popover closes. This prevents the Popover from becoming misaligned with its trigger. Implementation: listen for `scroll` event on `window`, close Popover on any scroll. For Bottom Sheet on mobile: scrolling within the Sheet body does NOT close it; only scrolling the background page closes it.
-
-### R8 [MEDIUM]: Badge CSS Positioning
-
-Badge positioning specification:
-- Position: `absolute` relative to the share button (parent has `position: relative`)
-- Location: top-right corner
-- Offset: `top: -4px; right: -4px`
-- Z-index: above button content (`z-index: 1`)
-- Min-width: 18px, height: 18px
-- Background: `var(--c-accent)`, color: `var(--c-text-on-accent)` (or white)
-- Border: 2px solid `var(--c-surface)` (creates visual separation from button edge)
-
-### R9 [LOW]: IconRenderer Ownership
-
-In the split architecture, `iconMap` and the `IconRenderer` helper stay in `OverflowMenu.vue` (the parent component). Both sub-components (`OverflowMenuDropdown.vue` and `OverflowMenuSheet.vue`) receive icon name strings via `OverflowMenuItem.icon` prop and render them using the parent's IconRenderer. The sub-components do NOT import iconMap directly — they emit icon name to the parent which resolves and passes the SVG. Alternative: pass resolved SVG as a slot from parent to child. Chosen approach: parent resolves icon → passes as slot content to keep sub-components pure.
-
-### R10 [LOW]: View Switching Animation
-
-ShareDialogContent switches between list view and create view with **instant switch** (no animation). Rationale: the Popover/Sheet container has limited height, and slide animations would require overflow handling. The "← Back" button in the create header provides clear navigation. If animation is desired later, a simple `opacity: 0 → 1` fade (0.15s) can be added without layout impact.
-
-### R11 [LOW]: share.ts Clarification
-
-The `share.ts` store's **public API surface** is unchanged: `fetchShares`, `createShare`, `revokeShares` remain as-is. Internally, a new reactive `shareUrlCache: Map<number, string>` ref is added to store the full share URLs (keyed by share ID) for display in the list view. On `createShare`, the returned `shareUrl` is cached. On `fetchShares`, URLs are reconstructed from `tokenPrefix + entrySlug + baseUrl`. This internal addition does not affect any existing consumers.
+12. Swipe-to-close gesture works on both OverflowMenuSheet and ShareDialog Sheet (BDD-15)
+13. Tablet viewport (641-1024px) uses Popover/Dropdown mode (BDD-24)
+14. Popover closes on parent page scroll
+15. Popover soft focus trap: Tab past last element closes Popover and returns focus to trigger
+16. Badge positioned at top-right corner of share button with specified offsets
+17. T058 E2E spec (`e2e/t058-share-redesign.e2e.spec.ts`) passes
+18. Updated `test_t057_ui_polish.spec.ts` passes with new selectors
