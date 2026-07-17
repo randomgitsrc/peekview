@@ -1,6 +1,6 @@
 task_id: T058
 task_name: overflow-share-redesign
-phase: READY
-status: active
+phase: DONE
+status: completed
 retries: {}
 created: 2026-07-17
