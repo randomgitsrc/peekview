@@ -7,11 +7,7 @@
 
 ## [Unreleased]
 
-### 变更
-
-- T058: OverflowMenu 重构为 Thin Wrapper Split（orchestrator → Dropdown/Sheet 子组件）
-- T058: ShareDialog 重构为 Popover/Sheet 双模式容器 + ShareDialogContent 共享逻辑
-- T058: 移除 ShareManagementPanel，分享功能集成到 EntryDetailView 的 Share 按钮 + badge
+## [0.9.0] - 2026-07-17
 
 ### 新增
 
@@ -20,6 +16,12 @@
 - T058: ShareDialogContent（list view + create view + expired collapsible + instant revoke）
 - T058: Share badge（active share count，--c-accent solid style）
 - T058: E2E test spec (t058-share-redesign.e2e.spec.ts, 28 tests)
+
+### 变更
+
+- T058: OverflowMenu 重构为 Thin Wrapper Split（orchestrator → Dropdown/Sheet 子组件）
+- T058: ShareDialog 重构为 Popover/Sheet 双模式容器 + ShareDialogContent 共享逻辑
+- T058: 移除 ShareManagementPanel，分享功能集成到 EntryDetailView 的 Share 按钮 + badge
 
 ## [0.8.0] - 2026-07-17
 
