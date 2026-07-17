@@ -9,34 +9,7 @@
 
 ## [0.9.0] - 2026-07-17
 
-### 新增
-
-- T058: OverflowMenuDropdown（desktop dropdown，DESIGN.md §6 CSS tokens）
-- T058: OverflowMenuSheet（mobile bottom sheet，swipe-to-close 50px threshold）
-- T058: ShareDialogContent（list view + create view + expired collapsible + instant revoke）
-- T058: Share badge（active share count，--c-accent solid style）
-- T058: E2E test spec (t058-share-redesign.e2e.spec.ts, 28 tests)
-
-### 变更
-
-- T058: OverflowMenu 重构为 Thin Wrapper Split（orchestrator → Dropdown/Sheet 子组件）
-- T058: ShareDialog 重构为 Popover/Sheet 双模式容器 + ShareDialogContent 共享逻辑
-- T058: 移除 ShareManagementPanel，分享功能集成到 EntryDetailView 的 Share 按钮 + badge
-
-## [0.8.0] - 2026-07-17
-
-### 新增
-
-- T056: Prometheus /metrics 端点（prometheus-fastapi-instrumentator 集成）
-- T056: `PEEKVIEW_METRICS__ENABLED` 配置项（默认 true，设为 false 关闭 /metrics）
-- T056: /metrics 端点绕过 API key 认证和速率限制（与 /health 同等处理）
-
-## [0.7.0] - 2026-07-17
-
-### 新增
-
--
-
+从 v0.6.2 跳版至 v0.9.0（v0.7.0、v0.8.0 未独立发布，变更已包含在本版本中）。
 
 ### 新增
 
@@ -45,13 +18,24 @@
 - T055: Merge 模式恢复（自动 ID/slug 重映射 + FK 链处理）
 - T055: Replace 模式恢复（staging 目录原子替换）
 - T055: `--dry-run` 恢复预览 + `--replace --yes` 全量替换
-- T057: ShareManagementPanel 重构为 `.share-popover` 上下文锚定气泡（紧贴 Share 按钮），支持 desktop popover / mobile Teleport 居中模态双模式
+- T056: Prometheus /metrics 端点（prometheus-fastapi-instrumentator 集成）
+- T056: `PEEKVIEW_METRICS__ENABLED` 配置项（默认 true，设为 false 关闭 /metrics）
+- T056: /metrics 端点绕过 API key 认证和速率限制（与 /health 同等处理）
+- T057: ShareManagementPanel 重构为 `.share-popover` 上下文锚定气泡，支持 desktop popover / mobile Teleport 居中模态双模式
 - T057: Share 状态机（loading → createForm / result / activeList），含 done/revoke 自动转换
+- T058: OverflowMenuDropdown（desktop dropdown，DESIGN.md §6 CSS tokens）
+- T058: OverflowMenuSheet（mobile bottom sheet，swipe-to-close 50px threshold）
+- T058: ShareDialogContent（list view + create view + expired collapsible + instant revoke）
+- T058: Share badge（active share count，--c-accent solid style）
+- T058: E2E test spec (t058-share-redesign.e2e.spec.ts, 28 tests)
 
 ### 变更
 
 - T057: Share UI 按钮文案 "Create Link" → "Generate Link"
 - T057: OverflowMenu dropdown 菜单项统一 `justify-content: flex-start` 严格左对齐
+- T058: OverflowMenu 重构为 Thin Wrapper Split（orchestrator → Dropdown/Sheet 子组件）
+- T058: ShareDialog 重构为 Popover/Sheet 双模式容器 + ShareDialogContent 共享逻辑
+- T058: 移除 ShareManagementPanel，分享功能集成到 EntryDetailView 的 Share 按钮 + badge
 
 ### 修复
 
@@ -59,11 +43,6 @@
 - T057: 移除冗余的全屏 ShareDialog 模态，改用紧贴 Share 按钮的 Popover；删除废弃组件 `ShareDialog.vue`
 
 ## [0.6.3] - 2026-07-14
-
-### 新增
-
--
-
 
 ### 新增
 
