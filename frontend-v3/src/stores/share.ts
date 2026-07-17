@@ -6,6 +6,7 @@ import type { ShareInfo } from '@/types'
 export const useShareStore = defineStore('share', () => {
   const shares = ref<ShareInfo[]>([])
   const loading = ref(false)
+  const shareUrlCache = ref<Map<number, string>>(new Map())
 
   async function fetchShares(slug: string) {
     loading.value = true
@@ -18,7 +19,10 @@ export const useShareStore = defineStore('share', () => {
   }
 
   async function createShare(slug: string, expiresIn: string, maxViews?: number) {
-    return api.createShare(slug, { expires_in: expiresIn, max_views: maxViews ?? null })
+    const result = await api.createShare(slug, { expires_in: expiresIn, max_views: maxViews ?? null })
+    shareUrlCache.value.set(result.id, result.shareUrl)
+    await fetchShares(slug)
+    return result
   }
 
   async function revokeShares(slug: string, shareIds: number[]) {
@@ -26,5 +30,9 @@ export const useShareStore = defineStore('share', () => {
     await fetchShares(slug)
   }
 
-  return { shares, loading, fetchShares, createShare, revokeShares }
+  function getShareUrl(shareId: number): string | null {
+    return shareUrlCache.value.get(shareId) ?? null
+  }
+
+  return { shares, loading, shareUrlCache, fetchShares, createShare, revokeShares, getShareUrl }
 })

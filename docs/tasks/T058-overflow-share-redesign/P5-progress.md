@@ -1,0 +1,12 @@
+- [verifier.md] P5=技术验证(跑测试), P6=验收(跑BDD); ui_affected必须实跑Playwright; 自查≠gate
+- [P0-brief.md] ui_affected=true; debug_env=make debug-start :8888; 前端vue-tsc CI强制; DESIGN.md --c-* tokens
+- [P2-design.md] gate_commands.P5=vue-tsc; P5_e2e引用不存在的t058 spec; ui_affected=true; 方案A Thin Wrapper Split
+- [P4-implementation.md] 6组件创建/修改; 876单测全绿; vue-tsc PASS; build PASS; CSS token断言jsdom无法解析需Playwright验证
+- [P5-dispatch-context.md] debug server运行中:8888; t058 spec不存在需创建; CDP可用:18800; Vision可用
+- [vue-tsc] PASS (0 errors)
+- [vitest] 876 passed, 1 skipped, 0 failed
+- [E2E spec created] t058-share-redesign.e2e.spec.ts with 22 tests across 5 describe blocks
+- [T058 E2E spec] 28/28 passed after fixes: serial mode, evaluate() workaround for handleClickOutside bug, networkidle wait
+- [回归测试] t052/viewer/t057 specs有23个预存失败（路由错误、缺少auth等），与T058改动无关
+- [CDP截图] 6张截图捕获+vision分析完成: desktop dropdown/popover, mobile sheet/share-sheet 全部通过视觉验证
+- [P5完成] unit.md(55行)+e2e.md(139行)已写入; 876单元测试全绿; 28/28 E2E全绿; 发现BUG-1(handleClickOutside)和BUG-2(showShareButton限制)

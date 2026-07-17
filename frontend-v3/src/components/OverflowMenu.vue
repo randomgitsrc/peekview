@@ -5,6 +5,8 @@
       :class="{ 'is-open': isOpen }"
       ref="triggerRef"
       @click="toggle"
+      @keydown.enter="open"
+      @keydown.space.prevent="open"
       aria-haspopup="true"
       :aria-expanded="isOpen"
       :aria-label="variant === 'sheet' ? 'More actions' : 'More'"
@@ -13,85 +15,27 @@
       <ChevronDownIcon :size="12" />
     </button>
 
-    <!-- Dropdown variant -->
-    <div
+    <OverflowMenuDropdown
       v-if="isOpen && variant === 'dropdown'"
-      class="overflow-dropdown"
-      role="menu"
+      :items="items"
+      @close="close"
+      @action="handleAction"
     >
-      <template v-for="item in items" :key="item.label">
-        <div v-if="item.divider" class="dropdown-divider"></div>
-        <a
-          v-if="item.href"
-          :href="item.href"
-          :target="item.target"
-          :rel="item.rel"
-          class="overflow-item"
-          :class="{ 'item-danger': item.variant === 'danger' }"
-          role="menuitem"
-          @click="close"
-        >
-          <IconRenderer v-if="item.icon" :name="item.icon" class="item-icon" />
-          <span class="item-label">{{ item.label }}</span>
-          <span v-if="item.hint" class="item-hint">{{ item.hint }}</span>
-        </a>
-        <button
-          v-else
-          class="overflow-item"
-          :class="{ 'item-danger': item.variant === 'danger' }"
-          role="menuitem"
-          @click="handleAction(item)"
-        >
-          <IconRenderer v-if="item.icon" :name="item.icon" class="item-icon" />
-          <span class="item-label">{{ item.label }}</span>
-          <span v-if="item.hint" class="item-hint">{{ item.hint }}</span>
-        </button>
+      <template #icon="{ item }">
+        <IconRenderer v-if="item.icon" :name="item.icon" class="item-icon" />
       </template>
-    </div>
+    </OverflowMenuDropdown>
 
-    <!-- Sheet variant (mobile) -->
-    <Teleport v-if="isOpen && variant === 'sheet'" to="body">
-      <div class="sheet-backdrop" @click="close"></div>
-      <div class="bottom-sheet" role="menu">
-        <div class="sheet-drag-handle"></div>
-        <div class="sheet-header">
-          <span class="sheet-title">More actions</span>
-          <button class="sheet-close-btn" @click="close" aria-label="Close">
-            <XIcon :size="20" />
-          </button>
-        </div>
-        <div class="sheet-body">
-          <template v-for="item in items" :key="item.label">
-            <div v-if="item.divider" class="sheet-divider"></div>
-            <a
-              v-if="item.href"
-              :href="item.href"
-              :target="item.target"
-              :rel="item.rel"
-              class="sheet-item"
-              :class="{ 'item-danger': item.variant === 'danger' }"
-              role="menuitem"
-              @click="close"
-            >
-              <IconRenderer v-if="item.icon" :name="item.icon" class="sheet-item-icon" />
-              <span class="sheet-item-label">{{ item.label }}</span>
-              <span v-if="item.hint" class="sheet-item-hint">{{ item.hint }}</span>
-            </a>
-            <button
-              v-else
-              class="sheet-item"
-              :class="{ 'item-danger': item.variant === 'danger' }"
-              role="menuitem"
-              @click="handleAction(item)"
-            >
-              <IconRenderer v-if="item.icon" :name="item.icon" class="sheet-item-icon" />
-              <span class="sheet-item-label">{{ item.label }}</span>
-              <span v-if="item.hint" class="sheet-item-hint">{{ item.hint }}</span>
-            </button>
-          </template>
-        </div>
-      </div>
-    </Teleport>
+    <OverflowMenuSheet
+      v-if="isOpen && variant === 'sheet'"
+      :items="items"
+      @close="close"
+      @action="handleAction"
+    >
+      <template #icon="{ item }">
+        <IconRenderer v-if="item.icon" :name="item.icon" class="sheet-item-icon" />
+      </template>
+    </OverflowMenuSheet>
   </div>
 </template>
 
@@ -99,7 +43,6 @@
 import { ref, onMounted, onUnmounted, h } from 'vue'
 import {
   MoreHorizontal as MoreHorizontalIcon,
-  X as XIcon,
   ChevronDown as ChevronDownIcon,
   Moon as MoonIcon,
   Sun as SunIcon,
@@ -113,6 +56,8 @@ import {
   Trash2 as Trash2Icon,
   Copy as CopyIcon,
 } from 'lucide-vue-next'
+import OverflowMenuDropdown from '@/components/OverflowMenuDropdown.vue'
+import OverflowMenuSheet from '@/components/OverflowMenuSheet.vue'
 
 const iconMap: Record<string, any> = {
   moon: MoonIcon,
@@ -164,6 +109,10 @@ function toggle() {
   isOpen.value = !isOpen.value
 }
 
+function open() {
+  isOpen.value = true
+}
+
 function close() {
   isOpen.value = false
   triggerRef.value?.focus()
@@ -184,6 +133,9 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && isOpen.value) {
     close()
   }
+  if (e.key === 'Tab' && isOpen.value) {
+    close()
+  }
 }
 
 onMounted(() => {
@@ -195,6 +147,8 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
 })
+
+defineExpose({ close })
 </script>
 
 <style scoped>
@@ -204,202 +158,7 @@ onUnmounted(() => {
 }
 
 .overflow-trigger.is-open {
-  background: var(--c-border);
+  background: var(--c-surface-lower);
   color: var(--c-accent);
-}
-
-/* Dropdown */
-.overflow-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  min-width: 180px;
-  max-height: calc(100vh - var(--header-height) - 120px);
-  overflow-y: auto;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-.overflow-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 36px;
-  padding: 8px 12px;
-  font-size: var(--font-sm);
-  color: var(--text-primary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.overflow-item:hover {
-  background: var(--c-border);
-}
-.overflow-item:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: -2px;
-}
-
-.overflow-item.item-danger {
-  color: var(--c-error);
-}
-
-.overflow-item.item-danger:hover {
-  background: var(--error-bg);
-}
-
-.item-icon {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-}
-
-.item-label {
-  flex: 1;
-}
-
-.item-hint {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 4px 0;
-}
-
-/* Bottom Sheet */
-.sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1000;
-}
-
-.bottom-sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--c-surface);
-  border-radius: 16px 16px 0 0;
-  z-index: 1001;
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
-}
-
-.sheet-drag-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--c-text-tertiary);
-  border-radius: 2px;
-  margin: 8px auto 0;
-  opacity: 0.4;
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px 8px;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.sheet-title {
-  font-size: var(--font-md);
-  font-weight: 600;
-}
-
-.sheet-close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--c-text-secondary);
-  cursor: pointer;
-}
-
-.sheet-close-btn:hover {
-  background: var(--c-border);
-  color: var(--c-text);
-}
-
-.sheet-body {
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-.sheet-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  font-size: var(--font-sm);
-  color: var(--text-primary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.sheet-item:hover {
-  background: var(--c-border);
-}
-.sheet-item:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: -2px;
-}
-
-.sheet-item.item-danger {
-  color: var(--c-error);
-}
-
-.sheet-item.item-danger:hover {
-  background: var(--error-bg);
-}
-
-.sheet-item-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-
-.sheet-item-label {
-  flex: 1;
-  text-align: left;
-}
-
-.sheet-item-hint {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-.sheet-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 4px 16px;
 }
 </style>

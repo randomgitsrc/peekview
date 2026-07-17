@@ -2,7 +2,7 @@
   <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Mobile sticky header -->
-    <div v-if="!isDesktop" class="mobile-sticky-header">
+    <div v-if="isMobile" class="mobile-sticky-header">
       <router-link to="/" class="back-btn" aria-label="Back">
         <ChevronLeftIcon :size="20" />
       </router-link>
@@ -51,13 +51,20 @@
           </button>
           <button
             v-if="showShareButton"
-            class="icon-btn"
-            @click="showShareDialog = !showShareDialog"
+            class="icon-btn share-btn"
+            @click="shareDialogOpen = !shareDialogOpen"
             aria-label="Share"
           >
             <Share2Icon :size="16" />
+            <span v-if="activeShareCount > 0" class="share-badge">{{ activeShareCount }}</span>
             <span class="tooltip">Share</span>
           </button>
+          <ShareDialog
+            v-if="showShareButton"
+            v-model:open="shareDialogOpen"
+            :entry-slug="slug"
+            variant="popover"
+          />
           <span class="action-sep"></span>
           <OverflowMenu :items="overflowItems" variant="dropdown" />
           <ThemeToggle />
@@ -196,7 +203,7 @@
     </div>
 
     <!-- Mobile meta-tags-bar (scroll-hide) -->
-    <div v-if="!isDesktop" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
+    <div v-if="isMobile" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
       <router-link
         v-if="entryStore.currentEntry?.username"
         :to="`/users/${entryStore.currentEntry.username}`"
@@ -217,7 +224,7 @@
     </div>
 
     <!-- Mobile bottom bar -->
-    <div v-if="!isDesktop && entryStore.currentEntry" class="mobile-bottom-bar">
+    <div v-if="isMobile && entryStore.currentEntry" class="mobile-bottom-bar">
       <button v-if="entryStore.isMultiFile" class="files-btn" @click="showFileDrawer = true" aria-label="Files">
         <FolderIcon :size="14" /> Files <span class="badge">{{ currentEntry?.files.length ?? 0 }}</span>
       </button>
@@ -235,6 +242,21 @@
           <CopyIcon :size="14" /> Copy
         </button>
       </template>
+      <button
+        v-if="showShareButton"
+        class="bottom-btn share-btn"
+        @click="shareDialogOpen = true"
+        aria-label="Share"
+      >
+        <Share2Icon :size="14" />
+        <span v-if="activeShareCount > 0" class="share-badge">{{ activeShareCount }}</span>
+      </button>
+      <ShareDialog
+        v-if="showShareButton"
+        v-model:open="shareDialogOpen"
+        :entry-slug="slug"
+        variant="sheet"
+      />
       <OverflowMenu :items="overflowItems" variant="sheet" />
     </div>
 
@@ -285,14 +307,6 @@
       @updated="handleExpiresInUpdated"
     />
 
-    <!-- Share Management Panel (owner, private entry only) -->
-    <ShareManagementPanel
-      v-if="showShareButton && currentEntry"
-      :entry-slug="slug"
-      class="entry-content"
-      @share-revoked="handleShareRevoked"
-    />
-
     <!-- Share watermark (non-owner share access only) -->
     <div v-if="isShareAccess" class="share-watermark">
       Shared by @{{ currentEntry?.shareContext?.sharedBy }}
@@ -324,8 +338,10 @@ import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ShareManagementPanel from '@/components/ShareManagementPanel.vue'
+import ShareDialog from '@/components/ShareDialog.vue'
 import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
+import { useShareStore } from '@/stores/share'
+import type { ShareInfo } from '@/types'
 import type { TocHeading } from '@/types'
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -343,27 +359,31 @@ const router = useRouter()
 const route = useRoute()
 const entryStore = useEntryStore()
 const authStore = useAuthStore()
+const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
 
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
 
-const showShareDialog = ref(false)
+const shareDialogOpen = ref(false)
 const shareErrorState = ref(false)
 const showExpiresInDialog = ref(false)
 
 const isFileTreeOpen = ref(false)
 const isTocOpen = ref(false)
 
-const isDesktop = ref(window.innerWidth >= 768)
+const viewportWidth = ref(window.innerWidth)
 let resizeTimer = 0
 function handleResize() {
   if (resizeTimer) cancelAnimationFrame(resizeTimer)
   resizeTimer = requestAnimationFrame(() => {
-    isDesktop.value = window.innerWidth >= 768
+    viewportWidth.value = window.innerWidth
   })
 }
+
+const isMobile = computed(() => viewportWidth.value <= 640)
+const isDesktop = computed(() => viewportWidth.value > 640)
 
 const metaTagsHidden = ref(false)
 let scrollContainer: HTMLElement | null = null
@@ -380,6 +400,15 @@ const showShareButton = computed(() => {
   if (!authStore.isOwner(currentEntry.value.ownerId)) return false
   if (currentEntry.value.status === 'archived') return false
   return !currentEntry.value.isPublic
+})
+
+function isShareExpired(share: ShareInfo): boolean {
+  if (!share.expiresAt) return false
+  return new Date(share.expiresAt) <= new Date()
+}
+
+const activeShareCount = computed(() => {
+  return shareStore.shares.filter(s => s.revokedAt === null && !isShareExpired(s)).length
 })
 
 const isExpiredButActive = computed(() => {
@@ -459,9 +488,6 @@ async function handleToggleVisibility() {
   }
 }
 
-function handleShareRevoked() {
-}
-
 async function handleExpiresInUpdated() {
   await entryStore.loadEntry(props.slug)
   toast.show('Entry updated', 'success')
@@ -526,14 +552,6 @@ const overflowItems = computed(() => {
       divider: true,
       action: handleToggleVisibility,
     })
-    if (showShareButton.value) {
-      items.push({
-        label: 'Share',
-        icon: 'share-2',
-        hint: 'Create share link',
-        action: () => { showShareDialog.value = true },
-      })
-    }
   }
   // Group 3: File actions
   if (entryStore.canDownload) {
@@ -846,6 +864,38 @@ watch(() => entryStore.currentEntry, async (entry) => {
 
 .reactivate-btn:hover {
   opacity: 0.9;
+}
+
+.share-btn {
+  position: relative;
+}
+
+.share-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  background: var(--c-accent);
+  color: var(--text-on-accent);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.bottom-btn.share-btn {
+  position: relative;
+}
+
+.bottom-btn.share-btn .share-badge {
+  top: 2px;
+  right: 2px;
 }
 
 .share-watermark {

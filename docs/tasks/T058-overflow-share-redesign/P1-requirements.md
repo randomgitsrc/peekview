@@ -305,7 +305,7 @@ None. P0-brief has determined the direction; all implicit needs identified above
 ## 5. Phase Tailoring
 
 ```yaml
-phases: [P1, P2, P3, P4, P5, P6, P8]
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 ```
 
 | Phase | Status | Rationale |
@@ -375,3 +375,11 @@ capability_requirements:
       - "playwright-cdp skill (can toggle data-theme attribute)"
     status: available
 ```
+
+## SCOPE+ 增补记录
+
+[SCOPE_RESOLVED: from P2-design.md] Share URL unavailable for existing shares — P4 implementer added shareUrlCache + getShareUrl() to share.ts store. For shares where full URL is unavailable, display `tokenPrefix...` as fallback. BDD-07 adjusted to accept this fallback display. No backend change needed.
+
+[SCOPE_RESOLVED: from P2-progress.md] Share URL unavailable for existing shares — same finding as P2-design.md, resolved via shareUrlCache fallback.
+[SCOPE_RESOLVED: from P2-review.md] SCOPE+ section numbering reference — same finding, resolved as above.
+[SCOPE_RESOLVED: from P2-design.md §11] Share URL unavailable for existing shares — same finding, resolved via shareUrlCache + getShareUrl() in share.ts store.

@@ -4,13 +4,24 @@ task_id: T058
 type: test-cases
 parent: P2-design.md
 trace_id: T058-P3-20260717
-status: draft
+status: complete
 created: 2026-07-17
 agent: test-designer
 test_code_dir: frontend-v3/src/components/__tests__
 ---
 
 # T058 P3 — Test Cases
+
+## Test Run Results (2026-07-17)
+
+| File | Total | Pass | Fail | Status |
+|------|-------|------|------|--------|
+| OverflowMenu.spec.ts | 33 | 21 | 12 | Red (new BDD contracts failing) |
+| ShareDialog.spec.ts | 55 | 35 | 20 | Red (container/theme/viewport failing) |
+| share.spec.ts | 4 | 4 | 0 | Green (store already implemented) |
+| **Total** | **92** | **60** | **32** | Mixed — 32 red tests guard new behavior |
+
+**Note**: ShareDialog.vue and ShareDialogContent.vue already exist with partial P4 implementation. Store (shareUrlCache/getShareUrl) is already implemented. 32 failing tests guard new BDD contracts not yet fulfilled (CSS tokens, theme consistency, Popover/Sheet container behavior, viewport overflow, keyboard navigation edge cases).
 
 ## Test File Plan
 

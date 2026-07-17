@@ -26,3 +26,10 @@
 - ShareInfo/ShareCreateResult types confirmed
 - useToast: Singleton pattern with show/remove
 - variables.css: All --c-* tokens defined for dark/light themes
+
+### [2026-07-17] Test code written and verified
+- OverflowMenu.spec.ts: 33 tests (21 pass, 12 fail — red for new BDD contracts)
+- ShareDialog.spec.ts: 55 tests (35 pass, 20 fail — red for container/theme/viewport contracts)
+- share.spec.ts: 4 tests (4 pass — store already has shareUrlCache/getShareUrl)
+- Total: 92 test cases covering all 24 BDD criteria
+- Red-light failures are genuine assertion failures (not import errors)
