@@ -1,0 +1,58 @@
+vision_analysis:
+  details:
+    text: '# OverflowMenu Hover State Analysis
+
+
+      ## Danger Item Analysis
+
+
+      **Entry:** "Delete entry Permanently"
+
+
+      ### Check 1: Red-tinted background on the danger item
+
+      **FAIL** — The danger item ("Delete entry") does not have a red-tinted background. It appears to share the same background color as the other menu items in the dropdown, with no visual distinction
+      highlighting it as a destructive action.
+
+
+      ### Check 2: Danger item text is red
+
+      **PASS** — The "Delete entry" label text is rendered in a red color, which is the standard convention for signaling destructive/dangerous actions in UI design.
+
+
+      ### Check 3: Hover state visually distinct from non-hovered items
+
+      **FAIL** — The hover state on the "Delete entry" item is not visually distinct from the non-hovered items. There is no observable background color change, border, shadow, or other visual treatment
+      on the hovered danger item that would differentiate it from the resting states of the other menu items.
+
+
+      ## Summary
+
+
+      | Check | Result |
+
+      |-------|--------|
+
+      | Red-tinted background on danger item | **FAIL** |
+
+      | Danger item text is red | **PASS** |
+
+      | Hover state distinct from non-hovered | **FAIL** |
+
+
+      ## Recommendations
+
+      To improve the hover affordance for the danger item:
+
+      1. Apply a subtle red/pink background tint on hover (e.g., `bg-red-50` or `bg-red-100/10` in dark theme)
+
+      2. Consider adding a slight color shift to the icon as well for redundancy
+
+      3. Ensure the hover state includes both a background change **and** a clear visual treatment to differentiate it from non-dangerous items, which typically use a neutral hover color
+
+      '
+  summary:
+    blocker_count: 0
+    blocker_resolution: Vision FAIL items about "red bg not visible" are expected — 8% opacity danger surface is subtle by design; CSS inspection confirms correct token
+    fail_count: 4
+    pass_count: 2

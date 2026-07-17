@@ -1,0 +1,45 @@
+vision_analysis:
+  details:
+    text: '# ShareDialog Create View Analysis
+
+
+      ## Component Check Results:
+
+
+      **1) Expiry dropdown/selector** — ✅ **PASS**
+
+      - Label: "Expires in"
+
+      - Selector shows "7 days" with a visible dropdown chevron
+
+
+      **2) Max views dropdown/selector** — ✅ **PASS**
+
+      - Label: "Max views"
+
+      - Selector shows "Unlimited" with a visible dropdown chevron
+
+
+      **3) ''Create link'' primary button** — ✅ **PASS**
+
+      - Blue primary action button labeled "Create link" is prominently displayed at the bottom of the form
+
+
+      **4) Back button** — ✅ **PASS**
+
+      - "Back" button with left arrow icon (←) is present in the top-left of the dialog header
+
+
+      ## Summary
+
+      All four required elements are **PRESENT**. The dialog follows a clean, conventional layout: header with back navigation + close, two stacked form selectors, and a full-width primary action button
+      at the bottom.
+
+
+      **Overall: 4/4 PASS**
+
+      '
+  summary:
+    blocker_count: 0
+    fail_count: 0
+    pass_count: 5

@@ -1,0 +1,27 @@
+vision_analysis:
+  details:
+    text: 'I''ll analyze the ShareDialog popover based on the screenshot:
+
+
+      1) **Popover width ~280px**: PASS - The popover appears to be approximately 280px wide.
+
+
+      2) **Share URL in monospace font**: PASS - The URL "https://peek.gsis.top/p6-pri..." is displayed in a monospace/typewriter-style font.
+
+
+      3) **Copy button visible**: PASS - A copy icon button is visible to the right of the share URL.
+
+
+      4) **Revoke button visible**: PASS - A red "Revoke" button is visible on the right side of the popover.
+
+
+      5) **Status line with views and expiry**: PASS - "0 views · Expires in 6d" is displayed below the URL.
+
+
+      6) **''Create new link'' button**: PASS - A "+ Create new link" button is visible at the bottom of the popover.
+
+      '
+  summary:
+    blocker_count: 0
+    fail_count: 0
+    pass_count: 6

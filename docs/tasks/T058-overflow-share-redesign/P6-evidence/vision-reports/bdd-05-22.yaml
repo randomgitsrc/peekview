@@ -1,0 +1,21 @@
+vision_analysis:
+  details:
+    text: 'I''ll analyze the mobile bottom bar in the image:
+
+
+      1) **Share button visible**: PASS — There is a share icon (the connected dots/share symbol) visible in the bottom bar.
+
+
+      2) **Badge with a number on the share button**: PASS — There is a blue badge with the number "1" displayed on the share button.
+
+
+      3) **Badge positioned at the top-right corner of the share button**: PASS — The blue badge with "1" is positioned at the top-right corner of the share button.
+
+
+      All three checks pass.
+
+      '
+  summary:
+    blocker_count: 0
+    fail_count: 0
+    pass_count: 3

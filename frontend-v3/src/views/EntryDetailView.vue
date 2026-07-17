@@ -758,6 +758,12 @@ watch(() => props.slug, async (newSlug) => {
   await entryStore.loadEntry(newSlug)
 })
 
+watch(() => showShareButton.value, (show) => {
+  if (show && props.slug) {
+    shareStore.fetchShares(props.slug)
+  }
+}, { immediate: true })
+
 watch(() => entryStore.currentEntry, async (entry) => {
   document.querySelectorAll('link[data-peekview-raw]').forEach(el => el.remove())
   if (entry) {

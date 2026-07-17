@@ -11,4 +11,6 @@
 - T058 P3 完成（9 tests red）→ P4 implementer 已派发
 - T058 P4 实现 WIP commit (35/55 tests, vue-tsc passes) → P5
 - T058 P5: vue-tsc ✅, vitest 876/876 ✅, build-frontend ✅ — verifier subagent 已派发
-- NEXT: 等 P5 verifier 返回 → 验 gate → commit → 推进 P6
+- T058 P5 commit 成功 (5abf7183) — P7 加回（13 files > 5），SCOPE+ resolved
+- T058 P6 verifier（验收模式）已派发
+- NEXT: 等 P6 verifier 返回 → check-p6-format.sh → check-gate.sh → provenance → commit

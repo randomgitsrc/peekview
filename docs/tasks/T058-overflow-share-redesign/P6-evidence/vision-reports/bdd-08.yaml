@@ -1,0 +1,39 @@
+vision_analysis:
+  details:
+    text: '# Share Dialog Analysis
+
+
+      ## 1) Copy button icon showing a checkmark?
+
+      **PASS** ✓
+
+
+      The copy button icon (located to the right of the URL) displays a clear checkmark icon, indicating the copy action was successful.
+
+
+      ## 2) Checkmark icon in a green/success color?
+
+      **PASS** ✓
+
+
+      The checkmark icon appears in a green color, which is the standard success/confirmation color used to indicate a successful copy action.
+
+
+      ## Summary
+
+      | Check | Result |
+
+      |-------|--------|
+
+      | Checkmark visible | PASS |
+
+      | Green/success color | PASS |
+
+
+      Both visual confirmation indicators are properly displayed after the copy action.
+
+      '
+  summary:
+    blocker_count: 0
+    fail_count: 0
+    pass_count: 4

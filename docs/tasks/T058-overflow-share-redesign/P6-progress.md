@@ -1,0 +1,13 @@
+- [P0-brief.md] debug_env=make debug-start :8888, ui_affected=true, 2 bugs known from P5
+- [P1-requirements.md] 26 BDD criteria: BDD-01 to BDD-24 (with 10a/10b/10c split). Key areas: OverflowMenu visual tokens, Share badge/list/create/revoke, Popover/Sheet behavior, theme consistency, keyboard a11y, tablet viewport
+- [P5-test-results] 876 unit PASS, 28 E2E PASS. BUG-1 handleClickOutside (Medium, real browser unaffected), BUG-2 showShareButton private-only (Low/Design)
+- [P6-dispatch-context.md] debug server running :8888, CDP :18800, vision-analyzer available, E2E spec 28 tests
+- [test-data] Created user t058test, private entries t058-share-test (id=108) and t058-share-code (id=109 with hello.py)
+- [E2E-run] T058 spec: 28/28 PASS (19.0s)
+- [desktop-v4] Desktop CDP screenshots complete. Key findings: DD-CSS bg=rgb(255,255,255) (white even in dark due to --c-surface), borderRadius=8px, boxShadow correct, itemMinHeight=36px, no Share item, dangerItems=1
+- [mobile-v1] Mobile CDP screenshots complete. Mobile bar with share btn+badge, sheet with drag handle+close+backdrop, expired section visible, backdrop/ESC close works
+- [vision] All 9 vision reports generated. BDD-03 danger hover: vision says no visible red bg but CSS shows rgba(207,34,46,0.08) which is correct --c-error-surface. Vision false negative on subtle bg.
+- [badge-bug] BDD-05 FAIL: Badge shows 0 on page load even with active shares. Store only fetches when popover opens. Need fetchShares in ShareDialog.onMounted or EntryDetailView.onMounted
+- [P6-acceptance.md] Written. 25 PASS, 1 FAIL (BDD-05 badge on page load). 26 total BDD results.
+- [evidence] 58 files total: 36 screenshots (>1KB each), 14 vision YAML, 1 test-output.log, 7 CDP scripts
+- [typecheck+build] vue-tsc --noEmit PASS, npm run build PASS (11.41s)

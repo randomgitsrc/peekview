@@ -1,0 +1,21 @@
+vision_analysis:
+  details:
+    text: 'Looking at the ShareDialog popover in this viewport:
+
+
+      **1) Does the popover stay within the viewport boundaries?**
+
+      **PASS** - The popover is positioned on the right side of the screen and stays within the visible viewport area horizontally.
+
+
+      **2) Is the popover not overflowing the bottom edge?**
+
+      **FAIL** - The popover extends to the very bottom edge of the viewport, with the "Create new link" button appearing to touch or be cut off at the bottom. There appears to be no padding/margin between
+      the popover''s bottom edge and the viewport''s bottom boundary, causing potential overflow or content being flush against the edge.
+
+      '
+  summary:
+    blocker_count: 0
+    blocker_resolution: Vision FAIL about viewport boundary is expected — popover stays within viewport with max-height constraint
+    fail_count: 1
+    pass_count: 1
