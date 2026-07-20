@@ -1,20 +1,23 @@
 <template>
   <div class="share-dialog" ref="containerRef">
     <template v-if="variant === 'popover'">
-      <div
-        v-if="isOpen"
-        class="share-popover"
-        :class="{ 'flip-up': flipUp }"
-        ref="popoverRef"
-        @keydown="onKeyDown"
-      >
-        <ShareDialogContent
-          :entry-slug="entrySlug"
-          @created="onCreated"
-          @revoked="onRevoked"
-          @close="closeDialog"
-        />
-      </div>
+      <Teleport to="body">
+        <div
+          v-if="isOpen"
+          class="share-popover"
+          :class="{ 'flip-up': flipUp }"
+          :style="popoverStyle"
+          ref="popoverRef"
+          @keydown="onKeyDown"
+        >
+          <ShareDialogContent
+            :entry-slug="entrySlug"
+            @created="onCreated"
+            @revoked="onRevoked"
+            @close="closeDialog"
+          />
+        </div>
+      </Teleport>
     </template>
 
     <template v-if="variant === 'sheet'">
@@ -50,6 +53,7 @@ import ShareDialogContent from '@/components/ShareDialogContent.vue'
 const props = withDefaults(defineProps<{
   entrySlug: string
   variant?: 'popover' | 'sheet'
+  triggerRef?: HTMLElement
 }>(), {
   variant: 'popover',
 })
@@ -65,11 +69,29 @@ const containerRef = ref<HTMLElement>()
 const popoverRef = ref<HTMLElement>()
 const sheetRef = ref<HTMLElement>()
 const flipUp = ref(false)
+const popoverPos = ref({ top: 0, right: 0 })
 
 const dragOffsetY = ref(0)
 const isDragging = ref(false)
 const isClosing = ref(false)
 let touchStartY = 0
+
+const popoverStyle = computed(() => {
+  if (flipUp.value) {
+    return {
+      position: 'fixed' as const,
+      bottom: `${window.innerHeight - popoverPos.value.top + 4}px`,
+      right: `${window.innerWidth - popoverPos.value.right}px`,
+      width: '280px',
+    }
+  }
+  return {
+    position: 'fixed' as const,
+    top: `${popoverPos.value.top + 4}px`,
+    right: `${window.innerWidth - popoverPos.value.right}px`,
+    width: '280px',
+  }
+})
 
 const sheetStyle = computed(() => ({
   transform: isDragging.value ? `translateY(${dragOffsetY.value}px)` : undefined,
@@ -88,23 +110,22 @@ function onRevoked() {
 }
 
 function updatePosition() {
-  if (props.variant !== 'popover' || !containerRef.value || !popoverRef.value) return
-  const triggerEl = containerRef.value.previousElementSibling as HTMLElement | null
+  if (props.variant !== 'popover') return
+  const triggerEl = props.triggerRef ?? containerRef.value?.previousElementSibling as HTMLElement | null
   if (!triggerEl) return
   const triggerRect = triggerEl.getBoundingClientRect()
-  const availableBelow = window.innerHeight - triggerRect.bottom
-  const popoverHeight = popoverRef.value.scrollHeight
-  if (availableBelow < Math.min(popoverHeight, 400)) {
-    flipUp.value = true
-  } else {
-    flipUp.value = false
+  popoverPos.value = { top: triggerRect.bottom, right: triggerRect.right }
+  if (popoverRef.value) {
+    const availableBelow = window.innerHeight - triggerRect.bottom
+    const popoverHeight = popoverRef.value.scrollHeight
+    flipUp.value = availableBelow < Math.min(popoverHeight, 400)
   }
 }
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     closeDialog()
-    const triggerEl = containerRef.value?.previousElementSibling as HTMLElement | null
+    const triggerEl = props.triggerRef ?? containerRef.value?.previousElementSibling as HTMLElement | null
     triggerEl?.focus()
     return
   }
@@ -118,12 +139,12 @@ function onKeyDown(e: KeyboardEvent) {
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault()
       closeDialog()
-      const triggerEl = containerRef.value?.previousElementSibling as HTMLElement | null
+      const triggerEl = props.triggerRef ?? containerRef.value?.previousElementSibling as HTMLElement | null
       triggerEl?.focus()
     } else if (!e.shiftKey && document.activeElement === last) {
       e.preventDefault()
       closeDialog()
-      const triggerEl = containerRef.value?.previousElementSibling as HTMLElement | null
+      const triggerEl = props.triggerRef ?? containerRef.value?.previousElementSibling as HTMLElement | null
       triggerEl?.focus()
     }
   }
@@ -168,12 +189,19 @@ function handleClickOutside(e: MouseEvent) {
   if (props.variant !== 'popover' || !isOpen.value) return
   if (popoverRef.value && popoverRef.value.contains(e.target as Node)) return
   if (containerRef.value && containerRef.value.contains(e.target as Node)) return
+  if (props.triggerRef && props.triggerRef.contains(e.target as Node)) return
   closeDialog()
 }
 
 function onScrollClose() {
   if (isOpen.value && props.variant === 'popover') {
     closeDialog()
+  }
+}
+
+function onResize() {
+  if (isOpen.value && props.variant === 'popover') {
+    updatePosition()
   }
 }
 
@@ -188,12 +216,14 @@ onMounted(() => {
   document.addEventListener('keydown', onGlobalKeydown)
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('scroll', onScrollClose, true)
+  window.addEventListener('resize', onResize)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onGlobalKeydown)
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('scroll', onScrollClose, true)
+  window.removeEventListener('resize', onResize)
 })
 </script>
 
@@ -203,22 +233,13 @@ onBeforeUnmount(() => {
 }
 
 .share-popover {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  width: 280px;
   max-height: calc(100vh - var(--header-height) - 20px);
   overflow-y: auto;
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-  z-index: 100;
-}
-
-.share-popover.flip-up {
-  top: auto;
-  bottom: calc(100% + 4px);
+  z-index: 200;
 }
 
 .share-sheet-backdrop {

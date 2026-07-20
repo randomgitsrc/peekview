@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 修复
+
+- 修复桌面端点击 share 按钮无反应：click-outside handler 瞬关 popover（改用 Teleport + JS 定位 + triggerRef 排除）
+- 修复 overflow-dropdown item-label 未左对齐：添加 text-align:left + item-icon-slot 占位确保无 icon 时也对齐
+- 修复 Firefox 下 TOC 滚动条遮挡 dropdown/popover：z-index 提升至 200
+
 ## [0.9.0] - 2026-07-17
 
 从 v0.6.2 跳版至 v0.9.0（v0.7.0、v0.8.0 未独立发布，变更已包含在本版本中）。

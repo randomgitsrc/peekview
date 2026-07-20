@@ -51,6 +51,7 @@
           </button>
           <button
             v-if="showShareButton"
+            ref="shareBtnRef"
             class="icon-btn share-btn"
             @click="shareDialogOpen = !shareDialogOpen"
             aria-label="Share"
@@ -63,6 +64,7 @@
             v-if="showShareButton"
             v-model:open="shareDialogOpen"
             :entry-slug="slug"
+            :trigger-ref="shareBtnRef"
             variant="popover"
           />
           <span class="action-sep"></span>
@@ -367,6 +369,7 @@ const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
 
 const shareDialogOpen = ref(false)
+const shareBtnRef = ref<HTMLElement>()
 const shareErrorState = ref(false)
 const showExpiresInDialog = ref(false)
 

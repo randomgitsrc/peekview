@@ -12,7 +12,7 @@
         role="menuitem"
         @click="emit('close')"
       >
-        <slot name="icon" :item="item" />
+        <span class="item-icon-slot"><slot name="icon" :item="item" /></span>
         <span class="item-label">{{ item.label }}</span>
         <span v-if="item.hint" class="item-hint">{{ item.hint }}</span>
       </a>
@@ -23,7 +23,7 @@
         role="menuitem"
         @click="emit('action', item)"
       >
-        <slot name="icon" :item="item" />
+        <span class="item-icon-slot"><slot name="icon" :item="item" /></span>
         <span class="item-label">{{ item.label }}</span>
         <span v-if="item.hint" class="item-hint">{{ item.hint }}</span>
       </button>
@@ -71,7 +71,7 @@ const dropdownRef = ref<HTMLElement>()
   border: 1px solid var(--c-border-strong);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-  z-index: 100;
+  z-index: 200;
 }
 
 .overflow-item {
@@ -106,14 +106,23 @@ const dropdownRef = ref<HTMLElement>()
   background: var(--c-error-surface);
 }
 
-.item-icon {
+.item-icon-slot {
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-icon {
   width: 18px;
   height: 18px;
 }
 
 .item-label {
   flex: 1;
+  text-align: left;
 }
 
 .item-hint {
