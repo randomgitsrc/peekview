@@ -403,3 +403,7 @@ capability_requirements:
       - "playwright-cdp skill（CDP 模式，可执行点击+滚动验证）"
     status: available
 ```
+
+## 范围增补追踪
+
+[SCOPE_RESOLVED] 无范围增补——P1-P4 执行过程中未发现超出基线的隐含需求

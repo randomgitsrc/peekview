@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 declare module '@iktakahiro/markdown-it-katex' {
   import type MarkdownIt from 'markdown-it'
   const mkKatex: MarkdownIt.PluginSimple
@@ -29,11 +27,3 @@ declare module 'markdown-it-sup' {
   const mkSup: MarkdownIt.PluginSimple
   export default mkSup
 }
-
-declare global {
-  interface Window {
-    CAP_CUSTOM_WASM_URL?: string
-  }
-}
-
-export {}

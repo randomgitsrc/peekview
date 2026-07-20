@@ -1,5 +1,10 @@
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
+import mkKatex from '@iktakahiro/markdown-it-katex'
+import mkTaskLists from 'markdown-it-task-lists'
+import mkFootnote from 'markdown-it-footnote'
+import mkSub from 'markdown-it-sub'
+import mkSup from 'markdown-it-sup'
 import type { TocHeading, MarkdownBlock, MarkdownBlocksResult } from '@/types'
 import { useShiki } from './useShiki'
 import { resolvePath } from '@/utils/path-map'
@@ -48,6 +53,11 @@ function buildFallbackCodeBlock(
 
 export function useMarkdown() {
   const md = new MarkdownIt({ html: true, linkify: true, typographer: true })
+  md.use(mkKatex, { throwOnError: false })
+  md.use(mkTaskLists)
+  md.use(mkFootnote)
+  md.use(mkSub)
+  md.use(mkSup)
   const { highlightCode } = useShiki()
 
   // Front matter extraction regex - must be at the very beginning of the file

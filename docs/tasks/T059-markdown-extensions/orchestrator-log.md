@@ -1,0 +1,1 @@
+NEXT: P4 commit blocked by agate gate false positive — [SCOPE+] only in embedded card block, not in actual dispatch-context content. Need to work around by adding [SCOPE_RESOLVED] to P1-requirements.md or finding another path.

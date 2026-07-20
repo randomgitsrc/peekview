@@ -64,12 +64,29 @@ function handleCodeBlockCopy(e: MouseEvent) {
 }
 
 function handleLinkClick(e: MouseEvent) {
-  const target = (e.target as Element).closest('a[data-peekview-file-id]')
+  const target = (e.target as Element).closest('a')
   if (!target) return
-  const fileId = parseInt(target.getAttribute('data-peekview-file-id') || '', 10)
-  if (!fileId) return
-  e.preventDefault()
-  emit('navigate-file', fileId)
+
+  const fileId = target.getAttribute('data-peekview-file-id')
+  if (fileId) {
+    e.preventDefault()
+    emit('navigate-file', parseInt(fileId, 10))
+    return
+  }
+
+  const href = target.getAttribute('href')
+  if (href && href.startsWith('#')) {
+    const isFootnoteLink = href.startsWith('#fn') || target.classList.contains('footnote-backref')
+    if (isFootnoteLink) {
+      e.preventDefault()
+      const targetId = href.slice(1)
+      const targetEl = contentRef.value?.querySelector(`[id="${CSS.escape(targetId)}"]`)
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      return
+    }
+  }
 }
 
 onMounted(() => {
@@ -362,6 +379,73 @@ watch(() => [props.content, theme.value, props.pathMap, props.slug], async () =>
   color: #3fb950;
   border-color: #3fb950;
   background: #0f2c1f;
+}
+
+/* === Footnote styles === */
+.markdown-body .footnotes-sep {
+  margin: 2rem 0 1rem;
+  border: none;
+  border-top: 1px solid var(--border-color, #d0d7de);
+}
+
+.markdown-body .footnotes {
+  font-size: 0.875em;
+  color: var(--text-secondary, #656d76);
+}
+
+.markdown-body .footnotes-list {
+  list-style: decimal;
+  padding-left: 2rem;
+}
+
+.markdown-body .footnote-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+.markdown-body .footnote-backref {
+  text-decoration: none;
+}
+
+[data-theme='dark'] .markdown-body .footnotes-sep {
+  border-top-color: #30363d;
+}
+
+[data-theme='dark'] .markdown-body .footnotes {
+  color: #8b949e;
+}
+
+/* === Task list styles === */
+.markdown-body .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-body .task-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.markdown-body .task-list-item-checkbox {
+  margin: 0;
+  accent-color: var(--accent-color, #1f6feb);
+  pointer-events: none;
+}
+
+[data-theme='dark'] .markdown-body .task-list-item-checkbox {
+  accent-color: #58a6ff;
+}
+
+/* === KaTeX dark mode === */
+[data-theme='dark'] .markdown-body .katex {
+  color: #c9d1d9;
+}
+
+/* === KaTeX block formula overflow === */
+.markdown-body .katex-block {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .markdown-body .code-block-wrapper pre {
