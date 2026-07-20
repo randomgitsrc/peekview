@@ -13,6 +13,7 @@
 - 修复桌面端 share popover 内按钮点击导致 popover 关闭：Vue 响应式更新移除 DOM 节点后 contains() 失效，添加 disconnected node 检查（!target.isConnected）
 - 修复 overflow-dropdown item-label 未左对齐：添加 text-align:left + item-icon-slot 占位确保无 icon 时也对齐
 - 修复 Firefox 下 TOC 滚动条遮挡 dropdown/popover：z-index 提升至 200
+- 修复 Landing 页面主题切换按钮图标不显示：SVG 在 flex 容器中 computed width 为 0px，ThemeToggle 改用 scoped CSS + 显式 SVG width/height
 
 ## [0.9.0] - 2026-07-17
 
