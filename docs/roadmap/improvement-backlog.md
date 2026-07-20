@@ -2,7 +2,7 @@
 
 > 创建：2026-06-09
 > 用途：汇总评审发现的待改进事项，按优先级跟踪
-> 当前版本：Backend v0.9.1 / MCP Server v0.9.2
+> 当前版本：Backend v0.9.2 / MCP Server v0.9.2
 
 ---
 
@@ -27,7 +27,7 @@
 | 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | ✅ v0.7.0(T055) |
 | 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | ✅ v0.8.0(T056) |
 | 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | ✅ v0.9.0(T058) |
-| 26 | Markdown 数学公式渲染（KaTeX：`$...$` 行内 + `$$...$$` 块级） | 体验/功能 | 🟠 近期 | 待办 |
+| 26 | Markdown 扩展补全（KaTeX + Task List + Footnote + Sub/Sup） | 体验/功能 | 🟠 近期 | 🔄 T059 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
