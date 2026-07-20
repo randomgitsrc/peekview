@@ -16,17 +16,17 @@
 | 4 | `verify_share_token` 的 `compare_digest` 永真，误导维护者 | 安全意图噪音 | 🟡 中期 | ✅ v0.4.0(T033) |
 | 5 | `max_views` 语义模糊（"最多发 N 个" vs "最多看 N 次"） | 产品语义 | 🟡 中期 | ✅ v0.4.0(T033) |
 | 6 | 发布通道统一到 CI（本地 publish 降级为验证） | 流程/CI | 🟡 中期 | 🔄 T035 |
-| 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | 待办 |
-| 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | 待办 |
+| 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | ✅ v0.6.3(T054) |
+| 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | ✅ v0.6.3(T054) |
 | 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | ✅ v0.4.0(T033) |
 | 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔵 长期 | 待办 |
 | 10b | entry 生命周期管理：过期→归档+可续命+可配置保留期 | 产品/架构 | 🟠 近期 | ✅ v0.5.4(T048) |
 | 15b | 图表源码自动清洗 + 移动端 header 滚动收缩 | 体验 | 🟠 近期 | ✅ v0.5.5(T049) |
 | 21 | Agent /raw 端点自动发现（Content Negotiation + HTML 自描述） | 产品/Agent | 🔴 立即 | ✅ T053 |
-| 22 | 后端 API 安全加固（默认 host + 限流 + passlib）+ 幂等 key + 代码风格 | 安全/产品 | 🔴 立即 | 🔄 T054 |
-| 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | 🔄 T055 |
-| 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | 🔄 T056 |
-| 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | 🔄 T058 |
+| 22 | 后端 API 安全加固（默认 host + 限流 + passlib）+ 幂等 key + 代码风格 | 安全/产品 | 🔴 立即 | ✅ v0.6.3(T054) |
+| 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | ✅ v0.7.0(T055) |
+| 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | ✅ v0.8.0(T056) |
+| 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | ✅ v0.9.0(T058) |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
