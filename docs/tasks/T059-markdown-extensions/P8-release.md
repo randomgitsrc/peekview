@@ -13,7 +13,7 @@ agent: releaser
 
 ## Version Bump
 
-- **bump_type**: patch
+- bump_type: patch
 - **Version change**: 0.9.1 → 0.9.2
 - **Git tag**: v0.9.2
 
