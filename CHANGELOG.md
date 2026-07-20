@@ -9,7 +9,8 @@
 
 ### 修复
 
-- 修复桌面端点击 share 按钮无反应：click-outside handler 瞬关 popover（改用 Teleport + JS 定位 + triggerRef 排除）
+- 修复桌面端点击 share 按钮无反应：click-outside handler 瞬关 popover（改用 Teleport + fixed 定位 + triggerRef 排除）
+- 修复桌面端 share popover 内按钮点击导致 popover 关闭：Vue 响应式更新移除 DOM 节点后 contains() 失效，添加 disconnected node 检查（!target.isConnected）
 - 修复 overflow-dropdown item-label 未左对齐：添加 text-align:left + item-icon-slot 占位确保无 icon 时也对齐
 - 修复 Firefox 下 TOC 滚动条遮挡 dropdown/popover：z-index 提升至 200
 

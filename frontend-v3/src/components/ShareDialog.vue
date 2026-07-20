@@ -187,9 +187,11 @@ function onGlobalKeydown(e: KeyboardEvent) {
 
 function handleClickOutside(e: MouseEvent) {
   if (props.variant !== 'popover' || !isOpen.value) return
-  if (popoverRef.value && popoverRef.value.contains(e.target as Node)) return
-  if (containerRef.value && containerRef.value.contains(e.target as Node)) return
-  if (props.triggerRef && props.triggerRef.contains(e.target as Node)) return
+  const target = e.target as Node
+  if (popoverRef.value && popoverRef.value.contains(target)) return
+  if (containerRef.value && containerRef.value.contains(target)) return
+  if (props.triggerRef && props.triggerRef.contains(target)) return
+  if (!target.isConnected) return
   closeDialog()
 }
 
