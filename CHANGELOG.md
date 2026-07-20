@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-07-20
+
+### 新增
+
+-
+
+
 ### 修复
 
 - 修复桌面端点击 share 按钮无反应：click-outside handler 瞬关 popover（改用 Teleport + fixed 定位 + triggerRef 排除）
