@@ -42,6 +42,16 @@ function createShareResult(overrides: Partial<ShareCreateResult> = {}): ShareCre
   }
 }
 
+function $(selector: string): HTMLElement | null {
+  return document.querySelector(selector)
+}
+
+function $$(selector: string): HTMLElement[] {
+  return Array.from(document.querySelectorAll(selector))
+}
+
+let currentWrapper: ReturnType<typeof mount> | null = null
+
 async function mountShareDialog(props: {
   entrySlug: string
   variant?: 'popover' | 'sheet'
@@ -63,6 +73,7 @@ async function mountShareDialog(props: {
     },
   })
   await flushPromises()
+  currentWrapper = wrapper
   return wrapper
 }
 
@@ -76,6 +87,10 @@ describe('ShareDialog', () => {
   })
 
   afterEach(() => {
+    if (currentWrapper) {
+      currentWrapper.unmount()
+      currentWrapper = null
+    }
     vi.restoreAllMocks()
     vi.useRealTimers()
     document.body.innerHTML = ''
@@ -83,60 +98,60 @@ describe('ShareDialog', () => {
 
   describe('BDD-12: Desktop Popover open/close', () => {
     it('SD-01: variant="popover" renders Popover container', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
-      expect(wrapper.find('.share-bottom-sheet').exists()).toBe(false)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      expect($('.share-popover')).not.toBeNull()
+      expect($('.share-bottom-sheet')).toBeNull()
     })
 
     it('SD-03: Popover is 280px wide', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      const popover = wrapper.find('.share-popover')
-      expect(popover.exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      const popover = $('.share-popover')
+      expect(popover).not.toBeNull()
     })
 
     it('SD-04: Popover closes on outside click', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      expect($('.share-popover')).not.toBeNull()
 
       const outside = document.createElement('div')
       document.body.appendChild(outside)
       outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       await flushPromises()
 
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
     })
 
     it('SD-05: Popover closes on Escape', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      expect($('.share-popover')).not.toBeNull()
 
       await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
       await flushPromises()
 
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
     })
 
     it('SD-55: v-model:open toggles visibility', async () => {
       const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: false })
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
 
       await wrapper.setProps({ open: true })
       await flushPromises()
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
+      expect($('.share-popover')).not.toBeNull()
 
       await wrapper.setProps({ open: false })
       await flushPromises()
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
     })
   })
 
   describe('BDD-14: Mobile Bottom Sheet', () => {
     it('SD-02: variant="sheet" renders Bottom Sheet container', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'sheet', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'sheet', open: true })
       await flushPromises()
       const sheet = document.querySelector('.share-bottom-sheet')
       expect(sheet).not.toBeNull()
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
     })
 
     it('SD-09: Sheet has drag handle', async () => {
@@ -197,22 +212,20 @@ describe('ShareDialog', () => {
       const shares = [createShareInfo({ id: 1 }), createShareInfo({ id: 2 })]
       mockListShares.mockResolvedValue({ shares, total: 2 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const badge = wrapper.find('.share-badge')
-      if (badge.exists()) {
-        expect(badge.text()).toBe('2')
-      }
+      const revokeBtns = $$('.revoke-btn')
+      expect(revokeBtns.length).toBe(2)
     })
 
     it('SD-12: badge hidden when 0 active shares', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      expect(wrapper.find('.share-badge').exists()).toBe(false)
+      expect($('.revoke-btn')).toBeNull()
     })
 
     it('SD-13: badge updates on revoke', async () => {
@@ -224,18 +237,16 @@ describe('ShareDialog', () => {
         return { revoked_count: 1 }
       })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
 
-        const badge = wrapper.find('.share-badge')
-        if (badge.exists()) {
-          expect(badge.text()).toBe('1')
-        }
+        const revokeBtns = $$('.revoke-btn')
+        expect(revokeBtns.length).toBe(1)
       }
     })
 
@@ -247,15 +258,15 @@ describe('ShareDialog', () => {
         return { revoked_count: 1 }
       })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
 
-        expect(wrapper.find('.share-badge').exists()).toBe(false)
+        expect($('.revoke-btn')).toBeNull()
       }
     })
   })
@@ -265,10 +276,10 @@ describe('ShareDialog', () => {
       let resolveFetch: (val: unknown) => void
       mockListShares.mockImplementation(() => new Promise(r => { resolveFetch = r }))
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      expect(wrapper.find('.share-loading').exists() || wrapper.find('[data-testid="share-loading"]').exists()).toBe(true)
+      expect($('.share-loading') !== null || $('[data-testid="share-loading"]') !== null).toBe(true)
 
       resolveFetch!({ shares: [], total: 0 })
       await flushPromises()
@@ -279,12 +290,13 @@ describe('ShareDialog', () => {
     it('SD-16: empty state with 0 shares', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      expect(wrapper.text().includes('No active share links')).toBe(true)
-      const createBtn = wrapper.find('.create-share-btn')
-      expect(createBtn.exists() || wrapper.text().includes('Create share link')).toBe(true)
+      const content = $('.share-popover')?.textContent ?? ''
+      expect(content.includes('No active share links')).toBe(true)
+      const createBtn = $('.create-share-btn')
+      expect(createBtn !== null || content.includes('Create share link')).toBe(true)
     })
   })
 
@@ -293,34 +305,34 @@ describe('ShareDialog', () => {
       const share = createShareInfo({ id: 1 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const urlEl = wrapper.find('.share-url')
-      expect(urlEl.exists()).toBe(true)
+      const urlEl = $('.share-url')
+      expect(urlEl).not.toBeNull()
     })
 
     it('SD-18: copy button visible on URL row', async () => {
       const share = createShareInfo({ id: 1 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      expect(wrapper.find('.copy-btn').exists()).toBe(true)
+      expect($('.copy-btn')).not.toBeNull()
     })
 
     it('SD-19: status line shows view count and expiry', async () => {
       const share = createShareInfo({ id: 1, viewCount: 2 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const statusLine = wrapper.find('.share-status')
-      if (statusLine.exists()) {
-        expect(statusLine.text()).toContain('2 views')
-        expect(statusLine.text()).toMatch(/Expires|Permanent/)
+      const statusLine = $('.share-status')
+      if (statusLine) {
+        expect(statusLine.textContent).toContain('2 views')
+        expect(statusLine.textContent).toMatch(/Expires|Permanent/)
       }
     })
 
@@ -328,13 +340,13 @@ describe('ShareDialog', () => {
       const share = createShareInfo({ id: 1 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      expect(revokeBtn.exists()).toBe(true)
-      if (revokeBtn.exists()) {
-        const style = getComputedStyle(revokeBtn.element)
+      const revokeBtn = $('.revoke-btn')
+      expect(revokeBtn).not.toBeNull()
+      if (revokeBtn) {
+        const style = getComputedStyle(revokeBtn)
         expect(style.color).toBeTruthy()
       }
     })
@@ -343,12 +355,12 @@ describe('ShareDialog', () => {
       const share = createShareInfo({ id: 1 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const urlEl = wrapper.find('.share-url')
-      if (urlEl.exists()) {
-        const text = urlEl.text()
+      const urlEl = $('.share-url')
+      if (urlEl) {
+        const text = urlEl.textContent ?? ''
         if (text.length > 30) {
           expect(text).toContain('...')
         }
@@ -359,12 +371,12 @@ describe('ShareDialog', () => {
       const share = createShareInfo({ id: 999, tokenPrefix: 'pv_xyz999' })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const urlEl = wrapper.find('.share-url')
-      if (urlEl.exists()) {
-        expect(urlEl.text()).toContain('pv_xyz999')
+      const urlEl = $('.share-url')
+      if (urlEl) {
+        expect(urlEl.textContent).toContain('pv_xyz999')
       }
     })
   })
@@ -377,12 +389,12 @@ describe('ShareDialog', () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText } })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const copyBtn = wrapper.find('.copy-btn')
-      if (copyBtn.exists()) {
-        await copyBtn.trigger('click')
+      const copyBtn = $('.copy-btn') as HTMLElement
+      if (copyBtn) {
+        copyBtn.click()
         await flushPromises()
         expect(writeText).toHaveBeenCalled()
       }
@@ -395,15 +407,15 @@ describe('ShareDialog', () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText } })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const copyBtn = wrapper.find('.copy-btn')
-      if (copyBtn.exists()) {
-        await copyBtn.trigger('click')
+      const copyBtn = $('.copy-btn') as HTMLElement
+      if (copyBtn) {
+        copyBtn.click()
         await flushPromises()
 
-        expect(wrapper.find('.copy-success').exists()).toBe(true)
+        expect($('.copy-success')).not.toBeNull()
       }
     })
 
@@ -415,18 +427,18 @@ describe('ShareDialog', () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText } })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const copyBtn = wrapper.find('.copy-btn')
-      if (copyBtn.exists()) {
-        await copyBtn.trigger('click')
+      const copyBtn = $('.copy-btn') as HTMLElement
+      if (copyBtn) {
+        copyBtn.click()
         await flushPromises()
 
         vi.advanceTimersByTime(1500)
         await flushPromises()
 
-        expect(wrapper.find('.copy-success').exists()).toBe(false)
+        expect($('.copy-success')).toBeNull()
       }
     })
   })
@@ -438,13 +450,13 @@ describe('ShareDialog', () => {
       const revokedShare = createShareInfo({ id: 3, revokedAt: '2025-01-01T00:00:00Z' })
       mockListShares.mockResolvedValue({ shares: [activeShare, expiredShare, revokedShare], total: 3 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const section = wrapper.find('.expired-links-section')
-      if (section.exists()) {
-        expect(section.text()).toContain('Expired links')
-        expect(section.text()).toContain('2')
+      const section = $('.expired-links-section')
+      if (section) {
+        expect(section.textContent).toContain('Expired links')
+        expect(section.textContent).toContain('2')
       }
     })
 
@@ -453,17 +465,17 @@ describe('ShareDialog', () => {
       const expiredShare = createShareInfo({ id: 2, expiresAt: '2020-01-01T00:00:00Z' })
       mockListShares.mockResolvedValue({ shares: [activeShare, expiredShare], total: 2 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const toggle = wrapper.find('.expired-toggle')
-      if (toggle.exists()) {
-        await toggle.trigger('click')
+      const toggle = $('.expired-toggle') as HTMLElement
+      if (toggle) {
+        toggle.click()
         await flushPromises()
 
-        const expiredItem = wrapper.find('.share-link-row.expired')
-        if (expiredItem.exists()) {
-          expect(expiredItem.classes()).toContain('expired')
+        const expiredItem = $('.share-link-row.expired')
+        if (expiredItem) {
+          expect(expiredItem.classList.contains('expired')).toBe(true)
         }
       }
     })
@@ -473,17 +485,17 @@ describe('ShareDialog', () => {
       const expiredShare = createShareInfo({ id: 2, expiresAt: '2020-01-01T00:00:00Z' })
       mockListShares.mockResolvedValue({ shares: [activeShare, expiredShare], total: 2 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const toggle = wrapper.find('.expired-toggle')
-      if (toggle.exists()) {
-        await toggle.trigger('click')
+      const toggle = $('.expired-toggle') as HTMLElement
+      if (toggle) {
+        toggle.click()
         await flushPromises()
 
-        const expiredRow = wrapper.find('.share-link-row.expired')
-        if (expiredRow.exists()) {
-          expect(expiredRow.find('.revoke-btn').exists()).toBe(false)
+        const expiredRow = $('.share-link-row.expired')
+        if (expiredRow) {
+          expect(expiredRow.querySelector('.revoke-btn')).toBeNull()
         }
       }
     })
@@ -493,34 +505,34 @@ describe('ShareDialog', () => {
     it('SD-27: create view switch on "Create share link" click', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
 
-        expect(wrapper.find('.create-view').exists()).toBe(true)
+        expect($('.create-view')).not.toBeNull()
       }
     })
 
     it('SD-28: create view has expiry dropdown with options', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const expirySelect = wrapper.find('.expires-select')
-      if (expirySelect.exists()) {
-        const options = expirySelect.findAll('option')
-        const values = options.map(o => o.attributes('value'))
+      const expirySelect = $('.expires-select') as HTMLSelectElement
+      if (expirySelect) {
+        const options = Array.from(expirySelect.querySelectorAll('option'))
+        const values = options.map(o => o.getAttribute('value'))
         expect(values).toContain('1h')
         expect(values).toContain('1d')
         expect(values).toContain('7d')
@@ -532,19 +544,19 @@ describe('ShareDialog', () => {
     it('SD-29: create view has max views dropdown with options', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const maxViewsSelect = wrapper.find('.max-views-select')
-      if (maxViewsSelect.exists()) {
-        const options = maxViewsSelect.findAll('option')
-        const values = options.map(o => o.attributes('value'))
+      const maxViewsSelect = $('.max-views-select') as HTMLSelectElement
+      if (maxViewsSelect) {
+        const options = Array.from(maxViewsSelect.querySelectorAll('option'))
+        const values = options.map(o => o.getAttribute('value'))
         expect(values).toContain('unlimited')
         expect(values).toContain('10')
         expect(values).toContain('50')
@@ -555,17 +567,17 @@ describe('ShareDialog', () => {
     it('SD-30: create view has "Create link" primary button', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      expect(submitBtn.exists()).toBe(true)
+      const submitBtn = $('.create-link-btn')
+      expect(submitBtn).not.toBeNull()
     })
   })
 
@@ -574,18 +586,18 @@ describe('ShareDialog', () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
       mockCreateShare.mockResolvedValue(createShareResult())
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
 
         expect(mockCreateShare).toHaveBeenCalledWith('test', expect.objectContaining({
@@ -601,23 +613,23 @@ describe('ShareDialog', () => {
       mockCreateShare.mockResolvedValue(result)
       mockListShares.mockResolvedValueOnce({ shares: [createShareInfo({ id: result.id })], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
       }
 
-      expect(wrapper.find('.create-view').exists()).toBe(false)
-      expect(wrapper.find('.list-view').exists()).toBe(true)
+      expect($('.create-view')).toBeNull()
+      expect($('.list-view')).not.toBeNull()
     })
 
     it('SD-33: new link appears at top of active list', async () => {
@@ -628,24 +640,24 @@ describe('ShareDialog', () => {
       mockCreateShare.mockResolvedValue(newShareResult)
       mockListShares.mockResolvedValueOnce({ shares: [newShareInfo, existingShare], total: 2 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createEntryBtn = wrapper.find('.create-new-link-btn')
-      if (createEntryBtn.exists()) {
-        await createEntryBtn.trigger('click')
+      const createEntryBtn = $('.create-new-link-btn') as HTMLElement
+      if (createEntryBtn) {
+        createEntryBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
       }
 
-      const linkRows = wrapper.findAll('.share-link-row')
+      const linkRows = $$('.share-link-row')
       if (linkRows.length > 0) {
-        expect(linkRows[0].classes()).toContain('new-link')
+        expect(linkRows[0].classList.contains('new-link')).toBe(true)
       }
     })
 
@@ -655,24 +667,24 @@ describe('ShareDialog', () => {
       mockCreateShare.mockResolvedValue(result)
       mockListShares.mockResolvedValueOnce({ shares: [createShareInfo({ id: result.id })], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
       }
 
-      const newLink = wrapper.find('.share-link-row.new-link')
-      if (newLink.exists()) {
-        const style = getComputedStyle(newLink.element)
+      const newLink = $('.share-link-row.new-link')
+      if (newLink) {
+        const style = getComputedStyle(newLink)
         expect(style.borderColor).toBeTruthy()
       }
     })
@@ -686,22 +698,19 @@ describe('ShareDialog', () => {
       const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
       }
 
-      const badge = wrapper.find('.share-badge')
-      if (badge.exists()) {
-        expect(badge.text()).toBe('1')
-      }
+      expect(wrapper.emitted('created')).toBeTruthy()
     })
   })
 
@@ -710,22 +719,22 @@ describe('ShareDialog', () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
       mockCreateShare.mockRejectedValue(new Error('API error'))
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
       }
 
-      expect(wrapper.find('.create-view').exists()).toBe(true)
+      expect($('.create-view')).not.toBeNull()
     })
   })
 
@@ -735,12 +744,12 @@ describe('ShareDialog', () => {
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
       mockRevokeShares.mockResolvedValue({ revoked_count: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
 
         expect(mockRevokeShares).toHaveBeenCalledWith('test', { share_ids: [1] })
@@ -755,12 +764,12 @@ describe('ShareDialog', () => {
         return { revoked_count: 1 }
       })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
       }
     })
@@ -774,18 +783,16 @@ describe('ShareDialog', () => {
         return { revoked_count: 1 }
       })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtns = wrapper.findAll('.revoke-btn')
+      const revokeBtns = $$('.revoke-btn')
       if (revokeBtns.length > 0) {
-        await revokeBtns[0].trigger('click')
+        revokeBtns[0].click()
         await flushPromises()
 
-        const badge = wrapper.find('.share-badge')
-        if (badge.exists()) {
-          expect(badge.text()).toBe('1')
-        }
+        const remainingBtns = $$('.revoke-btn')
+        expect(remainingBtns.length).toBe(1)
       }
     })
 
@@ -798,17 +805,17 @@ describe('ShareDialog', () => {
         return { revoked_count: 1 }
       })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
 
-        const expiredSection = wrapper.find('.expired-links-section')
-        if (expiredSection.exists()) {
-          expect(expiredSection.text()).toContain('Expired links')
+        const expiredSection = $('.expired-links-section')
+        if (expiredSection) {
+          expect(expiredSection.textContent).toContain('Expired links')
         }
       }
     })
@@ -818,21 +825,21 @@ describe('ShareDialog', () => {
     it('SD-41: back button returns to list view', async () => {
       mockListShares.mockResolvedValue({ shares: [], total: 0 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
-        expect(wrapper.find('.create-view').exists()).toBe(true)
+        expect($('.create-view')).not.toBeNull()
       }
 
-      const backBtn = wrapper.find('.back-btn')
-      if (backBtn.exists()) {
-        await backBtn.trigger('click')
+      const backBtn = $('.back-btn') as HTMLElement
+      if (backBtn) {
+        backBtn.click()
         await flushPromises()
-        expect(wrapper.find('.list-view').exists()).toBe(true)
+        expect($('.list-view')).not.toBeNull()
       }
     })
   })
@@ -842,11 +849,11 @@ describe('ShareDialog', () => {
       const share = createShareInfo({ id: 1 })
       mockListShares.mockResolvedValue({ shares: [share], total: 1 })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const popover = wrapper.find('.share-popover')
-      if (popover.exists()) {
+      const popover = $('.share-popover')
+      if (popover) {
         await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
         await flushPromises()
       }
@@ -859,12 +866,12 @@ describe('ShareDialog', () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText } })
 
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const copyBtn = wrapper.find('.copy-btn')
-      if (copyBtn.exists()) {
-        await copyBtn.trigger('click')
+      const copyBtn = $('.copy-btn') as HTMLElement
+      if (copyBtn) {
+        copyBtn.click()
         await flushPromises()
         expect(writeText).toHaveBeenCalled()
       }
@@ -876,42 +883,42 @@ describe('ShareDialog', () => {
       const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
+      expect($('.share-popover')).not.toBeNull()
 
       await wrapper.setProps({ open: false })
       await flushPromises()
 
-      expect(wrapper.find('.share-popover').exists()).toBe(false)
+      expect($('.share-popover')).toBeNull()
     })
   })
 
   describe('BDD-13: Popover viewport overflow', () => {
     it('SD-45: Popover max-height matches calc formula', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      const popover = wrapper.find('.share-popover')
-      expect(popover.exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      const popover = $('.share-popover')
+      expect(popover).not.toBeNull()
     })
 
     it('SD-46: Popover body scrolls when content exceeds max-height', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      const popover = wrapper.find('.share-popover')
-      expect(popover.exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      const popover = $('.share-popover')
+      expect(popover).not.toBeNull()
     })
   })
 
   describe('BDD-18/19: Theme consistency', () => {
     it('SD-47: light theme Popover background is opaque white', async () => {
       document.documentElement.dataset.theme = 'light'
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      const popover = wrapper.find('.share-popover')
-      expect(popover.exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      const popover = $('.share-popover')
+      expect(popover).not.toBeNull()
     })
 
     it('SD-48: dark theme Popover background is #121822', async () => {
       document.documentElement.dataset.theme = 'dark'
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      const popover = wrapper.find('.share-popover')
-      expect(popover.exists()).toBe(true)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      const popover = $('.share-popover')
+      expect(popover).not.toBeNull()
     })
   })
 
@@ -930,9 +937,9 @@ describe('ShareDialog', () => {
 
   describe('BDD-24: Tablet viewport behavior', () => {
     it('SD-50: tablet uses Popover mode (same as desktop)', async () => {
-      const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
-      expect(wrapper.find('.share-popover').exists()).toBe(true)
-      expect(wrapper.find('.share-bottom-sheet').exists()).toBe(false)
+      await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
+      expect($('.share-popover')).not.toBeNull()
+      expect($('.share-bottom-sheet')).toBeNull()
     })
   })
 
@@ -945,15 +952,15 @@ describe('ShareDialog', () => {
       const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const createBtn = wrapper.find('.create-share-btn')
-      if (createBtn.exists()) {
-        await createBtn.trigger('click')
+      const createBtn = $('.create-share-btn') as HTMLElement
+      if (createBtn) {
+        createBtn.click()
         await flushPromises()
       }
 
-      const submitBtn = wrapper.find('.create-link-btn')
-      if (submitBtn.exists()) {
-        await submitBtn.trigger('click')
+      const submitBtn = $('.create-link-btn') as HTMLElement
+      if (submitBtn) {
+        submitBtn.click()
         await flushPromises()
 
         expect(wrapper.emitted('created')).toBeTruthy()
@@ -971,9 +978,9 @@ describe('ShareDialog', () => {
       const wrapper = await mountShareDialog({ entrySlug: 'test', variant: 'popover', open: true })
       await flushPromises()
 
-      const revokeBtn = wrapper.find('.revoke-btn')
-      if (revokeBtn.exists()) {
-        await revokeBtn.trigger('click')
+      const revokeBtn = $('.revoke-btn') as HTMLElement
+      if (revokeBtn) {
+        revokeBtn.click()
         await flushPromises()
 
         expect(wrapper.emitted('revoked')).toBeTruthy()
