@@ -1,7 +1,7 @@
 task_id: T059
 task_name: markdown-extensions
-phase: P8
-status: active
+phase: READY
+status: done
 retries:
   P1: []
   P2: []
