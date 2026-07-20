@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-07-20
+
+### 修复
+
+- ShareDialog 单元测试修复：Teleport 渲染元素改用 `document.querySelector` 查询（55/55 全绿）
+
+
 ## [0.9.2] - 2026-07-20
 
 ### 新增
