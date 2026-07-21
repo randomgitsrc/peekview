@@ -28,6 +28,10 @@
 | T058 | overflow-share-redesign | ✅✅ 已完成 | P8→v0.9.0 | 🟠 | 无 | 2026-07-16 | 2026-07-17 |
 | T059 | markdown-extensions | ✅✅ 已完成 | P8→v0.9.3 | 🟠 | 无 | 2026-07-20 | 2026-07-20 |
 | T060 | archived-visibility-auth-refresh | ✅✅ 已完成 | P8→v0.9.4 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
+| T061 | t032-probe-data-review | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-21 | 2026-07-21 |
+| T062 | entry-reference-fields | ⬜ 待开始 | P0 | 🟠 | T061 | 2026-07-21 | 2026-07-21 |
+| T063 | task-category-field | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
+| T064 | storage-backend-abstraction | ⬜ 待开始 | P0 | 🟡 | 商业化决策 | 2026-07-21 | 2026-07-21 |
 
 ### 已完成
 

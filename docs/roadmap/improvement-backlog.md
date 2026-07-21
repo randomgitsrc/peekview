@@ -19,7 +19,7 @@
 | 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | ✅ v0.6.3(T054) |
 | 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | ✅ v0.6.3(T054) |
 | 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | ✅ v0.4.0(T033) |
-| 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔵 长期 | 待办 |
+| 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔴 立即 | ⬜ 直接写 |
 | 10b | entry 生命周期管理：过期→归档+可续命+可配置保留期 | 产品/架构 | 🟠 近期 | ✅ v0.5.4(T048) |
 | 15b | 图表源码自动清洗 + 移动端 header 滚动收缩 | 体验 | 🟠 近期 | ✅ v0.5.5(T049) |
 | 21 | Agent /raw 端点自动发现（Content Negotiation + HTML 自描述） | 产品/Agent | 🔴 立即 | ✅ T053 |
@@ -27,11 +27,18 @@
 | 23 | Admin backup/export 命令 | 运维 | 🟠 近期 | ✅ v0.7.0(T055) |
 | 24 | Prometheus /metrics 端点 | 可观测性 | 🟡 中期 | ✅ v0.8.0(T056) |
 | 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | ✅ v0.9.0(T058) |
-| 26 | Markdown 扩展补全（KaTeX + Task List + Footnote + Sub/Sup） | 体验/功能 | 🟠 近期 | 🔄 T059 |
+| 26 | Markdown 扩展补全（KaTeX + Task List + Footnote + Sub/Sup） | 体验/功能 | 🟠 近期 | ✅ v0.9.3(T059) |
+| 27 | 归档条目可见性策略修正 + 登录退出内容刷新 | 体验 | 🟠 近期 | ✅ v0.9.4(T060) |
+| 28 | T032 探针数据回顾：entry_reads 数据分析，判断 Agent 读取行为 | 产品/探针 | 🔴 立即 | 🔄 T061 |
+| 29 | Entry 引用关系字段（references/referenced_by）+ 轻量语义标签（topic/kind） | 产品/Agent | 🟠 近期 | ⬜ T062（依赖 T061） |
+| 30 | P0-brief task_category 字段（🔧/🎯/🌱）+ 排期规则流程化 | 流程 | 🟠 近期 | ⬜ T063 |
+| 31 | P8 自检清单加 `make dev`（防止 venv 依赖未同步导致测试虚设） | 流程/纠错 | 🔴 立即 | ⬜ 直接改 |
+| 32 | MCP updateEntry 设计理由文档（解释为何 MCP 不暴露更新能力） | 文档 | 🟠 近期 | ⬜ 直接写 |
+| 33 | 渲染能力从"主动加新格式"降级为"被动维护 bug" | 决策 | 🟡 中期 | ⬜ 团队决议 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
-| 14 | StorageBackend 接口抽象 | 架构 | 🔵 长期 | 待办 |
+| 14 | StorageBackend 接口抽象 | 架构 | 🟡 中期 | ⬜ T064（依赖商业化决策） |
 | 15 | publish_files 大目录扫描进度反馈 | 体验 | 🔵 长期 | 待办 |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
