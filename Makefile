@@ -4,7 +4,7 @@
 # Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
 # Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-frontend test-backend publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target
 help:
@@ -14,7 +14,10 @@ help:
 	@echo "  make build          - Build both frontend and backend (clean build)"
 	@echo "  make build-fast     - Incremental build (faster, uses cache)"
 	@echo "  make test           - Run all tests"
-	@echo "  make test-quick     - Run tests without rebuilding"
+	@echo "  make test-quick     - Run tests without rebuilding (auto-checks venv)"
+	@echo "  make lint           - Run ruff code linting"
+	@echo "  make lint-fix       - Auto-fix lint issues"
+	@echo "  make typecheck      - Run vue-tsc type checking"
 	@echo "  make verify-local   - Quick local verification (build-fast + test-quick)"
 	@echo "  make dev            - Install in editable mode for development"
 	@echo "  make clean          - Clean all build artifacts"
@@ -118,28 +121,54 @@ build-backend-fast:
 # Test Targets
 # =============================================================================
 
+# Guard: ensure venv exists and has core dependencies (T060 lesson)
+guard-venv:
+	@if [ ! -d "backend/.venv" ]; then \
+		echo "⚠️  venv 不存在，请先运行 make dev"; exit 1; \
+	fi
+	@cd backend && .venv/bin/python -c "import peekview" 2>/dev/null || \
+		(echo "⚠️  peekview 不可导入，请运行 make dev"; exit 1)
+	@cd backend && .venv/bin/python -c "import pytest, httpx" 2>/dev/null || \
+		(echo "⚠️  测试依赖缺失，请运行 make dev"; exit 1)
+
 # Run all tests (rebuild first)
-test: build-backend test-backend
+test: build-backend test-backend test-frontend
 	@echo "✓ All tests passed"
 
-# Quick test - run tests without rebuilding (for code fixes)
-test-quick:
+# Quick test - run tests without rebuilding
+test-quick: guard-venv
 	@echo "→ Running backend tests (quick)..."
-	cd backend && python3 -m pytest tests/ -v --tb=short
+	cd backend && .venv/bin/python -m pytest tests/ -v --tb=short
 	@echo "✓ Tests passed"
 
-# Run only failed tests
+# Run only failed tests (no guard-venv: if tests ran before, venv is fine)
 test-failed:
 	@echo "→ Running only failed tests..."
-	cd backend && python3 -m pytest tests/ --lf -v --tb=short
+	cd backend && .venv/bin/python -m pytest tests/ --lf -v --tb=short
 
 test-frontend:
+	@if [ ! -d "frontend-v3/node_modules" ]; then \
+		echo "→ Installing frontend dependencies..."; cd frontend-v3 && npm ci; \
+	fi
 	@echo "→ Running frontend tests..."
-	cd frontend-v3 && npm run test -- --run || echo "⚠️  Frontend tests skipped (no test files)"
+	cd frontend-v3 && npx vitest run
 
-test-backend:
+test-backend: guard-venv
 	@echo "→ Running backend tests..."
-	cd backend && python3 -m pytest tests/ -v --tb=short
+	cd backend && .venv/bin/python -m pytest tests/ -v --tb=short
+
+# Lint and type checking
+lint:
+	@echo "→ Running ruff check..."
+	cd backend && python3 -m ruff check peekview/ tests/
+
+lint-fix:
+	@echo "→ Running ruff check --fix + format..."
+	cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/
+
+typecheck:
+	@echo "→ Running vue-tsc type check..."
+	cd frontend-v3 && npx vue-tsc --noEmit
 
 # =============================================================================
 # Verification Targets
@@ -564,7 +593,7 @@ debug-test-mcp:
 	cd packages/mcp-server && PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=$$PEEKVIEW_API_KEY npm run test:integration || echo "  ⚠ 集成测试失败（可能需要 API Key）"
 	@echo ""
 	@echo "→ 运行 MCP Server E2E 测试..."
-	cd frontend-v3 && BASE_URL=http://127.0.0.1:8888 npx playwright test e2e/mcp-server.spec.ts --reporter=line || echo "  ⚠ E2E 测试失败"
+	cd frontend-v3 && E2E_GUARD_ENABLED=1 BASE_URL=http://127.0.0.1:8888 npx playwright test e2e/mcp-server.spec.ts --reporter=line
 	@echo ""
 	@echo "✓ MCP 测试流程完成"
 

@@ -105,18 +105,7 @@ jobs:
           python-version: "3.12"
 
       - name: Check version consistency
-        run: |
-          python3 scripts/doc-sync/update_version_docs.py --check
-
-      - name: Check CHANGELOG has current version
-        run: |
-          VERSION=$(grep '^version = ' backend/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-          if ! grep -qF "## [$VERSION]" CHANGELOG.md; then
-            echo "❌ CHANGELOG.md missing entry for v$VERSION"
-            echo "   Run: make sync-version-docs"
-            exit 1
-          fi
-          echo "✅ CHANGELOG.md contains v$VERSION"
+        run: make check-version
 
       - name: Check env var naming conventions
         run: |

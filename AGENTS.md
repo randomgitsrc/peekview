@@ -52,7 +52,7 @@ packages/mcp-server/src/
 7. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。API 是 `/api/v1/entries`，页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败
 8. **CHANGELOG 及时记录**：用户可见改动完成后，立刻写入 `CHANGELOG.md` 的 `[Unreleased]` 区域，不可延后
 9. 不加注释（除非被要求）
-10. 完成任务后必须跑 lint/typecheck：后端 `cd backend && python3 -m ruff check peekview/ tests/`（ruff 不在 venv）；前端 `cd frontend-v3 && npx vue-tsc --noEmit`（CI 强制）。mypy strict 在 pyproject 但未进 venv，非门禁
+10. 完成任务后必须跑 lint/typecheck：`make lint && make typecheck`（ruff 不在 venv，用系统 python3；CI 强制）
 11. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。超时后检查实际执行状态，不盲目重试
 
 ## 环境隔离
@@ -69,15 +69,14 @@ packages/mcp-server/src/
 make dev                  # 创建/更新 backend/.venv（不影响 pipx）
 
 # 后端
-cd backend && .venv/bin/python -m pytest tests/                     # 测试（用 venv）
-cd backend && python3 -m ruff check peekview/ tests/                # lint（ruff 不在 venv）
-cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/  # 自动修复
+make test-quick                                                          # 测试（用 venv，自动检查 venv 是否过期）
+make lint                                                                # lint（ruff 不在 venv，用系统 python3）
+make lint-fix                                                            # lint 自动修复
 
 # 前端
-make build-frontend                                                     # 构建 + 复制到 static/（⚠️ npm run build 只产出 dist/，不复制）
-make test-frontend                                                      # 单测（one-shot vitest run）
-cd frontend-v3 && ./node_modules/.bin/vitest run                        # 单测（⚠️ npm run test = watch 模式，会挂住 agent）
-cd frontend-v3 && npx vue-tsc --noEmit                                  # 类型检查（CI 强制）
+make build-frontend                                                      # 构建 + 复制到 static/
+make test-frontend                                                       # 单测（非 watch 模式，失败会报错）
+make typecheck                                                           # 类型检查（CI 强制）
 
 # MCP
 make build-mcp            # 构建
@@ -136,9 +135,9 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 
 ## 测试注意事项
 
-- **后端**：pytest 用 venv Python（`.venv/bin/python -m pytest`），conftest autouse 隔离，`factories.py` 提供测试数据构建器
-- **前端单测**：vitest + jsdom 环境，排除 `e2e/` 目录。`npm run test` 是 watch 模式会挂住 agent，必须用 `vitest run` 或 `make test-frontend`
-- **前端 E2E**：Playwright，spec 文件在 `frontend-v3/e2e/`。无 `npm run test:e2e` 脚本，用 `make debug-test` 或直接 `npx playwright test e2e/<spec>.ts`
+- **后端**：pytest 用 venv Python（`make test-quick`），conftest autouse 隔离，`factories.py` 提供测试数据构建器
+- **前端单测**：vitest + jsdom 环境（`make test-frontend`）。`npm run test` 是 watch 模式会挂住 agent，禁止使用
+- **前端 E2E**：Playwright（`make debug-test` 或 `E2E_SPEC=e2e/<spec>.ts make debug-test`）
 - **MCP 单测**：vitest + node 环境，`fileParallelism: false`（config 测试会 mutate process.env/HOME，串行避免竞态）。`npm test` = `npm run test:unit`
 - **MCP 集成/E2E**：需要 debug backend 在 `127.0.0.1:8888`，绝不能指向生产 `:8080`
 - **CI 门禁**（`.github/workflows/ci.yml`）：后端 pytest + 前端 `vue-tsc --noEmit` + 前端 `npm run build` + 文档版本一致性。ruff 不在 CI
@@ -172,6 +171,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 
 **关键约束**：
 - **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告
+- **gate_commands 引用 Makefile**：P2 的 `gate_commands` 建议使用 `make test-quick` / `make debug-test` 等 Makefile target，不手写裸命令。Makefile 是测试命令的唯一真相源
 - **[SCOPE+]**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补
 - **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **裁剪风险**：涉及 schema 变更/安全/多端 → P6 不可跳；「任务简单」不是合法裁剪理由

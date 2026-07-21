@@ -8,11 +8,13 @@
 > - 新增 `make verify-local` 本地快速验证
 > - 优化发布流程，减少重复构建
 
-## 快速发布（一句话）
+## 快速发布
 
 ```bash
-make publish && git tag -a v$(cd backend && python3 -c "from peekview import __version__; print(__version__)") -m "Release" && git push origin --tags
+make bump-version NEW_VERSION=x.y.z && make release
 ```
+
+`bump-version` 自动完成版本同步 + commit + tag。`release` 完成构建 + 发布到 PyPI。
 
 ## CHANGELOG 暂存区规范
 
@@ -207,13 +209,12 @@ curl -s http://127.0.0.1:8080/health   # 确认 version 是新版本
 
 ### 6. 创建并推送标签
 
-```bash
-VERSION=$(cd backend && python3 -c "from peekview import __version__; print(__version__)")
-git tag -a "v$VERSION" -m "Release v$VERSION"
+`make bump-version` 已自动完成 commit + tag，无需手动操作。
 
-# 推送（带重试机制）
-git push origin main || (sleep 5 && git push origin main)
-git push origin "v$VERSION" || (sleep 5 && git push origin "v$VERSION")
+推送标签（bump-version 已完成 tag 创建，只需 push）：
+
+```bash
+git push origin main && git push origin --tags
 ```
 
 ### 6.5 发布 MCP Server 到 npm（独立版本管理）

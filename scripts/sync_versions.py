@@ -61,6 +61,8 @@ DOC_SLOTS: list[Slot] = [
     # improvement-backlog.md
     ("docs/roadmap/improvement-backlog.md", rf"Backend v{SEMVER}", "peekview", 0),
     ("docs/roadmap/improvement-backlog.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),
+    # backend/README.md health check version
+    ("backend/README.md", rf'"version": "{SEMVER}"', "peekview", 0),
 ]
 
 
