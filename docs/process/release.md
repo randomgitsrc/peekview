@@ -125,6 +125,14 @@ curl -s http://127.0.0.1:8080/api/v1/entries | jq '.total'
 # peekview list --json | jq -r '.[] | select(.summary | test("(?i)(test|stdin|workflow)")) | .slug' | xargs -r peekview delete
 ```
 
+**发布前同步开发 venv 依赖** (T060 复盘教训):
+
+```bash
+# 确保 pyproject.toml 中的依赖已安装到本地 venv
+# 防止新增依赖后本地测试因缺包失败（隔离构建能绕过但本地测试虚设）
+make dev
+```
+
 ```bash
 # 如果刚运行过 make debug，用快速检查
 make pre-publish-quick
