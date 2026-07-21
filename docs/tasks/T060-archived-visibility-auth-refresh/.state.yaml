@@ -1,6 +1,6 @@
 task_id: T060
 task_name: archived-visibility-auth-refresh
-phase: P5
+phase: P6
 status: active
 retries:
   P1: []
