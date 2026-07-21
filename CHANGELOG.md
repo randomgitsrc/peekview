@@ -7,11 +7,14 @@
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-07-21
+
 ### 修复
 
-- 归档条目可见性策略修正：All/Mine tab 默认排除 archived 条目，仅 Archived tab 可见归档条目
-- 登录/退出/Auth 过期后列表自动刷新，权限状态与列表内容保持一致
-- MCP `list_entries` 增加 `status` 参数支持，非法值返回 422
+- 归档条目可见性策略修正：All/Mine tab 默认排除 archived 条目，仅 Archived tab 可见归档条目 (T060)
+- 登录/退出/Auth 过期后列表自动刷新，权限状态与列表内容保持一致 (T060)
+- MCP `list_entries` 增加 `status` 参数支持，非法值返回 422 (T060)
+- MCP `list_entries` 增加 `status` 参数支持，非法值返回 422 (T060)
 
 ## [0.9.3] - 2026-07-20
 
