@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PeekView**: Agent writes, humans view, agents can also read. Agent publishes entries via API/CLI/MCP → humans view formatted content in browser, and agents read raw content back via `/raw` endpoint.
 
-- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.2 (Streamable HTTP transport) has been released to npm.
-- **Current Version:** v0.9.4 (Backend/Frontend) | MCP Server v0.9.2
+- **Current State:** Backend, frontend, and MCP Server are complete. MCP Server v0.9.3 (Streamable HTTP transport) has been released to npm.
+- **Current Version:** v0.9.4 (Backend/Frontend) | MCP Server v0.9.3
 - **Architecture:** FastAPI (Python 3.10+; `pyproject.toml` `requires-python>=3.10`, ruff/mypy target `py310`, badges claim 3.12/3.13, build system: hatchling) + SQLite (WAL mode, FTS5) backend, Vue 3 + Vite + TypeScript + Shiki SPA frontend, MCP Server (Node.js ≥18/TypeScript, Streamable HTTP transport)
 
 ## Project Structure
@@ -244,7 +244,7 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
 2. **Local path:** `files[].local_path` - reads from server filesystem (allowlist check)
 3. **Directory scan:** `dirs[].path` - recursive scan, respects ignore patterns
 
-### MCP Server Architecture (v0.9.2)
+### MCP Server Architecture (v0.9.3)
 - **Transport**: Streamable HTTP via `@modelcontextprotocol/sdk`
 - **Auth**: Two-layer — `pv_` prefix check at initialize, then passthrough to PeekView API
 - **Session**: Per-session Server instance with idle timeout cleanup
@@ -254,7 +254,7 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
 - **publish_files**: reads files directly from disk, requires absolute paths, uses `server.allowed_paths` or cwd+tmpdir fallback, `trust_all_paths` option, rejects cwd `/`
 - **Service commands**: Auto-detect user/system service mode (`--user`/`--system` flags, default prefers user service)
 - **Deployment architecture**: Agent(A机器) → HTTP POST → MCP Server(B机器) → HTTP → PeekView(C机器). B and C may be the same server.
-- **Version correspondence:** MCP Server v0.9.2 requires PeekView Backend v0.1.25+
+- **Version correspondence:** MCP Server v0.9.3 requires PeekView Backend v0.1.25+
 
 ### Error Response Format
 ```json

@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [mcp-v0.9.3] - 2026-07-21
+
+### 新增
+
+- `list_entries` tool 增加 `status` 参数（enum: active/archived），支持按条目状态过滤 (T060)
+
 ## [0.9.4] - 2026-07-21
 
 ### 修复
