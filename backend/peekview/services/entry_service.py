@@ -402,18 +402,8 @@ class EntryService:
                             items=[], total=0, page=page, per_page=per_page,
                         )
             else:
-                if current_user_id and not is_admin:
-                    query = query.where(
-                        (Entry.status != EntryStatus.ARCHIVED) | (Entry.owner_id == current_user_id)
-                    )
-                    count_query = count_query.where(
-                        (Entry.status != EntryStatus.ARCHIVED) | (Entry.owner_id == current_user_id)
-                    )
-                elif is_admin:
-                    pass
-                else:
-                    query = query.where(Entry.status != EntryStatus.ARCHIVED)
-                    count_query = count_query.where(Entry.status != EntryStatus.ARCHIVED)
+                query = query.where(Entry.status != EntryStatus.ARCHIVED)
+                count_query = count_query.where(Entry.status != EntryStatus.ARCHIVED)
 
             # === Phase 1: Resolve owner to user_id ===
             # owner_found tri-state: None (N/A or "me") | True (user exists) | False (user not found)

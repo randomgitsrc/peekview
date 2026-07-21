@@ -8,6 +8,8 @@ const schema = z.object({
   tags: z.array(z.string()).optional(),
   page: z.number().int().positive().optional(),
   per_page: z.number().int().positive().max(100).default(20),
+  status: z.enum(['active', 'archived']).optional()
+    .describe('Filter by entry status. Default: active only.'),
 });
 
 export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
@@ -20,6 +22,11 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
       tags: { type: 'array', items: { type: 'string' } },
       page: { type: 'number', default: 1 },
       per_page: { type: 'number', default: 20 },
+      status: {
+        type: 'string',
+        enum: ['active', 'archived'],
+        description: 'Filter by entry status. Default: active only.',
+      },
     },
   },
   handler: async (args: unknown, ctx: SessionContext): Promise<ToolResult> => {
@@ -31,6 +38,7 @@ export const listEntriesTool = (client: PeekViewClient): ToolDefinition => ({
         params.per_page ?? 20,
         params.query,
         params.tags,
+        params.status,
       );
 
       if (result.items.length === 0) {

@@ -7,7 +7,7 @@ import io
 import logging
 import zipfile
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel import Session, select
 
@@ -200,6 +200,9 @@ async def list_entries(
     current_user: User | None = Depends(get_current_user),
 ):
     """List entries with search, filter, and pagination."""
+    VALID_STATUS_VALUES = {"active", "archived", "published"}
+    if status is not None and status not in VALID_STATUS_VALUES:
+        raise HTTPException(status_code=422, detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(VALID_STATUS_VALUES))}")
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False

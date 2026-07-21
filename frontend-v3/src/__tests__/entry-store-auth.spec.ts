@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useEntryStore } from '@/stores/entry'
 import { useAuthStore } from '@/stores/auth'
@@ -159,38 +159,6 @@ describe('Entry Store', () => {
 
       expect(entryStore.error).toBe('Network error')
       expect(entryStore.entries).toEqual([])
-    })
-  })
-
-  // ============================================================
-  // filterPrivateEntries (existing, to be removed per §2.7)
-  // ============================================================
-  describe('filterPrivateEntries', () => {
-    it('removes non-public entries from list', () => {
-      entryStore.entries = [
-        makeEntry({ id: 1, slug: 'pub', isPublic: true }),
-        makeEntry({ id: 2, slug: 'priv', isPublic: false }),
-        makeEntry({ id: 3, slug: 'pub2', isPublic: true }),
-      ]
-
-      entryStore.filterPrivateEntries()
-
-      expect(entryStore.entries).toHaveLength(2)
-      expect(entryStore.entries.map((e) => e.slug)).toEqual(['pub', 'pub2'])
-    })
-
-    it('keeps public archived entries (current bug: no status filter)', () => {
-      entryStore.entries = [
-        makeEntry({ id: 1, slug: 'pub-archived', isPublic: true, status: 'archived' }),
-        makeEntry({ id: 2, slug: 'priv', isPublic: false }),
-      ]
-
-      entryStore.filterPrivateEntries()
-
-      // Current implementation only filters by isPublic, not status
-      // This test exposes the gap: public archived entries remain after logout
-      expect(entryStore.entries).toHaveLength(1)
-      expect(entryStore.entries[0].slug).toBe('pub-archived')
     })
   })
 })

@@ -100,6 +100,7 @@ export class PeekViewClient {
     perPage = 20,
     query?: string,
     tags?: string[],
+    status?: string,
   ): Promise<ListEntriesResponse> {
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -108,6 +109,7 @@ export class PeekViewClient {
     if (tags?.length) {
       params.append('tags', tags.join(','));
     }
+    if (status) params.append('status', status);
     return this.request<ListEntriesResponse>(`/api/v1/entries?${params}`, undefined, userToken);
   }
 

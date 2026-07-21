@@ -96,7 +96,16 @@
         <template v-else>{{ entries.length }} result{{ entries.length === 1 ? '' : 's' }}</template>
       </div>
 
-      <div v-if="loading" class="loading-state">
+      <div
+        class="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {{ authChangeAnnouncement }}
+      </div>
+
+      <div v-if="loading" class="loading-state" role="status" aria-live="polite">
         <span>Loading...</span>
       </div>
 
@@ -250,6 +259,7 @@ const props = defineProps<{
 
 const currentOwner = ref<string | null>(null)
 const currentStatus = ref<string | null>(null)
+const authChangeAnnouncement = ref('')
 
 const isBannerMode = computed(() =>
   !!(props.owner) && props.owner !== 'me' && ownerFound.value !== false
@@ -378,8 +388,10 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
 
 function handleLogout() {
   showUserMenu.value = false
+  if (currentStatus.value === 'archived') {
+    currentStatus.value = null
+  }
   authStore.logout()
-  entryStore.filterPrivateEntries()
   toast.show('Logged out', 'success')
 }
 
@@ -441,16 +453,30 @@ watch(() => props.owner, (newOwner) => {
   }
 })
 
-watch(authState, (newState) => {
-  if (newState === 'authenticated' && !props.owner) {
-    const urlParams = new URLSearchParams(window.location.search)
-    const ownerParam = urlParams.get('owner')
-    if (ownerParam === 'me' && currentOwner.value !== 'me') {
-      currentOwner.value = 'me'
-      currentStatus.value = null
-      currentPage.value = 1
-      loadEntries({ page: 1, perPage: perPage.value, owner: 'me', q: searchQuery.value || undefined })
+watch(authState, (newState, oldState) => {
+  if (newState === 'authenticated' && oldState !== 'authenticated') {
+    authChangeAnnouncement.value = 'Signed in. List refreshed.'
+    if (!props.owner) {
+      const urlParams = new URLSearchParams(window.location.search)
+      const ownerParam = urlParams.get('owner')
+      if (ownerParam === 'me' && currentOwner.value !== 'me') {
+        currentOwner.value = 'me'
+        currentStatus.value = null
+      }
     }
+    currentPage.value = 1
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
+  } else if (newState === 'anonymous' && oldState === 'authenticated') {
+    authChangeAnnouncement.value = 'Signed out. List refreshed.'
+    if (currentStatus.value === 'archived') {
+      currentStatus.value = null
+      nextTick(() => {
+        const allTab = document.querySelector<HTMLButtonElement>('.owner-tab')
+        allTab?.focus()
+      })
+    }
+    currentPage.value = 1
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined }, { clearOnError: false })
   }
 })
 

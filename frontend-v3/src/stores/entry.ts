@@ -4,6 +4,8 @@ import { api } from '@/api/client'
 import type { Entry, File, ListEntriesParams } from '@/types'
 import { useToast } from '@/composables/useToast'
 
+let loadSeq = 0
+
 export const useEntryStore = defineStore('entry', () => {
   // State
   const entries = ref<Entry[]>([])
@@ -50,24 +52,29 @@ export const useEntryStore = defineStore('entry', () => {
   })
 
   // Actions
-  async function loadEntries(params?: ListEntriesParams): Promise<void> {
+  async function loadEntries(params?: ListEntriesParams, options?: { clearOnError?: boolean }): Promise<void> {
+    const seq = ++loadSeq
     loading.value = true
     error.value = null
 
     try {
       const response = await api.listEntries(params)
+      if (seq !== loadSeq) return
       entries.value = response.items
-      // Update pagination state
       page.value = response.page
       perPage.value = response.perPage
       total.value = response.total
-      // Update owner found state
       ownerFound.value = response.ownerFound ?? null
     } catch (err) {
+      if (seq !== loadSeq) return
       error.value = err instanceof Error ? err.message : 'Failed to load entries'
-      entries.value = []
+      if (options?.clearOnError !== false) {
+        entries.value = []
+      }
     } finally {
-      loading.value = false
+      if (seq === loadSeq) {
+        loading.value = false
+      }
     }
   }
 
@@ -172,11 +179,6 @@ export const useEntryStore = defineStore('entry', () => {
     }
   }
 
-  function filterPrivateEntries(): void {
-    // Used after logout to immediately remove private entries from the list
-    entries.value = entries.value.filter(e => e.isPublic)
-  }
-
   return {
     // State
     entries,
@@ -206,6 +208,5 @@ export const useEntryStore = defineStore('entry', () => {
     clearEntry,
     toggleVisibility,
     deleteEntry,
-    filterPrivateEntries,
   }
 })
