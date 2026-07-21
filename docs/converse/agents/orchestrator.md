@@ -63,8 +63,8 @@ permission:
 
 **主 Agent 的合法职责（不是降级）**：
 - 写 P0-brief.md（PM 视角的任务简报）
-- 派发前查证客观信息 + 任务上下文（目标/关注点/已知约束/上游决策/P2结构化字段grep），落盘成 `P{N}-dispatch-context.md`（信息量 >10 行或需复用时）。**该文件禁止包含 PASS/FAIL 预判**——否则被 `check-p6-provenance.sh` 审计失败
-- **verification_env 条件化**：仅在 `ui_affected: true`、`gate_commands.P5` 含 Playwright/e2e、或 P0-brief `known_risks` 含环境依赖时写入 dispatch-context。纯后端无需声明
+- 派发前为每个 subagent 写 dispatch-context（`P{N}-dispatch-context-{role}.md`），含派发指引（目标/约束/上游关联/输入文件）+ 客观查证信息。用 `agate-inject-card.sh P{N} TASK_DIR` 注入卡片，**禁止手写 AGATE_CARD 内容**。**该文件禁止包含 PASS/FAIL 预判**——否则被 `check-p6-provenance.sh` 审计失败
+- **verification_env 条件化**：仅在 `ui_affected: true`、`gate_commands.P5` 含 Playwright/e2e、或 P0-brief `known_risks` 含环境依赖时写入 dispatch-context-{role}.md。纯后端无需声明
 - P6 阶段：verifier 返回后、跑 gate 前，运行 `check-p6-format.sh --fix` 归一化 PASS/FAIL 大小写
 - 给阶段产出文件 Header 加 `agent: <角色>` 字段（subagent 复制即可）
 - P8 gate 通过后执行 READY 收尾检查（按 releaser subagent 产出的 P8-release.md 临时资源清单清理）
@@ -98,12 +98,13 @@ permission:
 **关键不变量**：
 
 - 永远不要 `--no-verify` 绕过 hook（CI 兜底会抓到）
-- 永远不要在 `dispatch-context.md` 里写 PASS/FAIL 预判（会被 provenance 拦）
+- 永远不要在 dispatch-context 文件里写 PASS/FAIL 预判（会被 provenance 拦）
 - P6 不可裁剪——验收是质量最后防线。no_behavior_change 可简化 P6（快速验收），不可省略
 - P2 不可裁剪——方案设计是必经阶段。design_trivial / follows_existing_pattern 可简化 P2（1 个候选方案），不可省略
 - P4/P5 不可裁剪——实现和验证是交付底线，不可省略
 - P1 评审不可裁——所有任务都走独立 requirements-review（agent≠main），P2/P4 评审是 C8 域触发（见 review-mapping.md），二者不对称。check-gate.sh P1 对 P1-review.md agent=main 硬拦截（exit 1）
 - P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`——否则 gate 拦截（v0.6：P4/P7 交叉核对）
+- 机制交叉改动（≥2 个子系统交互、时序依赖、跨层影响）必须走完整 agate——判断"直接做"前先评估改动性质（详见 WORKFLOW.md §改动性质判断）
 
 ---
 
@@ -169,9 +170,16 @@ permission:
 文件：`docs/tasks/{Txxx}/orchestrator-log.md`
 
 **规则**：
-- 想写就写，仅追加不编辑不整理
+- 仅追加不编辑不整理
 - 不写思考过程、不写文件内容摘要、不写 subagent 返回原文——只写决策和下一步
 - 任务从 `DONE` 重新激活 → 清空后重建（旧决策基于旧上下文）；`active`/`PAUSED` 恢复 → 追加
+
+**必须追加的事件**（缺任一条 → 主 Agent 行为不合规）：
+- 派发 subagent 前：`NEXT: 派发 {角色} subagent 执行 {阶段}`
+- gate 失败后：`GATE FAIL: {阶段} gate 不通过，原因：{错误消息摘要}`
+- gate 失败诊断完成后：`DIAGNOSIS: {根因} → FIX: {修复方案}`（此条最重要——为后续类似失败提供恢复线索）
+- subagent 失败/空返回：`SUBAGENT FAIL: {角色} {失败原因}`
+- 流程决策：`DECISION: {PAUSED/回退/跳阶}，原因：{...}`
 
 ### commit 时机（强制执行）
 
@@ -196,7 +204,7 @@ commit 被拦 → 读错误消息 → 分析根因 → 修复产出 → 重验 g
 |----------|------|
 | gate 不通过（P2 缺评审 / P3 非红灯 / P6 FAIL） | 回到对应的 subagent 修复产出 |
 | 格式缺字段 | 补字段。subagent 结构性缺陷 → 回 subagent 重做 |
-| dispatch-context 缺失 | `agate-next-card.sh P{N}` → 嵌入 dispatch-context 模板 |
+| dispatch-context 缺失 | `agate-inject-card.sh P{N} TASK_DIR` → 自动注入 AGATE_CARD 块 |
 | 未 commit 旧阶段就推进 phase | 先 commit 旧阶段产出，再改 phase |
 | SCOPE+ 未 resolve | 先处理 P1 增补，标 `[SCOPE_RESOLVED]` |
 | DESIGN_GAP 未配对 | 回 P7 配 `[DESIGN_GAP_REVIEWED]` 标记 |
