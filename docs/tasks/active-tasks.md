@@ -27,6 +27,7 @@
 | T056 | prometheus-metrics | ✅✅ 已完成 | P8→v0.8.0 | 🟡 | 无 | 2026-07-14 | 2026-07-17 |
 | T058 | overflow-share-redesign | ✅✅ 已完成 | P8→v0.9.0 | 🟠 | 无 | 2026-07-16 | 2026-07-17 |
 | T059 | markdown-extensions | ✅✅ 已完成 | P8→v0.9.3 | 🟠 | 无 | 2026-07-20 | 2026-07-20 |
+| T060 | archived-visibility-auth-refresh | 🔄 进行中 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
 
 ### 已完成
 
@@ -271,4 +272,5 @@ parent: (外部需求或 Bug 报告来源)
 | 2026-06-21 | 完成 T017 | theme-media-query-fix v0.1.63 发布到 PyPI |
 | 2026-06-20 | 完成 T016 | plantuml-rendering v0.1.62 发布到 PyPI |
 | 2026-06-20 | 创建 T016 | plantuml-rendering 立项，P0-brief 已写，原型验证通过（路线 A 确定可行） |
+| 2026-07-21 | 创建 T060 | archived-visibility-auth-refresh — 归档条目可见性策略修正 + 登录退出内容刷新 |
 | 2026-06-11 | 创建 | 初始版本，基于 workflow-v2 |

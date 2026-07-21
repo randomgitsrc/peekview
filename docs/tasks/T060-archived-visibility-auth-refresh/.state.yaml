@@ -1,0 +1,15 @@
+task_id: T060
+task_name: archived-visibility-auth-refresh
+phase: P0
+status: active
+retries:
+  P1: []
+  P2: []
+  P3: []
+  P4: []
+  P5: []
+  P6: []
+  P7: []
+  P8: []
+created: "2026-07-21"
+updated: "2026-07-21"
