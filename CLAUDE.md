@@ -330,15 +330,16 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
 
 ## Development Workflow (agate)
 
-非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 派发 subagent 到独立上下文，自己只读状态/派发/验门槛/更新状态，不亲自写产出。
+非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 派发 subagent 到独立上下文，自己只读状态/派发/验门槛/更新状态，不亲自写产出。派发前为每个 subagent 写 `P{N}-dispatch-context-{role}.md`（每个角色独立文件），AGATE_CARD 用 `agate-inject-card.sh` 注入，禁止手写。
 
 **阶段链 P1-P8**：P1 需求基线 → P2 设计 → P3 测试 → P4 实现 → P5 技术验证 → P6 验收 → P7 一致性 → P8 发布准备 → READY（人工 make publish）。
 
 **关键约束**：
 - **P1** 用 BDD（Given/When/Then）建立需求基线，先质疑需求、识别隐含依赖；需求明确则自走，拿不准方向才标 `[NEED_CONFIRM]` 问人
-- **P1 评审不可裁**：所有任务都走独立 requirements-review（agent≠main），与 P2 design-review 对称
+- **P1 评审不可裁**：所有任务都走独立 requirements-review（agent≠main）；P2/P4 评审是 C8 域触发，二者不对称
 - **P2** 必须声明 `packages:` `domains:` `ui_affected:`（漏 packages 导致多包发布漏 bump）。P2 不可裁剪——方案设计是必经阶段，`design_trivial`/`follows_existing_pattern` 可简化（1 个候选方案），不可省略
 - **`[SCOPE+]`**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补（不全重跑）
+- **机制交叉**：≥2 个子系统交互/时序依赖/跨层影响的改动必须走完整 agate，不可裁剪
 - **P6 验收铁律（T026 教训）**：
   - BDD 条件逐条实跑、翻译成人话；UI 必须 Playwright 实跑+截图，不接受"代码看起来对"
   - **每条 BDD PASS 必须有独立证据**（截图、测试日志、Playwright trace 至少一种）
@@ -348,6 +349,8 @@ JWT httpOnly Cookie (`peekview_token`) + Bearer header + `pv_` API key. Priority
   - P6 不可裁剪——验收是质量最后防线。`no_behavior_change` 可简化 P6（快速验收），不可省略
 - **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告（`[SCOPE_GAP]`/✅ 仅供参考）
+- **P8 releaser 只产出文件**：不执行 git commit/tag/bump-version；主 Agent gate 通过后亲自执行 bump-version → commit + tag
+- **P5 全量测试建议**：建议跑全量测试套件；预存失败登记到 `known-failures.md`（模板：`~/.agate/assets/templates/known-failures-template.md`），WARNING 级不阻断
 - 微/小任务可裁剪阶段，但裁剪需写理由，P1 需求基线不可跳
 
 ## Essential Documentation

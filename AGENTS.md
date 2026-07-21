@@ -157,30 +157,33 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 
 **启动 Task 前必须完成环境自检**：`docs/process/env-check-protocol.md`（5 项全 PASS 才进 P1）
 
-非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。
+非平凡任务走 [agate](https://github.com/randomgitsrc/agate) 工作流（规则在 `~/.agate/`）。主 Agent 只做四件事：写P0-brief、派发 subagent、验 gate、更新状态。不亲自写代码或产出。派发前为每个 subagent 写 `P{N}-dispatch-context-{role}.md`（每个角色独立文件），AGATE_CARD 用 `agate-inject-card.sh` 注入，禁止手写。
 
 **阶段链 P0-P8（默认全走，裁剪须有理由）**：
 - **P0** 主 Agent 亲自写 `P0-brief.md`：任务简报 + 环境约束 + 已知风险 + 裁剪倾向
 - **P1** 需求基线：质疑需求、识别隐含依赖、BDD 验收条件（Given/When/Then）。评审不可裁（agent≠main）
 - **P2** 方案设计：**不可裁剪**。`design_trivial`/`follows_existing_pattern` 可简化（1 候选方案），不可省略
-- **P3** TDD 测试：默认保留，仅纯文档/配置或 ≤3 行且有现成覆盖时才跳
+- **P3** TDD 测试：默认保留，仅 risk=low 且满足以下之一时才跳：①配置类任务无可测试行为 ②≤3 行且有现成覆盖。medium/high risk 必须走 TDD 红灯
 - **P4** 代码实现
-- **P5** 技术验证：pytest 全绿 + 测试环境隔离正常
+- **P5** 技术验证：pytest 全绿 + 测试环境隔离正常。建议跑全量测试套件；预存失败登记到 `known-failures.md`（WARNING 级，不阻断推进）
 - **P6** 验收：**不可裁剪**。BDD 逐条实跑+证据；UI 必须 Playwright 实跑+截图。`no_behavior_change` 可简化，不可省略
 - **P7** 一致性检查（多文件改动时）
-- **P8** 发布准备：每个声明的 package 各自 bump + CHANGELOG
+- **P8** 发布准备：releaser 只产出文件（不 commit/tag）；主 Agent gate 通过后亲自 bump-version + commit + tag。版本/CHANGELOG 双路径检查（暂存区或最近 5 commit，WARNING 级）
 
 **关键约束**：
 - **gate 判定**：主 Agent 亲自跑命令，绝不信 subagent 自我报告
 - **[SCOPE+]**：任何阶段发现新隐含需求 → 增补 P1 基线 + 定向回补
 - **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **裁剪风险**：涉及 schema 变更/安全/多端 → P6 不可跳；「任务简单」不是合法裁剪理由
+- **机制交叉**：≥2 个子系统交互/时序依赖/跨层影响的改动必须走完整 agate，不可裁剪
+- **orchestrator-log 必写**：派发前写 NEXT、gate 失败写 GATE FAIL + DIAGNOSIS、subagent 失败写 SUBAGENT FAIL、流程决策写 DECISION——缺任一条视为不合规
 
 ## 详细参考
 
 - 完整配置和规范：`CLAUDE.md`
 - 前端设计系统：`DESIGN.md`
 - 开发流程：`~/.agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agate)）
+- 预存失败登记模板：`~/.agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `docs/tasks/{Txxx}/known-failures.md`）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
 - 改善清单：`docs/roadmap/improvement-backlog.md`
