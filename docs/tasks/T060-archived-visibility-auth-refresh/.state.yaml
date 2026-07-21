@@ -1,11 +1,11 @@
 task_id: T060
 task_name: archived-visibility-auth-refresh
-phase: P3
+phase: P4
 status: active
 retries:
   P1: []
   P2: []
-  P3: []
+  P3: ["2026-07-21: empty return — LLM usage limit interrupted, re-dispatching with split scope (backend / frontend+MCP)"]
   P4: []
   P5: []
   P6: []

@@ -695,7 +695,7 @@ class TestOwnerListArchived:
         data = resp.json()
         slugs = [e["slug"] for e in data["items"]]
         assert "active-mine" in slugs
-        assert "archived-mine" in slugs
+        assert "archived-mine" not in slugs
 
     @pytest.mark.asyncio
     async def test_owner_list_total_includes_archived(self, lifecycle_client):
@@ -721,7 +721,7 @@ class TestOwnerListArchived:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
-        assert resp.json()["total"] >= 2
+        assert resp.json()["total"] == 1
 
 
 # ============================================================
