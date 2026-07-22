@@ -8,3 +8,4 @@ SUBAGENT FAIL: architect 空返回（读完9文件后认知过载，P2-design.md
 DIAGNOSIS: 读完9文件后面对"写完整设计文档"推理复杂度过高 → FIX: 补输入导航，明确根因已确认、方案方向明确，不需要再分析根因
 NEXT: 派发 test-designer subagent 执行 P3 TDD 测试设计
 NEXT: 派发 implementer subagent 执行 P4 代码实现
+NEXT: 派发 verifier subagent 执行 P6 验收

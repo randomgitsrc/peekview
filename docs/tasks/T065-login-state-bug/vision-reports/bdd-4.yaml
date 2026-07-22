@@ -1,0 +1,12 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    total_checks: 1
+  bdd_results:
+    - id: BDD-4
+      status: pass
+      checks:
+        - description: "Check"
+          result: pass
+  anomalies: []
