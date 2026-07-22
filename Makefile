@@ -348,7 +348,7 @@ sync-version-docs:
 	@python3 scripts/sync_versions.py
 	@echo ""
 	@echo "提示：如需将更改加入暂存区："
-	@echo "  git add README.md CLAUDE.md AGENTS.md INDEX.md CHANGELOG.md docs/roadmap/improvement-backlog.md"
+	@echo "  git add README.md AGENTS.md INDEX.md CHANGELOG.md docs/roadmap/improvement-backlog.md"
 
 # 查看当前变更需要更新哪些文档
 doc-checklist:
@@ -654,7 +654,7 @@ check-docs:
 check-env-vars:
 	@echo "=== 检查环境变量命名 ==="
 	@grep -rE "PEEKVIEW_(DATA_DIR|DB_PATH|HOST|PORT|API_KEY|CORS_ORIGINS|ALLOWED_PATHS)" \
-	  README.md CLAUDE.md backend/README.md docs/ --include="*.md" 2>/dev/null | \
+	  README.md backend/README.md docs/ --include="*.md" 2>/dev/null | \
 	  grep -v "STORAGE__\|SERVER__\|CLEANUP__\|LIMITS__\|LOGGING__\|^[[:space:]]*#" | \
 	  grep -E "(\||\`).*PEEKVIEW_(DATA_DIR|DB_PATH|HOST|PORT)" | \
 	  head -20 | sed 's/^/  ⚠ /' || echo "  ✓ 未发现旧格式环境变量"

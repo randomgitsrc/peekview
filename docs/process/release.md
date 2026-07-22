@@ -233,9 +233,9 @@ make pre-publish-npm
 # 4. 手动发布到 npm
 make publish-npm
 
-# 5. 提交并推送 tag 触发 CI 自动发布
-git add -A && git commit -m "chore(mcp): bump to v0.3.0"
-git tag mcp-v0.3.0 && git push origin mcp-v0.3.0
+# 5. 推送 tag 触发 CI 自动发布
+# bump-mcp-version 已自动 commit + tag，只需 push
+git push origin main && git push origin --tags
 ```
 
 **CI 自动发布**：推送 `mcp-v*` tag 会触发 GitHub Actions，自动在 Node 18/20 并行测试后发布到 npm。
