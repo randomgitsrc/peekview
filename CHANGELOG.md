@@ -5,6 +5,25 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+## [0.10.0] - 2026-07-22
+
+### 新增
+
+- Explore 列表页卡片/列表项改为原生 `<a>` 链接，支持右键"在新标签页打开"和"复制链接地址" (T031)
+- 详情页并行加载：点击卡片后 entry 元数据和首个文件内容并发请求，减少等待时间 (T031)
+- Explore 列表页和详情页加载态骨架屏（grid/list 双模式），替代纯文本 Loading (T031)
+
+### 修复
+
+- 元信息行分隔符 `·` 在部分字体 fallback 下渲染为灰色方块，改用 UI 字体栈确保正常显示 (T031)
+
+### 变更
+
+- 搜索框 placeholder 统一为英文 "Search titles, tags & content..." (T031)
+- 首页导航按钮文案从 "Explore" 改为 "Browse public" (T031)
+
 ## [0.9.5] - 2026-07-22
 
 ### 修复
