@@ -78,19 +78,30 @@ export const useEntryStore = defineStore('entry', () => {
     }
   }
 
-  async function loadEntry(slug: string, shareToken?: string): Promise<void> {
+  async function loadEntry(slug: string, fileId?: number, shareToken?: string): Promise<void> {
     loading.value = true
     error.value = null
 
     try {
-      const entry = await api.getEntry(slug, shareToken)
-      currentEntry.value = entry
+      const entryPromise = api.getEntry(slug, shareToken)
+      const contentPromise = api.getFileContent(slug, fileId ?? 0).catch(() => null)
 
+      const [entry, content] = await Promise.all([entryPromise, contentPromise])
+      currentEntry.value = entry
       activeFile.value = null
       fileContent.value = ''
 
       if (entry.files.length > 0) {
-        await selectFile(entry.files[0])
+        const targetFile = fileId != null
+          ? entry.files.find(f => f.id === fileId) ?? entry.files[0]
+          : entry.files[0]
+        activeFile.value = targetFile
+        if (content != null) {
+          fileContent.value = content
+        } else if (!targetFile.isBinary) {
+          const actualContent = await api.getFileContent(slug, targetFile.id)
+          fileContent.value = actualContent
+        }
       }
     } catch (err: any) {
       if (shareToken) {

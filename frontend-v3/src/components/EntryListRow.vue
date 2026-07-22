@@ -1,27 +1,26 @@
 <template>
-  <div
+  <a
     class="entry-list-row"
     :class="{ 'entry-list-row--archived': entry.status === 'archived' }"
-    role="button"
-    tabindex="0"
-    @click="$emit('navigate', entry)"
-    @keydown.enter="$emit('navigate', entry)"
-    @keydown.space.prevent="$emit('navigate', entry)"
+    :href="'/' + entry.slug"
+    @click.prevent="$emit('navigate', entry)"
   >
     <div class="entry-content">
       <div class="entry-title">{{ entry.summary || entry.slug }}</div>
       <div class="entry-meta-row">
         <span class="entry-meta">
-          <router-link
+          <span
             v-if="entry.username"
-            :to="`/users/${entry.username}`"
             class="meta-username"
-            @click.stop
-          >@{{ entry.username }}</router-link>
-          <span v-if="entry.username" class="meta-sep"> · </span>
+            role="link"
+            tabindex="0"
+            @click.stop.prevent="navigateToUser"
+            @keydown.enter.stop.prevent="navigateToUser"
+          >@{{ entry.username }}</span>
+          <span v-if="entry.username" class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
           <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
           <template v-if="entry.fileCount">
-            <span class="meta-sep"> · </span>
+            <span class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
             <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
           </template>
         </span>
@@ -35,7 +34,7 @@
         <BaseBadge v-if="isExpiredButActive" status="expired" />
         <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
-      <div v-if="isOwner" class="entry-actions" @click.stop>
+      <div v-if="isOwner" class="entry-actions" @click.stop.prevent>
         <button
           type="button"
           class="action-btn visibility-btn"
@@ -57,11 +56,12 @@
       </div>
     </div>
     <slot name="actions" />
-  </div>
+  </a>
 </template>
 
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -82,6 +82,14 @@ defineEmits<{
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
+
+const router = useRouter()
+
+function navigateToUser() {
+  if (props.entry.username) {
+    router.push(`/users/${props.entry.username}`)
+  }
+}
 
 const visibleTags = computed(() => props.entry.tags)
 
@@ -157,6 +165,7 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 
 .meta-sep {
   color: var(--c-text-tertiary);
+  font-family: Inter, -apple-system, sans-serif;
 }
 
 .meta-time {

@@ -59,7 +59,7 @@
           <div class="explore-search">
             <SearchInput
               v-model="searchQuery"
-              placeholder="搜索标题、标签和文件内容..."
+              placeholder="Search titles, tags & content..."
               @keydown="onSearchKeydown"
               @clear="clearSearch"
             />
@@ -106,7 +106,19 @@
       </div>
 
       <div v-if="loading" class="loading-state" role="status" aria-live="polite">
-        <span>Loading...</span>
+        <div v-if="viewMode === 'grid'" class="entry-grid">
+          <div v-for="i in 6" :key="i" class="skeleton-card">
+            <div class="skeleton-bar skeleton-title"></div>
+            <div class="skeleton-bar skeleton-meta"></div>
+            <div class="skeleton-bar skeleton-tags"></div>
+          </div>
+        </div>
+        <div v-else class="entry-panel">
+          <div v-for="i in 6" :key="i" class="skeleton-row">
+            <div class="skeleton-bar skeleton-title"></div>
+            <div class="skeleton-bar skeleton-meta"></div>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="ownerFound === false && props.owner" class="user-not-found">
@@ -352,7 +364,12 @@ function clearOwnerFilter() {
 }
 
 function navigateToEntry(entry: Entry) {
-  router.push(`/${entry.slug}`)
+  const firstFileId = entry.files?.[0]?.id
+  if (firstFileId) {
+    router.push({ path: `/${entry.slug}`, query: { firstFileId: String(firstFileId) } })
+  } else {
+    router.push(`/${entry.slug}`)
+  }
 }
 
 function navigateToApiKeys() {
@@ -671,8 +688,53 @@ onBeforeRouteUpdate((to) => {
 
 .loading-state {
   text-align: center;
-  padding: var(--space-7);
+  padding: 0;
   color: var(--c-text-secondary);
+}
+
+.skeleton-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeleton-row {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.skeleton-bar {
+  border-radius: 6px;
+  background: var(--c-border);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-title {
+  height: 16px;
+  width: 70%;
+}
+
+.skeleton-meta {
+  height: 13px;
+  width: 45%;
+}
+
+.skeleton-tags {
+  height: 22px;
+  width: 55%;
+}
+
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .error-state {
@@ -859,6 +921,7 @@ onBeforeRouteUpdate((to) => {
 
 .footer-meta .separator {
   opacity: 0.5;
+  font-family: Inter, -apple-system, sans-serif;
 }
 
 .footer-meta .copyright {

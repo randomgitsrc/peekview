@@ -132,7 +132,13 @@
       <main class="content-area entry-content" tabindex="-1">
         <!-- Loading State -->
         <div v-if="entryStore.loading" class="loading-state">
-          <span>Loading...</span>
+          <div class="skeleton-header">
+            <div class="skeleton-bar skeleton-title-bar"></div>
+            <div class="skeleton-bar skeleton-meta-bar"></div>
+          </div>
+          <div class="skeleton-content">
+            <div class="skeleton-bar skeleton-content-block"></div>
+          </div>
         </div>
 
         <!-- Error State -->
@@ -703,12 +709,13 @@ function extractHeadings(content: string): TocHeading[] {
 
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined
+  const firstFileId = route.query.firstFileId ? Number(route.query.firstFileId) : undefined
   shareErrorState.value = false
-  await entryStore.loadEntry(props.slug, shareToken)
+  await entryStore.loadEntry(props.slug, firstFileId, shareToken)
   if (shareToken && !currentEntry.value && entryStore.error) {
     shareErrorState.value = true
   }
-  if (shareToken) {
+  if (firstFileId || shareToken) {
     router.replace({ path: route.path, query: {} })
   }
   document.addEventListener('keydown', handleZenKeydown)
@@ -936,5 +943,43 @@ watch(() => entryStore.currentEntry, async (entry) => {
   border-radius: 4px;
   padding: 1px 5px;
   font-size: 10px;
+}
+
+.loading-state {
+  padding: var(--space-5);
+}
+
+.skeleton-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.skeleton-bar {
+  border-radius: 6px;
+  background: var(--c-border);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-title-bar {
+  height: 24px;
+  width: 50%;
+}
+
+.skeleton-meta-bar {
+  height: 14px;
+  width: 35%;
+}
+
+.skeleton-content-block {
+  height: 300px;
+  width: 100%;
+}
+
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 </style>

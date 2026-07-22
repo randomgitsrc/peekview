@@ -1,6 +1,6 @@
 <template>
   <div class="entry-card" :class="{ 'entry-card--own': isOwner, 'entry-card--archived': entry.status === 'archived' }">
-    <div v-if="isOwner" class="card-actions" @click.stop>
+    <div v-if="isOwner" class="card-actions" @click.stop.prevent>
       <button
         type="button"
         class="card-action-btn"
@@ -18,26 +18,25 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
     </div>
-    <div
+    <a
       class="card-body"
-      role="button"
-      tabindex="0"
-      @click="$emit('navigate', entry)"
-      @keydown.enter="$emit('navigate', entry)"
-      @keydown.space.prevent="$emit('navigate', entry)"
+      :href="'/' + entry.slug"
+      @click.prevent="$emit('navigate', entry)"
     >
       <h3 class="card-title">{{ entry.summary || entry.slug }}</h3>
       <div class="card-meta-text">
-        <router-link
+        <span
           v-if="entry.username"
-          :to="`/users/${entry.username}`"
           class="meta-username"
-          @click.stop
-        >@{{ entry.username }}</router-link>
-        <span v-if="entry.username" class="meta-sep"> · </span>
+          role="link"
+          tabindex="0"
+          @click.stop.prevent="navigateToUser"
+          @keydown.enter.stop.prevent="navigateToUser"
+        >@{{ entry.username }}</span>
+        <span v-if="entry.username" class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
         <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
         <template v-if="entry.fileCount">
-          <span class="meta-sep"> · </span>
+          <span class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
           <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
         </template>
       </div>
@@ -50,12 +49,13 @@
         <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else :status="entry.isPublic ? 'public' : 'private'" />
       </div>
-    </div>
+    </a>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -76,6 +76,14 @@ defineEmits<{
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
+
+const router = useRouter()
+
+function navigateToUser() {
+  if (props.entry.username) {
+    router.push(`/users/${props.entry.username}`)
+  }
+}
 
 const TAG_LIMIT = 3
 
@@ -198,6 +206,7 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 
 .meta-sep {
   color: var(--c-text-tertiary);
+  font-family: Inter, -apple-system, sans-serif;
 }
 
 .meta-time {
