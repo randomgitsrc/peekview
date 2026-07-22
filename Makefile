@@ -4,7 +4,7 @@
 # Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
 # Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-build debug-start debug-stop debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target
 help:
@@ -512,6 +512,12 @@ debug-start:
 	@echo ""
 	@echo "→ 等待服务稳定..."
 	@sleep 2
+
+debug-seed:
+	@echo ""
+	@echo "=== 灌入测试数据 ==="
+	@python3 scripts/seed-debug.py
+	@echo "✓ 测试数据已灌入 (alice/bob/carol, password: testpass123)"
 
 debug-verify-isolation:
 	@echo ""

@@ -95,12 +95,15 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 ```
 make build-frontend          # 1. 前端构建 → static/（改了前端必须跑，改了后端可跳）
 make debug-start              # 2. 启动 :8888 调试服务（自动用 .venv Python）
-make debug-verify-isolation   # 3. 验证数据隔离（依赖 :8080 在线；不在线就用 sqlite3 /tmp/peekview-debug/peekview.db 手动查）
-make debug-test               # 4. E2E 测试（或指定单个 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
-make debug-stop               # 5. 停止 + 清理 /tmp/peekview-debug/
+make debug-seed               # 3. 灌入测试数据（3 用户 + 9 条目：公开/私有/归档/多文件）
+make debug-verify-isolation   # 4. 验证数据隔离（依赖 :8080 在线；不在线就用 sqlite3 /tmp/peekview-debug/peekview.db 手动查）
+make debug-test               # 5. E2E 测试（或指定单个 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
+make debug-stop               # 6. 停止 + 清理 /tmp/peekview-debug/
 ```
 
 一键版：`make debug`（= build + start + verify-isolation + test + test-mcp）
+
+测试数据：`make debug-seed` 创建 alice/bob/carol（密码 testpass123）+ 9 个条目（公开 ×6、私有 ×2、归档 ×1），含 Python/Vue/K8s/Mermaid/PlantUML/SQLite/多文件模板等不同类型
 
 ## 发布流程
 
