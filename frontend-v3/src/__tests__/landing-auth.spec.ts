@@ -89,7 +89,7 @@ describe('T065: LandingView auth state bugs', () => {
         user: null,
       })
 
-      const signInBtn = wrapper.find('.nav-cta button.btn-ghost')
+      const signInBtn = wrapper.find('.nav-cta .btn-primary')
       expect(signInBtn.exists()).toBe(true)
       expect(signInBtn.text()).toContain('Sign in')
     })
@@ -102,7 +102,7 @@ describe('T065: LandingView auth state bugs', () => {
         user: mockUser,
       })
 
-      const signInBtn = wrapper.find('.nav-cta button.btn-ghost')
+      const signInBtn = wrapper.find('.nav-cta .btn-primary')
       expect(signInBtn.exists()).toBe(false)
     })
   })
@@ -158,7 +158,7 @@ describe('T065: LandingView auth state bugs', () => {
         user: null,
       })
 
-      const signInBtn = wrapper.find('.nav-cta button.btn-ghost')
+      const signInBtn = wrapper.find('.nav-cta .btn-primary')
       expect(signInBtn.exists()).toBe(false)
     })
   })

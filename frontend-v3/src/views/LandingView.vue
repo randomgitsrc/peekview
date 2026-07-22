@@ -17,7 +17,7 @@
         </div>
         <div class="nav-cta">
           <template v-if="authState === 'anonymous'">
-            <button class="btn btn-ghost btn-sm" @click="showLogin = true">Sign in</button>
+            <BaseButton variant="primary" size="small" @click="showLogin = true">Sign in</BaseButton>
           </template>
           <template v-else-if="authState === 'authenticated'">
             <div class="user-menu-wrapper">
@@ -197,6 +197,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import BaseButton from '@/components/BaseButton.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

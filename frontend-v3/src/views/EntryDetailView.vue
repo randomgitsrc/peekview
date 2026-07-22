@@ -2,18 +2,28 @@
   <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Mobile sticky header -->
-    <div v-if="isMobile" class="mobile-sticky-header">
+    <div v-if="isMobile" v-show="!zenMode" class="mobile-sticky-header">
       <router-link to="/" class="back-btn" aria-label="Back">
         <ChevronLeftIcon :size="20" />
       </router-link>
+      <span class="sticky-brand">PeekView</span>
       <span class="sticky-title">{{ entryTitle }}</span>
+      <button
+        v-if="authState === 'anonymous'"
+        class="mobile-signin-btn"
+        @click="showLogin = true"
+      >
+        <LogInIcon :size="14" class="signin-icon" />
+        <span class="signin-label">Sign in</span>
+      </button>
     </div>
 
     <!-- Desktop/Tablet header -->
-    <header v-if="isDesktop" class="detail-header">
+    <header v-if="isDesktop" v-show="!zenMode" class="detail-header">
       <div class="title-row">
         <router-link to="/" class="detail-logo" title="Back to home">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="detail-logo-word">PeekView</span>
         </router-link>
         <div class="title-group">
           <h1 class="title">{{ entryTitle }}</h1>
@@ -69,6 +79,16 @@
           />
           <span class="action-sep"></span>
           <OverflowMenu :items="overflowItems" variant="dropdown" />
+          <BaseButton
+            v-if="authState === 'anonymous'"
+            variant="primary"
+            size="small"
+            @click="showLogin = true"
+          >Sign in</BaseButton>
+          <router-link to="/explore" class="icon-btn" title="Explore">
+            <CompassIcon :size="16" />
+            <span class="tooltip">Explore</span>
+          </router-link>
           <ThemeToggle />
         </div>
       </div>
@@ -220,7 +240,7 @@
       <span class="meta-dot"></span>
       <span>{{ relativeTime }}</span>
       <span class="meta-sep"></span>
-      <span>{{ currentEntry?.readStats?.totalCount ?? 0 }} reads</span>
+      <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
       <span class="meta-dot"></span>
       <span :class="['status-tag', entryStore.currentEntry?.isPublic ? 'public' : 'private']">
         {{ entryStore.currentEntry?.isPublic ? 'Public' : 'Private' }}
@@ -232,11 +252,14 @@
     </div>
 
     <!-- Mobile bottom bar -->
-    <div v-if="isMobile && entryStore.currentEntry" class="mobile-bottom-bar">
+    <div v-if="isMobile && entryStore.currentEntry" v-show="!zenMode" class="mobile-bottom-bar">
       <button v-if="entryStore.isMultiFile" class="files-btn" @click="showFileDrawer = true" aria-label="Files">
-        <FolderIcon :size="14" /> Files <span class="badge">{{ currentEntry?.files.length ?? 0 }}</span>
+        <FolderIcon :size="14" /> <span class="badge">{{ currentEntry?.files.length ?? 0 }}</span> files
       </button>
       <div class="flex-spacer"></div>
+      <router-link to="/explore" class="bottom-btn" aria-label="Explore">
+        <CompassIcon :size="14" /> Explore
+      </router-link>
       <template v-if="isMarkdown && tocHeadings.length > 0">
         <button class="bottom-btn primary" @click="showTocDrawer = true" aria-label="Table of Contents">
           <ListIcon :size="14" /> TOC
@@ -315,6 +338,9 @@
       @updated="handleExpiresInUpdated"
     />
 
+    <!-- Login Dialog -->
+    <LoginDialog v-model:visible="showLogin" :allow-registration="true" />
+
     <!-- Share watermark (non-owner share access only) -->
     <div v-if="isShareAccess" class="share-watermark">
       Shared by @{{ currentEntry?.shareContext?.sharedBy }}
@@ -348,6 +374,8 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ShareDialog from '@/components/ShareDialog.vue'
 import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
+import BaseButton from '@/components/BaseButton.vue'
 import { useShareStore } from '@/stores/share'
 import type { ShareInfo } from '@/types'
 import type { TocHeading } from '@/types'
@@ -357,6 +385,8 @@ import {
   List as ListIcon,
   Copy as CopyIcon,
   Share2 as Share2Icon,
+  Compass as CompassIcon,
+  LogIn as LogInIcon,
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -370,6 +400,9 @@ const authStore = useAuthStore()
 const shareStore = useShareStore()
 const toast = useToast()
 const { currentEntry, activeFile } = storeToRefs(entryStore)
+const { authState } = storeToRefs(authStore)
+
+const showLogin = ref(false)
 
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)

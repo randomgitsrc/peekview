@@ -24,9 +24,21 @@
 .detail-header .detail-logo {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   flex-shrink: 0;
   align-self: center;
   text-decoration: none;
+}
+
+.detail-logo-word {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+}
+
+.detail-logo:hover .detail-logo-word {
+  color: var(--c-accent);
 }
 
 .detail-header .detail-logo:hover {
@@ -347,6 +359,40 @@
   font-weight: 600;
 }
 
+.sticky-brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+  flex-shrink: 0;
+}
+
+.mobile-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.mobile-signin-btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 380px) {
+  .mobile-signin-btn .signin-label {
+    display: none;
+  }
+}
+
 .meta-tags-bar {
   display: flex;
   align-items: center;
@@ -564,7 +610,9 @@
 .zen-mode .detail-header,
 .zen-mode .file-sidebar,
 .zen-mode .toc-sidebar,
-.zen-mode .mobile-actions {
+.zen-mode .mobile-actions,
+.zen-mode .mobile-sticky-header,
+.zen-mode .mobile-bottom-bar {
   display: none;
 }
 
