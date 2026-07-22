@@ -95,7 +95,7 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 ```
 make build-frontend          # 1. 前端构建 → static/（改了前端必须跑，改了后端可跳）
 make debug-start              # 2. 启动 :8888 调试服务（自动用 .venv Python）
-make debug-seed               # 3. 灌入测试数据（3 用户 + 9 条目：公开/私有/归档/多文件）
+make debug-seed               # 3. 灌入测试数据（3 用户 + 12 条目：公开/私有/归档/多文件）
 make debug-verify-isolation   # 4. 验证数据隔离（依赖 :8080 在线；不在线就用 sqlite3 /tmp/peekview-debug/peekview.db 手动查）
 make debug-test               # 5. E2E 测试（或指定单个 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
 make debug-stop               # 6. 停止 + 清理 /tmp/peekview-debug/
