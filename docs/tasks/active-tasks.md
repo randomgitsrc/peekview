@@ -33,8 +33,9 @@
 | T063 | task-category-field | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
 | T064 | storage-backend-abstraction | ⬜ 待开始 | P0 | 🟡 | 商业化决策 | 2026-07-21 | 2026-07-21 |
 | T065 | login-state-bug | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-22 | 2026-07-22 |
-| T066 | explore-card-display-config | ⬜ 待开始 | P0 | 🟠 | T031 | 2026-07-22 | 2026-07-22 |
+| T066 | explore-card-display-config | ⏸️ Deferred | P0 | 🟠 | T031 | 2026-07-22 | 2026-07-22 |
 | T067 | detail-page-framework | ⬜ 待开始 | P0 | 🟠 | T065 | 2026-07-22 | 2026-07-22 |
+| T068 | account-settings | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-22 | 2026-07-22 |
 
 ### 已完成
 
@@ -259,6 +260,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-22 | P0 审计纠正 + T066 deferred + T068 立项 | 代码核查纠正 brief 错误断言：T065 删"T060 回归"（watcher predates T060，LandingView:19 Sign in 无 authState 绑定是既有缺口）/ T067 收窄"无品牌/无tooltip"（桌面已有 logo+tooltip，真缺口是 Sign in/字标/导航/移动端）/ T066 发现 summary=标题术语冲突+reads 需后端→范围方向反→defer backlog / T068 account-settings 立项（Profile+改密码+API Keys hub，暴露 T011 已有后端能力，新增 PATCH /auth/me）|
 | 2026-07-22 | 创建 T065/T066/T067 + 重写 T031 | 冷打开审计后续拆分：T065 登录状态 bug（疑似 T060 回归）/ T066 卡片显示站点级配置（照抄 PeekDiagram）/ T067 详情页框架（品牌条+Sign in 绑定）；T031 重写为 explore 性能+交互（并行加载+卡片真链接+显示打磨）。执行顺序 T065→T031→T066→T067 |
 | 2026-07-09 | 创建 T051 | T048 生命周期缺口修复（定时清理/archived筛选/过期警告） |
 | 2026-07-08 | 创建 T050 | T049 问题归零修复（config_get bug + 规则系统补充 + 移动端 header 布局） |
