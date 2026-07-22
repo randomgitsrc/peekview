@@ -75,9 +75,9 @@ class TestListShares:
         """B20: Owner lists all shares (active, expired, revoked) for own entry."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="list-shares")
+        await _create_private_entry(client, alice["access_token"], slug="list-shares")
 
-        active = await _create_share(client, alice["access_token"], "list-shares", expires_in="7d")
+        await _create_share(client, alice["access_token"], "list-shares", expires_in="7d")
         expired = await _create_share(client, alice["access_token"], "list-shares", expires_in="1h")
         revoked = await _create_share(client, alice["access_token"], "list-shares", expires_in="30d")
 

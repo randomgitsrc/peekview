@@ -7,12 +7,10 @@ Each test maps to a BDD acceptance condition from P1-requirements.md.
 """
 
 import hashlib
-import io
 import json
 import tarfile
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner

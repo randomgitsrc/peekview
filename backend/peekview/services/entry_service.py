@@ -92,7 +92,7 @@ class EntryService:
                 return
 
             files = session.exec(
-                select(File).where(File.entry_id == entry_id, File.is_binary == False)
+                select(File).where(File.entry_id == entry_id, not File.is_binary)
             ).all()
 
             content_parts: list[str] = []
@@ -442,14 +442,14 @@ class EntryService:
             if is_admin:
                 pass
             elif current_user_id is None:
-                query = query.where(Entry.is_public == True)
-                count_query = count_query.where(Entry.is_public == True)
+                query = query.where(Entry.is_public)
+                count_query = count_query.where(Entry.is_public)
             else:
                 query = query.where(
-                    (Entry.is_public == True) | (Entry.owner_id == current_user_id)
+                    (Entry.is_public) | (Entry.owner_id == current_user_id)
                 )
                 count_query = count_query.where(
-                    (Entry.is_public == True) | (Entry.owner_id == current_user_id)
+                    (Entry.is_public) | (Entry.owner_id == current_user_id)
                 )
 
             # Tags filter (JSON array — use LIKE for SQLite JSON compatibility)

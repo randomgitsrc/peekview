@@ -82,7 +82,7 @@ class TestShareCookieSetting:
         """B17: Valid share token sets peekview_share_{slug} cookie."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="cookie-test")
+        await _create_private_entry(client, alice["access_token"], slug="cookie-test")
         token = await _get_share_token(client, alice["access_token"], "cookie-test")
 
         client.cookies.clear()
@@ -107,7 +107,7 @@ class TestShareCookieSetting:
         """B17 variant: Permanent share cookie has large Max-Age (not session cookie)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="permanent-cookie")
+        await _create_private_entry(client, alice["access_token"], slug="permanent-cookie")
         token = await _get_share_token(client, alice["access_token"], "permanent-cookie", expires_in="0")
 
         client.cookies.clear()
@@ -129,7 +129,7 @@ class TestShareCookieAccess:
         """B18: Share cookie enables subsequent access without ?share= param."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="cookie-access",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
@@ -147,7 +147,7 @@ class TestShareCookieAccess:
         """B18 variant: Cookie enables entry detail access (no ?share=)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="cookie-entry")
+        await _create_private_entry(client, alice["access_token"], slug="cookie-entry")
         token = await _get_share_token(client, alice["access_token"], "cookie-entry")
 
         client.cookies.clear()
@@ -168,7 +168,7 @@ class TestShareCookieRevocation:
         """B19: Revoked share cookie returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="revoked-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
@@ -193,7 +193,7 @@ class TestShareCookieRevocation:
         """B19 variant: Expired share cookie returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="expired-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
@@ -218,7 +218,7 @@ class TestShareCookieRevocation:
         """B19 variant: Cookie with exceeded max_views returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="maxviews-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )

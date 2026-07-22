@@ -4,14 +4,14 @@ Two-phase lifecycle: active → archived → permanent deletion.
 PATCH expires_in for renewal/reactivation. Archived access control.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
 from peekview.main import create_app
-from peekview.models import Entry, EntryStatus, User
-from peekview.services.admin_service import AdminService
+from peekview.models import Entry, User
 
 
 @pytest.fixture
@@ -620,7 +620,7 @@ class TestArchivedAccessControl:
 
     @pytest.mark.asyncio
     async def test_non_owner_get_archived_entry_404(self, lifecycle_client):
-        owner_token = await _register_user(lifecycle_client, "owner-b7c")
+        await _register_user(lifecycle_client, "owner-b7c")
         other_token = await _register_user(lifecycle_client, "other-b7c")
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:

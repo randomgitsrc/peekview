@@ -126,12 +126,12 @@ class AdminService:
             result = session.exec(
                 select(
                     func.count(Entry.id).label("total"),
-                    func.count(case((Entry.is_public == True, 1))).label("public"),
-                    func.count(case((Entry.is_public == False, 1))).label("private"),
+                    func.count(case((Entry.is_public, 1))).label("public"),
+                    func.count(case((not Entry.is_public, 1))).label("private"),
                     func.count(
                         case(
                             (
-                                (Entry.expires_at != None)
+                                (Entry.expires_at is not None)
                                 & (Entry.expires_at <= now_naive),
                                 1,
                             ),
@@ -152,7 +152,7 @@ class AdminService:
             key_total = session.exec(select(func.count(ApiKey.id))).one()
             key_expired = session.exec(
                 select(func.count(ApiKey.id)).where(
-                    ApiKey.expires_at != None,
+                    ApiKey.expires_at is not None,
                     ApiKey.expires_at <= now_naive,
                 )
             ).one()
@@ -192,7 +192,7 @@ class AdminService:
         with Session(self.engine) as session:
             expired = session.exec(
                 select(Entry).where(
-                    Entry.expires_at != None,
+                    Entry.expires_at is not None,
                     Entry.expires_at <= now_naive,
                     Entry.status == "active",
                 )
@@ -216,7 +216,7 @@ class AdminService:
                 old_archived = session.exec(
                     select(Entry).where(
                         Entry.status == "archived",
-                        Entry.archived_at != None,
+                        Entry.archived_at is not None,
                         Entry.archived_at <= cutoff,
                     )
                 ).all()
@@ -229,7 +229,7 @@ class AdminService:
             engine=self.engine, storage=self.storage, config=self.config
         )
 
-        for slug, entry_id, size_bytes in to_delete:
+        for slug, _entry_id, size_bytes in to_delete:
             try:
                 entry_service.delete_entry_by_api_key(slug)
                 deleted_slugs.append(slug)

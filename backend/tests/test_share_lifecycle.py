@@ -157,7 +157,7 @@ class TestShareLifecycle:
         alice = await _register(client, "alice")
         await _create_private_entry(client, alice["access_token"], slug="cascade-delete")
 
-        for i in range(5):
+        for _i in range(5):
             await _create_share(client, alice["access_token"], "cascade-delete")
 
         engine = app.state.engine
@@ -216,7 +216,7 @@ class TestShareLifecycle:
         """Implicit: view_count only increments on ?share= access, not cookie-based access."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="cookie-count",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )

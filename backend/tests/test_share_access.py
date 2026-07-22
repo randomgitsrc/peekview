@@ -83,7 +83,7 @@ class TestShareTokenAccess:
         """B07: Valid share token grants access to private entry."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="shared-private")
+        await _create_private_entry(client, alice["access_token"], slug="shared-private")
         token = await _get_share_token(client, alice["access_token"], "shared-private")
 
         client.cookies.clear()
@@ -105,7 +105,7 @@ class TestShareTokenAccess:
         """B08: Expired share token returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="expired-share")
+        await _create_private_entry(client, alice["access_token"], slug="expired-share")
         token = await _get_share_token(client, alice["access_token"], "expired-share", expires_in="1h")
 
         engine = app.state.engine
@@ -123,7 +123,7 @@ class TestShareTokenAccess:
         """B09: Revoked share token returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="revoked-share")
+        await _create_private_entry(client, alice["access_token"], slug="revoked-share")
         token = await _get_share_token(client, alice["access_token"], "revoked-share")
 
         engine = app.state.engine
@@ -141,7 +141,7 @@ class TestShareTokenAccess:
         """B10: Share token exceeding max_views returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="max-views-share")
+        await _create_private_entry(client, alice["access_token"], slug="max-views-share")
         token = await _get_share_token(client, alice["access_token"], "max-views-share", max_views=5)
 
         engine = app.state.engine
@@ -159,7 +159,7 @@ class TestShareTokenAccess:
         """B11: Share token does not grant access to expired entry."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="expired-entry-share")
+        await _create_private_entry(client, alice["access_token"], slug="expired-entry-share")
         token = await _get_share_token(client, alice["access_token"], "expired-entry-share")
 
         engine = app.state.engine
@@ -178,7 +178,7 @@ class TestShareTokenAccess:
         """B12: Invalid (wrong) share token returns 404."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="wrong-token")
+        await _create_private_entry(client, alice["access_token"], slug="wrong-token")
         await _get_share_token(client, alice["access_token"], "wrong-token")
 
         client.cookies.clear()
@@ -216,7 +216,7 @@ class TestShareSubResourceAccess:
         """B14: Share cookie grants access to HTML render."""
         client, app = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(
+        await _create_private_entry(
             client, alice["access_token"], slug="html-share",
             files=[{"filename": "page.html", "content": "<h1>Hello</h1>"}],
         )
@@ -265,7 +265,7 @@ class TestShareAuthPriority:
         """Implicit: Owner accessing own entry via share link sees full view (no share_context)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
-        entry = await _create_private_entry(client, alice["access_token"], slug="owner-share")
+        await _create_private_entry(client, alice["access_token"], slug="owner-share")
         token = await _get_share_token(client, alice["access_token"], "owner-share")
 
         resp = await client.get(
@@ -281,7 +281,7 @@ class TestShareAuthPriority:
         client, _ = client_and_app
         admin = await _register(client, "admin_user")
         bob = await _register(client, "bob")
-        entry = await _create_private_entry(client, bob["access_token"], slug="admin-share")
+        await _create_private_entry(client, bob["access_token"], slug="admin-share")
         token = await _get_share_token(client, bob["access_token"], "admin-share")
 
         resp = await client.get(

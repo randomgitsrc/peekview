@@ -12,18 +12,16 @@ BDD-8: Empty entry search unaffected
 
 import pytest
 from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import Session
 
-from peekview.config import PeekLimits, PeekServer, PeekStorage
-from peekview.config import PeekConfig
+from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
 from peekview.database import (
     FTS_CONTENT_TRUNCATE,
     backfill_fts_content,
     init_db,
     rebuild_fts_index,
-    search_entries,
 )
-from peekview.models import Entry, File
+from peekview.models import Entry
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
 

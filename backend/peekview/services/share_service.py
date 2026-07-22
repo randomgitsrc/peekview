@@ -68,7 +68,7 @@ class ShareService:
             active_count = session.exec(
                 select(func.count()).select_from(EntryShare).where(
                     EntryShare.entry_id == entry.id,
-                    EntryShare.revoked_at == None,  # noqa: E711
+                    EntryShare.revoked_at is None,
                 )
             ).one()
             if active_count >= MAX_SHARES_PER_ENTRY:
@@ -176,7 +176,7 @@ class ShareService:
                 select(EntryShare).where(
                     EntryShare.entry_id == entry.id,
                     EntryShare.id.in_(share_ids),
-                    EntryShare.revoked_at == None,  # noqa: E711
+                    EntryShare.revoked_at is None,
                 )
             ).all()
 
@@ -198,7 +198,7 @@ class ShareService:
             share = session.exec(
                 select(EntryShare).where(
                     EntryShare.token_hash == computed_hash,
-                    EntryShare.revoked_at == None,  # noqa: E711
+                    EntryShare.revoked_at is None,
                 )
             ).first()
 
@@ -220,7 +220,7 @@ class ShareService:
 
             stmt = (
                 update(EntryShare)
-                .where(EntryShare.id == share.id, EntryShare.revoked_at == None)  # noqa: E711
+                .where(EntryShare.id == share.id, EntryShare.revoked_at is None)
                 .values(view_count=EntryShare.view_count + 1)
             )
             session.exec(stmt)
@@ -241,7 +241,7 @@ class ShareService:
                 select(EntryShare).where(
                     EntryShare.entry_id == entry_id,
                     EntryShare.token_prefix == token_prefix,
-                    EntryShare.revoked_at == None,  # noqa: E711
+                    EntryShare.revoked_at is None,
                 )
             ).first()
 
@@ -264,7 +264,7 @@ class ShareService:
             active_shares = s.exec(
                 select(EntryShare).where(
                     EntryShare.entry_id == entry_id,
-                    EntryShare.revoked_at == None,  # noqa: E711
+                    EntryShare.revoked_at is None,
                 )
             ).all()
             for share in active_shares:

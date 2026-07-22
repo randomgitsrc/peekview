@@ -934,7 +934,7 @@ def _install_systemd_service(user_mode: bool, force: bool) -> None:
     """Install systemd service on Linux."""
     import getpass
 
-    config = PeekConfig()
+    PeekConfig()
     peekview_path = subprocess.run(["which", "peekview"], capture_output=True, text=True).stdout.strip()
 
     if not peekview_path:

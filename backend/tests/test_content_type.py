@@ -7,7 +7,6 @@ Expected failure: ImportError when importing _determine_content_type from peekvi
 from __future__ import annotations
 
 import pytest
-from sqlmodel import Session
 
 from peekview.api.files import _determine_content_type
 from peekview.models import File
@@ -118,9 +117,10 @@ class TestDetermineContentTypeThreeLevelFallback:
 class TestContentEndpointContentType:
     @pytest.fixture
     async def _setup_entry_with_file(self, client, tmp_path):
-        from peekview.main import create_app
+
         from httpx import ASGITransport, AsyncClient
-        import shutil
+
+        from peekview.main import create_app
 
         data_dir = tmp_path / "data"
         data_dir.mkdir(exist_ok=True)

@@ -4,8 +4,9 @@ Covers default archived exclusion for owner/admin/anonymous, plus
 explicit status=archived filtering and status parameter validation.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, select
 
@@ -284,7 +285,7 @@ class TestAdminArchived:
             )
 
         # User 2: 1 active + 1 archived
-        token2 = await _register_user(lifecycle_client, "user-a4")
+        await _register_user(lifecycle_client, "user-a4")
         with Session(engine) as session:
             user2 = session.exec(select(User).where(User.username == "user-a4")).first()
             _create_entry_direct(
@@ -333,7 +334,7 @@ class TestAdminArchived:
                 is_public=True,
             )
 
-        token2 = await _register_user(lifecycle_client, "user-a5")
+        await _register_user(lifecycle_client, "user-a5")
         with Session(engine) as session:
             user2 = session.exec(select(User).where(User.username == "user-a5")).first()
             _create_entry_direct(
@@ -415,7 +416,7 @@ class TestNonOwnerArchived:
 
     @pytest.mark.asyncio
     async def test_non_owner_cannot_see_others_archived_in_all_tab(self, lifecycle_client):
-        token_a = await _register_user(lifecycle_client, "user-a7-a")
+        await _register_user(lifecycle_client, "user-a7-a")
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             user_a = session.exec(select(User).where(User.username == "user-a7-a")).first()
@@ -446,7 +447,7 @@ class TestNonOwnerArchived:
 
     @pytest.mark.asyncio
     async def test_non_owner_cannot_see_others_archived_in_archived_tab(self, lifecycle_client):
-        token_a = await _register_user(lifecycle_client, "user-a7c-a")
+        await _register_user(lifecycle_client, "user-a7c-a")
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             user_a = session.exec(select(User).where(User.username == "user-a7c-a")).first()

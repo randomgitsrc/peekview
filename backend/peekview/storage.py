@@ -77,7 +77,7 @@ def get_disk_path(
     except ValueError:
         raise ForbiddenPathError(
             f"Path escapes entry directory: {file_path or filename}"
-        )
+        ) from None
 
     return target
 
@@ -114,7 +114,7 @@ def validate_local_path(
     try:
         resolved = original.resolve()
     except (OSError, RuntimeError) as e:
-        raise ForbiddenPathError(f"Cannot resolve path: {local_path} ({e})")
+        raise ForbiddenPathError(f"Cannot resolve path: {local_path} ({e})") from e
 
     # SECURITY: Check allowlist (v2 fix #2) - uses data_dir as fallback if allowed_paths empty
     if not config.is_local_path_allowed(resolved):
@@ -164,7 +164,7 @@ def write_file_atomic(
     try:
         target_path.parent.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise StorageError(f"Cannot create directory: {target_path.parent} ({e})")
+        raise StorageError(f"Cannot create directory: {target_path.parent} ({e})") from e
 
     # Use temp file in same directory for atomic rename
     temp_fd = None
@@ -199,7 +199,7 @@ def write_file_atomic(
                 temp_path.unlink()
             except OSError:
                 pass
-        raise StorageError(f"Failed to write file: {target_path} ({e})")
+        raise StorageError(f"Failed to write file: {target_path} ({e})") from e
 
     logger.debug(f"Wrote {len(content)} bytes to {target_path}")
 
@@ -229,7 +229,7 @@ def read_file_content(path: Path, max_size: int | None = None) -> bytes:
         return path.read_bytes()
 
     except OSError as e:
-        raise StorageError(f"Failed to read file: {path} ({e})")
+        raise StorageError(f"Failed to read file: {path} ({e})") from e
 
 
 def store_content(
@@ -312,7 +312,7 @@ def delete_entry_files(config: PeekConfig, entry_id: int) -> None:
             logger.info(f"Deleted entry directory: {entry_dir}")
         except OSError as e:
             logger.error(f"Failed to delete entry directory: {entry_dir} ({e})")
-            raise StorageError(f"Failed to delete entry files: {e}")
+            raise StorageError(f"Failed to delete entry files: {e}") from e
 
 
 def read_entry_file(

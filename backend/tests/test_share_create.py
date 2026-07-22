@@ -86,7 +86,7 @@ class TestCreateShare:
         """B01: Owner creates share with default 7d expiry, unlimited views."""
         client, app = client_and_app
         auth = await _register(client, "alice")
-        entry = await _create_private_entry(client, auth["access_token"], slug="my-private")
+        await _create_private_entry(client, auth["access_token"], slug="my-private")
 
         resp = await _create_share(client, auth["access_token"], "my-private")
         assert resp.status_code == 201, f"Expected 201, got {resp.status_code}: {resp.text}"
@@ -125,7 +125,7 @@ class TestCreateShare:
         """B01 variant: 1h expiry."""
         client, _ = client_and_app
         auth = await _register(client, "alice")
-        entry = await _create_private_entry(client, auth["access_token"], slug="one-hour")
+        await _create_private_entry(client, auth["access_token"], slug="one-hour")
 
         resp = await _create_share(client, auth["access_token"], "one-hour", expires_in="1h")
         assert resp.status_code == 201
@@ -142,7 +142,7 @@ class TestCreateShare:
         """B01 variant: max_views=10."""
         client, _ = client_and_app
         auth = await _register(client, "alice")
-        entry = await _create_private_entry(client, auth["access_token"], slug="limited-views")
+        await _create_private_entry(client, auth["access_token"], slug="limited-views")
 
         resp = await _create_share(client, auth["access_token"], "limited-views", max_views=10)
         assert resp.status_code == 201
@@ -153,7 +153,7 @@ class TestCreateShare:
         """B01 variant: expires_in='0' means permanent (no expiry)."""
         client, _ = client_and_app
         auth = await _register(client, "alice")
-        entry = await _create_private_entry(client, auth["access_token"], slug="permanent")
+        await _create_private_entry(client, auth["access_token"], slug="permanent")
 
         resp = await _create_share(client, auth["access_token"], "permanent", expires_in="0")
         assert resp.status_code == 201
@@ -200,7 +200,7 @@ class TestCreateSharePermission:
         """B05: Cannot create share for expired entry."""
         client, app = client_and_app
         auth = await _register(client, "alice")
-        entry = await _create_private_entry(client, auth["access_token"], slug="expired-entry")
+        await _create_private_entry(client, auth["access_token"], slug="expired-entry")
 
         engine = app.state.engine
         with Session(engine) as session:

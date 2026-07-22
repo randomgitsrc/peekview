@@ -105,7 +105,7 @@ class TestShareSecurity:
         import secrets as secrets_module
 
         with patch.object(secrets_module, "token_urlsafe", wraps=secrets_module.token_urlsafe) as mock_gen:
-            data = await _create_share(client, alice["access_token"], "csprng-test")
+            await _create_share(client, alice["access_token"], "csprng-test")
 
             mock_gen.assert_called()
             call_args = mock_gen.call_args_list

@@ -70,14 +70,14 @@ class TestServeCommand:
     @patch("uvicorn.run")
     def test_serve_basic(self, mock_uvicorn, runner):
         """Basic serve command should start uvicorn."""
-        result = runner.invoke(cli, ["serve"])
+        runner.invoke(cli, ["serve"])
         # Should call uvicorn.run
         assert mock_uvicorn.called
 
     @patch("uvicorn.run")
     def test_serve_with_host_port(self, mock_uvicorn, runner):
         """Serve with custom host and port."""
-        result = runner.invoke(cli, ["serve", "-h", "0.0.0.0", "-p", "3000"])
+        runner.invoke(cli, ["serve", "-h", "0.0.0.0", "-p", "3000"])
         assert mock_uvicorn.called
         call_kwargs = mock_uvicorn.call_args[1]
         assert call_kwargs["host"] == "0.0.0.0"
@@ -86,7 +86,7 @@ class TestServeCommand:
     @patch("uvicorn.run")
     def test_serve_reload_mode(self, mock_uvicorn, runner):
         """Serve with reload flag."""
-        result = runner.invoke(cli, ["serve", "--reload"])
+        runner.invoke(cli, ["serve", "--reload"])
         assert mock_uvicorn.called
         assert mock_uvicorn.call_args[1]["reload"] is True
 
@@ -552,7 +552,7 @@ class TestServiceInstallNoEnvVars:
     def test_service_install_no_host_port_in_env(self, mock_install, runner, isolated_fs):
         """service install should not pass host/port/data_dir to service file."""
         with patch("platform.system", return_value="Linux"):
-            result = runner.invoke(cli, ["service", "install", "--user"])
+            runner.invoke(cli, ["service", "install", "--user"])
             assert mock_install.called
             call_args = mock_install.call_args
             # Should only pass user_mode and force
@@ -570,7 +570,7 @@ class TestServiceInstallWithConfig:
         runner.invoke(cli, ["config", "set", "server.port", "3000"])
         # Install service
         with patch("platform.system", return_value="Linux"):
-            result = runner.invoke(cli, ["service", "install", "--user"])
+            runner.invoke(cli, ["service", "install", "--user"])
             # Should call _install_systemd_service with just user_mode and force
             assert mock_install.called
             call_args = mock_install.call_args

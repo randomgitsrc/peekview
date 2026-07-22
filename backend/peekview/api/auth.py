@@ -86,8 +86,8 @@ async def register(data: UserRegister, request: Request, response: Response) -> 
             session.commit()
             session.refresh(user)
     except IntegrityError:
-        # Username already taken — return generic error to prevent enumeration
-        raise RegistrationError("Registration failed. Please try a different username.")
+        # Username already taken - return generic error to prevent enumeration
+        raise RegistrationError("Registration failed. Please try a different username.") from None
 
     # Generate JWT
     from peekview.auth import _load_or_generate_secret_key

@@ -20,7 +20,6 @@ from peekview.services.html_render_service import (
     _process_css_refs,
     _sibling_keys,
     inject_resources,
-    normalize_ref,
 )
 
 

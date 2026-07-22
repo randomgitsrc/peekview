@@ -208,7 +208,6 @@ def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
             logger.warning(f"WAL mode not enabled (current: {journal_mode})")
 
     # Ensure models are registered before create_all
-    import peekview.models  # noqa: F401
 
     # Create tables
     SQLModel.metadata.create_all(engine)
@@ -482,7 +481,7 @@ def _aggregate_entry_content(
     from peekview.models import File
 
     files = session.exec(
-        select(File).where(File.entry_id == entry_id, File.is_binary == False)
+        select(File).where(File.entry_id == entry_id, not File.is_binary)
     ).all()
 
     content_parts: list[str] = []
@@ -516,7 +515,7 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
         from peekview.models import Entry
 
         entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
-        fts_count = session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
+        session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
         content_count = session.exec(text("SELECT COUNT(*) FROM entries_fts WHERE content IS NOT NULL AND content != ''")).scalar()
 
         if content_count >= entry_count and entry_count > 0:

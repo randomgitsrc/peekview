@@ -14,8 +14,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from peekview.models import EntryRead, ReadStatsResponse
-
+from peekview.models import EntryRead
 
 # --- Fixtures ---
 
@@ -263,7 +262,6 @@ class TestReadTrackingServiceRecordRead:
         assert records[0].count == 5
 
     def test_record_read_different_window(self, read_tracking_service, tracking_session):
-        import hashlib
 
         read_tracking_service.record_read(
             entry_id=1,
@@ -274,8 +272,8 @@ class TestReadTrackingServiceRecordRead:
             reader_ip=None,
         )
 
-        from unittest.mock import patch
         from datetime import timedelta
+        from unittest.mock import patch
 
         future_time = datetime.now(timezone.utc) + timedelta(minutes=2)
         with patch("peekview.services.read_tracking_service.datetime") as mock_dt:
@@ -364,7 +362,7 @@ class TestReadTrackingServiceStats:
         stats = read_tracking_service.get_read_stats(entry_id=1)
         assert stats.total_count == 4
         non_self_records = tracking_session.exec(
-            select(EntryRead).where(EntryRead.is_self_read == False)
+            select(EntryRead).where(not EntryRead.is_self_read)
         ).all()
         non_self_count = sum(r.count for r in non_self_records)
         assert non_self_count == 3

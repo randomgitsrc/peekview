@@ -200,9 +200,9 @@ async def list_entries(
     current_user: User | None = Depends(get_current_user),
 ):
     """List entries with search, filter, and pagination."""
-    VALID_STATUS_VALUES = {"active", "archived", "published"}
-    if status is not None and status not in VALID_STATUS_VALUES:
-        raise HTTPException(status_code=422, detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(VALID_STATUS_VALUES))}")
+    valid_status_values = {"active", "archived", "published"}
+    if status is not None and status not in valid_status_values:
+        raise HTTPException(status_code=422, detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}")
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False

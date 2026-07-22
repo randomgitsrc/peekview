@@ -106,7 +106,7 @@ class TestCreateEntry:
         import datetime
         before = datetime.datetime.now(datetime.timezone.utc)
         result, _ = entry_service.create_entry(summary="Default expiry")
-        after = datetime.datetime.now(datetime.timezone.utc)
+        datetime.datetime.now(datetime.timezone.utc)
         assert result.expires_at is not None
         expected = before + datetime.timedelta(days=15)
         tolerance = datetime.timedelta(seconds=5)
@@ -201,7 +201,7 @@ class TestCreateEntry:
             entry_service.get_entry("rollback-test")
             # If we get here, the entry was created despite path traversal error
             # which means rollback didn't happen - this is a failure
-            assert False, "Entry should not exist after rollback"
+            raise AssertionError("Entry should not exist after rollback")
         except Exception:
             # Entry doesn't exist - rollback worked correctly
             pass

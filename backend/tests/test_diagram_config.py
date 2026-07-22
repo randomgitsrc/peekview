@@ -8,7 +8,6 @@ Tests for:
 All tests currently RED — implementation not yet written.
 """
 
-from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
