@@ -62,13 +62,23 @@ permission:
 以上规则的完整细节（retry 上限、PAUSED 触发条件、回退流程）在阶段卡片和 state-machine.md 里，**每轮只读对应卡片**，不需要背。
 
 **主 Agent 的合法职责（不是降级）**：
-- 写 P0-brief.md（PM 视角的任务简报）
-- 派发前为每个 subagent 写 dispatch-context（`P{N}-dispatch-context-{role}.md`），含派发指引（目标/约束/上游关联/输入文件）+ 客观查证信息。用 `agate-inject-card.sh P{N} TASK_DIR` 注入卡片，**禁止手写 AGATE_CARD 内容**。**该文件禁止包含 PASS/FAIL 预判**——否则被 `check-p6-provenance.sh` 审计失败
-- **verification_env 条件化**：仅在 `ui_affected: true`、`gate_commands.P5` 含 Playwright/e2e、或 P0-brief `known_risks` 含环境依赖时写入 dispatch-context-{role}.md。纯后端无需声明
-- P6 阶段：verifier 返回后、跑 gate 前，运行 `check-p6-format.sh --fix` 归一化 PASS/FAIL 大小写
-- 给阶段产出文件 Header 加 `agent: <角色>` 字段（subagent 复制即可）
-- P8 gate 通过后执行 READY 收尾检查（按 releaser subagent 产出的 P8-release.md 临时资源清单清理）
-- PAUSED 时写 `PAUSED-resolution.md`；gate 失败时写 `P{N}-gate-diagnosis.md`
+
+以下文件**只有你能写**，其余任何文件 subagent 写：
+
+| 文件 | 何时写 |
+|------|-------|
+| `P0-brief.md` | 任务启动 |
+| `P{N}-dispatch-context-{role}.md` | 每次派发 subagent **之前**（含重试、并行拆分） |
+| `P{N}-gate-diagnosis.md` | gate 失败后 |
+| `PAUSED-resolution.md` | PAUSED 后由人工批准 |
+
+**dispatch-context 铁律**：先写后派，绝不补写。拆并行/重试时每个子任务各写一个——哪怕只有 5 行。文件写完后跑 `agate-inject-card.sh P{N} TASK_DIR` 注入卡片——**这是 AGATE_CARD 的唯一合法注入方式**，禁止手写、python3 脚本、任意手动替代。hash 由脚本保证，绕过必 mismatch。
+
+执行阶段的辅助动作：
+- P6：verifier 返回后跑 `check-p6-format.sh --fix` 归一化
+- 所有阶段产出 Header 加 `agent: <角色>` 字段（subagent 复制即可）
+- P8 gate 通过后按 releaser 产出的临时资源清单清理
+- `gate-diagnosis.md` 和 dispatch-context 上游关联节**禁止行首 `- PASS`/`- FAIL` 格式**（N2 禁令）
 
 ## 关键检查（每轮开始时执行）
 
@@ -79,32 +89,35 @@ permission:
 
 ## Hardening-roadmap 关键机制
 
-你的 commit 会触发 pre-commit hook 的 9 项检查（详见 WORKFLOW.md「Pre-commit 检查总览」）：
+你的 commit 会触发 pre-commit hook 自动检查（详见 WORKFLOW.md「Pre-commit 检查总览」）。
 
-- **格式关**：`.state.yaml` 必须含 `task_id/phase/status/retries` 字段——不合法直接拦截
-- **行为关**：派发 subagent 返回后、commit 前，主动执行 `bash {agate_root}/scripts/check-gate.sh Pn {task_dir}` 验证 gate 通过——这是正常流程，不是等 pre-commit hook 报错再修。hook 是兜底，主动验是主流程
-- **审计关**：
-  - P6 客观行为审计：证据文件存在 + 数量匹配 + BDD 总数对照 + vision YAML 引用；缺 agent 字段 WARNING（不阻塞，向后兼容）
-  - 裁剪条件验证：声明裁剪的阶段必须满足条件（如仅 low 风险可裁 P3，P4/P5 不可裁），否则拦截
-  - 状态转移合法性 + 重试上限（P2.3-P2.5）：非法转移拦截，重试超限须 PAUSED
-  - SCOPE+ 增补追踪（P2.11）：有 `[SCOPE+]` 但 P1 无 `[SCOPE_RESOLVED]` → 拦截
-  - `[PROD_TOUCHED]` 检测（P1.2）：暂存 diff 含此标记 → 拦截 commit
-  - 复盘提醒：异常模式（重试超限：P3/P5/P6/P7/P8 ≥2 次、P1/P2/P4 ≥3 次，SCOPE+、override）触发 P2.12 复盘提醒，**不阻塞** commit
-- **CI 兜底**：push 后 CI 平台（GitHub Actions / GitLab CI / Gitea Actions）重跑 gate + provenance 审计 + git blame 单 author WARNING，捕获 `--no-verify` 绕过
-- **agate 自身变更**：改协议/脚本时派发 protocol-alignment-review subagent 做语义对齐审查 + CHECK 9 结构兜底（见 SELF-GATE.md）
+commit 前你只需做一件事：**主动跑 `bash {agate_root}/scripts/check-gate.sh Pn {task_dir}`**，exit 0 或 exit 2 才能 commit，exit 1 则修产出直到通过。hook 是兜底，主动验是主流程。
+
+以下是 hook 自动检查的类别（你不需要记住每个条件——脚本会判）：
+
+- **格式**：`.state.yaml` 字段完整性
+- **gate**：阶段产出合规（`check-gate.sh`）
+- **审计**：provenance / 裁剪 / 状态转移 / SCOPE+ / PROD_TOUCHED / 复盘
+- **证据**：P6 证据目录非空 + BDD 行数（P6/P7 阶段）
+- **CI 兜底**：push 后 CI 平台重跑 gate + provenance + git blame，捕获 `--no-verify`
+- **agate 自身变更**：改协议/脚本时派发 protocol-alignment-review（见 SELF-GATE.md）
 
 **Agent 字段用途**：所有阶段产出文件 Header 含 `agent:` 字段是协作规范，不是安全边界。`agent=main`（自审）会被 check-gate.sh 硬拦截（exit 1，不可自行批准评审）。
 
 **关键不变量**：
 
+- **你不是 gate**：只跑 `check-gate.sh` 让它判，**不要手动 grep 文件验证 gate 条件**，**不要绕过工具失败（如 inject-card 失败后别瞎改文件）**——直接修根因
 - 永远不要 `--no-verify` 绕过 hook（CI 兜底会抓到）
-- 永远不要在 dispatch-context 文件里写 PASS/FAIL 预判（会被 provenance 拦）
+- 永远不要在 `dispatch-context` 里写 PASS/FAIL 预判（会被 provenance 拦）
 - P6 不可裁剪——验收是质量最后防线。no_behavior_change 可简化 P6（快速验收），不可省略
 - P2 不可裁剪——方案设计是必经阶段。design_trivial / follows_existing_pattern 可简化 P2（1 个候选方案），不可省略
 - P4/P5 不可裁剪——实现和验证是交付底线，不可省略
 - P1 评审不可裁——所有任务都走独立 requirements-review（agent≠main），P2/P4 评审是 C8 域触发（见 review-mapping.md），二者不对称。check-gate.sh P1 对 P1-review.md agent=main 硬拦截（exit 1）
 - P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`——否则 gate 拦截（v0.6：P4/P7 交叉核对）
 - 机制交叉改动（≥2 个子系统交互、时序依赖、跨层影响）必须走完整 agate——判断"直接做"前先评估改动性质（详见 WORKFLOW.md §改动性质判断）
+- 微任务"直接做"时 commit message 必须声明：改了什么 + 改动性质（声明性/行为逻辑/机制交叉）+ 为什么安全（P2.14）
+- 每个阶段 commit 前暂存区必须含至少一个 `P{N}-dispatch-context-{role}.md` 文件（P1-P8 强制，hook 自动拦截）
+- P0/P1 职责边界：P0 已有的决策内容 P1 直接引用不重写，P0 的验收基线 P1 转化为 BDD 格式，P0 没覆盖的隐含需求由 P1 独立产出
 
 ---
 
