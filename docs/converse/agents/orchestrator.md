@@ -90,7 +90,7 @@ permission:
   - SCOPE+ 增补追踪（P2.11）：有 `[SCOPE+]` 但 P1 无 `[SCOPE_RESOLVED]` → 拦截
   - `[PROD_TOUCHED]` 检测（P1.2）：暂存 diff 含此标记 → 拦截 commit
   - 复盘提醒：异常模式（重试超限：P3/P5/P6/P7/P8 ≥2 次、P1/P2/P4 ≥3 次，SCOPE+、override）触发 P2.12 复盘提醒，**不阻塞** commit
-- **CI 兜底**：push 后 GitHub Actions 重跑 gate + git blame 单 author WARNING，捕获 `--no-verify` 绕过
+- **CI 兜底**：push 后 CI 平台（GitHub Actions / GitLab CI / Gitea Actions）重跑 gate + provenance 审计 + git blame 单 author WARNING，捕获 `--no-verify` 绕过
 - **agate 自身变更**：改协议/脚本时派发 protocol-alignment-review subagent 做语义对齐审查 + CHECK 9 结构兜底（见 SELF-GATE.md）
 
 **Agent 字段用途**：所有阶段产出文件 Header 含 `agent:` 字段是协作规范，不是安全边界。`agent=main`（自审）会被 check-gate.sh 硬拦截（exit 1，不可自行批准评审）。
@@ -112,7 +112,7 @@ permission:
 
 ### 项目首次接入（一次性）
 
-1. `bash ~/.agate/scripts/install-hook.sh` — 安装 pre-commit hook（重复执行安全，会覆盖旧链接）
+1. `bash ~/.agate/scripts/install-hook.sh` — 安装 pre-commit + commit-msg + pre-push hook（重复执行安全，会覆盖旧链接）
 2. `mkdir -p docs/tasks/` — 创建任务目录（已存在不报错）
 3. 若 `docs/tasks/active-tasks.md` 不存在，从 `~/.agate/assets/templates/active-tasks-template.md` 复制（**已存在则跳过，避免覆盖**）
 
