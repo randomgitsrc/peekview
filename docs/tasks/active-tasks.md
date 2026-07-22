@@ -32,7 +32,7 @@
 | T062 | entry-reference-fields | ⬜ 待开始 | P0 | 🟠 | T061 | 2026-07-21 | 2026-07-21 |
 | T063 | task-category-field | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
 | T064 | storage-backend-abstraction | ⬜ 待开始 | P0 | 🟡 | 商业化决策 | 2026-07-21 | 2026-07-21 |
-| T065 | login-state-bug | 🔄 进行中 | P2 | 🔴 | 无 | 2026-07-22 | 2026-07-22 |
+| T065 | login-state-bug | 🔄 进行中 | P8 | 🔴 | 无 | 2026-07-22 | 2026-07-22 |
 | T066 | explore-card-display-config | ⏸️ Deferred | P0 | 🟠 | T031 | 2026-07-22 | 2026-07-22 |
 | T067 | detail-page-framework | ⬜ 待开始 | P0 | 🟠 | T065 | 2026-07-22 | 2026-07-22 |
 | T068 | account-settings | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-22 | 2026-07-22 |

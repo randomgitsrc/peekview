@@ -4,7 +4,7 @@
 
 Agent 发布产出，你拿到一个链接。浏览器打开就是渲染好的页面，其他 Agent 通过 `/raw` 读取原始内容。
 
-[![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
+[![Version](https://img.shields.io/badge/version-0.9.5-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Vue 3](https://img.shields.io/badge/vue-3.4+-green.svg)](https://vuejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

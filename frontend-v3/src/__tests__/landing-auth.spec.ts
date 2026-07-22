@@ -17,7 +17,7 @@ vi.mock('@/api/client', () => ({
 
 const LandingView = () => import('@/views/LandingView.vue')
 
-function createTestRouter(initialRoute = '/') {
+function createTestRouter(_initialRoute = '/') {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -121,7 +121,7 @@ describe('T065: LandingView auth state bugs', () => {
 
   describe('BDD-5: Anonymous user login → redirect (no regression)', () => {
     it('triggers router.replace("/explore") when authState changes from anonymous to authenticated', async () => {
-      const { wrapper, authStore, router } = await mountLanding({
+      const { authStore, router } = await mountLanding({
         initializing: false,
         user: null,
       })
