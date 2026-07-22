@@ -51,10 +51,6 @@ SOURCE_SLOTS: list[Slot] = [
 DOC_SLOTS: list[Slot] = [
     # README.md
     ("README.md", rf"version-{SEMVER}-blue", "peekview", 0),
-    # CLAUDE.md
-    ("CLAUDE.md", rf"\*\*Current Version:\*\* v{SEMVER}", "peekview", 0),
-    ("CLAUDE.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),
-    ("CLAUDE.md", rf"Architecture \(v{SEMVER}\)", "mcp_server", 0),
     # INDEX.md
     ("INDEX.md", rf"Backend/Frontend v{SEMVER}", "peekview", 0),
     ("INDEX.md", rf"MCP Server v{SEMVER}", "mcp_server", 0),
