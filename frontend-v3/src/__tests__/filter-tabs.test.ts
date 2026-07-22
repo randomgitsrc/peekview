@@ -41,12 +41,13 @@ describe('EntryCard', () => {
     expect(wrapper.find('.meta-username').exists()).toBe(false)
   })
 
-  it('TC-B15: @username is a router-link', () => {
+  it('TC-B15: @username is a clickable span with role=link', () => {
     const entry = makeEntry({ username: 'alice' })
     const wrapper = mount(EntryCard, { props: { entry }, global: { stubs: { BaseTag: true, BaseBadge: true } } })
     const link = wrapper.find('.meta-username')
     expect(link.exists()).toBe(true)
-    expect(link.attributes('to')).toBe('/users/alice')
+    expect(link.attributes('role')).toBe('link')
+    expect(link.text()).toContain('alice')
   })
 
   it('TC-C08: expired-but-active shows expired badge', () => {

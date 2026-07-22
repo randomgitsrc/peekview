@@ -96,21 +96,19 @@ describe('EntryListRow', () => {
     }
   })
 
-  it('emits navigate on Enter key', async () => {
+  it('renders row as a native link (Enter handled natively by <a>)', () => {
     const wrapper = createWrapper()
-    const row = wrapper.find('.entry-list-row') || wrapper.find('[role="button"]')
-    if (row.exists()) {
-      await row.trigger('keydown', { key: 'Enter' })
-      expect(wrapper.emitted('navigate')).toBeTruthy()
-    }
+    const link = wrapper.find('a.entry-list-row') || wrapper.find('a[href]')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('href')).toContain('test-entry')
   })
 
-  it('emits navigate on Space key', async () => {
+  it('does not emit navigate on Space key (links do not respond to Space)', async () => {
     const wrapper = createWrapper()
-    const row = wrapper.find('.entry-list-row') || wrapper.find('[role="button"]')
+    const row = wrapper.find('a.entry-list-row') || wrapper.find('a[href]')
     if (row.exists()) {
       await row.trigger('keydown', { key: ' ' })
-      expect(wrapper.emitted('navigate')).toBeTruthy()
+      expect(wrapper.emitted('navigate')).toBeFalsy()
     }
   })
 
