@@ -140,7 +140,7 @@ async def create_entry(
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     # Check anonymous create permission
-    if current_user is None and not global_key_auth:
+    if current_user is None and not global_key_auth:  # noqa: SIM102
         if not request.app.state.config.auth.allow_anonymous_create:
             raise AuthenticationError("Authentication required to create entries")
 

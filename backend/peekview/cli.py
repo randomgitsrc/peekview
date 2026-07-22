@@ -298,10 +298,7 @@ def create(
             expires_in=expires_in,
             is_public=is_public,
         )
-        if _is_remote_mode(backend):
-            result = create_result
-        else:
-            result = create_result[0]
+        result = create_result if _is_remote_mode(backend) else create_result[0]
 
         if json_output:
             click.echo(json.dumps({
@@ -741,7 +738,7 @@ def config_list() -> None:
         items.append((section, key_name, file_val, default_val))
 
     # Descriptions (hardcoded, keyed by (section, key_name))
-    _DESC: dict[tuple[str, str], str] = {
+    _DESC: dict[tuple[str, str], str] = {  # noqa: N806
         ("server", "host"): "# 绑定地址 (127.0.0.1 仅本地，0.0.0.0 所有接口)",
         ("server", "port"): "# 服务端口",
         ("server", "base_url"): "# 公开访问地址（为空时自动检测）",
@@ -779,7 +776,7 @@ def config_list() -> None:
     }
 
     # Section order
-    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote", "diagram"]
+    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote", "diagram"]  # noqa: N806
 
     click.echo("Configuration:")
     click.echo("")
@@ -1942,10 +1939,7 @@ def admin_stats(remote_url: str | None, json_output: bool) -> None:
         click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
 
     try:
-        if is_remote:
-            result = backend.admin_stats()
-        else:
-            result = backend.get_stats()
+        result = backend.admin_stats() if is_remote else backend.get_stats()
 
         if json_output:
             if isinstance(result, AdminStatsResponse):
@@ -2031,10 +2025,7 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
         click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
 
     try:
-        if is_remote:
-            result = backend.admin_cleanup()
-        else:
-            result = backend.cleanup_expired()
+        result = backend.admin_cleanup() if is_remote else backend.cleanup_expired()
 
         if json_output:
             if isinstance(result, AdminCleanupResponse):
@@ -2314,10 +2305,9 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
     click.echo("")
 
     # Confirm
-    if not yes:
-        if not click.confirm("Proceed with uninstall?"):
-            click.echo("Cancelled.")
-            return
+    if not yes and not click.confirm("Proceed with uninstall?"):
+        click.echo("Cancelled.")
+        return
 
     # Stop services first
     click.echo("→ Stopping services...")

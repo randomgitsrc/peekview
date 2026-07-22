@@ -91,7 +91,7 @@ def _sanitize_filename(filename: str) -> str:
 
 def _language_to_content_type(language: str | None) -> str:
     """Map language ID to Content-Type for inline display."""
-    _TYPE_MAP = {
+    _TYPE_MAP = {  # noqa: N806
         "python": "text/x-python",
         "javascript": "text/javascript",
         "typescript": "text/typescript",

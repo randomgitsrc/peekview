@@ -560,7 +560,7 @@ class TestBdd08ExportNonexistent:
         # After implementation: should exit != 0 with "not found" message
         # For TDD red light: check that the error is specifically about the entry,
         # not just "No such command"
-        if result.exit_code != 0:
+        if result.exit_code != 0:  # noqa: SIM102
             # If command doesn't exist yet, that's a red light (wrong error type)
             # but still a failure. After implementation, should mention "not found"
             if "No such command" in result.output:

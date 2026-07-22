@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from peekview.models import (
@@ -344,5 +345,5 @@ class TestSlugUniqueness:
         entry2 = Entry(slug="unique-slug", summary="Second")
         session.add(entry2)
 
-        with pytest.raises(Exception):  # IntegrityError
+        with pytest.raises(IntegrityError):
             session.commit()

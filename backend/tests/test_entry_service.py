@@ -4,7 +4,7 @@ import pytest
 
 from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
 from peekview.database import init_db
-from peekview.exceptions import InvalidSlugError, NotFoundError
+from peekview.exceptions import ForbiddenPathError, InvalidSlugError, NotFoundError
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
 
@@ -188,7 +188,7 @@ class TestCreateEntry:
     def test_create_transaction_rollback_on_file_error(self, entry_service, tmp_path):
         """If file write fails, the DB entry should also be rolled back."""
         # Path traversal should be blocked during storage
-        with pytest.raises(Exception):  # ForbiddenPathError or similar
+        with pytest.raises(ForbiddenPathError):
             entry_service.create_entry(
                 summary="Bad file",
                 slug="rollback-test",

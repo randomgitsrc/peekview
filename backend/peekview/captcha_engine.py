@@ -208,6 +208,4 @@ def siteverify_token(secret: str, site_key: str, token: str) -> bool:
         return False
     if payload.get("sk") != site_key:
         return False
-    if payload.get("exp", 0) < time.time() * 1000:
-        return False
-    return True
+    return not payload.get("exp", 0) < time.time() * 1000

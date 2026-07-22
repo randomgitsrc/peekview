@@ -317,8 +317,5 @@ class ShareService:
         }
 
     def _build_share_url(self, slug: str, token: str) -> str:
-        if self.config:
-            base_url = self.config.build_view_url(slug)
-        else:
-            base_url = f"/{slug}"
+        base_url = self.config.build_view_url(slug) if self.config else f"/{slug}"
         return f"{base_url}?share={token}"

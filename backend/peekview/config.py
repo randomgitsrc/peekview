@@ -448,7 +448,7 @@ class PeekConfig(BaseSettings):
 
             skip_key = False
             if isinstance(value, dict):
-                for nested_key in value.keys():
+                for nested_key in value:
                     env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
                     if env_var in _os.environ:
                         skip_key = True
@@ -456,7 +456,7 @@ class PeekConfig(BaseSettings):
 
             if skip_key:
                 merged_value = value.copy()
-                for nested_key in value.keys():
+                for nested_key in value:
                     env_var = f"{env_prefix}{key.upper()}{env_delim}{nested_key.upper()}"
                     if env_var in _os.environ:
                         merged_value[nested_key] = _os.environ[env_var]

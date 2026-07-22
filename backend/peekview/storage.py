@@ -7,6 +7,7 @@ Handles file operations with:
 - SHA256 content hashing
 """
 
+import contextlib
 import hashlib
 import logging
 import shutil
@@ -60,7 +61,7 @@ def get_disk_path(
     base = base.resolve()
 
     # Determine the relative path to use
-    if file_path:
+    if file_path:  # noqa: SIM108
         # file_path includes filename
         rel_path = file_path
     else:
@@ -195,10 +196,8 @@ def write_file_atomic(
     except OSError as e:
         # Cleanup temp file on error
         if temp_path and temp_path.exists():
-            try:
+            with contextlib.suppress(OSError):
                 temp_path.unlink()
-            except OSError:
-                pass
         raise StorageError(f"Failed to write file: {target_path} ({e})") from e
 
     logger.debug(f"Wrote {len(content)} bytes to {target_path}")

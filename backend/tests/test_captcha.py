@@ -138,7 +138,7 @@ class TestVerifyCaptcha:
         mock_response.json.return_value = {"success": True}
         mock_response.raise_for_status = MagicMock()
 
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -162,7 +162,7 @@ class TestVerifyCaptcha:
         mock_response.json.return_value = {"success": False}
         mock_response.raise_for_status = MagicMock()
 
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -210,14 +210,14 @@ class TestVerifyCaptcha:
 
         from peekview.api.captcha import verify_captcha
 
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
 
-            with pytest.raises(Exception):  # Should raise, not silently succeed
+            with pytest.raises(httpx.ConnectError):
                 await verify_captcha(
                     token="some-token",
                     site_key="test-key",
@@ -245,7 +245,7 @@ class TestRegisterWithCaptcha:
     @pytest.mark.asyncio
     async def test_register_with_invalid_captcha_token_fails(self, client_with_captcha_strict):
         """Register with invalid captcha token should fail with CAPTCHA_INVALID."""
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             mock_response = MagicMock()
             mock_response.json.return_value = {"success": False}
             mock_response.raise_for_status = MagicMock()
@@ -267,7 +267,7 @@ class TestRegisterWithCaptcha:
     @pytest.mark.asyncio
     async def test_register_with_valid_captcha_succeeds(self, client_with_captcha):
         """Register with valid captcha token should succeed (first user = admin)."""
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             mock_response = MagicMock()
             mock_response.json.return_value = {"success": True}
             mock_response.raise_for_status = MagicMock()
@@ -293,7 +293,7 @@ class TestRegisterWithCaptcha:
         This is a convenience for initial setup, controlled by captcha_exempt_first_user.
         """
         # First user, no captcha token, but we need to verify that no Cap call is made.
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             # If exempt works correctly, this mock should never be called.
             mock_response = MagicMock()
             mock_response.json.return_value = {"success": True}
@@ -333,7 +333,7 @@ class TestLoginWithCaptcha:
     async def test_login_with_valid_captcha_succeeds(self, client_with_captcha_strict):
         """Login with valid captcha + correct credentials should succeed."""
         # First register a user (we need to bypass captcha or mock it)
-        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:
+        with patch("peekview.api.captcha.httpx.AsyncClient") as MockClient:  # noqa: N806  # noqa: N806
             mock_response = MagicMock()
             mock_response.json.return_value = {"success": True}
             mock_response.raise_for_status = MagicMock()

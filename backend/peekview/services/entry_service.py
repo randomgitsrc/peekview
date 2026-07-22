@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import secrets
@@ -295,10 +296,8 @@ class EntryService:
                 except Exception:
                     # Rollback: delete any written files
                     for wp in written_paths:
-                        try:
+                        with contextlib.suppress(OSError):
                             wp.unlink()
-                        except OSError:
-                            pass
                     session.rollback()
                     raise
 
@@ -561,7 +560,7 @@ class EntryService:
                     raise NotFoundError(f"Entry not found: {slug}")
 
             # Archived access control: non-owner non-admin cannot update archived
-            if entry.status == EntryStatus.ARCHIVED:
+            if entry.status == EntryStatus.ARCHIVED:  # noqa: SIM102
                 if not is_admin and entry.owner_id != current_user_id:
                     raise NotFoundError(f"Entry not found: {slug}")
 

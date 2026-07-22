@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import json
 import os
@@ -281,10 +282,8 @@ class AdminService:
             engine=self.engine, storage=self.storage, config=self.config
         )
         for slug in entry_slugs:
-            try:
+            with contextlib.suppress(NotFoundError):
                 entry_service.delete_entry(slug, is_api_key_auth=True)
-            except NotFoundError:
-                pass
         with Session(self.engine) as session:
             from sqlalchemy import delete as sa_delete
             session.exec(sa_delete(ApiKey).where(ApiKey.user_id == user_id))

@@ -56,12 +56,13 @@ class TestPathTraversal:
     def test_dotdot_traversal_blocked(self, tmp_path):
         """.. sequences should not escape entry directory."""
         from peekview.config import PeekConfig
+        from peekview.exceptions import ForbiddenPathError
 
         config = PeekConfig()
         config.storage.data_dir = tmp_path
 
         # Attempt to traverse up with ..
-        with pytest.raises(Exception):  # ForbiddenPathError
+        with pytest.raises(ForbiddenPathError):
             get_disk_path(config, 1, "../../../etc/passwd", "passwd")
 
     def test_null_byte_injection_blocked(self, tmp_path):
@@ -85,12 +86,13 @@ class TestPathTraversal:
     def test_absolute_path_blocked(self, tmp_path):
         """Absolute paths should not escape entry directory."""
         from peekview.config import PeekConfig
+        from peekview.exceptions import ForbiddenPathError
 
         config = PeekConfig()
         config.storage.data_dir = tmp_path
 
         # Absolute path attempt
-        with pytest.raises(Exception):  # Should raise ForbiddenPathError
+        with pytest.raises(ForbiddenPathError):  # Should raise ForbiddenPathError
             get_disk_path(config, 1, "/etc/passwd", "passwd")
 
 

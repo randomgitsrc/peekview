@@ -1,5 +1,6 @@
 """Shared test fixtures — single source of truth for all test files."""
 
+import contextlib
 from collections.abc import Generator
 from pathlib import Path
 
@@ -14,10 +15,8 @@ def reset_rate_limiter():
     from peekview.api.rate_limit import limiter
     # Reset in-memory storage so rate limits don't accumulate across tests
     if limiter._limiter and limiter._limiter.storage:
-        try:
+        with contextlib.suppress(Exception):
             limiter._limiter.storage.reset()
-        except Exception:
-            pass
 
 
 @pytest.fixture(autouse=True)
