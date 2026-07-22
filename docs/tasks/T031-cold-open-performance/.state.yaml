@@ -1,6 +1,6 @@
 task_id: T031
-phase: P8
-status: in_progress
+phase: DONE
+status: done
 
 retries: {}
 retry_count: {}
