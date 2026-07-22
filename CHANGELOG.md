@@ -5,7 +5,11 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.9.5] - 2026-07-22
+
+### 修复
+
+- Landing 页面登录状态不同步：已登录用户访问 `/` 时仍显示未登录 UI，需手动刷新才更新 (T065)
 
 ## [mcp-v0.9.3] - 2026-07-21
 
