@@ -1,0 +1,17 @@
+task_id: T065
+phase: P1
+status: in_progress
+
+retries:
+  P1:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: add_review_feedback
+  P2: []
+
+retry_count:
+  P1: 1
+  P2: 0
+
+updated: 2026-07-22
