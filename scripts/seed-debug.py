@@ -15,6 +15,10 @@ import requests
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8888"
 
+if ":8080" in BASE or "peekview.ai" in BASE or "peek.gsis.top" in BASE:
+    print(f"FATAL: refusing to seed production ({BASE})")
+    sys.exit(1)
+
 MINI_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
 
 SVG_LOGO = (
