@@ -16,7 +16,22 @@
           <a href="https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
         </div>
         <div class="nav-cta">
-          <button class="btn btn-ghost btn-sm" @click="showLogin = true">Sign in</button>
+          <template v-if="authState === 'anonymous'">
+            <button class="btn btn-ghost btn-sm" @click="showLogin = true">Sign in</button>
+          </template>
+          <template v-else-if="authState === 'authenticated'">
+            <div class="user-menu-wrapper">
+              <button class="user-menu-trigger" @click="toggleUserMenu">
+                <span class="user-avatar">{{ userInitial }}</span>
+                <span class="user-name">{{ userName }}</span>
+              </button>
+              <Transition name="dropdown">
+                <div v-if="showUserMenu" class="user-dropdown">
+                  <button class="dropdown-item" @click="handleLogout">Logout</button>
+                </div>
+              </Transition>
+            </div>
+          </template>
           <ThemeToggle />
         </div>
       </nav>
@@ -176,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
@@ -184,8 +199,34 @@ import LoginDialog from '@/components/LoginDialog.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const router = useRouter()
-const { authState } = storeToRefs(useAuthStore())
+const authStore = useAuthStore()
+const { authState, user } = storeToRefs(authStore)
 const showLogin = ref(false)
+const showUserMenu = ref(false)
+
+const userInitial = computed(() => {
+  const name = user.value?.displayName || user.value?.username || ''
+  return name.charAt(0).toUpperCase()
+})
+
+const userName = computed(() => {
+  return user.value?.displayName || user.value?.username || ''
+})
+
+function toggleUserMenu() {
+  showUserMenu.value = !showUserMenu.value
+}
+
+function closeUserMenu(e: MouseEvent) {
+  if (!(e.target as HTMLElement).closest('.user-menu-wrapper')) {
+    showUserMenu.value = false
+  }
+}
+
+function handleLogout() {
+  showUserMenu.value = false
+  authStore.logout()
+}
 
 const SEO_TITLE = 'PeekView — Agent writes. You read. Agents read too.'
 const SEO_DESC = 'Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link.'
@@ -204,8 +245,15 @@ function removeMeta() { document.querySelectorAll('[data-peekview-landing]').for
 async function copyCmd(text: string) { try { await navigator.clipboard.writeText(text) } catch {} }
 
 watch(authState, (state) => { if (state === 'authenticated') router.replace('/explore') })
-onMounted(() => { injectMeta() })
-onUnmounted(() => { removeMeta() })
+onMounted(async () => {
+  injectMeta()
+  document.addEventListener('click', closeUserMenu)
+  await nextTick()
+  if (authState.value === 'authenticated') {
+    router.replace('/explore')
+  }
+})
+onUnmounted(() => { removeMeta(); document.removeEventListener('click', closeUserMenu) })
 
 const codeFmt = '<div style="font-family:var(--font-mono);font-size:12px;line-height:1.75">' +
   '<div style="display:flex;gap:10px;margin-bottom:1px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">1</span><span><span class="kw">import</span> { chromium } <span class="kw">from</span> <span class="st">\'playwright\'</span>;</span></div>' +
@@ -262,6 +310,19 @@ nav { display:flex;align-items:center;justify-content:space-between;height:72px 
 .nav-links a { font-size:14px;color:var(--c-text-secondary);transition:color .15s }
 .nav-links a:hover { color:var(--c-text) }
 .nav-cta { display:flex;align-items:center;gap:14px }
+
+.user-menu-wrapper { position:relative }
+.user-menu-trigger { display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:8px;border:1px solid var(--c-border-strong);background:transparent;color:var(--c-text);cursor:pointer;font-size:13px;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;transition:all .15s }
+.user-menu-trigger:hover { background:var(--c-border) }
+.user-avatar { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600 }
+.user-name { max-width:100px;overflow:hidden;text-overflow:ellipsis }
+.user-dropdown { position:absolute;top:calc(100% + 4px);right:0;background:var(--c-surface);border:1px solid var(--c-border-strong);border-radius:8px;padding:4px;min-width:120px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:100 }
+.dropdown-item { display:block;width:100%;padding:8px 12px;border:none;background:none;color:var(--c-text-secondary);cursor:pointer;font-size:13px;text-align:left;border-radius:6px }
+.dropdown-item:hover { background:var(--c-surface-lower);color:var(--c-text) }
+.dropdown-enter-active { transition:opacity .15s ease }
+.dropdown-leave-active { transition:opacity .15s ease }
+.dropdown-enter-from { opacity:0 }
+.dropdown-leave-to { opacity:0 }
 
 .btn { display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border-radius:8px;font-size:14px;font-weight:600;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap }
 .btn-primary { background:var(--c-accent);color:#fff;box-shadow:0 6px 20px rgba(77,141,255,.35) }
