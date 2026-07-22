@@ -1,0 +1,22 @@
+phase: P3
+task_id: T067
+status: in_progress
+created: 2026-07-23
+updated: 2026-07-23
+history:
+  - phase: P0
+    date: 2026-07-22
+    status: completed
+    note: P0-brief.md 五字段齐全
+  - phase: P1
+    date: 2026-07-23
+    status: completed
+    note: 12 条 BDD，0 NEED_CONFIRM，review approved（2 轮）
+  - phase: P2
+    date: 2026-07-23
+    status: completed
+    note: 方案 A (品牌字标内嵌 header)，3 候选方案，review approved (8.0/10)，SCOPE+ zen mode bug
+  - phase: P3
+    date: 2026-07-23
+    status: completed
+    note: 28 测试用例，23 红灯确认
