@@ -103,7 +103,7 @@ make debug-stop               # 6. 停止 + 清理 /tmp/peekview-debug/
 
 一键版：`make debug`（= build + start + verify-isolation + test + test-mcp）
 
-测试数据：`make debug-seed` 创建 alice/bob/carol（密码 testpass123）+ 9 个条目（公开 ×6、私有 ×2、归档 ×1），含 Python/Vue/K8s/Mermaid/PlantUML/SQLite/多文件模板等不同类型
+测试数据：`make debug-seed` 创建 alice/bob/carol（密码 testpass123）+ 12 个条目（公开 ×9、私有 ×2、归档 ×1），含 Python/Vue/K8s/Mermaid/PlantUML/SQLite/多文件模板等不同类型
 
 ## 发布流程
 

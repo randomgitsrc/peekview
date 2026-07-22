@@ -6,11 +6,10 @@ Default BASE_URL: http://127.0.0.1:8888
 
 Creates:
 - 3 users: alice, bob, carol (password: testpass123)
-- 12 entries: 8 public, 2 private, 1 archived, 1 with binary image
+- 12 entries: 9 public, 2 private, 1 archived
 - File types: Python, TypeScript, YAML, Markdown (rich), HTML, SVG, PlantUML, Mermaid, JSON, Shell, binary PNG
 """
 
-import base64
 import sys
 import requests
 
@@ -420,7 +419,7 @@ def main():
         is_public=True,
         files=[
             {"filename": "README.md", "content": "# 产品截图\n\n## 首页\n\n![首页截图](screenshot.png)\n\n## Logo\n\n![Logo](logo.svg)\n\n## 说明\n\n- `screenshot.png` — 二进制图片（不可编辑，显示为预览）\n- `logo.svg` — SVG 矢量图（可编辑，显示为代码+预览）\n"},
-            {"filename": "screenshot.png", "content": base64.b64decode(MINI_PNG_B64).decode("latin-1"), "is_binary": True},
+            {"filename": "screenshot.png", "content_base64": MINI_PNG_B64},
             {"filename": "logo.svg", "content": SVG_LOGO},
         ],
     )
@@ -455,18 +454,17 @@ def main():
             {"filename": "deploy.sh", "content": "#!/bin/bash\nset -e\n\necho \"部署到生产环境...\"\nssh prod-server \"cd /app && git pull && docker-compose up -d\"\necho \"完成!\""},
         ],
     )
-    if r:
-        requests.patch(
-            f"{BASE}/api/v1/entries/{r['slug']}",
-            headers={"Authorization": f"Bearer {carol}"},
-            json={"status": "archived"},
-        )
+    requests.patch(
+        f"{BASE}/api/v1/entries/{r['slug']}",
+        headers={"Authorization": f"Bearer {carol}"},
+        json={"status": "archived"},
+    )
 
     r = requests.get(f"{BASE}/api/v1/entries", headers={"Authorization": f"Bearer {alice}"})
     total = r.json().get("total", "?")
     print(f"Done. Total entries: {total}")
     print("Users: alice/bob/carol (password: testpass123)")
-    print("Entries: 8 public + 2 private + 1 archived + 1 with binary image")
+    print("Entries: 9 public + 2 private + 1 archived")
 
 
 if __name__ == "__main__":
