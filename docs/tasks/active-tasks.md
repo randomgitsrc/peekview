@@ -30,10 +30,10 @@
 | T060 | archived-visibility-auth-refresh | ✅✅ 已完成 | P8→v0.9.4 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
 | T061 | t032-probe-data-review | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-21 | 2026-07-21 |
 | T062 | entry-reference-fields | ⬜ 待开始 | P0 | 🟠 | T061 | 2026-07-21 | 2026-07-21 |
-| T063 | task-category-field | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-21 |
+| T063 | task-category-field | ❌ 已取消 | P0 | 🟠 | 无 | 2026-07-21 | 2026-07-23 |
 | T064 | storage-backend-abstraction | ⬜ 待开始 | P0 | 🟡 | 商业化决策 | 2026-07-21 | 2026-07-21 |
 | T065 | login-state-bug | ✅✅ 已完成 | P8→v0.9.5 | 🔴 | 无 | 2026-07-22 | 2026-07-22 |
-| T066 | explore-card-display-config | ⬜ 待开始 | P0 | 🟠 | T031 | 2026-07-22 | 2026-07-23 |
+| T066 | explore-card-display-config | ❌ 已取消 | P0 | 🟠 | T031 | 2026-07-22 | 2026-07-23 |
 | T067 | detail-page-framework | ✅✅ 已完成 | P8→v0.10.1 | 🟠 | T065 | 2026-07-22 | 2026-07-23 |
 
 ### 已完成
