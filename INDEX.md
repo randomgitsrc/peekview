@@ -1,6 +1,6 @@
 # PeekView — 项目导航
 
-> Backend/Frontend v0.10.0 · MCP Server v0.9.3
+> Backend/Frontend v0.10.1 · MCP Server v0.9.3
 
 PeekView 是一个轻量级内容发布服务。AI Agent 通过 API/CLI/MCP 发布内容，人在浏览器里查看格式化结果。
 

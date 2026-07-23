@@ -7,6 +7,22 @@
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-07-23
+
+### 新增
+
+- 详情页桌面端 header 新增 "PeekView" 品牌字标（logo 旁），移动端 sticky-header 新增品牌标识 (T067)
+- 详情页新增 Sign in 入口：匿名用户可从详情页直接登录，登录后响应式消失 (T067)
+- 详情页新增 Explore 导航入口：桌面端 header Compass 图标按钮，移动端 bottom-bar Explore 按钮 (T067)
+- 首页 Sign in 按钮升级为 primary 样式，提升视觉权重；极窄屏 (≤380px) 下仍可见 (T067)
+
+### 修复
+
+- 移动端底栏文件按钮文案从 "Files N" 改为 "N files" 格式 (T067)
+- reads 计数格式统一：移动端改为条件复数 + readStats 为 null 时不显示 (T067)
+- zen mode 未隐藏移动端 sticky-header 和 bottom-bar，现已修复 (T067)
+
+
 ## [0.10.0] - 2026-07-22
 
 ### 新增
