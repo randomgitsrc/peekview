@@ -1,6 +1,6 @@
-phase: P5
+phase: P7
 task_id: T067
-status: in_progress
+status: completed
 created: 2026-07-23
 updated: 2026-07-23
 history:
@@ -24,3 +24,11 @@ history:
     date: 2026-07-23
     status: completed
     note: 28/28 测试通过，978 全量通过 + typecheck pass
+  - phase: P5
+    date: 2026-07-23
+    status: completed
+    note: make test-frontend 978 pass + make typecheck pass
+  - phase: P6
+    date: 2026-07-23
+    status: completed
+    note: 12/12 BDD PASS，8 截图 + vision-helper 分析
