@@ -21,6 +21,7 @@ from peekview.models import (
     RESERVED_USERNAMES,
     AuthResponse,
     ChangePasswordRequest,
+    UpdateProfileRequest,
     User,
     UserLogin,
     UserRegister,
@@ -186,6 +187,33 @@ async def logout(response: Response):
 @router.get("/me")
 async def get_me(user: User = Depends(require_auth)) -> UserResponse:
     """Get current authenticated user info."""
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        display_name=user.display_name,
+        is_active=user.is_active,
+        is_admin=user.is_admin,
+        created_at=user.created_at,
+    )
+
+
+@router.patch("/me")
+async def update_profile(
+    data: UpdateProfileRequest,
+    request: Request,
+    current_user: User = Depends(require_auth),
+) -> UserResponse:
+    engine = request.app.state.engine
+    with Session(engine) as session:
+        user = session.get(User, current_user.id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if data.display_name is not None:
+            trimmed = data.display_name.strip()
+            user.display_name = trimmed if trimmed else None
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return UserResponse(
         id=user.id,
         username=user.username,

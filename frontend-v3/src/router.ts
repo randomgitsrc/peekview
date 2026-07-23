@@ -14,7 +14,15 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./views/EntryListView.vue'),
   },
   {
-    // Must appear before /:slug to avoid matching "users" as a slug parameter
+    path: '/settings',
+    name: 'settings',
+    component: () => import('./views/SettingsView.vue'),
+  },
+  {
+    path: '/settings/apikeys',
+    redirect: { path: '/settings', query: { tab: 'apikeys' } },
+  },
+  {
     path: '/users/:username',
     name: 'user-entries',
     component: () => import('./views/EntryListView.vue'),
@@ -25,11 +33,6 @@ const routes: RouteRecordRaw[] = [
     name: 'detail',
     component: () => import('./views/EntryDetailView.vue'),
     props: true,
-  },
-  {
-    path: '/settings/apikeys',
-    name: 'api-keys',
-    component: () => import('./views/ApiKeyListView.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
@@ -60,6 +63,12 @@ router.beforeEach((to, _from) => {
     const authStore = useAuthStore()
     if (authStore.authState === 'authenticated') {
       return '/explore'
+    }
+  }
+  if (to.path === '/settings') {
+    const authStore = useAuthStore()
+    if (authStore.authState !== 'authenticated') {
+      return '/'
     }
   }
 })

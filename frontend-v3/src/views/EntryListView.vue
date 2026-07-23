@@ -374,7 +374,7 @@ function navigateToEntry(entry: Entry) {
 
 function navigateToApiKeys() {
   showUserMenu.value = false
-  router.push('/settings/apikeys')
+  router.push('/settings?tab=apikeys')
 }
 
 const showLogin = ref(false)

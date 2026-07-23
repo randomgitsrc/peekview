@@ -208,6 +208,20 @@ class PeekAPI {
     return this.transformUser(response.data)
   }
 
+  async updateProfile(displayName: string | null): Promise<User> {
+    const response = await this.client.patch<UserApiResponse>('/auth/me', {
+      display_name: displayName,
+    })
+    return this.transformUser(response.data)
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    await this.client.post('/auth/change-password', {
+      old_password: oldPassword,
+      new_password: newPassword,
+    })
+  }
+
   logout(): void {
     this.client.post('/auth/logout').catch(() => {})
   }

@@ -727,6 +727,10 @@ class ChangePasswordRequest(SQLModel):
     new_password: str = Field(..., min_length=8, max_length=72)
 
 
+class UpdateProfileRequest(SQLModel):
+    display_name: str | None = Field(default=None, max_length=64)
+
+
 # Share schemas
 
 

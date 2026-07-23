@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref, nextTick, defineComponent, h } from 'vue'
+import { ref, nextTick, defineComponent } from 'vue'
 
 const mockAuthState = ref<'loading' | 'authenticated' | 'anonymous'>('authenticated')
 const mockUser = ref<any>({

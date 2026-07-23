@@ -60,6 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(displayName: string | null): Promise<void> {
+    const updated = await api.updateProfile(displayName)
+    user.value = updated
+  }
+
   window.addEventListener('peekview:auth-expired', () => {
     if (!initializing.value) {
       user.value = null
@@ -77,5 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     fetchMe,
+    updateProfile,
   }
 })

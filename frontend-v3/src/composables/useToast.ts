@@ -25,6 +25,14 @@ function remove(id: number): void {
   messages.value = messages.value.filter(t => t.id !== id)
 }
 
+function success(message: string): void {
+  show(message, 'success')
+}
+
+function error(message: string): void {
+  show(message, 'error')
+}
+
 export function useToast() {
-  return { messages, show, remove }
+  return { messages, show, success, error, remove }
 }
