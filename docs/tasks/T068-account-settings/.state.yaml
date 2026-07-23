@@ -1,6 +1,6 @@
-phase: P1
+phase: P3
 task_id: T068
-status: completed
+status: in_progress
 created: 2026-07-23
 updated: 2026-07-23
 history:
@@ -12,3 +12,7 @@ history:
     date: 2026-07-23
     status: completed
     note: 14 条 BDD，0 NEED_CONFIRM，review approved（2 轮）
+  - phase: P2
+    date: 2026-07-23
+    status: completed
+    note: 方案 A（单组件+条件渲染 tab），follows_existing_pattern，review approved
