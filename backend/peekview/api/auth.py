@@ -262,7 +262,7 @@ async def change_password(
     engine = request.app.state.engine
 
     if not verify_password(data.old_password, current_user.password_hash):
-        raise HTTPException(status_code=401, detail="Old password is incorrect")
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
 
     with Session(engine) as session:
         user = session.get(User, current_user.id)

@@ -185,7 +185,7 @@ class TestChangePasswordSession:
             json={"old_password": "wrongpass123", "new_password": "newpass123"},
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert resp.status_code == 401
+        assert resp.status_code == 400
         assert "incorrect" in resp.json()["detail"].lower()
 
     @pytest.mark.asyncio

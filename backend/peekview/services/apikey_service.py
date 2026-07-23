@@ -124,7 +124,7 @@ class ApiKeyService:
             count = session.exec(
                 select(func.count(ApiKey.id)).where(
                     ApiKey.user_id == user_id,
-                    (ApiKey.expires_at is None) | (ApiKey.expires_at > now_naive),
+                    (ApiKey.expires_at.is_(None)) | (ApiKey.expires_at > now_naive),
                 )
             ).one()
         return count

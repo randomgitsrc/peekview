@@ -165,7 +165,7 @@ async def test_change_password_wrong_old(client):
     resp = await client.post("/api/v1/auth/change-password",
                              headers={"Authorization": f"Bearer {token}"},
                              json={"old_password": "wrongpass", "new_password": "newpass456"})
-    assert resp.status_code == 401
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

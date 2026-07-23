@@ -24,3 +24,15 @@ history:
     date: 2026-07-23
     status: completed
     note: 35/35 测试通过，997 前端全量 pass + typecheck pass + lint pass
+  - phase: P5
+    date: 2026-07-23
+    status: completed
+    note: 902 pass / 63 预存失败（非 T068），make test-quick 通过
+  - phase: P6
+    date: 2026-07-23
+    status: failed
+    note: 12/14 PASS, BUG-1 BDD-03 清空display_name失败, BUG-2 BDD-08 apikey创建500, SIDE-EFFECT BDD-06 旧密码错误触发登出
+  - phase: P4-fix1
+    date: 2026-07-23
+    status: completed
+    note: 修3 bug：display_name清空、apikey创建500、旧密码错误登出
