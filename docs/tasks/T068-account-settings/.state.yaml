@@ -1,6 +1,6 @@
-phase: P7
+phase: DONE
 task_id: T068
-status: in_progress
+status: completed
 created: 2026-07-23
 updated: 2026-07-23
 history:
@@ -44,3 +44,11 @@ history:
     date: 2026-07-23
     status: completed
     note: 14/14 BDD PASS (round 2)，3 bug 修复验证通过
+  - phase: P7
+    date: 2026-07-23
+    status: completed
+    note: 1 DESIGN_GAP 已配对，14 BDD=14 PASS，无 BLOCKER
+  - phase: P8
+    date: 2026-07-23
+    status: completed
+    note: bump_type=minor, 0.10.1→0.11.0, tag v0.11.0
