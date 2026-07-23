@@ -261,6 +261,7 @@ parent: (外部需求或 Bug 报告来源)
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-23 | 完成 T067 | detail-page-framework → v0.10.1 发布（品牌字标+Sign in入口+Explore导航+zen mode修复+reads统一+底栏文案修正） |
 | 2026-07-22 | P0 审计纠正 + T066 deferred + T068 立项 | 代码核查纠正 brief 错误断言：T065 删"T060 回归"（watcher predates T060，LandingView:19 Sign in 无 authState 绑定是既有缺口）/ T067 收窄"无品牌/无tooltip"（桌面已有 logo+tooltip，真缺口是 Sign in/字标/导航/移动端）/ T066 发现 summary=标题术语冲突+reads 需后端→范围方向反→defer backlog / T068 account-settings 立项（Profile+改密码+API Keys hub，暴露 T011 已有后端能力，新增 PATCH /auth/me）|
 | 2026-07-22 | 创建 T065/T066/T067 + 重写 T031 | 冷打开审计后续拆分：T065 登录状态 bug（疑似 T060 回归）/ T066 卡片显示站点级配置（照抄 PeekDiagram）/ T067 详情页框架（品牌条+Sign in 绑定）；T031 重写为 explore 性能+交互（并行加载+卡片真链接+显示打磨）。执行顺序 T065→T031→T066→T067 |
 | 2026-07-09 | 创建 T051 | T048 生命周期缺口修复（定时清理/archived筛选/过期警告） |
