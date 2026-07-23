@@ -1,0 +1,14 @@
+phase: P1
+task_id: T068
+status: completed
+created: 2026-07-23
+updated: 2026-07-23
+history:
+  - phase: P0
+    date: 2026-07-22
+    status: completed
+    note: P0-brief.md 五字段齐全
+  - phase: P1
+    date: 2026-07-23
+    status: completed
+    note: 14 条 BDD，0 NEED_CONFIRM，review approved（2 轮）
