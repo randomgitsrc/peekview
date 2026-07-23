@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd11-tab-url-sync.png
+bdd_id: BDD-11
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Security tab active with URL showing tab=security parameter"
+      status: pass
+  conclusion: pass

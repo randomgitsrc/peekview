@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd02-display-name-saved.png
+bdd_id: BDD-02
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Display Name shows 'Alice Chen', green toast 'Profile updated' visible"
+      status: pass
+  conclusion: pass

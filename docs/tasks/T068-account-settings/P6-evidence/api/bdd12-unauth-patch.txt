@@ -1,0 +1,2 @@
+{"error":{"code":"NOT_AUTHENTICATED","message":"Authentication required","details":null}}
+HTTP_STATUS: 401

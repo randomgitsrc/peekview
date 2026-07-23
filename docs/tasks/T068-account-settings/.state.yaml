@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: T068
 status: in_progress
 created: 2026-07-23
@@ -36,3 +36,7 @@ history:
     date: 2026-07-23
     status: completed
     note: 修3 bug：display_name清空、apikey创建500、旧密码错误登出
+  - phase: P5
+    date: 2026-07-23
+    status: completed
+    note: fix round 后 65 pass + typecheck + lint

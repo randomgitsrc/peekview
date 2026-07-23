@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd10b-unauth-redirect.png
+bdd_id: BDD-10b
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Unauthenticated user redirected from /settings/apikeys to landing page"
+      status: pass
+  conclusion: pass

@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd04-validation-error.png
+bdd_id: BDD-04
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Display Name input filled with 64 A's, Save button disabled"
+      status: pass
+  conclusion: pass

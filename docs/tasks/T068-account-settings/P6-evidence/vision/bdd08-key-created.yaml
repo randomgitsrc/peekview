@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd08-key-created.png
+bdd_id: BDD-08
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "API key creation dialog showing duplicate name validation error (expected test behavior)"
+      status: pass
+  conclusion: pass

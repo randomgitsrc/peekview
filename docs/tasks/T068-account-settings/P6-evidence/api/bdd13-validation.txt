@@ -1,0 +1,2 @@
+{"detail":[{"type":"string_too_long","loc":["body","display_name"],"msg":"String should have at most 64 characters","input":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","ctx":{"max_length":64}}]}
+HTTP_STATUS: 422

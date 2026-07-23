@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd10a-loggedin-redirect.png
+bdd_id: BDD-10a
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Logged-in user redirected from /settings/apikeys to /settings?tab=apikeys, API Keys tab visible"
+      status: pass
+  conclusion: pass

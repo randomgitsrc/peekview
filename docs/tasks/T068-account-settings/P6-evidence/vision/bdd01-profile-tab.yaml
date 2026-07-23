@@ -1,0 +1,10 @@
+screenshot: screenshots/bdd01-profile-tab.png
+bdd_id: BDD-01
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+  observations:
+    - description: "Profile tab active with username=alice (readonly), display_name input, Role=Admin badge, Member Since date, Save button"
+      status: pass
+  conclusion: pass
