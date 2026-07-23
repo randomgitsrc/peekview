@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T068
 status: in_progress
 created: 2026-07-23
@@ -16,3 +16,7 @@ history:
     date: 2026-07-23
     status: completed
     note: 方案 A（单组件+条件渲染 tab），follows_existing_pattern，review approved
+  - phase: P3
+    date: 2026-07-23
+    status: completed
+    note: 16 后端 + 19 前端测试用例，真红灯确认
