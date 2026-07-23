@@ -357,7 +357,7 @@ doc-checklist:
 	@echo "  4. git add -A && git commit -m \"chore(release): bump version to $(NEW_VERSION)\""
 
 # Quick pre-publish check (no rebuild) - use after code fixes
-pre-publish-quick: check-version check-changelog test-quick verify-wheel
+pre-publish-quick: dev check-version check-changelog test-quick verify-wheel
 	@echo ""
 	@echo "✓ Quick pre-publish checks passed"
 	@echo "  Use this after code fixes to avoid full rebuild"
@@ -365,7 +365,7 @@ pre-publish-quick: check-version check-changelog test-quick verify-wheel
 	@echo "Ready to publish with: make publish"
 
 # Full pre-publish check (clean build + test) - use for final verification
-pre-publish: clean build check-version check-changelog test verify-wheel
+pre-publish: clean build dev check-version check-changelog test verify-wheel
 	@echo ""
 	@echo "✓ Full pre-publish checks passed"
 	@echo "  - Clean build: OK"

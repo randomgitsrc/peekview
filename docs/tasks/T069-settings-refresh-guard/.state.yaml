@@ -1,0 +1,10 @@
+phase: P0
+task_id: T069
+status: in_progress
+created: 2026-07-23
+updated: 2026-07-23
+history:
+  - phase: P0
+    date: 2026-07-23
+    status: completed
+    note: P0-brief.md 四字段齐全

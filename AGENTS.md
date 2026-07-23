@@ -130,6 +130,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 - **sibling 注入**：后端 BS4 实现（`html_render_service.py`），CSS/JS/img/favicon 内联注入。前端只传 file IDs，不 fetch 内容
 - **DOMPurify**：清理 markdown 输出。Mermaid 源码不走 DOM（用 `Map` 传递）。含 `-->` 的属性会被 DOMPurify 删除
 - **MCP 双模式**：`remote`（A→B→C，暴露 create_entry/get/list/delete）| `local`（A=B→C，暴露 publish_files/get/list/delete）
+- **MCP 不暴露 updateEntry 的理由**：PeekView 定位是"发布记录"而非"协作编辑"。entry 代表一个已发布快照，语义上应该是创建或覆盖（publish），而非原地修改。`publish_files` 在+已有 entry 时走覆盖路径，相当于 immutable update（新快照替换旧快照），不需要单独的 partial update 能力。如果未来出现"多 Agent 协作编辑同一 entry"的真实场景，再重新评估。
 - **数据库**：SQLite WAL + FTS5，时间戳 timezone-aware UTC（`datetime.now(timezone.utc)`）
 - **Agent 读路径**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON（文本文件含 content；二进制 content=null + file_url）。公开免认证，私有需 API key。短链接 `/{slug}/raw` → 302 重定向
 - **Playwright/Vision**：Chrome CDP `localhost:18800`，`connectOverCDP` 模式。脚本必须 `try/finally { page.close() }` + `process.exit(0)`。不要 `browser.close()`（会杀 Chrome）。截图后用 vision-helper subagent 分析
