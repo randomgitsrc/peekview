@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T070
 status: in_progress
 created: 2026-07-24
@@ -27,4 +27,8 @@ history:
   - phase: P5
     date: 2026-07-25
     status: completed
-    note: gate_commands 通过：220 测试全绿，0 失败
+    note: gate_commands 通过，220 测试全绿，0 失败
+  - phase: P6
+    date: 2026-07-25
+    status: completed
+    note: 24/24 BDD PASS，P6-evidence 3 文件，所有 gate 通过
