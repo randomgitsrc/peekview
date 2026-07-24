@@ -1,4 +1,4 @@
-phase: P4
+phase: P6
 task_id: T070
 status: in_progress
 created: 2026-07-24
@@ -20,3 +20,11 @@ history:
     date: 2026-07-25
     status: completed
     note: 17 个测试用例（11 红灯 + 6 回归保护），BDD-1~17 全覆盖，BDD-18~24 manual
+  - phase: P4
+    date: 2026-07-25
+    status: completed
+    note: 7 项代码+文档改动，220 全量测试通过，review approved（MCP+CSO），CHANGELOG 已更新
+  - phase: P5
+    date: 2026-07-25
+    status: completed
+    note: gate_commands 通过：220 测试全绿，0 失败
