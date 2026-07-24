@@ -1,6 +1,6 @@
-phase: P7
+phase: DONE
 task_id: T070
-status: in_progress
+status: completed
 created: 2026-07-24
 updated: 2026-07-25
 history:
@@ -32,3 +32,11 @@ history:
     date: 2026-07-25
     status: completed
     note: 24/24 BDD PASS，P6-evidence 3 文件，所有 gate 通过
+  - phase: P7
+    date: 2026-07-25
+    status: completed
+    note: 双向一致性检查通过，无 BLOCKER/DEVIATION-CRITICAL，无 DESIGN_GAP
+  - phase: P8
+    date: 2026-07-25
+    status: completed
+    note: mcp-server v0.9.3→v0.10.0 minor bump，git tag mcp-v0.10.0，P5 重跑全绿
