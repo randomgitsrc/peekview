@@ -241,6 +241,9 @@ export function createExpressApp(
         peekview_url: string;
         public_url: string;
         api_key_configured: boolean;
+        cwd: string;
+        mode: string;
+        allowed_paths: string[];
       };
       peekview_error?: string;
     } = {
@@ -253,6 +256,9 @@ export function createExpressApp(
         peekview_url: config.peekviewUrl || '',
         public_url: config.publicUrl || '',
         api_key_configured: !!config.apiKey,
+        cwd: process.cwd(),
+        mode: config.mode,
+        allowed_paths: config.mode === 'local' ? config.allowedPaths : [],
       }
     };
 

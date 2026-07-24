@@ -44,7 +44,33 @@ claude mcp add peekview \
   --header "Authorization: Bearer pv_your_api_key"
 ```
 
-**其他 MCP 客户端（Cursor / OpenCode / ...）：**
+**OpenCode：**
+```json
+// opencode.json
+{
+  "mcpServers": {
+    "peekview": {
+      "url": "http://localhost:33333/mcp",
+      "headers": { "Authorization": "Bearer pv_your_api_key" }
+    }
+  }
+}
+```
+
+**Cursor：**
+```json
+// .cursor/mcp.json
+{
+  "mcpServers": {
+    "peekview": {
+      "url": "http://localhost:33333/mcp",
+      "headers": { "Authorization": "Bearer pv_your_api_key" }
+    }
+  }
+}
+```
+
+**其他 MCP 客户端：**
 ```json
 {
   "peekview": {
@@ -55,6 +81,10 @@ claude mcp add peekview \
 ```
 
 工具列表、Local/Remote 双模式、安全模型：[packages/mcp-server/README.md](packages/mcp-server/README.md)
+
+### Docker 场景
+
+Docker 容器内运行 MCP Server 时，默认 cwd 为 `/`，需配置 `MCP_ALLOWED_PATHS` 或设置 `working_dir`。详见 [MCP Server Docker 指引](packages/mcp-server/README.md#docker-场景指引)。
 
 ## CLI 速查
 

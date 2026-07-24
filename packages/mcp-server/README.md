@@ -93,7 +93,7 @@ claude mcp add peekview \
   --transport http http://localhost:33333/mcp \
   --header "Authorization: Bearer pv_xxxxxxxx..."
 
-# Docker 容器内的 Agent 需声明 namespace（容器路径自动翻译为主机路径）
+# Docker 容器内的 Agent 需声明 namespace（namespace 是 Agent 侧的短路径别名，volume mount 必须同路径）
 claude mcp add peekview \
   --transport http http://host.docker.internal:33333/mcp \
   --header "Authorization: Bearer pv_xxxxxxxx..." \
@@ -166,7 +166,7 @@ peekview-mcp service uninstall --user
 | `server.host` | `MCP_HOST` | `0.0.0.0` | 绑定地址，`127.0.0.1` 仅本地，`0.0.0.0` 所有接口 |
 | `server.cors_origins` | `MCP_CORS_ORIGINS` | `*` | CORS 来源，逗号分隔多个域名 |
 | `server.mode` | `MCP_MODE` | `remote` | 部署模式：`remote`（默认）或 `local` |
-| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式显式路径白名单，冒号分隔；配置后覆盖默认 cwd+系统临时目录；支持 `~` 展开 |
+| `server.allowed_paths` | `MCP_ALLOWED_PATHS` | - | local 模式显式路径白名单；YAML 配置文件用数组格式（`- /path1`），环境变量用冒号分隔（`MCP_ALLOWED_PATHS=/path1:/path2`）；配置后覆盖默认 cwd+系统临时目录；支持 `~` 展开 |
 | `server.path_namespaces` | — | — | Docker 容器路径映射（仅配置文件），见下方「Docker 容器部署」 |
 | `server.trust_all_paths` | `MCP_TRUST_ALL_PATHS` | `false` | 危险选项：跳过路径白名单，仅 best-effort 敏感路径保护 |
 | `logging.level` | `MCP_LOG_LEVEL` | `info` | 日志级别：`debug`, `info`, `warn`, `error` |
@@ -360,15 +360,15 @@ peekview:
 server:
   mode: local
   allowed_paths:
-    - ~/docker-data1   # 容器映射的主机目录
-    - ~/docker-data2
-  # 命名空间映射：容器内路径 → 主机路径
+    - /data/project1   # volume mount 的主机目录（容器内路径 = 主机挂载路径）
+    - /data/project2
+  # namespace 是 Agent 侧的短路径别名，用于 Agent 传入路径的前缀替换
+  # volume mount 必须同路径（容器内路径 = 主机挂载路径）
   path_namespaces:
     docker-a:
-      /opt/data: ~/docker-data1
-      /opt/logs: ~/docker-data1-logs
+      /data: /data     # Agent 传 /data/xxx → 确认归属 namespace docker-a
     docker-b:
-      /opt/data: ~/docker-data2
+      /data: /data
 ```
 
 ## 环境变量
@@ -425,19 +425,26 @@ Claude Code (Alice)              Claude Code (Bob)
 version: '3.8'
 services:
   peekview:
-    image: peekview:latest
+    image: python:3.12-slim
+    command: pip install peekview && peekview serve --host 0.0.0.0 --port 8080
     ports:
       - "8080:8080"
     volumes:
       - peekview-data:/data
 
   mcp-server:
-    image: peekview/mcp-server:latest
+    image: node:20-alpine
+    command: npm install -g @peekview/mcp-server && peekview-mcp serve
+    working_dir: /app
     ports:
       - "33333:33333"
     environment:
       - PEEKVIEW_URL=http://peekview:8080
       - PEEKVIEW_PUBLIC_URL=https://peek.example.com
+      - MCP_MODE=local
+      - MCP_ALLOWED_PATHS=/data:/app
+    volumes:
+      - mcp-data:/data
 ```
 
 ### 手动部署
@@ -458,6 +465,74 @@ peekview-mcp service start
 claude mcp add peekview \
   --transport http https://peek.example.com:33333/mcp \
   --header "Authorization: Bearer pv_xxx"
+```
+
+## Docker 场景指引
+
+### cwd=/ 问题
+
+Docker 容器默认 WORKDIR 为 `/`，MCP Server local 模式在 cwd 为根目录且未配置 `allowed_paths` 时会拒绝 `publish_files`（安全保护）。
+
+**解决方案（任选其一）：**
+
+1. **配置 `allowed_paths`**（推荐）：显式指定允许的目录
+   ```bash
+   # 环境变量方式
+   MCP_ALLOWED_PATHS=/data:/app
+   # 或配置文件方式
+   peekview-mcp config set server.allowed_paths /data:/app
+   ```
+
+2. **设置 `working_dir`**：用非根目录启动容器
+   ```yaml
+   working_dir: /app
+   ```
+
+3. **`trust_all_paths=true`**（危险，仅限完全信任环境）
+
+### 网络选择
+
+| 方式 | 适用场景 | 配置 |
+|------|---------|------|
+| `--network host` | MCP Server 与 PeekView 同机 | `PEEKVIEW_URL=http://localhost:8080` |
+| 端口映射 | MCP Server 在容器内 | `ports: ["33333:33333"]` + `PEEKVIEW_URL=http://host.docker.internal:8080` |
+
+### Volume Mount 同路径原则
+
+容器内路径必须与主机挂载路径一致（namespace 只影响 Agent 传入路径的前缀替换，不做路径翻译）：
+
+```yaml
+volumes:
+  - /data/project:/data/project   # ✅ 同路径
+  - /host/path:/container/path     # ❌ 不同路径，publish_files 无法找到文件
+```
+
+### Docker Compose 完整示例
+
+```yaml
+version: '3.8'
+services:
+  peekview:
+    image: python:3.12-slim
+    command: sh -c "pip install peekview && peekview serve --host 0.0.0.0 --port 8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - peekview-data:/data
+
+  mcp-server:
+    image: node:20-alpine
+    command: sh -c "npm install -g @peekview/mcp-server && peekview-mcp serve"
+    working_dir: /app
+    ports:
+      - "33333:33333"
+    environment:
+      - PEEKVIEW_URL=http://peekview:8080
+      - PEEKVIEW_PUBLIC_URL=https://peek.example.com
+      - MCP_MODE=local
+      - MCP_ALLOWED_PATHS=/data:/app
+    volumes:
+      - mcp-data:/data
 ```
 
 ## 故障排查

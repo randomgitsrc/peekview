@@ -7,6 +7,24 @@
 
 ## [Unreleased]
 
+### 新增
+
+- MCP Server Docker 部署指引：三份 README 均新增 Docker 场景配置说明（cwd=/ 问题、allowed_paths 配置、volume mount 同路径原则）(T070)
+- MCP Server 根 README 新增 OpenCode/Cursor 接入示例 (T070)
+- MCP Server `/health` 端点新增 cwd、mode、allowed_paths 诊断字段（local 模式显示 allowed_paths，remote 模式为空数组）(T070)
+- MCP Server `config list` 新增 runtime 节：显示 cwd、mode、env 覆盖后的最终生效值 (T070)
+- MCP Server `config verify` 新增 allowed_paths 文件可读性测试 (T070)
+- MCP Server `publish_files` 工具描述新增 Docker 场景提示、诊断命令提示、namespace 提示 (T070)
+
+### 修复
+
+- MCP Server CWD guard bug：cwd=/ 且已配置 allowed_paths 时 publish_files 不再错误拒绝 (T070)
+- MCP Server 错误信息区分：cwd=/ 拒绝时明确说明"cwd 为根目录"和"未配置 allowed_paths"两个原因 (T070)
+- MCP Server allowed_paths 容错：YAML 文件中 allowed_paths 写为冒号分隔字符串时不再崩溃，自动解析为数组 (T070)
+- MCP Server README namespace 语义修正：从"容器路径自动翻译"改为"Agent 侧短路径别名，volume mount 必须同路径" (T070)
+- MCP Server README allowed_paths 格式描述修正：区分 YAML 数组格式和环境变量冒号分隔格式 (T070)
+- MCP Server README Docker Compose 示例修正：从不存在的镜像名改为 node:20-alpine + npm install -g (T070)
+
 ## [0.11.0] - 2026-07-23
 
 ### 新增

@@ -219,6 +219,10 @@ cd backend && .venv/bin/python -m pytest tests/  # Run tests
 make debug-start # Start dev server (port 8888)
 ```
 
+## Docker 场景
+
+MCP Server 在 Docker 容器内运行时，默认 cwd 为 `/`，需配置 `MCP_ALLOWED_PATHS` 或设置 `working_dir`。详见 [MCP Server Docker 指引](../packages/mcp-server/README.md#docker-场景指引)。
+
 ## License
 
 MIT License

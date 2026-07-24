@@ -4,10 +4,12 @@
  */
 import { Command } from 'commander';
 import { existsSync } from 'fs';
+import { promises as fsp, constants as fsConstants } from 'fs';
 import { join } from 'path';
 import { saveConfigToFile, loadConfigFromFile } from '../config/file.js';
 import type { ConfigFileData } from '../config/file.js';
 import { validateUrl } from '../config/validators.js';
+import { mergeConfig } from '../config/merge.js';
 
 function getHomeDir(): string {
   return process.env.HOME || process.env.USERPROFILE || '/tmp';
@@ -171,6 +173,20 @@ export function configListAction(): void {
         console.log(`    ${from} → ${to}`);
       }
     }
+    console.log('');
+  }
+
+  try {
+    const merged = mergeConfig(config, process.env);
+    console.log('runtime:');
+    console.log(`  cwd:          ${process.cwd()}`);
+    console.log(`  mode:         ${merged.mode}`);
+    console.log(`  allowed_paths:${merged.allowedPaths.length > 0 ? merged.allowedPaths.join(':') : '(not set)'}  (resolved, env-merged)`);
+    console.log('');
+  } catch {
+    console.log('runtime:');
+    console.log(`  cwd:          ${process.cwd()}`);
+    console.log(`  mode:         (merge failed — missing required config)`);
     console.log('');
   }
 
@@ -492,6 +508,25 @@ export async function verifyAction(): Promise<void> {
     console.log(`✅ peekview.public_url：${publicUrl}`);
   } else {
     console.log('⚠️  peekview.public_url 未配置（可选）');
+  }
+
+  try {
+    const merged = mergeConfig(config, process.env);
+    const allowedPaths = merged.allowedPaths;
+    if (allowedPaths.length > 0) {
+      console.log('\nallowed_paths 可读性检查:');
+      for (const p of allowedPaths) {
+        try {
+          await fsp.access(p, fsConstants.R_OK);
+          console.log(`  ✅ ${p} — 可读`);
+        } catch {
+          console.log(`  ❌ ${p} — 不可读或不存在`);
+          allOk = false;
+        }
+      }
+    }
+  } catch {
+    // mergeConfig may fail if required fields missing; skip allowed_paths check
   }
 
   if (!allOk) process.exit(1);

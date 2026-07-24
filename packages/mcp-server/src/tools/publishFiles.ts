@@ -306,7 +306,11 @@ Examples:
 - Generated doc: write_file("/tmp/intro.md") then { "summary": "Intro", "paths": ["/tmp/intro.md"] }
 - Directory:     { "summary": "Docs", "paths": ["/project/docs/"], "include_patterns": ["*.md"] }
 
-Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
+Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build
+
+Docker/container: if cwd=/, configure server.allowed_paths or set trust_all_paths=true.
+Troubleshooting: run 'peekview-mcp config verify' to check config and file access.
+Namespace: use X-Peekview-Namespace header when Agent runs in a container with path_namespaces configured.`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -336,11 +340,18 @@ Skipped automatically: .git, node_modules, __pycache__, .venv, dist, build`,
       const params = schema.parse(args);
 
       const cwd = process.cwd();
-      if (path.resolve(cwd) === path.parse(cwd).root) {
+      const isCwdRoot = path.resolve(cwd) === path.parse(cwd).root;
+      if (isCwdRoot && !config.trustAllPaths && config.allowedPaths.length === 0) {
         return {
           content: [{
             type: 'text',
-            text: 'ERROR: local 模式未配置 allowed_paths，且当前工作目录为文件系统根目录。请显式配置 server.allowed_paths 后再使用 publish_files。',
+            text: 'ERROR: local 模式当前工作目录为文件系统根目录（/），且未配置 allowed_paths。\n' +
+                  '原因：cwd 为根目录时默认允许范围过大，存在安全风险。\n' +
+                  '解决方案：\n' +
+                  '  1. 配置 server.allowed_paths 显式指定允许的目录\n' +
+                  '  2. 或设置 server.trust_all_paths=true（危险，跳过路径白名单）\n' +
+                  '  3. 或用 -w /tmp 等非根目录启动\n' +
+                  '诊断：peekview-mcp config verify',
           }],
         };
       }
