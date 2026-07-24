@@ -79,7 +79,7 @@ export function mergeConfig(fileConfig: ConfigFileData | null, env: NodeJS.Proce
   if (env.MCP_ALLOWED_PATHS) {
     allowedPaths = env.MCP_ALLOWED_PATHS.split(':').filter((p) => p.length > 0).map(expandHome);
   } else if (fileConfig?.server?.allowed_paths) {
-    const raw = fileConfig.server.allowed_paths;
+    const raw: string | string[] = fileConfig.server.allowed_paths as string | string[];
     const paths = typeof raw === 'string'
       ? raw.split(':').filter((p: string) => p.length > 0)
       : Array.isArray(raw) ? raw : [];

@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [mcp-v0.10.0] - 2026-07-25
+
 ### 新增
 
 - MCP Server Docker 部署指引：三份 README 均新增 Docker 场景配置说明（cwd=/ 问题、allowed_paths 配置、volume mount 同路径原则）(T070)
