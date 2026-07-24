@@ -35,6 +35,10 @@
 | 31 | P8 自检清单加 `make dev`（防止 venv 依赖未同步导致测试虚设） | 流程/纠错 | 🔴 立即 | ✅ 已改 |
 | 32 | MCP updateEntry 设计理由文档（解释为何 MCP 不暴露更新能力） | 文档 | 🟠 近期 | ✅ 已写入 AGENTS.md |
 | 33 | 渲染能力从"主动加新格式"降级为"被动维护 bug" | 决策 | 🟡 中期 | ⬜ 团队决议 |
+| 34 | peekview-mcp 官方 Docker 镜像（避免每次 npm install 40-60s） | 运维 | 🟡 中期 | ⬜ 待立项 |
+| 35 | MCP type/mode 命名重构（type=transport, mode=read_mode，breaking change） | 架构 | 🔵 长期 | ⬜ 待择期 |
+| 36 | PeekView 本身 Docker 部署支持（官方镜像 + docker-compose） | 运维 | 🟡 中期 | ⬜ 待立项 |
+| 37 | MCP 部署场景完整矩阵文档（11 种场景） | 文档 | 🟡 中期 | ⬜ T070 后补充 |
 | 11 | 嵌入式 iframe 分享 (`/embed/{slug}`) | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 12 | 版本化 / 时间契约 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 13 | OG 预览卡片 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
