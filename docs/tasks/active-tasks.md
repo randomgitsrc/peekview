@@ -15,6 +15,8 @@
 | T068 | account-settings | ✅✅ 已完成 | P8→v0.11.0 | 🟠 | 无 | 2026-07-22 | 2026-07-23 |
 | T069 | settings-refresh-guard | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-23 | 2026-07-23 |
 | T070 | mcp-docker-deployability | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-24 | 2026-07-24 |
+| T071 | mcp-official-docker-image | ⬜ 待开始 | P0 | 🟡 | 无（T070 完成后更佳） | 2026-07-24 | 2026-07-24 |
+| T072 | peekview-docker-deploy | ⬜ 待开始 | P0 | 🟡 | 无（和 T071 可并行） | 2026-07-24 | 2026-07-24 |
 
 ### 待开始
 
