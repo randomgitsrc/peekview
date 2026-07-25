@@ -1,0 +1,10 @@
+phase: P0
+task_id: T073
+status: in_progress
+created: 2026-07-25
+updated: 2026-07-25
+history:
+  - phase: P0
+    date: 2026-07-25
+    status: completed
+    note: P0-brief.md 五字段齐全，根因已定位
