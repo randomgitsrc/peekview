@@ -14,6 +14,24 @@
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-07-26
+
+### 新增
+
+-
+
+
+### 修复
+
+- 详情页 auth guard 全页刷新 bug：已登录用户刷新 /settings 不再被重定向到首页，守卫等待 authState 初始化完成后再判断 (T069)
+
+### 变更
+
+- 桌面端 header 品牌文字颜色降级 + 新增分隔符，消除品牌与标题的视觉混淆 (T069)
+- 移动端 sticky header 重构：去掉 ← 箭头和品牌文字，logo icon 兼任返回，标题两行紧凑显示 (T069)
+- 移动端 bottom bar 重构：Files/TOC 改用 toggle-btn + badge，去掉 Explore/Share，收入 Overflow (T069)
+- FileTree 面板头部显示文件数量（`Files · N`）(T069)
+
 ## [mcp-v0.10.0] - 2026-07-25
 
 ### 新增
