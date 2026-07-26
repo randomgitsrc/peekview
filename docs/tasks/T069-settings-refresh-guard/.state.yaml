@@ -1,6 +1,6 @@
-phase: P1
+phase: P5
 task_id: T069
-status: in_progress
+status: completed
 created: 2026-07-23
 updated: 2026-07-26
 history:
@@ -10,5 +10,21 @@ history:
     note: P0-brief.md 五字段齐全
   - phase: P1
     date: 2026-07-26
-    status: in_progress
-    note: 派发 analyst subagent
+    status: completed
+    note: P1-requirements.md 24 BDD, review approved
+  - phase: P2
+    date: 2026-07-26
+    status: completed
+    note: P2-design.md async guard + Promise.race, plan-design-review approved
+  - phase: P3
+    date: 2026-07-26
+    status: completed
+    note: P3-test-cases.md 24 BDD covered
+  - phase: P4
+    date: 2026-07-26
+    status: completed
+    note: auth guard + header/bottom bar UI polish
+  - phase: P5
+    date: 2026-07-26
+    status: completed
+    note: 1021 passed, 1 预存失败(T068)
