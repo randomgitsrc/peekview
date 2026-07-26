@@ -1,8 +1,9 @@
-phase: P5
+phase: DONE
 task_id: T073
 status: completed
 created: 2026-07-25
 updated: 2026-07-26
+release_version: v0.11.1
 history:
   - phase: P0
     date: 2026-07-25
@@ -28,3 +29,15 @@ history:
     date: 2026-07-26
     status: completed
     note: 971 passed, 0 failed, gate通过
+  - phase: P6
+    date: 2026-07-26
+    status: completed
+    note: 13 BDD 全 PASS, 验收通过
+  - phase: P7
+    date: 2026-07-26
+    status: completed
+    note: 双向一致, 无 BLOCKER
+  - phase: P8
+    date: 2026-07-26
+    status: completed
+    note: bump patch v0.11.1, tag created
