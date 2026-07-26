@@ -59,13 +59,13 @@ class TestBdd10LintFixIdempotent:
         original_sqlalchemy_lines = {}
         for py_file in services_dir.glob("*.py"):
             lines = py_file.read_text().splitlines()
-            sql_lines = [l for l in lines if any(p in l for p in sqlalchemy_patterns)]
+            sql_lines = [line for line in lines if any(p in line for p in sqlalchemy_patterns)]
             if sql_lines:
                 original_sqlalchemy_lines[str(py_file)] = sql_lines
 
         if database_file.exists():
             lines = database_file.read_text().splitlines()
-            sql_lines = [l for l in lines if any(p in l for p in sqlalchemy_patterns)]
+            sql_lines = [line for line in lines if any(p in line for p in sqlalchemy_patterns)]
             if sql_lines:
                 original_sqlalchemy_lines[str(database_file)] = sql_lines
 
@@ -83,7 +83,7 @@ class TestBdd10LintFixIdempotent:
         changed_sqlalchemy = []
         for path_str, original_lines in original_sqlalchemy_lines.items():
             current_lines = Path(path_str).read_text().splitlines()
-            current_sql_lines = [l for l in current_lines if any(p in l for p in sqlalchemy_patterns)]
+            current_sql_lines = [line for line in current_lines if any(p in line for p in sqlalchemy_patterns)]
             if current_sql_lines != original_lines:
                 changed_sqlalchemy.append(Path(path_str).name)
 
