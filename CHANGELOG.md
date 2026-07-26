@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.11.1] - 2026-07-26
+
+### 修复
+
+- 修复 ruff `--fix --unsafe-fixes` 导致的 SQLAlchemy 查询语法回归：19 处 `not Column`/`Column is None`/`Column is not None`/裸 Column 误改恢复为 `~Column`/`.is_(None)`/`.isnot(None)`/`.is_(True)` (T073)
+- pyproject.toml 添加 E711/E712 到 ruff lint ignore 列表，防止 ruff 再次"修复"SQLAlchemy 比较语法 (T073)
+
 ## [Unreleased]
 
 ## [mcp-v0.10.0] - 2026-07-25
