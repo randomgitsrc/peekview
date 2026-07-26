@@ -1,10 +1,18 @@
-phase: P0
+phase: P3
 task_id: T073
 status: in_progress
 created: 2026-07-25
-updated: 2026-07-25
+updated: 2026-07-26
 history:
   - phase: P0
     date: 2026-07-25
     status: completed
     note: P0-brief.md 五字段齐全，根因已定位
+  - phase: P1
+    date: 2026-07-26
+    status: completed
+    note: P1-requirements.md 13 BDD, review approved (rev2)
+  - phase: P2
+    date: 2026-07-26
+    status: completed
+    note: P2-design.md 3 候选方案, plan-eng-review approved
