@@ -253,9 +253,20 @@ FILENAME_MAP: dict[str, str] = {
 
 # Languages that don't need highlighting (plain text)
 PLAIN_TEXT_LANGS = {
-    "text", "log", "csv", "ignore", "git_attributes",
-    "autohotkey", "editorconfig", "git_config", "janet",
-    "odin", "pip-requirements", "sed", "vba", "vbscript",
+    "text",
+    "log",
+    "csv",
+    "ignore",
+    "git_attributes",
+    "autohotkey",
+    "editorconfig",
+    "git_config",
+    "janet",
+    "odin",
+    "pip-requirements",
+    "sed",
+    "vba",
+    "vbscript",
 }
 
 # Binary file detection helpers

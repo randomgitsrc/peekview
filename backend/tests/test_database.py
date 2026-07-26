@@ -44,11 +44,7 @@ class TestInitDb:
         engine = init_db(tmp_path / "test.db")
 
         with engine.connect() as conn:
-            result = conn.execute(
-                text(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
-            )
+            result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = {row[0] for row in result}
 
         assert "entries" in tables
@@ -98,9 +94,7 @@ class TestFTS5:
 
         with engine.connect() as conn:
             result = conn.execute(
-                text(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
-                )
+                text("SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'")
             )
             assert result.scalar() == "entries_fts"
 
@@ -111,11 +105,7 @@ class TestFTS5:
         engine = init_db(tmp_path / "test.db")
 
         with engine.connect() as conn:
-            result = conn.execute(
-                text(
-                    "SELECT name FROM sqlite_master WHERE type='trigger'"
-                )
-            )
+            result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='trigger'"))
             triggers = {row[0] for row in result}
 
         assert "entries_ai" in triggers
@@ -135,9 +125,7 @@ class TestFTS5:
             entry_id = entry.id
 
             result = session.exec(
-                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(
-                    id=entry_id
-                )
+                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id)
             )
             assert result.scalar() == 1
 
@@ -159,9 +147,7 @@ class TestFTS5:
 
             # Check FTS
             result = session.exec(
-                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(
-                    id=entry_id
-                )
+                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id)
             )
             assert result.scalar() == 0
 
@@ -280,10 +266,12 @@ class TestGetDbStats:
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
-            session.add_all([
-                Entry(slug="a", summary="A"),
-                Entry(slug="b", summary="B"),
-            ])
+            session.add_all(
+                [
+                    Entry(slug="a", summary="A"),
+                    Entry(slug="b", summary="B"),
+                ]
+            )
             session.commit()
 
         stats = get_db_stats(engine)
@@ -300,10 +288,12 @@ class TestGetDbStats:
             session.add(entry)
             session.commit()
 
-            session.add_all([
-                File(entry_id=entry.id, filename="a.py", size=10),
-                File(entry_id=entry.id, filename="b.py", size=20),
-            ])
+            session.add_all(
+                [
+                    File(entry_id=entry.id, filename="a.py", size=10),
+                    File(entry_id=entry.id, filename="b.py", size=20),
+                ]
+            )
             session.commit()
 
         stats = get_db_stats(engine)
@@ -332,9 +322,7 @@ class TestRebuildFtsIndex:
             rebuild_fts_index(engine)
 
             # Check
-            result = session.exec(
-                text("SELECT COUNT(*) FROM entries_fts")
-            )
+            result = session.exec(text("SELECT COUNT(*) FROM entries_fts"))
             assert result.scalar() == 1
 
         engine.dispose()

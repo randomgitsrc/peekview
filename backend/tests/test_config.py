@@ -59,6 +59,7 @@ class TestPeekLimits:
     def test_default_expires_in_invalid_falls_back(self, caplog):
         """Invalid default_expires_in triggers WARNING and falls back to '15d'."""
         import logging
+
         caplog.set_level(logging.WARNING, logger="peekview.config")
         limits = PeekLimits(default_expires_in="999999d")
         assert limits.default_expires_in == "15d"
@@ -202,9 +203,7 @@ class TestLocalPathAllowlist:
         """Path within allowed directory is allowed."""
         allowed = tmp_path / "allowed"
         allowed.mkdir()
-        config = PeekConfig(
-            storage=PeekStorage(allowed_paths=[allowed])
-        )
+        config = PeekConfig(storage=PeekStorage(allowed_paths=[allowed]))
         test_file = allowed / "test.py"
         test_file.write_text("# test")
         assert config.is_local_path_allowed(test_file)
@@ -216,9 +215,7 @@ class TestLocalPathAllowlist:
         outside = tmp_path / "outside" / "test.py"
         outside.parent.mkdir()
         outside.write_text("# test")
-        config = PeekConfig(
-            storage=PeekStorage(allowed_paths=[allowed])
-        )
+        config = PeekConfig(storage=PeekStorage(allowed_paths=[allowed]))
         assert not config.is_local_path_allowed(outside)
 
     def test_nested_path_in_allowlist(self, tmp_path):
@@ -227,9 +224,7 @@ class TestLocalPathAllowlist:
         nested = allowed / "subdir" / "test.py"
         nested.parent.mkdir(parents=True)
         nested.write_text("# test")
-        config = PeekConfig(
-            storage=PeekStorage(allowed_paths=[allowed])
-        )
+        config = PeekConfig(storage=PeekStorage(allowed_paths=[allowed]))
         assert config.is_local_path_allowed(nested)
 
     def test_symlink_resolved_path(self, tmp_path):
@@ -240,9 +235,7 @@ class TestLocalPathAllowlist:
         actual.write_text("# actual")
         link = tmp_path / "link.py"
         link.symlink_to(actual)
-        config = PeekConfig(
-            storage=PeekStorage(allowed_paths=[allowed])
-        )
+        config = PeekConfig(storage=PeekStorage(allowed_paths=[allowed]))
         # Note: is_local_path_allowed resolves the path
         # so symlinks pointing to allowed paths are allowed
         assert config.is_local_path_allowed(link)
@@ -272,17 +265,17 @@ class TestConfigLimitsEndpoint:
     async def test_config_limits_respects_env_var(self, monkeypatch, temp_data_dir, temp_db_path):
         """GET /api/v1/config/limits reflects PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN."""
         from peekview.main import create_app
+
         monkeypatch.setenv("PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN", "7d")
 
         # Use create_app with special env that doesn't read config file
         app = create_app(data_dir=temp_data_dir, db_path=temp_db_path)
 
         from httpx import ASGITransport, AsyncClient
+
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             resp = await ac.get("/api/v1/config/limits")
             assert resp.status_code == 200
             data = resp.json()
             assert data["default_expires_in"] == "7d"
-
-

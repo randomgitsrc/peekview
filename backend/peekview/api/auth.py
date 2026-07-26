@@ -137,9 +137,7 @@ async def login(data: UserLogin, request: Request, response: Response) -> AuthRe
     )
 
     with Session(engine) as session:
-        user = session.exec(
-            select(User).where(User.username == data.username)
-        ).first()
+        user = session.exec(select(User).where(User.username == data.username)).first()
 
     # Generic error: don't reveal whether username exists or password is wrong
     if user is None or not user.is_active:
@@ -236,9 +234,7 @@ async def delete_self(
     if current_user.is_admin:
         admin_count = 0
         with Session(engine) as s:
-            admin_count = s.exec(
-                select(User).where(User.is_admin.is_(True))
-            ).all()
+            admin_count = s.exec(select(User).where(User.is_admin.is_(True))).all()
             admin_count = len(admin_count)
         if admin_count == 1 and confirm_username != current_user.username:
             raise HTTPException(
@@ -271,6 +267,3 @@ async def change_password(
         user.password_hash = hash_password(data.new_password)
         session.add(user)
         session.commit()
-
-
-

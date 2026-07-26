@@ -15,6 +15,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -23,6 +24,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -34,8 +36,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -68,8 +73,8 @@ async def _create_share(client, auth_token, slug, expires_in="7d", max_views=Non
 
 # --- B23: Owner revokes specific shares ---
 
-class TestRevokeShares:
 
+class TestRevokeShares:
     async def test_b23_owner_revokes_specific_shares(self, client_and_app):
         """B23: Owner revokes specific shares, others remain active."""
         client, app = client_and_app

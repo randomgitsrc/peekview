@@ -102,9 +102,7 @@ async def lifespan(app: FastAPI):
                 logger.info("Cleanup: running initial check (check_on_start=True)")
                 try:
                     loop = asyncio.get_running_loop()
-                    result = await loop.run_in_executor(
-                        None, admin_service.cleanup_expired
-                    )
+                    result = await loop.run_in_executor(None, admin_service.cleanup_expired)
                     logger.info(
                         "Cleanup: archived=%d, deleted=%d, freed=%.2fMB",
                         result.archived_count,
@@ -118,9 +116,7 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(interval)
                 try:
                     loop = asyncio.get_running_loop()
-                    result = await loop.run_in_executor(
-                        None, admin_service.cleanup_expired
-                    )
+                    result = await loop.run_in_executor(None, admin_service.cleanup_expired)
                     logger.info(
                         "Cleanup: archived=%d, deleted=%d, freed=%.2fMB",
                         result.archived_count,
@@ -210,9 +206,11 @@ def create_app(
     from peekview.services.read_tracking_service import ReadTrackingService
     from peekview.services.share_service import ShareService
     from peekview.storage import StorageManager
+
     storage = StorageManager(config=config)
 
     from peekview.database import backfill_fts_content
+
     backfill_fts_content(engine, storage)
 
     entry_service = EntryService(engine=engine, storage=storage, config=config)
@@ -227,7 +225,7 @@ def create_app(
     app.state.read_tracking_service = read_tracking_service
 
     # Setup CORS - use config or default
-    cors_origins = getattr(config, 'cors_origins', ["http://localhost:5173"])
+    cors_origins = getattr(config, "cors_origins", ["http://localhost:5173"])
     if isinstance(cors_origins, str):
         cors_origins = cors_origins.split(",")
     app.add_middleware(
@@ -257,8 +255,14 @@ def create_app(
                 pass
             else:
                 response.headers["X-Frame-Options"] = "DENY"
-                response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
-        elif path == "/" or path.startswith("/assets") or (not path.startswith("/api") and not path.startswith("/health")):
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'none'; frame-ancestors 'none'"
+                )
+        elif (
+            path == "/"
+            or path.startswith("/assets")
+            or (not path.startswith("/api") and not path.startswith("/health"))
+        ):
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"
             if has_share_param:
@@ -282,8 +286,9 @@ def create_app(
         return response
 
     # API key auth middleware (if configured)
-    api_key = getattr(config.server, 'api_key', '') or getattr(config, 'api_key', '')
+    api_key = getattr(config.server, "api_key", "") or getattr(config, "api_key", "")
     if api_key:
+
         @app.middleware("http")
         async def api_key_auth(request: Request, call_next):
             # Skip auth for health check and metrics
@@ -300,7 +305,12 @@ def create_app(
 
             # Skip auth for raw shortlink redirect (target route handles auth)
             path = request.url.path
-            if not path.startswith("/") or path.startswith("/api") or path.startswith("/assets") or path.startswith("/health"):
+            if (
+                not path.startswith("/")
+                or path.startswith("/api")
+                or path.startswith("/assets")
+                or path.startswith("/health")
+            ):
                 pass
             elif path.endswith("/raw") and "/" not in path[1:-4]:
                 return await call_next(request)
@@ -334,7 +344,13 @@ def create_app(
 
             return JSONResponse(
                 status_code=401,
-                content={"error": {"code": "UNAUTHORIZED", "message": "Invalid or missing API key", "details": None}},
+                content={
+                    "error": {
+                        "code": "UNAUTHORIZED",
+                        "message": "Invalid or missing API key",
+                        "details": None,
+                    }
+                },
             )
 
     # Request logging middleware
@@ -345,7 +361,10 @@ def create_app(
         duration = (time.time() - start) * 1000
         logger.info(
             "%s %s → %d (%.1fms)",
-            request.method, request.url.path, response.status_code, duration,
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration,
         )
         return response
 
@@ -358,11 +377,14 @@ def create_app(
     async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
         return JSONResponse(
             status_code=429,
-            content={"error": {"code": "RATE_LIMITED", "message": str(exc.detail), "details": None}},
+            content={
+                "error": {"code": "RATE_LIMITED", "message": str(exc.detail), "details": None}
+            },
         )
 
     # Add SlowAPIMiddleware for rate limiting
     from slowapi.middleware import SlowAPIMiddleware
+
     app.add_middleware(SlowAPIMiddleware)
 
     # Prometheus instrumentator (middleware must wrap all routes)
@@ -386,6 +408,7 @@ def create_app(
     from peekview.api.entries import router as entries_router
     from peekview.api.files import router as files_router
     from peekview.api.shares import router as shares_router
+
     app.include_router(auth_router)
     app.include_router(apikeys_router)
     app.include_router(entries_router)
@@ -544,6 +567,7 @@ def _setup_static_files(app: FastAPI) -> None:
             @app.get("/")
             async def serve_spa():
                 from fastapi.responses import FileResponse
+
                 return FileResponse(frontend_dist / "index.html")
 
             @app.get("/{path:path}")
@@ -552,6 +576,7 @@ def _setup_static_files(app: FastAPI) -> None:
 
                 if path.startswith("api/") or path.startswith("health"):
                     from fastapi import HTTPException
+
                     raise HTTPException(status_code=404, detail="Not found")
 
                 file_path = frontend_dist / path
@@ -560,6 +585,7 @@ def _setup_static_files(app: FastAPI) -> None:
 
                 if not _is_frontend_route(path) and _prefers_json(request.headers.get("accept")):
                     from peekview.api.files import resolve_entry_raw
+
                     return await resolve_entry_raw(request, path)
 
                 index_path = frontend_dist / "index.html"
@@ -568,8 +594,7 @@ def _setup_static_files(app: FastAPI) -> None:
                 if not _is_frontend_route(path) and _slug_exists(request, path):
                     html = _inject_link(html, path)
                     link_value = (
-                        f'</api/v1/entries/{path}/raw>; rel="alternate";'
-                        ' type="application/json"'
+                        f'</api/v1/entries/{path}/raw>; rel="alternate"; type="application/json"'
                     )
                     return HTMLResponse(
                         content=html,

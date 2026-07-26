@@ -74,13 +74,15 @@ class PeekLimits(BaseSettings):
         import logging
 
         from peekview.services.file_service import parse_expires_in
+
         _config_logger = logging.getLogger("peekview.config")
         try:
             parse_expires_in(v)
         except ValueError as exc:
             _config_logger.warning(
                 "Invalid PEEKVIEW_LIMITS__DEFAULT_EXPIRES_IN=%r: %s. Falling back to '15d'.",
-                v, exc,
+                v,
+                exc,
             )
             return "15d"
         return v
@@ -428,10 +430,7 @@ class PeekConfig(BaseSettings):
                 )
 
         if kwargs.get("debug_mode") and "auth" not in kwargs:
-            has_auth_env = any(
-                v.startswith("PEEKVIEW_AUTH__")
-                for v in _os.environ
-            )
+            has_auth_env = any(v.startswith("PEEKVIEW_AUTH__") for v in _os.environ)
             if not has_auth_env:
                 kwargs["auth"] = PeekAuth(captcha_enabled=False)
 

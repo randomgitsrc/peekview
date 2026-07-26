@@ -100,9 +100,7 @@ def validate_local_path(
             except ValueError:
                 continue
         if not path_allowed:
-            raise ForbiddenPathError(
-                f"Path is outside allowed directories: {local_path}"
-            )
+            raise ForbiddenPathError(f"Path is outside allowed directories: {local_path}")
 
     return resolved
 

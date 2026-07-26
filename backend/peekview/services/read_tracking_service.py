@@ -82,13 +82,16 @@ class ReadTrackingService:
             ).one()
 
             try:
-                unique_count = session.execute(
-                    text(
-                        "SELECT COUNT(DISTINCT reader_fingerprint) FROM entry_reads "
-                        "WHERE entry_id = :eid AND is_self_read = 0 AND action = 'read'"
-                    ),
-                    {"eid": entry_id},
-                ).scalar() or 0
+                unique_count = (
+                    session.execute(
+                        text(
+                            "SELECT COUNT(DISTINCT reader_fingerprint) FROM entry_reads "
+                            "WHERE entry_id = :eid AND is_self_read = 0 AND action = 'read'"
+                        ),
+                        {"eid": entry_id},
+                    ).scalar()
+                    or 0
+                )
             except Exception:
                 unique_count = 0
 
@@ -100,9 +103,7 @@ class ReadTrackingService:
             by_channel = {row[0]: row[1] for row in channel_rows}
 
             last_read = session.exec(
-                select(func.max(EntryRead.updated_at)).where(
-                    EntryRead.entry_id == entry_id
-                )
+                select(func.max(EntryRead.updated_at)).where(EntryRead.entry_id == entry_id)
             ).first()
 
             return ReadStatsResponse(
@@ -120,9 +121,7 @@ class ReadTrackingService:
     ) -> ReadEventListResponse:
         with Session(self.engine) as session:
             total = session.exec(
-                select(func.count()).select_from(EntryRead).where(
-                    EntryRead.entry_id == entry_id
-                )
+                select(func.count()).select_from(EntryRead).where(EntryRead.entry_id == entry_id)
             ).one()
 
             offset = (page - 1) * per_page

@@ -38,16 +38,22 @@ async def api_key_client(tmp_path, monkeypatch):
 
 async def _setup_users(client):
     """Register admin (first user) + normal user, return (admin_token, user_token)."""
-    admin_resp = await client.post("/api/v1/auth/register", json={
-        "username": "adminuser",
-        "password": "adminpass123",
-    })
+    admin_resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "adminuser",
+            "password": "adminpass123",
+        },
+    )
     admin_token = admin_resp.json()["access_token"]
 
-    user_resp = await client.post("/api/v1/auth/register", json={
-        "username": "normaluser",
-        "password": "normalpass123",
-    })
+    user_resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "normaluser",
+            "password": "normalpass123",
+        },
+    )
     user_token = user_resp.json()["access_token"]
 
     return admin_token, user_token
@@ -58,11 +64,15 @@ async def _create_private_entry_with_file(client, token, global_key=None):
     headers = {"Authorization": f"Bearer {token}"}
     if global_key:
         headers["X-API-Key"] = global_key
-    resp = await client.post("/api/v1/entries", json={
-        "summary": "Private entry",
-        "is_public": False,
-        "files": [{"filename": "secret.py", "content": "SECRET=42"}],
-    }, headers=headers)
+    resp = await client.post(
+        "/api/v1/entries",
+        json={
+            "summary": "Private entry",
+            "is_public": False,
+            "files": [{"filename": "secret.py", "content": "SECRET=42"}],
+        },
+        headers=headers,
+    )
     assert resp.status_code == 201
     data = resp.json()
     return data["slug"], data["files"][0]["id"]
@@ -70,16 +80,20 @@ async def _create_private_entry_with_file(client, token, global_key=None):
 
 async def _create_public_entry_with_file(client):
     """Create a public entry with a file, return (slug, file_id)."""
-    resp = await client.post("/api/v1/entries", json={
-        "summary": "Public entry",
-        "files": [{"filename": "readme.md", "content": "# Hello"}],
-    })
+    resp = await client.post(
+        "/api/v1/entries",
+        json={
+            "summary": "Public entry",
+            "files": [{"filename": "readme.md", "content": "# Hello"}],
+        },
+    )
     assert resp.status_code == 201
     data = resp.json()
     return data["slug"], data["files"][0]["id"]
 
 
 # --- BUG-1: File endpoint admin visibility --- #
+
 
 class TestAdminFileDownload:
     """AC-1: Admin can download files from others' private entries."""
@@ -120,10 +134,13 @@ class TestNonOwnerFileAccess:
     @pytest.mark.asyncio
     async def test_normal_user_download_private_file_404(self, file_client):
         _admin_token, user1_token = await _setup_users(file_client)
-        user2_resp = await file_client.post("/api/v1/auth/register", json={
-            "username": "user2",
-            "password": "user2pass123",
-        })
+        user2_resp = await file_client.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "user2",
+                "password": "user2pass123",
+            },
+        )
         user2_token = user2_resp.json()["access_token"]
 
         slug, file_id = await _create_private_entry_with_file(file_client, user1_token)
@@ -137,10 +154,13 @@ class TestNonOwnerFileAccess:
     @pytest.mark.asyncio
     async def test_normal_user_content_private_file_404(self, file_client):
         _admin_token, user1_token = await _setup_users(file_client)
-        user2_resp = await file_client.post("/api/v1/auth/register", json={
-            "username": "user2b",
-            "password": "user2bpass123",
-        })
+        user2_resp = await file_client.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "user2b",
+                "password": "user2bpass123",
+            },
+        )
         user2_token = user2_resp.json()["access_token"]
 
         slug, file_id = await _create_private_entry_with_file(file_client, user1_token)
@@ -226,6 +246,7 @@ class TestPublicEntryFileAccess:
 
 # --- IMPL-1: require_admin dependency --- #
 
+
 class TestRequireAdminRejectsNonAdmin:
     """AC-7: require_admin rejects non-admin (403)."""
 
@@ -266,10 +287,13 @@ class TestExistingEndpointsRegression:
 
     @pytest.mark.asyncio
     async def test_entry_crud_still_works(self, file_client):
-        create = await file_client.post("/api/v1/entries", json={
-            "summary": "Regression test",
-            "slug": "regression-test",
-        })
+        create = await file_client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Regression test",
+                "slug": "regression-test",
+            },
+        )
         assert create.status_code == 201
 
         get = await file_client.get("/api/v1/entries/regression-test")
@@ -280,24 +304,33 @@ class TestExistingEndpointsRegression:
 
     @pytest.mark.asyncio
     async def test_auth_endpoints_still_work(self, file_client):
-        reg = await file_client.post("/api/v1/auth/register", json={
-            "username": "regressionuser",
-            "password": "regpass123",
-        })
+        reg = await file_client.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "regressionuser",
+                "password": "regpass123",
+            },
+        )
         assert reg.status_code == 201
 
-        login = await file_client.post("/api/v1/auth/login", json={
-            "username": "regressionuser",
-            "password": "regpass123",
-        })
+        login = await file_client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "regressionuser",
+                "password": "regpass123",
+            },
+        )
         assert login.status_code == 200
 
     @pytest.mark.asyncio
     async def test_file_endpoints_still_work(self, file_client):
-        create = await file_client.post("/api/v1/entries", json={
-            "summary": "File regression",
-            "files": [{"filename": "test.py", "content": "pass"}],
-        })
+        create = await file_client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "File regression",
+                "files": [{"filename": "test.py", "content": "pass"}],
+            },
+        )
         data = create.json()
         slug = data["slug"]
         file_id = data["files"][0]["id"]

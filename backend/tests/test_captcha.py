@@ -235,10 +235,13 @@ class TestRegisterWithCaptcha:
     @pytest.mark.asyncio
     async def test_register_without_captcha_token_fails(self, client_with_captcha_strict):
         """Register without captcha token should fail with CAPTCHA_REQUIRED."""
-        resp = await client_with_captcha_strict.post("/api/v1/auth/register", json={
-            "username": "nocaptchatest",
-            "password": "somepass123",
-        })
+        resp = await client_with_captcha_strict.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "nocaptchatest",
+                "password": "somepass123",
+            },
+        )
         assert resp.status_code == 401
         assert resp.json()["error"]["code"] == "CAPTCHA_REQUIRED"
 
@@ -256,11 +259,14 @@ class TestRegisterWithCaptcha:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
 
-            resp = await client_with_captcha_strict.post("/api/v1/auth/register", json={
-                "username": "badcaptcha",
-                "password": "somepass123",
-                "captcha_token": "fake-token",
-            })
+            resp = await client_with_captcha_strict.post(
+                "/api/v1/auth/register",
+                json={
+                    "username": "badcaptcha",
+                    "password": "somepass123",
+                    "captcha_token": "fake-token",
+                },
+            )
             assert resp.status_code == 401
             assert resp.json()["error"]["code"] == "CAPTCHA_INVALID"
 
@@ -278,11 +284,14 @@ class TestRegisterWithCaptcha:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
 
-            resp = await client_with_captcha.post("/api/v1/auth/register", json={
-                "username": "goodcaptcha",
-                "password": "goodpass123",
-                "captcha_token": "valid-token",
-            })
+            resp = await client_with_captcha.post(
+                "/api/v1/auth/register",
+                json={
+                    "username": "goodcaptcha",
+                    "password": "goodpass123",
+                    "captcha_token": "valid-token",
+                },
+            )
             assert resp.status_code == 201
             assert resp.json()["user"]["username"] == "goodcaptcha"
 
@@ -303,11 +312,14 @@ class TestRegisterWithCaptcha:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
 
-            resp = await client_with_captcha.post("/api/v1/auth/register", json={
-                "username": "firstadmin",
-                "password": "adminpass123",
-                # No captcha_token
-            })
+            resp = await client_with_captcha.post(
+                "/api/v1/auth/register",
+                json={
+                    "username": "firstadmin",
+                    "password": "adminpass123",
+                    # No captcha_token
+                },
+            )
             assert resp.status_code == 201
             # Verify the Cap endpoint was NOT called for first user
             assert mock_client.post.call_count == 0
@@ -322,10 +334,13 @@ class TestLoginWithCaptcha:
     @pytest.mark.asyncio
     async def test_login_without_captcha_token_fails(self, client_with_captcha_strict):
         """Login without captcha token should fail with CAPTCHA_REQUIRED."""
-        resp = await client_with_captcha_strict.post("/api/v1/auth/login", json={
-            "username": "anyuser",
-            "password": "anypass123",
-        })
+        resp = await client_with_captcha_strict.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "anyuser",
+                "password": "anypass123",
+            },
+        )
         assert resp.status_code == 401
         assert resp.json()["error"]["code"] == "CAPTCHA_REQUIRED"
 
@@ -345,19 +360,25 @@ class TestLoginWithCaptcha:
             MockClient.return_value = mock_client
 
             # Register (strict mode → must pass captcha)
-            reg = await client_with_captcha_strict.post("/api/v1/auth/register", json={
-                "username": "logincaptchatest",
-                "password": "loginpass123",
-                "captcha_token": "valid-token",
-            })
+            reg = await client_with_captcha_strict.post(
+                "/api/v1/auth/register",
+                json={
+                    "username": "logincaptchatest",
+                    "password": "loginpass123",
+                    "captcha_token": "valid-token",
+                },
+            )
             assert reg.status_code == 201
 
             # Login
-            resp = await client_with_captcha_strict.post("/api/v1/auth/login", json={
-                "username": "logincaptchatest",
-                "password": "loginpass123",
-                "captcha_token": "valid-token",
-            })
+            resp = await client_with_captcha_strict.post(
+                "/api/v1/auth/login",
+                json={
+                    "username": "logincaptchatest",
+                    "password": "loginpass123",
+                    "captcha_token": "valid-token",
+                },
+            )
             assert resp.status_code == 200
             assert resp.json()["user"]["username"] == "logincaptchatest"
 
@@ -398,23 +419,32 @@ class TestCaptchaDisabled:
     @pytest.mark.asyncio
     async def test_register_without_captcha_token_works(self, client_without_captcha):
         """With captcha disabled, register should not require captcha_token."""
-        resp = await client_without_captcha.post("/api/v1/auth/register", json={
-            "username": "noCaptchaNeeded",
-            "password": "nopass123",
-        })
+        resp = await client_without_captcha.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "noCaptchaNeeded",
+                "password": "nopass123",
+            },
+        )
         assert resp.status_code == 201
 
     @pytest.mark.asyncio
     async def test_login_without_captcha_token_works(self, client_without_captcha):
         """With captcha disabled, login should not require captcha_token."""
         # First register
-        await client_without_captcha.post("/api/v1/auth/register", json={
-            "username": "noCaptchaUser",
-            "password": "nopass123",
-        })
+        await client_without_captcha.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "noCaptchaUser",
+                "password": "nopass123",
+            },
+        )
         # Then login
-        resp = await client_without_captcha.post("/api/v1/auth/login", json={
-            "username": "noCaptchaUser",
-            "password": "nopass123",
-        })
+        resp = await client_without_captcha.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "noCaptchaUser",
+                "password": "nopass123",
+            },
+        )
         assert resp.status_code == 200

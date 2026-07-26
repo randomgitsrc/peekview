@@ -54,11 +54,14 @@ class TestHealthCheck:
 class TestCreateEntry:
     @pytest.mark.asyncio
     async def test_create_with_content_returns_201(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Test entry",
-            "slug": "create-test",
-            "files": [{"path": "main.py", "content": "print('hello')"}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Test entry",
+                "slug": "create-test",
+                "files": [{"path": "main.py", "content": "print('hello')"}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         # Slug may have suffix if conflict, but should start with our slug
@@ -73,17 +76,23 @@ class TestCreateEntry:
 
     @pytest.mark.asyncio
     async def test_create_invalid_slug(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Bad",
-            "slug": "Hello World!",
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Bad",
+                "slug": "Hello World!",
+            },
+        )
         assert resp.status_code == 400
 
     @pytest.mark.asyncio
     async def test_create_auto_slug(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Auto slug",
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Auto slug",
+            },
+        )
         assert resp.status_code == 201
         assert len(resp.json()["slug"]) == 6
 
@@ -92,9 +101,13 @@ class TestGetEntry:
     @pytest.mark.asyncio
     async def test_get_entry(self, client):
         # Create first
-        create_resp = await client.post("/api/v1/entries", json={
-            "summary": "Find me", "slug": "get-test",
-        })
+        create_resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Find me",
+                "slug": "get-test",
+            },
+        )
         assert create_resp.status_code == 201
         # Get
         resp = await client.get("/api/v1/entries/get-test")
@@ -138,11 +151,14 @@ class TestFileContentEndpoint:
     async def test_get_file_content_inline(self, client):
         """GET /entries/{slug}/files/{file_id}/content returns raw text."""
         slug = "filecontent-test"
-        create_resp = await client.post("/api/v1/entries", json={
-            "summary": "File test",
-            "slug": slug,
-            "files": [{"path": "hello.py", "content": "print('hello')"}],
-        })
+        create_resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "File test",
+                "slug": slug,
+                "files": [{"path": "hello.py", "content": "print('hello')"}],
+            },
+        )
         assert create_resp.status_code == 201
         data = create_resp.json()
         # Use actual slug returned (may have suffix)
@@ -162,11 +178,14 @@ class TestFileDownload:
     async def test_download_file(self, client):
         """GET /entries/{slug}/files/{file_id} downloads with Content-Disposition."""
         slug = "filedownload-test"
-        create_resp = await client.post("/api/v1/entries", json={
-            "summary": "Download test",
-            "slug": slug,
-            "files": [{"path": "code.py", "content": "x=1"}],
-        })
+        create_resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Download test",
+                "slug": slug,
+                "files": [{"path": "code.py", "content": "x=1"}],
+            },
+        )
         assert create_resp.status_code == 201
         data = create_resp.json()
         actual_slug = data["slug"]

@@ -14,6 +14,7 @@ from httpx import ASGITransport, AsyncClient
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -22,6 +23,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -33,8 +35,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -72,8 +77,8 @@ async def _get_share_token(client, auth_token, slug, **kwargs):
 
 # --- B30: Token comparison uses constant-time ---
 
-class TestShareSecurity:
 
+class TestShareSecurity:
     async def test_b30_token_verification_rejects_invalid_token(self, client_and_app):
         """B30: Token verification correctly rejects invalid tokens."""
         client, app = client_and_app
@@ -104,13 +109,16 @@ class TestShareSecurity:
 
         import secrets as secrets_module
 
-        with patch.object(secrets_module, "token_urlsafe", wraps=secrets_module.token_urlsafe) as mock_gen:
+        with patch.object(
+            secrets_module, "token_urlsafe", wraps=secrets_module.token_urlsafe
+        ) as mock_gen:
             await _create_share(client, alice["access_token"], "csprng-test")
 
             mock_gen.assert_called()
             call_args = mock_gen.call_args_list
-            assert any(a[0][0] == 12 for a in call_args if a[0]), \
+            assert any(a[0][0] == 12 for a in call_args if a[0]), (
                 "secrets.token_urlsafe must be called with 12 (96 bits)"
+            )
 
     async def test_b31_token_is_16_chars_urlsafe(self, client_and_app):
         """B31: Generated token is 16 chars of URL-safe base64."""
@@ -136,8 +144,9 @@ class TestShareSecurity:
         assert resp.status_code == 200
 
         referrer_policy = resp.headers.get("referrer-policy", "")
-        assert referrer_policy == "no-referrer", \
+        assert referrer_policy == "no-referrer", (
             f"Referrer-Policy must be 'no-referrer' for share access, got '{referrer_policy}'"
+        )
 
     async def test_b32_no_referrer_policy_without_share(self, client_and_app):
         """B32 negative: No special Referrer-Policy without ?share= param."""
@@ -155,5 +164,6 @@ class TestShareSecurity:
         assert resp.status_code == 200
 
         referrer_policy = resp.headers.get("referrer-policy", "")
-        assert referrer_policy != "no-referrer", \
+        assert referrer_policy != "no-referrer", (
             "Referrer-Policy must NOT be 'no-referrer' for normal access"
+        )

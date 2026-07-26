@@ -56,10 +56,13 @@ async def retention_zero_client(tmp_path, monkeypatch):
 
 
 async def _register_user(client, username, password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={
-        "username": username,
-        "password": password,
-    })
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "password": password,
+        },
+    )
     return resp.json()["access_token"]
 
 
@@ -71,8 +74,18 @@ def _make_admin(app, session, username="adminuser"):
         session.commit()
 
 
-def _create_entry_direct(app, session, *, slug, summary="Test", is_public=True,
-                         status="active", expires_at=None, archived_at=None, owner_id=None):
+def _create_entry_direct(
+    app,
+    session,
+    *,
+    slug,
+    summary="Test",
+    is_public=True,
+    status="active",
+    expires_at=None,
+    archived_at=None,
+    owner_id=None,
+):
     entry = Entry(
         slug=slug,
         summary=summary,
@@ -101,7 +114,8 @@ class TestCleanupArchivePhase:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin1")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="expired-1",
                 expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
@@ -122,7 +136,8 @@ class TestCleanupArchivePhase:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin2")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="expired-at-check",
                 expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
@@ -144,7 +159,8 @@ class TestCleanupArchivePhase:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin3")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="expired-null-check",
                 expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
@@ -182,7 +198,8 @@ class TestCleanupArchivePhase:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin5")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="fresh-expired",
                 expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
             )
@@ -210,7 +227,8 @@ class TestCleanupDeletePhase:
         with Session(engine) as session:
             _make_admin(cleanup_client._app, session, "admin6")
             _create_entry_direct(
-                cleanup_client._app, session,
+                cleanup_client._app,
+                session,
                 slug="old-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
@@ -232,7 +250,8 @@ class TestCleanupDeletePhase:
         with Session(engine) as session:
             _make_admin(cleanup_client._app, session, "admin7")
             _create_entry_direct(
-                cleanup_client._app, session,
+                cleanup_client._app,
+                session,
                 slug="db-remove-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
@@ -254,7 +273,8 @@ class TestCleanupDeletePhase:
         with Session(engine) as session:
             _make_admin(cleanup_client._app, session, "admin8")
             _create_entry_direct(
-                cleanup_client._app, session,
+                cleanup_client._app,
+                session,
                 slug="freed-mb-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
@@ -276,12 +296,14 @@ class TestCleanupDeletePhase:
         with Session(engine) as session:
             _make_admin(cleanup_client._app, session, "admin9")
             _create_entry_direct(
-                cleanup_client._app, session,
+                cleanup_client._app,
+                session,
                 slug="to-archive",
                 expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
             _create_entry_direct(
-                cleanup_client._app, session,
+                cleanup_client._app,
+                session,
                 slug="to-delete",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=31),
@@ -312,7 +334,8 @@ class TestCleanupRetentionZero:
         with Session(engine) as session:
             _make_admin(retention_zero_client._app, session, "admin10")
             _create_entry_direct(
-                retention_zero_client._app, session,
+                retention_zero_client._app,
+                session,
                 slug="keep-forever",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=120),
@@ -337,7 +360,8 @@ class TestCleanupRetentionZero:
         with Session(engine) as session:
             _make_admin(retention_zero_client._app, session, "admin11")
             _create_entry_direct(
-                retention_zero_client._app, session,
+                retention_zero_client._app,
+                session,
                 slug="retention-zero-check",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=200),
@@ -364,7 +388,8 @@ class TestPatchExpiresIn:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b4")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="extend-expiry",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=3),
                 owner_id=user.id,
@@ -389,7 +414,8 @@ class TestPatchExpiresIn:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b4b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="status-active-check",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=3),
                 owner_id=user.id,
@@ -417,7 +443,8 @@ class TestPatchExpiresInZero:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b5")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="never-expire",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=3),
                 owner_id=user.id,
@@ -438,7 +465,8 @@ class TestPatchExpiresInZero:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b5b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="never-expire-status",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=3),
                 owner_id=user.id,
@@ -466,7 +494,8 @@ class TestPatchReactivate:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b6")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="reactivate-me",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=5),
@@ -488,7 +517,8 @@ class TestPatchReactivate:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b6b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="react-status",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=5),
@@ -510,7 +540,8 @@ class TestPatchReactivate:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b6c")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="react-at-null",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=5),
@@ -532,7 +563,8 @@ class TestPatchReactivate:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b6d")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="react-exp-set",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=5),
@@ -557,7 +589,8 @@ class TestPatchReactivate:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "user-b6e")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="react-permanent",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=5),
@@ -585,7 +618,8 @@ class TestArchivedAccessControl:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-pub",
                 is_public=True,
                 status="archived",
@@ -603,7 +637,8 @@ class TestArchivedAccessControl:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-b7")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-owner",
                 is_public=True,
                 status="archived",
@@ -626,7 +661,8 @@ class TestArchivedAccessControl:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-b7c")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-nonowner",
                 is_public=True,
                 status="archived",
@@ -647,7 +683,8 @@ class TestArchivedAccessControl:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin-b7d")
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-admin",
                 is_public=True,
                 status="archived",
@@ -675,12 +712,14 @@ class TestOwnerListArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-b8")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="active-mine",
                 owner_id=user.id,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-mine",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -704,12 +743,14 @@ class TestOwnerListArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-b8b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="active-count",
                 owner_id=user.id,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-count",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -735,12 +776,14 @@ class TestAnonymousListExcludesArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="pub-active",
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="pub-archived",
                 is_public=True,
                 status="archived",
@@ -759,12 +802,14 @@ class TestAnonymousListExcludesArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="pub-active-2",
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="pub-archived-2",
                 is_public=True,
                 status="archived",
@@ -792,7 +837,8 @@ class TestShareArchivedEntry:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-b10")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="archived-share",
                 is_public=False,
                 status="archived",
@@ -819,13 +865,15 @@ class TestFTSExcludesArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="fts-active",
                 summary="uniquekeyword-alpha in active entry",
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="fts-archived",
                 summary="uniquekeyword-alpha in archived entry",
                 is_public=True,

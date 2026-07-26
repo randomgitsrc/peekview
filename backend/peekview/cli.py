@@ -102,11 +102,13 @@ def _scan_directory_local(base_path: Path, ignored_dirs: set[str]) -> list[dict[
                 # Try to read as text
                 content = file_path.read_text(encoding="utf-8", errors="strict")
                 rel_path = file_path.relative_to(base_path)
-                files_data.append({
-                    "path": str(rel_path),
-                    "filename": name,
-                    "content": content,
-                })
+                files_data.append(
+                    {
+                        "path": str(rel_path),
+                        "filename": name,
+                        "content": content,
+                    }
+                )
             except UnicodeDecodeError:
                 # Binary file - skip with warning
                 rel_path = file_path.relative_to(base_path)
@@ -115,10 +117,7 @@ def _scan_directory_local(base_path: Path, ignored_dirs: set[str]) -> list[dict[
     return files_data
 
 
-@click.group(
-    name="peekview",
-    context_settings={"help_option_names": ["-h", "--help"]}
-)
+@click.group(name="peekview", context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__, "-v", "--version", prog_name="peekview")
 def cli() -> None:
     """PeekView - A lightweight code & document formatting display service."""
@@ -140,13 +139,27 @@ Examples:
 
 
 @cli.command(epilog=SERVE_EXAMPLES)
-@click.option("--host", "-h", default=None, help="Server bind address (default: 127.0.0.1, use 0.0.0.0 for all interfaces)")
+@click.option(
+    "--host",
+    "-h",
+    default=None,
+    help="Server bind address (default: 127.0.0.1, use 0.0.0.0 for all interfaces)",
+)
 @click.option("--port", "-p", default=None, type=int, help="Server port (default: 8080)")
-@click.option("--base-url", "-b", default=None, help="External base URL (e.g., https://example.com)")
+@click.option(
+    "--base-url", "-b", default=None, help="External base URL (e.g., https://example.com)"
+)
 @click.option("--reload", is_flag=True, help="Enable auto-reload (development)")
 @click.option("--workers", "-w", default=1, type=int, help="Number of worker processes")
 @click.pass_context
-def serve(ctx: click.Context, host: str | None, port: int | None, base_url: str | None, reload: bool, workers: int) -> None:
+def serve(
+    ctx: click.Context,
+    host: str | None,
+    port: int | None,
+    base_url: str | None,
+    reload: bool,
+    workers: int,
+) -> None:
     """Start the PeekView server."""
     import uvicorn
 
@@ -203,11 +216,20 @@ Examples:
 @click.option("--summary", "-s", required=True, help="Entry summary/description")
 @click.option("--slug", help="Custom URL slug (auto-generated if not provided)")
 @click.option("--tag", "-t", multiple=True, help="Tags (can be specified multiple times)")
-@click.option("--expires-in", help="Expiration duration (e.g., '7d', '1h', '30m'). Default: configured via limits.default_expires_in. Use '0' for no expiration.")
+@click.option(
+    "--expires-in",
+    help="Expiration duration (e.g., '7d', '1h', '30m'). Default: configured via limits.default_expires_in. Use '0' for no expiration.",
+)
 @click.option("--from-stdin", is_flag=True, help="Read file content from stdin")
 @click.option("--base-url", "-b", default=None, help="External base URL for generated links")
 @click.option("--remote-url", "-r", default=None, help="Remote server URL")
-@click.option("--visibility", "-v", type=click.Choice(["public", "private"]), default="public", help="Entry visibility")
+@click.option(
+    "--visibility",
+    "-v",
+    type=click.Choice(["public", "private"]),
+    default="public",
+    help="Entry visibility",
+)
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
 def create(
     paths: tuple[str, ...],
@@ -248,11 +270,13 @@ def create(
         # Read from stdin
         content = sys.stdin.read()
         filename = "stdin.txt"
-        files_data.append({
-            "path": filename,
-            "filename": filename,
-            "content": content,
-        })
+        files_data.append(
+            {
+                "path": filename,
+                "filename": filename,
+                "content": content,
+            }
+        )
     elif paths:
         # Process each path
         for path_str in paths:
@@ -274,11 +298,13 @@ def create(
                 # Read file content
                 try:
                     content = path.read_text(encoding="utf-8", errors="replace")
-                    files_data.append({
-                        "path": path.name,
-                        "filename": path.name,
-                        "content": content,
-                    })
+                    files_data.append(
+                        {
+                            "path": path.name,
+                            "filename": path.name,
+                            "content": content,
+                        }
+                    )
                 except Exception as e:
                     click.echo(f"Error reading {path_str}: {e}", err=True)
                     sys.exit(1)
@@ -301,13 +327,18 @@ def create(
         result = create_result if _is_remote_mode(backend) else create_result[0]
 
         if json_output:
-            click.echo(json.dumps({
-                "id": result.id,
-                "slug": result.slug,
-                "url": result.url,
-                "created_at": result.created_at.isoformat() if result.created_at else None,
-                "file_count": len(result.files),
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "id": result.id,
+                        "slug": result.slug,
+                        "url": result.url,
+                        "created_at": result.created_at.isoformat() if result.created_at else None,
+                        "file_count": len(result.files),
+                    },
+                    indent=2,
+                )
+            )
         else:
             click.echo(f"✓ Created entry: {result.slug}")
             click.echo(f"  URL: {result.url}")
@@ -323,7 +354,9 @@ def create(
 
 @cli.command()
 @click.argument("slug")
-@click.option("--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)")
+@click.option(
+    "--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)"
+)
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
 def get(slug: str, remote_url: str | None, json_output: bool) -> None:
     """Get entry details by slug.
@@ -347,25 +380,30 @@ def get(slug: str, remote_url: str | None, json_output: bool) -> None:
         entry = backend.get_entry(slug)
 
         if json_output:
-            click.echo(json.dumps({
-                "id": entry.id,
-                "slug": entry.slug,
-                "summary": entry.summary,
-                "status": entry.status,
-                "tags": entry.tags,
-                "files": [
+            click.echo(
+                json.dumps(
                     {
-                        "id": f.id,
-                        "path": f.path,
-                        "filename": f.filename,
-                        "language": f.language,
-                        "size": f.size,
-                    }
-                    for f in entry.files
-                ],
-                "created_at": entry.created_at.isoformat() if entry.created_at else None,
-                "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
-            }, indent=2))
+                        "id": entry.id,
+                        "slug": entry.slug,
+                        "summary": entry.summary,
+                        "status": entry.status,
+                        "tags": entry.tags,
+                        "files": [
+                            {
+                                "id": f.id,
+                                "path": f.path,
+                                "filename": f.filename,
+                                "language": f.language,
+                                "size": f.size,
+                            }
+                            for f in entry.files
+                        ],
+                        "created_at": entry.created_at.isoformat() if entry.created_at else None,
+                        "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
+                    },
+                    indent=2,
+                )
+            )
         else:
             click.echo(f"Entry: {entry.slug}")
             click.echo(f"Summary: {entry.summary}")
@@ -388,7 +426,9 @@ def get(slug: str, remote_url: str | None, json_output: bool) -> None:
 @click.option("--status", "-s", help="Filter by status")
 @click.option("--page", "-p", default=1, type=int, help="Page number")
 @click.option("--per-page", default=20, type=int, help="Items per page")
-@click.option("--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)")
+@click.option(
+    "--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)"
+)
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
 def list_entries(
     query: str | None,
@@ -441,26 +481,47 @@ def list_entries(
             per_page_num = result.per_page
 
         if json_output:
-            click.echo(json.dumps({
-                "items": [
+            click.echo(
+                json.dumps(
                     {
-                        "id": item.get("id") if isinstance(item, dict) else item.id,
-                        "slug": item.get("slug") if isinstance(item, dict) else item.slug,
-                        "summary": item.get("summary") if isinstance(item, dict) else item.summary,
-                        "tags": item.get("tags") if isinstance(item, dict) else item.tags,
-                        "status": item.get("status") if isinstance(item, dict) else item.status,
-                        "file_count": item.get("file_count") if isinstance(item, dict) else item.file_count,
-                        "created_at": (item.get("created_at") if isinstance(item, dict)
-                                       else item.created_at.isoformat() if item.created_at else None),
-                        "updated_at": (item.get("updated_at") if isinstance(item, dict)
-                                       else item.updated_at.isoformat() if item.updated_at else None),
-                    }
-                    for item in items
-                ],
-                "total": total,
-                "page": page_num,
-                "per_page": per_page_num,
-            }, indent=2))
+                        "items": [
+                            {
+                                "id": item.get("id") if isinstance(item, dict) else item.id,
+                                "slug": item.get("slug") if isinstance(item, dict) else item.slug,
+                                "summary": item.get("summary")
+                                if isinstance(item, dict)
+                                else item.summary,
+                                "tags": item.get("tags") if isinstance(item, dict) else item.tags,
+                                "status": item.get("status")
+                                if isinstance(item, dict)
+                                else item.status,
+                                "file_count": item.get("file_count")
+                                if isinstance(item, dict)
+                                else item.file_count,
+                                "created_at": (
+                                    item.get("created_at")
+                                    if isinstance(item, dict)
+                                    else item.created_at.isoformat()
+                                    if item.created_at
+                                    else None
+                                ),
+                                "updated_at": (
+                                    item.get("updated_at")
+                                    if isinstance(item, dict)
+                                    else item.updated_at.isoformat()
+                                    if item.updated_at
+                                    else None
+                                ),
+                            }
+                            for item in items
+                        ],
+                        "total": total,
+                        "page": page_num,
+                        "per_page": per_page_num,
+                    },
+                    indent=2,
+                )
+            )
         else:
             click.echo(f"Entries ({total} total, page {page_num}):")
             click.echo()
@@ -468,7 +529,9 @@ def list_entries(
                 item_slug = item.get("slug") if isinstance(item, dict) else item.slug
                 item_summary = item.get("summary") if isinstance(item, dict) else item.summary
                 item_tags = item.get("tags") if isinstance(item, dict) else item.tags
-                item_file_count = item.get("file_count") if isinstance(item, dict) else item.file_count
+                item_file_count = (
+                    item.get("file_count") if isinstance(item, dict) else item.file_count
+                )
                 item_status = item.get("status") if isinstance(item, dict) else item.status
 
                 tags_str = f" [{', '.join(item_tags)}]" if item_tags else ""
@@ -484,7 +547,9 @@ def list_entries(
 
 @cli.command()
 @click.argument("slug")
-@click.option("--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)")
+@click.option(
+    "--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)"
+)
 @click.confirmation_option(prompt="Are you sure you want to delete this entry?")
 def delete(slug: str, remote_url: str | None) -> None:
     """Delete an entry by slug.
@@ -534,26 +599,45 @@ def config_cmd():
 SUPPORTED_CONFIG_KEYS = (
     "base_url",
     # Server
-    "server.host", "server.port", "server.base_url", "server.api_key",
-    "server.cors_origins", "server.rate_limit_enabled",
-    "server.rate_limit_per_minute", "server.rate_limit_login_per_minute",
+    "server.host",
+    "server.port",
+    "server.base_url",
+    "server.api_key",
+    "server.cors_origins",
+    "server.rate_limit_enabled",
+    "server.rate_limit_per_minute",
+    "server.rate_limit_login_per_minute",
     # Storage
-    "storage.data_dir", "storage.db_path", "storage.allowed_paths",
+    "storage.data_dir",
+    "storage.db_path",
+    "storage.allowed_paths",
     "storage.health_disk_warning_mb",
     # Auth
-    "auth.secret_key", "auth.token_expire_days", "auth.allow_registration",
+    "auth.secret_key",
+    "auth.token_expire_days",
+    "auth.allow_registration",
     "auth.allow_anonymous_create",
-    "auth.captcha_enabled", "auth.captcha_site_key",
+    "auth.captcha_enabled",
+    "auth.captcha_site_key",
     # Limits
-    "limits.max_file_size", "limits.max_entry_files", "limits.max_entry_size",
-    "limits.max_slug_length", "limits.max_summary_length", "limits.max_per_page",
+    "limits.max_file_size",
+    "limits.max_entry_files",
+    "limits.max_entry_size",
+    "limits.max_slug_length",
+    "limits.max_summary_length",
+    "limits.max_per_page",
     "limits.default_expires_in",
     # Cleanup
-    "cleanup.check_on_start", "cleanup.interval_seconds",
+    "cleanup.check_on_start",
+    "cleanup.interval_seconds",
     # Logging
-    "logging.level", "logging.log_file",
+    "logging.level",
+    "logging.log_file",
     # Remote
-    "remote.url", "remote.api_key", "remote.timeout", "remote.verify_ssl",
+    "remote.url",
+    "remote.api_key",
+    "remote.timeout",
+    "remote.verify_ssl",
     # Diagram
     "diagram.sanitize_enabled",
 )
@@ -603,25 +687,45 @@ def config_set(key: str, value: str) -> None:
         config[section] = {}
 
     # Type conversion based on key patterns
-    if key_name in ("port", "token_expire_days", "timeout", "health_disk_warning_mb",
-                    "max_file_size", "max_entry_files", "max_entry_size",
-                    "max_slug_length", "max_summary_length", "max_per_page",
-                    "interval_seconds",
-                    "captcha_builtin_difficulty", "captcha_builtin_challenge_count",
-                    "captcha_builtin_challenge_size", "captcha_builtin_challenge_ttl_ms",
-                    "captcha_builtin_token_ttl_ms", "rate_limit_per_minute",
-                    "rate_limit_login_per_minute"):
+    if key_name in (
+        "port",
+        "token_expire_days",
+        "timeout",
+        "health_disk_warning_mb",
+        "max_file_size",
+        "max_entry_files",
+        "max_entry_size",
+        "max_slug_length",
+        "max_summary_length",
+        "max_per_page",
+        "interval_seconds",
+        "captcha_builtin_difficulty",
+        "captcha_builtin_challenge_count",
+        "captcha_builtin_challenge_size",
+        "captcha_builtin_challenge_ttl_ms",
+        "captcha_builtin_token_ttl_ms",
+        "rate_limit_per_minute",
+        "rate_limit_login_per_minute",
+    ):
         try:
             value = int(value)
         except ValueError:
             click.echo(f"Error: {key} must be an integer", err=True)
             sys.exit(1)
-    elif key_name in ("allow_registration", "allow_anonymous_create",
-                      "rate_limit_enabled", "check_on_start", "verify_ssl",
-                      "captcha_enabled", "captcha_exempt_first_user",
-                      "sanitize_enabled"):
+    elif key_name in (
+        "allow_registration",
+        "allow_anonymous_create",
+        "rate_limit_enabled",
+        "check_on_start",
+        "verify_ssl",
+        "captcha_enabled",
+        "captcha_exempt_first_user",
+        "sanitize_enabled",
+    ):
         if value.lower() not in ("true", "1", "yes", "on", "false", "0", "no", "off"):
-            click.echo(f"Error: {key} must be a boolean (true/false, 1/0, yes/no, on/off)", err=True)
+            click.echo(
+                f"Error: {key} must be a boolean (true/false, 1/0, yes/no, on/off)", err=True
+            )
             sys.exit(1)
         value = value.lower() in ("true", "1", "yes", "on")
     elif key_name == "cors_origins" or key_name == "allowed_paths":
@@ -772,11 +876,23 @@ def config_list() -> None:
         ("remote", "api_key"): "# 远程 API Key",
         ("remote", "timeout"): "# 远程请求超时秒数",
         ("remote", "verify_ssl"): "# 验证 SSL 证书",
-        ("diagram", "sanitize_enabled"): "# 图表源码自动清洗开关（mermaid/plantuml/svg 渲染前预处理）",
+        (
+            "diagram",
+            "sanitize_enabled",
+        ): "# 图表源码自动清洗开关（mermaid/plantuml/svg 渲染前预处理）",
     }
 
     # Section order
-    _SECTION_ORDER = ["server", "storage", "auth", "limits", "cleanup", "logging", "remote", "diagram"]  # noqa: N806
+    _SECTION_ORDER = [
+        "server",
+        "storage",
+        "auth",
+        "limits",
+        "cleanup",
+        "logging",
+        "remote",
+        "diagram",
+    ]  # noqa: N806
 
     click.echo("Configuration:")
     click.echo("")
@@ -887,8 +1003,15 @@ def service_cmd():
 
 
 @service_cmd.command(name="install")
-@click.option("--user", "user_mode", is_flag=True, help="Install as user service (no sudo needed) [default if neither exists]")
-@click.option("--system", "system_mode", is_flag=True, help="Install as system service (requires sudo)")
+@click.option(
+    "--user",
+    "user_mode",
+    is_flag=True,
+    help="Install as user service (no sudo needed) [default if neither exists]",
+)
+@click.option(
+    "--system", "system_mode", is_flag=True, help="Install as system service (requires sudo)"
+)
 @click.option("--force", is_flag=True, help="Overwrite existing service")
 def install_service(user_mode: bool, system_mode: bool, force: bool) -> None:
     """Install PeekView as a system service.
@@ -932,7 +1055,9 @@ def _install_systemd_service(user_mode: bool, force: bool) -> None:
     import getpass
 
     PeekConfig()
-    peekview_path = subprocess.run(["which", "peekview"], capture_output=True, text=True).stdout.strip()
+    peekview_path = subprocess.run(
+        ["which", "peekview"], capture_output=True, text=True
+    ).stdout.strip()
 
     if not peekview_path:
         click.echo("Error: peekview not found in PATH", err=True)
@@ -1175,13 +1300,11 @@ def service_status(user_mode: bool, system_mode: bool) -> None:
         try:
             if is_user:
                 result = subprocess.run(
-                    ["systemctl", "--user", "status", "peekview"],
-                    capture_output=True, text=True
+                    ["systemctl", "--user", "status", "peekview"], capture_output=True, text=True
                 )
             else:
                 result = subprocess.run(
-                    ["systemctl", "status", "peekview"],
-                    capture_output=True, text=True
+                    ["systemctl", "status", "peekview"], capture_output=True, text=True
                 )
             click.echo(result.stdout if result.stdout else result.stderr)
         except subprocess.CalledProcessError as e:
@@ -1189,8 +1312,7 @@ def service_status(user_mode: bool, system_mode: bool) -> None:
     elif system == "Darwin":
         try:
             result = subprocess.run(
-                ["launchctl", "list", "com.peekview"],
-                capture_output=True, text=True
+                ["launchctl", "list", "com.peekview"], capture_output=True, text=True
             )
             click.echo(result.stdout if result.stdout else "Service not loaded")
         except subprocess.CalledProcessError:
@@ -1387,7 +1509,9 @@ def user_create(username: str, password: str | None, admin: bool) -> None:
         click.echo("Error: Username must be 3-32 characters", err=True)
         sys.exit(1)
     if not re.match(r"^[a-zA-Z0-9_-]+$", username):
-        click.echo("Error: Username must contain only letters, digits, underscores, and hyphens", err=True)
+        click.echo(
+            "Error: Username must contain only letters, digits, underscores, and hyphens", err=True
+        )
         sys.exit(1)
 
     # Get password
@@ -1876,7 +2000,6 @@ def apikey_cleanup(remote_url: str | None, user: str | None) -> None:
             sys.exit(1)
 
 
-
 def _resolve_user_local(config: PeekConfig, username: str) -> "User":
     """Local mode: resolve username → User. Exits with error if not found."""
     engine = init_db(config.db_path)
@@ -1894,6 +2017,7 @@ def _get_apikey_service_local(config: PeekConfig) -> ApiKeyService:
     engine = init_db(config.db_path)
     check_schema(engine)
     return ApiKeyService(engine=engine)
+
 
 def _get_admin_service(
     config: PeekConfig, cli_remote_url: str | None = None
@@ -1951,7 +2075,9 @@ def admin_stats(remote_url: str | None, json_output: bool) -> None:
                         "private": result.entries.private,
                         "expired": result.entries.expired,
                         "active": result.entries.active,
-                        "latest_created_at": result.entries.latest_created_at.isoformat() if result.entries.latest_created_at else None,
+                        "latest_created_at": result.entries.latest_created_at.isoformat()
+                        if result.entries.latest_created_at
+                        else None,
                     },
                     "api_keys": {
                         "total": result.api_keys.total,
@@ -2046,7 +2172,9 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
                     if result.archived_slugs:
                         click.echo(f"  Archived: {', '.join(result.archived_slugs)}")
                 if result.deleted_count:
-                    click.echo(f"  Deleted: {result.deleted_count} entry(ies), freed {result.freed_mb} MB")
+                    click.echo(
+                        f"  Deleted: {result.deleted_count} entry(ies), freed {result.freed_mb} MB"
+                    )
                     if result.deleted_slugs:
                         click.echo(f"  Deleted: {', '.join(result.deleted_slugs)}")
                 if not result.archived_count and not result.deleted_count:
@@ -2065,7 +2193,12 @@ def admin_cleanup(remote_url: str | None, json_output: bool) -> None:
 
 
 @admin_cmd.command(name="backup")
-@click.option("--output", "-o", default=None, help="Output path for backup tar.gz (default: peekview-backup-YYYYMMDD-HHMMSS.tar.gz in CWD)")
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output path for backup tar.gz (default: peekview-backup-YYYYMMDD-HHMMSS.tar.gz in CWD)",
+)
 def admin_backup(output: str | None) -> None:
     """Create a full backup of PeekView data (DB + files + config + secrets)."""
     config = PeekConfig()
@@ -2095,8 +2228,17 @@ def admin_backup(output: str | None) -> None:
 
 @admin_cmd.command(name="export")
 @click.option("--slug", "-s", required=True, help="Entry slug to export")
-@click.option("--format", "-f", "fmt", type=click.Choice(["json", "zip"]), default="json", help="Export format (default: json)")
-@click.option("--output", "-o", default=None, help="Output path (for zip format; default: {slug}.zip in CWD)")
+@click.option(
+    "--format",
+    "-f",
+    "fmt",
+    type=click.Choice(["json", "zip"]),
+    default="json",
+    help="Export format (default: json)",
+)
+@click.option(
+    "--output", "-o", default=None, help="Output path (for zip format; default: {slug}.zip in CWD)"
+)
 def admin_export(slug: str, fmt: str, output: str | None) -> None:
     """Export a single entry to JSON or ZIP format."""
     config = PeekConfig()
@@ -2141,7 +2283,9 @@ def admin_restore(backup_file: str, dry_run: bool, replace: bool, yes: bool) -> 
         sys.exit(1)
 
     if replace and not yes:
-        click.echo("WARNING: Replace mode will DELETE ALL existing data and replace with backup contents.")
+        click.echo(
+            "WARNING: Replace mode will DELETE ALL existing data and replace with backup contents."
+        )
         confirm = input("Type 'yes' to confirm: ")
         if confirm.strip().lower() != "yes":
             click.echo("Restore cancelled.")
@@ -2171,7 +2315,9 @@ def admin_restore(backup_file: str, dry_run: bool, replace: bool, yes: bool) -> 
             click.echo(f"  version_check: {result.version_check}")
         else:
             if result.version_check == "downgrade_warning":
-                click.echo("Warning: Backup is from a lower version. Some features may not work as expected.")
+                click.echo(
+                    "Warning: Backup is from a lower version. Some features may not work as expected."
+                )
             if result.entries_imported > 0 or result.users_imported > 0:
                 click.echo("Restore completed:")
                 click.echo(f"  Users imported:     {result.users_imported}")
@@ -2189,7 +2335,9 @@ def admin_restore(backup_file: str, dry_run: bool, replace: bool, yes: bool) -> 
         error_msg = str(e).lower()
         if "version" in error_msg or "incompat" in error_msg:
             click.echo(f"Error: {e}", err=True)
-            click.echo("No changes were made to the database (rollback/transaction intact).", err=True)
+            click.echo(
+                "No changes were made to the database (rollback/transaction intact).", err=True
+            )
         elif "checksum" in error_msg or "integrity" in error_msg or "corrupt" in error_msg:
             click.echo(f"Error: {e}", err=True)
         else:
@@ -2277,11 +2425,12 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
     pip_installed = False
     try:
         import subprocess
+
         result = subprocess.run(
             [sys.executable, "-m", "pip", "show", "peekview"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         pip_installed = result.returncode == 0
     except Exception:
@@ -2312,16 +2461,8 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
     # Stop services first
     click.echo("→ Stopping services...")
     try:
-        subprocess.run(
-            ["systemctl", "stop", "peekview"],
-            capture_output=True,
-            check=False
-        )
-        subprocess.run(
-            ["systemctl", "disable", "peekview"],
-            capture_output=True,
-            check=False
-        )
+        subprocess.run(["systemctl", "stop", "peekview"], capture_output=True, check=False)
+        subprocess.run(["systemctl", "disable", "peekview"], capture_output=True, check=False)
     except Exception:
         pass
 
@@ -2331,10 +2472,7 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
         if pipx_installed:
             # pipx uninstall doesn't support -y flag
             result = subprocess.run(
-                ["pipx", "uninstall", "peekview"],
-                capture_output=True,
-                text=True,
-                check=False
+                ["pipx", "uninstall", "peekview"], capture_output=True, text=True, check=False
             )
             if result.returncode == 0:
                 click.echo("✓ PeekView uninstalled via pipx")
@@ -2345,7 +2483,7 @@ def uninstall_cmd(yes: bool, keep_data: bool) -> None:
                 [sys.executable, "-m", "pip", "uninstall", "-y", "peekview"],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 click.echo("✓ PeekView uninstalled via pip")

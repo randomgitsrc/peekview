@@ -71,10 +71,15 @@ class TestCLIRemoteCreate:
         # Run CLI in remote mode
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(test_file),
-                "-s", "Test entry",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(test_file),
+                "-s",
+                "Test entry",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -89,11 +94,15 @@ class TestCLIRemoteCreate:
         """Test creating entry from stdin."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "create",
-                "-s", "Stdin entry",
+                "-s",
+                "Stdin entry",
                 "--from-stdin",
-                "--remote-url", server_url,
+                "--remote-url",
+                server_url,
             ],
             input="console.log('hello')",
             capture_output=True,
@@ -113,10 +122,15 @@ class TestCLIRemoteCreate:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(src_dir),
-                "-s", "Directory entry",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(src_dir),
+                "-s",
+                "Directory entry",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -137,10 +151,15 @@ class TestCLIRemoteCreate:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(src_dir),
-                "-s", "Mixed entry",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(src_dir),
+                "-s",
+                "Mixed entry",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -158,12 +177,19 @@ class TestCLIRemoteCreate:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(test_file),
-                "-s", "Tagged entry",
-                "-t", "python",
-                "-t", "cli",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(test_file),
+                "-s",
+                "Tagged entry",
+                "-t",
+                "python",
+                "-t",
+                "cli",
+                "--remote-url",
+                server_url,
                 "--json-output",
             ],
             capture_output=True,
@@ -181,11 +207,15 @@ class TestCLIRemoteCreate:
         # This server has no API key set
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "create",
-                "-s", "No auth test",
+                "-s",
+                "No auth test",
                 "--from-stdin",
-                "--remote-url", server_url,
+                "--remote-url",
+                server_url,
             ],
             input="test content",
             capture_output=True,
@@ -208,11 +238,17 @@ class TestCLIRemoteList:
 
             subprocess.run(
                 [
-                    sys.executable, "-m", "peekview",
-                    "create", str(test_file),
-                    "-s", f"Test entry {i}",
-                    "-t", "test",
-                    "--remote-url", server_url,
+                    sys.executable,
+                    "-m",
+                    "peekview",
+                    "create",
+                    str(test_file),
+                    "-s",
+                    f"Test entry {i}",
+                    "-t",
+                    "test",
+                    "--remote-url",
+                    server_url,
                 ],
                 capture_output=True,
             )
@@ -221,9 +257,12 @@ class TestCLIRemoteList:
         """Test listing entries."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "list",
-                "--remote-url", server_url,
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -237,10 +276,14 @@ class TestCLIRemoteList:
         """Test listing with search query."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "list",
-                "-q", "entry 0",
-                "--remote-url", server_url,
+                "-q",
+                "entry 0",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -254,10 +297,14 @@ class TestCLIRemoteList:
         """Test listing with tag filter."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "list",
-                "-t", "test",
-                "--remote-url", server_url,
+                "-t",
+                "test",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -271,9 +318,12 @@ class TestCLIRemoteList:
         """Test listing with JSON output."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "list",
-                "--remote-url", server_url,
+                "--remote-url",
+                server_url,
                 "--json-output",
             ],
             capture_output=True,
@@ -299,12 +349,19 @@ class TestCLIRemoteGet:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(test_file),
-                "-s", "Entry for get test",
-                "-t", "test",
-                "--slug", "test-get-entry",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(test_file),
+                "-s",
+                "Entry for get test",
+                "-t",
+                "test",
+                "--slug",
+                "test-get-entry",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -317,9 +374,13 @@ class TestCLIRemoteGet:
         """Test getting entry details."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "get", test_entry_slug,
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "get",
+                test_entry_slug,
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -334,9 +395,13 @@ class TestCLIRemoteGet:
         """Test getting entry with JSON output."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "get", test_entry_slug,
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "get",
+                test_entry_slug,
+                "--remote-url",
+                server_url,
                 "--json-output",
             ],
             capture_output=True,
@@ -353,9 +418,13 @@ class TestCLIRemoteGet:
         """Test getting non-existent entry."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "get", "non-existent-slug-12345",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "get",
+                "non-existent-slug-12345",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -376,11 +445,17 @@ class TestCLIRemoteDelete:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "create", str(test_file),
-                "-s", "Entry for delete test",
-                "--slug", "test-delete-entry",
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "create",
+                str(test_file),
+                "-s",
+                "Entry for delete test",
+                "--slug",
+                "test-delete-entry",
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
             text=True,
@@ -393,9 +468,13 @@ class TestCLIRemoteDelete:
         """Test deleting entry."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "delete", test_entry_slug,
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "delete",
+                test_entry_slug,
+                "--remote-url",
+                server_url,
                 "--yes",  # Skip confirmation
             ],
             capture_output=True,
@@ -409,9 +488,13 @@ class TestCLIRemoteDelete:
         # Verify entry is gone
         get_result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "get", test_entry_slug,
-                "--remote-url", server_url,
+                sys.executable,
+                "-m",
+                "peekview",
+                "get",
+                test_entry_slug,
+                "--remote-url",
+                server_url,
             ],
             capture_output=True,
         )
@@ -427,6 +510,7 @@ class TestCLIRemoteConfig:
         # Must also set PYTHONPATH to include user site-packages so
         # dependencies like sqlalchemy remain importable when HOME changes.
         import site
+
         user_site = site.getusersitepackages()
         env_overrides = {
             "HOME": str(tmp_path),
@@ -435,8 +519,13 @@ class TestCLIRemoteConfig:
         with patch.dict(subprocess.os.environ, env_overrides):
             result = subprocess.run(
                 [
-                    sys.executable, "-m", "peekview",
-                    "config", "set", "remote.url", "https://example.com",
+                    sys.executable,
+                    "-m",
+                    "peekview",
+                    "config",
+                    "set",
+                    "remote.url",
+                    "https://example.com",
                 ],
                 capture_output=True,
                 text=True,
@@ -450,8 +539,13 @@ class TestCLIRemoteConfig:
         """Test setting remote API key via config."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
-                "config", "set", "remote.api_key", "sk-test-key",
+                sys.executable,
+                "-m",
+                "peekview",
+                "config",
+                "set",
+                "remote.api_key",
+                "sk-test-key",
             ],
             capture_output=True,
             text=True,
@@ -470,9 +564,12 @@ class TestCLIRemoteModeSwitching:
         # Just test that the CLI accepts the argument
         result = subprocess.run(
             [
-                sys.executable, "-m", "peekview",
+                sys.executable,
+                "-m",
+                "peekview",
                 "list",
-                "--remote-url", "",  # Empty string = local mode
+                "--remote-url",
+                "",  # Empty string = local mode
             ],
             capture_output=True,
             text=True,

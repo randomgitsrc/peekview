@@ -38,18 +38,18 @@ async def client():
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-SIMPLE_HTML = (
-    "<!DOCTYPE html><html><head><title>Test</title></head>"
-    "<body><h1>Hi</h1></body></html>"
-)
+SIMPLE_HTML = "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hi</h1></body></html>"
 
 
 async def _create_entry(client, files, summary="html render test"):
     """Create an entry with files; return (slug, files_list)."""
-    resp = await client.post("/api/v1/entries", json={
-        "summary": summary,
-        "files": files,
-    })
+    resp = await client.post(
+        "/api/v1/entries",
+        json={
+            "summary": summary,
+            "files": files,
+        },
+    )
     assert resp.status_code == 201, resp.text
     entry = resp.json()
     return entry["slug"], entry["files"]
@@ -68,36 +68,48 @@ def _render_url(slug, file_id, inject=None):
 class TestRenderRouteBasics:
     @pytest.mark.asyncio
     async def test_render_returns_html(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         assert resp.status_code == 200
         assert "text/html" in resp.headers.get("content-type", "")
 
     @pytest.mark.asyncio
     async def test_render_csp_allows_unsafe_inline(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         csp = resp.headers.get("content-security-policy", "")
         assert "unsafe-inline" in csp
 
     @pytest.mark.asyncio
     async def test_render_no_xframe_deny(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         xfo = resp.headers.get("x-frame-options", "")
         assert xfo.upper() != "DENY"
 
     @pytest.mark.asyncio
     async def test_render_cache_control_nostore(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         cc = resp.headers.get("cache-control", "")
         assert "no-store" in cc
@@ -109,25 +121,34 @@ class TestRenderRouteBasics:
 class TestRenderAccessControl:
     @pytest.mark.asyncio
     async def test_render_public_anonymous_ok(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
     async def test_render_nonexistent_file_404(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, 999999))
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
     async def test_render_non_html_file_404(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "main.py", "content": "print('hello')"},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "main.py", "content": "print('hello')"},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         assert resp.status_code == 404
 
@@ -138,9 +159,12 @@ class TestRenderAccessControl:
 class TestRenderCSPDetails:
     @pytest.mark.asyncio
     async def test_csp_connect_src_allows_https(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         csp = resp.headers.get("content-security-policy", "")
         assert "connect-src" in csp
@@ -148,9 +172,12 @@ class TestRenderCSPDetails:
 
     @pytest.mark.asyncio
     async def test_csp_worker_src_allows_blob(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         csp = resp.headers.get("content-security-policy", "")
         assert "worker-src" in csp
@@ -158,9 +185,12 @@ class TestRenderCSPDetails:
 
     @pytest.mark.asyncio
     async def test_csp_img_src_allows_https(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         csp = resp.headers.get("content-security-policy", "")
         assert "img-src" in csp
@@ -168,9 +198,12 @@ class TestRenderCSPDetails:
 
     @pytest.mark.asyncio
     async def test_csp_frame_ancestors_self(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         csp = resp.headers.get("content-security-policy", "")
         assert "frame-ancestors" in csp
@@ -184,19 +217,25 @@ class TestRenderSiblingInject:
     @pytest.mark.asyncio
     async def test_render_no_inject_returns_raw_html(self, client):
         html = "<!DOCTYPE html><html><head></head><body><p>raw</p></body></html>"
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": html},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": html},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"]))
         assert resp.status_code == 200
         assert "<p>raw</p>" in resp.text
 
     @pytest.mark.asyncio
     async def test_render_inject_css(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-            {"path": "style.css", "content": "body { color: red; }"},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+                {"path": "style.css", "content": "body { color: red; }"},
+            ],
+        )
         html_id = files[0]["id"]
         css_id = files[1]["id"]
         resp = await client.get(_render_url(slug, html_id, inject=css_id))
@@ -206,10 +245,13 @@ class TestRenderSiblingInject:
 
     @pytest.mark.asyncio
     async def test_render_inject_js(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-            {"path": "app.js", "content": "console.log('injected');"},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+                {"path": "app.js", "content": "console.log('injected');"},
+            ],
+        )
         html_id = files[0]["id"]
         js_id = files[1]["id"]
         resp = await client.get(_render_url(slug, html_id, inject=js_id))
@@ -219,9 +261,12 @@ class TestRenderSiblingInject:
 
     @pytest.mark.asyncio
     async def test_render_inject_invalid_id_ignored(self, client):
-        slug, files = await _create_entry(client, [
-            {"path": "index.html", "content": SIMPLE_HTML},
-        ])
+        slug, files = await _create_entry(
+            client,
+            [
+                {"path": "index.html", "content": SIMPLE_HTML},
+            ],
+        )
         resp = await client.get(_render_url(slug, files[0]["id"], inject=999999))
         assert resp.status_code == 200
         assert "<h1>Hi</h1>" in resp.text
@@ -235,23 +280,29 @@ class TestModuleScriptInjection:
         html = '<html><head></head><body><script type="module" src="app.js"></script></body></html>'
         siblings = [
             SiblingFileData(
-                filename="app.js", path=None,
+                filename="app.js",
+                path=None,
                 content='import { x } from "./dep.js"; console.log(x);',
-                language="javascript", is_binary=False, mime_type=None,
+                language="javascript",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
         assert 'type="module"' in result
-        assert 'import { x }' in result
+        assert "import { x }" in result
         assert 'src="app.js"' not in result
 
     def test_module_script_not_duplicated_in_unreferenced(self):
         html = '<html><head></head><body><script type="module" src="app.js"></script></body></html>'
         siblings = [
             SiblingFileData(
-                filename="app.js", path=None,
+                filename="app.js",
+                path=None,
                 content="console.log('mod');",
-                language="javascript", is_binary=False, mime_type=None,
+                language="javascript",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -260,16 +311,19 @@ class TestModuleScriptInjection:
 
     def test_importmap_preserved_module_inlined(self):
         html = (
-            '<html><head></head><body>'
+            "<html><head></head><body>"
             '<script type="importmap">{"imports": {"./dep.js": "./dep.js"}}</script>'
             '<script type="module" src="app.js"></script>'
-            '</body></html>'
+            "</body></html>"
         )
         siblings = [
             SiblingFileData(
-                filename="app.js", path=None,
+                filename="app.js",
+                path=None,
                 content="console.log('mod');",
-                language="javascript", is_binary=False, mime_type=None,
+                language="javascript",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -282,9 +336,12 @@ class TestModuleScriptInjection:
         html = '<html><head></head><body><script type="text/javascript" src="app.js"></script></body></html>'
         siblings = [
             SiblingFileData(
-                filename="app.js", path=None,
+                filename="app.js",
+                path=None,
                 content="console.log('classic');",
-                language="javascript", is_binary=False, mime_type=None,
+                language="javascript",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -295,9 +352,12 @@ class TestModuleScriptInjection:
         html = '<html><head></head><body><script type="application/json" src="data.js"></script></body></html>'
         siblings = [
             SiblingFileData(
-                filename="data.js", path=None,
+                filename="data.js",
+                path=None,
                 content='{"key": "val"}',
-                language="json", is_binary=False, mime_type=None,
+                language="json",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -329,9 +389,12 @@ class TestCssInternalRefs:
         text_map: dict[str, str] = {}
         binary_map: dict[str, SiblingFileData] = {
             "bg.png": SiblingFileData(
-                filename="bg.png", path=None,
+                filename="bg.png",
+                path=None,
                 content=base64.b64encode(b"\x89PNG").decode(),
-                language=None, is_binary=True, mime_type="image/png",
+                language=None,
+                is_binary=True,
+                mime_type="image/png",
             ),
         }
         result = _process_css_refs(css, text_map, binary_map)
@@ -358,7 +421,7 @@ class TestCssInternalRefs:
         css_a = '@import url("b.css");\n.a {}'
         css_b = '@import url("c.css");\n.b {}'
         css_c = '@import url("d.css");\n.c {}'
-        css_d = '.d {}'
+        css_d = ".d {}"
         text_map = {"a.css": css_a, "b.css": css_b, "c.css": css_c, "d.css": css_d}
         result = _process_css_refs(css_a, text_map, {})
         assert ".a {}" in result
@@ -379,14 +442,20 @@ class TestCssInternalRefs:
         html = '<html><head><link rel="stylesheet" href="main.css"></head><body></body></html>'
         siblings = [
             SiblingFileData(
-                filename="main.css", path=None,
+                filename="main.css",
+                path=None,
                 content='@import url("theme.css");\nbody { color: red; }',
-                language="css", is_binary=False, mime_type=None,
+                language="css",
+                is_binary=False,
+                mime_type=None,
             ),
             SiblingFileData(
-                filename="theme.css", path=None,
+                filename="theme.css",
+                path=None,
                 content="body { background: #eee; }",
-                language="css", is_binary=False, mime_type=None,
+                language="css",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -403,22 +472,28 @@ class TestSvgAsImg:
         svg_content = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>'
         siblings = [
             SiblingFileData(
-                filename="diagram.svg", path=None,
+                filename="diagram.svg",
+                path=None,
                 content=svg_content,
-                language="xml", is_binary=False, mime_type=None,
+                language="xml",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
-        assert 'data:image/svg+xml;charset=utf-8,' in result
+        assert "data:image/svg+xml;charset=utf-8," in result
         assert 'src="diagram.svg"' not in result
 
     def test_svg_img_by_extension(self):
         html = '<html><head></head><body><img src="icon.svg"></body></html>'
         siblings = [
             SiblingFileData(
-                filename="icon.svg", path=None,
+                filename="icon.svg",
+                path=None,
                 content="<svg></svg>",
-                language=None, is_binary=False, mime_type=None,
+                language=None,
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -428,9 +503,12 @@ class TestSvgAsImg:
         html = '<html><head></head><body><img src="photo.png"></body></html>'
         siblings = [
             SiblingFileData(
-                filename="photo.png", path=None,
+                filename="photo.png",
+                path=None,
                 content=base64.b64encode(b"\x89PNG\r\n").decode(),
-                language=None, is_binary=True, mime_type="image/png",
+                language=None,
+                is_binary=True,
+                mime_type="image/png",
             ),
         ]
         result = inject_resources(html, siblings)
@@ -440,28 +518,44 @@ class TestSvgAsImg:
         html = '<html><head></head><body><img src="data.txt"></body></html>'
         siblings = [
             SiblingFileData(
-                filename="data.txt", path=None,
+                filename="data.txt",
+                path=None,
                 content="hello world",
-                language="text", is_binary=False, mime_type=None,
+                language="text",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
         assert 'src="data.txt"' in result
 
     def test_is_svg_file_by_language(self):
-        f = SiblingFileData(filename="d.xml", path=None, content="", language="xml", is_binary=False, mime_type=None)
+        f = SiblingFileData(
+            filename="d.xml", path=None, content="", language="xml", is_binary=False, mime_type=None
+        )
         assert _is_svg_file(f) is True
 
     def test_is_svg_file_by_extension(self):
-        f = SiblingFileData(filename="d.svg", path=None, content="", language=None, is_binary=False, mime_type=None)
+        f = SiblingFileData(
+            filename="d.svg", path=None, content="", language=None, is_binary=False, mime_type=None
+        )
         assert _is_svg_file(f) is True
 
     def test_is_svg_file_by_language_svg(self):
-        f = SiblingFileData(filename="d", path=None, content="", language="svg", is_binary=False, mime_type=None)
+        f = SiblingFileData(
+            filename="d", path=None, content="", language="svg", is_binary=False, mime_type=None
+        )
         assert _is_svg_file(f) is True
 
     def test_is_svg_file_negative(self):
-        f = SiblingFileData(filename="d.js", path=None, content="", language="javascript", is_binary=False, mime_type=None)
+        f = SiblingFileData(
+            filename="d.js",
+            path=None,
+            content="",
+            language="javascript",
+            is_binary=False,
+            mime_type=None,
+        )
         assert _is_svg_file(f) is False
 
 
@@ -471,8 +565,12 @@ class TestSvgAsImg:
 class TestPathNormalization:
     def test_sibling_keys_basename_fallback(self):
         f = SiblingFileData(
-            filename="app.js", path="js/app.js",
-            content="", language="javascript", is_binary=False, mime_type=None,
+            filename="app.js",
+            path="js/app.js",
+            content="",
+            language="javascript",
+            is_binary=False,
+            mime_type=None,
         )
         keys = _sibling_keys(f)
         assert "app.js" in keys
@@ -480,8 +578,12 @@ class TestPathNormalization:
 
     def test_sibling_keys_no_duplicate_basename(self):
         f = SiblingFileData(
-            filename="style.css", path="style.css",
-            content="", language="css", is_binary=False, mime_type=None,
+            filename="style.css",
+            path="style.css",
+            content="",
+            language="css",
+            is_binary=False,
+            mime_type=None,
         )
         keys = _sibling_keys(f)
         assert keys.count("style.css") == 1
@@ -506,9 +608,12 @@ class TestPathNormalization:
         html = '<html><head><link rel="stylesheet" href="../style.css"></head><body></body></html>'
         siblings = [
             SiblingFileData(
-                filename="style.css", path=None,
+                filename="style.css",
+                path=None,
                 content="body { color: red; }",
-                language="css", is_binary=False, mime_type=None,
+                language="css",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -519,9 +624,12 @@ class TestPathNormalization:
         html = '<html><head></head><body><script src="../js/app.js"></script></body></html>'
         siblings = [
             SiblingFileData(
-                filename="app.js", path="js/app.js",
+                filename="app.js",
+                path="js/app.js",
                 content="console.log('app');",
-                language="javascript", is_binary=False, mime_type=None,
+                language="javascript",
+                is_binary=False,
+                mime_type=None,
             ),
         ]
         result = inject_resources(html, siblings)
@@ -532,9 +640,12 @@ class TestPathNormalization:
         html = '<html><head></head><body><img src="../images/photo.png"></body></html>'
         siblings = [
             SiblingFileData(
-                filename="photo.png", path="images/photo.png",
+                filename="photo.png",
+                path="images/photo.png",
                 content=base64.b64encode(b"\x89PNG").decode(),
-                language=None, is_binary=True, mime_type="image/png",
+                language=None,
+                is_binary=True,
+                mime_type="image/png",
             ),
         ]
         result = inject_resources(html, siblings)

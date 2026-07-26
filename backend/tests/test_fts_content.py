@@ -56,10 +56,12 @@ class TestBDD1TextFileContentSearchable:
             summary="Deploy script",
             slug="deploy",
             tags=["ops"],
-            files_data=[{
-                "path": "deploy.sh",
-                "content": "kubectl apply -f deployment.yaml",
-            }],
+            files_data=[
+                {
+                    "path": "deploy.sh",
+                    "content": "kubectl apply -f deployment.yaml",
+                }
+            ],
         )
 
         found = entry_service.list_entries(q="kubectl")
@@ -71,10 +73,12 @@ class TestBDD1TextFileContentSearchable:
             summary="Simple script",
             slug="simple",
             tags=["ops"],
-            files_data=[{
-                "path": "app.py",
-                "content": "import sqlalchemy from flask",
-            }],
+            files_data=[
+                {
+                    "path": "app.py",
+                    "content": "import sqlalchemy from flask",
+                }
+            ],
         )
 
         found = entry_service.list_entries(q="sqlalchemy")
@@ -83,6 +87,7 @@ class TestBDD1TextFileContentSearchable:
 
     def test_search_file_content_with_base64_binary_skipped(self, entry_service):
         import base64
+
         binary_data = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
         result, _ = entry_service.create_entry(
             summary="Logo asset",
@@ -112,6 +117,7 @@ class TestBDD2BinaryFileNotIndexed:
 
     def test_binary_file_content_not_searchable(self, entry_service):
         import base64
+
         binary_content = b"\x89PNG\r\n\x1a\n" + b"\x00" * 50 + b"UNIQUEBINARYMARKER"
         result, _ = entry_service.create_entry(
             summary="Logo asset",
@@ -130,6 +136,7 @@ class TestBDD2BinaryFileNotIndexed:
 
     def test_text_file_searchable_alongside_binary(self, entry_service):
         import base64
+
         binary_data = b"\x00" * 100
         result, _ = entry_service.create_entry(
             summary="Mixed files",
@@ -176,18 +183,24 @@ class TestBDD3BackfillExistingEntries:
         entry_result, _ = svc.create_entry(
             summary="Legacy entry",
             slug="legacy",
-            files_data=[{
-                "path": "legacy.py",
-                "content": "def legacy_function(): pass",
-            }],
+            files_data=[
+                {
+                    "path": "legacy.py",
+                    "content": "def legacy_function(): pass",
+                }
+            ],
         )
 
         with Session(engine) as session:
-            session.exec(text("DELETE FROM entries_fts WHERE rowid = :id").bindparams(id=entry_result.id))
-            session.exec(text(
-                "INSERT INTO entries_fts(rowid, summary, tags, content) "
-                "VALUES (:id, :summary, :tags, :content)"
-            ).bindparams(id=entry_result.id, summary="Legacy entry", tags="", content=""))
+            session.exec(
+                text("DELETE FROM entries_fts WHERE rowid = :id").bindparams(id=entry_result.id)
+            )
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(id=entry_result.id, summary="Legacy entry", tags="", content="")
+            )
             session.commit()
 
         found = svc.list_entries(q="legacy_function")
@@ -237,10 +250,12 @@ class TestBDD4FTSSyncAfterFileChanges:
         created, _ = entry_service.create_entry(
             summary="Config files",
             slug="config",
-            files_data=[{
-                "path": "config.yaml",
-                "content": "database_url: postgres://localhost",
-            }],
+            files_data=[
+                {
+                    "path": "config.yaml",
+                    "content": "database_url: postgres://localhost",
+                }
+            ],
         )
 
         found = entry_service.list_entries(q="database_url")
@@ -262,10 +277,15 @@ class TestBDD4FTSSyncAfterFileChanges:
         found = entry_service.list_entries(q="flask_route")
         assert len(found.items) == 0
 
-        entry_service.update_entry("config-add", add_files=[{
-            "path": "app.py",
-            "content": "def flask_route(): pass",
-        }])
+        entry_service.update_entry(
+            "config-add",
+            add_files=[
+                {
+                    "path": "app.py",
+                    "content": "def flask_route(): pass",
+                }
+            ],
+        )
 
         found = entry_service.list_entries(q="flask_route")
         assert len(found.items) == 1
@@ -274,10 +294,12 @@ class TestBDD4FTSSyncAfterFileChanges:
         entry_service.create_entry(
             summary="Original summary",
             slug="update-summary",
-            files_data=[{
-                "path": "code.py",
-                "content": "import django_orm",
-            }],
+            files_data=[
+                {
+                    "path": "code.py",
+                    "content": "import django_orm",
+                }
+            ],
         )
 
         found = entry_service.list_entries(q="django_orm")
@@ -453,7 +475,7 @@ class TestFTS5ContentlessMode:
         with engine.connect() as conn:
             columns = {row[1] for row in conn.execute(text("PRAGMA table_info(entries_fts)"))}
 
-        assert 'content' in columns
+        assert "content" in columns
         engine.dispose()
 
     def test_delete_entry_removes_from_fts(self, entry_service):

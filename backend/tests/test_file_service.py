@@ -124,9 +124,7 @@ def test_scan_directory_ignores_node_modules(tmp_path):
     (tmp_path / "node_modules").mkdir()
     (tmp_path / "node_modules" / "lib.js").write_text("lib")
     (tmp_path / "app.js").write_text("app")
-    files = scan_directory(
-        str(tmp_path), allowed_dirs=[tmp_path], ignored_dirs={"node_modules"}
-    )
+    files = scan_directory(str(tmp_path), allowed_dirs=[tmp_path], ignored_dirs={"node_modules"})
     names = [f.filename for f in files]
     assert "lib.js" not in names
 

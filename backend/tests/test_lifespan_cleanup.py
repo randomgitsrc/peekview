@@ -41,10 +41,13 @@ _original_sleep = asyncio.sleep
 @pytest.mark.asyncio
 async def test_interval_gt_zero_creates_task(tmp_path, mock_cleanup_response):
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=False)
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        return_value=mock_cleanup_response,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            return_value=mock_cleanup_response,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
         async with lifespan(app):
             pass
@@ -63,10 +66,13 @@ async def test_interval_gt_zero_task_calls_cleanup(tmp_path, mock_cleanup_respon
             raise asyncio.CancelledError()
         await _original_sleep(0)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=fake_sleep):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=fake_sleep),
+    ):
         app = create_app(config=config)
         async with lifespan(app):
             await _original_sleep(0.2)
@@ -79,10 +85,13 @@ async def test_check_on_start_true_runs_immediately(tmp_path, mock_cleanup_respo
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=True)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
         async with lifespan(app):
             await _original_sleep(0.1)
@@ -95,10 +104,13 @@ async def test_check_on_start_false_no_immediate_call(tmp_path, mock_cleanup_res
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=False)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
         async with lifespan(app):
             await _original_sleep(0.1)
@@ -135,10 +147,13 @@ async def test_shutdown_cancels_task(tmp_path, mock_cleanup_response, caplog):
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=False)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
 
         with caplog.at_level(logging.INFO):
@@ -153,10 +168,13 @@ async def test_shutdown_cancel_log(tmp_path, mock_cleanup_response, caplog):
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=False)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
 
         with caplog.at_level(logging.INFO):
@@ -171,10 +189,13 @@ async def test_cleanup_logs_archived_deleted_freed(tmp_path, mock_cleanup_respon
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=True)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
 
         with caplog.at_level(logging.INFO):
@@ -207,10 +228,13 @@ async def test_cleanup_exception_continues_loop(tmp_path, caplog):
             raise asyncio.CancelledError()
         await _original_sleep(0)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        side_effect=cleanup_side_effect,
-    ), patch("asyncio.sleep", side_effect=fake_sleep):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            side_effect=cleanup_side_effect,
+        ),
+        patch("asyncio.sleep", side_effect=fake_sleep),
+    ):
         app = create_app(config=config)
 
         with caplog.at_level(logging.INFO):
@@ -226,10 +250,13 @@ async def test_check_on_start_initial_log(tmp_path, mock_cleanup_response, caplo
     config = _make_config(tmp_path, interval_seconds=3600, check_on_start=True)
     mock_cleanup = MagicMock(return_value=mock_cleanup_response)
 
-    with patch(
-        "peekview.services.admin_service.AdminService.cleanup_expired",
-        mock_cleanup,
-    ), patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+    with (
+        patch(
+            "peekview.services.admin_service.AdminService.cleanup_expired",
+            mock_cleanup,
+        ),
+        patch("asyncio.sleep", side_effect=asyncio.CancelledError),
+    ):
         app = create_app(config=config)
 
         with caplog.at_level(logging.INFO):

@@ -202,26 +202,37 @@ async def list_entries(
     """List entries with search, filter, and pagination."""
     valid_status_values = {"active", "archived", "published"}
     if status is not None and status not in valid_status_values:
-        raise HTTPException(status_code=422, detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}")
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}",
+        )
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
     result = service.list_entries(
-        q=q, tags=tag_list, status=status, page=page, per_page=per_page,
-        current_user_id=current_user_id, is_admin=is_admin, owner=owner,
+        q=q,
+        tags=tag_list,
+        status=status,
+        page=page,
+        per_page=per_page,
+        current_user_id=current_user_id,
+        is_admin=is_admin,
+        owner=owner,
     )
 
     channel = _detect_channel(request)
     reader_ip = request.client.host if request.client else None
-    asyncio.create_task(_record_read_async(
-        request.app.state,
-        entry_id=None,
-        entry_owner_id=None,
-        action="discover",
-        channel=channel,
-        reader_id=current_user_id,
-        reader_ip=reader_ip,
-    ))
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=None,
+            entry_owner_id=None,
+            action="discover",
+            channel=channel,
+            reader_id=current_user_id,
+            reader_ip=reader_ip,
+        )
+    )
 
     return result
 
@@ -253,14 +264,29 @@ async def get_entry(
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
-            if entry.is_public or (current_user_id is not None and (is_admin or entry.owner_id == current_user_id)):
-                resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin,
-                                        include_read_stats=(current_user_id is not None and (is_admin or entry.owner_id == current_user_id)))
-                asyncio.create_task(_record_read_async(
-                    request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
-                    action="read", channel="api", reader_id=current_user_id,
-                    reader_ip=request.client.host if request.client else None,
-                ))
+            if entry.is_public or (
+                current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
+            ):
+                resp = service.get_entry(
+                    slug,
+                    current_user_id=current_user_id,
+                    is_admin=is_admin,
+                    include_read_stats=(
+                        current_user_id is not None
+                        and (is_admin or entry.owner_id == current_user_id)
+                    ),
+                )
+                asyncio.create_task(
+                    _record_read_async(
+                        request.app.state,
+                        entry_id=entry.id,
+                        entry_owner_id=entry.owner_id,
+                        action="read",
+                        channel="api",
+                        reader_id=current_user_id,
+                        reader_ip=request.client.host if request.client else None,
+                    )
+                )
                 return resp
 
         result = service.get_entry_with_share(slug, share, share_service)
@@ -277,11 +303,17 @@ async def get_entry(
             is_secure=is_secure,
         )
 
-        asyncio.create_task(_record_read_async(
-            request.app.state, entry_id=entry_response.id, entry_owner_id=entry_response.owner_id,
-            action="read", channel="share", reader_id=current_user_id,
-            reader_ip=request.client.host if request.client else None,
-        ))
+        asyncio.create_task(
+            _record_read_async(
+                request.app.state,
+                entry_id=entry_response.id,
+                entry_owner_id=entry_response.owner_id,
+                action="read",
+                channel="share",
+                reader_id=current_user_id,
+                reader_ip=request.client.host if request.client else None,
+            )
+        )
 
         content = entry_response.model_dump(mode="json")
         response = JSONResponse(content=content)
@@ -294,11 +326,17 @@ async def get_entry(
         with Session(request.app.state.engine) as session:
             entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if entry:
-                asyncio.create_task(_record_read_async(
-                    request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
-                    action="read", channel="share", reader_id=current_user_id,
-                    reader_ip=request.client.host if request.client else None,
-                ))
+                asyncio.create_task(
+                    _record_read_async(
+                        request.app.state,
+                        entry_id=entry.id,
+                        entry_owner_id=entry.owner_id,
+                        action="read",
+                        channel="share",
+                        reader_id=current_user_id,
+                        reader_ip=request.client.host if request.client else None,
+                    )
+                )
         return cookie_result
 
     with Session(request.app.state.engine) as session:
@@ -307,14 +345,22 @@ async def get_entry(
             raise NotFoundError(f"Entry not found: {slug}")
 
     include_stats = current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
-    resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin, include_read_stats=include_stats)
+    resp = service.get_entry(
+        slug, current_user_id=current_user_id, is_admin=is_admin, include_read_stats=include_stats
+    )
 
     channel = _detect_channel(request)
-    asyncio.create_task(_record_read_async(
-        request.app.state, entry_id=entry.id, entry_owner_id=entry.owner_id,
-        action="read", channel=channel, reader_id=current_user_id,
-        reader_ip=request.client.host if request.client else None,
-    ))
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=entry.id,
+            entry_owner_id=entry.owner_id,
+            action="read",
+            channel=channel,
+            reader_id=current_user_id,
+            reader_ip=request.client.host if request.client else None,
+        )
+    )
 
     return resp
 
@@ -337,7 +383,9 @@ async def get_entry_reads(
         raise NotFoundError(f"Entry not found: {slug}")
 
     return request.app.state.read_tracking_service.get_read_events(
-        entry_id=entry.id, page=page, per_page=per_page,
+        entry_id=entry.id,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -464,7 +512,9 @@ async def download_entry_files(
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         for file_record in entry.files:
             # Get the actual disk path
-            disk_path = service.storage.get_disk_path(entry.id, file_record.path or file_record.filename)
+            disk_path = service.storage.get_disk_path(
+                entry.id, file_record.path or file_record.filename
+            )
             if disk_path.exists():
                 # Use stored path or filename for zip entry
                 arcname = file_record.path or file_record.filename

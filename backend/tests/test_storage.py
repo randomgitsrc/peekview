@@ -290,14 +290,14 @@ class TestStoreLocalFile:
         source = allowed / "source.txt"
         source.write_text("source content")
 
-        config = PeekConfig(storage=PeekStorage(
-            data_dir=tmp_path / "data",
-            allowed_paths=[allowed],
-        ))
-
-        disk_path, size, sha256 = store_local_file(
-            config, 1, "dest.txt", "dest.txt", str(source)
+        config = PeekConfig(
+            storage=PeekStorage(
+                data_dir=tmp_path / "data",
+                allowed_paths=[allowed],
+            )
         )
+
+        disk_path, size, sha256 = store_local_file(config, 1, "dest.txt", "dest.txt", str(source))
 
         assert disk_path.exists()
         assert disk_path.read_text() == "source content"
@@ -309,10 +309,12 @@ class TestStoreLocalFile:
         source.write_text("secret")
 
         # No allowlist
-        config = PeekConfig(storage=PeekStorage(
-            data_dir=tmp_path / "data",
-            allowed_paths=[],
-        ))
+        config = PeekConfig(
+            storage=PeekStorage(
+                data_dir=tmp_path / "data",
+                allowed_paths=[],
+            )
+        )
 
         with pytest.raises(ForbiddenPathError):
             store_local_file(config, 1, "dest.txt", "dest.txt", str(source))
@@ -326,10 +328,12 @@ class TestStoreLocalFile:
         link = tmp_path / "link.txt"
         link.symlink_to(target)
 
-        config = PeekConfig(storage=PeekStorage(
-            data_dir=tmp_path / "data",
-            allowed_paths=[allowed],
-        ))
+        config = PeekConfig(
+            storage=PeekStorage(
+                data_dir=tmp_path / "data",
+                allowed_paths=[allowed],
+            )
+        )
 
         with pytest.raises(ForbiddenPathError) as exc_info:
             store_local_file(config, 1, "dest.txt", "dest.txt", str(link))

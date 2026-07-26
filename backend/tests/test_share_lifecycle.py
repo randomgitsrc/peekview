@@ -17,6 +17,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -25,6 +26,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -36,8 +38,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -77,8 +82,8 @@ async def _get_share_token(client, auth_token, slug, **kwargs):
 
 # --- B26: Private→public auto-revokes ---
 
-class TestShareLifecycle:
 
+class TestShareLifecycle:
     async def test_b26_private_to_public_auto_revokes(self, client_and_app):
         """B26: Changing entry from private to public auto-revokes all active shares."""
         client, app = client_and_app
@@ -105,7 +110,9 @@ class TestShareLifecycle:
         assert resp.status_code == 200
         data = resp.json()
 
-        assert data.get("revoked_shares") == 2, "revoked_shares must count 2 still-active shares (1 was already revoked)"
+        assert data.get("revoked_shares") == 2, (
+            "revoked_shares must count 2 still-active shares (1 was already revoked)"
+        )
 
         engine = app.state.engine
         with Session(engine) as session:
@@ -140,16 +147,18 @@ class TestShareLifecycle:
         assert resp.status_code == 200
 
         data = resp.json()
-        assert data.get("revoked_shares") is None or data.get("revoked_shares") == 0, \
+        assert data.get("revoked_shares") is None or data.get("revoked_shares") == 0, (
             "public→private must not revoke shares"
+        )
 
         engine = app.state.engine
         with Session(engine) as session:
             shares_after = session.exec(select(EntryShare)).all()
             for s_after in shares_after:
                 s_before = revoked_at_before.get(s_after.id)
-                assert s_after.revoked_at == s_before, \
+                assert s_after.revoked_at == s_before, (
                     "Share revoked_at must be unchanged after public→private"
+                )
 
     async def test_b28_entry_delete_cascades_to_shares(self, client_and_app):
         """B28: Deleting entry cascades to delete all share records."""
@@ -209,15 +218,16 @@ class TestShareLifecycle:
         engine = app.state.engine
         with Session(engine) as session:
             share = session.exec(select(EntryShare)).first()
-            assert share.view_count == 60, \
-                f"view_count must be 60 (50+10), got {share.view_count}"
+            assert share.view_count == 60, f"view_count must be 60 (50+10), got {share.view_count}"
 
     async def test_view_count_only_increments_on_token_access(self, client_and_app):
         """Implicit: view_count only increments on ?share= access, not cookie-based access."""
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="cookie-count",
+            client,
+            alice["access_token"],
+            slug="cookie-count",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
         token = await _get_share_token(client, alice["access_token"], "cookie-count")
@@ -238,7 +248,9 @@ class TestShareLifecycle:
         engine = app.state.engine
         with Session(engine) as session:
             share = session.exec(select(EntryShare)).first()
-            assert share.view_count == 1, "view_count must NOT increment on cookie-based sub-resource access"
+            assert share.view_count == 1, (
+                "view_count must NOT increment on cookie-based sub-resource access"
+            )
 
     async def test_default_expiry_is_7d(self, client_and_app):
         """Implicit: Default expires_in is 7d per P0 user_decision #2."""

@@ -208,8 +208,22 @@ class TestPeekClientRequests:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "items": [
-                {"id": 1, "slug": "entry-1", "summary": "First", "tags": [], "status": "active", "file_count": 1},
-                {"id": 2, "slug": "entry-2", "summary": "Second", "tags": ["python"], "status": "active", "file_count": 2},
+                {
+                    "id": 1,
+                    "slug": "entry-1",
+                    "summary": "First",
+                    "tags": [],
+                    "status": "active",
+                    "file_count": 1,
+                },
+                {
+                    "id": 2,
+                    "slug": "entry-2",
+                    "summary": "Second",
+                    "tags": ["python"],
+                    "status": "active",
+                    "file_count": 2,
+                },
             ],
             "total": 2,
             "page": 1,

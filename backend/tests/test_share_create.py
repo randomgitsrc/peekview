@@ -19,6 +19,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     """Create completely isolated temp directory. Returns (client, app)."""
@@ -28,6 +29,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -39,8 +41,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201, f"Register failed: {resp.status_code} {resp.text}"
     return resp.json()
 
@@ -80,8 +85,8 @@ async def _create_share(client, auth_token, slug, expires_in="7d", max_views=Non
 
 # --- B01: Owner creates share link for own private entry ---
 
-class TestCreateShare:
 
+class TestCreateShare:
     async def test_b01_owner_creates_share_default(self, client_and_app):
         """B01: Owner creates share with default 7d expiry, unlimited views."""
         client, app = client_and_app
@@ -163,8 +168,8 @@ class TestCreateShare:
 
 # --- B02: Non-owner cannot create share link ---
 
-class TestCreateSharePermission:
 
+class TestCreateSharePermission:
     async def test_b02_non_owner_cannot_create(self, client_and_app):
         """B02: Non-owner gets 403."""
         client, _ = client_and_app
@@ -205,6 +210,7 @@ class TestCreateSharePermission:
         engine = app.state.engine
         with Session(engine) as session:
             from peekview.models import Entry
+
             e = session.exec(select(Entry).where(Entry.slug == "expired-entry")).first()
             e.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
             session.add(e)

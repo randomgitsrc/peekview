@@ -97,14 +97,18 @@ class TestDetermineContentTypeThreeLevelFallback:
 
     def test_level2_language_to_mime_hit(self):
         f = _make_file(
-            path="custom.css", filename="custom.css",
-            language="css", is_binary=True,
+            path="custom.css",
+            filename="custom.css",
+            language="css",
+            is_binary=True,
         )
         result = _determine_content_type(f)
         assert result == "text/css"
 
     def test_level3_mimetypes_guess_type_hit(self):
-        f = _make_file(path="screenshot.png", filename="screenshot.png", language=None, is_binary=True)
+        f = _make_file(
+            path="screenshot.png", filename="screenshot.png", language=None, is_binary=True
+        )
         result = _determine_content_type(f)
         assert result == "image/png"
 
@@ -132,11 +136,14 @@ class TestContentEndpointContentType:
 
     @pytest.mark.asyncio
     async def test_png_content_endpoint_returns_image_png(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "PNG test",
-            "slug": "png-test",
-            "files": [{"path": "screenshot.png", "content": "iVBORw0KGgo="}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "PNG test",
+                "slug": "png-test",
+                "files": [{"path": "screenshot.png", "content": "iVBORw0KGgo="}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]
@@ -148,11 +155,14 @@ class TestContentEndpointContentType:
 
     @pytest.mark.asyncio
     async def test_jpeg_content_endpoint_returns_image_jpeg(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "JPEG test",
-            "slug": "jpeg-test",
-            "files": [{"path": "photo.jpg", "content": "/9j/4AAQSkZJRg=="}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "JPEG test",
+                "slug": "jpeg-test",
+                "files": [{"path": "photo.jpg", "content": "/9j/4AAQSkZJRg=="}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]
@@ -165,11 +175,14 @@ class TestContentEndpointContentType:
     @pytest.mark.asyncio
     async def test_svg_content_endpoint_returns_image_svg_xml(self, client):
         svg_content = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>'
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "SVG test",
-            "slug": "svg-test",
-            "files": [{"path": "diagram.svg", "content": svg_content}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "SVG test",
+                "slug": "svg-test",
+                "files": [{"path": "diagram.svg", "content": svg_content}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]
@@ -181,11 +194,14 @@ class TestContentEndpointContentType:
 
     @pytest.mark.asyncio
     async def test_bin_content_endpoint_returns_octet_stream(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "BIN test",
-            "slug": "bin-test",
-            "files": [{"path": "data.bin", "content": "AQID"}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "BIN test",
+                "slug": "bin-test",
+                "files": [{"path": "data.bin", "content": "AQID"}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]
@@ -197,11 +213,14 @@ class TestContentEndpointContentType:
 
     @pytest.mark.asyncio
     async def test_py_content_endpoint_returns_text_x_python(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Python test",
-            "slug": "py-test",
-            "files": [{"path": "main.py", "content": "print('hello')"}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Python test",
+                "slug": "py-test",
+                "files": [{"path": "main.py", "content": "print('hello')"}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]
@@ -213,11 +232,14 @@ class TestContentEndpointContentType:
 
     @pytest.mark.asyncio
     async def test_css_content_endpoint_returns_text_css(self, client):
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "CSS test",
-            "slug": "css-test",
-            "files": [{"path": "style.css", "content": "body { margin: 0; }"}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "CSS test",
+                "slug": "css-test",
+                "files": [{"path": "style.css", "content": "body { margin: 0; }"}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         slug = data["slug"]

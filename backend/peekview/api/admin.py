@@ -52,9 +52,7 @@ async def delete_user(
     admin: User = Depends(require_admin),
 ) -> None:
     try:
-        request.app.state.admin_service.delete_user(
-            user_id=user_id, current_user_id=admin.id
-        )
+        request.app.state.admin_service.delete_user(user_id=user_id, current_user_id=admin.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 

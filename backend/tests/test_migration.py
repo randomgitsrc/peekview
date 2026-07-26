@@ -6,6 +6,7 @@ and `SchemaMismatchError` functionality.
 TDD: Tests are written BEFORE implementation. They should FAIL
 until the actual code changes are applied in P4.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,6 +26,7 @@ except ImportError:
     # P4 will implement; stub for P3 TDD 真红灯
     def check_schema(engine):
         raise NotImplementedError("check_schema() not yet implemented (P4)")
+
 
 try:
     from peekview.exceptions import SchemaMismatchError
@@ -171,9 +173,7 @@ class TestRunMigrations:
         _run_migrations(engine)
 
         with engine.connect() as conn:
-            columns = {
-                row[1] for row in conn.execute(text("PRAGMA table_info(users)"))
-            }
+            columns = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
             assert "is_admin" in columns
 
         engine.dispose()
@@ -217,9 +217,7 @@ class TestRunMigrations:
         _run_migrations(engine)
 
         with engine.connect() as conn:
-            columns = {
-                row[1] for row in conn.execute(text("PRAGMA table_info(entries)"))
-            }
+            columns = {row[1] for row in conn.execute(text("PRAGMA table_info(entries)"))}
             assert "is_public" in columns
             assert "owner_id" in columns
 
@@ -258,10 +256,12 @@ class TestSchemaMismatchError:
 
     def test_multiple_tables(self):
         """Multiple tables with missing columns should all be reported."""
-        err = SchemaMismatchError({
-            "users": ["is_admin"],
-            "entries": ["is_public", "owner_id"],
-        })
+        err = SchemaMismatchError(
+            {
+                "users": ["is_admin"],
+                "entries": ["is_public", "owner_id"],
+            }
+        )
         msg = str(err)
         assert "users" in msg
         assert "is_admin" in msg

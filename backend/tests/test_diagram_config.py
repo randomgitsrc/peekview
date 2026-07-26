@@ -8,7 +8,6 @@ Tests for:
 All tests currently RED — implementation not yet written.
 """
 
-
 import pytest
 from click.testing import CliRunner
 
@@ -21,6 +20,7 @@ class TestPeekDiagramConfig:
     def test_diagram_config_default_enabled(self):
         """Default sanitize_enabled is True (B-BDD-1)."""
         from peekview.config import PeekDiagram
+
         diagram = PeekDiagram()
         assert diagram.sanitize_enabled is True
 
@@ -28,12 +28,14 @@ class TestPeekDiagramConfig:
         """PEEKVIEW_DIAGRAM__SANITIZE_ENABLED env overrides default (B-BDD-1)."""
         monkeypatch.setenv("PEEKVIEW_DIAGRAM__SANITIZE_ENABLED", "false")
         from peekview.config import PeekDiagram
+
         diagram = PeekDiagram()
         assert diagram.sanitize_enabled is False
 
     def test_diagram_config_registered_in_peekconfig(self):
         """PeekConfig includes diagram section (B-BDD-1)."""
         from peekview.config import PeekConfig, PeekDiagram
+
         config = PeekConfig()
         assert hasattr(config, "diagram")
         assert isinstance(config.diagram, PeekDiagram)
@@ -58,11 +60,13 @@ class TestDiagramConfigEndpoint:
     async def test_endpoint_reflects_env_var(self, monkeypatch, temp_data_dir, temp_db_path):
         """GET /api/v1/config/diagram reflects env override (B-BDD-1)."""
         from peekview.main import create_app
+
         monkeypatch.setenv("PEEKVIEW_DIAGRAM__SANITIZE_ENABLED", "false")
 
         app = create_app(data_dir=temp_data_dir, db_path=temp_db_path)
 
         from httpx import ASGITransport, AsyncClient
+
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             resp = await ac.get("/api/v1/config/diagram")

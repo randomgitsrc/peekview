@@ -16,7 +16,9 @@ async def me_client(tmp_path):
         yield ac
 
 
-async def _register_user(client: AsyncClient, username="testuser", password="testpass123", display_name=None):
+async def _register_user(
+    client: AsyncClient, username="testuser", password="testpass123", display_name=None
+):
     body: dict = {"username": username, "password": password}
     if display_name is not None:
         body["display_name"] = display_name

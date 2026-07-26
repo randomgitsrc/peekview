@@ -18,12 +18,8 @@ _MAX_INJECT_IDS = 50
 _BINARY_SIZE_LIMIT = 768 * 1024
 _CSS_RECURSION_LIMIT = 3
 
-_IMPORT_RE = re.compile(
-    r'@import\s+(?:url\(\s*[\'"]?|[\'"])([^\'")\s]+)[\'"]?\s*\)?\s*;'
-)
-_URL_RE = re.compile(
-    r'url\(\s*[\'"]?([^\'")\s]+)[\'"]?\s*\)'
-)
+_IMPORT_RE = re.compile(r'@import\s+(?:url\(\s*[\'"]?|[\'"])([^\'")\s]+)[\'"]?\s*\)?\s*;')
+_URL_RE = re.compile(r'url\(\s*[\'"]?([^\'")\s]+)[\'"]?\s*\)')
 
 
 @dataclass
@@ -152,7 +148,9 @@ def _process_css_refs(
         if key in visited:
             return m.group(0)
         visited.add(key)
-        resolved = _process_css_refs(text_map[key], text_map, binary_map, svg_keys, depth + 1, visited)
+        resolved = _process_css_refs(
+            text_map[key], text_map, binary_map, svg_keys, depth + 1, visited
+        )
         return resolved
 
     css_content = _IMPORT_RE.sub(_replace_import, css_content)

@@ -3,6 +3,7 @@
 All tests are RED initially — endpoint does not exist yet.
 Tests define the contract; implementation makes them green.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -23,9 +24,7 @@ async def client():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         app = create_app(data_dir=data_dir, db_path=db_path)
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as c:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             yield c
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -40,15 +39,15 @@ async def client_with_key(monkeypatch):
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         app = create_app(data_dir=data_dir, db_path=db_path)
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as c:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             yield c
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-async def _create_public_entry(client, content: str, filename: str = "README.md", language: str = "markdown") -> str:
+async def _create_public_entry(
+    client, content: str, filename: str = "README.md", language: str = "markdown"
+) -> str:
     """Helper: create public entry, return slug."""
     resp = await client.post(
         "/api/v1/entries",
@@ -159,6 +158,7 @@ async def test_raw_private_entry_with_api_key_returns_content(client_with_key):
 async def test_raw_binary_file_returns_file_url_not_content(client):
     # 上传一个 PNG（最小合法 PNG）
     import base64
+
     minimal_png = (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
         b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
@@ -169,10 +169,12 @@ async def test_raw_binary_file_returns_file_url_not_content(client):
         json={
             "summary": "image entry",
             "is_public": True,
-            "files": [{
-                "filename": "logo.png",
-                "content_base64": base64.b64encode(minimal_png).decode(),
-            }],
+            "files": [
+                {
+                    "filename": "logo.png",
+                    "content_base64": base64.b64encode(minimal_png).decode(),
+                }
+            ],
         },
     )
     assert resp.status_code in (200, 201)

@@ -28,15 +28,28 @@ async def lifecycle_client(tmp_path, monkeypatch):
 
 
 async def _register_user(client, username, password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={
-        "username": username,
-        "password": password,
-    })
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "password": password,
+        },
+    )
     return resp.json()["access_token"]
 
 
-def _create_entry_direct(app, session, *, slug, summary="Test", is_public=True,
-                         status="active", expires_at=None, archived_at=None, owner_id=None):
+def _create_entry_direct(
+    app,
+    session,
+    *,
+    slug,
+    summary="Test",
+    is_public=True,
+    status="active",
+    expires_at=None,
+    archived_at=None,
+    owner_id=None,
+):
     entry = Entry(
         slug=slug,
         summary=summary,
@@ -70,19 +83,22 @@ class TestOwnerDefaultExcludesArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a1")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a1-active-1",
                 owner_id=user.id,
                 is_public=False,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a1-active-2",
                 owner_id=user.id,
                 is_public=False,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a1-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -108,7 +124,8 @@ class TestOwnerDefaultExcludesArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a1b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a1b-only-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -136,19 +153,22 @@ class TestOwnerMineExcludesArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a2")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a2-active-1",
                 owner_id=user.id,
                 is_public=False,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a2-active-2",
                 owner_id=user.id,
                 is_public=False,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a2-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -174,7 +194,8 @@ class TestOwnerMineExcludesArchived:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a2b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a2b-only-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -202,13 +223,15 @@ class TestOwnerArchivedTab:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a3")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a3-active",
                 owner_id=user.id,
                 is_public=False,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a3-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -233,7 +256,8 @@ class TestOwnerArchivedTab:
         with Session(engine) as session:
             user = session.exec(select(User).where(User.username == "owner-a3b")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a3b-active",
                 owner_id=user.id,
                 is_public=False,
@@ -260,23 +284,24 @@ class TestAdminArchived:
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin-a4")
             # User 1: 2 active + 1 archived (all public for visibility)
-            user1 = session.exec(
-                select(User).where(User.username == "admin-a4")
-            ).first()
+            user1 = session.exec(select(User).where(User.username == "admin-a4")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a4-u1-active-1",
                 owner_id=user1.id,
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a4-u1-active-2",
                 owner_id=user1.id,
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a4-u1-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -289,13 +314,15 @@ class TestAdminArchived:
         with Session(engine) as session:
             user2 = session.exec(select(User).where(User.username == "user-a4")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a4-u2-active",
                 owner_id=user2.id,
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a4-u2-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -322,11 +349,10 @@ class TestAdminArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _make_admin(lifecycle_client._app, session, "admin-a5")
-            user1 = session.exec(
-                select(User).where(User.username == "admin-a5")
-            ).first()
+            user1 = session.exec(select(User).where(User.username == "admin-a5")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a5-u1-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -338,7 +364,8 @@ class TestAdminArchived:
         with Session(engine) as session:
             user2 = session.exec(select(User).where(User.username == "user-a5")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a5-u2-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -364,19 +391,22 @@ class TestAnonymousArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a6-public-active",
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a6-public-archived",
                 is_public=True,
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a6-private-archived",
                 is_public=False,
                 status="archived",
@@ -396,7 +426,8 @@ class TestAnonymousArchived:
         engine = lifecycle_client._app.state.engine
         with Session(engine) as session:
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a6b-public-archived",
                 is_public=True,
                 status="archived",
@@ -421,13 +452,15 @@ class TestNonOwnerArchived:
         with Session(engine) as session:
             user_a = session.exec(select(User).where(User.username == "user-a7-a")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a7-a-active",
                 owner_id=user_a.id,
                 is_public=True,
             )
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a7-a-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),
@@ -452,7 +485,8 @@ class TestNonOwnerArchived:
         with Session(engine) as session:
             user_a = session.exec(select(User).where(User.username == "user-a7c-a")).first()
             _create_entry_direct(
-                lifecycle_client._app, session,
+                lifecycle_client._app,
+                session,
                 slug="a7c-a-archived",
                 status="archived",
                 archived_at=datetime.now(timezone.utc) - timedelta(days=1),

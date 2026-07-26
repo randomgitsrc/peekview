@@ -148,9 +148,7 @@ class ApiKey(SQLModel, table=True):
     """API Key model — bound to user, permissions equivalent to JWT."""
 
     __tablename__ = "api_keys"
-    __table_args__ = (
-        Index("idx_api_keys_user_name", "user_id", "name", unique=True),
-    )
+    __table_args__ = (Index("idx_api_keys_user_name", "user_id", "name", unique=True),)
 
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(..., foreign_key="users.id", index=True)
@@ -235,9 +233,7 @@ class EntryShare(SQLModel, table=True):
     """Share link model — grants temporary read access to private entries."""
 
     __tablename__ = "entry_shares"
-    __table_args__ = (
-        Index("idx_entry_shares_entry_prefix", "entry_id", "token_prefix"),
-    )
+    __table_args__ = (Index("idx_entry_shares_entry_prefix", "entry_id", "token_prefix"),)
 
     id: int | None = Field(default=None, primary_key=True)
     entry_id: int = Field(foreign_key="entries.id", index=True)
@@ -357,7 +353,9 @@ class File(FileBase, table=True):
 Index("idx_entries_status", Entry.status)
 Index("idx_entries_user_id", Entry.user_id)
 Index("idx_entries_is_public", Entry.is_public)
-Index("idx_entries_is_public_status_created", Entry.is_public, Entry.status, Entry.created_at.desc())
+Index(
+    "idx_entries_is_public_status_created", Entry.is_public, Entry.status, Entry.created_at.desc()
+)
 Index("idx_entries_expires_at", Entry.expires_at)
 Index("idx_entries_created_at", Entry.created_at)
 Index("idx_entries_updated_at", Entry.updated_at)
@@ -423,7 +421,10 @@ class EntryUpdate(SQLModel):
     status: EntryStatus | None = Field(default=None)
     tags: list[str] | None = Field(default=None)
     is_public: bool | None = Field(default=None)
-    expires_in: str | None = Field(default=None, description="Duration like '7d', '1h', '0' for never. Reactivates archived entries.")
+    expires_in: str | None = Field(
+        default=None,
+        description="Duration like '7d', '1h', '0' for never. Reactivates archived entries.",
+    )
     add_files: list[FileCreate] | None = Field(default=None)
     remove_file_ids: list[int] | None = Field(default=None)
     add_dirs: list[DirCreate] | None = Field(default=None)
@@ -505,6 +506,7 @@ class EntryListItem(SQLModel):
 
 class RawFileItem(SQLModel):
     """Single file raw content for /raw endpoint."""
+
     id: int
     filename: str
     path: str | None = None
@@ -518,6 +520,7 @@ class RawFileItem(SQLModel):
 
 class EntryRawResponse(SQLModel):
     """Response for GET /api/v1/entries/{slug}/raw."""
+
     slug: str
     summary: str
     tags: list[str]
@@ -593,7 +596,9 @@ class UserRegister(SQLModel):
     username: str = Field(..., min_length=3, max_length=32)
     password: str = Field(..., min_length=8, max_length=72)
     display_name: str | None = Field(default=None, max_length=64)
-    captcha_token: str | None = Field(default=None, description="Cap captcha token (required when captcha enabled)")
+    captcha_token: str | None = Field(
+        default=None, description="Cap captcha token (required when captcha enabled)"
+    )
 
     @field_validator("username")
     @classmethod
@@ -610,7 +615,9 @@ class UserLogin(SQLModel):
 
     username: str
     password: str
-    captcha_token: str | None = Field(default=None, description="Cap captcha token (required when captcha enabled)")
+    captcha_token: str | None = Field(
+        default=None, description="Cap captcha token (required when captcha enabled)"
+    )
 
 
 class UserResponse(SQLModel):
@@ -740,7 +747,9 @@ class ShareCreateRequest(SQLModel):
         description="Duration: 1h, 24h, 7d, 30d, or 0 for permanent",
     )
     max_views: int | None = Field(
-        default=None, ge=1, le=100000,
+        default=None,
+        ge=1,
+        le=100000,
         description="Max view count. null = unlimited",
     )
 

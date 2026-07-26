@@ -61,6 +61,7 @@ def _config_to_dataclass(auth_config) -> CaptchaConfig:
     # Auto-generated secret fallback (from builtin engine)
     if not secret_key:
         from pathlib import Path
+
         secret_path = Path.home() / ".peekview" / ".captcha_secret"
         if secret_path.exists():
             secret_key = secret_path.read_text().strip()
@@ -80,9 +81,7 @@ def _config_to_dataclass(auth_config) -> CaptchaConfig:
         if is_external and not verify_url:
             missing.append("captcha_verify_url")
         if missing:
-            raise CaptchaConfigError(
-                f"Captcha is enabled but missing config: {', '.join(missing)}"
-            )
+            raise CaptchaConfigError(f"Captcha is enabled but missing config: {', '.join(missing)}")
 
     return CaptchaConfig(
         enabled=enabled,
@@ -122,6 +121,7 @@ async def verify_captcha_token(
     # ─── Builtin mode ─────────────────────────────────────────────────────
     if not verify_url or verify_url.strip() == "":
         from peekview.captcha_engine import siteverify_token
+
         ok = siteverify_token(secret_key, site_key, token)
         if ok:
             return True

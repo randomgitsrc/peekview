@@ -17,6 +17,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -25,6 +26,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -36,8 +38,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -77,8 +82,8 @@ async def _get_share_token(client, auth_token, slug, **kwargs):
 
 # --- B07: Valid share token grants access ---
 
-class TestShareTokenAccess:
 
+class TestShareTokenAccess:
     async def test_b07_valid_token_grants_access(self, client_and_app):
         """B07: Valid share token grants access to private entry."""
         client, app = client_and_app
@@ -106,7 +111,9 @@ class TestShareTokenAccess:
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(client, alice["access_token"], slug="expired-share")
-        token = await _get_share_token(client, alice["access_token"], "expired-share", expires_in="1h")
+        token = await _get_share_token(
+            client, alice["access_token"], "expired-share", expires_in="1h"
+        )
 
         engine = app.state.engine
         with Session(engine) as session:
@@ -142,7 +149,9 @@ class TestShareTokenAccess:
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(client, alice["access_token"], slug="max-views-share")
-        token = await _get_share_token(client, alice["access_token"], "max-views-share", max_views=5)
+        token = await _get_share_token(
+            client, alice["access_token"], "max-views-share", max_views=5
+        )
 
         engine = app.state.engine
         with Session(engine) as session:
@@ -165,6 +174,7 @@ class TestShareTokenAccess:
         engine = app.state.engine
         with Session(engine) as session:
             from peekview.models import Entry
+
             e = session.exec(select(Entry).where(Entry.slug == "expired-entry-share")).first()
             e.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
             session.add(e)
@@ -188,11 +198,13 @@ class TestShareTokenAccess:
 
 # --- B13-B16: Share token grants sub-resource access ---
 
-class TestShareSubResourceAccess:
 
+class TestShareSubResourceAccess:
     async def _setup_entry_with_file(self, client, auth_token, slug="file-share"):
         entry = await _create_private_entry(
-            client, auth_token, slug=slug,
+            client,
+            auth_token,
+            slug=slug,
             files=[{"filename": "hello.py", "content": "print('hello')"}],
         )
         token = await _get_share_token(client, auth_token, slug)
@@ -217,7 +229,9 @@ class TestShareSubResourceAccess:
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="html-share",
+            client,
+            alice["access_token"],
+            slug="html-share",
             files=[{"filename": "page.html", "content": "<h1>Hello</h1>"}],
         )
         token = await _get_share_token(client, alice["access_token"], "html-share")
@@ -259,8 +273,8 @@ class TestShareSubResourceAccess:
 
 # --- Implicit: Auth priority over share token ---
 
-class TestShareAuthPriority:
 
+class TestShareAuthPriority:
     async def test_owner_access_ignores_share_context(self, client_and_app):
         """Implicit: Owner accessing own entry via share link sees full view (no share_context)."""
         client, _ = client_and_app
@@ -274,7 +288,10 @@ class TestShareAuthPriority:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data.get("share_context") is None or data["share_context"].get("is_share_access") is not True
+        assert (
+            data.get("share_context") is None
+            or data["share_context"].get("is_share_access") is not True
+        )
 
     async def test_admin_access_ignores_share_context(self, client_and_app):
         """Implicit: Admin accessing private entry sees full view (no share_context)."""
@@ -290,7 +307,10 @@ class TestShareAuthPriority:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data.get("share_context") is None or data["share_context"].get("is_share_access") is not True
+        assert (
+            data.get("share_context") is None
+            or data["share_context"].get("is_share_access") is not True
+        )
 
     async def test_public_entry_ignores_share_param(self, client_and_app):
         """Implicit: Public entry ignores share param (no share_context)."""
@@ -307,4 +327,7 @@ class TestShareAuthPriority:
         resp = await client.get("/api/v1/entries/public-share?share=some_token")
         assert resp.status_code == 200
         data = resp.json()
-        assert data.get("share_context") is None or data["share_context"].get("is_share_access") is not True
+        assert (
+            data.get("share_context") is None
+            or data["share_context"].get("is_share_access") is not True
+        )

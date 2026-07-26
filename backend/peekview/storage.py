@@ -76,9 +76,7 @@ def get_disk_path(
     try:
         target.relative_to(base)
     except ValueError:
-        raise ForbiddenPathError(
-            f"Path escapes entry directory: {file_path or filename}"
-        ) from None
+        raise ForbiddenPathError(f"Path escapes entry directory: {file_path or filename}") from None
 
     return target
 
@@ -221,9 +219,7 @@ def read_file_content(path: Path, max_size: int | None = None) -> bytes:
             # Check size first
             size = path.stat().st_size
             if size > max_size:
-                raise StorageError(
-                    f"File exceeds size limit: {size} > {max_size} bytes"
-                )
+                raise StorageError(f"File exceeds size limit: {size} > {max_size} bytes")
 
         return path.read_bytes()
 
@@ -453,9 +449,7 @@ class StorageManager:
         file_path: str | None = None,
     ) -> Path:
         """Write file content for an entry."""
-        return store_content(
-            self.config or PeekConfig(), entry_id, file_path, filename, content
-        )[0]
+        return store_content(self.config or PeekConfig(), entry_id, file_path, filename, content)[0]
 
     def read_file(
         self,
@@ -464,9 +458,7 @@ class StorageManager:
         file_path: str | None = None,
     ) -> bytes:
         """Read a file from an entry."""
-        return read_entry_file(
-            self.config or PeekConfig(), entry_id, file_path, filename
-        )
+        return read_entry_file(self.config or PeekConfig(), entry_id, file_path, filename)
 
     def delete_entry_files(self, entry_id: int) -> None:
         """Delete all files for an entry."""
@@ -479,9 +471,7 @@ class StorageManager:
         file_path: str | None = None,
     ) -> bool:
         """Check if a file exists in an entry."""
-        return entry_file_exists(
-            self.config or PeekConfig(), entry_id, file_path, filename
-        )
+        return entry_file_exists(self.config or PeekConfig(), entry_id, file_path, filename)
 
     def get_entry_size(self, entry_id: int) -> int:
         """Get total size of all files in an entry."""

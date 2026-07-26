@@ -1,6 +1,5 @@
 """Tests for exception hierarchy."""
 
-
 from peekview.exceptions import (
     ConflictError,
     DatabaseError,

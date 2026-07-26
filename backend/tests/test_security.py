@@ -29,6 +29,7 @@ async def client():
             yield c
     finally:
         import shutil
+
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
@@ -47,6 +48,7 @@ async def auth_client(monkeypatch):
             yield c
     finally:
         import shutil
+
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
@@ -224,7 +226,9 @@ class TestApiKeyAuthBypass:
         )
         assert resp.status_code == 401
 
-    @pytest.mark.skip(reason="Timing attack resistance requires constant-time comparison implementation")
+    @pytest.mark.skip(
+        reason="Timing attack resistance requires constant-time comparison implementation"
+    )
     @pytest.mark.asyncio
     async def test_timing_attack_resistance(self, auth_client):
         """Timing should be roughly equal for valid/invalid tokens."""
@@ -256,7 +260,7 @@ class TestApiKeyAuthBypass:
         malicious_tokens = [
             "Bearer ' OR '1'='1",
             "Bearer '; DROP TABLE entries; --",
-            "Bearer \" OR \"1\"=\"1",
+            'Bearer " OR "1"="1',
         ]
 
         for token in malicious_tokens:
@@ -297,10 +301,13 @@ class TestFileUploadAbuse:
         # Create oversized content
         oversized_content = "x" * (max_size + 1000)
 
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Oversized test",
-            "files": [{"path": "huge.txt", "content": oversized_content}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Oversized test",
+                "files": [{"path": "huge.txt", "content": oversized_content}],
+            },
+        )
 
         # Should be rejected with 413 Payload Too Large
         assert resp.status_code == 413
@@ -316,10 +323,13 @@ class TestFileUploadAbuse:
         # Create too many files
         files = [{"path": f"file{i}.txt", "content": "test"} for i in range(max_files + 5)]
 
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Too many files test",
-            "files": files,
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Too many files test",
+                "files": files,
+            },
+        )
 
         # Should be rejected
         assert resp.status_code == 413
@@ -342,10 +352,13 @@ class TestFileUploadAbuse:
             content = "x" * single_file_size
             files.append({"path": f"file{i}.txt", "content": content})
 
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "Huge entry test",
-            "files": files,
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Huge entry test",
+                "files": files,
+            },
+        )
 
         # Should be rejected
         assert resp.status_code == 413
@@ -358,10 +371,13 @@ class TestSqlInjection:
     async def test_fts_query_injection_blocked(self, client):
         """FTS5 special characters in search should be sanitized."""
         # Create an entry first
-        await client.post("/api/v1/entries", json={
-            "summary": "Test entry",
-            "slug": "sql-test",
-        })
+        await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Test entry",
+                "slug": "sql-test",
+            },
+        )
 
         # Attempt SQL injection in search query
         malicious_queries = [
@@ -386,10 +402,13 @@ class TestSqlInjection:
         ]
 
         for slug in malicious_slugs:
-            resp = await client.post("/api/v1/entries", json={
-                "summary": "SQL test",
-                "slug": slug,
-            })
+            resp = await client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": "SQL test",
+                    "slug": slug,
+                },
+            )
             # Should be rejected by slug validation (400)
             assert resp.status_code == 400
 
@@ -402,16 +421,19 @@ class TestXssProtection:
         """Script tags in summary should be escaped or rejected."""
         xss_payloads = [
             "<script>alert('xss')</script>",
-            '<img src=x onerror="alert(\'xss\')">',
+            "<img src=x onerror=\"alert('xss')\">",
             "javascript:alert('xss')",
             "<svg onload=alert('xss')>",
         ]
 
         for payload in xss_payloads:
             # XSS in summary
-            resp = await client.post("/api/v1/entries", json={
-                "summary": payload,
-            })
+            resp = await client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": payload,
+                },
+            )
 
             if resp.status_code == 201:
                 # If accepted, verify it's stored safely (not executed)
@@ -439,10 +461,13 @@ class TestXssProtection:
 </html>
 """
 
-        resp = await client.post("/api/v1/entries", json={
-            "summary": "XSS content test",
-            "files": [{"path": "test.html", "content": xss_content}],
-        })
+        resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "XSS content test",
+                "files": [{"path": "test.html", "content": xss_content}],
+            },
+        )
 
         assert resp.status_code == 201
         data = resp.json()
@@ -450,9 +475,7 @@ class TestXssProtection:
         file_id = data["files"][0]["id"]
 
         # Retrieve file content
-        content_resp = await client.get(
-            f"/api/v1/entries/{entry_slug}/files/{file_id}/content"
-        )
+        content_resp = await client.get(f"/api/v1/entries/{entry_slug}/files/{file_id}/content")
         assert content_resp.status_code == 200
 
         # Content should be returned as-is (safe storage)
@@ -488,10 +511,14 @@ class TestInformationDisclosure:
         # of error responses matches our expected format
 
         # Invalid slug format gives us a controlled error
-        resp = await auth_client.post("/api/v1/entries", json={
-            "summary": "Test",
-            "slug": "invalid slug with spaces!",
-        }, headers={"Authorization": "Bearer test-secret-key"})
+        resp = await auth_client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "Test",
+                "slug": "invalid slug with spaces!",
+            },
+            headers={"Authorization": "Bearer test-secret-key"},
+        )
 
         assert resp.status_code == 400
         data = resp.json()
@@ -503,7 +530,7 @@ class TestInformationDisclosure:
 
         # Should not have traceback or file references
         assert "Traceback" not in str(data)
-        assert "File \"/" not in str(data)
+        assert 'File "/' not in str(data)
 
 
 class TestCorsSecurity:
@@ -556,10 +583,13 @@ class TestFilenameSanitization:
         ]
 
         for filename in malicious_filenames:
-            resp = await client.post("/api/v1/entries", json={
-                "summary": "Filename injection test",
-                "files": [{"path": filename, "content": "test"}],
-            })
+            resp = await client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": "Filename injection test",
+                    "files": [{"path": filename, "content": "test"}],
+                },
+            )
 
             if resp.status_code == 201:
                 data = resp.json()
@@ -567,9 +597,7 @@ class TestFilenameSanitization:
                 file_id = data["files"][0]["id"]
 
                 # Try to download with malicious filename
-                download_resp = await client.get(
-                    f"/api/v1/entries/{entry_slug}/files/{file_id}"
-                )
+                download_resp = await client.get(f"/api/v1/entries/{entry_slug}/files/{file_id}")
                 assert download_resp.status_code == 200
 
                 # Content-Disposition should be sanitized
@@ -594,19 +622,20 @@ class TestFilenameSanitization:
         ]
         for prefix in malicious_slugs_prefixes:
             # Create an entry with multiple files to enable ZIP download
-            resp = await client.post("/api/v1/entries", json={
-                "summary": "ZIP injection test",
-                "files": [
-                    {"path": f"{prefix}/file1.txt", "content": "content1"},
-                    {"path": f"{prefix}/file2.txt", "content": "content2"},
-                ],
-            })
+            resp = await client.post(
+                "/api/v1/entries",
+                json={
+                    "summary": "ZIP injection test",
+                    "files": [
+                        {"path": f"{prefix}/file1.txt", "content": "content1"},
+                        {"path": f"{prefix}/file2.txt", "content": "content2"},
+                    ],
+                },
+            )
             if resp.status_code == 201:
                 data = resp.json()
                 entry_slug = data["slug"]
-                download_resp = await client.get(
-                    f"/api/v1/entries/{entry_slug}/download"
-                )
+                download_resp = await client.get(f"/api/v1/entries/{entry_slug}/download")
                 assert download_resp.status_code == 200
                 if "content-disposition" in download_resp.headers:
                     disposition = download_resp.headers["content-disposition"]
@@ -643,7 +672,9 @@ class TestSecurityHeaders:
         assert resp.headers.get("x-content-type-options") == "nosniff"
         assert resp.headers.get("content-security-policy") is not None
         assert "script-src 'self'" in resp.headers.get("content-security-policy", "")
-        assert resp.headers.get("cache-control") is None or "no-store" not in resp.headers.get("cache-control", "")
+        assert resp.headers.get("cache-control") is None or "no-store" not in resp.headers.get(
+            "cache-control", ""
+        )
 
 
 class TestHealthCheck:
@@ -664,6 +695,7 @@ class TestHealthCheck:
     async def test_health_check_degraded_on_db_error(self, app):
         """DB error should return degraded, not 500."""
         from unittest.mock import MagicMock
+
         original_engine = app.state.engine
         mock_engine = MagicMock()
         mock_engine.connect.side_effect = Exception("DB unavailable")
@@ -692,10 +724,13 @@ class TestRateLimiting:
             # Make more than 10 rapid login requests (limit is 10/minute)
             got_429 = False
             for _ in range(15):
-                resp = await c.post("/api/v1/auth/login", json={
-                    "username": "nonexistent",
-                    "password": "wrong",
-                })
+                resp = await c.post(
+                    "/api/v1/auth/login",
+                    json={
+                        "username": "nonexistent",
+                        "password": "wrong",
+                    },
+                )
                 if resp.status_code == 429:
                     got_429 = True
                     # Verify error format
@@ -717,6 +752,7 @@ class TestRateLimiting:
         from pathlib import Path
 
         from peekview.main import create_app
+
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         disabled_app = create_app(
@@ -728,10 +764,13 @@ class TestRateLimiting:
         async with AsyncClient(transport=transport, base_url="http://test") as c:
             # Make many login requests with rate limiting disabled
             for _ in range(10):
-                resp = await c.post("/api/v1/auth/login", json={
-                    "username": "nonexistent",
-                    "password": "wrong",
-                })
+                resp = await c.post(
+                    "/api/v1/auth/login",
+                    json={
+                        "username": "nonexistent",
+                        "password": "wrong",
+                    },
+                )
                 # Should get 401 (bad credentials) not 429 (rate limit)
                 assert resp.status_code in (401, 400), f"Expected 401/400, got {resp.status_code}"
 
@@ -741,6 +780,7 @@ class TestRateLimiting:
         from pathlib import Path
 
         from peekview.main import create_app
+
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(
@@ -752,10 +792,13 @@ class TestRateLimiting:
         async with AsyncClient(transport=transport, base_url="http://test") as c:
             got_429 = False
             for _ in range(5):
-                resp = await c.post("/api/v1/auth/login", json={
-                    "username": "nobody",
-                    "password": "wrong",
-                })
+                resp = await c.post(
+                    "/api/v1/auth/login",
+                    json={
+                        "username": "nobody",
+                        "password": "wrong",
+                    },
+                )
                 if resp.status_code == 429:
                     got_429 = True
                     assert resp.json()["error"]["code"] == "RATE_LIMITED"
@@ -768,6 +811,7 @@ class TestRateLimiting:
         from pathlib import Path
 
         from peekview.main import create_app
+
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(
@@ -779,10 +823,15 @@ class TestRateLimiting:
         async with AsyncClient(transport=transport, base_url="http://test") as c:
             got_429 = False
             for _ in range(5):
-                resp = await c.post("/api/v1/captcha/challenge", json={
-                    "site_key": "test",
-                })
+                resp = await c.post(
+                    "/api/v1/captcha/challenge",
+                    json={
+                        "site_key": "test",
+                    },
+                )
                 if resp.status_code == 429:
                     got_429 = True
                     break
-            assert got_429, "Expected 429 for captcha challenge after exceeding rate_limit_per_minute=3"
+            assert got_429, (
+                "Expected 429 for captcha challenge after exceeding rate_limit_per_minute=3"
+            )

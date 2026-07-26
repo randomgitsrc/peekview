@@ -16,12 +16,22 @@ from peekview.exceptions import NotFoundError, PeekError
 
 RemoteEntry = namedtuple(
     "RemoteEntry",
-    ["id", "slug", "url", "summary", "status", "tags", "files", "expires_at", "created_at", "updated_at"]
+    [
+        "id",
+        "slug",
+        "url",
+        "summary",
+        "status",
+        "tags",
+        "files",
+        "expires_at",
+        "created_at",
+        "updated_at",
+    ],
 )
 
 RemoteFile = namedtuple(
-    "RemoteFile",
-    ["id", "path", "filename", "language", "is_binary", "size", "line_count"]
+    "RemoteFile", ["id", "path", "filename", "language", "is_binary", "size", "line_count"]
 )
 
 
@@ -38,7 +48,7 @@ class PeekClient:
         api_key: str = "",
         token: str = "",
         timeout: int = 30,
-        verify_ssl: bool = True
+        verify_ssl: bool = True,
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout

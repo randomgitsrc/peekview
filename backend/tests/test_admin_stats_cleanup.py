@@ -23,16 +23,22 @@ async def admin_client(tmp_path, monkeypatch):
 
 
 async def _setup_users(client):
-    admin_resp = await client.post("/api/v1/auth/register", json={
-        "username": "adminuser",
-        "password": "adminpass123",
-    })
+    admin_resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "adminuser",
+            "password": "adminpass123",
+        },
+    )
     admin_token = admin_resp.json()["access_token"]
 
-    user_resp = await client.post("/api/v1/auth/register", json={
-        "username": "normaluser",
-        "password": "normalpass123",
-    })
+    user_resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "normaluser",
+            "password": "normalpass123",
+        },
+    )
     user_token = user_resp.json()["access_token"]
 
     return admin_token, user_token
@@ -99,6 +105,7 @@ class TestAdminStats:
                 )
                 session.add(entry)
             from datetime import datetime, timedelta, timezone
+
             expired_entry = Entry(
                 slug="expired-1",
                 summary="Expired",
@@ -266,6 +273,7 @@ class TestStatsPerformance:
 
         with Session(engine) as session:
             from sqlalchemy import text
+
             session.exec(text("DELETE FROM files"))
             session.exec(text("DELETE FROM entries"))
             session.commit()
@@ -303,6 +311,7 @@ class TestAdminCleanup:
         with Session(engine) as session:
             _make_admin_direct(admin_client._app, session)
             from datetime import datetime, timedelta, timezone
+
             for i in range(3):
                 entry = Entry(
                     slug=f"expired-cleanup-{i}",
@@ -365,6 +374,7 @@ class TestCleanupIdempotent:
         with Session(engine) as session:
             _make_admin_direct(admin_client._app, session)
             from datetime import datetime, timedelta, timezone
+
             for i in range(2):
                 entry = Entry(
                     slug=f"idem-expired-{i}",
@@ -434,7 +444,11 @@ class TestCLIAdminCleanupLocal:
         runner = CliRunner()
         result = runner.invoke(cli, ["admin", "cleanup"])
         assert result.exit_code == 0
-        assert "No expired" in result.output or "Archived:" in result.output or result.output.strip() == ""
+        assert (
+            "No expired" in result.output
+            or "Archived:" in result.output
+            or result.output.strip() == ""
+        )
 
 
 # --- CLEANUP-7: CLI admin cleanup remote mode --- #
@@ -496,7 +510,5 @@ class TestCleanupPreservesActive:
         assert "active-keep" not in data["archived_slugs"]
 
         with Session(engine) as session:
-            active = session.exec(
-                select(Entry).where(Entry.slug == "active-keep")
-            ).first()
+            active = session.exec(select(Entry).where(Entry.slug == "active-keep")).first()
             assert active is not None

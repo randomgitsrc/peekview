@@ -16,6 +16,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -24,6 +25,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -35,8 +37,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -76,8 +81,8 @@ async def _get_share_token(client, auth_token, slug, **kwargs):
 
 # --- B17: Valid share token sets cookie ---
 
-class TestShareCookieSetting:
 
+class TestShareCookieSetting:
     async def test_b17_share_token_sets_cookie(self, client_and_app):
         """B17: Valid share token sets peekview_share_{slug} cookie."""
         client, app = client_and_app
@@ -108,7 +113,9 @@ class TestShareCookieSetting:
         client, _ = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(client, alice["access_token"], slug="permanent-cookie")
-        token = await _get_share_token(client, alice["access_token"], "permanent-cookie", expires_in="0")
+        token = await _get_share_token(
+            client, alice["access_token"], "permanent-cookie", expires_in="0"
+        )
 
         client.cookies.clear()
         resp = await client.get(f"/api/v1/entries/permanent-cookie?share={token}")
@@ -123,14 +130,16 @@ class TestShareCookieSetting:
 
 # --- B18: Share cookie enables subsequent access ---
 
-class TestShareCookieAccess:
 
+class TestShareCookieAccess:
     async def test_b18_cookie_enables_sub_resource_access(self, client_and_app):
         """B18: Share cookie enables subsequent access without ?share= param."""
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="cookie-access",
+            client,
+            alice["access_token"],
+            slug="cookie-access",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
         token = await _get_share_token(client, alice["access_token"], "cookie-access")
@@ -162,14 +171,16 @@ class TestShareCookieAccess:
 
 # --- B19: Revoked/expired share cookie denies access ---
 
-class TestShareCookieRevocation:
 
+class TestShareCookieRevocation:
     async def test_b19_revoked_cookie_denies_access(self, client_and_app):
         """B19: Revoked share cookie returns 404."""
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="revoked-cookie",
+            client,
+            alice["access_token"],
+            slug="revoked-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
         token = await _get_share_token(client, alice["access_token"], "revoked-cookie")
@@ -194,10 +205,14 @@ class TestShareCookieRevocation:
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="expired-cookie",
+            client,
+            alice["access_token"],
+            slug="expired-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
-        token = await _get_share_token(client, alice["access_token"], "expired-cookie", expires_in="1h")
+        token = await _get_share_token(
+            client, alice["access_token"], "expired-cookie", expires_in="1h"
+        )
 
         client.cookies.clear()
         entry_resp = await client.get(f"/api/v1/entries/expired-cookie?share={token}")
@@ -219,10 +234,14 @@ class TestShareCookieRevocation:
         client, app = client_and_app
         alice = await _register(client, "alice")
         await _create_private_entry(
-            client, alice["access_token"], slug="maxviews-cookie",
+            client,
+            alice["access_token"],
+            slug="maxviews-cookie",
             files=[{"filename": "test.py", "content": "x = 1"}],
         )
-        token = await _get_share_token(client, alice["access_token"], "maxviews-cookie", max_views=1)
+        token = await _get_share_token(
+            client, alice["access_token"], "maxviews-cookie", max_views=1
+        )
 
         client.cookies.clear()
         entry_resp = await client.get(f"/api/v1/entries/maxviews-cookie?share={token}")

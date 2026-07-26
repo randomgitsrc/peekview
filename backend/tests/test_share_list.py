@@ -16,6 +16,7 @@ from peekview.models import EntryShare
 
 # --- Fixtures ---
 
+
 @pytest.fixture(scope="function")
 async def client_and_app():
     tmp_dir = Path(tempfile.mkdtemp())
@@ -24,6 +25,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -35,8 +37,11 @@ async def client_and_app():
 
 # --- Helpers ---
 
+
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -69,8 +74,8 @@ async def _create_share(client, auth_token, slug, expires_in="7d", max_views=Non
 
 # --- B20: Owner lists shares ---
 
-class TestListShares:
 
+class TestListShares:
     async def test_b20_owner_lists_shares(self, client_and_app):
         """B20: Owner lists all shares (active, expired, revoked) for own entry."""
         client, app = client_and_app
@@ -79,7 +84,9 @@ class TestListShares:
 
         await _create_share(client, alice["access_token"], "list-shares", expires_in="7d")
         expired = await _create_share(client, alice["access_token"], "list-shares", expires_in="1h")
-        revoked = await _create_share(client, alice["access_token"], "list-shares", expires_in="30d")
+        revoked = await _create_share(
+            client, alice["access_token"], "list-shares", expires_in="30d"
+        )
 
         engine = app.state.engine
         with Session(engine) as session:

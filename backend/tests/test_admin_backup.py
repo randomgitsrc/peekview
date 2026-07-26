@@ -38,9 +38,16 @@ def isolated_env(runner, monkeypatch, tmp_path):
 
 def _create_entry_with_files(runner, slug="test-entry", summary="Test entry"):
     """Helper: create a CLI entry with files for testing."""
-    result = runner.invoke(cli, [
-        "create", "-s", summary, "--slug", slug,
-    ])
+    result = runner.invoke(
+        cli,
+        [
+            "create",
+            "-s",
+            summary,
+            "--slug",
+            slug,
+        ],
+    )
     return result
 
 
@@ -67,6 +74,7 @@ def _build_backup_tarball(
     staging.mkdir()
 
     import sqlite3
+
     db_path = staging / "peekview.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript("""
@@ -259,6 +267,7 @@ class TestBdd01ConsistentBackup:
 
         # Extract DB from tarball and verify it's a valid SQLite database
         import sqlite3
+
         with tarfile.open(str(tar_path), "r:gz") as tar:
             db_member = [m for m in tar.getmembers() if "peekview.db" in m.name][0]
             tar.extract(db_member, path=isolated_env / "extracted")
@@ -317,8 +326,12 @@ class TestBdd02CustomOutput:
         # This assertion will fail both before and after implementation:
         # - Before: error is "No such command 'backup'" (no path mention)
         # - After: error should mention the invalid path
-        assert "path" in result.output.lower() or "directory" in result.output.lower() or "not found" in result.output.lower() or "no such file" in result.output.lower(), \
-            f"Error should mention path/directory issue: {result.output}"
+        assert (
+            "path" in result.output.lower()
+            or "directory" in result.output.lower()
+            or "not found" in result.output.lower()
+            or "no such file" in result.output.lower()
+        ), f"Error should mention path/directory issue: {result.output}"
 
 
 # ============================================================
@@ -334,8 +347,9 @@ class TestBdd03RemoteReject:
         monkeypatch.setenv("PEEKVIEW_REMOTE__URL", "http://remote-server:8080")
         result = _create_backup_via_cli(runner)
         assert result.exit_code != 0, "Should reject remote mode"
-        assert "remote" in result.output.lower() or "not support" in result.output.lower(), \
+        assert "remote" in result.output.lower() or "not support" in result.output.lower(), (
             f"Error message should mention remote mode: {result.output}"
+        )
 
 
 # ============================================================
@@ -393,8 +407,9 @@ class TestBdd04Integrity:
                 found = False
                 for key, expected_sha in checksums.items():
                     if key.endswith(basename) or key == member.name:
-                        assert actual_sha == expected_sha, \
+                        assert actual_sha == expected_sha, (
                             f"SHA256 mismatch for {member.name}: expected {expected_sha}, got {actual_sha}"
+                        )
                         found = True
                         break
                 assert found, f"No checksum entry for {member.name} in {list(checksums.keys())}"
@@ -451,9 +466,17 @@ class TestBdd06JsonExport:
     def test_export_json_format(self, runner, isolated_env):
         """Export should produce a JSON file with entry metadata + file contents."""
         _create_entry_with_files(runner, slug="json-export-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "json-export-test", "--format", "json",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "json-export-test",
+                "--format",
+                "json",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         # Output should be valid JSON
@@ -464,9 +487,17 @@ class TestBdd06JsonExport:
     def test_export_json_entry_metadata(self, runner, isolated_env):
         """JSON export entry should contain required metadata fields."""
         _create_entry_with_files(runner, slug="json-meta-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "json-meta-test", "--format", "json",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "json-meta-test",
+                "--format",
+                "json",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         data = json.loads(result.output)
@@ -478,9 +509,17 @@ class TestBdd06JsonExport:
     def test_export_json_file_fields(self, runner, isolated_env):
         """JSON export files should have filename, path, language, is_binary, size, sha256."""
         _create_entry_with_files(runner, slug="json-files-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "json-files-test", "--format", "json",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "json-files-test",
+                "--format",
+                "json",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         data = json.loads(result.output)
@@ -502,9 +541,17 @@ class TestBdd07ZipExport:
     def test_export_zip_format(self, runner, isolated_env):
         """Export should produce a valid ZIP file."""
         _create_entry_with_files(runner, slug="zip-export-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "zip-export-test", "--format", "zip",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "zip-export-test",
+                "--format",
+                "zip",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         # Find zip file path from output
@@ -515,9 +562,17 @@ class TestBdd07ZipExport:
     def test_export_zip_contains_entry_json(self, runner, isolated_env):
         """ZIP should contain entry.json with metadata."""
         _create_entry_with_files(runner, slug="zip-entry-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "zip-entry-test", "--format", "zip",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "zip-entry-test",
+                "--format",
+                "zip",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         zip_path = _extract_export_path(result.output, isolated_env, ".zip")
@@ -530,9 +585,17 @@ class TestBdd07ZipExport:
     def test_export_zip_files_are_extractable(self, runner, isolated_env):
         """ZIP files should be extractable and readable."""
         _create_entry_with_files(runner, slug="zip-extract-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "zip-extract-test", "--format", "zip",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "zip-extract-test",
+                "--format",
+                "zip",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         zip_path = _extract_export_path(result.output, isolated_env, ".zip")
@@ -553,9 +616,15 @@ class TestBdd08ExportNonexistent:
 
     def test_export_nonexistent_entry(self, runner, isolated_env):
         """Export of a nonexistent slug should fail with an error."""
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "nonexistent-entry-xyz",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "nonexistent-entry-xyz",
+            ],
+        )
         # Should fail — either command not implemented (exit != 0) or entry not found
         # After implementation: should exit != 0 with "not found" message
         # For TDD red light: check that the error is specifically about the entry,
@@ -564,7 +633,9 @@ class TestBdd08ExportNonexistent:
             # If command doesn't exist yet, that's a red light (wrong error type)
             # but still a failure. After implementation, should mention "not found"
             if "No such command" in result.output:
-                pytest.fail("export command not yet implemented — expected 'not found' error for nonexistent entry")
+                pytest.fail(
+                    "export command not yet implemented — expected 'not found' error for nonexistent entry"
+                )
         # If exit_code == 0 (command exists but didn't error on nonexistent slug):
         assert result.exit_code != 0, "Should fail for nonexistent entry"
 
@@ -580,9 +651,15 @@ class TestBdd09DefaultFormat:
     def test_export_default_format_is_json(self, runner, isolated_env):
         """Export without --format should produce JSON output."""
         _create_entry_with_files(runner, slug="default-format-test")
-        result = runner.invoke(cli, [
-            "admin", "export", "--slug", "default-format-test",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "export",
+                "--slug",
+                "default-format-test",
+            ],
+        )
         assert result.exit_code == 0, f"export failed: {result.output}"
 
         # Should be valid JSON
@@ -615,9 +692,14 @@ class TestBdd10BasicRestore:
         assert tar_path is not None
 
         # Now restore into a clean target
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+            ],
+        )
         assert result.exit_code == 0, f"restore failed: {result.output}"
 
         # Verify entry exists in restored DB
@@ -637,12 +719,18 @@ class TestBdd11VersionReject:
         """Backup from higher version should be rejected."""
         # Build a backup with version "99.0.0" (higher than current)
         tar_path = _build_backup_tarball(isolated_env, version="99.0.0")
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+            ],
+        )
         assert result.exit_code != 0, "Should reject higher version backup"
-        assert "version" in result.output.lower() or "incompat" in result.output.lower(), \
+        assert "version" in result.output.lower() or "incompat" in result.output.lower(), (
             f"Error should mention version incompatibility: {result.output}"
+        )
 
     def test_restore_higher_version_no_data_change(self, runner, isolated_env):
         """Rejecting a higher version backup should not modify target data."""
@@ -656,8 +744,9 @@ class TestBdd11VersionReject:
         # The restore should fail (version incompatibility)
         assert result.exit_code != 0, "Should reject higher version backup"
         # Error message must mention version incompatibility specifically
-        assert "version" in result.output.lower() or "incompat" in result.output.lower(), \
+        assert "version" in result.output.lower() or "incompat" in result.output.lower(), (
             f"Error should mention version incompatibility: {result.output}"
+        )
 
 
 # ============================================================
@@ -671,10 +760,16 @@ class TestBdd11aSameVersion:
     def test_restore_allows_same_version(self, runner, isolated_env):
         """Backup with same version as current should restore normally."""
         from peekview import __version__
+
         tar_path = _build_backup_tarball(isolated_env, version=__version__)
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+            ],
+        )
         assert result.exit_code == 0, f"Same version restore failed: {result.output}"
 
 
@@ -689,13 +784,21 @@ class TestBdd11bLowerVersion:
     def test_restore_allows_lower_version_with_warning(self, runner, isolated_env):
         """Backup from lower version should proceed but output a warning."""
         tar_path = _build_backup_tarball(isolated_env, version="0.1.0")
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+            ],
+        )
         # Should succeed (exit_code 0) but warn about lower version
         assert result.exit_code == 0, f"Lower version restore failed: {result.output}"
-        assert "version" in result.output.lower() or "lower" in result.output.lower() or "warn" in result.output.lower(), \
-            f"Should warn about lower version: {result.output}"
+        assert (
+            "version" in result.output.lower()
+            or "lower" in result.output.lower()
+            or "warn" in result.output.lower()
+        ), f"Should warn about lower version: {result.output}"
 
 
 # ============================================================
@@ -753,12 +856,18 @@ class TestBdd13RemoteReject:
     def test_restore_rejects_remote_mode(self, runner, isolated_env, monkeypatch):
         """When PEEKVIEW_REMOTE__URL is set, restore should fail."""
         monkeypatch.setenv("PEEKVIEW_REMOTE__URL", "http://remote-server:8080")
-        result = runner.invoke(cli, [
-            "admin", "restore", "/tmp/fake-backup.tar.gz",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                "/tmp/fake-backup.tar.gz",
+            ],
+        )
         assert result.exit_code != 0, "Should reject remote mode"
-        assert "remote" in result.output.lower() or "not support" in result.output.lower(), \
+        assert "remote" in result.output.lower() or "not support" in result.output.lower(), (
             f"Error should mention remote: {result.output}"
+        )
 
 
 # ============================================================
@@ -774,8 +883,11 @@ class TestBdd14IntegrityCheck:
         tar_path = _build_backup_tarball(isolated_env, corrupt_file="peekview.db")
         result = runner.invoke(cli, ["admin", "restore", str(tar_path)])
         assert result.exit_code != 0, "Should fail when checksums don't match"
-        assert "checksum" in result.output.lower() or "integrity" in result.output.lower() or "corrupt" in result.output.lower(), \
-            f"Error should mention integrity: {result.output}"
+        assert (
+            "checksum" in result.output.lower()
+            or "integrity" in result.output.lower()
+            or "corrupt" in result.output.lower()
+        ), f"Error should mention integrity: {result.output}"
 
     def test_restore_valid_backup_succeeds(self, runner, isolated_env):
         """Restore of a valid (uncorrupted) backup should succeed."""
@@ -798,35 +910,52 @@ class TestBdd15DryRun:
 
         # Count entries before
         list_before = runner.invoke(cli, ["list", "-j"])
-        total_before = json.loads(list_before.output).get("total", 0) if list_before.exit_code == 0 else 0
+        total_before = (
+            json.loads(list_before.output).get("total", 0) if list_before.exit_code == 0 else 0
+        )
 
-        result = runner.invoke(cli, [
-            "admin", "restore", "--dry-run", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                "--dry-run",
+                str(tar_path),
+            ],
+        )
         assert result.exit_code == 0, f"dry-run failed: {result.output}"
 
         # Verify data unchanged
         list_after = runner.invoke(cli, ["list", "-j"])
-        total_after = json.loads(list_after.output).get("total", 0) if list_after.exit_code == 0 else -1
+        total_after = (
+            json.loads(list_after.output).get("total", 0) if list_after.exit_code == 0 else -1
+        )
 
-        assert total_before == total_after, \
+        assert total_before == total_after, (
             f"dry-run should not modify data: before={total_before}, after={total_after}"
+        )
 
     def test_restore_dry_run_shows_preview(self, runner, isolated_env):
         """Dry-run should output entry_count, user_count, conflicts, version_check."""
         tar_path = _build_backup_tarball(isolated_env)
-        result = runner.invoke(cli, [
-            "admin", "restore", "--dry-run", str(tar_path),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                "--dry-run",
+                str(tar_path),
+            ],
+        )
         assert result.exit_code == 0, f"dry-run failed: {result.output}"
 
         output_lower = result.output.lower()
         # Should mention counts
-        assert "entry" in output_lower or "count" in output_lower, \
+        assert "entry" in output_lower or "count" in output_lower, (
             f"Dry-run should show entry count: {result.output}"
+        )
         # Should mention version
-        assert "version" in output_lower, \
-            f"Dry-run should show version check: {result.output}"
+        assert "version" in output_lower, f"Dry-run should show version check: {result.output}"
 
 
 # ============================================================
@@ -862,8 +991,12 @@ class TestBdd16InterruptSafety:
             # Command failed — check that it's a proper failure with rollback guarantee
             # Before implementation: "No such command" — no rollback message
             # After implementation with error: should mention rollback or transaction
-            assert "rollback" in result.output.lower() or "transaction" in result.output.lower() or "intact" in result.output.lower() or "no changes" in result.output.lower(), \
-                f"Failed restore should indicate data is intact: {result.output}"
+            assert (
+                "rollback" in result.output.lower()
+                or "transaction" in result.output.lower()
+                or "intact" in result.output.lower()
+                or "no changes" in result.output.lower()
+            ), f"Failed restore should indicate data is intact: {result.output}"
 
 
 # ============================================================
@@ -887,8 +1020,9 @@ class TestBdd17DebugIsolation:
         assert result.exit_code == 0, f"backup failed: {result.output}"
 
         # Output should mention a .tar.gz file
-        assert ".tar.gz" in result.output, \
+        assert ".tar.gz" in result.output, (
             f"Backup output should mention .tar.gz file: {result.output}"
+        )
 
 
 # ============================================================
@@ -902,9 +1036,16 @@ class TestBdd18ReplaceMode:
     def test_restore_replace_basic(self, runner, isolated_env):
         """Empty target + --replace + --yes should restore all backup data."""
         tar_path = _build_backup_tarball(isolated_env)
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path), "--replace", "--yes",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+                "--replace",
+                "--yes",
+            ],
+        )
         assert result.exit_code == 0, f"replace restore failed: {result.output}"
 
         get_result = runner.invoke(cli, ["get", "backup-entry"])
@@ -913,24 +1054,43 @@ class TestBdd18ReplaceMode:
     def test_restore_replace_requires_confirmation(self, runner, isolated_env):
         """--replace without --yes should require confirmation."""
         tar_path = _build_backup_tarball(isolated_env)
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path), "--replace",
-        ], input="no\n")
-        assert "confirm" in result.output.lower() or "cancel" in result.output.lower() or "warning" in result.output.lower(), \
-            f"Should prompt for confirmation: {result.output}"
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+                "--replace",
+            ],
+            input="no\n",
+        )
+        assert (
+            "confirm" in result.output.lower()
+            or "cancel" in result.output.lower()
+            or "warning" in result.output.lower()
+        ), f"Should prompt for confirmation: {result.output}"
 
     def test_restore_replace_with_existing_data(self, runner, isolated_env):
         """Target with existing data + --replace should replace old data."""
         _create_entry_with_files(runner, slug="existing-entry")
 
         tar_path = _build_backup_tarball(isolated_env)
-        result = runner.invoke(cli, [
-            "admin", "restore", str(tar_path), "--replace", "--yes",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "admin",
+                "restore",
+                str(tar_path),
+                "--replace",
+                "--yes",
+            ],
+        )
         assert result.exit_code == 0, f"replace restore failed: {result.output}"
 
         get_backup = runner.invoke(cli, ["get", "backup-entry"])
-        assert get_backup.exit_code == 0, f"Backup entry should exist after replace: {get_backup.output}"
+        assert get_backup.exit_code == 0, (
+            f"Backup entry should exist after replace: {get_backup.output}"
+        )
 
         get_old = runner.invoke(cli, ["get", "existing-entry"])
         assert get_old.exit_code != 0, f"Old entry should be gone after replace: {get_old.output}"

@@ -8,6 +8,7 @@ Three-layer discovery:
 All tests are RED initially — implementation does not exist yet.
 Tests define the contract; P4 implementation makes them green.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -30,9 +31,7 @@ async def client():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         app = create_app(data_dir=data_dir, db_path=db_path)
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as c:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             c._app = app
             yield c
     finally:
@@ -163,8 +162,7 @@ class TestB4BrowserAccept:
         slug = await _create_public_entry(client, slug="b4-test")
 
         browser_accept = (
-            "text/html,application/xhtml+xml,application/xml;q=0.9,"
-            "image/webp,*/*;q=0.8"
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
         )
         resp = await client.get(f"/{slug}", headers={"Accept": browser_accept})
 
@@ -282,7 +280,9 @@ class TestB7bAdminAuth:
         _make_admin(client._app, "admin7b")
 
         slug = await _create_private_entry(
-            client, owner_auth["access_token"], slug="b7b-private",
+            client,
+            owner_auth["access_token"],
+            slug="b7b-private",
         )
         client.cookies.clear()
 
@@ -346,8 +346,7 @@ class TestB10LinkInjection:
         assert resp.status_code == 200
         html = resp.text
         expected_link = (
-            f'<link rel="alternate" type="application/json" '
-            f'href="/api/v1/entries/{slug}/raw" />'
+            f'<link rel="alternate" type="application/json" href="/api/v1/entries/{slug}/raw" />'
         )
         assert expected_link in html
 
@@ -362,7 +361,9 @@ class TestB10bPrivateLink:
     async def test_link_in_head_for_private_entry(self, client):
         auth = await _register(client, "owner10b")
         slug = await _create_private_entry(
-            client, auth["access_token"], slug="b10b-private",
+            client,
+            auth["access_token"],
+            slug="b10b-private",
         )
 
         resp = await client.get(f"/{slug}", headers={"Accept": "text/html"})
@@ -370,8 +371,7 @@ class TestB10bPrivateLink:
         assert resp.status_code == 200
         html = resp.text
         expected_link = (
-            f'<link rel="alternate" type="application/json" '
-            f'href="/api/v1/entries/{slug}/raw" />'
+            f'<link rel="alternate" type="application/json" href="/api/v1/entries/{slug}/raw" />'
         )
         assert expected_link in html
 
@@ -379,7 +379,9 @@ class TestB10bPrivateLink:
     async def test_raw_still_404_without_auth(self, client):
         auth = await _register(client, "owner10b2")
         slug = await _create_private_entry(
-            client, auth["access_token"], slug="b10b2-private",
+            client,
+            auth["access_token"],
+            slug="b10b2-private",
         )
         client.cookies.clear()
 
@@ -469,7 +471,9 @@ class TestB13bPrivateLinkHeader:
     async def test_link_header_for_private_entry(self, client):
         auth = await _register(client, "owner13b")
         slug = await _create_private_entry(
-            client, auth["access_token"], slug="b13b-private",
+            client,
+            auth["access_token"],
+            slug="b13b-private",
         )
 
         resp = await client.get(f"/{slug}", headers={"Accept": "text/html"})
@@ -551,7 +555,7 @@ class TestB17E2ELinkDiscovery:
         html_resp = await client.get(f"/{slug}", headers={"Accept": "*/*"})
         assert html_resp.status_code == 200
         html = html_resp.text
-        assert f'/api/v1/entries/{slug}/raw' in html
+        assert f"/api/v1/entries/{slug}/raw" in html
 
         raw_resp = await client.get(f"/api/v1/entries/{slug}/raw")
         assert raw_resp.status_code == 200

@@ -102,53 +102,79 @@ class TestCreateCommand:
 
     def test_create_basic(self, runner, isolated_fs):
         """Create with summary should work."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output
         assert "entry:" in result.output.lower()
 
     def test_create_with_slug(self, runner, isolated_fs):
         """Create with custom slug."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-            "--slug", "my-custom-slug",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+                "--slug",
+                "my-custom-slug",
+            ],
+        )
         assert result.exit_code == 0
         assert "my-custom-slug" in result.output
 
     def test_create_with_tags(self, runner, isolated_fs):
         """Create with multiple tags."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-            "-t", "python",
-            "-t", "cli",
-            "-t", "test",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+                "-t",
+                "python",
+                "-t",
+                "cli",
+                "-t",
+                "test",
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output
 
     def test_create_with_expires_in(self, runner, isolated_fs):
         """Create with expiration."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-            "--expires-in", "1h",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+                "--expires-in",
+                "1h",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_create_json_output(self, runner, isolated_fs):
         """Create with JSON output."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-            "--slug", "json-test-cli",
-            "-j",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+                "--slug",
+                "json-test-cli",
+                "-j",
+            ],
+        )
         assert result.exit_code == 0
         # Parse JSON output
         data = json.loads(result.output)
@@ -163,11 +189,15 @@ class TestCreateCommand:
         test_file = Path("test.py")
         test_file.write_text("print('hello')")
 
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test from file",
-            str(test_file),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test from file",
+                str(test_file),
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output
 
@@ -177,11 +207,16 @@ class TestCreateCommand:
         Path("file1.py").write_text("x = 1")
         Path("file2.py").write_text("y = 2")
 
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Multiple files",
-            "file1.py", "file2.py",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Multiple files",
+                "file1.py",
+                "file2.py",
+            ],
+        )
         assert result.exit_code == 0
         assert "Files: 2" in result.output
 
@@ -193,31 +228,44 @@ class TestCreateCommand:
         (test_dir / "main.py").write_text("print('hello')")
         (test_dir / "utils.py").write_text("def util(): pass")
 
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "From directory",
-            str(test_dir),
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "From directory",
+                str(test_dir),
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output
 
     def test_create_nonexistent_file(self, runner, isolated_fs):
         """Create from non-existent file should fail."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Test",
-            "nonexistent.py",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test",
+                "nonexistent.py",
+            ],
+        )
         assert result.exit_code != 0
         assert "not found" in result.output.lower() or "Path not found" in result.output
 
     def test_create_from_stdin(self, runner, isolated_fs):
         """Create from stdin."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "From stdin",
-            "--from-stdin",
-        ], input="print('from stdin')")
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "From stdin",
+                "--from-stdin",
+            ],
+            input="print('from stdin')",
+        )
 
         assert result.exit_code == 0
         assert "Created" in result.output
@@ -235,11 +283,16 @@ class TestGetCommand:
     def test_get_existing_entry(self, runner, isolated_fs):
         """Get existing entry should succeed."""
         # First create an entry
-        runner.invoke(cli, [
-            "create",
-            "-s", "Test entry",
-            "--slug", "get-test-entry",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Test entry",
+                "--slug",
+                "get-test-entry",
+            ],
+        )
 
         # Now get it
         result = runner.invoke(cli, ["get", "get-test-entry"])
@@ -250,11 +303,16 @@ class TestGetCommand:
     def test_get_json_output(self, runner, isolated_fs):
         """Get with JSON output."""
         # Create entry
-        runner.invoke(cli, [
-            "create",
-            "-s", "JSON test",
-            "--slug", "json-get-test",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "JSON test",
+                "--slug",
+                "json-get-test",
+            ],
+        )
 
         result = runner.invoke(cli, ["get", "json-get-test", "-j"])
         assert result.exit_code == 0
@@ -297,12 +355,18 @@ class TestListCommand:
     def test_list_with_tag_filter(self, runner, isolated_fs):
         """List with tag filter."""
         # Create entry with tags
-        runner.invoke(cli, [
-            "create",
-            "-s", "Tagged entry",
-            "--slug", "tagged",
-            "-t", "important",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Tagged entry",
+                "--slug",
+                "tagged",
+                "-t",
+                "important",
+            ],
+        )
 
         result = runner.invoke(cli, ["list", "-t", "important"])
         assert result.exit_code == 0
@@ -337,11 +401,16 @@ class TestDeleteCommand:
     def test_delete_with_confirmation(self, runner, isolated_fs):
         """Delete should prompt for confirmation."""
         # Create entry
-        runner.invoke(cli, [
-            "create",
-            "-s", "To delete",
-            "--slug", "delete-test",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "To delete",
+                "--slug",
+                "delete-test",
+            ],
+        )
 
         # Delete with confirmation (input 'y')
         result = runner.invoke(cli, ["delete", "delete-test"], input="y\n")
@@ -351,11 +420,16 @@ class TestDeleteCommand:
     def test_delete_requires_confirmation(self, runner, isolated_fs):
         """Delete without confirmation should prompt."""
         # Create entry
-        runner.invoke(cli, [
-            "create",
-            "-s", "To delete",
-            "--slug", "delete-confirm-test",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "To delete",
+                "--slug",
+                "delete-confirm-test",
+            ],
+        )
 
         # Try to delete without confirmation
         result = runner.invoke(cli, ["delete", "delete-confirm-test"], input="n\n")
@@ -365,11 +439,16 @@ class TestDeleteCommand:
     def test_delete_after_deletion_not_found(self, runner, isolated_fs):
         """After delete, entry should not be found."""
         # Create entry
-        runner.invoke(cli, [
-            "create",
-            "-s", "To delete",
-            "--slug", "delete-verify",
-        ])
+        runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "To delete",
+                "--slug",
+                "delete-verify",
+            ],
+        )
 
         # Delete it
         runner.invoke(cli, ["delete", "delete-verify", "--yes"])
@@ -385,11 +464,16 @@ class TestIntegrationWorkflow:
     def test_full_workflow(self, runner, isolated_fs):
         """Full workflow: create, list, get, delete."""
         # 1. Create
-        create_result = runner.invoke(cli, [
-            "create",
-            "-s", "Integration test entry",
-            "--slug", "workflow-test",
-        ])
+        create_result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Integration test entry",
+                "--slug",
+                "workflow-test",
+            ],
+        )
         assert create_result.exit_code == 0
         assert "workflow-test" in create_result.output
 
@@ -418,13 +502,20 @@ class TestIntegrationWorkflow:
         Path("README.md").write_text("# My Project")
 
         # Create entry with files
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Project with files",
-            "--slug", "files-workflow",
-            "-t", "python",
-            "main.py", "README.md",
-        ])
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Project with files",
+                "--slug",
+                "files-workflow",
+                "-t",
+                "python",
+                "main.py",
+                "README.md",
+            ],
+        )
         assert result.exit_code == 0
         assert "Files: 2" in result.output
 
@@ -436,12 +527,18 @@ class TestIntegrationWorkflow:
 
     def test_create_from_stdin_workflow(self, runner, isolated_fs):
         """Workflow with stdin input."""
-        result = runner.invoke(cli, [
-            "create",
-            "-s", "Code from stdin",
-            "--slug", "stdin-workflow",
-            "--from-stdin",
-        ], input="def hello():\n    print('world')")
+        result = runner.invoke(
+            cli,
+            [
+                "create",
+                "-s",
+                "Code from stdin",
+                "--slug",
+                "stdin-workflow",
+                "--from-stdin",
+            ],
+            input="def hello():\n    print('world')",
+        )
 
         assert result.exit_code == 0
 
@@ -556,7 +653,7 @@ class TestServiceInstallNoEnvVars:
             assert mock_install.called
             call_args = mock_install.call_args
             # Should only pass user_mode and force
-            assert call_args[0][0] is True   # user_mode
+            assert call_args[0][0] is True  # user_mode
             assert call_args[0][1] is False  # force
 
 
@@ -574,5 +671,5 @@ class TestServiceInstallWithConfig:
             # Should call _install_systemd_service with just user_mode and force
             assert mock_install.called
             call_args = mock_install.call_args
-            assert call_args[0][0] is True   # user_mode
+            assert call_args[0][0] is True  # user_mode
             assert call_args[0][1] is False  # force

@@ -95,15 +95,14 @@ class TestCreateEntry:
         assert "auth" in entry.tags
 
     def test_create_with_expires(self, entry_service):
-        result, _ = entry_service.create_entry(
-            summary="Expiring", slug="expire", expires_in="7d"
-        )
+        result, _ = entry_service.create_entry(summary="Expiring", slug="expire", expires_in="7d")
         entry = entry_service.get_entry("expire")
         assert entry.expires_at is not None
 
     def test_create_without_expires_uses_default_15d(self, entry_service):
         """Without expires_in, expires_at should be ~15 days from now."""
         import datetime
+
         before = datetime.datetime.now(datetime.timezone.utc)
         result, _ = entry_service.create_entry(summary="Default expiry")
         datetime.datetime.now(datetime.timezone.utc)
@@ -114,9 +113,7 @@ class TestCreateEntry:
 
     def test_create_expires_zero_means_never(self, entry_service):
         """expires_in='0' means never expire — expires_at is None."""
-        result, _ = entry_service.create_entry(
-            summary="Permanent", slug="perm", expires_in="0"
-        )
+        result, _ = entry_service.create_entry(summary="Permanent", slug="perm", expires_in="0")
         assert result.expires_at is None
 
     def test_create_response_has_expires_at_field(self, entry_service):
@@ -128,6 +125,7 @@ class TestCreateEntry:
     def test_create_expires_empty_string_uses_default(self, entry_service):
         """expires_in='' should behave like None → use default 15d."""
         import datetime
+
         before = datetime.datetime.now(datetime.timezone.utc)
         result, _ = entry_service.create_entry(
             summary="Empty expires_in", slug="empty-exp", expires_in=""
@@ -140,6 +138,7 @@ class TestCreateEntry:
     def test_create_expires_whitespace_uses_default(self, entry_service):
         """expires_in='   ' should behave like None → use default 15d."""
         import datetime
+
         before = datetime.datetime.now(datetime.timezone.utc)
         result, _ = entry_service.create_entry(
             summary="Whitespace expires_in", slug="ws-exp", expires_in="   "
@@ -155,6 +154,7 @@ class TestCreateEntry:
 
         from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
         from peekview.database import init_db
+
         db_path = tmp_path / "test_custom.db"
         data_dir = tmp_path / "data_custom"
         data_dir.mkdir()
@@ -244,9 +244,7 @@ class TestListEntries:
 
     def test_list_items_expires_at_null_for_permanent(self, entry_service):
         """EntryListItem with expires_in='0' should have expires_at=None."""
-        entry_service.create_entry(
-            summary="Permanent entry", slug="perm-list", expires_in="0"
-        )
+        entry_service.create_entry(summary="Permanent entry", slug="perm-list", expires_in="0")
         result = entry_service.list_entries(page=1, per_page=10)
         items = [i for i in result.items if i.slug == "perm-list"]
         assert len(items) == 1

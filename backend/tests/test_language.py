@@ -1,6 +1,5 @@
 """Tests for language detection."""
 
-
 from peekview.language import (
     PLAIN_TEXT_LANGS,
     detect_language,
@@ -189,7 +188,7 @@ class TestGuessLanguageFromContent:
 
     def test_json_array(self):
         """Detect JSON array."""
-        content = '[1, 2, 3]'
+        content = "[1, 2, 3]"
         assert guess_language_from_content(content) == "json"
 
     def test_no_guess(self):
@@ -220,8 +219,16 @@ class TestPlainTextLanguages:
     def test_contains_all_no_grammar_langs(self):
         """All languages without Shiki grammar are in PLAIN_TEXT_LANGS."""
         no_grammar_langs = {
-            "autohotkey", "editorconfig", "git_attributes", "git_config",
-            "ignore", "janet", "odin", "pip-requirements", "sed", "vba",
+            "autohotkey",
+            "editorconfig",
+            "git_attributes",
+            "git_config",
+            "ignore",
+            "janet",
+            "odin",
+            "pip-requirements",
+            "sed",
+            "vba",
             "vbscript",
         }
         for lang in no_grammar_langs:
@@ -249,18 +256,22 @@ class TestShikiLanguageIdAlignment:
 
     def test_no_mathematica_in_extension_map(self):
         from peekview.language import EXTENSION_MAP
+
         assert "mathematica" not in EXTENSION_MAP.values()
 
     def test_no_registry_in_extension_map(self):
         from peekview.language import EXTENSION_MAP
+
         assert "registry" not in EXTENSION_MAP.values()
 
     def test_no_mathematica_in_filename_map(self):
         from peekview.language import FILENAME_MAP
+
         assert "mathematica" not in FILENAME_MAP.values()
 
     def test_no_registry_in_filename_map(self):
         from peekview.language import FILENAME_MAP
+
         assert "registry" not in FILENAME_MAP.values()
 
     def test_wolfram_in_language_list(self):

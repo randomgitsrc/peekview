@@ -20,8 +20,9 @@ async def client(tmp_path):
 
 
 async def _register(client, username, password="pass123456"):
-    resp = await client.post("/api/v1/auth/register",
-                             json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()["access_token"]
 
@@ -35,10 +36,15 @@ def _make_admin(app, username):
 
 
 async def _create_entry(client, token):
-    resp = await client.post("/api/v1/entries",
-                             headers={"Authorization": f"Bearer {token}"},
-                             json={"summary": "test", "is_public": True,
-                                   "files": [{"filename": "f.md", "content": "x"}]})
+    resp = await client.post(
+        "/api/v1/entries",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "summary": "test",
+            "is_public": True,
+            "files": [{"filename": "f.md", "content": "x"}],
+        },
+    )
     assert resp.status_code in (200, 201)
     return resp.json()["slug"]
 
@@ -50,25 +56,31 @@ async def test_admin_delete_user_cascade(client):
     _make_admin(client._app, "adminuser")
 
     slug = await _create_entry(client, alice_token)
-    await client.post("/api/v1/apikeys",
-                      headers={"Authorization": f"Bearer {alice_token}"},
-                      json={"name": "alice-key"})
+    await client.post(
+        "/api/v1/apikeys",
+        headers={"Authorization": f"Bearer {alice_token}"},
+        json={"name": "alice-key"},
+    )
 
-    list_resp = await client.get("/api/v1/admin/users?username=alice",
-                                 headers={"Authorization": f"Bearer {admin_token}"})
+    list_resp = await client.get(
+        "/api/v1/admin/users?username=alice", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert list_resp.status_code == 200
     alice_id = list_resp.json()[0]["id"]
 
-    del_resp = await client.delete(f"/api/v1/admin/users/{alice_id}",
-                                   headers={"Authorization": f"Bearer {admin_token}"})
+    del_resp = await client.delete(
+        f"/api/v1/admin/users/{alice_id}", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert del_resp.status_code == 204
 
-    entry_resp = await client.get(f"/api/v1/entries/{slug}",
-                                  headers={"Authorization": f"Bearer {admin_token}"})
+    entry_resp = await client.get(
+        f"/api/v1/entries/{slug}", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert entry_resp.status_code == 404
 
-    list_resp2 = await client.get("/api/v1/admin/users?username=alice",
-                                  headers={"Authorization": f"Bearer {admin_token}"})
+    list_resp2 = await client.get(
+        "/api/v1/admin/users?username=alice", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert list_resp2.json() == []
 
 
@@ -80,8 +92,9 @@ async def test_admin_cannot_delete_self(client):
     with Session(client._app.state.engine) as s:
         admin_id = s.exec(select(User).where(User.username == "adminuser")).first().id
 
-    resp = await client.delete(f"/api/v1/admin/users/{admin_id}",
-                               headers={"Authorization": f"Bearer {admin_token}"})
+    resp = await client.delete(
+        f"/api/v1/admin/users/{admin_id}", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert resp.status_code == 400
     assert "self" in resp.json()["detail"].lower() or "yourself" in resp.json()["detail"].lower()
 
@@ -91,13 +104,16 @@ async def test_unique_admin_delete_self_requires_confirm(client):
     admin_token = await _register(client, "adminuser")
     _make_admin(client._app, "adminuser")
 
-    resp1 = await client.delete("/api/v1/auth/me",
-                                headers={"Authorization": f"Bearer {admin_token}"})
+    resp1 = await client.delete(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert resp1.status_code == 409
     assert resp1.json()["detail"]["code"] == "last_admin"
 
-    resp2 = await client.delete("/api/v1/auth/me?confirm_username=adminuser",
-                                headers={"Authorization": f"Bearer {admin_token}"})
+    resp2 = await client.delete(
+        "/api/v1/auth/me?confirm_username=adminuser",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     assert resp2.status_code == 204
 
     with Session(client._app.state.engine) as s:
@@ -111,12 +127,12 @@ async def test_user_delete_self(client):
     bob_token = await _register(client, "bob")
     slug = await _create_entry(client, bob_token)
 
-    resp = await client.delete("/api/v1/auth/me",
-                               headers={"Authorization": f"Bearer {bob_token}"})
+    resp = await client.delete("/api/v1/auth/me", headers={"Authorization": f"Bearer {bob_token}"})
     assert resp.status_code == 204
 
-    entry_resp = await client.get(f"/api/v1/entries/{slug}",
-                                  headers={"Authorization": f"Bearer {admin_token}"})
+    entry_resp = await client.get(
+        f"/api/v1/entries/{slug}", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert entry_resp.status_code == 404
 
 
@@ -129,13 +145,16 @@ async def test_admin_reset_password(client):
     with Session(client._app.state.engine) as s:
         alice_id = s.exec(select(User).where(User.username == "alice")).first().id
 
-    resp = await client.post(f"/api/v1/admin/users/{alice_id}/reset-password",
-                             headers={"Authorization": f"Bearer {admin_token}"},
-                             json={"new_password": "newpass456"})
+    resp = await client.post(
+        f"/api/v1/admin/users/{alice_id}/reset-password",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"new_password": "newpass456"},
+    )
     assert resp.status_code in (200, 204)
 
-    login_resp = await client.post("/api/v1/auth/login",
-                                   json={"username": "alice", "password": "newpass456"})
+    login_resp = await client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "newpass456"}
+    )
     assert login_resp.status_code == 200
     assert "access_token" in login_resp.json()
 
@@ -144,17 +163,21 @@ async def test_admin_reset_password(client):
 async def test_change_password_self(client):
     token = await _register(client, "alice", "oldpass123")
 
-    resp = await client.post("/api/v1/auth/change-password",
-                             headers={"Authorization": f"Bearer {token}"},
-                             json={"old_password": "oldpass123", "new_password": "newpass456"})
+    resp = await client.post(
+        "/api/v1/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"old_password": "oldpass123", "new_password": "newpass456"},
+    )
     assert resp.status_code == 204
 
-    bad_login = await client.post("/api/v1/auth/login",
-                                  json={"username": "alice", "password": "oldpass123"})
+    bad_login = await client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "oldpass123"}
+    )
     assert bad_login.status_code == 401
 
-    good_login = await client.post("/api/v1/auth/login",
-                                   json={"username": "alice", "password": "newpass456"})
+    good_login = await client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "newpass456"}
+    )
     assert good_login.status_code == 200
 
 
@@ -162,9 +185,11 @@ async def test_change_password_self(client):
 async def test_change_password_wrong_old(client):
     token = await _register(client, "alice", "oldpass123")
 
-    resp = await client.post("/api/v1/auth/change-password",
-                             headers={"Authorization": f"Bearer {token}"},
-                             json={"old_password": "wrongpass", "new_password": "newpass456"})
+    resp = await client.post(
+        "/api/v1/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"old_password": "wrongpass", "new_password": "newpass456"},
+    )
     assert resp.status_code == 400
 
 
@@ -177,8 +202,9 @@ async def test_non_admin_cannot_delete_user(client):
     with Session(client._app.state.engine) as s:
         alice_id = s.exec(select(User).where(User.username == "alice")).first().id
 
-    resp = await client.delete(f"/api/v1/admin/users/{alice_id}",
-                               headers={"Authorization": f"Bearer {bob_token}"})
+    resp = await client.delete(
+        f"/api/v1/admin/users/{alice_id}", headers={"Authorization": f"Bearer {bob_token}"}
+    )
     assert resp.status_code == 403
 
 
@@ -189,8 +215,9 @@ async def test_admin_list_users_by_username(client):
     await _register(client, "alice")
     await _register(client, "alicex")
 
-    resp = await client.get("/api/v1/admin/users?username=alice",
-                            headers={"Authorization": f"Bearer {admin_token}"})
+    resp = await client.get(
+        "/api/v1/admin/users?username=alice", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 1
@@ -212,8 +239,9 @@ async def test_delete_user_cleans_disk_files(client):
     with Session(client._app.state.engine) as s:
         alice_id = s.exec(select(User).where(User.username == "alice")).first().id
 
-    await client.delete(f"/api/v1/admin/users/{alice_id}",
-                        headers={"Authorization": f"Bearer {admin_token}"})
+    await client.delete(
+        f"/api/v1/admin/users/{alice_id}", headers={"Authorization": f"Bearer {admin_token}"}
+    )
 
     files_after = list(data_dir.rglob("*.md"))
     assert len(files_after) == 0

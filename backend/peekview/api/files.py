@@ -48,6 +48,7 @@ async def _record_read_async(
     except Exception as e:
         logger.warning("Failed to record read event: %s", e)
 
+
 RENDER_CSP = (
     "default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; "
     "script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; "
@@ -214,6 +215,7 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
             cookie_value = request.cookies.get(cookie_name)
             if cookie_value:
                 from peekview.services.share_service import ShareService
+
                 share_service = ShareService(engine=engine, config=config)
                 share = share_service.verify_share_cookie(entry.id, cookie_value)
                 if share:
@@ -411,6 +413,7 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
             entry_resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
         except NotFoundError:
             from peekview.api.entries import _check_share_cookie
+
             cookie_result = _check_share_cookie(request, slug, service)
             if cookie_result is None:
                 raise
@@ -426,38 +429,40 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
     raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
 
     with Session(engine) as session:
-        db_files = session.exec(
-            select(File).where(File.entry_id == entry_id)
-        ).all()
+        db_files = session.exec(select(File).where(File.entry_id == entry_id)).all()
 
     raw_files: list[RawFileItem] = []
     for f in db_files:
         if f.is_binary:
-            raw_files.append(RawFileItem(
-                id=f.id,
-                filename=f.filename,
-                path=f.path,
-                language=f.language,
-                is_binary=True,
-                size=f.size,
-                content=None,
-                content_encoding=None,
-                file_url=f"{base}/api/v1/entries/{entry_slug}/files/{f.id}/content",
-            ))
+            raw_files.append(
+                RawFileItem(
+                    id=f.id,
+                    filename=f.filename,
+                    path=f.path,
+                    language=f.language,
+                    is_binary=True,
+                    size=f.size,
+                    content=None,
+                    content_encoding=None,
+                    file_url=f"{base}/api/v1/entries/{entry_slug}/files/{f.id}/content",
+                )
+            )
         else:
             raw_bytes = storage.read_file(entry_id, f.filename, f.path)
             content_str = raw_bytes.decode("utf-8", errors="replace")
-            raw_files.append(RawFileItem(
-                id=f.id,
-                filename=f.filename,
-                path=f.path,
-                language=f.language,
-                is_binary=False,
-                size=f.size,
-                content=content_str,
-                content_encoding="utf-8",
-                file_url=None,
-            ))
+            raw_files.append(
+                RawFileItem(
+                    id=f.id,
+                    filename=f.filename,
+                    path=f.path,
+                    language=f.language,
+                    is_binary=False,
+                    size=f.size,
+                    content=content_str,
+                    content_encoding="utf-8",
+                    file_url=None,
+                )
+            )
 
     result = EntryRawResponse(
         slug=entry_slug,
@@ -477,11 +482,17 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
     current_user_id_raw = current_user.id if current_user else None
     channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
     reader_ip = request.client.host if request.client else None
-    asyncio.create_task(_record_read_async(
-        request.app.state, entry_id=entry_id, entry_owner_id=entry_owner_id,
-        action="read", channel=channel, reader_id=current_user_id_raw,
-        reader_ip=reader_ip,
-    ))
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=entry_id,
+            entry_owner_id=entry_owner_id,
+            action="read",
+            channel=channel,
+            reader_id=current_user_id_raw,
+            reader_ip=reader_ip,
+        )
+    )
 
     return Response(
         content=serialized,
