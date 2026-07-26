@@ -1,8 +1,9 @@
-phase: P5
+phase: DONE
 task_id: T069
 status: completed
 created: 2026-07-23
 updated: 2026-07-26
+release_version: v0.11.2
 history:
   - phase: P0
     date: 2026-07-23
@@ -27,4 +28,16 @@ history:
   - phase: P5
     date: 2026-07-26
     status: completed
-    note: 1021 passed, 1 预存失败(T068)
+    note: vitest 1021 passed, 1 预存失败(T068)
+  - phase: P6
+    date: 2026-07-26
+    status: completed
+    note: 24 BDD 全 PASS, Playwright实跑+vision截图确认
+  - phase: P7
+    date: 2026-07-26
+    status: completed
+    note: 双向一致, BLOCKER=0
+  - phase: P8
+    date: 2026-07-26
+    status: completed
+    note: bump patch v0.11.2, tag created
