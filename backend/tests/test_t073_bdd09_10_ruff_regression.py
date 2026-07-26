@@ -56,21 +56,23 @@ class TestBdd10LintFixIdempotent:
             ".is_(True)",
         ]
 
-        original_contents = {}
+        original_sqlalchemy_lines = {}
         for py_file in services_dir.glob("*.py"):
-            content = py_file.read_text()
-            if any(p in content for p in sqlalchemy_patterns):
-                original_contents[str(py_file)] = content
+            lines = py_file.read_text().splitlines()
+            sql_lines = [l for l in lines if any(p in l for p in sqlalchemy_patterns)]
+            if sql_lines:
+                original_sqlalchemy_lines[str(py_file)] = sql_lines
 
         if database_file.exists():
-            db_content = database_file.read_text()
-            if any(p in db_content for p in sqlalchemy_patterns):
-                original_contents[str(database_file)] = db_content
+            lines = database_file.read_text().splitlines()
+            sql_lines = [l for l in lines if any(p in l for p in sqlalchemy_patterns)]
+            if sql_lines:
+                original_sqlalchemy_lines[str(database_file)] = sql_lines
 
-        if not original_contents:
+        if not original_sqlalchemy_lines:
             pytest.skip("No files with SQLAlchemy patterns found (pre-fix state)")
 
-        result = subprocess.run(
+        subprocess.run(
             ["make", "lint-fix"],
             capture_output=True,
             text=True,
@@ -78,12 +80,13 @@ class TestBdd10LintFixIdempotent:
             timeout=120,
         )
 
-        changed_files = []
-        for path_str, original in original_contents.items():
-            current = Path(path_str).read_text()
-            if current != original:
-                changed_files.append(Path(path_str).name)
+        changed_sqlalchemy = []
+        for path_str, original_lines in original_sqlalchemy_lines.items():
+            current_lines = Path(path_str).read_text().splitlines()
+            current_sql_lines = [l for l in current_lines if any(p in l for p in sqlalchemy_patterns)]
+            if current_sql_lines != original_lines:
+                changed_sqlalchemy.append(Path(path_str).name)
 
-        assert len(changed_files) == 0, (
-            f"make lint-fix changed SQLAlchemy comparisons in: {changed_files}"
+        assert len(changed_sqlalchemy) == 0, (
+            f"make lint-fix changed SQLAlchemy comparisons in: {changed_sqlalchemy}"
         )

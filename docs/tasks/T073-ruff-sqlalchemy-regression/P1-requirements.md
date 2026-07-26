@@ -112,12 +112,11 @@ ruff `--fix --unsafe-fixes`（commit 165997b5）自动修复 E711/E712 规则，
 
 ```yaml
 P1_simplified: false
-phases: [P1, P2, P3, P4, P5, P6, P8]
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 skipped:
-  P7:
-    reason: 改动模式虽多样（is not None vs not Column vs 裸 Column）但每处独立可验证，无交叉依赖
-coupling_checklist: [api-schema: checked, data-model: checked, config-change: checked]
-跳过风险: 低 — 19 处修复均为机械替换，无跨文件状态依赖
+  P7: null
+coupling_checklist: null
+跳过风险: null
 ```
 
 裁剪理由：

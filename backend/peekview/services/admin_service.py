@@ -128,12 +128,11 @@ class AdminService:
                 select(
                     func.count(Entry.id).label("total"),
                     func.count(case((Entry.is_public, 1))).label("public"),
-                    func.count(case((not Entry.is_public, 1))).label("private"),
+                    func.count(case((~Entry.is_public, 1))).label("private"),
                     func.count(
                         case(
                             (
-                                (Entry.expires_at is not None)
-                                & (Entry.expires_at <= now_naive),
+                                (Entry.expires_at.isnot(None)) & (Entry.expires_at <= now_naive),
                                 1,
                             ),
                         )
@@ -144,16 +143,14 @@ class AdminService:
             total, public, private, expired = result
             active = total - expired
 
-            latest_created_at = session.exec(
-                select(func.max(Entry.created_at))
-            ).one()
+            latest_created_at = session.exec(select(func.max(Entry.created_at))).one()
 
             user_count = session.exec(select(func.count(User.id))).one()
 
             key_total = session.exec(select(func.count(ApiKey.id))).one()
             key_expired = session.exec(
                 select(func.count(ApiKey.id)).where(
-                    ApiKey.expires_at is not None,
+                    ApiKey.expires_at.isnot(None),
                     ApiKey.expires_at <= now_naive,
                 )
             ).one()
@@ -193,7 +190,7 @@ class AdminService:
         with Session(self.engine) as session:
             expired = session.exec(
                 select(Entry).where(
-                    Entry.expires_at is not None,
+                    Entry.expires_at.isnot(None),
                     Entry.expires_at <= now_naive,
                     Entry.status == "active",
                 )
@@ -217,7 +214,7 @@ class AdminService:
                 old_archived = session.exec(
                     select(Entry).where(
                         Entry.status == "archived",
-                        Entry.archived_at is not None,
+                        Entry.archived_at.isnot(None),
                         Entry.archived_at <= cutoff,
                     )
                 ).all()
@@ -226,9 +223,7 @@ class AdminService:
                     size_bytes = self.storage.get_entry_size(e.id)
                     to_delete.append((e.slug, e.id, size_bytes))
 
-        entry_service = EntryService(
-            engine=self.engine, storage=self.storage, config=self.config
-        )
+        entry_service = EntryService(engine=self.engine, storage=self.storage, config=self.config)
 
         for slug, _entry_id, size_bytes in to_delete:
             try:
@@ -275,17 +270,15 @@ class AdminService:
             if not user:
                 raise NotFoundError(f"User {user_id} not found")
             entry_slugs = [
-                e.slug
-                for e in session.exec(select(Entry).where(Entry.owner_id == user_id)).all()
+                e.slug for e in session.exec(select(Entry).where(Entry.owner_id == user_id)).all()
             ]
-        entry_service = EntryService(
-            engine=self.engine, storage=self.storage, config=self.config
-        )
+        entry_service = EntryService(engine=self.engine, storage=self.storage, config=self.config)
         for slug in entry_slugs:
             with contextlib.suppress(NotFoundError):
                 entry_service.delete_entry(slug, is_api_key_auth=True)
         with Session(self.engine) as session:
             from sqlalchemy import delete as sa_delete
+
             session.exec(sa_delete(ApiKey).where(ApiKey.user_id == user_id))
             user = session.get(User, user_id)
             if user:
@@ -358,9 +351,7 @@ class AdminService:
                 timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 file_checksums=checksums,
             )
-            (staging_path / "metadata.json").write_text(
-                json.dumps(metadata.model_dump(), indent=2)
-            )
+            (staging_path / "metadata.json").write_text(json.dumps(metadata.model_dump(), indent=2))
 
             tmp_output = output_path.with_suffix(".tar.gz.tmp")
             with tarfile.open(str(tmp_output), "w:gz") as tar:
@@ -378,15 +369,11 @@ class AdminService:
         self, slug: str, fmt: str = "json", output_path: Path | None = None
     ) -> str | Path:
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry '{slug}' not found")
 
-            files = session.exec(
-                select(File).where(File.entry_id == entry.id)
-            ).all()
+            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
             owner = None
             if entry.owner_id:
@@ -427,15 +414,17 @@ class AdminService:
 
         if not files_data:
             summary_content = entry.summary.encode("utf-8")
-            files_data.append({
-                "filename": "summary.txt",
-                "path": "summary.txt",
-                "language": "text",
-                "is_binary": False,
-                "size": len(summary_content),
-                "sha256": _sha256_bytes(summary_content),
-                "content": entry.summary,
-            })
+            files_data.append(
+                {
+                    "filename": "summary.txt",
+                    "path": "summary.txt",
+                    "language": "text",
+                    "is_binary": False,
+                    "size": len(summary_content),
+                    "sha256": _sha256_bytes(summary_content),
+                    "content": entry.summary,
+                }
+            )
 
         if fmt == "json":
             return json.dumps({"entry": entry_data, "files": files_data}, indent=2)
@@ -446,10 +435,16 @@ class AdminService:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(str(output_path), "w", zipfile.ZIP_DEFLATED) as zf:
-            entry_json = json.dumps({"entry": entry_data, "files": [
-                {k: v for k, v in fd.items() if k not in ("content", "content_base64")}
-                for fd in files_data
-            ]}, indent=2)
+            entry_json = json.dumps(
+                {
+                    "entry": entry_data,
+                    "files": [
+                        {k: v for k, v in fd.items() if k not in ("content", "content_base64")}
+                        for fd in files_data
+                    ],
+                },
+                indent=2,
+            )
             zf.writestr(f"{slug}/entry.json", entry_json)
 
             for f in files:
@@ -509,9 +504,7 @@ class AdminService:
             for rel_path, expected_sha in checksums.items():
                 actual_path = staging_path / rel_path
                 if not actual_path.exists():
-                    raise ValueError(
-                        f"Backup integrity check failed: {rel_path} missing"
-                    )
+                    raise ValueError(f"Backup integrity check failed: {rel_path} missing")
                 actual_sha = _sha256_file(actual_path)
                 if actual_sha != expected_sha:
                     raise ValueError(
@@ -544,16 +537,31 @@ class AdminService:
             backup_conn.row_factory = sqlite3.Row
 
             try:
-                entry_count = (backup_conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
-                               if _table_exists(backup_conn, "entries") else 0)
-                user_count = (backup_conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-                              if _table_exists(backup_conn, "users") else 0)
-                api_key_count = (backup_conn.execute("SELECT COUNT(*) FROM api_keys").fetchone()[0]
-                                 if _table_exists(backup_conn, "api_keys") else 0)
-                share_count = (backup_conn.execute("SELECT COUNT(*) FROM entry_shares").fetchone()[0]
-                               if _table_exists(backup_conn, "entry_shares") else 0)
-                read_count = (backup_conn.execute("SELECT COUNT(*) FROM entry_reads").fetchone()[0]
-                              if _table_exists(backup_conn, "entry_reads") else 0)
+                entry_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
+                    if _table_exists(backup_conn, "entries")
+                    else 0
+                )
+                user_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+                    if _table_exists(backup_conn, "users")
+                    else 0
+                )
+                api_key_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM api_keys").fetchone()[0]
+                    if _table_exists(backup_conn, "api_keys")
+                    else 0
+                )
+                share_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM entry_shares").fetchone()[0]
+                    if _table_exists(backup_conn, "entry_shares")
+                    else 0
+                )
+                read_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM entry_reads").fetchone()[0]
+                    if _table_exists(backup_conn, "entry_reads")
+                    else 0
+                )
 
                 conflicts = self._detect_conflicts(backup_conn)
 
@@ -592,23 +600,23 @@ class AdminService:
         if _table_exists(backup_conn, "users"):
             for row in backup_conn.execute("SELECT id, username FROM users"):
                 if row["username"] in existing_usernames:
-                    conflicts.append(ConflictInfo(
-                        type="username", value=row["username"], backup_id=row["id"]
-                    ))
+                    conflicts.append(
+                        ConflictInfo(type="username", value=row["username"], backup_id=row["id"])
+                    )
 
         if _table_exists(backup_conn, "entries"):
             for row in backup_conn.execute("SELECT id, slug FROM entries"):
                 if row["slug"] in existing_slugs:
-                    conflicts.append(ConflictInfo(
-                        type="slug", value=row["slug"], backup_id=row["id"]
-                    ))
+                    conflicts.append(
+                        ConflictInfo(type="slug", value=row["slug"], backup_id=row["id"])
+                    )
 
         if _table_exists(backup_conn, "api_keys"):
             for row in backup_conn.execute("SELECT id, key_hash FROM api_keys"):
                 if row["key_hash"] in existing_key_hashes:
-                    conflicts.append(ConflictInfo(
-                        type="key_hash", value=row["key_hash"], backup_id=row["id"]
-                    ))
+                    conflicts.append(
+                        ConflictInfo(type="key_hash", value=row["key_hash"], backup_id=row["id"])
+                    )
 
         return conflicts
 
@@ -633,9 +641,7 @@ class AdminService:
 
         with Session(self.engine) as session:
             try:
-                existing_usernames = dict(
-                    session.exec(select(User.username, User.id)).all()
-                )
+                existing_usernames = dict(session.exec(select(User.username, User.id)).all())
                 existing_slugs = set(session.exec(select(Entry.slug)).all())
                 existing_key_hashes = set(session.exec(select(ApiKey.key_hash)).all())
                 existing_window_keys = set()
@@ -743,7 +749,9 @@ class AdminService:
                             expires_at=_parse_db_datetime(_row_get(row, "expires_at")),
                             max_views=_row_get(row, "max_views"),
                             view_count=_row_get(row, "view_count", 0),
-                            created_by=user_map.get(created_by, created_by) if created_by else created_by,
+                            created_by=user_map.get(created_by, created_by)
+                            if created_by
+                            else created_by,
                         )
                         session.add(new_share)
                         session.flush()
@@ -940,9 +948,11 @@ def _table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
 
 
 def _table_exists_raw(session: Session, table_name: str) -> bool:
-    result = session.exec(text(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=:name"
-    ).bindparams(name=table_name)).first()
+    result = session.exec(
+        text("SELECT name FROM sqlite_master WHERE type='table' AND name=:name").bindparams(
+            name=table_name
+        )
+    ).first()
     return result is not None
 
 

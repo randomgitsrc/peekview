@@ -41,6 +41,7 @@ def tracking_session(tracking_engine):
 @pytest.fixture(scope="function")
 def read_tracking_service(tracking_engine):
     from peekview.services.read_tracking_service import ReadTrackingService
+
     return ReadTrackingService(engine=tracking_engine)
 
 
@@ -52,6 +53,7 @@ async def client_and_app():
         data_dir.mkdir()
         db_path = tmp_dir / "test.db"
         from peekview.main import create_app
+
         app = create_app(data_dir=data_dir, db_path=db_path)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -65,7 +67,9 @@ async def client_and_app():
 
 
 async def _register(client, username="testuser", password="testpass123"):
-    resp = await client.post("/api/v1/auth/register", json={"username": username, "password": password})
+    resp = await client.post(
+        "/api/v1/auth/register", json={"username": username, "password": password}
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -74,7 +78,9 @@ def _auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
-async def _create_entry(client, auth_token=None, slug=None, summary="Test entry", is_public=True, files=None):
+async def _create_entry(
+    client, auth_token=None, slug=None, summary="Test entry", is_public=True, files=None
+):
     data = {"summary": summary, "is_public": is_public}
     if slug:
         data["slug"] = slug
@@ -88,6 +94,7 @@ async def _create_entry(client, auth_token=None, slug=None, summary="Test entry"
 
 async def _wait_for_async_write(delay=0.15):
     import asyncio
+
     await asyncio.sleep(delay)
 
 
@@ -126,6 +133,7 @@ class TestEntryReadModel:
 
     def test_window_key_unique_constraint(self, tracking_session):
         from sqlalchemy.exc import IntegrityError
+
         r1 = EntryRead(
             entry_id=1,
             channel="api",
@@ -197,7 +205,9 @@ class TestReadTrackingServiceRecordRead:
         assert len(records) == 1
         assert records[0].channel == "mcp"
 
-    def test_record_read_non_owner_is_self_read_false(self, read_tracking_service, tracking_session):
+    def test_record_read_non_owner_is_self_read_false(
+        self, read_tracking_service, tracking_session
+    ):
         read_tracking_service.record_read(
             entry_id=1,
             entry_owner_id=10,
@@ -306,7 +316,9 @@ class TestReadTrackingServiceRecordRead:
         assert len(records) == 1
         assert records[0].action == "discover"
 
-    def test_record_read_reader_fingerprint_authenticated(self, read_tracking_service, tracking_session):
+    def test_record_read_reader_fingerprint_authenticated(
+        self, read_tracking_service, tracking_session
+    ):
         read_tracking_service.record_read(
             entry_id=1,
             entry_owner_id=10,
@@ -318,8 +330,11 @@ class TestReadTrackingServiceRecordRead:
         records = tracking_session.exec(select(EntryRead)).all()
         assert records[0].reader_fingerprint == "u:5"
 
-    def test_record_read_reader_fingerprint_anonymous_ip(self, read_tracking_service, tracking_session):
+    def test_record_read_reader_fingerprint_anonymous_ip(
+        self, read_tracking_service, tracking_session
+    ):
         import hashlib
+
         read_tracking_service.record_read(
             entry_id=1,
             entry_owner_id=10,
@@ -332,7 +347,9 @@ class TestReadTrackingServiceRecordRead:
         expected = f"a:{hashlib.sha256(b'1.2.3.4').hexdigest()[:8]}"
         assert records[0].reader_fingerprint == expected
 
-    def test_record_read_reader_fingerprint_anonymous_no_ip(self, read_tracking_service, tracking_session):
+    def test_record_read_reader_fingerprint_anonymous_no_ip(
+        self, read_tracking_service, tracking_session
+    ):
         read_tracking_service.record_read(
             entry_id=1,
             entry_owner_id=10,
@@ -347,22 +364,37 @@ class TestReadTrackingServiceRecordRead:
 
 class TestReadTrackingServiceStats:
     def _seed_reads(self, service, session):
-        service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None)
-        service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None)
-        service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="mcp", reader_id=6, reader_ip=None)
-        service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=10, reader_ip=None)
+        service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None
+        )
+        service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None
+        )
+        service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="mcp", reader_id=6, reader_ip=None
+        )
+        service.record_read(
+            entry_id=1,
+            entry_owner_id=10,
+            action="read",
+            channel="api",
+            reader_id=10,
+            reader_ip=None,
+        )
 
     def test_get_read_stats_total_count(self, read_tracking_service, tracking_session):
         self._seed_reads(read_tracking_service, tracking_session)
         stats = read_tracking_service.get_read_stats(entry_id=1)
         assert stats.total_count == 4
 
-    def test_get_read_stats_total_count_excludes_self_reads(self, read_tracking_service, tracking_session):
+    def test_get_read_stats_total_count_excludes_self_reads(
+        self, read_tracking_service, tracking_session
+    ):
         self._seed_reads(read_tracking_service, tracking_session)
         stats = read_tracking_service.get_read_stats(entry_id=1)
         assert stats.total_count == 4
         non_self_records = tracking_session.exec(
-            select(EntryRead).where(not EntryRead.is_self_read)
+            select(EntryRead).where(~EntryRead.is_self_read)
         ).all()
         non_self_count = sum(r.count for r in non_self_records)
         assert non_self_count == 3
@@ -393,8 +425,12 @@ class TestReadTrackingServiceStats:
 
 class TestReadTrackingServiceEvents:
     def test_get_read_events_pagination(self, read_tracking_service, tracking_session):
-        read_tracking_service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None)
-        read_tracking_service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="mcp", reader_id=6, reader_ip=None)
+        read_tracking_service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None
+        )
+        read_tracking_service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="mcp", reader_id=6, reader_ip=None
+        )
 
         result = read_tracking_service.get_read_events(entry_id=1, page=1, per_page=1)
         assert len(result.items) == 1
@@ -403,7 +439,9 @@ class TestReadTrackingServiceEvents:
         assert result.per_page == 1
 
     def test_get_read_events_fields(self, read_tracking_service, tracking_session):
-        read_tracking_service.record_read(entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None)
+        read_tracking_service.record_read(
+            entry_id=1, entry_owner_id=10, action="read", channel="api", reader_id=5, reader_ip=None
+        )
         result = read_tracking_service.get_read_events(entry_id=1)
         event = result.items[0]
         assert hasattr(event, "id")
@@ -454,7 +492,9 @@ class TestAPIReadTracking:
     async def test_share_link_records_channel_share(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerA", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="share-track-test", is_public=False)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="share-track-test", is_public=False
+        )
         slug = entry["slug"]
 
         resp = await client.post(
@@ -479,7 +519,9 @@ class TestAPIReadTracking:
     async def test_non_owner_read_is_self_read_false(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerB", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="self-read-test", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="self-read-test", is_public=True
+        )
         slug = entry["slug"]
 
         user_b = await _register(client, username="readerB", password="testpass123")
@@ -487,9 +529,7 @@ class TestAPIReadTracking:
         await _wait_for_async_write()
 
         with Session(app.state.engine) as session:
-            records = session.exec(
-                select(EntryRead).where(EntryRead.channel == "api")
-            ).all()
+            records = session.exec(select(EntryRead).where(EntryRead.channel == "api")).all()
             non_self = [r for r in records if r.reader_id is not None and r.is_self_read is False]
             assert len(non_self) >= 1
 
@@ -497,7 +537,9 @@ class TestAPIReadTracking:
     async def test_owner_read_is_self_read_true(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerC", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="owner-self-read", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="owner-self-read", is_public=True
+        )
         slug = entry["slug"]
 
         await client.get(f"/api/v1/entries/{slug}", headers=_auth(user_a["access_token"]))
@@ -562,7 +604,9 @@ class TestAPIReadTracking:
     async def test_owner_sees_read_stats(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerD", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="stats-owner-test", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="stats-owner-test", is_public=True
+        )
         slug = entry["slug"]
 
         await client.get(f"/api/v1/entries/{slug}")
@@ -580,7 +624,9 @@ class TestAPIReadTracking:
     async def test_non_owner_no_read_stats(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerE", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="stats-noowner-test", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="stats-noowner-test", is_public=True
+        )
         slug = entry["slug"]
 
         user_b = await _register(client, username="readerE", password="testpass123")
@@ -598,9 +644,7 @@ class TestAPIReadTracking:
         await _wait_for_async_write()
 
         with Session(app.state.engine) as session:
-            records = session.exec(
-                select(EntryRead).where(EntryRead.action == "discover")
-            ).all()
+            records = session.exec(select(EntryRead).where(EntryRead.action == "discover")).all()
             assert len(records) >= 1
 
     @pytest.mark.asyncio
@@ -626,7 +670,9 @@ class TestAPIReadTracking:
     async def test_read_events_endpoint(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerF", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="events-endpoint-test", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="events-endpoint-test", is_public=True
+        )
         slug = entry["slug"]
 
         await client.get(f"/api/v1/entries/{slug}")
@@ -647,7 +693,9 @@ class TestAPIReadTracking:
     async def test_read_events_requires_owner_or_admin(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerG", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="events-auth-test", is_public=True)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="events-auth-test", is_public=True
+        )
         slug = entry["slug"]
 
         user_b = await _register(client, username="readerG", password="testpass123")
@@ -675,7 +723,9 @@ class TestAPIReadTracking:
     async def test_share_cookie_access_records_channel_share(self, client_and_app):
         client, app = client_and_app
         user_a = await _register(client, username="ownerH", password="testpass123")
-        entry = await _create_entry(client, auth_token=user_a["access_token"], slug="share-cookie-test", is_public=False)
+        entry = await _create_entry(
+            client, auth_token=user_a["access_token"], slug="share-cookie-test", is_public=False
+        )
         slug = entry["slug"]
 
         resp = await client.post(
@@ -698,7 +748,5 @@ class TestAPIReadTracking:
         await _wait_for_async_write()
 
         with Session(app.state.engine) as session:
-            records = session.exec(
-                select(EntryRead).where(EntryRead.channel == "share")
-            ).all()
+            records = session.exec(select(EntryRead).where(EntryRead.channel == "share")).all()
             assert len(records) >= 1

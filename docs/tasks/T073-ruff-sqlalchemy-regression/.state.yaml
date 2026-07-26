@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T073
 status: in_progress
 created: 2026-07-25
@@ -16,3 +16,7 @@ history:
     date: 2026-07-26
     status: completed
     note: P2-design.md 3 候选方案, plan-eng-review approved
+  - phase: P3
+    date: 2026-07-26
+    status: completed
+    note: P3-test-cases.md 13 BDD 全覆盖, 45 真红灯

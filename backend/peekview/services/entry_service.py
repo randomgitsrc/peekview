@@ -93,7 +93,7 @@ class EntryService:
                 return
 
             files = session.exec(
-                select(File).where(File.entry_id == entry_id, not File.is_binary)
+                select(File).where(File.entry_id == entry_id, ~File.is_binary)
             ).all()
 
             content_parts: list[str] = []
@@ -104,7 +104,7 @@ class EntryService:
                     disk_path = self.storage.get_disk_path(entry_id, f.filename, f.path)
                     if disk_path and disk_path.exists():
                         raw = disk_path.read_bytes()
-                        text_content = raw.decode('utf-8', errors='replace')[:FTS_CONTENT_TRUNCATE]
+                        text_content = raw.decode("utf-8", errors="replace")[:FTS_CONTENT_TRUNCATE]
                         if total_len + len(text_content) > FTS_CONTENT_MAX_PER_ENTRY:
                             remaining = FTS_CONTENT_MAX_PER_ENTRY - total_len
                             if remaining > 0:
@@ -115,19 +115,21 @@ class EntryService:
                 except Exception:
                     continue
 
-            aggregated = ' '.join(content_parts)
+            aggregated = " ".join(content_parts)
 
             session.exec(text("DELETE FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id))
 
-            session.exec(text(
-                "INSERT INTO entries_fts(rowid, summary, tags, content) "
-                "VALUES (:id, :summary, :tags, :content)"
-            ).bindparams(
-                id=entry_id,
-                summary=entry.summary,
-                tags=' '.join(entry.tags or []),
-                content=aggregated,
-            ))
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry_id,
+                    summary=entry.summary,
+                    tags=" ".join(entry.tags or []),
+                    content=aggregated,
+                )
+            )
 
             session.commit()
 
@@ -177,9 +179,7 @@ class EntryService:
         # Validate/generate slug
         if slug:
             if not SLUG_PATTERN.match(slug):
-                raise InvalidSlugError(
-                    f"Slug must match [a-z0-9_-], got: {slug!r}"
-                )
+                raise InvalidSlugError(f"Slug must match [a-z0-9_-], got: {slug!r}")
             if len(slug) > self.config.limits.max_slug_length:
                 raise InvalidSlugError(
                     f"Slug exceeds max length ({self.config.limits.max_slug_length})"
@@ -257,7 +257,7 @@ class EntryService:
                         line_count = None
                         if content and not is_binary:
                             try:
-                                line_count = content.decode('utf-8').count('\n') + 1
+                                line_count = content.decode("utf-8").count("\n") + 1
                             except (UnicodeDecodeError, AttributeError):
                                 line_count = None
 
@@ -306,10 +306,20 @@ class EntryService:
                 existing = self._find_by_idempotency_key(idempotency_key)
                 if existing:
                     if existing.owner_id != current_user_id:
-                        raise ConflictError("idempotency_key already used by another user") from None
+                        raise ConflictError(
+                            "idempotency_key already used by another user"
+                        ) from None
                     return existing, True
             return self._retry_with_slug_suffix(
-                summary, slug, tags, files_data, dirs_data, expires_in, is_public, current_user_id, idempotency_key
+                summary,
+                slug,
+                tags,
+                files_data,
+                dirs_data,
+                expires_in,
+                is_public,
+                current_user_id,
+                idempotency_key,
             )
 
         self._update_fts_content(entry_id)
@@ -325,16 +335,20 @@ class EntryService:
             files=file_responses,
         ), False
 
-    def get_entry(self, slug: str, current_user_id: int | None = None, is_admin: bool = False, include_read_stats: bool = False) -> EntryResponse:
+    def get_entry(
+        self,
+        slug: str,
+        current_user_id: int | None = None,
+        is_admin: bool = False,
+        include_read_stats: bool = False,
+    ) -> EntryResponse:
         """Get entry details by slug.
 
         Private entries are only visible to their owner (or admin).
         Returns 404 for non-owners of private entries (not 403, to prevent slug enumeration).
         """
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -349,14 +363,14 @@ class EntryService:
                 if not is_admin and entry.owner_id != current_user_id:
                     raise NotFoundError(f"Entry not found: {slug}")
 
-            files = session.exec(
-                select(File).where(File.entry_id == entry.id)
-            ).all()
+            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
             # Resolve username for owner
             username = self._resolve_username(session, entry.owner_id)
 
-            return self._build_response(entry, list(files), username, include_read_stats=include_read_stats)
+            return self._build_response(
+                entry, list(files), username, include_read_stats=include_read_stats
+            )
 
     def list_entries(
         self,
@@ -398,7 +412,10 @@ class EntryService:
                         count_query = count_query.where(Entry.owner_id == current_user_id)
                     else:
                         return EntryListResponse(
-                            items=[], total=0, page=page, per_page=per_page,
+                            items=[],
+                            total=0,
+                            page=page,
+                            per_page=per_page,
                         )
             else:
                 query = query.where(Entry.status != EntryStatus.ARCHIVED)
@@ -413,7 +430,10 @@ class EntryService:
                 if owner == "me":
                     if current_user_id is None:
                         return EntryListResponse(
-                            items=[], total=0, page=page, per_page=per_page,
+                            items=[],
+                            total=0,
+                            page=page,
+                            per_page=per_page,
                             owner_found=None,
                         )
                     owner_user_id = current_user_id
@@ -428,7 +448,10 @@ class EntryService:
                         owner_found = True
                     else:
                         return EntryListResponse(
-                            items=[], total=0, page=page, per_page=per_page,
+                            items=[],
+                            total=0,
+                            page=page,
+                            per_page=per_page,
                             owner_found=False,
                         )
 
@@ -441,14 +464,12 @@ class EntryService:
             if is_admin:
                 pass
             elif current_user_id is None:
-                query = query.where(Entry.is_public)
-                count_query = count_query.where(Entry.is_public)
+                query = query.where(Entry.is_public.is_(True))
+                count_query = count_query.where(Entry.is_public.is_(True))
             else:
-                query = query.where(
-                    (Entry.is_public) | (Entry.owner_id == current_user_id)
-                )
+                query = query.where(Entry.is_public.is_(True) | (Entry.owner_id == current_user_id))
                 count_query = count_query.where(
-                    (Entry.is_public) | (Entry.owner_id == current_user_id)
+                    Entry.is_public.is_(True) | (Entry.owner_id == current_user_id)
                 )
 
             # Tags filter (JSON array — use LIKE for SQLite JSON compatibility)
@@ -471,7 +492,10 @@ class EntryService:
                         count_query = count_query.where(Entry.id.in_(fts_ids))
                     else:
                         return EntryListResponse(
-                            items=[], total=0, page=page, per_page=per_page,
+                            items=[],
+                            total=0,
+                            page=page,
+                            per_page=per_page,
                             owner_found=owner_found,
                         )
                 except Exception:
@@ -488,9 +512,7 @@ class EntryService:
             owner_ids = [e.owner_id for e in entries if e.owner_id is not None]
             username_map = {}
             if owner_ids:
-                users = session.exec(
-                    select(User).where(User.id.in_(set(owner_ids)))
-                ).all()
+                users = session.exec(select(User).where(User.id.in_(set(owner_ids)))).all()
                 username_map = {u.id: u.username for u in users}
 
             items = []
@@ -519,7 +541,10 @@ class EntryService:
                 )
 
         return EntryListResponse(
-            items=items, total=total, page=page, per_page=per_page,
+            items=items,
+            total=total,
+            page=page,
+            per_page=per_page,
             owner_found=owner_found,
         )
 
@@ -545,9 +570,7 @@ class EntryService:
         Global API key auth bypasses ownership checks.
         """
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -685,16 +708,21 @@ class EntryService:
             self._update_fts_content(entry_id)
 
             # Get all remaining files
-            files = session.exec(
-                select(File).where(File.entry_id == entry.id)
-            ).all()
+            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
             response = self._build_response(entry, list(files))
             if revoked_shares is not None:
                 response.revoked_shares = revoked_shares
             return response
 
-    def delete_entry(self, slug: str, current_user_id: int | None = None, is_api_key_auth: bool = False, allow_local: bool = False, is_admin: bool = False) -> None:
+    def delete_entry(
+        self,
+        slug: str,
+        current_user_id: int | None = None,
+        is_api_key_auth: bool = False,
+        allow_local: bool = False,
+        is_admin: bool = False,
+    ) -> None:
         """Delete entry and all associated files.
 
         Only the owner or admin can delete an entry. Admin can also delete
@@ -720,9 +748,7 @@ class EntryService:
             raise NotFoundError(f"Entry not found: {slug}")
 
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -751,9 +777,7 @@ class EntryService:
         including owner_id=NULL legacy entries.
         """
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -766,26 +790,27 @@ class EntryService:
 
     def _cleanup_reads(self, entry_id: int) -> None:
         from peekview.models import EntryRead
+
         with Session(self.engine) as session:
-            for r in session.exec(
-                select(EntryRead).where(EntryRead.entry_id == entry_id)
-            ).all():
+            for r in session.exec(select(EntryRead).where(EntryRead.entry_id == entry_id)).all():
                 session.delete(r)
             session.commit()
 
     def _find_by_idempotency_key(self, key: str) -> CreateEntryResponse | None:
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.idempotency_key == key)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.idempotency_key == key)).first()
             if not entry:
                 return None
             files = session.exec(select(File).where(File.entry_id == entry.id)).all()
             file_responses = [
                 FileResponse(
-                    id=f.id, path=f.path, filename=f.filename,
-                    language=f.language, is_binary=f.is_binary,
-                    size=f.size, line_count=f.line_count,
+                    id=f.id,
+                    path=f.path,
+                    filename=f.filename,
+                    language=f.language,
+                    is_binary=f.is_binary,
+                    size=f.size,
+                    line_count=f.line_count,
                 )
                 for f in files
             ]
@@ -854,14 +879,16 @@ class EntryService:
                 from pathlib import Path
 
                 content = Path(sf.local_path).read_bytes()
-                result.append({
-                    "path": sf.path or sf.filename,
-                    "filename": sf.filename,
-                    "content_bytes": content,
-                    "language": sf.language,
-                    "is_binary": sf.is_binary,
-                    "size": len(content),
-                })
+                result.append(
+                    {
+                        "path": sf.path or sf.filename,
+                        "filename": sf.filename,
+                        "content_bytes": content,
+                        "language": sf.language,
+                        "is_binary": sf.is_binary,
+                        "size": len(content),
+                    }
+                )
 
         return result
 
@@ -943,7 +970,13 @@ class EntryService:
         user = session.exec(select(User).where(User.id == owner_id)).first()
         return user.username if user else None
 
-    def _build_response(self, entry: Entry, files: list[File], username: str | None = None, include_read_stats: bool = False) -> EntryResponse:
+    def _build_response(
+        self,
+        entry: Entry,
+        files: list[File],
+        username: str | None = None,
+        include_read_stats: bool = False,
+    ) -> EntryResponse:
         """Build EntryResponse from Entry + File records."""
         file_responses = []
         for f in files:
@@ -962,6 +995,7 @@ class EntryService:
         read_stats = None
         if include_read_stats:
             from peekview.services.read_tracking_service import ReadTrackingService
+
             tracking_service = ReadTrackingService(engine=self.engine)
             read_stats = tracking_service.get_read_stats(entry.id)
 
@@ -984,18 +1018,19 @@ class EntryService:
 
     def _get_share_service(self):
         from peekview.services.share_service import ShareService
+
         return ShareService(engine=self.engine, config=self.config)
 
-    def get_entry_with_share(self, slug: str, share_token: str, share_service) -> tuple[EntryResponse, Any] | None:
+    def get_entry_with_share(
+        self, slug: str, share_token: str, share_service
+    ) -> tuple[EntryResponse, Any] | None:
         """Get entry with share token validation.
 
         Returns (EntryResponse, EntryShare) on success, None on failure.
         For share access, share_context is set in the response.
         """
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 return None
 
@@ -1004,7 +1039,11 @@ class EntryService:
 
             now = datetime.now(timezone.utc)
             if entry.expires_at:
-                entry_exp = entry.expires_at.replace(tzinfo=timezone.utc) if entry.expires_at.tzinfo is None else entry.expires_at
+                entry_exp = (
+                    entry.expires_at.replace(tzinfo=timezone.utc)
+                    if entry.expires_at.tzinfo is None
+                    else entry.expires_at
+                )
                 if entry_exp <= now:
                     return None
 
@@ -1012,15 +1051,14 @@ class EntryService:
             if not entry_share:
                 return None
 
-            files = session.exec(
-                select(File).where(File.entry_id == entry.id)
-            ).all()
+            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
             username = self._resolve_username(session, entry.owner_id)
             shared_by = self._resolve_username(session, entry_share.created_by)
 
             response = self._build_response(entry, list(files), username)
             from peekview.models import EntryShareContext
+
             response.share_context = EntryShareContext(
                 is_share_access=True,
                 shared_by=shared_by,

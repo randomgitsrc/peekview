@@ -44,9 +44,7 @@ class ShareService:
         is_admin: bool = False,
     ) -> ShareCreateResponse:
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -61,20 +59,24 @@ class ShareService:
 
             now = datetime.now(timezone.utc)
             if entry.expires_at:
-                entry_exp = entry.expires_at.replace(tzinfo=timezone.utc) if entry.expires_at.tzinfo is None else entry.expires_at
+                entry_exp = (
+                    entry.expires_at.replace(tzinfo=timezone.utc)
+                    if entry.expires_at.tzinfo is None
+                    else entry.expires_at
+                )
                 if entry_exp <= now:
                     raise ValidationError("Cannot create share for expired entry")
 
             active_count = session.exec(
-                select(func.count()).select_from(EntryShare).where(
+                select(func.count())
+                .select_from(EntryShare)
+                .where(
                     EntryShare.entry_id == entry.id,
-                    EntryShare.revoked_at is None,
+                    EntryShare.revoked_at.is_(None),
                 )
             ).one()
             if active_count >= MAX_SHARES_PER_ENTRY:
-                raise ValidationError(
-                    f"Maximum share links reached ({MAX_SHARES_PER_ENTRY})"
-                )
+                raise ValidationError(f"Maximum share links reached ({MAX_SHARES_PER_ENTRY})")
 
             token = secrets.token_urlsafe(12)
             token_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -120,9 +122,7 @@ class ShareService:
         is_admin: bool = False,
     ) -> ShareListResponse:
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -162,9 +162,7 @@ class ShareService:
         is_admin: bool = False,
     ) -> int:
         with Session(self.engine) as session:
-            entry = session.exec(
-                select(Entry).where(Entry.slug == slug)
-            ).first()
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
@@ -176,7 +174,7 @@ class ShareService:
                 select(EntryShare).where(
                     EntryShare.entry_id == entry.id,
                     EntryShare.id.in_(share_ids),
-                    EntryShare.revoked_at is None,
+                    EntryShare.revoked_at.is_(None),
                 )
             ).all()
 
@@ -198,7 +196,7 @@ class ShareService:
             share = session.exec(
                 select(EntryShare).where(
                     EntryShare.token_hash == computed_hash,
-                    EntryShare.revoked_at is None,
+                    EntryShare.revoked_at.is_(None),
                 )
             ).first()
 
@@ -211,7 +209,11 @@ class ShareService:
             now = datetime.now(timezone.utc)
 
             if share.expires_at:
-                share_exp = share.expires_at.replace(tzinfo=timezone.utc) if share.expires_at.tzinfo is None else share.expires_at
+                share_exp = (
+                    share.expires_at.replace(tzinfo=timezone.utc)
+                    if share.expires_at.tzinfo is None
+                    else share.expires_at
+                )
                 if share_exp <= now:
                     return None
 
@@ -220,7 +222,7 @@ class ShareService:
 
             stmt = (
                 update(EntryShare)
-                .where(EntryShare.id == share.id, EntryShare.revoked_at is None)
+                .where(EntryShare.id == share.id, EntryShare.revoked_at.is_(None))
                 .values(view_count=EntryShare.view_count + 1)
             )
             session.exec(stmt)
@@ -241,7 +243,7 @@ class ShareService:
                 select(EntryShare).where(
                     EntryShare.entry_id == entry_id,
                     EntryShare.token_prefix == token_prefix,
-                    EntryShare.revoked_at is None,
+                    EntryShare.revoked_at.is_(None),
                 )
             ).first()
 
@@ -249,7 +251,11 @@ class ShareService:
                 return None
 
             if share.expires_at:
-                share_exp = share.expires_at.replace(tzinfo=timezone.utc) if share.expires_at.tzinfo is None else share.expires_at
+                share_exp = (
+                    share.expires_at.replace(tzinfo=timezone.utc)
+                    if share.expires_at.tzinfo is None
+                    else share.expires_at
+                )
                 if share_exp <= now:
                     return None
 
@@ -264,7 +270,7 @@ class ShareService:
             active_shares = s.exec(
                 select(EntryShare).where(
                     EntryShare.entry_id == entry_id,
-                    EntryShare.revoked_at is None,
+                    EntryShare.revoked_at.is_(None),
                 )
             ).all()
             for share in active_shares:
@@ -289,7 +295,9 @@ class ShareService:
     ) -> dict:
         now = datetime.now(timezone.utc)
         if expires_at:
-            share_exp = expires_at.replace(tzinfo=timezone.utc) if expires_at.tzinfo is None else expires_at
+            share_exp = (
+                expires_at.replace(tzinfo=timezone.utc) if expires_at.tzinfo is None else expires_at
+            )
             max_age = int((share_exp - now).total_seconds())
             if max_age < 0:
                 max_age = 0

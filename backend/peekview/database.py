@@ -72,9 +72,9 @@ def _run_migrations(engine: Engine) -> None:
             logger.info("Migration: added archived_at column to entries")
 
         if "idempotency_key" not in columns:
-            conn.execute(text(
-                "ALTER TABLE entries ADD COLUMN idempotency_key VARCHAR(128) DEFAULT NULL"
-            ))
+            conn.execute(
+                text("ALTER TABLE entries ADD COLUMN idempotency_key VARCHAR(128) DEFAULT NULL")
+            )
             conn.commit()
             logger.info("Migration: added idempotency_key column to entries")
 
@@ -100,9 +100,7 @@ def _run_migrations(engine: Engine) -> None:
         # Check existing indexes
         indexes = {
             row[0]
-            for row in conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='index'")
-            )
+            for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
         }
 
         if "idx_entries_is_public" not in indexes:
@@ -126,7 +124,7 @@ def _run_migrations(engine: Engine) -> None:
         except Exception:
             fts_columns = set()
 
-        if 'content' not in fts_columns:
+        if "content" not in fts_columns:
             conn.execute(text("DROP TABLE IF EXISTS entries_fts"))
             conn.execute(text("DROP TRIGGER IF EXISTS entries_ai"))
             conn.execute(text("DROP TRIGGER IF EXISTS entries_ad"))
@@ -151,9 +149,7 @@ def check_schema(engine: Engine) -> None:
     with engine.connect() as conn:
         existing_tables = {
             row[0]
-            for row in conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='table'")
-            )
+            for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
         }
 
         for table_name, table in SQLModel.metadata.tables.items():
@@ -161,8 +157,7 @@ def check_schema(engine: Engine) -> None:
                 continue
 
             actual_columns = {
-                row[1]
-                for row in conn.execute(text(f"PRAGMA table_info({table_name})"))
+                row[1] for row in conn.execute(text(f"PRAGMA table_info({table_name})"))
             }
             expected_columns = set(table.columns.keys())
             missing = sorted(col for col in expected_columns if col not in actual_columns)
@@ -236,16 +231,16 @@ def _setup_indexes(engine: Engine) -> None:
     with engine.connect() as conn:
         indexes = {
             row[0]
-            for row in conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='index'")
-            )
+            for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
         }
 
         if "idx_entries_idempotency_key" not in indexes:
-            conn.execute(text(
-                "CREATE UNIQUE INDEX idx_entries_idempotency_key ON entries(idempotency_key) "
-                "WHERE idempotency_key IS NOT NULL"
-            ))
+            conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX idx_entries_idempotency_key ON entries(idempotency_key) "
+                    "WHERE idempotency_key IS NOT NULL"
+                )
+            )
             conn.commit()
             logger.info("Setup: added unique index on entries.idempotency_key")
 
@@ -259,9 +254,7 @@ def setup_fts5(engine: Engine) -> None:
     """
     with engine.connect() as conn:
         result = conn.execute(
-            text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
-            )
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'")
         )
         if result.scalar():
             logger.debug("FTS5 table already exists")
@@ -391,9 +384,7 @@ def rebuild_fts_index(engine: Engine, storage: StorageManager | None = None) -> 
     """
     with engine.connect() as conn:
         result = conn.execute(
-            text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'"
-            )
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'")
         )
         if not result.scalar():
             logger.warning("FTS5 table does not exist, skipping rebuild")
@@ -407,18 +398,21 @@ def rebuild_fts_index(engine: Engine, storage: StorageManager | None = None) -> 
         if storage:
             with Session(engine) as session:
                 from peekview.models import Entry
+
                 entries = session.exec(select(Entry)).all()
                 for entry in entries:
                     content = _aggregate_entry_content(entry.id, storage, session)
-                    conn.execute(text(
-                        "INSERT INTO entries_fts(rowid, summary, tags, content) "
-                        "VALUES (:id, :summary, :tags, :content)"
-                    ).bindparams(
-                        id=entry.id,
-                        summary=entry.summary,
-                        tags=' '.join(entry.tags or []),
-                        content=content,
-                    ))
+                    conn.execute(
+                        text(
+                            "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                            "VALUES (:id, :summary, :tags, :content)"
+                        ).bindparams(
+                            id=entry.id,
+                            summary=entry.summary,
+                            tags=" ".join(entry.tags or []),
+                            content=content,
+                        )
+                    )
         else:
             try:
                 conn.execute(
@@ -441,21 +435,13 @@ def get_db_stats(engine: Engine) -> dict:
         Dict with entry count, file count, FTS stats
     """
     with Session(engine) as session:
+        entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
 
-
-        entry_count = session.exec(
-            text("SELECT COUNT(*) FROM entries")
-        ).scalar()
-
-        file_count = session.exec(
-            text("SELECT COUNT(*) FROM files")
-        ).scalar()
+        file_count = session.exec(text("SELECT COUNT(*) FROM files")).scalar()
 
         # Get FTS5 stats
         try:
-            fts_doc_count = session.exec(
-                text("SELECT COUNT(*) FROM entries_fts")
-            ).scalar()
+            fts_doc_count = session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
         except Exception:
             fts_doc_count = 0
 
@@ -475,15 +461,11 @@ def get_db_stats(engine: Engine) -> dict:
         }
 
 
-def _aggregate_entry_content(
-    entry_id: int, storage: StorageManager, session: Session
-) -> str:
+def _aggregate_entry_content(entry_id: int, storage: StorageManager, session: Session) -> str:
     """Aggregate text file content for an entry, with truncation."""
     from peekview.models import File
 
-    files = session.exec(
-        select(File).where(File.entry_id == entry_id, not File.is_binary)
-    ).all()
+    files = session.exec(select(File).where(File.entry_id == entry_id, ~File.is_binary)).all()
 
     content_parts: list[str] = []
     total_len = 0
@@ -493,7 +475,7 @@ def _aggregate_entry_content(
             disk_path = storage.get_disk_path(entry_id, f.filename, f.path)
             if disk_path and disk_path.exists():
                 raw = disk_path.read_bytes()
-                text_content = raw.decode('utf-8', errors='replace')[:FTS_CONTENT_TRUNCATE]
+                text_content = raw.decode("utf-8", errors="replace")[:FTS_CONTENT_TRUNCATE]
                 if total_len + len(text_content) > FTS_CONTENT_MAX_PER_ENTRY:
                     remaining = FTS_CONTENT_MAX_PER_ENTRY - total_len
                     if remaining > 0:
@@ -504,7 +486,7 @@ def _aggregate_entry_content(
         except Exception:
             continue
 
-    return ' '.join(content_parts)
+    return " ".join(content_parts)
 
 
 def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
@@ -517,7 +499,9 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
 
         entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
         session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
-        content_count = session.exec(text("SELECT COUNT(*) FROM entries_fts WHERE content IS NOT NULL AND content != ''")).scalar()
+        content_count = session.exec(
+            text("SELECT COUNT(*) FROM entries_fts WHERE content IS NOT NULL AND content != ''")
+        ).scalar()
 
         if content_count >= entry_count and entry_count > 0:
             logger.debug("FTS content already backfilled")
@@ -528,15 +512,17 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
         entries = session.exec(select(Entry)).all()
         for entry in entries:
             content = _aggregate_entry_content(entry.id, storage, session)
-            session.exec(text(
-                "INSERT INTO entries_fts(rowid, summary, tags, content) "
-                "VALUES (:id, :summary, :tags, :content)"
-            ).bindparams(
-                id=entry.id,
-                summary=entry.summary,
-                tags=' '.join(entry.tags or []),
-                content=content,
-            ))
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry.id,
+                    summary=entry.summary,
+                    tags=" ".join(entry.tags or []),
+                    content=content,
+                )
+            )
 
         session.commit()
         logger.info(f"Backfilled FTS content for {len(entries)} entries")

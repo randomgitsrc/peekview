@@ -56,9 +56,7 @@ class ApiKeyService:
         # Check active key limit
         active_count = self.count_active_keys(user_id)
         if active_count >= MAX_ACTIVE_KEYS_PER_USER:
-            raise ValidationError(
-                f"Maximum {MAX_ACTIVE_KEYS_PER_USER} active API keys per user"
-            )
+            raise ValidationError(f"Maximum {MAX_ACTIVE_KEYS_PER_USER} active API keys per user")
 
         # Parse expiry
         expires_at = None
@@ -137,9 +135,7 @@ class ApiKeyService:
     ) -> None:
         """Revoke (delete) an API key. Only owner or admin can revoke."""
         with Session(self.engine) as session:
-            api_key = session.exec(
-                select(ApiKey).where(ApiKey.id == key_id)
-            ).first()
+            api_key = session.exec(select(ApiKey).where(ApiKey.id == key_id)).first()
 
             if api_key is None:
                 raise NotFoundError(f"API key not found: {key_id}")
@@ -158,7 +154,7 @@ class ApiKeyService:
             expired = session.exec(
                 select(ApiKey).where(
                     ApiKey.user_id == user_id,
-                    ApiKey.expires_at is not None,
+                    ApiKey.expires_at.isnot(None),
                     ApiKey.expires_at <= now_naive,
                 )
             ).all()
@@ -179,9 +175,7 @@ class ApiKeyService:
         now = datetime.now(timezone.utc)
 
         with Session(self.engine) as session:
-            api_key = session.exec(
-                select(ApiKey).where(ApiKey.key_hash == key_hash)
-            ).first()
+            api_key = session.exec(select(ApiKey).where(ApiKey.key_hash == key_hash)).first()
 
             if api_key is None:
                 return None, None
@@ -200,9 +194,7 @@ class ApiKeyService:
                     return None, None
 
             # Check bound user is active
-            user = session.exec(
-                select(User).where(User.id == api_key.user_id)
-            ).first()
+            user = session.exec(select(User).where(User.id == api_key.user_id)).first()
             if user is None or not user.is_active:
                 return None, None
 

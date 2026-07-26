@@ -75,9 +75,7 @@ class TestBdd07CleanupExpiredNullExpiresAt:
         assert "permanent-entry" not in result.archived_slugs
 
         with Session(engine) as session:
-            permanent = session.exec(
-                select(Entry).where(Entry.slug == "permanent-entry")
-            ).first()
+            permanent = session.exec(select(Entry).where(Entry.slug == "permanent-entry")).first()
             assert permanent is not None
             assert permanent.status == "active", (
                 f"Permanent entry should remain active, got {permanent.status}"
@@ -116,7 +114,5 @@ class TestBdd08CleanupOldArchivedNullArchivedAt:
         assert "active-no-archived" not in result.deleted_slugs
 
         with Session(engine) as session:
-            active = session.exec(
-                select(Entry).where(Entry.slug == "active-no-archived")
-            ).first()
+            active = session.exec(select(Entry).where(Entry.slug == "active-no-archived")).first()
             assert active is not None, "Active entry with NULL archived_at should not be deleted"

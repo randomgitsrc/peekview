@@ -92,6 +92,8 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # function call in default argument (FastAPI Depends pattern)
+    "E711",  # Comparison to None (SQLAlchemy .is_()/.isnot() required)
+    "E712",  # Comparison to True/False (SQLAlchemy .is_()/~ required)
 ]
 
 [tool.ruff.format]
