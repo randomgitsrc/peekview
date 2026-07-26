@@ -3,19 +3,15 @@
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
     <!-- Mobile sticky header -->
     <div v-if="isMobile" v-show="!zenMode" class="mobile-sticky-header">
-      <router-link to="/" class="back-btn" aria-label="Back">
-        <ChevronLeftIcon :size="20" />
+      <router-link to="/" class="mobile-logo-link" aria-label="Back to home">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </router-link>
-      <span class="sticky-brand">PeekView</span>
-      <span class="sticky-title">{{ entryTitle }}</span>
-      <button
+      <span class="sticky-title two-line">{{ entryTitle }}</span>
+      <a
         v-if="authState === 'anonymous'"
-        class="mobile-signin-btn"
+        class="mobile-signin-link"
         @click="showLogin = true"
-      >
-        <LogInIcon :size="14" class="signin-icon" />
-        <span class="signin-label">Sign in</span>
-      </button>
+      >Sign in</a>
     </div>
 
     <!-- Desktop/Tablet header -->
@@ -25,6 +21,7 @@
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="detail-logo-word">PeekView</span>
         </router-link>
+        <span class="brand-sep"></span>
         <div class="title-group">
           <h1 class="title">{{ entryTitle }}</h1>
         </div>
@@ -37,6 +34,7 @@
             :aria-expanded="isFileTreeOpen"
           >
             <FolderIcon :size="16" />
+            <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
             <span class="tooltip">Toggle file tree</span>
           </button>
           <button
@@ -144,6 +142,7 @@
         <FileTree
           :files="entryStore.currentEntry?.files || []"
           :activeFileId="entryStore.activeFile?.id ?? null"
+          :fileCount="currentEntry?.files.length"
           @select="entryStore.selectFile"
         />
       </aside>
@@ -253,19 +252,21 @@
 
     <!-- Mobile bottom bar -->
     <div v-if="isMobile && entryStore.currentEntry" v-show="!zenMode" class="mobile-bottom-bar">
-      <button v-if="entryStore.isMultiFile" class="files-btn" @click="showFileDrawer = true" aria-label="Files">
-        <FolderIcon :size="14" /> <span class="badge">{{ currentEntry?.files.length ?? 0 }}</span> files
+      <button v-if="entryStore.isMultiFile"
+        :class="['toggle-btn', { active: showFileDrawer }]"
+        @click="showFileDrawer = !showFileDrawer"
+        aria-label="Files">
+        <FolderIcon :size="16" />
+        <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
+      </button>
+      <button v-if="isMarkdown && tocHeadings.length > 0"
+        :class="['toggle-btn', { active: showTocDrawer }]"
+        @click="showTocDrawer = !showTocDrawer"
+        aria-label="Table of Contents">
+        <ListIcon :size="16" />
       </button>
       <div class="flex-spacer"></div>
-      <router-link to="/explore" class="bottom-btn" aria-label="Explore">
-        <CompassIcon :size="14" /> Explore
-      </router-link>
-      <template v-if="isMarkdown && tocHeadings.length > 0">
-        <button class="bottom-btn primary" @click="showTocDrawer = true" aria-label="Table of Contents">
-          <ListIcon :size="14" /> TOC
-        </button>
-      </template>
-      <template v-else-if="!isBinary">
+      <template v-if="!isBinary">
         <button v-if="entryStore.canWrap" :class="['bottom-btn', entryStore.wrapEnabled && 'primary']" @click="entryStore.toggleWrap()">
           Wrap
         </button>
@@ -273,21 +274,6 @@
           <CopyIcon :size="14" /> Copy
         </button>
       </template>
-      <button
-        v-if="showShareButton"
-        class="bottom-btn share-btn"
-        @click="shareDialogOpen = true"
-        aria-label="Share"
-      >
-        <Share2Icon :size="14" />
-        <span v-if="activeShareCount > 0" class="share-badge">{{ activeShareCount }}</span>
-      </button>
-      <ShareDialog
-        v-if="showShareButton"
-        v-model:open="shareDialogOpen"
-        :entry-slug="slug"
-        variant="sheet"
-      />
       <OverflowMenu :items="overflowItems" variant="sheet" />
     </div>
 
@@ -295,12 +281,13 @@
     <div v-if="showFileDrawer" class="drawer-overlay" @click="showFileDrawer = false"></div>
     <aside v-if="showFileDrawer" class="drawer drawer-left">
       <div class="drawer-header">
-        <span>Files</span>
+        <span>Files · {{ currentEntry?.files.length ?? 0 }}</span>
         <span class="drawer-close" @click="showFileDrawer = false">&times;</span>
       </div>
       <FileTree
         :files="entryStore.currentEntry?.files || []"
         :activeFileId="entryStore.activeFile?.id ?? null"
+        :fileCount="currentEntry?.files.length"
         @select="selectFileAndCloseDrawer"
       />
     </aside>
@@ -309,7 +296,7 @@
     <div v-if="showTocDrawer" class="drawer-overlay" @click="showTocDrawer = false"></div>
     <aside v-if="showTocDrawer" class="drawer drawer-right">
       <div class="drawer-header">
-        <span>Table of Contents</span>
+        <span>Table of Contents · {{ tocHeadings.length }}</span>
         <span class="drawer-close" @click="showTocDrawer = false">&times;</span>
       </div>
       <TocNav
@@ -380,13 +367,11 @@ import { useShareStore } from '@/stores/share'
 import type { ShareInfo } from '@/types'
 import type { TocHeading } from '@/types'
 import {
-  ChevronLeft as ChevronLeftIcon,
   Folder as FolderIcon,
   List as ListIcon,
   Copy as CopyIcon,
   Share2 as Share2Icon,
   Compass as CompassIcon,
-  LogIn as LogInIcon,
 } from 'lucide-vue-next'
 
 const props = defineProps<{

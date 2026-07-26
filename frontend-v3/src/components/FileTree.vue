@@ -6,7 +6,7 @@ export const EXPAND_KEY: InjectionKey<{ expandedPaths: Ref<Set<string>>; toggleD
 <template>
   <div class="file-tree">
     <div class="file-tree-header">
-      <h3>Files</h3>
+      <h3>Files<template v-if="fileCount !== undefined"> · {{ fileCount }}</template></h3>
     </div>
     <ul class="file-list">
       <TreeNodeItem
@@ -29,6 +29,7 @@ import TreeNodeItem from '@/components/TreeNodeItem.vue'
 const props = defineProps<{
   files: File[]
   activeFileId: number | null
+  fileCount?: number
 }>()
 
 const emit = defineEmits<{

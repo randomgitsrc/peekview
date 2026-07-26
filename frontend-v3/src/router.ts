@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 
 const routes: RouteRecordRaw[] = [
@@ -58,18 +59,29 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, _from) => {
+function waitForAuthInit(authStore: ReturnType<typeof useAuthStore>, ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(resolve, ms)
+    const stop = watch(() => authStore.initializing, (val) => {
+      if (!val) {
+        clearTimeout(timeout)
+        stop()
+        resolve()
+      }
+    }, { immediate: true })
+  })
+}
+
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+  if (authStore.authState === 'loading') {
+    await waitForAuthInit(authStore, 5000)
+  }
   if (to.path === '/') {
-    const authStore = useAuthStore()
-    if (authStore.authState === 'authenticated') {
-      return '/explore'
-    }
+    if (authStore.authState === 'authenticated') return '/explore'
   }
   if (to.path === '/settings') {
-    const authStore = useAuthStore()
-    if (authStore.authState !== 'authenticated') {
-      return '/'
-    }
+    if (authStore.authState !== 'authenticated') return '/'
   }
 })
 

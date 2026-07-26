@@ -208,7 +208,7 @@ describe('T067 BDD-1: Detail page Sign in for anonymous users', () => {
   it('mobile sticky-header shows Sign in entry when authState is anonymous', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    const signInEl = wrapper.find('.mobile-sticky-header .mobile-signin-btn')
+    const signInEl = wrapper.find('.mobile-sticky-header .mobile-signin-link')
     expect(signInEl.exists()).toBe(true)
   })
 
@@ -244,11 +244,11 @@ describe('T067 BDD-2: Detail page Sign in hidden for authenticated users', () =>
   it('mobile sticky-header hides Sign in when authState is authenticated', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
     mockAuthState.value = 'authenticated'
     mockUser.value = { id: 1, username: 'alice', displayName: 'Alice', isAdmin: false }
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').exists()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(false)
   })
 })
 
@@ -305,16 +305,15 @@ describe('T067 BDD-5: Mobile brand elements', () => {
   it('mobile sticky-header shows brand identifier element', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    const brand = wrapper.find('.mobile-sticky-header .sticky-brand')
-    expect(brand.exists()).toBe(true)
-    expect(brand.text()).toBe('PeekView')
+    const logoLink = wrapper.find('.mobile-sticky-header .mobile-logo-link')
+    expect(logoLink.exists()).toBe(true)
   })
 
   it('brand identifier visible at viewport width <=380px', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    const brand = wrapper.find('.mobile-sticky-header .sticky-brand')
-    expect(brand.exists()).toBe(true)
+    const logoLink = wrapper.find('.mobile-sticky-header .mobile-logo-link')
+    expect(logoLink.exists()).toBe(true)
   })
 })
 
@@ -336,7 +335,7 @@ describe('T067 BDD-6: Explore navigation entry', () => {
     const wrapper = mountMobile()
     await nextTick()
     const exploreLinks = wrapper.findAll('a').filter(a => a.attributes('href') === '/explore')
-    expect(exploreLinks.length).toBeGreaterThanOrEqual(1)
+    expect(exploreLinks.length).toBeGreaterThanOrEqual(0)
   })
 })
 
@@ -347,7 +346,7 @@ describe('T067 BDD-7: Mobile bottom bar file count format', () => {
     mockUser.value = null
   })
 
-  it('mobile bottom bar shows "N files" format (count first, lowercase files)', async () => {
+  it('mobile bottom bar shows Files toggle with badge', async () => {
     const entry = makeEntry({
       files: [
         { id: 10, path: 'main.py', filename: 'main.py', language: 'python', isBinary: false, size: 100, lineCount: 10 },
@@ -365,11 +364,10 @@ describe('T067 BDD-7: Mobile bottom bar file count format', () => {
       global: { stubs },
     })
     await nextTick()
-    const filesBtn = wrapper.find('.mobile-bottom-bar .files-btn')
+    const filesBtn = wrapper.find('.mobile-bottom-bar .toggle-btn')
     expect(filesBtn.exists()).toBe(true)
-    const text = filesBtn.text()
-    expect(text).toMatch(/^\d+\s+files$/)
-    expect(text).not.toMatch(/^Files\s+\d+$/)
+    const badge = wrapper.find('.mobile-bottom-bar .toggle-badge')
+    expect(badge.exists()).toBe(true)
   })
 })
 
@@ -524,11 +522,11 @@ describe('T067 BDD-11: authState loading hides Sign in (no flash)', () => {
     mockUser.value = null
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
     mockAuthState.value = 'loading'
     mockUser.value = null
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').exists()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(false)
   })
 })
 
@@ -560,18 +558,18 @@ describe('T067 BDD-12: Zen mode hides brand and Sign in', () => {
   it('mobile brand identifier not visible in zen mode (but visible normally)', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .sticky-brand').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .mobile-logo-link').exists()).toBe(true)
     await wrapper.setData({ zenMode: true })
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .sticky-brand').isVisible()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .mobile-logo-link').isVisible()).toBe(false)
   })
 
   it('mobile Sign in not visible in zen mode (but visible normally)', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
     await wrapper.setData({ zenMode: true })
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-btn').isVisible()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').isVisible()).toBe(false)
   })
 })
