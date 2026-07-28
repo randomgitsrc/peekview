@@ -1,7 +1,7 @@
 ---
 # ── agate 配置 ──────────────────────────────────────────────
 agate_root: ~/.agate
-project_root: /home/kity/oclab/peekview-b
+project_root: /home/kity/oclab/peekview
 
 # ── OpenCode 配置 ───────────────────────────────────────────
 name: orchestrator
