@@ -883,7 +883,7 @@ def config_list() -> None:
     }
 
     # Section order
-    _SECTION_ORDER = [
+    _SECTION_ORDER = [  # noqa: N806
         "server",
         "storage",
         "auth",
@@ -892,7 +892,7 @@ def config_list() -> None:
         "logging",
         "remote",
         "diagram",
-    ]  # noqa: N806
+    ]
 
     click.echo("Configuration:")
     click.echo("")

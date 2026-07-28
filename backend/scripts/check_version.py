@@ -5,6 +5,7 @@ import re
 import sys
 from pathlib import Path
 
+
 def get_version_from_file(filepath: Path, pattern: str) -> str | None:
     """Extract version from file using regex pattern."""
     try:

@@ -17,6 +17,7 @@
 ### 修复
 
 - Account Settings 清空 display_name 时 PATCH 发送 `null` 而非空字符串，与后端语义一致 (T074)
+- 修复 ruff lint 残留：cli.py N806 noqa 位置错误 + scripts/ import 排序
 
 ## [0.11.2] - 2026-07-26
 

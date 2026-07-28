@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Verify wheel contains correct static files."""
-import zipfile
-import sys
 import os
 import re
+import sys
+import zipfile
+
 
 def main():
     wheel_dir = "dist"
