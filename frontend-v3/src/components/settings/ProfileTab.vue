@@ -67,7 +67,7 @@ async function handleSave() {
   if (saving.value || displayName.value.length > 64) return
   saving.value = true
   try {
-    const value = displayName.value.trim()
+    const value = displayName.value.trim() || null
     await authStore.updateProfile(value)
     toast.success('Profile updated')
   } catch (err: any) {

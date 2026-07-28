@@ -14,6 +14,10 @@
 
 ## [Unreleased]
 
+### 修复
+
+- Account Settings 清空 display_name 时 PATCH 发送 `null` 而非空字符串，与后端语义一致 (T074)
+
 ## [0.11.2] - 2026-07-26
 
 ### 新增

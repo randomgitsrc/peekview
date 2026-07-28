@@ -20,9 +20,9 @@
 
 PeekView 后端镜像 + MCP Server 镜像 + docker-compose 模板 + CI 自动推送。合并理由：共用 CI workflow / ghcr.io 通道 / VERSIONS.json 同步逻辑，compose 模板跨依赖。roadmap #34/#36/#37 统一在此 task 交付。
 
-### T074: display_name null 修复
+### T074: display_name null 修复 ✅ hotfixed
 
-T068 预存失败：Account Settings 清空 display_name 时 PATCH 发 `""` 不发 `null`。≤3 行改动 + 现成测试覆盖。
+≤3 行改动 + 现有测试覆盖，直接 hotfix 不走 agate。ProfileTab.vue `trim() || null`，BDD-03 测试已绿。
 
 ### T075: 结构化数据查看器
 
@@ -38,7 +38,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 
 ### T078: 读取追踪强化 + display_name 修复
 
-新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action`/`by_source` 维度。原始事件 90 天清理。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。顺手修复 T068 预存失败（display_name 清空发 `""` 不发 `null`）。
+新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action`/`by_source` 维度。原始事件 90 天清理。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。
 
 ---
 
@@ -47,7 +47,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 | 编号 | 任务名称 | 原状态 | 处理方式 | 原因 |
 |------|----------|--------|----------|------|
 | T061 | t032-probe-data-review | ⬜ P0 | 降级 roadmap | 已有结论（跨 Agent 读取信号极弱），3 个月后复查 |
-| T074 | display-name-null-fix | ⬜ P0 | 合并→T078 | ≤3 行改动，不值得独立走 agate |
+| T074 | display-name-null-fix | ⬜ P0 | ✅ hotfixed | ≤3 行改动直接修复，不走 agate |
 | T035 | ci-publish-pipeline | ⬜ P0 | 降级 roadmap | CI publish 已工作（OIDC+NPM_TOKEN），待改的只是 make publish 不上传（3 行），不需要 agate 流程 |
 | T062 | entry-reference-fields | ⬜ P0 | 降级 roadmap | 依赖 T061 结论，T061 可能得出"无信号→不做" |
 | T064 | storage-backend-abstraction | ⬜ P0 | 降级 roadmap | 依赖商业化决策，无触发条件 |
