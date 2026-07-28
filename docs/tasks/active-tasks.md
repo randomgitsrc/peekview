@@ -14,6 +14,8 @@
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T074 | display-name-null-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
+| T076 | entry-card-interaction | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
+| T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 
 ### T061: 探针数据回顾
 
@@ -30,6 +32,14 @@ T068 预存失败：Account Settings 清空 display_name 时 PATCH 发 `""` 不�
 ### T075: 结构化数据查看器
 
 TableView（CSV/TSV，TanStack Table headless，复用 Pagination.vue）+ TreeView（JSON/YAML/XML，统一树节点渲染）+ 源码/渲染切换（含 Markdown 补缺口）。5 种格式富渲染 + 统一切换机制。
+
+### T076: EntryCard 交互修复
+
+Card `<a>` 拆分：card-body 变 div，title/username/tag 各自独立 `<a>`，修复右键复制链接混乱。Tags 可点击跳转 `/?tags=xxx` 过滤页。EntryListRow 同步修复。
+
+### T077: 时间线 MVP
+
+entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推断 project（git remote → cwd → null）+ listEntries 支持 project 过滤。Agent 通过 `listEntries(project=xxx)` 读取项目演进脉络，等价 git log。前端无改动（Phase 1）。
 
 ---
 
@@ -160,6 +170,7 @@ TableView（CSV/TSV，TanStack Table headless，复用 Pagination.vue）+ TreeVi
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |
 | 2026-07-28 | 立项 T075 | structured-data-viewer：TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口；T076 code-search 降级 roadmap |
 | 2026-07-28 | 任务整理 | T071+T072 合并→T071-docker-deploy；T035/T062/T064 降级 roadmap；新建 T074-display-name-null-fix；roadmap #2 标完成/#6 降级/#29 降级/#33 决策/#34+36+37→T071/#10 非 task |
 | 2026-07-26 | 完成 T073 | ruff-sqlalchemy-regression → v0.11.1（19 处修复 + E711/E712 ignore） |

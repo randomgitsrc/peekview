@@ -1,0 +1,11 @@
+phase: P0
+task_id: T077
+task_name: timeline-mvp
+status: pending
+created: 2026-07-28
+updated: 2026-07-28
+history:
+  - phase: P0
+    date: 2026-07-28
+    status: in_progress
+    note: project_slug字段 + timelines表 + MCP推断/过滤

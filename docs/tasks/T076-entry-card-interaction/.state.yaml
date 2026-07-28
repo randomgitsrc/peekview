@@ -1,0 +1,11 @@
+phase: P0
+task_id: T076
+task_name: entry-card-interaction
+status: pending
+created: 2026-07-28
+updated: 2026-07-28
+history:
+  - phase: P0
+    date: 2026-07-28
+    status: in_progress
+    note: Card a拆分 + Tags可点击 + Explore tag过滤
