@@ -1,0 +1,11 @@
+phase: P0
+task_id: T075
+task_name: structured-data-viewer
+status: pending
+created: 2026-07-28
+updated: 2026-07-28
+history:
+  - phase: P0
+    date: 2026-07-28
+    status: in_progress
+    note: P0-brief 完成，TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口

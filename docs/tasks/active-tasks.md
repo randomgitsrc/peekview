@@ -13,6 +13,7 @@
 | T061 | t032-probe-data-review | ⬜ 待开始 | P0 | 🔴 | 无 | 2026-07-21 | 2026-07-28 |
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T074 | display-name-null-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
+| T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 
 ### T061: 探针数据回顾
 
@@ -26,6 +27,10 @@ PeekView 后端镜像 + MCP Server 镜像 + docker-compose 模板 + CI 自动推
 
 T068 预存失败：Account Settings 清空 display_name 时 PATCH 发 `""` 不发 `null`。≤3 行改动 + 现成测试覆盖。
 
+### T075: 结构化数据查看器
+
+TableView（CSV/TSV，TanStack Table headless，复用 Pagination.vue）+ TreeView（JSON/YAML/XML，统一树节点渲染）+ 源码/渲染切换（含 Markdown 补缺口）。5 种格式富渲染 + 统一切换机制。
+
 ---
 
 ## 已归档/降级
@@ -36,6 +41,7 @@ T068 预存失败：Account Settings 清空 display_name 时 PATCH 发 `""` 不�
 | T062 | entry-reference-fields | ⬜ P0 | 降级 roadmap | 依赖 T061 结论，T061 可能得出"无信号→不做" |
 | T064 | storage-backend-abstraction | ⬜ P0 | 降级 roadmap | 依赖商业化决策，无触发条件 |
 | T072 | peekview-docker-deploy | ⬜ P0 | 合并→T071 | 与 T071 共用 CI/发布/同步，compose 跨依赖 |
+| T076 | code-search | — | 降级 roadmap | 浏览器 Ctrl+F 可用，内置搜索体验好但非必要 |
 
 ---
 
@@ -154,6 +160,7 @@ T068 预存失败：Account Settings 清空 display_name 时 PATCH 发 `""` 不�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-28 | 立项 T075 | structured-data-viewer：TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口；T076 code-search 降级 roadmap |
 | 2026-07-28 | 任务整理 | T071+T072 合并→T071-docker-deploy；T035/T062/T064 降级 roadmap；新建 T074-display-name-null-fix；roadmap #2 标完成/#6 降级/#29 降级/#33 决策/#34+36+37→T071/#10 非 task |
 | 2026-07-26 | 完成 T073 | ruff-sqlalchemy-regression → v0.11.1（19 处修复 + E711/E712 ignore） |
 | 2026-07-26 | 完成 T069 | detail-page-header-polish → v0.11.2（auth guard async wait + header/bottom bar UI polish） |
