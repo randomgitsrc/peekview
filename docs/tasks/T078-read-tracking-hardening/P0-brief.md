@@ -11,12 +11,12 @@ parent: 探针数据统计不准 + 查询性能 + 数据膨胀
 
 ## 任务简述
 
-强化 PeekView 的读取追踪系统：新增聚合表（O(1) 查询）、扩展统计维度（by_action）、原始事件定期清理（防膨胀）、admin stats 加全局读取概览。
+强化 PeekView 的读取追踪系统：新增聚合表（O(1) 查询）、扩展统计维度（by_action + by_source）、原始事件定期清理（防膨胀）、admin stats 加全局读取概览。
 
 ## 背景痛点
 
 1. **查询性能隐患**：`get_read_stats()` 每次对 `entry_reads` 表做 `SUM`/`COUNT(DISTINCT)`，数据量增长后查询变慢
-2. **统计维度缺失**：`read_stats` 只按 channel 分，不按 action（read/raw/download/discover）分，无法区分"人看详情页"和"Agent 读 raw"
+2. **统计维度缺失**：`read_stats` 只按 channel 分，不按 action（read/raw/download/discover）分，无法区分"人看详情页"和"Agent 读 raw"；也不按来源（source）分，不知道"从哪里来的"
 3. **数据膨胀**：`entry_reads` 表只增不减，长期运行会膨胀
 4. **全局统计缺失**：admin stats 只统计 entry/user 数量，没有读取维度
 
@@ -31,6 +31,7 @@ CREATE TABLE entry_read_stats (
     unique_readers  INTEGER DEFAULT 0,
     by_action       TEXT DEFAULT '{}',   -- JSON: {"read":12,"raw":3,"download":2,"discover":5}
     by_channel      TEXT DEFAULT '{}',   -- JSON: {"api":14,"mcp":1,"share":1}
+    by_source       TEXT DEFAULT '{}',   -- JSON: {"direct":10,"internal":3,"search":2}
     last_read_at    TEXT,
     updated_at      TEXT
 );
@@ -40,9 +41,9 @@ CREATE TABLE entry_read_stats (
 - 写时更新：`record_read()` 时同时更新 `entry_read_stats`
 - 迁移：应用启动时检查 `entry_read_stats` 是否为空，空则从 `entry_reads` 回填
 
-### B. `read_stats` 返回 `by_action`
+### B. `read_stats` 返回 `by_action` + `by_source`
 
-`ReadStatsResponse` 新增 `by_action` 字段，与现有 `by_channel` 并列：
+`ReadStatsResponse` 新增 `by_action` 和 `by_source` 字段，与现有 `by_channel` 并列：
 
 ```json
 {
@@ -57,6 +58,11 @@ CREATE TABLE entry_read_stats (
   "by_channel": {
     "api": 14,
     "mcp": 1
+  },
+  "by_source": {
+    "direct": 10,
+    "internal": 3,
+    "search": 2
   },
   "last_read_at": "2026-07-28T13:45:22"
 }
@@ -80,15 +86,47 @@ CREATE TABLE entry_read_stats (
   "total_reads": 1505,
   "reads_today": 23,
   "reads_by_action": {"read": 321, "raw": 5, "download": 12, "discover": 1188},
-  "reads_by_channel": {"api": 1499, "mcp": 5, "share": 1}
+  "reads_by_channel": {"api": 1499, "mcp": 5, "share": 1},
+  "reads_by_source": {"direct": 1200, "internal": 200, "search": 50, "unknown": 55}
 }
 ```
 
-### E. 迁移策略
+### E. 来源分类逻辑
 
-- `database.py` 的 `create_all()` 确保 `entry_read_stats` 表存在
+`record_read()` 时从 HTTP Referer header 解析来源，分类为 `source` 字段存入 `entry_reads`：
+
+| 分类 | 判断逻辑 | 示例 |
+|------|----------|------|
+| `internal` | Referer 同域名（`request.url.hostname` 匹配） | Explore 列表 → 详情页 |
+| `search` | Referer 域名匹配搜索引擎列表（google/bing/baidu/duckduckgo/yandex） | Google 搜索 → 详情页 |
+| `social` | Referer 域名匹配社交平台列表（slack/discord/wechat/telegram/twitter） | Slack 聊天 → 详情页 |
+| `direct` | 无 Referer 或空 Referer | 浏览器直接输入 URL、书签、Agent API 调用 |
+| `other` | 其他来源 | 未知网站 |
+
+实现位置：`read_tracking_service.py` 新增 `_classify_source(referer: str | None, host: str) -> str` 函数。
+
+`entry_reads` 表新增 `source` 列（string, nullable）。历史数据无 source → 回填时归为 `unknown`。
+
+### F. `unique_readers` 写时更新精度
+
+写时更新 `unique_readers` 时，不能简单 `+1`——新读取者可能已存在。策略：
+
+- `entry_read_stats` 表新增 `reader_fingerprints` 列（TEXT，存储逗号分隔的已见 fingerprint 集合，或空格分隔）
+- `record_read()` 时：检查 fingerprint 是否在 `reader_fingerprints` 中，不存在则 `unique_readers += 1` 并追加
+- 性能：`reader_fingerprints` 字符串用 `in` 检查，单 entry 读取者通常 <100 人，O(N) 可接受
+- 替代方案：用 `SET` 语义（逗号分隔字符串 + `str.split(",")` 检查），避免额外表
+
+### G. 备份/恢复同步
+
+- `admin_service.backup()` 导出 `entry_read_stats` 表数据
+- `admin_service.restore()` 导入 `entry_read_stats` 并重建
+- `AdminStatsResponse` 新增 `read_stats_imported` 字段
+
+### H. 迁移策略
+
+- `database.py` 的 `create_all()` 确保 `entry_read_stats` 表存在，`entry_reads` 表新增 `source` 列
 - 启动时检查：如果 `entry_read_stats` 为空且 `entry_reads` 有数据，执行一次性回填
-- 回填逻辑：`INSERT INTO entry_read_stats SELECT entry_id, SUM(count), ... FROM entry_reads GROUP BY entry_id`
+- 回填逻辑：从 `entry_reads` 聚合计算 `by_action`/`by_channel`/`by_source`（历史无 source 归为 `unknown`），`unique_readers` 用 `COUNT(DISTINCT reader_fingerprint)`，`reader_fingerprints` 用 `GROUP_CONCAT`
 - 回填完成后日志记录
 
 ## 不做
@@ -106,27 +144,32 @@ CREATE TABLE entry_read_stats (
 
 ## 已知风险
 
-- risk=medium：新增表 + 写时更新逻辑 + 迁移回填
-- 写时更新性能：每次 read 多一次 `entry_read_stats` 写操作。SQLite 单写者模型下，日均几十次读取无影响
+- risk=medium：新增表 + 写时更新逻辑 + 迁移回填 + 来源分类
+- 写时更新性能：每次 read 多一次 `entry_read_stats` 写操作（含 JSON 序列化 + fingerprint 检查）。SQLite 单写者模型下，日均几十次读取无影响
+- `unique_readers` 精度：`reader_fingerprints` 字符串检查在读取者很多时（>500）可能变慢。但单 entry 读取者通常 <100 人，可接受
+- Referer 不可靠：浏览器可能不发 Referer（隐私设置/DNT），Agent API 调用无 Referer → 归为 `direct`。来源统计是尽力而为，不是精确值
 - 回填数据量：当前 740 行 entry_reads，回填瞬间完成。但大量历史数据时可能需要批量处理
-- `by_action`/`by_channel` 用 JSON 存储：SQLite 没有原生 JSON 字段类型，查询不如关系型灵活。但当前只做整行读取不做 JSON 内查询，够用
+- `by_action`/`by_channel`/`by_source` 用 JSON 存储：SQLite 没有原生 JSON 字段类型，查询不如关系型灵活。但当前只做整行读取不做 JSON 内查询，够用
 
 ## 裁剪倾向
 
-- P1 不可裁（评审：聚合表设计 + 写时更新策略 + 清理时机）
-- P2 必须走（聚合表 schema + 迁移策略 + 清理配置需设计）
-- P3 保留（聚合逻辑 + 清理逻辑 + 迁移回填需要测试覆盖）
-- P5 验证：后端测试（聚合正确性 + 清理 + 迁移）
-- P6 验收：read_stats 返回 by_action + admin stats 有读取维度 + 原始事件 90 天后清理
-- P7 一致性：database.py + read_tracking_service + admin_service + config + models
+- P1 不可裁（评审：聚合表设计 + 写时更新策略 + 清理时机 + 来源分类规则）
+- P2 必须走（聚合表 schema + source 分类 + unique_readers 精度 + 迁移策略 + 清理配置）
+- P3 保留（聚合逻辑 + 来源分类 + 清理逻辑 + 迁移回填 + 备份恢复需要测试覆盖）
+- P5 验证：后端测试（聚合正确性 + source 分类 + 清理 + 迁移 + 备份恢复）
+- P6 验收：read_stats 返回 by_action + by_source + admin stats 有读取维度 + 原始事件 90 天后清理
+- P7 一致性：database.py + read_tracking_service + admin_service + config + models + entries.py + files.py
 
 ## 验证标准
 
-- `read_stats` 返回 `by_action` 字段，包含 read/raw/download/discover 四种 action
+- `read_stats` 返回 `by_action` 字段（read/raw/download/discover）和 `by_source` 字段（direct/internal/search/social/other/unknown）
 - `entry_read_stats` 表写时更新，`get_read_stats()` 从聚合表读不查原始表
-- 已有 `entry_reads` 数据在启动时回填到 `entry_read_stats`
+- `unique_readers` 写时更新准确（重复读取者不重复计数）
+- `entry_reads` 表新增 `source` 列，`record_read()` 时从 Referer 分类填充
+- 已有 `entry_reads` 数据在启动时回填到 `entry_read_stats`（source 归为 unknown）
 - 超过 90 天的 `entry_reads` 记录被清理
 - 清理后 `entry_read_stats` 数据不受影响
-- admin stats 包含 `total_reads`、`reads_today`、`reads_by_action`、`reads_by_channel`
+- admin stats 包含 `total_reads`、`reads_today`、`reads_by_action`、`reads_by_channel`、`reads_by_source`
+- backup/restore 覆盖 `entry_read_stats` 表
 - 后端测试全绿
 - `make lint` 通过
