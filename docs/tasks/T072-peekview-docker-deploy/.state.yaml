@@ -1,10 +1,14 @@
 phase: P0
 task_id: T072
-status: in_progress
+status: merged
 created: 2026-07-24
-updated: 2026-07-24
+updated: 2026-07-28
 history:
   - phase: P0
     date: 2026-07-24
     status: completed
     note: P0-brief.md 完成，PeekView Docker 部署支持
+  - phase: MERGED
+    date: 2026-07-28
+    status: merged
+    note: 合并进 T071-docker-deploy，两个镜像+compose 统一管理

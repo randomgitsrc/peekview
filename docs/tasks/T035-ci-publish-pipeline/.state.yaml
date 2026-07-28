@@ -1,0 +1,14 @@
+phase: P0
+task_id: T035
+status: deferred
+created: 2026-06-29
+updated: 2026-07-28
+history:
+  - phase: P0
+    date: 2026-06-29
+    status: completed
+    note: P0-brief.md 完成
+  - phase: DEFERRED
+    date: 2026-07-28
+    status: deferred
+    note: 降级到 roadmap。CI publish workflow 已正常工作（OIDC + NPM_TOKEN），真正要做的只是 make publish 改不上传（3 行改动），不需要走 agate 流程
