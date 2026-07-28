@@ -247,6 +247,24 @@ async def download_file(
 
         content = storage.read_file(entry_id, file_record.filename, file_record.path)
         safe_name = _sanitize_filename(file_record.filename)
+
+        entry_record = session.exec(
+            select(Entry).where(Entry.id == entry_id)
+        ).first()
+        channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+        current_user_id_dl = current_user.id if current_user else None
+        asyncio.create_task(
+            _record_read_async(
+                request.app.state,
+                entry_id=entry_id,
+                entry_owner_id=entry_record.owner_id if entry_record else None,
+                action="download",
+                channel=channel,
+                reader_id=current_user_id_dl,
+                reader_ip=request.client.host if request.client else None,
+            )
+        )
+
         return Response(
             content=content,
             media_type="application/octet-stream",
@@ -280,6 +298,24 @@ async def get_file_content(
             raise NotFoundError(f"File not found: {file_id}")
 
     content = storage.read_file(entry_id, file_record.filename, file_record.path)
+
+    with Session(engine) as session:
+        entry_record = session.exec(
+            select(Entry).where(Entry.id == entry_id)
+        ).first()
+    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    current_user_id_fc = current_user.id if current_user else None
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=entry_id,
+            entry_owner_id=entry_record.owner_id if entry_record else None,
+            action="read",
+            channel=channel,
+            reader_id=current_user_id_fc,
+            reader_ip=request.client.host if request.client else None,
+        )
+    )
 
     content_type = _determine_content_type(file_record)
     return Response(
@@ -487,7 +523,7 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
             request.app.state,
             entry_id=entry_id,
             entry_owner_id=entry_owner_id,
-            action="read",
+            action="raw",
             channel=channel,
             reader_id=current_user_id_raw,
             reader_ip=reader_ip,

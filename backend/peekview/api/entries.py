@@ -523,6 +523,21 @@ async def download_entry_files(
     zip_buffer.seek(0)
 
     filename = _sanitize_filename(f"{entry.slug}.zip")
+
+    channel = _detect_channel(request)
+    current_user_id_dl = current_user.id if current_user else None
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=entry.id,
+            entry_owner_id=entry.owner_id,
+            action="download",
+            channel=channel,
+            reader_id=current_user_id_dl,
+            reader_ip=request.client.host if request.client else None,
+        )
+    )
+
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",

@@ -664,7 +664,7 @@ class TestAPIReadTracking:
         with Session(app.state.engine) as session:
             records = session.exec(select(EntryRead)).all()
             assert len(records) >= 1
-            assert records[0].action == "read"
+            assert records[0].action == "raw"
 
     @pytest.mark.asyncio
     async def test_read_events_endpoint(self, client_and_app):
