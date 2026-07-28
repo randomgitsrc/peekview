@@ -11,7 +11,6 @@
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
-| T074 | display-name-null-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T076 | entry-card-interaction | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
@@ -37,9 +36,9 @@ Card `<a>` 拆分：card-body 变 div，title/username/tag 各自独立 `<a>`，
 
 entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推断 project（git remote → cwd → null）+ listEntries 支持 project 过滤。Agent 通过 `listEntries(project=xxx)` 读取项目演进脉络，等价 git log。前端无改动（Phase 1）。
 
-### T078: 读取追踪强化
+### T078: 读取追踪强化 + display_name 修复
 
-新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action` 维度（read/raw/download/discover）。原始事件 90 天清理（整合进 cleanup）。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。
+新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action`/`by_source` 维度。原始事件 90 天清理。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。顺手修复 T068 预存失败（display_name 清空发 `""` 不发 `null`）。
 
 ---
 
@@ -48,6 +47,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 | 编号 | 任务名称 | 原状态 | 处理方式 | 原因 |
 |------|----------|--------|----------|------|
 | T061 | t032-probe-data-review | ⬜ P0 | 降级 roadmap | 已有结论（跨 Agent 读取信号极弱），3 个月后复查 |
+| T074 | display-name-null-fix | ⬜ P0 | 合并→T078 | ≤3 行改动，不值得独立走 agate |
 | T035 | ci-publish-pipeline | ⬜ P0 | 降级 roadmap | CI publish 已工作（OIDC+NPM_TOKEN），待改的只是 make publish 不上传（3 行），不需要 agate 流程 |
 | T062 | entry-reference-fields | ⬜ P0 | 降级 roadmap | 依赖 T061 结论，T061 可能得出"无信号→不做" |
 | T064 | storage-backend-abstraction | ⬜ P0 | 降级 roadmap | 依赖商业化决策，无触发条件 |

@@ -11,7 +11,7 @@ parent: 探针数据统计不准 + 查询性能 + 数据膨胀
 
 ## 任务简述
 
-强化 PeekView 的读取追踪系统：新增聚合表（O(1) 查询）、扩展统计维度（by_action + by_source）、原始事件定期清理（防膨胀）、admin stats 加全局读取概览。
+强化 PeekView 的读取追踪系统：新增聚合表（O(1) 查询）、扩展统计维度（by_action + by_source）、原始事件定期清理（防膨胀）、admin stats 加全局读取概览。顺手修复 T068 预存失败（display_name 清空发 `""` 不发 `null`）。
 
 ## 背景痛点
 
@@ -19,6 +19,7 @@ parent: 探针数据统计不准 + 查询性能 + 数据膨胀
 2. **统计维度缺失**：`read_stats` 只按 channel 分，不按 action（read/raw/download/discover）分，无法区分"人看详情页"和"Agent 读 raw"；也不按来源（source）分，不知道"从哪里来的"
 3. **数据膨胀**：`entry_reads` 表只增不减，长期运行会膨胀
 4. **全局统计缺失**：admin stats 只统计 entry/user 数量，没有读取维度
+5. **T068 预存失败**：Account Settings 清空 display_name 时 PATCH 发 `""` 不发 `null`，后端不认为字段被清空
 
 ## 任务范围
 
@@ -122,6 +123,12 @@ CREATE TABLE entry_read_stats (
 - `admin_service.restore()` 导入 `entry_read_stats` 并重建
 - `AdminStatsResponse` 新增 `read_stats_imported` 字段
 
+### I. display_name null 修复（T074 合并）
+
+T068 预存失败：前端 `AccountSettings.vue` 表单提交时，空字符串字段序列化为 `""`，后端 `PATCH /auth/me` 的 Pydantic schema 区分 `None`（未传/清空）和 `""`（空字符串），导致清空操作不生效。
+
+修复：前端提交时，空字符串 display_name 转为 `null`。或后端 schema 将 `""` 视为清空。择一实现。
+
 ### H. 迁移策略
 
 - `database.py` 的 `create_all()` 确保 `entry_read_stats` 表存在，`entry_reads` 表新增 `source` 列
@@ -171,5 +178,6 @@ CREATE TABLE entry_read_stats (
 - 清理后 `entry_read_stats` 数据不受影响
 - admin stats 包含 `total_reads`、`reads_today`、`reads_by_action`、`reads_by_channel`、`reads_by_source`
 - backup/restore 覆盖 `entry_read_stats` 表
+- display_name 清空后 PATCH 发 `null` 非 `""`，T068 预存失败用例通过
 - 后端测试全绿
 - `make lint` 通过
