@@ -16,6 +16,7 @@
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T076 | entry-card-interaction | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
+| T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 
 ### T061: 探针数据回顾
 
@@ -40,6 +41,10 @@ Card `<a>` 拆分：card-body 变 div，title/username/tag 各自独立 `<a>`，
 ### T077: 时间线 MVP
 
 entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推断 project（git remote → cwd → null）+ listEntries 支持 project 过滤。Agent 通过 `listEntries(project=xxx)` 读取项目演进脉络，等价 git log。前端无改动（Phase 1）。
+
+### T078: 读取追踪强化
+
+新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action` 维度（read/raw/download/discover）。原始事件 90 天清理（整合进 cleanup）。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。
 
 ---
 
@@ -170,6 +175,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |
 | 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |
 | 2026-07-28 | 立项 T075 | structured-data-viewer：TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口；T076 code-search 降级 roadmap |
 | 2026-07-28 | 任务整理 | T071+T072 合并→T071-docker-deploy；T035/T062/T064 降级 roadmap；新建 T074-display-name-null-fix；roadmap #2 标完成/#6 降级/#29 降级/#33 决策/#34+36+37→T071/#10 非 task |
