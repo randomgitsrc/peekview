@@ -1,11 +1,15 @@
-phase: P0
+phase: P1
 task_id: T076
 task_name: entry-card-interaction
-status: pending
+status: completed
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-30
 history:
   - phase: P0
     date: 2026-07-28
-    status: in_progress
-    note: Card a拆分 + Tags可点击 + Explore tag过滤
+    status: completed
+    note: P0-brief 完整（范围 A/B/C/D + 不做清单 + risk=low）；2026-07-30 环境自检全 PASS（工具链/debug:8888/CDP/vision）
+  - phase: P1
+    date: 2026-07-30
+    status: completed
+    note: 21 BDD 基线（含移动端/可访问性/右键复制/tag 过滤空状态），requirements-review approved；tag 路径修正 /explore?tags=xxx；gate exit 2
