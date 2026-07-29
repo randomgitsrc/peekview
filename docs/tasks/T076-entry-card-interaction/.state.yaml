@@ -1,4 +1,4 @@
-phase: P2
+phase: P3
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -17,3 +17,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 方案A（BaseTag 多态 href + 原生 <a> + CSS tooltip），3 候选+权衡；plan-design-review approved（6 维度无 BLOCKER，7 NOTE iOS tooltip 重点）；gate exit 2
+  - phase: P3
+    date: 2026-07-30
+    status: completed
+    note: 36 单测（t076-*.spec.ts ×4）+ 42 e2e（entry-card-interaction.spec.ts），21 BDD 1:1；check-tdd-red exit 0（32 assertion failures / 0 collection errors，真红灯）

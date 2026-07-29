@@ -19,3 +19,9 @@ NEXT: 派发 architect subagent 执行 P2（产出 P2-design.md，方案设计 +
 GATE PASS: P2 gate exit 2（3 候选方案+权衡，四字段齐全 packages=[frontend-v3]/domains=[frontend]/ui_affected=true/gate_commands 含 P5+P5_e2e；P2-review.md status=approved + agent=plan-design-review）。方案 A：BaseTag 多态 href + 原生 <a> + CSS tooltip。design-review 提 7 条 NOTE（iOS touch tooltip 为重点风险），P4 实现需消费 P2-review.md。
 
 NEXT: 派发 test-designer subagent 执行 P3（产出 TDD 红灯测试，含 vitest 单测 + Playwright e2e）
+
+GATE PASS: P3 红灯 exit 0（assertion_failures=32, collection_errors=0，classic red-light）。测试代码：t076-base-tag/entry-card/entry-list-row/search-url-tags.spec.ts（36 单测）+ e2e/entry-card-interaction.spec.ts（42 e2e），21 BDD 1:1 映射。P3-test-cases.md 含 test_code_dir。
+
+NOTE: vitest 红灯验证适配配置（check-tdd-red.sh，cwd=frontend-v3）：TEST_RUNNER="npx vitest run" TEST_RUNNER_FLAGS="--reporter=default" TEST_FAIL_PATTERN="Tests[[:space:]]+[0-9]+ failed" TEST_ERROR_PATTERN="Failed Suites[[:space:]]+[0-9]+" TEST_IMPORT_PATTERN="Cannot find (module|package) '" PROJECT_MODULE="src"。默认 FAIL_PATTERN 会匹配 vitest 多行 "N failed" 导致整数解析错误，必须用精确 pattern。
+
+NEXT: 派发 implementer subagent 执行 P4（按 P2 方案实现 EntryCard/EntryListRow/BaseTag/EntryListView，让红灯变绿）
