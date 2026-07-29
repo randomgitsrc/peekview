@@ -15,3 +15,7 @@ NEXT: 派发 analyst subagent 执行 P1（产出 P1-requirements.md，建立 BDD
 GATE PASS: P1 gate exit 2（21 BDD `#### BDD-NN`，0 NEED_CONFIRM，0 GAP，risk_level=low，domains=[frontend]，packages=[frontend-v3]，phases=[P1-P8]；P1-review.md status=approved + agent=requirements-review + 含 BDD 锚点）。analyst 将 tag 过滤路径从 P0 的 /?tags=xxx 修正为 /explore?tags=xxx，review 核实路由正确。
 
 NEXT: 派发 architect subagent 执行 P2（产出 P2-design.md，方案设计 + gate_commands + files_to_read）
+
+GATE PASS: P2 gate exit 2（3 候选方案+权衡，四字段齐全 packages=[frontend-v3]/domains=[frontend]/ui_affected=true/gate_commands 含 P5+P5_e2e；P2-review.md status=approved + agent=plan-design-review）。方案 A：BaseTag 多态 href + 原生 <a> + CSS tooltip。design-review 提 7 条 NOTE（iOS touch tooltip 为重点风险），P4 实现需消费 P2-review.md。
+
+NEXT: 派发 test-designer subagent 执行 P3（产出 TDD 红灯测试，含 vitest 单测 + Playwright e2e）

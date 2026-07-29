@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -13,3 +13,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 21 BDD 基线（含移动端/可访问性/右键复制/tag 过滤空状态），requirements-review approved；tag 路径修正 /explore?tags=xxx；gate exit 2
+  - phase: P2
+    date: 2026-07-30
+    status: completed
+    note: 方案A（BaseTag 多态 href + 原生 <a> + CSS tooltip），3 候选+权衡；plan-design-review approved（6 维度无 BLOCKER，7 NOTE iOS tooltip 重点）；gate exit 2
