@@ -14,6 +14,8 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-30
+
 ### 新增
 
 - BaseTag 可点击跳转 `/explore?tags={tag}` 过滤页 (T076)
@@ -28,6 +30,7 @@
 
 - Account Settings 清空 display_name 时 PATCH 发送 `null` 而非空字符串，与后端语义一致 (T074)
 - 修复 ruff lint 残留：cli.py N806 noqa 位置错误 + scripts/ import 排序
+- read tracking 埋点修正：raw 端点 action 区分为 'raw'（区分详情页读取与 Agent raw 读取），新增 download/zip/单文件下载埋点 (T032)
 
 ## [0.11.2] - 2026-07-26
 
