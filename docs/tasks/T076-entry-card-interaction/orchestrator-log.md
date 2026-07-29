@@ -25,3 +25,7 @@ GATE PASS: P3 红灯 exit 0（assertion_failures=32, collection_errors=0，class
 NOTE: vitest 红灯验证适配配置（check-tdd-red.sh，cwd=frontend-v3）：TEST_RUNNER="npx vitest run" TEST_RUNNER_FLAGS="--reporter=default" TEST_FAIL_PATTERN="Tests[[:space:]]+[0-9]+ failed" TEST_ERROR_PATTERN="Failed Suites[[:space:]]+[0-9]+" TEST_IMPORT_PATTERN="Cannot find (module|package) '" PROJECT_MODULE="src"。默认 FAIL_PATTERN 会匹配 vitest 多行 "N failed" 导致整数解析错误，必须用精确 pattern。
 
 NEXT: 派发 implementer subagent 执行 P4（按 P2 方案实现 EntryCard/EntryListRow/BaseTag/EntryListView，让红灯变绿）
+
+GATE PASS: P4（暂存区含非 md/yaml 代码文件）。实现 5 文件（EntryCard/EntryListRow/BaseTag/EntryListView/searchUrl.logic）+ 6 旧测试结构适配（span role=link→<a>，加 vue-router mock；主 Agent 核实非删断言、方向符合 P2、P3 t076-* 基线未改）。主 Agent 自跑：make typecheck exit 0 + make test-frontend exit 0（77 文件/1057 passed|1 skipped）。P4-review.md status=approved + agent=design-review（7 维度全过）。
+
+NEXT: 派发 verifier subagent 执行 P5（技术验证：跑 P2 gate_commands.P5 + P5_e2e，全绿）

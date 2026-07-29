@@ -33,6 +33,7 @@ export interface RestoredQuery {
   owner: string | null
   status: string | null
   page: number
+  tags: string[]
 }
 
 export function parseRestoreQuery(queryString: string): RestoredQuery {
@@ -41,6 +42,8 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
   const q = params.get('q') ?? ''
   const owner = params.get('owner') ?? null
   const status = params.get('status') ?? null
+  const tagsParam = params.get('tags')
+  const tags = tagsParam ? tagsParam.split(',').filter(Boolean) : []
 
   let page = 1
   const pageParam = params.get('page')
@@ -51,7 +54,7 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
     }
   }
 
-  return { q, owner, status, page }
+  return { q, owner, status, page, tags }
 }
 
 export type SearchKeyAction = 'flush' | 'clear' | 'none'

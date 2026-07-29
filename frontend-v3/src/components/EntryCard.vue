@@ -18,21 +18,17 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
     </div>
-    <a
-      class="card-body"
-      :href="'/' + entry.slug"
-      @click.prevent="$emit('navigate', entry)"
-    >
-      <h3 class="card-title">{{ entry.summary || entry.slug }}</h3>
+    <div class="card-body">
+      <a class="card-title" :href="'/' + entry.slug" @click.prevent="navigateToEntry">
+        {{ entry.summary || entry.slug }}
+      </a>
       <div class="card-meta-text">
-        <span
+        <a
           v-if="entry.username"
           class="meta-username"
-          role="link"
-          tabindex="0"
-          @click.stop.prevent="navigateToUser"
-          @keydown.enter.stop.prevent="navigateToUser"
-        >@{{ entry.username }}</span>
+          :href="'/users/' + entry.username"
+          @click.prevent="navigateToUser"
+        >@{{ entry.username }}</a>
         <span v-if="entry.username" class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
         <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
         <template v-if="entry.fileCount">
@@ -41,15 +37,27 @@
         </template>
       </div>
       <div v-if="entry.tags.length" class="card-tags">
-        <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
-        <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
+        <BaseTag
+          v-for="tag in visibleTags"
+          :key="tag"
+          :href="'/explore?tags=' + encodeURIComponent(tag)"
+          @navigate="navigateToTag"
+        >{{ tag }}</BaseTag>
+        <button
+          v-if="remainingTagCount > 0"
+          type="button"
+          class="tag-overflow"
+          tabindex="0"
+          :data-tags="entry.tags.join(', ')"
+          :aria-label="'All tags: ' + entry.tags.join(', ')"
+        >+{{ remainingTagCount }}</button>
       </div>
       <div v-if="isOwner || isExpiredButActive" class="card-footer">
         <BaseBadge v-if="isExpiredButActive" status="expired" />
         <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else :status="entry.isPublic ? 'public' : 'private'" />
       </div>
-    </a>
+    </div>
   </div>
 </template>
 
@@ -72,17 +80,29 @@ const props = withDefaults(defineProps<{
 })
 
 defineEmits<{
-  navigate: [entry: Entry]
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
 
 const router = useRouter()
 
+function navigateToEntry() {
+  const firstFileId = props.entry.files?.[0]?.id
+  if (firstFileId) {
+    router.push({ path: `/${props.entry.slug}`, query: { firstFileId: String(firstFileId) } })
+  } else {
+    router.push(`/${props.entry.slug}`)
+  }
+}
+
 function navigateToUser() {
   if (props.entry.username) {
     router.push(`/users/${props.entry.username}`)
   }
+}
+
+function navigateToTag(href: string) {
+  router.push(href)
 }
 
 const TAG_LIMIT = 3
@@ -164,7 +184,6 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   flex-direction: column;
   flex: 1;
   padding: var(--space-4);
-  cursor: pointer;
 }
 
 .card-title {
@@ -176,6 +195,16 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-decoration: none;
+}
+
+.card-title:hover {
+  text-decoration: underline;
+}
+
+.card-title:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .card-desc {
@@ -204,6 +233,11 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   text-decoration: underline;
 }
 
+.meta-username:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
+}
+
 .meta-sep {
   color: var(--c-text-tertiary);
   font-family: Inter, -apple-system, sans-serif;
@@ -222,6 +256,7 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 }
 
 .tag-overflow {
+  position: relative;
   display: inline-flex;
   align-items: center;
   background: var(--c-tag-bg);
@@ -230,6 +265,37 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   padding: 4px 10px;
   font-size: var(--font-xs);
   font-family: var(--font-mono);
+  border: none;
+  cursor: default;
+}
+
+.tag-overflow::after {
+  content: attr(data-tags);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-xs);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+}
+
+.tag-overflow:hover::after,
+.tag-overflow:focus::after {
+  opacity: 1;
+}
+
+.tag-overflow:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .card-footer {

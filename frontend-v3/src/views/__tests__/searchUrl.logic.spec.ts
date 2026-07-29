@@ -133,6 +133,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: 'me',
       status: null,
       page: 2,
+      tags: [],
     })
   })
 
@@ -143,6 +144,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: null,
       status: null,
       page: 1,
+      tags: [],
     })
   })
 
@@ -153,6 +155,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: 'me',
       status: null,
       page: 1,
+      tags: [],
     })
   })
 
@@ -163,6 +166,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: null,
       status: null,
       page: 1,
+      tags: [],
     })
   })
 
@@ -173,6 +177,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: null,
       status: null,
       page: 1,
+      tags: [],
     })
   })
 
@@ -198,6 +203,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: null,
       status: null,
       page: 1,
+      tags: [],
     })
   })
 
@@ -218,6 +224,7 @@ describe('parseRestoreQuery — URL query parsing for restoreFromURL', () => {
       owner: 'alice',
       status: null,
       page: 1,
+      tags: [],
     })
   })
 

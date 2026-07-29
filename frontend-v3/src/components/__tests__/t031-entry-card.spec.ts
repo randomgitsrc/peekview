@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EntryCard from '@/components/EntryCard.vue'
 import type { Entry } from '@/types'
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: pushMock }) }))
 
 const mockEntry: Entry = {
   id: 1,
@@ -19,30 +22,29 @@ const mockEntry: Entry = {
   createdAt: '2026-01-01T00:00:00Z',
 }
 
-const routerLinkStub = {
-  template: '<a :href="to"><slot /></a>',
-  props: ['to'],
-}
-
 describe('T031 EntryCard', () => {
   const createWrapper = (props: Record<string, any> = {}) =>
     mount(EntryCard, {
       props: { entry: mockEntry, ...props },
-      global: { stubs: { 'router-link': routerLinkStub } },
     })
+
+  beforeEach(() => {
+    pushMock.mockClear()
+  })
 
   describe('BDD-2: native link', () => {
-    it('card-body should be an <a> element with href to entry slug', () => {
+    it('card-title should be an <a> element with href to entry slug', () => {
       const wrapper = createWrapper()
-      const cardBody = wrapper.find('.card-body')
-      expect(cardBody.exists()).toBe(true)
-      expect(cardBody.element.tagName.toLowerCase()).toBe('a')
-      expect(cardBody.attributes('href')).toBe('/test-entry')
+      const title = wrapper.find('.card-title')
+      expect(title.exists()).toBe(true)
+      expect(title.element.tagName.toLowerCase()).toBe('a')
+      expect(title.attributes('href')).toBe('/test-entry')
     })
 
-    it('should NOT have role="button" or tabindex="0"', () => {
+    it('card-body should be a <div> (not a link)', () => {
       const wrapper = createWrapper()
       const cardBody = wrapper.find('.card-body')
+      expect(cardBody.element.tagName.toLowerCase()).toBe('div')
       expect(cardBody.attributes('role')).not.toBe('button')
       expect(cardBody.attributes('tabindex')).toBeUndefined()
     })
@@ -65,34 +67,30 @@ describe('T031 EntryCard', () => {
   })
 
   describe('BDD-7: nested interactive elements', () => {
-    it('username should be a span with role="link", not a router-link or <a>', () => {
+    it('username should be an <a> with href to user page', () => {
       const wrapper = createWrapper()
       const username = wrapper.find('.meta-username')
       expect(username.exists()).toBe(true)
-      expect(username.element.tagName.toLowerCase()).toBe('span')
-      expect(username.attributes('role')).toBe('link')
+      expect(username.element.tagName.toLowerCase()).toBe('a')
+      expect(username.attributes('href')).toBe('/users/alice')
     })
 
-    it('card body should be <a> and clicking toggle button should NOT emit navigate', async () => {
+    it('clicking toggle button should NOT trigger navigation', async () => {
       const wrapper = createWrapper({ isOwner: true })
-      const cardBody = wrapper.find('.card-body')
-      expect(cardBody.element.tagName.toLowerCase()).toBe('a')
       const toggleBtn = wrapper.find('.card-action-btn')
       expect(toggleBtn.exists()).toBe(true)
       await toggleBtn.trigger('click')
       expect(wrapper.emitted('toggleVisibility')).toBeTruthy()
-      expect(wrapper.emitted('navigate')).toBeFalsy()
+      expect(pushMock).not.toHaveBeenCalled()
     })
 
-    it('card body should be <a> and clicking delete button should NOT emit navigate', async () => {
+    it('clicking delete button should NOT trigger navigation', async () => {
       const wrapper = createWrapper({ isOwner: true })
-      const cardBody = wrapper.find('.card-body')
-      expect(cardBody.element.tagName.toLowerCase()).toBe('a')
       const deleteBtn = wrapper.find('.card-action-btn--danger')
       expect(deleteBtn.exists()).toBe(true)
       await deleteBtn.trigger('click')
       expect(wrapper.emitted('delete')).toBeTruthy()
-      expect(wrapper.emitted('navigate')).toBeFalsy()
+      expect(pushMock).not.toHaveBeenCalled()
     })
   })
 })

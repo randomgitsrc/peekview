@@ -1,22 +1,20 @@
 <template>
-  <a
+  <div
     class="entry-list-row"
     :class="{ 'entry-list-row--archived': entry.status === 'archived' }"
-    :href="'/' + entry.slug"
-    @click.prevent="$emit('navigate', entry)"
   >
     <div class="entry-content">
-      <div class="entry-title">{{ entry.summary || entry.slug }}</div>
+      <a class="entry-title" :href="'/' + entry.slug" @click.prevent="navigateToEntry">
+        {{ entry.summary || entry.slug }}
+      </a>
       <div class="entry-meta-row">
         <span class="entry-meta">
-          <span
+          <a
             v-if="entry.username"
             class="meta-username"
-            role="link"
-            tabindex="0"
-            @click.stop.prevent="navigateToUser"
-            @keydown.enter.stop.prevent="navigateToUser"
-          >@{{ entry.username }}</span>
+            :href="'/users/' + entry.username"
+            @click.prevent="navigateToUser"
+          >@{{ entry.username }}</a>
           <span v-if="entry.username" class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
           <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
           <template v-if="entry.fileCount">
@@ -26,8 +24,20 @@
         </span>
       </div>
       <div v-if="entry.tags.length" class="entry-tags-row">
-        <BaseTag v-for="tag in visibleTags" :key="tag">{{ tag }}</BaseTag>
-        <span v-if="remainingTagCount > 0" class="tag-overflow">+{{ remainingTagCount }}</span>
+        <BaseTag
+          v-for="tag in visibleTags"
+          :key="tag"
+          :href="'/explore?tags=' + encodeURIComponent(tag)"
+          @navigate="navigateToTag"
+        >{{ tag }}</BaseTag>
+        <button
+          v-if="remainingTagCount > 0"
+          type="button"
+          class="tag-overflow"
+          tabindex="0"
+          :data-tags="entry.tags.join(', ')"
+          :aria-label="'All tags: ' + entry.tags.join(', ')"
+        >+{{ remainingTagCount }}</button>
       </div>
     </div>
     <div class="entry-right">
@@ -56,7 +66,7 @@
       </div>
     </div>
     <slot name="actions" />
-  </a>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -78,12 +88,20 @@ const props = withDefaults(defineProps<{
 })
 
 defineEmits<{
-  navigate: [entry: Entry]
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
 
 const router = useRouter()
+
+function navigateToEntry() {
+  const firstFileId = props.entry.files?.[0]?.id
+  if (firstFileId) {
+    router.push({ path: `/${props.entry.slug}`, query: { firstFileId: String(firstFileId) } })
+  } else {
+    router.push(`/${props.entry.slug}`)
+  }
+}
 
 function navigateToUser() {
   if (props.entry.username) {
@@ -91,9 +109,15 @@ function navigateToUser() {
   }
 }
 
-const visibleTags = computed(() => props.entry.tags)
+function navigateToTag(href: string) {
+  router.push(href)
+}
 
-const remainingTagCount = computed(() => 0)
+const TAG_LIMIT = 3
+
+const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
+
+const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
 const createdAtRef = toRef(() => props.entry.createdAt)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
@@ -108,17 +132,11 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   align-items: center;
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--c-border);
-  cursor: pointer;
   transition: background var(--transition-fast);
 }
 
 .entry-list-row:hover {
   background: var(--c-surface-lower);
-}
-
-.entry-list-row:focus-visible {
-  outline: 2px solid var(--c-accent-secondary);
-  outline-offset: -2px;
 }
 
 .entry-content {
@@ -132,6 +150,17 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  text-decoration: none;
+}
+
+.entry-title:hover {
+  text-decoration: underline;
+}
+
+.entry-title:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .entry-meta-row {
@@ -163,6 +192,11 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   text-decoration: underline;
 }
 
+.meta-username:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
+}
+
 .meta-sep {
   color: var(--c-text-tertiary);
   font-family: Inter, -apple-system, sans-serif;
@@ -173,6 +207,7 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 }
 
 .tag-overflow {
+  position: relative;
   display: inline-flex;
   align-items: center;
   background: var(--c-tag-bg);
@@ -181,6 +216,37 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   padding: 4px 10px;
   font-size: var(--font-xs);
   font-family: var(--font-mono);
+  border: none;
+  cursor: default;
+}
+
+.tag-overflow::after {
+  content: attr(data-tags);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-xs);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+}
+
+.tag-overflow:hover::after,
+.tag-overflow:focus::after {
+  opacity: 1;
+}
+
+.tag-overflow:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .entry-right {

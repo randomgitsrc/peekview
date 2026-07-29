@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import EntryCard from '@/components/EntryCard.vue'
 import type { Entry } from '@/types'
 
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
 vi.mock('@/composables/useRelativeTime', () => ({
   useRelativeTime: () => ({ relative: ref('2d ago'), full: ref('2026-07-07 14:30') }),
 }))
@@ -41,12 +43,12 @@ describe('EntryCard', () => {
     expect(wrapper.find('.meta-username').exists()).toBe(false)
   })
 
-  it('TC-B15: @username is a clickable span with role=link', () => {
+  it('TC-B15: @username is a clickable link', () => {
     const entry = makeEntry({ username: 'alice' })
     const wrapper = mount(EntryCard, { props: { entry }, global: { stubs: { BaseTag: true, BaseBadge: true } } })
     const link = wrapper.find('.meta-username')
     expect(link.exists()).toBe(true)
-    expect(link.attributes('role')).toBe('link')
+    expect(link.element.tagName.toLowerCase()).toBe('a')
     expect(link.text()).toContain('alice')
   })
 

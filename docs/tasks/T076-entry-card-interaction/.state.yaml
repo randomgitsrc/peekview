@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -21,3 +21,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 36 单测（t076-*.spec.ts ×4）+ 42 e2e（entry-card-interaction.spec.ts），21 BDD 1:1；check-tdd-red exit 0（32 assertion failures / 0 collection errors，真红灯）
+  - phase: P4
+    date: 2026-07-30
+    status: completed
+    note: 5 实现（EntryCard/EntryListRow/BaseTag/EntryListView/searchUrl.logic）+ 6 旧测试结构适配；1057 全绿 + typecheck 通过；design-review approved（7 维度）；P3 t076-* 基线未改

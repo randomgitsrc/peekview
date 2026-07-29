@@ -51,8 +51,14 @@
             >Archived</button>
           </div>
 
-          <div v-if="showChip" class="filter-chip-bar">
-            <FilterChip :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+          <div v-if="showChip || currentTags.length" class="filter-chip-bar">
+            <FilterChip v-if="showChip" :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+            <FilterChip
+              v-for="tag in currentTags"
+              :key="tag"
+              :label="tag"
+              @dismiss="removeTag(tag)"
+            />
           </div>
         </div>
         <div class="toolbar-right">
@@ -143,7 +149,6 @@
             :entry="entry"
             :is-owner="authStore.isOwner(entry.ownerId)"
             :current-username="currentUserUsername"
-            @navigate="navigateToEntry"
             @toggle-visibility="handleToggleVisibility"
             @delete="confirmDeleteEntry"
           />
@@ -155,7 +160,6 @@
             :entry="entry"
             :is-owner="authStore.isOwner(entry.ownerId)"
             :current-username="currentUserUsername"
-            @navigate="navigateToEntry"
             @toggle-visibility="handleToggleVisibility"
             @delete="confirmDeleteEntry"
           />
@@ -271,6 +275,7 @@ const props = defineProps<{
 
 const currentOwner = ref<string | null>(null)
 const currentStatus = ref<string | null>(null)
+const currentTags = ref<string[]>([])
 const authChangeAnnouncement = ref('')
 
 const isBannerMode = computed(() =>
@@ -323,14 +328,14 @@ function flushSearch() {
   const q = searchQuery.value.trim()
   updateURL({ q: q || undefined, page: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: q || undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: q || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 function clearSearch() {
   searchQuery.value = ''
   updateURL({ q: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 const debouncedSearch = useDebounce(flushSearch, 300)
@@ -351,7 +356,7 @@ function setFilter(owner: string | null, status: string | null) {
   currentOwner.value = owner
   currentStatus.value = status
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, status: status || undefined, q: searchQuery.value || undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, status: status || undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   updateURL({ owner: owner || undefined, status: status || undefined, page: undefined })
 }
 
@@ -359,17 +364,15 @@ function clearOwnerFilter() {
   currentOwner.value = null
   currentStatus.value = null
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, q: searchQuery.value || undefined })
+  loadEntries({ page: 1, perPage: perPage.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   updateURL({ owner: undefined, status: undefined, page: undefined })
 }
 
-function navigateToEntry(entry: Entry) {
-  const firstFileId = entry.files?.[0]?.id
-  if (firstFileId) {
-    router.push({ path: `/${entry.slug}`, query: { firstFileId: String(firstFileId) } })
-  } else {
-    router.push(`/${entry.slug}`)
-  }
+function removeTag(tag: string) {
+  currentTags.value = currentTags.value.filter(t => t !== tag)
+  currentPage.value = 1
+  updateURL({ tags: currentTags.value.length ? currentTags.value.join(',') : undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 function navigateToApiKeys() {
@@ -458,7 +461,7 @@ watch(viewMode, (mode) => {
 
 watch(currentPage, (newPage) => {
   updateURL({ page: newPage > 1 ? String(newPage) : undefined })
-  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 })
 
 watch(() => props.owner, (newOwner) => {
@@ -466,7 +469,7 @@ watch(() => props.owner, (newOwner) => {
     currentOwner.value = null
     currentStatus.value = null
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, q: searchQuery.value || undefined })
+    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   }
 })
 
@@ -482,7 +485,7 @@ watch(authState, (newState, oldState) => {
       }
     }
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   } else if (newState === 'anonymous' && oldState === 'authenticated') {
     authChangeAnnouncement.value = 'Signed out. List refreshed.'
     if (currentStatus.value === 'archived') {
@@ -493,7 +496,7 @@ watch(authState, (newState, oldState) => {
       })
     }
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined }, { clearOnError: false })
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined }, { clearOnError: false })
   }
 })
 
@@ -514,6 +517,7 @@ function restoreFromURL() {
   const restored = parseRestoreQuery(window.location.search.slice(1))
   searchQuery.value = restored.q
   currentPage.value = restored.page
+  currentTags.value = restored.tags ?? []
 }
 
 onMounted(() => {
@@ -521,7 +525,7 @@ onMounted(() => {
     currentOwner.value = null
   }
   restoreFromURL()
-  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined })
+  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 })
 
 onBeforeRouteUpdate((to) => {
@@ -532,13 +536,16 @@ onBeforeRouteUpdate((to) => {
   const newOwner = (to.query.owner as string) || null
   const newStatus = (to.query.status as string) || null
   const newPage = parseInt(to.query.page as string) || 1
+  const newTagsParam = (to.query.tags as string) || ''
+  const newTags = newTagsParam ? newTagsParam.split(',').filter(Boolean) : []
 
   searchQuery.value = newQ
   currentOwner.value = newOwner
   currentStatus.value = newStatus
   currentPage.value = Math.max(1, newPage)
+  currentTags.value = newTags
 
-  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, status: newStatus || undefined, q: newQ || undefined })
+  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, status: newStatus || undefined, q: newQ || undefined, tags: newTags.length ? newTags : undefined })
 })
 </script>
 

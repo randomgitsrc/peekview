@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EntryListRow from '@/components/EntryListRow.vue'
 import type { Entry } from '@/types'
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: pushMock }) }))
 
 const mockEntry: Entry = {
   id: 1,
@@ -19,30 +22,29 @@ const mockEntry: Entry = {
   createdAt: '2026-01-01T00:00:00Z',
 }
 
-const routerLinkStub = {
-  template: '<a :href="to"><slot /></a>',
-  props: ['to'],
-}
-
 describe('T031 EntryListRow', () => {
   const createWrapper = (props: Record<string, any> = {}) =>
     mount(EntryListRow, {
       props: { entry: mockEntry, ...props },
-      global: { stubs: { 'router-link': routerLinkStub } },
     })
+
+  beforeEach(() => {
+    pushMock.mockClear()
+  })
 
   describe('BDD-2: native link', () => {
-    it('root element should be an <a> with href to entry slug', () => {
+    it('entry-title should be an <a> with href to entry slug', () => {
       const wrapper = createWrapper()
-      const root = wrapper.find('.entry-list-row')
-      expect(root.exists()).toBe(true)
-      expect(root.element.tagName.toLowerCase()).toBe('a')
-      expect(root.attributes('href')).toBe('/test-entry')
+      const title = wrapper.find('.entry-title')
+      expect(title.exists()).toBe(true)
+      expect(title.element.tagName.toLowerCase()).toBe('a')
+      expect(title.attributes('href')).toBe('/test-entry')
     })
 
-    it('should NOT have role="button" or tabindex="0"', () => {
+    it('root should be a <div> (not a link)', () => {
       const wrapper = createWrapper()
       const root = wrapper.find('.entry-list-row')
+      expect(root.element.tagName.toLowerCase()).toBe('div')
       expect(root.attributes('role')).not.toBe('button')
       expect(root.attributes('tabindex')).toBeUndefined()
     })
@@ -65,23 +67,21 @@ describe('T031 EntryListRow', () => {
   })
 
   describe('BDD-7: nested interactive elements', () => {
-    it('username should be a span with role="link", not a router-link or <a>', () => {
+    it('username should be an <a> with href to user page', () => {
       const wrapper = createWrapper()
       const username = wrapper.find('.meta-username')
       expect(username.exists()).toBe(true)
-      expect(username.element.tagName.toLowerCase()).toBe('span')
-      expect(username.attributes('role')).toBe('link')
+      expect(username.element.tagName.toLowerCase()).toBe('a')
+      expect(username.attributes('href')).toBe('/users/alice')
     })
 
-    it('root should be <a> and clicking toggle button should NOT emit navigate', async () => {
+    it('clicking toggle button should NOT trigger navigation', async () => {
       const wrapper = createWrapper({ isOwner: true })
-      const root = wrapper.find('.entry-list-row')
-      expect(root.element.tagName.toLowerCase()).toBe('a')
       const toggleBtn = wrapper.find('[data-action="toggle-visibility"]')
       expect(toggleBtn.exists()).toBe(true)
       await toggleBtn.trigger('click')
       expect(wrapper.emitted('toggleVisibility')).toBeTruthy()
-      expect(wrapper.emitted('navigate')).toBeFalsy()
+      expect(pushMock).not.toHaveBeenCalled()
     })
   })
 })

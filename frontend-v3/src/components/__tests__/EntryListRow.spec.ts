@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EntryListRow from '@/components/EntryListRow.vue'
 import type { Entry } from '@/types'
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: pushMock }) }))
 
 const mockEntry: Entry = {
   id: 1,
@@ -27,17 +30,15 @@ const mockPrivateEntry: Entry = {
   username: 'bob',
 }
 
-const routerLinkStub = {
-  template: '<a :href="to"><slot /></a>',
-  props: ['to'],
-}
-
 describe('EntryListRow', () => {
   const createWrapper = (props: Record<string, any> = {}) =>
     mount(EntryListRow, {
       props: { entry: mockEntry, ...props },
-      global: { stubs: { 'router-link': routerLinkStub } },
     })
+
+  beforeEach(() => {
+    pushMock.mockClear()
+  })
 
   it('renders entry summary', () => {
     const wrapper = createWrapper()
@@ -87,29 +88,18 @@ describe('EntryListRow', () => {
     expect(actions.exists()).toBe(false)
   })
 
-  it('emits navigate on row click', async () => {
+  it('navigates via title link click', async () => {
     const wrapper = createWrapper()
-    const row = wrapper.find('.entry-list-row') || wrapper.find('[role="button"]') || wrapper.find('a')
-    if (row.exists()) {
-      await row.trigger('click')
-      expect(wrapper.emitted('navigate')).toBeTruthy()
-    }
+    const title = wrapper.find('.entry-title')
+    await title.trigger('click')
+    expect(pushMock).toHaveBeenCalled()
   })
 
-  it('renders row as a native link (Enter handled natively by <a>)', () => {
+  it('renders title as a native link with href', () => {
     const wrapper = createWrapper()
-    const link = wrapper.find('a.entry-list-row') || wrapper.find('a[href]')
+    const link = wrapper.find('a.entry-title')
     expect(link.exists()).toBe(true)
     expect(link.attributes('href')).toContain('test-entry')
-  })
-
-  it('does not emit navigate on Space key (links do not respond to Space)', async () => {
-    const wrapper = createWrapper()
-    const row = wrapper.find('a.entry-list-row') || wrapper.find('a[href]')
-    if (row.exists()) {
-      await row.trigger('keydown', { key: ' ' })
-      expect(wrapper.emitted('navigate')).toBeFalsy()
-    }
   })
 
   it('emits toggleVisibility when visibility button clicked', async () => {

@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import EntryListRow from '@/components/EntryListRow.vue'
 import type { Entry } from '@/types'
 
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
 vi.mock('@/composables/useRelativeTime', () => ({
   useRelativeTime: () => ({ relative: ref('2d ago'), full: ref('2026-07-07 14:30') }),
 }))
@@ -41,12 +43,12 @@ describe('EntryListRow', () => {
     expect(wrapper.find('.meta-username').exists()).toBe(false)
   })
 
-  it('TC-B15: @username is a clickable span with role=link', () => {
+  it('TC-B15: @username is a clickable link', () => {
     const entry = makeEntry({ username: 'bob' })
     const wrapper = mount(EntryListRow, { props: { entry }, global: { stubs: { BaseTag: true, BaseBadge: true } } })
     const link = wrapper.find('.meta-username')
     expect(link.exists()).toBe(true)
-    expect(link.attributes('role')).toBe('link')
+    expect(link.element.tagName.toLowerCase()).toBe('a')
     expect(link.text()).toContain('bob')
   })
 
