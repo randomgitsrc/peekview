@@ -403,7 +403,7 @@ publish:
 	@echo "→ Step 4/4: 发布到 PyPI..."
 	@TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
-		for f in "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
+		for f in "$HOME/.env" "$HOME/.bash_env" "$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
 				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
@@ -414,7 +414,7 @@ publish:
 		echo "✗ Error: PYPI_API_TOKEN not set"; \
 		echo ""; \
 		echo "  获取方式：https://pypi.org/manage/account/token/"; \
-		echo "  配置方式：echo 'export PYPI_API_TOKEN=\"pypi-...\"' >> ~/.bash_env"; \
+		echo "  配置方式：echo 'PYPI_API_TOKEN=\"pypi-...\"' >> ~/.env"; \
 		echo ""; \
 		exit 1; \
 	fi; \
@@ -429,7 +429,7 @@ publish-test: clean build test check-version
 	@echo "→ Publishing to TestPyPI..."
 	@TOKEN="$$PYPI_TEST_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
-		for f in "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
+		for f in "$HOME/.env" "$HOME/.bash_env" "$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
 				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_TEST_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
