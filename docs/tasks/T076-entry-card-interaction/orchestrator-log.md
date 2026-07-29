@@ -41,3 +41,7 @@ GATE PASS: P6 验收。21 BDD 全 PASS（check-gate.sh P6 exit 2，FAIL=0/NC=0/T
 DECISION: P6 首轮 vision 对 BDD-02/12/20 报否定（列表页/无 chip/无 focus 轮廓）。主 Agent 按 T046 原则逐条追查根因（不自改源码、不程序化指标反驳）：三者均为 e2e 证据截图时机问题（BDD-02 SPA 过渡期未卸载列表 DOM；BDD-12 截图在 chip 移除后；BDD-20 截图在 Tab 遍历后焦点移出），实现经核实正确（自写验证脚本：navigated-to-detail=true / shows-removable-chip+removal-works=true / outline=solid 2px rgb(5,80,174)）。主 Agent 重截正确证据（P6 允许自写脚本落 P6-evidence/）+ vision 复核 blocker=0。非实现缺陷，不退 P4。
 
 NEXT: 派发 consistency-reviewer subagent 执行 P7（一致性检查：实现 vs P2 设计 + DESIGN_GAP 配对）
+
+GATE PASS: P7 一致性检查 exit 0（BLOCKER=0，DEVIATION-CRITICAL=0）。实现忠实 P2 方案 A（0 DESIGN_GAP）；P1 21 BDD ↔ P6 21 PASS 编号一一对应内容正确；packages=[frontend-v3] 与 P4 改动范围吻合；无残留 NEED_CONFIRM/SCOPE+。
+
+NEXT: 派发 releaser subagent 执行 P8（发布准备：bump_type 判定 + CHANGELOG + 版本文件核对，不 commit/tag）

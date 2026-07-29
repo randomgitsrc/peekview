@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -39,3 +39,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 21 BDD 全 PASS（证据截图×19 + href/nav/chip/focus 断言 log + vision×19 全 blocker=0）；provenance exit 0；BDD-02/12/20 首轮 vision 否定系证据截图时机问题（SPA 过渡/移除后/焦点移出），主 Agent 自写脚本重截+vision 复核通过，实现无缺陷
+  - phase: P7
+    date: 2026-07-30
+    status: completed
+    note: 一致性检查通过（BLOCKER=0，CRITICAL=0，gate exit 0）；实现忠实 P2 方案 A（0 DESIGN_GAP）；P1 21 BDD ↔ P6 21 PASS 编号一一对应；packages=[frontend-v3] 与改动范围吻合
