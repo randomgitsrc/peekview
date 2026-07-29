@@ -79,17 +79,6 @@ docker run ... node:20-alpine \
 - 前端构建产物嵌入：pip 包已含 `peekview/static/`，Docker 镜像 multi-stage build 需确保用最新前端
 - SQLite WAL 在 Docker volume 上的兼容性（应该没问题，但需验证）
 
-## 裁剪倾向
-
-- risk=medium：涉及两个镜像 + CI + compose + 多文档，但不改业务代码
-- P1 不可裁（评审）
-- P2 必须走（multi-stage build + 数据卷 + compose 网络需设计）
-- P3 可跳（Docker 构建本身是 CI 验证，无业务逻辑单测）
-- P5 验证：两个镜像构建成功 + 容器启动 + 基本功能验证
-- P6 验收：Docker 部署后浏览器访问正常 + 数据持久化 + MCP publish_files
-- P7 一致性：Dockerfile×2 + CI + Makefile + compose + README×3 + VERSIONS.json
-- P8 发布：bump version + 推镜像
-
 ## 依赖
 
 - T070 已完成（CWD guard 修复，MCP 镜像 WORKDIR 可不设 /tmp 的前提已满足）

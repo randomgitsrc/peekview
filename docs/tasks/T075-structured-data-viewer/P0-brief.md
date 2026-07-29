@@ -88,15 +88,6 @@ parent: AI 时代结构化数据查看需求
 - YAML 安全：必须用 `SAFE_SCHEMA`，否则 `!!python/object` 等标签可执行任意代码
 - CSV parse 边界：引号内换行、双引号转义、BOM 头等 edge case
 
-## 裁剪倾向
-
-- P1 不可裁（评审）
-- P2 必须走（TanStack Table 集成方案 + TreeView 组件设计 + 切换机制需评审）
-- P3 保留（新组件需要 TDD 覆盖 parse 逻辑和渲染边界）
-- P5 验证：前端单测 + 构建验证 + 手动 Playwright 截图
-- P6 验收：Playwright 实跑各格式渲染 + 切换 + 分页 + 大数据截断
-- P7 一致性：新增组件 × 2 + 依赖 × 2 + 后端映射 + 前端检测 + 切换机制，跨文件改动多
-
 ## 验证标准
 
 - .csv 文件显示为可分页、可排序、可筛选、可横向滚动的表格

@@ -92,15 +92,6 @@ parent: 跨 Agent 信息同步需求 + 时间线方案论证
 - **推断不准**：Agent 在 `/tmp/` 或 `~/` 下工作时归属不明 → project=null → 不硬凑
 - **timelines 表膨胀**：每次新 project slug 自动创建，可能有大量只用一次的 timeline。后续可加清理逻辑（entry_count=0 且超过 N 天的 timeline 自动删除）
 
-## 裁剪倾向
-
-- P1 不可裁（评审：数据模型 + 推断逻辑 + 同名冲突策略）
-- P2 必须走（推断优先级 + 自动创建时机 + timeline 清理策略需设计）
-- P3 保留（推断逻辑 + 自动创建需要测试覆盖）
-- P5 验证：后端测试 + MCP 测试 + 手动验证推断逻辑
-- P6 验收：Agent 能 `listEntries(project=xxx)` 读到时间线，推断逻辑覆盖主要场景
-- P7 一致性：后端 model + API + MCP + CLI 四端对齐
-
 ## 验证标准
 
 - `publish_files` 不传 project → 自动推断（git remote 或 cwd basename）

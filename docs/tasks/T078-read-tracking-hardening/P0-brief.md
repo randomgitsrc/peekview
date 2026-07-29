@@ -158,15 +158,6 @@ T068 预存失败：前端 `AccountSettings.vue` 表单提交时，空字符串�
 - 回填数据量：当前 740 行 entry_reads，回填瞬间完成。但大量历史数据时可能需要批量处理
 - `by_action`/`by_channel`/`by_source` 用 JSON 存储：SQLite 没有原生 JSON 字段类型，查询不如关系型灵活。但当前只做整行读取不做 JSON 内查询，够用
 
-## 裁剪倾向
-
-- P1 不可裁（评审：聚合表设计 + 写时更新策略 + 清理时机 + 来源分类规则）
-- P2 必须走（聚合表 schema + source 分类 + unique_readers 精度 + 迁移策略 + 清理配置）
-- P3 保留（聚合逻辑 + 来源分类 + 清理逻辑 + 迁移回填 + 备份恢复需要测试覆盖）
-- P5 验证：后端测试（聚合正确性 + source 分类 + 清理 + 迁移 + 备份恢复）
-- P6 验收：read_stats 返回 by_action + by_source + admin stats 有读取维度 + 原始事件 90 天后清理
-- P7 一致性：database.py + read_tracking_service + admin_service + config + models + entries.py + files.py
-
 ## 验证标准
 
 - `read_stats` 返回 `by_action` 字段（read/raw/download/discover）和 `by_source` 字段（direct/internal/search/social/other/unknown）

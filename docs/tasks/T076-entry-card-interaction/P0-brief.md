@@ -99,12 +99,6 @@ EntryListRow 和 EntryCard 有同样的结构问题，同步拆分 `<a>`。
 - card-body 从 `<a>` 变 `<div>` 后，整个卡片的点击区域变小（只有 title 是链接）——这可能是期望行为（避免误点），但需确认用户体验
 - 键盘可访问性：card-title 和 meta-username 作为 `<a>` 天然可 tab 聚焦，需确认 focus 样式
 
-## 裁剪倾向
-
-- risk=low，但涉及 2 个核心组件重构
-- P3 可跳（无新业务逻辑，现有测试覆盖组件渲染）
-- P7 可简化（纯 UI 改动，无跨文件一致性风险除了 EntryCard/EntryListRow 对齐）
-
 ## 验证标准
 
 - hover card-title → 出现下划线，点击进入 entry 详情页
