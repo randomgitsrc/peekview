@@ -1,20 +1,26 @@
 """T073 BDD-9 & BDD-10: ruff regression prevention.
 
-BDD-9: Given fixed code with correct SQLAlchemy Column comparison syntax,
+BDD-9: Given pyproject.toml with E711/E712 in ruff lint ignore list,
+When reading the ignore list from pyproject.toml,
+Then "E711" and "E712" are both present.
+
+BDD-10: Given existing code uses correct SQLAlchemy Column comparison syntax
+(.is_(None) / .isnot(None) / ~Column / .is_(True)),
 When running `ruff check --select E711,E712`,
-Then no E711/E712 violations are reported (because E711/E712 are in ignore list).
+Then exit code is 0 (no violations found).
 
-BDD-10: Given fixed code and updated ruff config (E711/E712 ignored),
-When running `make lint-fix`,
-Then SQLAlchemy Column comparison syntax is unchanged.
+BDD-9 verifies the ignore list is in place (configuration guard).
+BDD-10 verifies the existing code is clean (code guard).
 
-BDD-9 FAILS because pyproject.toml does not yet have E711/E712 in the ignore list.
-After P4 fix, the code will use .is_(None)/.isnot(None)/~Column/.is_(True) which
-are valid SQLAlchemy syntax. Without the ignore, ruff would not flag these (they
-don't use == None/!= None/== False), but the ignore is needed to prevent future
-regression if someone writes `Column == None` again.
+Together they form a two-layer defense:
+- Layer 1 (config): E711/E712 are in ignore list → ruff won't auto-fix them
+- Layer 2 (code): even if the ignore list is removed, existing code uses valid
+  SQLAlchemy syntax that doesn't trigger E711/E712
 
-The test verifies the configuration is in place, not that ruff currently flags anything.
+BDD-10 uses `ruff check --select E711,E712` (read-only) rather than
+`make lint-fix` (which would rewrite the entire codebase per all enabled
+rules, leaving the working tree dirty). This way the test has zero side
+effects regardless of pass/fail.
 """
 
 from pathlib import Path
@@ -39,54 +45,17 @@ class TestBdd09RuffConfigIgnoresE711E712:
         )
 
 
-class TestBdd10LintFixIdempotent:
-    def test_bdd_10_lint_fix_preserves_sqlalchemy_syntax(self):
+class TestBdd10RuffCheckSelectE711E712:
+    def test_bdd_10_existing_code_passes_e711_e712_check(self):
+        """读性检查现有代码不触发 E711/E712 违规。replace `make lint-fix` → `ruff check --select E711,E712`。"""
         import subprocess
 
-        services_dir = BACKEND_DIR / "peekview" / "services"
-        database_file = BACKEND_DIR / "peekview" / "database.py"
-
-        sqlalchemy_patterns = [
-            ".is_(None)",
-            ".isnot(None)",
-            "~Entry.",
-            "~File.",
-            "~ApiKey.",
-            "~EntryRead.",
-            ".is_(True)",
-        ]
-
-        original_sqlalchemy_lines = {}
-        for py_file in services_dir.glob("*.py"):
-            lines = py_file.read_text().splitlines()
-            sql_lines = [line for line in lines if any(p in line for p in sqlalchemy_patterns)]
-            if sql_lines:
-                original_sqlalchemy_lines[str(py_file)] = sql_lines
-
-        if database_file.exists():
-            lines = database_file.read_text().splitlines()
-            sql_lines = [line for line in lines if any(p in line for p in sqlalchemy_patterns)]
-            if sql_lines:
-                original_sqlalchemy_lines[str(database_file)] = sql_lines
-
-        if not original_sqlalchemy_lines:
-            pytest.skip("No files with SQLAlchemy patterns found (pre-fix state)")
-
-        subprocess.run(
-            ["make", "lint-fix"],
-            capture_output=True,
-            text=True,
-            cwd=str(BACKEND_DIR.parent),
-            timeout=120,
+        result = subprocess.run(
+            ["python3", "-m", "ruff", "check", "--select", "E711,E712",
+             "peekview/", "tests/"],
+            capture_output=True, text=True, cwd=str(BACKEND_DIR), timeout=60,
         )
-
-        changed_sqlalchemy = []
-        for path_str, original_lines in original_sqlalchemy_lines.items():
-            current_lines = Path(path_str).read_text().splitlines()
-            current_sql_lines = [line for line in current_lines if any(p in line for p in sqlalchemy_patterns)]
-            if current_sql_lines != original_lines:
-                changed_sqlalchemy.append(Path(path_str).name)
-
-        assert len(changed_sqlalchemy) == 0, (
-            f"make lint-fix changed SQLAlchemy comparisons in: {changed_sqlalchemy}"
+        assert result.returncode == 0, (
+            f"ruff E711/E712 violations found (E711/E712 ignore may be missing):\n"
+            f"stdout:\n{result.stdout}\n\nstderr:\n{result.stderr}"
         )
