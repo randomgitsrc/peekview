@@ -51,7 +51,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 | T062 | entry-reference-fields | ⬜ P0 | 降级 roadmap | 依赖 T061 结论，T061 可能得出"无信号→不做" |
 | T064 | storage-backend-abstraction | ⬜ P0 | 降级 roadmap | 依赖商业化决策，无触发条件 |
 | T072 | peekview-docker-deploy | ⬜ P0 | 合并→T071 | 与 T071 共用 CI/发布/同步，compose 跨依赖 |
-| T076 | code-search | — | 降级 roadmap | 浏览器 Ctrl+F 可用，内置搜索体验好但非必要 |
+| T076 | code-search (旧编号已复用为 entry-card-interaction) | — | 降级 roadmap | 浏览器 Ctrl+F 可用，内置搜索体验好但非必要 |
 
 ---
 
