@@ -1,0 +1,55 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd03-username-nav.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd03-username-nav.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        ← Back to Home
+        @t076u1785348814556's entries
+        Search titles, tags & content...
+        user nav 1785348814556
+        @t076u1785348814556 · 8h ago · 1 file
+        t076c1785348814556
+        GitHub
+        PyPI
+        npm
+        Built for sharing code & docs
+        v0.11.2 · © 2026 PeekView
+      components:
+        - type: "page"
+          label: "user entries page"
+          state: "loaded"
+        - type: "link"
+          label: "← Back to Home"
+          state: "normal"
+        - type: "heading"
+          label: "@t076u1785348814556's entries"
+          state: "normal"
+        - type: "search"
+          label: "Search titles, tags & content..."
+          state: "empty"
+        - type: "card"
+          label: "user nav 1785348814556"
+          state: "normal"
+        - type: "link"
+          label: "@t076u1785348814556"
+          state: "normal (blue link)"
+        - type: "tag"
+          label: "t076c1785348814556"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-03 点击 username 后跳转到 user 页面（按用户过滤的列表或用户页）"
+      result: "pass"
+      evidence: "页面顶部 heading 显式为 '@t076u1785348814556's entries'，列表中只展示属于该用户的一条 entry（user nav 1785348814556），证明已按 username 过滤并跳转至用户页。"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

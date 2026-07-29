@@ -1,0 +1,53 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd21-card-hover.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd21-card-hover.png"
+      visible_text_complete: |
+        P
+        PeekView
+        Login
+        Search titles, tags & content...
+        card highlight 1785348818546
+        8h ago • 1 file
+        ga1785348818546
+        list tag 1785348818075
+        8h ago • 1 file
+        lb1785348818075
+        focus targets 1785348817677
+        @t076x1785348817677 • 8h ago • 1 file
+        fa1785348817677
+        persist filter 1785348817736
+        8h ago • 1 file
+        keep1785348817736
+      components:
+        - type: "card"
+          label: "card highlight 1785348818546"
+          state: "hover"
+          details: "蓝色 accent 边框（约 #3b82f6）"
+        - type: "card"
+          label: "list tag 1785348818075"
+          state: "normal"
+          details: "浅灰边框（约 #e5e7eb）"
+        - type: "card"
+          label: "focus targets 1785348817677"
+          state: "normal"
+          details: "浅灰边框；meta 行起始为蓝色文本 '@t076x1785348817677'"
+        - type: "card"
+          label: "persist filter 1785348817736"
+          state: "normal"
+          details: "浅灰边框"
+      anomalies: []
+  bdd_results:
+    - condition: "卡片 hover 时边框高亮（边框颜色应为蓝色 accent，区别于默认灰色边框）"
+      result: "pass"
+      evidence: "第一张卡片 'card highlight 1785348818546' 边框为蓝色（约 #3b82f6 accent），与其下方 3 张可见卡片的浅灰边框（约 #e5e7eb）色差明显，hover 高亮可辨识"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

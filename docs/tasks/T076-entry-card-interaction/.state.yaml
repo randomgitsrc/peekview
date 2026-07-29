@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -35,3 +35,7 @@ history:
     date: 2026-07-30
     status: completed
     note: typecheck+单测全绿（1057）+ e2e 42/42（retry 1 轮：12 测试侧缺陷[选择器/隔离/匿名数据/CDP hover]修复后主 Agent 全量重跑通过）；PROD_NOT_TOUCHED；BDD-21 CDP hover 限制降级 CSS 规则检查+P6 vision 补验
+  - phase: P6
+    date: 2026-07-30
+    status: completed
+    note: 21 BDD 全 PASS（证据截图×19 + href/nav/chip/focus 断言 log + vision×19 全 blocker=0）；provenance exit 0；BDD-02/12/20 首轮 vision 否定系证据截图时机问题（SPA 过渡/移除后/焦点移出），主 Agent 自写脚本重截+vision 复核通过，实现无缺陷

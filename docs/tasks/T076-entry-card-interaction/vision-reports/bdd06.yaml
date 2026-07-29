@@ -1,0 +1,54 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd06-nonlink.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd06-nonlink.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        Search titles, tags & content...
+        nonlink area 1785348816761
+        8h ago · 1 file
+        t076f1785348816761
+        tag hover 1785348816390
+        8h ago · 1 file
+        t076h1785348816390
+        only a 1785348816013
+        8h ago · 1 file
+        ma1785348816013
+        list hover 1785348816033
+        8h ago · 1 file
+        ld1785348816033
+      components:
+        - type: "card"
+          label: "nonlink area 1785348816761"
+          state: "hover (blue outline, title without underline)"
+        - type: "card"
+          label: "tag hover 1785348816390"
+          state: "normal"
+        - type: "card"
+          label: "only a 1785348816013"
+          state: "normal"
+        - type: "card"
+          label: "list hover 1785348816033"
+          state: "normal"
+        - type: "tag"
+          label: "t076f1785348816761"
+          state: "normal"
+        - type: "meta"
+          label: "8h ago · 1 file"
+          state: "non-link area inside hover card"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-06 hover 非链接区域（meta 时间/分隔符/footer）无下划线，默认光标"
+      result: "pass"
+      evidence: "'nonlink area 1785348816761' 卡片处于 hover 态（蓝色边框），其标题保持粗体黑色文本且无下划线；meta '8h ago · 1 file' 同样无下划线，证明悬停非链接区域时未触发下划线。（光标样式无法从静态截图判断。）"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

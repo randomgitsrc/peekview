@@ -1,0 +1,52 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd14-tag-plus-q.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd14-tag-plus-q.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        combo1785348817103 ×
+        zebra1785348817103
+        ×
+        zebra1785348817103 match
+        8h ago · 1 file
+        combo1785348817103
+        GitHub
+        PyPI
+        npm
+        Built for sharing code & docs
+        v0.11.2 · © 2026 PeekView
+      components:
+        - type: "page"
+          label: "EntryList (tag + q combined)"
+          state: "normal"
+        - type: "chip"
+          label: "combo1785348817103 ×"
+          state: "visible"
+        - type: "search-input"
+          label: "zebra1785348817103 (含清空 ×)"
+          state: "filled"
+        - type: "icon-button"
+          label: "clear search (×)"
+          state: "visible"
+        - type: "card"
+          label: "zebra1785348817103 match"
+          state: "normal"
+        - type: "tag"
+          label: "combo1785348817103"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-14 tag 过滤与搜索 q 组合（同时按 tag 和关键词过滤）"
+      result: "pass"
+      evidence: "顶部显示 tag chip 'combo1785348817103 ×'，搜索框内含关键词 'zebra1785348817103'（带清空 ×）；列表仅显示一张同时匹配的 entry 'zebra1785348817103 match'，其 tag 字段为 'combo1785348817103'，title 含 zebra 关键词，tag + q 组合过滤生效"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

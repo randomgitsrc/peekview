@@ -2,6 +2,7 @@
 phase: P5
 date: 2026-07-30
 trigger: gate_fail
+agent: main
 ---
 # P5 Gate 诊断
 

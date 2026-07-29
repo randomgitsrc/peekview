@@ -1,0 +1,7 @@
+- [init] P6 verifier 启动，已读 dispatch-context/verifier.md/P1/P5-e2e/P0
+- [copy] 19 张 e2e 截图复制到 P6-evidence/screenshots/
+- [assert] BDD-04/05 href 断言脚本实跑：6 title-href + 2 username-href 全 PASS，写入 bdd04-05-href-assert.log
+- [dedup] 19 截图 md5 去重检查完成
+- [selfcheck] format=0 evidence=0 provenance 修复后复跑
+- [selfcheck] format=0, evidence=0; provenance 仅剩 vision YAML 缺失（vision-analyst 待派，占位引用已写）
+- [done] P6-acceptance.md 写入：21 BDD 结果行（19 截图类 + 2 查询类），证据 20 文件

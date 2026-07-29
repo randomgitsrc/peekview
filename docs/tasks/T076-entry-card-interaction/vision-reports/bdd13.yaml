@@ -1,0 +1,56 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd13-multi-tag.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd13-multi-tag.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        ma1785348816013 ×
+        mb1785348816013 ×
+        Search titles, tags & content...
+        both tags 1785348816013
+        8h ago · 1 file
+        ma1785348816013
+        mb1785348816013
+        GitHub
+        PyPI
+        npm
+        Built for sharing code & docs
+        v0.11.2 · © 2026 PeekView
+      components:
+        - type: "page"
+          label: "EntryList (multi-tag filtered)"
+          state: "normal"
+        - type: "chip"
+          label: "ma1785348816013 ×"
+          state: "visible"
+        - type: "chip"
+          label: "mb1785348816013 ×"
+          state: "visible"
+        - type: "search-input"
+          label: "Search titles, tags & content..."
+          state: "empty"
+        - type: "card"
+          label: "both tags 1785348816013"
+          state: "normal"
+        - type: "tag"
+          label: "ma1785348816013"
+          state: "normal"
+        - type: "tag"
+          label: "mb1785348816013"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-13 多 tag 过滤（AND 语义），列表只显示同时含所有 tag 的 entry"
+      result: "pass"
+      evidence: "顶部同时显示两个 chip：ma1785348816013 × 和 mb1785348816013 ×（均带 × 移除按钮）；列表仅显示一张 entry 'both tags 1785348816013'，其 tag 字段同时含 ma1785348816013 和 mb1785348816013，符合 AND 语义"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

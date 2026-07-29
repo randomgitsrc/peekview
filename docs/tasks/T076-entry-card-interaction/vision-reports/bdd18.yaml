@@ -1,0 +1,49 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd18-list-user.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd18-list-user.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        ← Back to Home
+        @t076w1785348819618's entries
+        Search titles, tags & content...
+        list user 1785348819618
+        @t076w1785348819618
+        8h ago
+        1 file
+        lc1785348819618
+        GitHub
+        PyPI
+        npm
+        Built for sharing code & docs
+        v0.11.2
+        © 2026 PeekView
+      components:
+        - type: "link"
+          label: "'← Back to Home' 返回链接"
+          state: "visible"
+        - type: "heading"
+          label: "页面 H1 '@t076w1785348819618's entries' (用户主页标题)"
+          state: "visible"
+        - type: "search"
+          label: "search input"
+          state: "normal"
+        - type: "card"
+          label: "entry card: title 'list user 1785348819618' / username 链接 '@t076w1785348819618' + meta / tag 'lc1785348819618'"
+          state: "visible"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-18 列表视图点击 username 跳转至用户主页"
+      result: "pass"
+      evidence: "页面出现 '← Back to Home' 与 '@t076w1785348819618's entries' 标题，确认已导航至用户 entries 主页（@username 主页）；入口 card 中显示该用户名作为元数据链接"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

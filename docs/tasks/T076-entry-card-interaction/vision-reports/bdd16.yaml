@@ -1,0 +1,46 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd16-list-title.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd16-list-title.png"
+      visible_text_complete: |
+        list nav 1785348816036
+        Sign in
+        · 8h ago
+        |
+        · Public
+        · la1785348816036
+        Copy
+        ···
+        (中部内容区域为空白)
+      components:
+        - type: "page"
+          label: "简化 header（logo 'P' + entry 标题 'list nav 1785348816036' + 'Sign in' 链接）"
+          state: "visible"
+        - type: "page"
+          label: "中部空白内容区（entry 文件渲染区域）"
+          state: "empty"
+        - type: "row"
+          label: "底部 meta 条：8h ago · Public（绿色 pill）· tag pill 'la1785348816036'"
+          state: "visible"
+        - type: "button"
+          label: "底部操作区 'Copy' 按钮 + '...' 更多菜单按钮"
+          state: "visible"
+      anomalies:
+        - type: "info"
+          location: "中部内容区域"
+          description: "entry 详情页主体文件渲染区为空白（该测试 entry 文件内容简单，渲染区无突出内容）"
+          severity: "info"
+  bdd_results:
+    - condition: "BDD-16 列表视图点击 title 跳转至详情页"
+      result: "pass"
+      evidence: "header 出现 entry 标题 'list nav 1785348816036'（替换首页的 'PeekView' 品牌词）并显示 'Sign in' 登录入口；底部出现详情页独有元素：Public 状态 pill、Copy 操作按钮、'...' 更多菜单——确认已从列表页导航到 entry 详情页"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

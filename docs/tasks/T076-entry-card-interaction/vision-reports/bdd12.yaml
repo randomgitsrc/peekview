@@ -1,0 +1,47 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd12-chip-remove.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd12-chip-remove.png"
+      visible_text_complete: |
+        PeekView
+        Login
+        chip1785350787454 ×
+        Search titles, tags & conte
+        chip entry 1785350787454
+        8h ago
+        1 file
+        chip1785350787454
+        GitHub
+        PyPI
+        npm
+        Built for sharing code & docs
+        v0.11.2
+        © 2026 PeekView
+      components:
+        - type: "chip"
+          label: "filter chip 'chip1785350787454' with × remove button (chip label 蓝色加粗)"
+          state: "visible"
+        - type: "search"
+          label: "search input 'Search titles, tags & conte...' placeholder"
+          state: "normal"
+        - type: "toggle"
+          label: "view mode toggle (grid icon 蓝色 active, list icon 灰色)"
+          state: "normal"
+        - type: "card"
+          label: "entry card: title 'chip entry 1785350787454', meta '8h ago · 1 file', tag chip 'chip1785350787454'"
+          state: "visible"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-12 tag 过滤显示可移除的 chip（chip 带 × 可点击移除）"
+      result: "pass"
+      evidence: "截图顶部有单个过滤 chip 'chip1785350787454 ×'，× 字符清晰可见位于标签文字右侧。移除行为见 bdd12-chip-assert.log（点击 .filter-chip-dismiss 后 URL 从 ?tags= 变为 /explore，chip-removed=true）"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

@@ -1,0 +1,37 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd20-tab-focus.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd20-tab-focus.png"
+      visible_text_complete: |
+        Header: PeekView | Login (右上角含 dark-mode toggle 按钮)
+        Search box 占位: "Search titles, tags & conte" (被截断)
+        View toggle: grid icon + list icon (搜索框右侧)
+        Card 1 (左上, 第一行第一列) - title: "chip entry 1785350787454" [FOCUS]
+          - meta: "8h ago · 1 file"; tag chip: "chip1785350787454"
+        Card 2-20: 多张 entry 卡片（bdd02 nav detail / inspect nav / list user / card highlight / focus targets / persist filter / overflow tooltip / zebra / filtered 等），均 normal 态无 focus 轮廓
+        分页 (底部): Prev | 1 (current 高亮) | 2 | 3 | ... | 15 | Next | Out of 165
+      components:
+        - type: "card-title link"
+          label: "chip entry 1785350787454 (第一行第一列)"
+          state: "focus"
+        - type: "pagination current page button"
+          label: "数字 1"
+          state: "active (蓝色实心背景)"
+        - type: "其余卡片标题"
+          label: "其他卡片 title"
+          state: "normal (无 focus 轮廓)"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-20 Tab 键聚焦 title/username/tag 链接，呈现可见 focus 样式"
+      result: "pass"
+      evidence: "截图左上角第一行第一列卡片标题 'chip entry 1785350787454' 有清晰的蓝色矩形描边环（约 2px 蓝色实线），紧贴该文字边界，与其他未聚焦的卡片标题形成鲜明对比。这是典型的 keyboard focus outline 视觉表现，符合 CSS 实现（outline: 2px solid accent-secondary + outline-offset: 2px）。DOM 层 Tab 聚焦遍历（card-title/meta-username/base-tag）见 e2e BDD-20（42/42 通过）+ bdd20-focus-assert.log（card-title/base-tag outline=solid 2px rgb(5,80,174)）"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

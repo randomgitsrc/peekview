@@ -1,0 +1,60 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/t076-bdd19-list-hover.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-07-30"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/t076-bdd19-list-hover.png"
+      visible_text_complete: |
+        (顶部 header 被部分裁切，仅 logo 'P' 残影可见)
+        Search titles, tags & content...
+        tag hover 1785348816390
+        8h ago
+        1 file
+        t076h1785348816390
+        only a 1785348816013
+        8h ago
+        1 file
+        ma1785348816013
+        list hover 1785348816033
+        8h ago
+        1 file
+        ld1785348816033
+        list nav 1785348816036
+        8h ago
+        1 file
+        la1785348816036
+        both tags 1785348816013
+        8h ago
+        1 file
+        ma1785348816013
+        mb1785348816013
+      components:
+        - type: "search"
+          label: "search input"
+          state: "normal"
+        - type: "toggle"
+          label: "view toggle (list 当前 active)"
+          state: "normal"
+        - type: "row"
+          label: "list view entry 行 1: title 'tag hover 1785348816390'（带下划线 / hover 态）/ meta / tag 't076h1785348816390'"
+          state: "hover"
+        - type: "row"
+          label: "list view entry 行 2-5: title 'only a' / 'list hover' / 'list nav' / 'both tags'（均无下划线）"
+          state: "normal"
+      anomalies:
+        - type: "info"
+          location: "顶部 header"
+          description: "header 区被截图边界裁切，logo 'P' 仅残影可见"
+          severity: "info"
+  bdd_results:
+    - condition: "BDD-19 列表视图 hover 语义与 grid 一致（hover 标题出现下划线，非链接区无下划线）"
+      result: "pass"
+      evidence: "第 1 条 entry 的 title 'tag hover 1785348816390' 文字下方有明显下划线（hover 态），其余 4 条 title 均无下划线（normal 态）；所有行的 meta '8h ago · 1 file' 与 tag chip 区域均无下划线，与 grid 视图样式一致"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"
