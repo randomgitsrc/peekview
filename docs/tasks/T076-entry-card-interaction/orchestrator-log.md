@@ -49,3 +49,15 @@ NEXT: 派发 releaser subagent 执行 P8（发布准备：bump_type 判定 + CHA
 GATE PASS: P8 脚本化检查 exit 2（bump_type=minor 命中；version/CHANGELOG WARNING 系 bump 前预期）。releaser 产出 P8-release.md：minor bump peekview 0.11.2→0.12.0（mcp 保持 0.10.0，前端构建打包进 peekview 包）；CHANGELOG [Unreleased] 已追加 T076 条目（新增×3/变更×1，保留 T074+ruff lint）；临时资源清单（debug:8888 PID 282214 + /tmp/peekview-debug/）；PROD_NOT_TOUCHED。
 
 NEXT: 主 Agent 执行 make bump-version NEW_VERSION=0.12.0 → CHANGELOG [Unreleased]→[0.12.0] amend → 重跑 P5 gate → READY 收尾
+
+DECISION: bump-version 的 `git add -A` 误纳入 frontend-v3/docs/ T069 遗留截图（11 文件）。主 Agent 用 git rm -r --cached + amend 清理 release commit，保持 T069 遗留为 untracked（非本任务产生，交用户处置）。CHANGELOG 补 read tracking 埋点修正条目（0d580c7d，T032 遗漏项，v0.11.2..HEAD 范围内用户可观测后端变更）。
+
+GATE PASS: P8 完成。bump-version → v0.12.0（peekview 0.11.2→0.12.0，mcp 保持 0.10.0）。bump 后重跑 P5 gate：typecheck exit 0 + test-frontend 1057 passed|1 skipped exit 0。git log v0.11.2..HEAD 对照 CHANGELOG 无遗漏（补 read tracking 埋点修正）。release commit db38fef3 干净（10 files，无 T069 遗留）。tag v0.12.0 已创建。
+
+READY 收尾检查全通过：debug 服务已停 + /tmp/peekview-debug 清理 + 端口释放；无开发安装残留；无 PROD_TOUCHED（全程隔离 DB）；git 工作区干净（仅 T069 untracked 遗留）。
+
+[T076] READY — entry-card-interaction v0.12.0
+改动：5 实现文件（EntryCard/EntryListRow/BaseTag/EntryListView/searchUrl.logic）+ 测试（单测1057 + e2e 42）
+验证：P1-P8 全 gate 通过，21 BDD 验收全 PASS，vision×19 全 blocker=0，provenance exit 0
+设计：原生 <a> 语义拆分 card-body，BaseTag 多态 href，CSS tooltip，FilterChip 复用，searchUrl.logic tags 扩展
+下一步：make publish（人工触发 PyPI 发布）

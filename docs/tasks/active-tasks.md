@@ -12,7 +12,6 @@
 |------|----------|------|------|--------|------|----------|----------|
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
-| T076 | entry-card-interaction | 🔄 进行中 | P7 | 🟠 | 无 | 2026-07-28 | 2026-07-30 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 
@@ -60,6 +59,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| T076 | entry-card-interaction | v0.12.0 | 🟠 | 2026-07-30 |
 | T073 | ruff-sqlalchemy-regression | v0.11.1 | 🔴 | 2026-07-26 |
 | T069 | detail-page-header-polish | v0.11.2 | 🟠 | 2026-07-26 |
 | T070 | mcp-docker-deployability | mcp-v0.10.0 | 🔴 | 2026-07-25 |
@@ -171,6 +171,7 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-30 | 完成 T076 | entry-card-interaction → v0.12.0（EntryCard/EntryListRow <a> 拆分 + BaseTag 可点击 + Explore tag 过滤 + tooltip；完整 agate P0-P8，21 BDD 验收全 PASS，vision×19 全 blocker=0） |
 | 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |
 | 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |
 | 2026-07-28 | 立项 T075 | structured-data-viewer：TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口；T076 code-search 降级 roadmap |

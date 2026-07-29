@@ -1,7 +1,8 @@
-phase: P8
+phase: READY
 task_id: T076
 task_name: entry-card-interaction
 status: completed
+release_version: v0.12.0
 created: 2026-07-28
 updated: 2026-07-30
 retries:
