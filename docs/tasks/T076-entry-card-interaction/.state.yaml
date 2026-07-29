@@ -1,9 +1,15 @@
-phase: P4
+phase: P5
 task_id: T076
 task_name: entry-card-interaction
 status: completed
 created: 2026-07-28
 updated: 2026-07-30
+retries:
+  P5:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: fix_test_code
 history:
   - phase: P0
     date: 2026-07-28
@@ -25,3 +31,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 5 实现（EntryCard/EntryListRow/BaseTag/EntryListView/searchUrl.logic）+ 6 旧测试结构适配；1057 全绿 + typecheck 通过；design-review approved（7 维度）；P3 t076-* 基线未改
+  - phase: P5
+    date: 2026-07-30
+    status: completed
+    note: typecheck+单测全绿（1057）+ e2e 42/42（retry 1 轮：12 测试侧缺陷[选择器/隔离/匿名数据/CDP hover]修复后主 Agent 全量重跑通过）；PROD_NOT_TOUCHED；BDD-21 CDP hover 限制降级 CSS 规则检查+P6 vision 补验

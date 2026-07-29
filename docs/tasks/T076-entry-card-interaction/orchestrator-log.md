@@ -29,3 +29,9 @@ NEXT: 派发 implementer subagent 执行 P4（按 P2 方案实现 EntryCard/Entr
 GATE PASS: P4（暂存区含非 md/yaml 代码文件）。实现 5 文件（EntryCard/EntryListRow/BaseTag/EntryListView/searchUrl.logic）+ 6 旧测试结构适配（span role=link→<a>，加 vue-router mock；主 Agent 核实非删断言、方向符合 P2、P3 t076-* 基线未改）。主 Agent 自跑：make typecheck exit 0 + make test-frontend exit 0（77 文件/1057 passed|1 skipped）。P4-review.md status=approved + agent=design-review（7 维度全过）。
 
 NEXT: 派发 verifier subagent 执行 P5（技术验证：跑 P2 gate_commands.P5 + P5_e2e，全绿）
+
+GATE FAIL: P5 e2e 28/42（12 失败）。DIAGNOSIS: 主 Agent 独立核实——12 失败均测试侧缺陷，实现正确。类别 A（BDD-16~19 选择器 hasText vs title attr）/ 类别 B（BDD-02/04 .first() 命中错误 entry）/ BDD-20（匿名 entry 无 username）/ BDD-21（CDP hover 不触发 :hover，实现 CSS 经核实正确 --c-accent≠--c-border-strong）。FIX: 派 test-designer 修 e2e spec（不回 P4，实现正确），retries[P5]=1。
+
+GATE PASS: P5 全量重跑（主 Agent 亲自，A1）。make typecheck exit 0 + make test-frontend 77 文件/1057 passed|1 skipped exit 0；e2e 42 passed (11.7s) exit 0。fail-list.txt 空，unit.md 含 runner 签名（N5）。PROD_NOT_TOUCHED，隔离 DB。BDD-21 降级 CSS 规则检查 + P6 vision 补验。
+
+NEXT: 派发 verifier subagent 执行 P6（验收：21 BDD 逐条实跑 + Playwright 截图 + vision 分析）

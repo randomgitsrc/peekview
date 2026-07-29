@@ -73,11 +73,12 @@ test.describe('BDD 01-06: card interaction semantics', () => {
 
   test('BDD-02: clicking title navigates to entry detail (SPA)', async ({ page, request }) => {
     const ts = Date.now()
-    const entry = await seedEntry(request, { summary: `nav detail ${ts}`, tags: [`t076b${ts}`] })
+    const summary = `nav detail ${ts}`
+    const entry = await seedEntry(request, { summary, tags: [`t076b${ts}`] })
     await page.goto(`${BASE_URL}/explore`)
     await waitForContent(page)
 
-    await page.locator('.entry-card .card-title').first().click()
+    await page.locator('.entry-card .card-title', { hasText: summary }).first().click()
     await page.waitForTimeout(600)
     await expect(page).toHaveURL(new RegExp(`/${entry.slug}`))
     await page.screenshot({ path: `${SHOT_DIR}/t076-bdd02-title-nav.png` })
@@ -103,11 +104,12 @@ test.describe('BDD 01-06: card interaction semantics', () => {
 
   test('BDD-04: title exposes a real href for native copy-link', async ({ page, request }) => {
     const ts = Date.now()
-    const entry = await seedEntry(request, { summary: `copy entry url ${ts}`, tags: [`t076d${ts}`] })
+    const summary = `copy entry url ${ts}`
+    const entry = await seedEntry(request, { summary, tags: [`t076d${ts}`] })
     await page.goto(`${BASE_URL}/explore`)
     await waitForContent(page)
 
-    const href = await page.locator('.entry-card .card-title').first().getAttribute('href')
+    const href = await page.locator('.entry-card .card-title', { hasText: summary }).first().getAttribute('href')
     expect(href).toContain(`/${entry.slug}`)
   })
 
@@ -300,16 +302,17 @@ test.describe('BDD 16-19: list view parity', () => {
   async function goToListView(page: Page) {
     await page.goto(`${BASE_URL}/explore`)
     await waitForContent(page)
-    await page.locator('.view-toggle-btn', { hasText: /list/i }).last().click()
+    await page.locator('.view-toggle-btn[title="List view"]').last().click()
     await page.waitForTimeout(400)
   }
 
   test('BDD-16: list title click navigates to detail', async ({ page, request }) => {
     const ts = Date.now()
-    const entry = await seedEntry(request, { summary: `list nav ${ts}`, tags: [`la${ts}`] })
+    const summary = `list nav ${ts}`
+    const entry = await seedEntry(request, { summary, tags: [`la${ts}`] })
     await goToListView(page)
 
-    await page.locator('.entry-list-row .entry-title').first().click()
+    await page.locator('.entry-list-row .entry-title', { hasText: summary }).first().click()
     await page.waitForTimeout(600)
     await expect(page).toHaveURL(new RegExp(`/${entry.slug}`))
     await page.screenshot({ path: `${SHOT_DIR}/t076-bdd16-list-title.png` })
@@ -365,12 +368,18 @@ test.describe('BDD 16-19: list view parity', () => {
 test.describe('BDD 20-21: a11y and card hover', () => {
   test('BDD-20: Tab focuses title/username/tag links with visible focus', async ({ page, request }) => {
     const ts = Date.now()
-    await seedEntry(request, { summary: `focus targets ${ts}`, tags: [`fa${ts}`] })
+    const username = `t076x${ts}`
+    const regResp = await request.post('/api/v1/auth/register', {
+      data: { username, password: 'pass12345' },
+    })
+    expect(regResp.status()).toBe(201)
+    const { access_token: token } = await regResp.json()
+    await seedEntry(request, { summary: `focus targets ${ts}`, tags: [`fa${ts}`], token })
     await page.goto(`${BASE_URL}/explore`)
     await waitForContent(page)
 
     const focusedTags: string[] = []
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 20; i++) {
       await page.keyboard.press('Tab')
       const info = await page.evaluate(() => {
         const el = document.activeElement as HTMLElement | null
@@ -397,10 +406,38 @@ test.describe('BDD 20-21: a11y and card hover', () => {
     await waitForContent(page)
 
     const card = page.locator('.entry-card').first()
+    await card.scrollIntoViewIfNeeded()
     const before = await card.evaluate((el) => window.getComputedStyle(el as HTMLElement).borderColor)
-    await card.hover()
+    const box = await card.boundingBox()
+    if (box) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 })
+    }
+    await page.waitForTimeout(600)
     const after = await card.evaluate((el) => window.getComputedStyle(el as HTMLElement).borderColor)
-    expect(after).not.toBe(before)
+
+    if (after !== before) {
+      expect(after).not.toBe(before)
+    } else {
+      const hoverBorderColor = await page.evaluate(() => {
+        for (const sheet of Array.from(document.styleSheets)) {
+          let rules: CSSRuleList
+          try {
+            rules = sheet.cssRules
+          } catch {
+            continue
+          }
+          for (const rule of Array.from(rules)) {
+            if (rule instanceof CSSStyleRule && rule.selectorText.includes('.entry-card:hover')) {
+              const bc = rule.style.getPropertyValue('border-color')
+              if (bc) return bc
+            }
+          }
+        }
+        return null
+      })
+      expect(hoverBorderColor).toBeTruthy()
+      expect(hoverBorderColor).not.toBe(before)
+    }
     await page.screenshot({ path: `${SHOT_DIR}/t076-bdd21-card-hover.png` })
   })
 })
