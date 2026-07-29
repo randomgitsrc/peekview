@@ -14,6 +14,16 @@
 
 ## [Unreleased]
 
+### 新增
+
+- BaseTag 可点击跳转 `/explore?tags={tag}` 过滤页 (T076)
+- Explore 页 URL `?tags=` 过滤 + 可移除 FilterChip 指示 (T076)
+- tag-overflow +N tooltip（hover/tap 显示全部 tags）(T076)
+
+### 变更
+
+- EntryCard/EntryListRow card-body `<a>` 拆分为 `<div>`，title/username/tag 各自独立 `<a>`，修复右键复制链接混乱 + hover 全下划线 (T076)
+
 ### 修复
 
 - Account Settings 清空 display_name 时 PATCH 发送 `null` 而非空字符串，与后端语义一致 (T074)

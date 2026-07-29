@@ -1,5 +1,0 @@
-- [读取输入] P1/P2/P4/P6 全部读取完成，开始逐项检查
-- [检查1-DESIGN_GAP] P4 声明 0 个 DESIGN_GAP（grep 确认=0），无需配对，实现忠实 P2 方案 A
-- [检查2-SCOPE+] 全阶段 0 个 SCOPE+（grep 确认=0），无未闭环项
-- [检查3-跨文件一致性] P1 BDD=21 == P6 PASS=21，编号内容一一映射正确；P2 packages=[frontend-v3] 与 P4 implementation_dir=frontend-v3/src 吻合；实现代码验证：BaseTag 多态 href、EntryCard card-body=div + title/username 独立 <a>、searchUrl.logic tags 扩展、EntryListView FilterChip 复用——均忠实 P2 方案 A
-- [检查4-未决项清零] 全阶段无残留 [NEED_CONFIRM]/[BLOCKER]/[DEVIATION-CRITICAL]；P1+P6 均含 [NO_NEED_CONFIRM]

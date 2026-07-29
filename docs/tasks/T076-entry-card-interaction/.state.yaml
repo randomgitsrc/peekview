@@ -1,4 +1,4 @@
-phase: P7
+phase: P8
 task_id: T076
 task_name: entry-card-interaction
 status: completed
@@ -43,3 +43,7 @@ history:
     date: 2026-07-30
     status: completed
     note: 一致性检查通过（BLOCKER=0，CRITICAL=0，gate exit 0）；实现忠实 P2 方案 A（0 DESIGN_GAP）；P1 21 BDD ↔ P6 21 PASS 编号一一对应；packages=[frontend-v3] 与改动范围吻合
+  - phase: P8
+    date: 2026-07-30
+    status: completed
+    note: minor bump peekview 0.11.2→0.12.0（mcp 保持 0.10.0）；CHANGELOG [Unreleased] 追加 T076 条目（随发 T074+ruff lint）；PROD_NOT_TOUCHED；releaser 产出 P8-release.md，bump-version/commit/tag 由主 Agent 执行

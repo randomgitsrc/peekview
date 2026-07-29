@@ -45,3 +45,7 @@ NEXT: 派发 consistency-reviewer subagent 执行 P7（一致性检查：实现 
 GATE PASS: P7 一致性检查 exit 0（BLOCKER=0，DEVIATION-CRITICAL=0）。实现忠实 P2 方案 A（0 DESIGN_GAP）；P1 21 BDD ↔ P6 21 PASS 编号一一对应内容正确；packages=[frontend-v3] 与 P4 改动范围吻合；无残留 NEED_CONFIRM/SCOPE+。
 
 NEXT: 派发 releaser subagent 执行 P8（发布准备：bump_type 判定 + CHANGELOG + 版本文件核对，不 commit/tag）
+
+GATE PASS: P8 脚本化检查 exit 2（bump_type=minor 命中；version/CHANGELOG WARNING 系 bump 前预期）。releaser 产出 P8-release.md：minor bump peekview 0.11.2→0.12.0（mcp 保持 0.10.0，前端构建打包进 peekview 包）；CHANGELOG [Unreleased] 已追加 T076 条目（新增×3/变更×1，保留 T074+ruff lint）；临时资源清单（debug:8888 PID 282214 + /tmp/peekview-debug/）；PROD_NOT_TOUCHED。
+
+NEXT: 主 Agent 执行 make bump-version NEW_VERSION=0.12.0 → CHANGELOG [Unreleased]→[0.12.0] amend → 重跑 P5 gate → READY 收尾
