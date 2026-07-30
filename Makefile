@@ -405,7 +405,7 @@ publish:
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$HOME/.env" "$HOME/.bash_env" "$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
-				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_API_TOKEN' _ "$$f"); \
+				TOKEN=$$(bash -c 'set -a && source "$$1" 2>/dev/null && echo $$PYPI_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
 			fi; \
 		done; \
