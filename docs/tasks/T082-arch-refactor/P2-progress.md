@@ -1,0 +1,28 @@
+- [P2-dispatch-context-architect.md] 已读取：6项重构，41 BDD，约束（不改API/不改DB/不改MCP），DI现状+重复代码+HTTPException+事务问题+前端store过载+god component 全部客观信息已确认
+- [P0-brief.md] 6项结构性问题，risk=high，约束：后端先改前端后改，EntryDetailView<300行子组件<200行，store<150行
+- [P1-requirements.md] 41 BDD（BDD-1~41），6项重构按依赖顺序，无裁剪，domains=[backend,frontend]，packages独立管理
+- [architect.md] P2产出方案设计+实现导航，候选方案≥2（follows_existing_pattern可1个），四字段必填，files_to_read控制P4上下文
+- [main.py:200-449] app.state初始化5个service（entry/apikey/admin/share/read_tracking），模式B参照（admin.py/shares.py直接用request.app.state.*）。HTTPException仅在main.py:535,580基础设施层
+- [entries.py] DI模式A（Depends _get_service→get_entry_service），_looks_like_jwt:102，_is_global_api_key_auth:108，_record_read_async:47（3处重复），HTTPException:205（status验证422），_check_share_cookie用Session直接查DB
+- [files.py] DI模式C（4处StorageManager(config=config)+Session(engine)），_looks_like_jwt:140，_is_global_api_key_auth:145，_record_read_async:30（重复），ShareService(engine,config)新建:219，_resolve_entry用get_engine(config)
+- [auth.py] _looks_like_jwt:193（第3份），ApiKeyService(engine)新建:185，get_current_user是同步函数取request.app.state。HTTPException残留无（用AuthenticationError/ForbiddenError）
+- [api/auth.py] HTTPException:208(404 user not found),240(409 last_admin),261(400 old password),266(404 user not found)。4处需→PeekError。已有InvalidCredentialsError/RegistrationError/ForbiddenError
+- [api/admin.py] HTTPException:57(ValueError→400)。模式B（直接request.app.state.admin_service）。1处需→PeekError
+- [exceptions.py] PeekError基类(status_code+error_code)，已有ValidationError(400)/NotFoundError(404)/ConflictError(409)/AuthenticationError(401)/ForbiddenError(403)。缺404 user not found专用类和400 password error专用类
+- [entry_service.py:200-329] 事务问题确认：line 229 commit(entry row)，line 277 commit(file records)，line 296-302 except块 rollback+删文件但entry已commit。构造函数需查line 51附近
+- [entry_service.py:970-1022] _build_response:999 new ReadTrackingService(engine=self.engine)，_get_share_service:1022 new ShareService(engine,config)。两处跨service new
+- [admin_service.py:200-299] cleanup_expired:226 new EntryService，delete_user:275 new EntryService。两处跨service new
+- [admin_service.py:1-50] 导入EntryService和StorageManager，构造函数需查line 51附近
+- [entry.ts] 223行：list状态(entries/page/perPage/total/ownerFound)+detail状态(currentEntry/activeFile/fileContent)+UI状态(wrapEnabled/loading/error)+loadSeq模块级:7。toggleVisibility/deleteEntry跨list和detail
+- [entry_service.py:51-80] get_entry_service(app)已有singleton逻辑，EntryService.__init__(engine,storage,config)
+- [EntryDetailView.vue:1-336] 模板335行：mobile header/desktop header/meta-row/banners/file-sidebar/content-area/toc-sidebar/meta-tags-bar/mobile-bottom-bar/drawers/dialogs/watermark
+- [EntryDetailView.vue:338-811] 脚本473行：20+ref(zenMode/isFileTreeOpen/isTocOpen/viewportWidth/metaTagsHidden/showFileDrawer/showTocDrawer/shareDialogOpen/showConfirmDelete/showExpiresInDialog/showLogin等)，15+computed，15+函数，4 watcher
+- [EntryDetailView.vue:813-1003] 样式195行：entry-owner-link/title-group/banners/share-btn/share-watermark/meta-tag/loading-state/skeleton
+- [admin_service.py:117-121] AdminService.__init__(engine,storage,config)——与EntryService相同签名
+- [file_service.py] 无class，纯工具函数(validate_local_path/scan_directory/parse_expires_in/decode_base64_content)
+- [EntryListView.vue] 用useEntryStore，storeToRefs解构entries/loading/error/total/perPage/ownerFound，loadEntries/deleteEntry/toggleVisibility。searchUrl.logic.ts不直接引用store（纯函数）
+- [EntryDetailView.vue] 用useEntryStore，storeToRefs解构currentEntry/activeFile。用entryStore.isMultiFile/canCopy/canWrap/canDownload/canPack/fileContent/wrapEnabled/loading/error/selectFile/toggleWrap/loadEntry/deleteEntry/toggleVisibility
+- [main.py:481-491] PeekError handler已存在：status_code=exc.status_code, content={error:{code,message,details:None}}。HTTPException的detail字段由FastAPI默认handler处理（返回{detail:...}）
+- [main.py:530-580] HTTPException残留2处：535(metrics_disabled 404)和580(serve_spa_catchall 404)——均为基础设施层路由（非API），保留不改
+- [前端错误格式] ExpiresInDialog.vue: e.response?.data?.detail||e.message||'Failed to update'。SecurityTab.vue: err?.response?.data?.detail。ProfileTab.vue: err?.response?.data?.detail||'Failed to update profile'。3处需改为e.response?.data?.error?.message
+- [P2-design.md 已写入] 所有检查通过：Header(agent:architect)、四字段齐全、6项重构各2候选方案+权衡+选择理由、41 BDD全覆盖、files_to_read清单、minimal_validation(not_needed)、env_constraints

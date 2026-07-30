@@ -238,7 +238,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { useEntryStore } from '@/stores/entry'
+import { useEntryListStore } from '@/stores/entryList'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { storeToRefs } from 'pinia'
@@ -261,7 +261,7 @@ import { loadViewMode, saveViewMode } from '@/composables/useViewMode'
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
 
-const entryStore = useEntryStore()
+const entryStore = useEntryListStore()
 const authStore = useAuthStore()
 const toast = useToast()
 const router = useRouter()

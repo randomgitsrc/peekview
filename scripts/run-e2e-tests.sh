@@ -77,6 +77,15 @@ export BASE_URL=$BASE_URL
 echo ""
 spec="${E2E_SPEC:-e2e/debug-server.spec.ts}"
 echo "→ 运行 E2E 测试 ($spec)..."
+
+# Check if CDP Chrome is available (WSL environment)
+if curl -sf http://127.0.0.1:18800/json/version > /dev/null 2>&1; then
+    export CDP_ENDPOINT="http://127.0.0.1:18800"
+    echo "✓ 使用 CDP Chrome: $CDP_ENDPOINT"
+else
+    echo "ℹ  CDP Chrome 不可用，使用本地 Chromium"
+fi
+
 npx playwright test "$spec" --reporter=line || {
     echo ""
     echo "✗ E2E 测试失败"

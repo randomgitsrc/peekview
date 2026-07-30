@@ -17,8 +17,7 @@
 | T079 | interaction-consistency | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
-| T082 | arch-refactor | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
-| T083 | cjk-search-fix | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
+| T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 
 ### T071: Docker 部署（合并原 T071+T072）
 
@@ -59,10 +58,6 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 ### T082: 架构重构
 
 后端 DI 三种模式统一为 `app.state` 注入（files.py 走 service、跨 service 调用用注入实例、去掉 fallback new）。错误格式统一为 PeekError。重复代码提取（_looks_like_jwt 等 3 处）。create_entry 事务完整性修复。前端 entry store 拆分为 EntryListStore + EntryDetailStore。EntryDetailView 1003 行 god component 拆分为子组件（目标 < 300 行）。
-
-### T083: 中文搜索与 Tag 过滤修复
-
-三个 bug：①Tag 过滤完全失效（SQLAlchemy JSON 序列化 ensure_ascii=True 导致中文转义为 \uXXXX，LIKE 在转义字符串上匹配失败）→ 改用 json_each 精确匹配；②FTS5 中文搜索部分失效（unicode61 不分词连续 CJK 字符，子词搜不到）→ 应用层 jieba 预分词；③FTS5 连字符复合 tag 搜索盲区（google-gemini 整体一个 token，搜 gemini 不命中）→ FTS 索引文本中连字符替换为空格。
 
 ---
 
@@ -197,7 +192,6 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 | 日期 | 操作 | 内容 |
 |------|------|------|
 | 2026-07-30 | 立项 T082 | arch-refactor：后端 DI 统一+错误格式统一+重复代码提取+create_entry 事务；前端 entry store 拆分+EntryDetailView 拆分。多维度架构审计发现 6 项结构性问题 |
-| 2026-07-30 | 立项 T083 | cjk-search-fix：Tag 过滤失效（LIKE→json_each）+ FTS5 中文搜索（jieba 预分词）+ 连字符复合 tag 搜索盲区（FTS 索引文本连字符→空格）|
 | 2026-07-30 | 立项 T079+T080+T081 | T079 交互一致性修复（AuthButton/UserMenu 统一 + tag 可点击 + Explore 按钮移除）；T080 admin 用户管理（后端 disable/enable/promote/demote + CLI + 前端 /admin 页面）；T081 详情页侧边栏可拖拽调整宽度；roadmap #46 删除（需求弱）/#47→T081 |
 | 2026-07-30 | 完成 T076 | entry-card-interaction → v0.12.0（EntryCard/EntryListRow <a> 拆分 + BaseTag 可点击 + Explore tag 过滤 + tooltip；完整 agate P0-P8，21 BDD 验收全 PASS，vision×19 全 blocker=0） |
 | 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |

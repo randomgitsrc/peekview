@@ -19,7 +19,7 @@ if ":8080" in BASE or "peekview.ai" in BASE or "peek.gsis.top" in BASE:
     print(f"FATAL: refusing to seed production ({BASE})")
     sys.exit(1)
 
-MINI_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+MINI_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAUAAAAC0CAIAAABqhmJGAAAFLUlEQVR4nO3Y24uc9R3H8d/MPLNmE10vW6wbknQ8QJZV64UXpdX6D9giREFUMCZCaUqKtNADpfRCKtaq9CptKB4oUjxhL1rwhBp7G4sJajYxLUZz0RohG7OnzDNPLzZsD7to2UTDx3m97uYH34ffDPOe5/dMa+v24wXI1D7XGwBWT8AQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQTMAQrDqT4d27xs7WPmCY3XnX9OoG3YEhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhmIAhWHWuN3AOfPs70xs3dkpp1XVz85Y1GzZ0/p+pHTtP/PrBC5ZePvnU3Be+2PnaV7uLL3/14Mx113anp5vrrh35VDYNKxnGgDtV6/t3ryulvPf+4OFHZn/yo3WruMjkZPfFlxYWA56fbz78cPCVq7pneaPwSYb6CH3xl9offDCYmWl2/272/gdm7v3lyb/9vS6lLF9ZcuJE87Off3T06KD35c6779aDQSmlvPlWPTFRlVJ27Dyx4viPf/rRsWODUsoDD808/oe5UsqBqf5vds9+1m+Yz52hDvitt/vj450nnpy7/hsjd39v7bY7Rh99bK6UsnxlUb9fdv129uYtay66qN1ul02bOu8crkspb+w7deUV/z7LLB+f2FxNHaybpjRNOXKkLqVMTZ1uHs7EMH6H6n5z3/0nm6aMjrZuv23NvffN/OOfpyudX2gGg7L/zfp/VtrtUkr5/eOz11zTvfzy0x/aFZPV/v39S3qdw4frW28ZXbr+8vGJzdXe10+NX9xeP94+8t5gbq6ZOlhv+7qnZc7UMAa89Ay8aFA3O797frdbmqYcPFS32yuslFL6/eb9o4NS+kt/XE1srl54cebqI9X69Z32fxxllo9fdln19DPzhw7XvV7VHakPTNX9fjM21vpM3zafR0N9hF7U61Wv//VUKWXf/v6f/jy/4koppapaP/zBumPHmlf3LCyurF3bGhlpvfaXU1ddWX38BUe6ZezC1t69/V6vc0mv89zzC5deOow/nZx1vkblpi3nPfrY3MuvLLQ7rdtvXbPiyqJWq2zbOnrPL06Oj3c2buiUUiYnq2f/OH/jt877+AuWUiY2V3v2LJy/rrVpY+fgof43b/ivEVid1tbtx1c9vHvX2FncCgytO++aXt2gIzQEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEEzAEa23dfvxc7wFYJXdgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCCZgCPYvd4xbnNfrIwIAAAAASUVORK5CYII="
 
 SVG_LOGO = (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">\n'
@@ -232,16 +232,16 @@ MERMAID_GANTT = (
     '    title PeekView 开发路线图\n'
     '    dateFormat YYYY-MM-DD\n'
     '    section 基础功能\n'
-    '    数据库 + API        :done, db, 2026-06-01, 2026-06-15\n'
-    '    前端渲染            :done, fe, 2026-06-10, 2026-06-25\n'
-    '    认证系统            :done, auth, 2026-06-20, 2026-07-05\n'
+    '    "数据库 + API"     :done, db, 2026-06-01, 2026-06-15\n'
+    '    "前端渲染"         :done, fe, 2026-06-10, 2026-06-25\n'
+    '    "认证系统"         :done, auth, 2026-06-20, 2026-07-05\n'
     '    section 增强功能\n'
-    '    MCP Server          :done, mcp, 2026-07-01, 2026-07-15\n'
-    '    冷打开优化          :active, cold, 2026-07-20, 2026-07-30\n'
+    '    "MCP Server"       :done, mcp, 2026-07-01, 2026-07-15\n'
+    '    "冷打开优化"       :active, cold, 2026-07-20, 2026-07-30\n'
     '    section 规划中\n'
-    '    引用关系            :plan, ref, 2026-08-01, 2026-08-15\n'
-    '    标签过滤            :plan, tag, 2026-08-10, 2026-08-20\n'
-    '```'
+    '    "引用关系"         :plan, ref, 2026-08-01, 2026-08-15\n'
+    '    "标签过滤"         :plan, tag, 2026-08-10, 2026-08-20\n'
+    '```\n'
 )
 
 PLANTUML_ARCH = (

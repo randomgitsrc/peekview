@@ -1,0 +1,30 @@
+task_id: T082
+phase: READY
+status: completed
+created: 2026-07-30
+updated: 2026-07-30
+retries: {}
+history:
+  - {phase: P0, action: completed, date: "2026-07-30", note: "P0-brief written"}
+  - {phase: P1, action: started, date: "2026-07-30", note: "Requirements baseline"}
+  - {phase: P1, action: review, date: "2026-07-30", note: "needs-revision: 7 BLOCKER (multi-GWT, BDD-7 状态码, BDD-18/19 不可判定)"}
+  - {phase: P1, action: revised, date: "2026-07-30", note: "BDD 31→41 条, 7 BLOCKER 全修"}
+  - {phase: P1, action: review_approved, date: "2026-07-30", note: "P1-review.md status:approved, gate exit 2"}
+  - {phase: P2, action: started, date: "2026-07-30", note: "Design phase"}
+  - {phase: P2, action: review, date: "2026-07-30", note: "eng+design review needs-revision: 3 BLOCKER"}
+  - {phase: P2, action: revised, date: "2026-07-30", note: "3 BLOCKER 全修"}
+  - {phase: P2, action: review_approved, date: "2026-07-30", note: "eng+design review均approved, 组长汇总approved, gate exit 2"}
+  - {phase: P3, action: started, date: "2026-07-30", note: "TDD test phase"}
+  - {phase: P3, action: completed, date: "2026-07-30", note: "32红灯测试, check-tdd-red.sh exit 0, committed"}
+  - {phase: P4, action: started, date: "2026-07-30", note: "Implementation phase"}
+  - {phase: P4, action: implemented, date: "2026-07-30", note: "R1-R7 全实现, committed"}
+  - {phase: P4, action: review_approved, date: "2026-07-30", note: "eng+design review均approved, 0 BLOCKER"}
+  - {phase: P5, action: started, date: "2026-07-30", note: "Verification phase"}
+  - {phase: P5, action: completed, date: "2026-07-30", note: "verifier执行4个gate_commands全绿, gate exit 2, committed"}
+  - {phase: P6, action: started, date: "2026-07-30", note: "Acceptance phase"}
+  - {phase: P6, action: completed, date: "2026-07-30", note: "41 BDD全PASS, gate exit 2, evidence+provenance exit 0"}
+  - {phase: P7, action: started, date: "2026-07-30", note: "Consistency phase"}
+  - {phase: P7, action: completed, date: "2026-07-30", note: "3 DESIGN_GAP全REVIEWED, 0 BLOCKER, gate exit 0"}
+  - {phase: P8, action: started, date: "2026-07-30", note: "Release phase"}
+  - {phase: P8, action: completed, date: "2026-07-30", note: "bump 0.12.1, P5重跑全绿, CHANGELOG更新, committed"}
+  - {phase: READY, action: completed, date: "2026-07-30", note: "T082 架构重构完成"}

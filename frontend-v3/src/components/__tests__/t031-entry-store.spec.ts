@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { useEntryStore } from '@/stores/entry'
+import { useEntryDetailStore } from '@/stores/entryDetail'
 import type { Entry } from '@/types'
 
 vi.mock('@/api/client', () => ({
@@ -60,7 +60,7 @@ describe('T031 BDD-1: parallel loading', () => {
       return result
     })
 
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     const loadPromise = store.loadEntry('test-entry')
 
     await vi.waitFor(() => {

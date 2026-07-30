@@ -70,8 +70,9 @@ test.describe('Debug Server - Captcha', () => {
 
   test('login dialog contains captcha widget when enabled', async ({ page }) => {
     await page.goto('/')
-    await page.waitForSelector('.btn-login', { timeout: 10000, state: 'visible' })
-    await page.click('.btn-login')
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await loginBtn.click()
     await page.waitForSelector('.login-dialog', { timeout: 5000, state: 'visible' })
     await page.waitForTimeout(2000)
     const html = await page.locator('.login-dialog').innerHTML()

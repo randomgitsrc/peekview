@@ -27,8 +27,8 @@ const mockTotal = ref(0)
 const mockPerPage = ref(20)
 const mockOwnerFound = ref<boolean | null>(null)
 
-vi.mock('@/stores/entry', () => ({
-  useEntryStore: () => ({
+vi.mock('@/stores/entryList', () => ({
+  useEntryListStore: () => ({
     entries: mockEntries,
     loading: mockLoading,
     error: mockError,

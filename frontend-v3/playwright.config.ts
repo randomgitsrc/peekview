@@ -18,12 +18,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // CDP: connect to Windows Chrome (WSL mirrored networking, port 18800)
+        cdpEndpoint: process.env.CDP_ENDPOINT || undefined,
+      },
     },
     {
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
+        cdpEndpoint: process.env.CDP_ENDPOINT || undefined,
         // Longer timeouts for Mobile Chrome
         actionTimeout: 45000,
         navigationTimeout: 45000,

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useEntryStore } from '@/stores/entry'
+import { useEntryListStore } from '@/stores/entryList'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/api/client'
 import type { Entry, EntryListResponse } from '@/types'
@@ -51,11 +51,11 @@ function makeListResponse(items: Entry[], total?: number): EntryListResponse {
 const mockListEntries = api.listEntries as ReturnType<typeof vi.fn>
 
 describe('Entry Store', () => {
-  let entryStore: ReturnType<typeof useEntryStore>
+  let entryStore: ReturnType<typeof useEntryListStore>
 
   beforeEach(() => {
     setActivePinia(createPinia())
-    entryStore = useEntryStore()
+    entryStore = useEntryListStore()
     vi.clearAllMocks()
   })
 

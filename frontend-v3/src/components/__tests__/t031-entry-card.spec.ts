@@ -50,19 +50,11 @@ describe('T031 EntryCard', () => {
     })
   })
 
-  describe('BDD-3: separator font', () => {
-    it('meta-sep should have UI font-family (not inherit mono)', () => {
+  describe('BDD-3: separator', () => {
+    it('meta-dot separator exists between meta items', () => {
       const wrapper = createWrapper()
-      const sep = wrapper.find('.meta-sep')
-      expect(sep.exists()).toBe(true)
-      const style = window.getComputedStyle(sep.element)
-      const fontFamily = sep.element.getAttribute('style') || ''
-      const classes = sep.classes()
-      const hasUiFont = fontFamily.includes('Inter') || fontFamily.includes('sans-serif') ||
-        classes.some(c => c.includes('ui-font'))
-      const computedFont = style.fontFamily || ''
-      const hasUiFontComputed = computedFont.includes('Inter') || computedFont.includes('sans-serif')
-      expect(hasUiFont || hasUiFontComputed).toBe(true)
+      const dots = wrapper.findAll('.meta-dot')
+      expect(dots.length).toBeGreaterThan(0)
     })
   })
 

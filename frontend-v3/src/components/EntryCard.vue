@@ -29,10 +29,10 @@
           :href="'/users/' + entry.username"
           @click.prevent="navigateToUser"
         >@{{ entry.username }}</a>
-        <span v-if="entry.username" class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
+        <span v-if="entry.username" class="meta-dot"></span>
         <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
         <template v-if="entry.fileCount">
-          <span class="meta-sep" style="font-family: Inter, -apple-system, sans-serif"> · </span>
+          <span class="meta-dot"></span>
           <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
         </template>
       </div>
@@ -218,6 +218,9 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 }
 
 .card-meta-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: var(--c-text-tertiary);
   font-family: var(--font-mono);
@@ -236,11 +239,6 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
 .meta-username:focus-visible {
   outline: 2px solid var(--c-accent-secondary);
   outline-offset: 2px;
-}
-
-.meta-sep {
-  color: var(--c-text-tertiary);
-  font-family: Inter, -apple-system, sans-serif;
 }
 
 .meta-time {

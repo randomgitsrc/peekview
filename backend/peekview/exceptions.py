@@ -7,19 +7,27 @@ All exceptions inherit from PeekError and provide:
 """
 
 
+from __future__ import annotations
+
+from typing import Any
+
+
 class PeekError(Exception):
     """Base exception for all PeekView errors.
 
     Attributes:
         status_code: HTTP status code (default 500)
         error_code: Machine-readable error code
+        message: Human-readable description
+        details: Optional structured details for the error response
     """
 
     status_code: int = 500
     error_code: str = "INTERNAL_ERROR"
 
-    def __init__(self, message: str | None = None):
+    def __init__(self, message: str | None = None, details: Any = None):
         self.message = message or "An unexpected error occurred"
+        self.details = details
         super().__init__(self.message)
 
 
@@ -213,3 +221,31 @@ class SchemaMismatchError(PeekError):
             + "  (or restart peekview serve if not installed as a service)"
         )
         super().__init__(message)
+
+
+class ParameterValidationError(PeekError):
+    """Request parameter validation failed (422).
+
+    Used for query/path parameter validation errors that don't fit
+    the business-logic ValidationError (400) category.
+    """
+
+    status_code = 422
+    error_code = "PARAMETER_VALIDATION_ERROR"
+
+
+class LastAdminError(PeekError):
+    """Attempted to delete the last admin account (409).
+
+    Carries details with confirm_required flag.
+    """
+
+    status_code = 409
+    error_code = "LAST_ADMIN"
+
+
+class InvalidPasswordError(PeekError):
+    """Old password verification failed during password change (400)."""
+
+    status_code = 400
+    error_code = "INVALID_PASSWORD"

@@ -1,0 +1,13 @@
+- [INPUT] 读取角色定义、dispatch-context、P0-brief、P2-design、P3-test-cases 完成
+- [INPUT] 读取所有源码文件完成（entries.py, files.py, auth.py, api/auth.py, admin.py, exceptions.py, main.py, entry_service.py, admin_service.py）
+- [R2] api/_shared.py 创建完成（record_read_async, looks_like_jwt, is_global_api_key_auth）
+- [R3] exceptions.py: PeekError base 加 details 字段 + 新增 ParameterValidationError/LastAdminError/InvalidPasswordError
+- [R1] main.py: 构造注入初始化（share_service/read_tracking_service 先创建，传给 EntryService；entry_service 传给 AdminService）
+- [R1] entry_service.py: 构造函数加 read_tracking_service/share_service 参数 + _build_response/_get_share_service 用注入实例 + 删除 get_entry_service 死函数
+- [R1] admin_service.py: 构造函数加 entry_service 参数 + cleanup_expired/delete_user 用注入实例
+- [R1+R2] auth.py: ApiKeyService→app.state.apikey_service + 移除 _looks_like_jwt 改用 _shared.looks_like_jwt
+- [R1+R2+R3] entries.py: DI 统一(app.state) + 去重(import _shared) + HTTPException→ParameterValidationError(422)
+- [R1+R2] files.py: DI 统一(app.state/service 方法) + 去重(import _shared) + 移除 StorageManager/Session/get_engine 直建
+- [R4] entry_service.py: create_entry 事务修复 commit→flush，文件写入成功后单次 commit
+- [自检] T082 14条测试全绿 + 全量 985 passed/2 skipped + lint 通过 + 完成标志全部验证
+- [完成] P4-implementation-backend.md 已写入

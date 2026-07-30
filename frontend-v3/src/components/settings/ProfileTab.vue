@@ -71,7 +71,7 @@ async function handleSave() {
     await authStore.updateProfile(value)
     toast.success('Profile updated')
   } catch (err: any) {
-    toast.error(err?.response?.data?.detail || 'Failed to update profile')
+    toast.error(err?.response?.data?.error?.message || 'Failed to update profile')
   } finally {
     saving.value = false
   }

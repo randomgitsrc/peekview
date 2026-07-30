@@ -14,8 +14,9 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 test.describe('Captcha - Enabled Mode', () => {
   test('captcha widget appears in login dialog', async ({ page }) => {
     await page.goto(BASE_URL + '/')
-    await page.waitForSelector('.btn-login', { timeout: 10000 })
-    await page.click('.btn-login')
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await loginBtn.click()
     await page.waitForTimeout(1000)
 
     // Widget should be visible
@@ -45,8 +46,9 @@ test.describe('Captcha - Enabled Mode', () => {
 
   test('submit disabled until captcha solved', async ({ page }) => {
     await page.goto(BASE_URL + '/')
-    await page.waitForSelector('.btn-login', { timeout: 10000 })
-    await page.click('.btn-login')
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await loginBtn.click()
     await page.waitForTimeout(1000)
 
     await page.fill('#login-username', 'captchatest')

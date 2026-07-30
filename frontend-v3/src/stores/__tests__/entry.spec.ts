@@ -32,8 +32,8 @@ describe('entry store: loadEntries ownerFound storage', () => {
       ownerFound: true,
     })
 
-    const { useEntryStore } = await import('@/stores/entry')
-    const store = useEntryStore()
+    const { useEntryListStore } = await import('@/stores/entryList')
+    const store = useEntryListStore()
     await store.loadEntries({ owner: 'alice' })
 
     // After P4 implementation, store should expose ownerFound ref
@@ -49,8 +49,8 @@ describe('entry store: loadEntries ownerFound storage', () => {
       ownerFound: false,
     })
 
-    const { useEntryStore } = await import('@/stores/entry')
-    const store = useEntryStore()
+    const { useEntryListStore } = await import('@/stores/entryList')
+    const store = useEntryListStore()
     await store.loadEntries({ owner: 'nonexistent' })
 
     expect((store as unknown as Record<string, unknown>).ownerFound).toBe(false)
@@ -65,8 +65,8 @@ describe('entry store: loadEntries ownerFound storage', () => {
       ownerFound: null,
     })
 
-    const { useEntryStore } = await import('@/stores/entry')
-    const store = useEntryStore()
+    const { useEntryListStore } = await import('@/stores/entryList')
+    const store = useEntryListStore()
     await store.loadEntries()
 
     expect((store as unknown as Record<string, unknown>).ownerFound).toBe(null)
@@ -81,8 +81,8 @@ describe('entry store: loadEntries ownerFound storage', () => {
       // ownerFound intentionally omitted
     })
 
-    const { useEntryStore } = await import('@/stores/entry')
-    const store = useEntryStore()
+    const { useEntryListStore } = await import('@/stores/entryList')
+    const store = useEntryListStore()
     await store.loadEntries()
 
     expect((store as unknown as Record<string, unknown>).ownerFound).toBe(null)
@@ -112,8 +112,8 @@ describe('entry store: loadEntries ownerFound storage', () => {
       ownerFound: true,
     })
 
-    const { useEntryStore } = await import('@/stores/entry')
-    const store = useEntryStore()
+    const { useEntryListStore } = await import('@/stores/entryList')
+    const store = useEntryListStore()
     await store.loadEntries({ owner: 'alice' })
 
     expect(store.entries).toHaveLength(1)

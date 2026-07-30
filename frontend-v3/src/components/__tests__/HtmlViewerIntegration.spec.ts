@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { useEntryStore } from '@/stores/entry'
+import { useEntryDetailStore } from '@/stores/entryDetail'
 
 // ─── Mock 子组件，聚焦渲染分支逻辑 ──────────────────────────────────────────
 vi.mock('@/components/HtmlViewer.vue', () => ({
@@ -54,31 +54,31 @@ describe('entry store canWrap', () => {
   })
 
   it('HTML 文件时 canWrap 为 false', () => {
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     store.$patch({ activeFile: makeFile({ language: 'html' }) })
     expect(store.canWrap).toBe(false)
   })
 
   it('Markdown 文件时 canWrap 为 false', () => {
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     store.$patch({ activeFile: makeFile({ filename: 'README.md', language: 'markdown' }) })
     expect(store.canWrap).toBe(false)
   })
 
   it('Python 文件时 canWrap 为 true', () => {
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     store.$patch({ activeFile: makeFile({ filename: 'main.py', language: 'python' }) })
     expect(store.canWrap).toBe(true)
   })
 
   it('二进制文件时 canWrap 为 false', () => {
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     store.$patch({ activeFile: makeFile({ filename: 'image.png', language: null, isBinary: true }) })
     expect(store.canWrap).toBe(false)
   })
 
   it('无 activeFile 时 canWrap 为 false', () => {
-    const store = useEntryStore()
+    const store = useEntryDetailStore()
     store.$patch({ activeFile: null })
     expect(store.canWrap).toBe(false)
   })
