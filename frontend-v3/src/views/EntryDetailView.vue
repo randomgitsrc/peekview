@@ -4,7 +4,7 @@
     <!-- Mobile sticky header -->
     <div v-if="isMobile" v-show="!zenMode" class="mobile-sticky-header">
       <router-link to="/" class="mobile-logo-link" aria-label="Back to home">
-        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </router-link>
       <span class="sticky-title two-line">{{ entryTitle }}</span>
       <a
@@ -18,7 +18,7 @@
     <header v-if="isDesktop" v-show="!zenMode" class="detail-header">
       <div class="title-row">
         <router-link to="/" class="detail-logo" title="Back to home">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="detail-logo-word">PeekView</span>
         </router-link>
         <span class="brand-sep"></span>
@@ -854,7 +854,7 @@ watch(() => entryStore.currentEntry, async (entry) => {
 .expired-edit-btn {
   padding: var(--space-1) var(--space-3);
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-sm);
@@ -887,7 +887,7 @@ watch(() => entryStore.currentEntry, async (entry) => {
 .reactivate-btn {
   padding: var(--space-1) var(--space-3);
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-sm);

@@ -299,7 +299,7 @@ PATH RULES:
 - Sensitive files such as .env, *.env, .npmrc, .pypirc, .git-credentials, ~/.ssh, ~/.aws, ~/.kube, *.pem/*.key are always blocked.
 
 VISIBILITY:
-- publish_files defaults to private (is_public=false). Set is_public=true to publish a public link.
+- publish_files defaults to public (is_public=true). Set is_public=false to create a private entry.
 
 Examples:
 - Single file:   { "summary": "Fix", "paths": ["/project/fix.py"] }
@@ -322,7 +322,7 @@ Namespace: use X-Peekview-Namespace header when Agent runs in a container with p
       },
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
-      is_public: { type: 'boolean', description: 'Whether entry is public (default: false)' },
+      is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
       include_patterns: {
         type: 'array', items: { type: 'string' },
@@ -513,7 +513,7 @@ Namespace: use X-Peekview-Namespace header when Agent runs in a container with p
         };
       }
 
-      // 发布——默认 is_public=false
+      // 发布——默认 is_public=true
       const entry = await client.createEntry({
         summary: params.summary,
         files,

@@ -142,7 +142,7 @@ function close() {
   width: 100%;
   padding: var(--space-2) var(--space-4);
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-md);

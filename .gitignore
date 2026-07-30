@@ -89,3 +89,4 @@ packages/mcp-server/coverage/
 peekview-backup-*.tar.gz
 zip-*-test.zip
 .worktrees/
+frontend-v3/docs/

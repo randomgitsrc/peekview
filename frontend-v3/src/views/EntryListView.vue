@@ -2,7 +2,7 @@
   <div class="entry-list">
     <header class="explore-header">
       <router-link to="/" class="explore-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="explore-logo-word">PeekView</span>
       </router-link>
       <div class="explore-actions">
@@ -633,7 +633,7 @@ onBeforeRouteUpdate((to) => {
   height: 24px;
   border-radius: 50%;
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: var(--font-xs);
   font-weight: 600;
 }
@@ -662,7 +662,7 @@ onBeforeRouteUpdate((to) => {
   padding: 1px 5px;
   border-radius: 3px;
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;

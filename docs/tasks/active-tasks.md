@@ -14,6 +14,10 @@
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
+| T079 | interaction-consistency | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
+| T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
+| T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
+| T082 | arch-refactor | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 
 ### T071: Docker 部署（合并原 T071+T072）
 
@@ -38,6 +42,22 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 ### T078: 读取追踪强化 + display_name 修复
 
 新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action`/`by_source` 维度。原始事件 90 天清理。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。
+
+### T079: 交互一致性修复
+
+DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一致→抽共享 AuthButton 组件，按规则统一 variant + 文案 "Sign in"；②用户菜单不一致→抽共享 UserMenu 组件，统一为 Settings + Logout；③Detail 页 Explore 按钮冗余→移除（logo 已覆盖）；④详情页 tag 不可点击→改用 BaseTag 组件。后端无改动。
+
+### T080: Admin 用户管理
+
+后端补 disable/enable + promote/demote API + CLI `user disable/enable`。前端新增 /admin 路由 + 用户管理页面（列表、禁用/启用、删除、重置密码、角色变更）。Phase 1 不含 backup/restore（保留 CLI-only）。MCP 不暴露。
+
+### T081: 详情页侧边栏可拖拽调整宽度
+
+桌面端 file tree 和 TOC 侧边栏固定宽度，长文件名/长标题被遮挡。加拖拽 handle 调整横向宽度，最小/最大宽度约束，宽度持久化 localStorage，移动端不适用（drawer）。
+
+### T082: 架构重构
+
+后端 DI 三种模式统一为 `app.state` 注入（files.py 走 service、跨 service 调用用注入实例、去掉 fallback new）。错误格式统一为 PeekError。重复代码提取（_looks_like_jwt 等 3 处）。create_entry 事务完整性修复。前端 entry store 拆分为 EntryListStore + EntryDetailStore。EntryDetailView 1003 行 god component 拆分为子组件（目标 < 300 行）。
 
 ---
 
@@ -171,6 +191,8 @@ entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-30 | 立项 T082 | arch-refactor：后端 DI 统一+错误格式统一+重复代码提取+create_entry 事务；前端 entry store 拆分+EntryDetailView 拆分。多维度架构审计发现 6 项结构性问题 |
+| 2026-07-30 | 立项 T079+T080+T081 | T079 交互一致性修复（AuthButton/UserMenu 统一 + tag 可点击 + Explore 按钮移除）；T080 admin 用户管理（后端 disable/enable/promote/demote + CLI + 前端 /admin 页面）；T081 详情页侧边栏可拖拽调整宽度；roadmap #46 删除（需求弱）/#47→T081 |
 | 2026-07-30 | 完成 T076 | entry-card-interaction → v0.12.0（EntryCard/EntryListRow <a> 拆分 + BaseTag 可点击 + Explore tag 过滤 + tooltip；完整 agate P0-P8，21 BDD 验收全 PASS，vision×19 全 blocker=0） |
 | 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |
 | 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |

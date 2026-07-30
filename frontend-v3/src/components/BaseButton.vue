@@ -82,7 +82,7 @@ defineEmits<{
 
 .btn-primary {
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border-color: var(--c-accent);
   box-shadow: 0 6px 20px var(--c-glow);
 }
@@ -115,7 +115,7 @@ defineEmits<{
 
 .btn-danger {
   background: var(--c-error);
-  color: #fff;
+  color: var(--text-on-accent);
   border-color: var(--c-error);
 }
 

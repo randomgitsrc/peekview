@@ -6,7 +6,7 @@
     <div class="wrap">
       <nav>
         <router-link to="/" class="brand">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="word">PeekView</span>
         </router-link>
         <div class="nav-links">
@@ -173,7 +173,7 @@
     <footer>
       <div class="wrap foot">
         <router-link to="/" class="brand">
-          <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="word">PeekView</span>
         </router-link>
         <div class="links">
@@ -264,7 +264,7 @@ const codeFmt = '<div style="font-family:var(--font-mono);font-size:12px;line-he
   '<div style="display:flex;gap:10px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">6</span><span><span class="kw">await</span> page.<span class="fn">goto</span>(<span class="st">\'https://peekview.dev\'</span>);</span></div></div>'
 const mdFmt = `<div style="font-size:13px;line-height:1.65;color:var(--c-text-secondary)"><div style="color:var(--c-text);font-size:16px;font-weight:700;margin-bottom:10px">Agent Runbook</div><div style="margin-bottom:6px">Every <b style="color:var(--c-text)">plan → act → observe</b> cycle is logged.</div><div style="margin-bottom:3px">• Rendered in real time</div><div>• Shareable by URL</div></div>`
 const diagramFmt = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:12px"><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent-secondary);font-weight:500">Plan</span><span style="color:var(--c-text-tertiary);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent-secondary);font-weight:500">Act</span><span style="color:var(--c-text-tertiary);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(119,166,255,.15);border:1px solid rgba(119,166,255,.4);color:#76a6ff;font-weight:600">Ship ✓</span></div>`
-const htmlFmt = `<div style="display:flex;flex-direction:column;gap:10px;justify-content:center"><div style="height:32px;border-radius:8px;border:1px solid var(--c-border-strong);background:var(--c-surface);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--c-text-tertiary)">peekview.dev/p/agent-runbook</div><div style="display:flex;gap:8px"><span style="padding:6px 14px;border-radius:7px;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600">Open</span><span style="padding:6px 14px;border-radius:7px;border:1px solid var(--c-border-strong);color:var(--c-text-secondary);font-size:12px">Copy link</span></div></div>`
+const htmlFmt = `<div style="display:flex;flex-direction:column;gap:10px;justify-content:center"><div style="height:32px;border-radius:8px;border:1px solid var(--c-border-strong);background:var(--c-surface);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--c-text-tertiary)">peekview.dev/p/agent-runbook</div><div style="display:flex;gap:8px"><span style="padding:6px 14px;border-radius:7px;background:var(--c-accent);color:var(--text-on-accent);font-size:12px;font-weight:600">Open</span><span style="padding:6px 14px;border-radius:7px;border:1px solid var(--c-border-strong);color:var(--c-text-secondary);font-size:12px">Copy link</span></div></div>`
 const svgFmt = '<div style="display:flex;align-items:center;justify-content:center;gap:20px">' +
   '<svg width="130" height="78" viewBox="0 0 260 156">' +
   '<rect x="10" y="45" width="60" height="30" rx="6" fill="rgba(77,141,255,.12)" stroke="rgba(77,141,255,.35)" stroke-width="1.5"/>' +
@@ -315,7 +315,7 @@ nav { display:flex;align-items:center;justify-content:space-between;height:72px 
 .user-menu-wrapper { position:relative }
 .user-menu-trigger { display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:8px;border:1px solid var(--c-border-strong);background:transparent;color:var(--c-text);cursor:pointer;font-size:13px;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;transition:all .15s }
 .user-menu-trigger:hover { background:var(--c-border) }
-.user-avatar { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600 }
+.user-avatar { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--c-accent);color:var(--text-on-accent);font-size:12px;font-weight:600 }
 .user-name { max-width:100px;overflow:hidden;text-overflow:ellipsis }
 .user-dropdown { position:absolute;top:calc(100% + 4px);right:0;background:var(--c-surface);border:1px solid var(--c-border-strong);border-radius:8px;padding:4px;min-width:120px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:100 }
 .dropdown-item { display:block;width:100%;padding:8px 12px;border:none;background:none;color:var(--c-text-secondary);cursor:pointer;font-size:13px;text-align:left;border-radius:6px }
@@ -326,7 +326,7 @@ nav { display:flex;align-items:center;justify-content:space-between;height:72px 
 .dropdown-leave-to { opacity:0 }
 
 .btn { display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border-radius:8px;font-size:14px;font-weight:600;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap }
-.btn-primary { background:var(--c-accent);color:#fff;box-shadow:0 6px 20px rgba(77,141,255,.35) }
+.btn-primary { background:var(--c-accent);color:var(--text-on-accent);box-shadow:0 6px 20px rgba(77,141,255,.35) }
 .btn-primary:hover { background:var(--c-accent-secondary) }
 .btn-ghost { background:transparent;color:var(--c-text);border-color:var(--c-border-strong) }
 .btn-ghost:hover { background:var(--c-border);border-color:var(--c-text-secondary) }
@@ -399,7 +399,7 @@ h1 { margin:0;font-size:76px;line-height:1.02;font-weight:700;letter-spacing:-.0
 .fmt .render .md-bullet .bar { width:64%;margin:0 }
 .fmt .render .vbar { width:2px;height:13px;background:var(--c-border-strong);display:block }
 .fmt .render .html-box { height:36px;border-radius:8px;border:1px solid var(--c-border);background:var(--c-surface);margin-bottom:11px;width:100% }
-.fmt .render .html-btn { display:inline-flex;align-self:flex-start;height:27px;padding:0 15px;align-items:center;border-radius:7px;background:var(--c-accent);color:#fff;font-size:12px;font-weight:600 }
+.fmt .render .html-btn { display:inline-flex;align-self:flex-start;height:27px;padding:0 15px;align-items:center;border-radius:7px;background:var(--c-accent);color:var(--text-on-accent);font-size:12px;font-weight:600 }
 .fmt .render svg { color:var(--c-accent-secondary) }
 .fmt .lbl { padding:16px 20px 20px }
 .fmt .lbl .name { font-size:15.5px;font-weight:650;letter-spacing:-.01em }

@@ -248,9 +248,7 @@ async def download_file(
         content = storage.read_file(entry_id, file_record.filename, file_record.path)
         safe_name = _sanitize_filename(file_record.filename)
 
-        entry_record = session.exec(
-            select(Entry).where(Entry.id == entry_id)
-        ).first()
+        entry_record = session.exec(select(Entry).where(Entry.id == entry_id)).first()
         channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
         current_user_id_dl = current_user.id if current_user else None
         asyncio.create_task(
@@ -300,9 +298,7 @@ async def get_file_content(
     content = storage.read_file(entry_id, file_record.filename, file_record.path)
 
     with Session(engine) as session:
-        entry_record = session.exec(
-            select(Entry).where(Entry.id == entry_id)
-        ).first()
+        entry_record = session.exec(select(Entry).where(Entry.id == entry_id)).first()
     channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
     current_user_id_fc = current_user.id if current_user else None
     asyncio.create_task(

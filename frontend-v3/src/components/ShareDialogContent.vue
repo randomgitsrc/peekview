@@ -325,7 +325,7 @@ onMounted(() => {
   justify-content: center;
   padding: 8px 16px;
   background: var(--c-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: 6px;
   font-size: var(--font-sm);

@@ -25,7 +25,6 @@ effects regardless of pass/fail.
 
 from pathlib import Path
 
-import pytest
 import tomllib
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -51,9 +50,11 @@ class TestBdd10RuffCheckSelectE711E712:
         import subprocess
 
         result = subprocess.run(
-            ["python3", "-m", "ruff", "check", "--select", "E711,E712",
-             "peekview/", "tests/"],
-            capture_output=True, text=True, cwd=str(BACKEND_DIR), timeout=60,
+            ["python3", "-m", "ruff", "check", "--select", "E711,E712", "peekview/", "tests/"],
+            capture_output=True,
+            text=True,
+            cwd=str(BACKEND_DIR),
+            timeout=60,
         )
         assert result.returncode == 0, (
             f"ruff E711/E712 violations found (E711/E712 ignore may be missing):\n"
