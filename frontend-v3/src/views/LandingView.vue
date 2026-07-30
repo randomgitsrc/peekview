@@ -306,7 +306,7 @@ a { color:inherit;text-decoration:none }
 /* nav */
 nav { display:flex;align-items:center;justify-content:space-between;height:72px }
 .brand { display:flex;align-items:center;gap:11px }
-.word { font-size:21px;font-weight:700;letter-spacing:-0.02em }
+.word { font-size:20px;font-weight:700;letter-spacing:-0.02em;color:var(--c-text) }
 .nav-links { display:flex;align-items:center;gap:30px }
 .nav-links a { font-size:14px;color:var(--c-text-secondary);transition:color .15s }
 .nav-links a:hover { color:var(--c-text) }

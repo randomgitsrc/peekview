@@ -113,11 +113,11 @@ describe('T076 EntryCard interaction', () => {
       expect((time.element as HTMLElement).closest('a')).toBeNull()
     })
 
-    it('meta-sep is not inside any anchor element', () => {
+    it('meta-dot is not inside any anchor element', () => {
       const wrapper = createWrapper()
-      const sep = wrapper.find('.meta-sep')
-      expect(sep.exists()).toBe(true)
-      expect((sep.element as HTMLElement).closest('a')).toBeNull()
+      const dot = wrapper.find('.meta-dot')
+      expect(dot.exists()).toBe(true)
+      expect((dot.element as HTMLElement).closest('a')).toBeNull()
     })
   })
 

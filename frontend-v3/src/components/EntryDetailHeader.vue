@@ -53,10 +53,9 @@
       <template v-else-if="isExpiredButActive"><span class="meta-dot"></span><span class="status-tag" style="color:var(--c-warning)">Expired</span></template>
       <template v-else-if="currentEntry?.expiresAt"><span class="meta-dot"></span><span>Expires {{ formatExpiresIn(currentEntry.expiresAt) }}</span></template>
       <span class="meta-sep"></span>
-      <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
-      <span class="meta-dot"></span>
+      <template v-if="currentEntry?.readStats"><span>{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span><span class="meta-dot"></span></template>
       <span :class="['status-tag', currentEntry?.isPublic ? 'public' : 'private']">{{ currentEntry?.isPublic ? 'Public' : 'Private' }}</span>
-      <template v-for="tag in currentEntry?.tags ?? []" :key="tag"><span class="meta-dot"></span><span class="meta-tag">{{ tag }}</span></template>
+      <template v-for="tag in currentEntry?.tags ?? []" :key="tag"><span class="meta-tag">{{ tag }}</span></template>
     </div>
   </header>
 
@@ -65,10 +64,9 @@
     <router-link v-if="currentEntry?.username" :to="`/users/${currentEntry.username}`" class="owner-link">@{{ currentEntry.username }}</router-link>
     <span class="meta-dot"></span><span>{{ relativeTime }}</span>
     <span class="meta-sep"></span>
-    <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
-    <span class="meta-dot"></span>
+    <template v-if="currentEntry?.readStats"><span>{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span><span class="meta-dot"></span></template>
     <span :class="['status-tag', currentEntry?.isPublic ? 'public' : 'private']">{{ currentEntry?.isPublic ? 'Public' : 'Private' }}</span>
-    <template v-for="tag in currentEntry?.tags ?? []" :key="tag"><span class="meta-dot"></span><span class="meta-tag">{{ tag }}</span></template>
+    <template v-for="tag in currentEntry?.tags ?? []" :key="tag"><span class="meta-tag">{{ tag }}</span></template>
   </div>
 </template>
 
@@ -159,7 +157,6 @@ const shareDialogModel = computed({
 .entry-owner-link { font-size: 12px; color: var(--c-accent); text-decoration: none; font-family: var(--font-mono); }
 .entry-owner-link:hover { text-decoration: underline; }
 .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--c-text-tertiary); flex-shrink: 0; }
-.meta-sep { flex: 1; }
 .status-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--c-tag-bg); color: var(--c-text-tertiary); }
 .status-tag.public { background: var(--c-accent-surface); color: var(--c-accent); }
 .status-tag.private { background: var(--c-surface-lower); color: var(--c-text-secondary); }
