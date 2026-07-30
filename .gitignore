@@ -88,3 +88,4 @@ packages/mcp-server/coverage/
 .gate-history.jsonl
 peekview-backup-*.tar.gz
 zip-*-test.zip
+.worktrees/
