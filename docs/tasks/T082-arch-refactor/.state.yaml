@@ -1,5 +1,5 @@
 task_id: T082
-phase: P5
+phase: P7
 status: in_progress
 created: 2026-07-30
 updated: 2026-07-30
@@ -20,3 +20,7 @@ history:
   - {phase: P4, action: implemented, date: "2026-07-30", note: "R1-R7 全实现, committed"}
   - {phase: P4, action: review_approved, date: "2026-07-30", note: "eng+design review均approved, 0 BLOCKER"}
   - {phase: P5, action: started, date: "2026-07-30", note: "Verification phase"}
+  - {phase: P5, action: completed, date: "2026-07-30", note: "verifier执行4个gate_commands全绿, gate exit 2, committed"}
+  - {phase: P6, action: started, date: "2026-07-30", note: "Acceptance phase"}
+  - {phase: P6, action: completed, date: "2026-07-30", note: "41 BDD全PASS, gate exit 2, evidence+provenance exit 0"}
+  - {phase: P7, action: started, date: "2026-07-30", note: "Consistency phase"}
