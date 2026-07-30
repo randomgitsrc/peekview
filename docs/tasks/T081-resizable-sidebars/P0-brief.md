@@ -31,6 +31,7 @@ parent: null
 
 ## 关联
 
-- layout.css: `.file-sidebar` / `.toc-sidebar` 固定 width
-- variables.css: `--sidebar-width` / `--toc-width`（拖拽后需动态覆盖 CSS variable）
+- T082 后侧边栏 DOM 和 CSS 在 `EntryDetailContent.vue`（非主组件 `EntryDetailView.vue`）
+- `EntryDetailContent.vue`: `.file-sidebar` width:200px / `.toc-sidebar` width:240px（拖拽后需动态覆盖）
+- variables.css: `--sidebar-width` / `--toc-width`（拖拽后动态覆盖 CSS variable）
 - DESIGN.md §4=三栏布局描述

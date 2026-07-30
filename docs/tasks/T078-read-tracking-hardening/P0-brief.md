@@ -104,7 +104,7 @@ CREATE TABLE entry_read_stats (
 | `direct` | 无 Referer 或空 Referer | 浏览器直接输入 URL、书签、Agent API 调用 |
 | `other` | 其他来源 | 未知网站 |
 
-实现位置：`read_tracking_service.py` 新增 `_classify_source(referer: str | None, host: str) -> str` 函数。
+实现位置：`read_tracking_service.py` 新增 `_classify_source(referer: str | None, host: str) -> str` 函数。T082 后 `read_tracking_service` 通过 `app.state.read_tracking_service` 注入，`record_read()` 调用方（`_shared.py` 的 `_record_read_async`）通过 `request.app.state` 获取。若需修改 `record_read()` 签名（加 referer/source 参数），沿注入链路修改即可。
 
 `entry_reads` 表新增 `source` 列（string, nullable）。历史数据无 source → 回填时归为 `unknown`。
 
@@ -122,6 +122,7 @@ CREATE TABLE entry_read_stats (
 - `admin_service.backup()` 导出 `entry_read_stats` 表数据
 - `admin_service.restore()` 导入 `entry_read_stats` 并重建
 - `AdminStatsResponse` 新增 `read_stats_imported` 字段
+- T082 后 `AdminService` 已通过构造注入 `entry_service`，访问 `entry_read_stats` 走注入链路，不再内部 new
 
 ### I. display_name null 修复（T074 合并）
 

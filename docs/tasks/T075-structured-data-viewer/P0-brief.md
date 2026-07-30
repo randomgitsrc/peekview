@@ -63,7 +63,7 @@ parent: AI 时代结构化数据查看需求
 
 - 后端 `language.py` 确认对 .csv/.tsv/.json/.yaml/.yml/.xml 的 language 返回值
 - 如缺失，补充扩展名 → language 映射
-- 前端 `EntryDetailView.vue` 的 `isMarkdown`/`isHtml`/`isImage` 计算属性旁，新增 `isCsv`/`isTsv`/`isJson`/`isYaml`/`isXml` 检测
+- 前端格式检测属性（`isMarkdown`/`isHtml`/`isImage`）已由 T082 拆分到 `composables/useEntryDetailComputed.ts`，新增 `isCsv`/`isTsv`/`isJson`/`isYaml`/`isXml` 检测应在此 composable 中添加，渲染组件入口在 `EntryDetailContent.vue`
 
 ## 不做
 

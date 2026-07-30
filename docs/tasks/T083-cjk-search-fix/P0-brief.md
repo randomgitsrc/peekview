@@ -25,7 +25,7 @@ parent: null
 DB 存储: ["\u524d\u7aef", "Vue", "\u7ec4\u4ef6\u5e93"]
 ```
 
-后端代码（`entry_service.py:476-480`）用 `CAST(tags AS TEXT) LIKE '%"前端"%'` 模式匹配，但 DB 里存的是 `\u524d\u7aef`，匹配失败。**所有非 ASCII tag 的过滤都失效**，不只是中文。
+后端代码（`entry_service.py:461-463`）用 `Entry.tags.cast(String).like(f'%"{tag}"%')` 模式匹配，但 DB 里存的是 `\u524d\u7aef`，匹配失败。**所有非 ASCII tag 的过滤都失效**，不只是中文。
 
 **修法**：用 SQLite 原生 JSON 函数 `json_each` 做精确匹配：
 
@@ -108,5 +108,5 @@ FTS tags: "google gemini gemini"                  ← 连字符→空格
 ## 关联
 
 - 调查结论：本次会话中完整复现 + 验证（python3 脚本 + SQLite 3.45.1）
-- 与 T082 无文件冲突：T082 改 DI/错误格式/store/component，T083 改 FTS 索引逻辑和 tag 查询方式
+- T082 已合并（v0.12.2）：entry_service.py 行号已更新，DI 统一后 service 通过 app.state 注入
 - SQLite FTS5 官方文档：https://www.sqlite.org/fts5.html
