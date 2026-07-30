@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: T083
 status: in_progress
 created: 2026-07-30
@@ -9,4 +9,5 @@ history:
   - {phase: P2, status: completed, ts: "2026-07-31T00:30:00Z", note: "方案 A trigger 降级 + 6 项最小验证全 confirmed，review approved"}
   - {phase: P3, status: completed, ts: "2026-07-31T00:45:00Z", note: "16 测试用例覆盖 BDD-1~15+17，check-tdd-red 经典红灯（16 assertion failures）"}
   - {phase: P4, status: completed, ts: "2026-07-31T01:00:00Z", note: "text_utils.py + trigger 降级 + json_each + jieba 分词，16 红灯全绿 + 1001 passed 零回归，review approved"}
-  - {phase: P5, status: in_progress, ts: "2026-07-31T01:05:00Z", note: "P4 gate passed, 推进 P5 技术验证"}
+  - {phase: P5, status: completed, ts: "2026-07-31T01:10:00Z", note: "make test-quick: 1001 passed + 2 skipped + failed=0，零回归"}
+  - {phase: P6, status: in_progress, ts: "2026-07-31T01:15:00Z", note: "P5 gate passed, 推进 P6 BDD 验收"}
