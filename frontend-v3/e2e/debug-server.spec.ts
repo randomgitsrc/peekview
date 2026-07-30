@@ -17,16 +17,20 @@ const testEntries: string[] = []
 async function waitForAuth(page: any, timeout = 30000) {
   // Wait for either user menu (authenticated) or login button (anonymous)
   // Use first() to handle cases where both might exist during transition
-  await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout, state: 'visible' })
+  await page.locator('button', { hasText: /Sign in|Login/ }).or(page.locator('.user-menu-trigger')).first().waitFor({ state: 'visible', timeout })
 }
 
 // Helper: Wait for page to be ready (auth state loaded)
 async function waitForPageReady(page: any, timeout = 30000) {
   // Wait until auth state is determined (loading completes)
   await page.waitForFunction(() => {
-    const btnLogin = document.querySelector('.btn-login')
+    const buttons = Array.from(document.querySelectorAll('button'))
+    const btnLogin = buttons.some(b => {
+      const text = (b.textContent || '').trim().toLowerCase()
+      return text === 'sign in' || text === 'login'
+    })
     const userMenu = document.querySelector('.user-menu-trigger')
-    return btnLogin !== null || userMenu !== null
+    return btnLogin || userMenu !== null
   }, { timeout })
 }
 
@@ -130,7 +134,7 @@ test.describe('Debug Server - Basic', () => {
   })
 
   test('homepage loads', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/explore')
     await expect(page.locator('body')).toBeVisible()
     await page.screenshot({ path: '/tmp/e2e-results/01-homepage.png' })
   })
@@ -303,7 +307,7 @@ test.describe('Debug Server - Pagination', () => {
       })
     }
 
-    await page.goto('/')
+    await page.goto('/explore')
     // Wait for entries to load
     await page.waitForSelector('.entry-card', { timeout: 10000 })
 
@@ -328,7 +332,7 @@ test.describe('Debug Server - Pagination', () => {
       })
     }
 
-    await page.goto('/')
+    await page.goto('/explore')
     await page.waitForSelector('.pagination', { timeout: 10000 })
 
     // Get first page entries
@@ -352,7 +356,7 @@ test.describe('Debug Server - Pagination', () => {
 
 test.describe('Debug Server - Theme', () => {
   test('theme toggle works', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/explore')
 
     // Get initial theme
     const initialTheme = await page.evaluate(() =>
@@ -455,11 +459,11 @@ test.describe('Debug Server - Mobile', () => {
 
 test.describe('Debug Server - Auth', () => {
   test('login button visible when anonymous', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/explore')
     // Wait for auth initialization to complete (loading state -> anonymous)
     await waitForPageReady(page, 10000)
-    await page.waitForSelector('.btn-login', { timeout: 10000, state: 'visible' })
-    await expect(page.locator('.btn-login')).toBeVisible()
+    await page.locator('button', { hasText: /Sign in|Login/ }).first().waitFor({ state: 'visible', timeout: 10000 })
+    await expect(page.locator('button', { hasText: /Sign in|Login/ })).toBeVisible()
     await page.screenshot({ path: '/tmp/e2e-results/20-login-button.png' })
   })
 
@@ -474,13 +478,14 @@ test.describe('Debug Server - Auth', () => {
     // Registration sets a cookie — clear it so we can test login flow
     await page.context().clearCookies()
 
-    await page.goto('/')
+    await page.goto('/explore')
     // Wait for page to be ready first
     await waitForPageReady(page, 10000)
-    await page.waitForSelector('.btn-login', { timeout: 10000, state: 'visible' })
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
 
     // Click Login button
-    await page.click('.btn-login')
+    await loginBtn.click()
     await page.waitForTimeout(1000)
 
     // Dialog should be visible
@@ -632,7 +637,7 @@ test.describe('Debug Server - Auth', () => {
     await page.waitForTimeout(1000)
 
     // Should see Login button again
-    await expect(page.locator('.btn-login')).toBeVisible()
+    await expect(page.locator('button', { hasText: /Sign in|Login/ })).toBeVisible()
     // Cookie should be cleared
     const cookies = await page.context().cookies()
     const authCookie = cookies.find(c => c.name === 'peekview_token')
@@ -705,8 +710,8 @@ test.describe('Debug Server - All/Mine Tabs', () => {
   })
 
   test('owner tabs hidden when anonymous', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForSelector('.btn-login, .user-menu-trigger', { timeout: 10000 })
+    await page.goto('/explore')
+    await page.locator('button', { hasText: /Sign in|Login/ }).or(page.locator('.user-menu-trigger')).first().waitFor({ state: 'visible', timeout: 10000 })
     await expect(page.locator('.owner-tabs')).not.toBeVisible()
   })
 })
@@ -733,7 +738,7 @@ test.describe('Debug Server - API Keys', () => {
       httpOnly: true,
       sameSite: 'Lax' as const,
     }])
-    await page.goto('/')
+    await page.goto('/explore')
     await page.waitForTimeout(2000)
     await page.waitForSelector('.user-menu-trigger', { timeout: 30000 })
 

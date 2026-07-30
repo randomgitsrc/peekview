@@ -10,8 +10,9 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 test.describe('Captcha - Disabled Mode', () => {
   test('login dialog does not show captcha widget when disabled', async ({ page }) => {
     await page.goto(BASE_URL + '/')
-    await page.waitForSelector('.btn-login', { timeout: 10000 })
-    await page.click('.btn-login')
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await loginBtn.click()
     await page.waitForTimeout(500)
 
     // Widget should not be present
@@ -27,8 +28,9 @@ test.describe('Captcha - Disabled Mode', () => {
   test('register without captcha works when disabled', async ({ page }) => {
     const uniqueUser = `nocap_${Date.now()}`
     await page.goto(BASE_URL + '/')
-    await page.waitForSelector('.btn-login', { timeout: 10000 })
-    await page.click('.btn-login')
+    const loginBtn = page.locator('button', { hasText: /Sign in|Login/ }).first()
+    await loginBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await loginBtn.click()
     await page.waitForTimeout(500)
 
     // Switch to register

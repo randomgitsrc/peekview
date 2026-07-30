@@ -4,9 +4,13 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 
 async function waitForPageReady(page: any, timeout = 30000) {
   await page.waitForFunction(() => {
-    const btnLogin = document.querySelector('.btn-login')
+    const buttons = Array.from(document.querySelectorAll('button'))
+    const btnLogin = buttons.some(b => {
+      const text = (b.textContent || '').trim().toLowerCase()
+      return text === 'sign in' || text === 'login'
+    })
     const userMenu = document.querySelector('.user-menu-trigger')
-    return btnLogin !== null || userMenu !== null
+    return btnLogin || userMenu !== null
   }, { timeout })
 }
 
