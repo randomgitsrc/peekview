@@ -132,6 +132,33 @@ def _run_migrations(engine: Engine) -> None:
             conn.commit()
             logger.info("Migration: dropped old FTS5 table for content column expansion")
 
+        # FTS trigger migration: application layer now manages FTS writes via jieba tokenization
+        # Drop INSERT trigger (no longer needed) and UPDATE trigger (changed to DELETE-only)
+        conn.execute(text("DROP TRIGGER IF EXISTS entries_ai"))
+        conn.execute(text("DROP TRIGGER IF EXISTS entries_au"))
+
+        # Re-create UPDATE trigger as DELETE-only (no INSERT; app layer writes new FTS data)
+        conn.execute(text("""
+            CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries
+            BEGIN
+                DELETE FROM entries_fts WHERE rowid = OLD.id;
+            END
+        """))
+        conn.commit()
+        logger.info("Migration: dropped FTS INSERT/UPDATE triggers for jieba tokenization")
+
+
+FTS_VERSION = 2  # v1 = original (unicode61, no jieba), v2 = jieba tokenized
+
+
+def _get_user_version(conn) -> int:
+    result = conn.execute(text("PRAGMA user_version")).scalar()
+    return result or 0
+
+
+def _set_user_version(conn, version: int) -> None:
+    conn.execute(text(f"PRAGMA user_version = {version}"))
+
 
 def check_schema(engine: Engine) -> None:
     """Compare actual DB columns against SQLModel metadata expectations.
@@ -274,16 +301,6 @@ def setup_fts5(engine: Engine) -> None:
 
         conn.execute(
             text("""
-                CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries
-                BEGIN
-                    INSERT INTO entries_fts(rowid, summary, tags, content)
-                    VALUES (NEW.id, NEW.summary, NEW.tags, '');
-                END
-            """)
-        )
-
-        conn.execute(
-            text("""
                 CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries
                 BEGIN
                     DELETE FROM entries_fts WHERE rowid = OLD.id;
@@ -296,14 +313,12 @@ def setup_fts5(engine: Engine) -> None:
                 CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries
                 BEGIN
                     DELETE FROM entries_fts WHERE rowid = OLD.id;
-                    INSERT INTO entries_fts(rowid, summary, tags, content)
-                    VALUES (NEW.id, NEW.summary, NEW.tags, '');
                 END
             """)
         )
 
         conn.commit()
-        logger.info("FTS5 virtual table and triggers created (contentless mode)")
+        logger.info("FTS5 virtual table and triggers created (contentless mode, app-layer writes)")
 
 
 def get_engine(config_or_path: PeekConfig | Path | str | None = None) -> Engine:
@@ -357,11 +372,14 @@ def search_entries(session: Session, query: str, limit: int = 100) -> list[int]:
     Returns:
         List of entry IDs matching the query
     """
-    # Sanitize query to prevent FTS5 syntax errors
-    # Remove special FTS5 characters that could cause issues
-    safe_query = query.replace('"', '""').replace("'", "''")
+    from peekview.text_utils import tokenize_query
 
-    # Use FTS5 MATCH operator
+    tokenized = tokenize_query(query)
+    if not tokenized:
+        return []
+
+    safe_query = tokenized.replace('"', '""').replace("'", "''")
+
     result = session.exec(
         text(
             """
@@ -382,6 +400,8 @@ def rebuild_fts_index(engine: Engine, storage: StorageManager | None = None) -> 
     Useful if the FTS index gets out of sync.
     If storage is provided, file content is also indexed.
     """
+    from peekview.text_utils import tokenize_for_fts
+
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT name FROM sqlite_master WHERE type='table' AND name='entries_fts'")
@@ -395,34 +415,23 @@ def rebuild_fts_index(engine: Engine, storage: StorageManager | None = None) -> 
         except Exception as e:
             logger.warning(f"Could not delete from entries_fts: {e}")
 
-        if storage:
-            with Session(engine) as session:
-                from peekview.models import Entry
+        with Session(engine) as session:
+            from peekview.models import Entry
 
-                entries = session.exec(select(Entry)).all()
-                for entry in entries:
-                    content = _aggregate_entry_content(entry.id, storage, session)
-                    conn.execute(
-                        text(
-                            "INSERT INTO entries_fts(rowid, summary, tags, content) "
-                            "VALUES (:id, :summary, :tags, :content)"
-                        ).bindparams(
-                            id=entry.id,
-                            summary=entry.summary,
-                            tags=" ".join(entry.tags or []),
-                            content=content,
-                        )
-                    )
-        else:
-            try:
+            entries = session.exec(select(Entry)).all()
+            for entry in entries:
+                content = _aggregate_entry_content(entry.id, storage, session) if storage else ""
                 conn.execute(
-                    text("""
-                    INSERT INTO entries_fts(rowid, summary, tags, content)
-                    SELECT id, summary, tags, '' FROM entries
-                """)
+                    text(
+                        "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                        "VALUES (:id, :summary, :tags, :content)"
+                    ).bindparams(
+                        id=entry.id,
+                        summary=tokenize_for_fts(entry.summary),
+                        tags=tokenize_for_fts(" ".join(entry.tags or [])),
+                        content=tokenize_for_fts(content) if content else "",
+                    )
                 )
-            except Exception as e:
-                logger.warning(f"Could not repopulate entries_fts: {e}")
 
         conn.commit()
         logger.info("FTS5 index rebuilt")
@@ -493,21 +502,29 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
     """Backfill FTS content column for existing entries (idempotent).
 
     Called from application startup after StorageManager is available.
+    Uses PRAGMA user_version to track FTS format version — only rebuilds
+    when version mismatches or content is incomplete.
     """
+    from peekview.text_utils import tokenize_for_fts
+
     with Session(engine) as session:
         from peekview.models import Entry
 
         entry_count = session.exec(text("SELECT COUNT(*) FROM entries")).scalar()
-        session.exec(text("SELECT COUNT(*) FROM entries_fts")).scalar()
+        if entry_count == 0:
+            return
+
+        current_version = _get_user_version(session)
         content_count = session.exec(
             text("SELECT COUNT(*) FROM entries_fts WHERE content IS NOT NULL AND content != ''")
         ).scalar()
 
-        if content_count >= entry_count and entry_count > 0:
-            logger.debug("FTS content already backfilled")
+        if current_version >= FTS_VERSION and content_count >= entry_count:
+            logger.debug("FTS content already backfilled (version %d)", current_version)
             return
 
         session.exec(text("DELETE FROM entries_fts"))
+        _set_user_version(session, FTS_VERSION)
 
         entries = session.exec(select(Entry)).all()
         for entry in entries:
@@ -518,14 +535,14 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
                     "VALUES (:id, :summary, :tags, :content)"
                 ).bindparams(
                     id=entry.id,
-                    summary=entry.summary,
-                    tags=" ".join(entry.tags or []),
-                    content=content,
+                    summary=tokenize_for_fts(entry.summary),
+                    tags=tokenize_for_fts(" ".join(entry.tags or [])),
+                    content=tokenize_for_fts(content),
                 )
             )
 
         session.commit()
-        logger.info(f"Backfilled FTS content for {len(entries)} entries")
+        logger.info(f"Backfilled FTS content for {len(entries)} entries (version {FTS_VERSION})")
 
 
 # Event listeners for debugging (optional)

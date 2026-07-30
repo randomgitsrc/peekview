@@ -209,6 +209,10 @@ def create_app(
 
     storage = StorageManager(config=config)
 
+    from peekview.text_utils import preload_jieba
+
+    preload_jieba()
+
     from peekview.database import backfill_fts_content
 
     backfill_fts_content(engine, storage)

@@ -493,7 +493,8 @@ class TestFTS5ContentlessMode:
         found = entry_service.list_entries(q="delete_marker_word")
         assert len(found.items) == 0
 
-    def test_fts_insert_trigger_content_empty(self, tmp_path):
+    def test_fts_app_layer_writes_empty_content(self, tmp_path):
+        """After direct INSERT (no trigger), FTS is empty until app layer populates."""
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
@@ -504,6 +505,6 @@ class TestFTS5ContentlessMode:
             result = session.exec(
                 text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry.id)
             )
-            assert result.scalar() == 1
+            assert result.scalar() == 0
 
         engine.dispose()

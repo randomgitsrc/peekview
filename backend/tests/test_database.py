@@ -101,21 +101,23 @@ class TestFTS5:
         engine.dispose()
 
     def test_triggers_created(self, tmp_path: Path):
-        """FTS triggers are created."""
+        """FTS triggers are created (DELETE + DELETE-only UPDATE, no INSERT)."""
         engine = init_db(tmp_path / "test.db")
 
         with engine.connect() as conn:
             result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='trigger'"))
             triggers = {row[0] for row in result}
 
-        assert "entries_ai" in triggers
+        assert "entries_ai" not in triggers
         assert "entries_ad" in triggers
         assert "entries_au" in triggers
 
         engine.dispose()
 
-    def test_fts_insert_trigger(self, tmp_path: Path):
-        """Insert trigger populates FTS."""
+    def test_fts_app_layer_write(self, tmp_path: Path):
+        """Application layer populates FTS (no INSERT trigger)."""
+        from peekview.text_utils import tokenize_for_fts
+
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
@@ -123,6 +125,20 @@ class TestFTS5:
             session.add(entry)
             session.commit()
             entry_id = entry.id
+
+            session.exec(text("DELETE FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id))
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry_id,
+                    summary=tokenize_for_fts(entry.summary),
+                    tags="",
+                    content="",
+                )
+            )
+            session.commit()
 
             result = session.exec(
                 text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id)
@@ -140,6 +156,19 @@ class TestFTS5:
             session.add(entry)
             session.commit()
             entry_id = entry.id
+
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry_id,
+                    summary=entry.summary,
+                    tags="",
+                    content="",
+                )
+            )
+            session.commit()
 
             # Delete
             session.delete(entry)
@@ -159,6 +188,8 @@ class TestSearchEntries:
 
     def test_search_by_summary(self, tmp_path: Path):
         """Can search by summary content."""
+        from peekview.text_utils import tokenize_for_fts
+
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
@@ -167,7 +198,20 @@ class TestSearchEntries:
             session.add_all([entry1, entry2])
             session.commit()
 
-            # Wait for FTS index
+            for e in [entry1, entry2]:
+                session.exec(
+                    text(
+                        "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                        "VALUES (:id, :summary, :tags, :content)"
+                    ).bindparams(
+                        id=e.id,
+                        summary=tokenize_for_fts(e.summary),
+                        tags="",
+                        content="",
+                    )
+                )
+            session.commit()
+
             session.exec(text("INSERT INTO entries_fts(entries_fts) VALUES('optimize')"))
 
             # Search
@@ -179,11 +223,26 @@ class TestSearchEntries:
 
     def test_search_by_tags(self, tmp_path: Path):
         """Can search by tags."""
+        from peekview.text_utils import tokenize_for_fts
+
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
             entry = Entry(slug="test", summary="Test", tags=["python", "fastapi"])
             session.add(entry)
+            session.commit()
+
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry.id,
+                    summary="",
+                    tags=tokenize_for_fts(" ".join(entry.tags or [])),
+                    content="",
+                )
+            )
             session.commit()
 
             session.exec(text("INSERT INTO entries_fts(entries_fts) VALUES('optimize')"))
@@ -195,11 +254,26 @@ class TestSearchEntries:
 
     def test_search_no_results(self, tmp_path: Path):
         """Returns empty list for no matches."""
+        from peekview.text_utils import tokenize_for_fts
+
         engine = init_db(tmp_path / "test.db")
 
         with Session(engine) as session:
             entry = Entry(slug="test", summary="Test")
             session.add(entry)
+            session.commit()
+
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(
+                    id=entry.id,
+                    summary=tokenize_for_fts(entry.summary),
+                    tags="",
+                    content="",
+                )
+            )
             session.commit()
 
             session.exec(text("INSERT INTO entries_fts(entries_fts) VALUES('optimize')"))

@@ -13,7 +13,7 @@ from sqlalchemy import text
 from sqlmodel import Session
 
 from peekview.config import PeekConfig, PeekLimits, PeekServer, PeekStorage
-from peekview.database import init_db, backfill_fts_content, search_entries
+from peekview.database import backfill_fts_content, init_db, search_entries
 from peekview.models import Entry
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
@@ -47,7 +47,7 @@ def cjk_entry_service(tmp_path):
 
 class TestBDD1ChineseTagFilter:
     def test_bdd_1_chinese_tag_filter(self, cjk_entry_service):
-        entry = cjk_entry_service.create_entry(
+        cjk_entry_service.create_entry(
             summary="Test CJK tag",
             slug="cjk-tag-1",
             tags=["前端", "Vue"],
@@ -321,6 +321,7 @@ class TestBDD14BackfillRebuildsFTS:
             )
             session.add(entry)
             session.commit()
+            entry_id = entry.id
 
             session.exec(text("DELETE FROM entries_fts"))
             session.exec(
@@ -328,7 +329,7 @@ class TestBDD14BackfillRebuildsFTS:
                     "INSERT INTO entries_fts(rowid, summary, tags, content) "
                     "VALUES (:id, :summary, :tags, :content)"
                 ).bindparams(
-                    id=entry.id,
+                    id=entry_id,
                     summary="前端组件库设计",
                     tags="组件库",
                     content="",
@@ -340,7 +341,7 @@ class TestBDD14BackfillRebuildsFTS:
 
         with Session(engine) as session:
             ids = search_entries(session, "组件")
-            assert entry.id in ids
+            assert entry_id in ids
 
         engine.dispose()
 

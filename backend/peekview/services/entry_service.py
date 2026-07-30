@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import String, func, text
+from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -70,6 +70,8 @@ class EntryService:
 
         Called after create_entry and update_entry to keep FTS content in sync.
         """
+        from peekview.text_utils import tokenize_for_fts
+
         with Session(self.engine) as session:
             entry = session.exec(select(Entry).where(Entry.id == entry_id)).first()
             if not entry:
@@ -108,9 +110,9 @@ class EntryService:
                     "VALUES (:id, :summary, :tags, :content)"
                 ).bindparams(
                     id=entry_id,
-                    summary=entry.summary,
-                    tags=" ".join(entry.tags or []),
-                    content=aggregated,
+                    summary=tokenize_for_fts(entry.summary),
+                    tags=tokenize_for_fts(" ".join(entry.tags or [])),
+                    content=tokenize_for_fts(aggregated),
                 )
             )
 
@@ -455,35 +457,41 @@ class EntryService:
                     Entry.is_public.is_(True) | (Entry.owner_id == current_user_id)
                 )
 
-            # Tags filter (JSON array — use LIKE for SQLite JSON compatibility)
+            # Tags filter — use json_each for exact match (fixes non-ASCII tag filtering)
             if tags:
                 for tag in tags:
-                    quoted = f'"{tag}"'
-                    query = query.where(Entry.tags.cast(String).like(f"%{quoted}%"))
-                    count_query = count_query.where(Entry.tags.cast(String).like(f"%{quoted}%"))
+                    tag_filter = text(
+                        "EXISTS (SELECT 1 FROM json_each(entries.tags) WHERE json_each.value = :tag)"
+                    ).bindparams(tag=tag)
+                    query = query.where(tag_filter)
+                    count_query = count_query.where(tag_filter)
 
             # FTS5 search
             if q and q.strip():
-                try:
-                    fts_result = session.exec(
-                        text("SELECT rowid FROM entries_fts WHERE entries_fts MATCH :q"),
-                        params={"q": q.strip()},
-                    )
-                    fts_ids = [row[0] for row in fts_result]
-                    if fts_ids:
-                        query = query.where(Entry.id.in_(fts_ids))
-                        count_query = count_query.where(Entry.id.in_(fts_ids))
-                    else:
-                        return EntryListResponse(
-                            items=[],
-                            total=0,
-                            page=page,
-                            per_page=per_page,
-                            owner_found=owner_found,
+                from peekview.text_utils import tokenize_query
+
+                tokenized = tokenize_query(q)
+                if tokenized:
+                    safe_q = tokenized.replace('"', '""').replace("'", "''")
+                    try:
+                        fts_result = session.exec(
+                            text("SELECT rowid FROM entries_fts WHERE entries_fts MATCH :q"),
+                            params={"q": safe_q},
                         )
-                except Exception:
-                    # FTS might not be available
-                    pass
+                        fts_ids = [row[0] for row in fts_result]
+                        if fts_ids:
+                            query = query.where(Entry.id.in_(fts_ids))
+                            count_query = count_query.where(Entry.id.in_(fts_ids))
+                        else:
+                            return EntryListResponse(
+                                items=[],
+                                total=0,
+                                page=page,
+                                per_page=per_page,
+                                owner_found=owner_found,
+                            )
+                    except Exception:
+                        pass
 
             # Order by created_at desc
             query = query.order_by(Entry.created_at.desc())
