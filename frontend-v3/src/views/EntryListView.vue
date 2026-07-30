@@ -6,24 +6,8 @@
         <span class="explore-logo-word">PeekView</span>
       </router-link>
       <div class="explore-actions">
-        <template v-if="authState === 'anonymous'">
-          <BaseButton variant="ghost" @click="showLogin = true">Login</BaseButton>
-        </template>
-        <template v-else-if="authState === 'authenticated'">
-          <div class="user-menu-wrapper">
-            <button class="user-menu-trigger" @click="toggleUserMenu">
-              <span class="user-avatar">{{ userInitial }}</span>
-              <span class="user-name">{{ userName }}</span>
-              <span v-if="authStore.isAdmin" class="admin-badge">admin</span>
-            </button>
-            <Transition name="dropdown">
-              <div v-if="showUserMenu" class="user-dropdown">
-                <button class="dropdown-item" @click="navigateToApiKeys">API Keys</button>
-                <button class="dropdown-item" @click="handleLogout">Logout</button>
-              </div>
-            </Transition>
-          </div>
-        </template>
+        <AuthButton v-if="authState === 'anonymous'" page-type="functional" @sign-in="showLogin = true" />
+        <UserMenu v-else-if="authState === 'authenticated'" @logout="handleLogout" />
         <ThemeToggle />
       </div>
     </header>
@@ -236,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useEntryListStore } from '@/stores/entryList'
 import { useAuthStore } from '@/stores/auth'
@@ -246,7 +230,8 @@ import SearchInput from '@/components/SearchInput.vue'
 import EntryListRow from '@/components/EntryListRow.vue'
 import EntryCard from '@/components/EntryCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import BaseButton from '@/components/BaseButton.vue'
+import AuthButton from '@/components/AuthButton.vue'
+import UserMenu from '@/components/UserMenu.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
@@ -375,39 +360,9 @@ function removeTag(tag: string) {
   loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
-function navigateToApiKeys() {
-  showUserMenu.value = false
-  router.push('/settings?tab=apikeys')
-}
-
 const showLogin = ref(false)
 
-const showUserMenu = ref(false)
-
-const userInitial = computed(() => {
-  const name = user.value?.displayName || user.value?.username || ''
-  return name.charAt(0).toUpperCase()
-})
-
-const userName = computed(() => {
-  return user.value?.displayName || user.value?.username || ''
-})
-
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function closeUserMenu(e: MouseEvent) {
-  if (!(e.target as HTMLElement).closest('.user-menu-wrapper')) {
-    showUserMenu.value = false
-  }
-}
-
-onMounted(() => document.addEventListener('click', closeUserMenu))
-onUnmounted(() => document.removeEventListener('click', closeUserMenu))
-
 function handleLogout() {
-  showUserMenu.value = false
   if (currentStatus.value === 'archived') {
     currentStatus.value = null
   }
@@ -607,89 +562,10 @@ onBeforeRouteUpdate((to) => {
   border-width: 0;
 }
 
-.user-menu-wrapper { position: relative; }
-
-.user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--c-border-strong);
-  background: transparent;
-  color: var(--c-text);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  transition: all var(--transition-fast);
+.explore-search {
+  max-width: 280px;
+  min-width: 0;
 }
-
-.user-menu-trigger:hover { background: var(--c-surface-lower); }
-
-.user-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  font-size: var(--font-xs);
-  font-weight: 600;
-}
-
-.user-name {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  right: 0;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--radius-md);
-  padding: var(--space-1);
-  min-width: 120px;
-  box-shadow: var(--shadow-md);
-  z-index: 100;
-}
-
-.admin-badge {
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  background: none;
-  color: var(--c-text-secondary);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  text-align: left;
-  border-radius: var(--radius-sm);
-}
-
-.dropdown-item:hover {
-  background: var(--c-surface-lower);
-  color: var(--c-text);
-}
-
-.dropdown-enter-active { transition: opacity 0.15s ease; }
-.dropdown-leave-active { transition: opacity 0.15s ease; }
-.dropdown-enter-from { opacity: 0; }
-.dropdown-leave-to { opacity: 0; }
 
 .list-content { padding: var(--space-4); max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
 

@@ -265,7 +265,7 @@ describe('T067 BDD-1: Detail page Sign in for anonymous users', () => {
   it('desktop header shows Sign in button when authState is anonymous', async () => {
     const wrapper = mountDesktop()
     await nextTick()
-    const signInBtn = wrapper.find('.actions-area .btn-primary')
+    const signInBtn = wrapper.find('.actions-area .btn-secondary')
     expect(signInBtn.exists()).toBe(true)
     expect(signInBtn.text()).toContain('Sign in')
   })
@@ -273,14 +273,15 @@ describe('T067 BDD-1: Detail page Sign in for anonymous users', () => {
   it('mobile sticky-header shows Sign in entry when authState is anonymous', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    const signInEl = wrapper.find('.mobile-sticky-header .mobile-signin-link')
+    const signInEl = wrapper.find('.mobile-sticky-header .btn-ghost')
     expect(signInEl.exists()).toBe(true)
+    expect(signInEl.text()).toContain('Sign in')
   })
 
   it('clicking Sign in opens LoginDialog', async () => {
     const wrapper = mountDesktop()
     await nextTick()
-    const signInBtn = wrapper.find('.actions-area .btn-primary')
+    const signInBtn = wrapper.find('.actions-area .btn-secondary')
     expect(signInBtn.exists()).toBe(true)
     await signInBtn.trigger('click')
     await nextTick()
@@ -299,21 +300,21 @@ describe('T067 BDD-2: Detail page Sign in hidden for authenticated users', () =>
   it('desktop header hides Sign in button when authState is authenticated', async () => {
     const wrapper = mountDesktop()
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(true)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(true)
     mockAuthState.value = 'authenticated'
     mockUser.value = { id: 1, username: 'alice', displayName: 'Alice', isAdmin: false }
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(false)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(false)
   })
 
   it('mobile sticky-header hides Sign in when authState is authenticated', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').exists()).toBe(true)
     mockAuthState.value = 'authenticated'
     mockUser.value = { id: 1, username: 'alice', displayName: 'Alice', isAdmin: false }
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').exists()).toBe(false)
   })
 })
 
@@ -327,11 +328,11 @@ describe('T067 BDD-3: Sign in disappears reactively after login', () => {
   it('Sign in button disappears when authState changes from anonymous to authenticated', async () => {
     const wrapper = mountDesktop()
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(true)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(true)
     mockAuthState.value = 'authenticated'
     mockUser.value = { id: 1, username: 'alice', displayName: 'Alice', isAdmin: false }
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(false)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(false)
   })
 })
 
@@ -389,18 +390,21 @@ describe('T067 BDD-6: Explore navigation entry', () => {
     mockUser.value = null
   })
 
-  it('desktop has clickable navigation element pointing to /explore', async () => {
+  it('desktop does not have Explore button in actions-area (removed in T079)', async () => {
     const wrapper = mountDesktop()
     await nextTick()
     const exploreLinks = wrapper.findAll('a').filter(a => a.attributes('href') === '/explore')
-    expect(exploreLinks.length).toBeGreaterThanOrEqual(1)
+    expect(exploreLinks.length).toBe(0)
+    const actionsArea = wrapper.find('.actions-area')
+    expect(actionsArea.exists()).toBe(true)
+    expect(actionsArea.html()).not.toContain('Explore')
   })
 
-  it('mobile has clickable navigation element pointing to /explore', async () => {
+  it('mobile does not have Explore button (removed in T079)', async () => {
     const wrapper = mountMobile()
     await nextTick()
     const exploreLinks = wrapper.findAll('a').filter(a => a.attributes('href') === '/explore')
-    expect(exploreLinks.length).toBeGreaterThanOrEqual(0)
+    expect(exploreLinks.length).toBe(0)
   })
 })
 
@@ -575,11 +579,11 @@ describe('T067 BDD-11: authState loading hides Sign in (no flash)', () => {
     mockUser.value = null
     const wrapper = mountDesktop()
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(true)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(true)
     mockAuthState.value = 'loading'
     mockUser.value = null
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(false)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(false)
   })
 
   it('mobile Sign in not visible when authState is loading (but visible when anonymous)', async () => {
@@ -587,11 +591,11 @@ describe('T067 BDD-11: authState loading hides Sign in (no flash)', () => {
     mockUser.value = null
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').exists()).toBe(true)
     mockAuthState.value = 'loading'
     mockUser.value = null
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').exists()).toBe(false)
   })
 })
 
@@ -614,10 +618,10 @@ describe('T067 BDD-12: Zen mode hides brand and Sign in', () => {
   it('desktop Sign in not visible in zen mode (but visible normally)', async () => {
     const wrapper = mountDesktop()
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').exists()).toBe(true)
+    expect(wrapper.find('.actions-area .btn-secondary').exists()).toBe(true)
     await wrapper.setData({ zenMode: true })
     await nextTick()
-    expect(wrapper.find('.actions-area .btn-primary').isVisible()).toBe(false)
+    expect(wrapper.find('.actions-area .btn-secondary').isVisible()).toBe(false)
   })
 
   it('mobile brand identifier not visible in zen mode (but visible normally)', async () => {
@@ -632,9 +636,9 @@ describe('T067 BDD-12: Zen mode hides brand and Sign in', () => {
   it('mobile Sign in not visible in zen mode (but visible normally)', async () => {
     const wrapper = mountMobile()
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').exists()).toBe(true)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').exists()).toBe(true)
     await wrapper.setData({ zenMode: true })
     await nextTick()
-    expect(wrapper.find('.mobile-sticky-header .mobile-signin-link').isVisible()).toBe(false)
+    expect(wrapper.find('.mobile-sticky-header .btn-ghost').isVisible()).toBe(false)
   })
 })

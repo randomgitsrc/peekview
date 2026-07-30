@@ -12,17 +12,25 @@ vi.mock('vue-router', () => ({
 }))
 
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    user: ref(null),
-    authState: ref('anonymous'),
-    isAdmin: ref(false),
-    logout: vi.fn(),
-  }),
+  useAuthStore: () => mockAuthStore,
   storeToRefs: (s: any) => ({
     user: s.user,
     isAdmin: s.isAdmin,
   }),
 }))
+
+const mockAuthStore = {
+  user: ref(null),
+  authState: ref('anonymous'),
+  isAdmin: ref(false),
+  logout: vi.fn(),
+}
+
+function setAuthState(state: string, user: any = null, isAdmin = false) {
+  mockAuthStore.authState.value = state
+  mockAuthStore.user.value = user
+  mockAuthStore.isAdmin.value = isAdmin
+}
 
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn(), show: vi.fn() }),
@@ -119,18 +127,16 @@ describe('EntryDetailHeader — T079', () => {
       const header = wrapper.find('.detail-header')
       expect(header.exists()).toBe(true)
 
-      const btn = header.find('button')
-      expect(btn.classes()).toContain('btn-secondary')
+      const btn = header.find('.btn-secondary')
+      expect(btn.exists()).toBe(true)
       expect(btn.text()).toBe('Sign in')
     })
 
     it('desktop header does NOT use primary variant for sign-in', () => {
       const wrapper = createWrapper({ isMobile: false, authState: 'anonymous' })
       const header = wrapper.find('.detail-header')
-      const btn = header.find('button.btn-small, button.base-button')
-      if (btn.exists()) {
-        expect(btn.classes()).not.toContain('btn-primary')
-      }
+      const btn = header.find('.btn-primary')
+      expect(btn.exists()).toBe(false)
     })
   })
 
@@ -165,7 +171,7 @@ describe('EntryDetailHeader — T079', () => {
     it('desktop header does not show AuthButton when authenticated', () => {
       const wrapper = createWrapper({ isMobile: false, authState: 'authenticated' })
       const header = wrapper.find('.detail-header')
-      const signInBtn = header.find('button:has-text("Sign in")')
+      const signInBtn = header.find('.btn-secondary, .btn-ghost, .btn-primary')
       expect(signInBtn.exists()).toBe(false)
     })
 
@@ -193,7 +199,7 @@ describe('EntryDetailHeader — T079', () => {
     it('mobile header does not show AuthButton when authenticated', () => {
       const wrapper = createWrapper({ isMobile: true, authState: 'authenticated' })
       const mobileHeader = wrapper.find('.mobile-sticky-header')
-      const signInBtn = mobileHeader.find('button:has-text("Sign in")')
+      const signInBtn = mobileHeader.find('.btn-secondary, .btn-ghost, .btn-primary')
       expect(signInBtn.exists()).toBe(false)
     })
 
@@ -313,20 +319,13 @@ describe('EntryDetailHeader — T079', () => {
 
   describe('Admin badge in Detail page user menu', () => {
     it('admin user shows admin badge in detail header trigger', async () => {
-      vi.doMock('@/stores/auth', () => ({
-        useAuthStore: () => ({
-          user: ref({ id: 1, username: 'admin1', displayName: 'Admin', isActive: true, isAdmin: true, createdAt: '2024-01-01T00:00:00Z' }),
-          authState: ref('authenticated'),
-          isAdmin: ref(true),
-          logout: vi.fn(),
-        }),
-        storeToRefs: (s: any) => ({
-          user: s.user,
-          isAdmin: s.isAdmin,
-        }),
-      }))
+      setAuthState('authenticated',
+        { id: 1, username: 'admin1', displayName: 'Admin', isActive: true, isAdmin: true, createdAt: '2024-01-01T00:00:00Z' },
+        true
+      )
 
       const wrapper = createWrapper({ isMobile: false, authState: 'authenticated' })
+      await flushPromises()
       const header = wrapper.find('.detail-header')
       const badge = header.find('.admin-badge')
       expect(badge.exists()).toBe(true)

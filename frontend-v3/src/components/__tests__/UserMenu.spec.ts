@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import UserMenu from '@/components/UserMenu.vue'
 
@@ -20,18 +20,16 @@ const mockAdminUser = {
   isAdmin: true,
 }
 
-function createAuthStoreMock(user: typeof mockUser | null, isAdmin = false) {
-  return {
-    user: ref(user),
-    authState: ref(user ? 'authenticated' : 'anonymous'),
-    isAdmin: ref(isAdmin),
-    logout: vi.fn(),
-  }
-}
-
-const routerLinkStub = {
-  template: '<a :href="to"><slot /></a>',
-  props: ['to'],
+const mockAuthStore: {
+  user: Ref<typeof mockUser | null>
+  authState: Ref<string>
+  isAdmin: Ref<boolean>
+  logout: ReturnType<typeof vi.fn>
+} = {
+  user: ref(null),
+  authState: ref('anonymous'),
+  isAdmin: ref(false),
+  logout: vi.fn(),
 }
 
 const mockRouter = {
@@ -42,11 +40,31 @@ vi.mock('vue-router', () => ({
   useRouter: () => mockRouter,
 }))
 
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: () => mockAuthStore,
+  storeToRefs: (s: any) => ({
+    user: s.user,
+    isAdmin: s.isAdmin,
+  }),
+}))
+
+function setAuthStore(user: typeof mockUser | null, isAdmin = false) {
+  mockAuthStore.user.value = user
+  mockAuthStore.authState.value = user ? 'authenticated' : 'anonymous'
+  mockAuthStore.isAdmin.value = isAdmin
+}
+
+const routerLinkStub = {
+  template: '<a :href="to"><slot /></a>',
+  props: ['to'],
+}
+
 describe('UserMenu', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.stubGlobal('__APP_VERSION__', '0.0.0-test')
     mockRouter.push.mockReset()
+    mockAuthStore.logout.mockReset()
   })
 
   afterEach(() => {
@@ -54,15 +72,7 @@ describe('UserMenu', () => {
     vi.restoreAllMocks()
   })
 
-  function mountUserMenu(authStoreMock: ReturnType<typeof createAuthStoreMock>) {
-    vi.mock('@/stores/auth', () => ({
-      useAuthStore: () => authStoreMock,
-      storeToRefs: (s: any) => ({
-        user: s.user,
-        isAdmin: s.isAdmin,
-      }),
-    }))
-
+  function mountUserMenu() {
     return mount(UserMenu, {
       global: {
         stubs: {
@@ -73,14 +83,14 @@ describe('UserMenu', () => {
   }
 
   it('BDD-07: renders user menu trigger for authenticated user', () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
     expect(wrapper.find('.user-menu-trigger').exists()).toBe(true)
   })
 
   it('BDD-07: dropdown contains Settings and Logout after clicking trigger', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -95,8 +105,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-08: Explore page renders same Settings + Logout menu', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -108,8 +118,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-09: Detail desktop renders user menu with Settings + Logout', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -121,8 +131,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-10: Detail mobile renders user menu with Settings + Logout', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -134,8 +144,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-11: admin user shows admin badge in trigger', () => {
-    const store = createAuthStoreMock(mockAdminUser, true)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockAdminUser, true)
+    const wrapper = mountUserMenu()
 
     const badge = wrapper.find('.admin-badge')
     expect(badge.exists()).toBe(true)
@@ -143,15 +153,15 @@ describe('UserMenu', () => {
   })
 
   it('BDD-11: non-admin user does not show admin badge', () => {
-    const store = createAuthStoreMock(mockUser, false)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser, false)
+    const wrapper = mountUserMenu()
 
     expect(wrapper.find('.admin-badge').exists()).toBe(false)
   })
 
   it('BDD-12: menu items are consistent (Settings + Logout only)', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -162,8 +172,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-12: admin user menu still has same items (Settings + Logout)', async () => {
-    const store = createAuthStoreMock(mockAdminUser, true)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockAdminUser, true)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -174,8 +184,8 @@ describe('UserMenu', () => {
   })
 
   it('BDD-17: clicking Settings navigates to /settings?tab=apikeys', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -187,8 +197,8 @@ describe('UserMenu', () => {
   })
 
   it('clicking Logout calls authStore.logout and emits logout event', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -196,13 +206,13 @@ describe('UserMenu', () => {
     const logoutItem = wrapper.findAll('.dropdown-item')[1]
     await logoutItem.trigger('click')
 
-    expect(store.logout).toHaveBeenCalledTimes(1)
+    expect(mockAuthStore.logout).toHaveBeenCalledTimes(1)
     expect(wrapper.emitted('logout')).toBeTruthy()
   })
 
   it('dropdown closes after clicking outside', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
@@ -222,22 +232,22 @@ describe('UserMenu', () => {
   })
 
   it('shows user initial (first letter of displayName)', () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
     expect(wrapper.find('.user-avatar').text()).toBe('A')
   })
 
   it('shows username when displayName is null', () => {
     const userNoDisplay = { ...mockUser, displayName: null }
-    const store = createAuthStoreMock(userNoDisplay)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(userNoDisplay)
+    const wrapper = mountUserMenu()
     expect(wrapper.find('.user-name').text()).toBe('alice')
     expect(wrapper.find('.user-avatar').text()).toBe('A')
   })
 
   it('toggles dropdown on trigger click', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     expect(wrapper.find('.user-dropdown').exists()).toBe(false)
 
@@ -249,8 +259,8 @@ describe('UserMenu', () => {
   })
 
   it('dropdown closes after Settings click', async () => {
-    const store = createAuthStoreMock(mockUser)
-    const wrapper = mountUserMenu(store)
+    setAuthStore(mockUser)
+    const wrapper = mountUserMenu()
 
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
