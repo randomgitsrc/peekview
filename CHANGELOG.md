@@ -34,11 +34,6 @@
 
 ## [0.11.2] - 2026-07-26
 
-### 新增
-
--
-
-
 ### 修复
 
 - 详情页 auth guard 全页刷新 bug：已登录用户刷新 /settings 不再被重定向到首页，守卫等待 authState 初始化完成后再判断 (T069)
@@ -74,7 +69,15 @@
 
 ### 新增
 
--
+- Account Settings 页面：Profile/Security/API Keys 三 tab，单组件条件渲染 (T068)
+- `PATCH /api/v1/auth/me` 端点：更新 display_name，空字符串自动存 null (T068)
+- Settings 路由守卫：未登录用户访问 /settings 自动重定向到首页 (T068)
+- 旧路由 `/settings/apikeys` 重定向到 `/settings?tab=apikeys`（已登录/未登录分别处理）(T068)
+
+### 修复
+
+- API key 创建 500：`apikey_service.py` 改用 `.is_(None)` 兼容 SQLAlchemy column (T068)
+- 旧密码错误返回 401 → 400：前端不被 axios interceptor 误登出 (T068)
 
 
 ## [0.10.1] - 2026-07-23
