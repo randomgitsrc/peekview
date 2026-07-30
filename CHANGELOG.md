@@ -14,6 +14,21 @@
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-07-30
+
+### 重构
+
+- 后端 DI 统一：三种模式（Depends+fallback / 路由内手建 / 直接 app.state）统一为 `request.app.state.*` + 构造注入，跨 service 调用使用同一实例 (T082)
+- 后端去重：`_looks_like_jwt` / `_is_global_api_key_auth` / `_record_read_async` 从 3 个文件 7 份副本提取到 `api/_shared.py` 单一定义点 (T082)
+- 后端错误格式统一：7 处 `HTTPException` → `PeekError` 子类（新增 `ParameterValidationError(422)` / `LastAdminError(409)` / `InvalidPasswordError(400)`），所有 API 端点返回 `{"error":{"code","message","details"}}` 统一格式 (T082)
+- 后端事务修复：`create_entry` 的 `session.commit()` 改为 `session.flush()`，文件写入失败时 entry row 一并回滚，消除脏数据 (T082)
+- 前端 store 拆分：`entry.ts`（223 行）拆分为 `entryList.ts`（99 行）+ `entryDetail.ts`（132 行），list/detail 状态隔离，跨 store 协调通过 Pinia action 内引用 (T082)
+- 前端 EntryDetailView 拆分：1003 行 god component → 主组件（236 行）+ 5 子组件 + 4 composable (T082)
+
+### 修复
+
+- 前端错误格式兼容：3 处组件 `e.response?.data?.detail` → `e.response?.data?.error?.message`，跟随后端错误格式统一 (T082)
+
 ## [0.12.0] - 2026-07-30
 
 ### 新增
