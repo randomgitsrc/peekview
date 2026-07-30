@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
+import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 
-const STORES_DIR = resolve(__dirname, '..')
+const STORES_DIR = resolve(__dirname, '..', 'stores')
 
 // BDD-17: entry list 和 detail 使用不同的 Pinia store
 describe('BDD-17: store 拆分 — entry list 和 detail 分离', () => {

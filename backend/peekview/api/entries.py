@@ -7,32 +7,30 @@ import io
 import logging
 import zipfile
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel import Session, select
 
+from peekview.api._shared import (
+    _is_global_api_key_auth,
+    _record_read_async,
+)
 from peekview.api.files import _sanitize_filename
 from peekview.api.rate_limit import entries_rate_limit, limiter
 from peekview.auth import get_current_user, require_auth
-from peekview.exceptions import AuthenticationError, NotFoundError
+from peekview.exceptions import AuthenticationError, NotFoundError, ParameterValidationError
 from peekview.models import (
-    API_KEY_PREFIX,
     CreateEntryRequest,
     Entry,
     EntryShareContext,
     EntryUpdate,
     User,
 )
-from peekview.services.entry_service import EntryService, get_entry_service
+from peekview.services.entry_service import EntryService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
-
-
-def _get_service(request: Request) -> EntryService:
-    """Get EntryService from app state."""
-    return get_entry_service(request.app)
 
 
 def _detect_channel(request: Request) -> str:
@@ -42,28 +40,6 @@ def _detect_channel(request: Request) -> str:
     if "share=" in str(request.url.query):
         return "share"
     return "api"
-
-
-async def _record_read_async(
-    app_state,
-    entry_id: int | None,
-    entry_owner_id: int | None,
-    action: str,
-    channel: str,
-    reader_id: int | None,
-    reader_ip: str | None,
-) -> None:
-    try:
-        app_state.read_tracking_service.record_read(
-            entry_id=entry_id,
-            entry_owner_id=entry_owner_id,
-            action=action,
-            channel=channel,
-            reader_id=reader_id,
-            reader_ip=reader_ip,
-        )
-    except Exception as e:
-        logger.warning("Failed to record read event: %s", e)
 
 
 def _check_share_cookie(request: Request, slug: str, service: EntryService):
@@ -99,44 +75,15 @@ def _check_share_cookie(request: Request, slug: str, service: EntryService):
         return response
 
 
-def _looks_like_jwt(token: str) -> bool:
-    """Heuristic: JWTs have 3 base64url-encoded segments separated by dots."""
-    parts = token.split(".")
-    return len(parts) == 3
-
-
-def _is_global_api_key_auth(request: Request, current_user: User | None) -> bool:
-    """Check if request is authenticated via global master API key (no user binding).
-
-    Only returns True for global master key — it bypasses ownership checks.
-    User-level API keys (pv_ prefix) have current_user set, treated like JWT.
-    """
-    if current_user is not None:
-        return False  # Has user = JWT or user-level key, not global key
-
-    # No user: check if request used X-API-Key or Bearer (non-JWT, non-pv_)
-    x_key = request.headers.get("X-API-Key", "")
-    if x_key and not x_key.startswith(API_KEY_PREFIX):
-        return True  # Global master key
-
-    auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        token = auth[7:]
-        if not _looks_like_jwt(token) and not token.startswith(API_KEY_PREFIX):
-            return True  # Global master key (Bearer backward compat)
-
-    return False
-
-
 @router.post("", status_code=201)
 @limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
 async def create_entry(
     data: CreateEntryRequest,
     request: Request,
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """Create a new entry. Returns 201 Created."""
+    service = request.app.state.entry_service
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     # Check anonymous create permission
@@ -196,15 +143,14 @@ async def list_entries(
     owner: str | None = Query(None, description="Filter: 'me' for own entries"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """List entries with search, filter, and pagination."""
+    service = request.app.state.entry_service
     valid_status_values = {"active", "archived", "published"}
     if status is not None and status not in valid_status_values:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}",
+        raise ParameterValidationError(
+            f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}"
         )
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
@@ -242,7 +188,6 @@ async def get_entry(
     slug: str,
     share: str | None = Query(default=None, max_length=64),
     request: Request = None,  # injected by FastAPI
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """Get entry details by slug.
@@ -251,6 +196,7 @@ async def get_entry(
     If share token is valid, sets a share cookie and returns entry
     with share_context. Cookie enables subsequent sub-resource access.
     """
+    service = request.app.state.entry_service
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
 
@@ -395,10 +341,10 @@ async def update_entry(
     slug: str,
     data: EntryUpdate,
     request: Request,
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """Update an entry."""
+    service = request.app.state.entry_service
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     # Convert add_files to dicts
@@ -448,10 +394,10 @@ async def update_entry(
 async def delete_entry(
     slug: str,
     request: Request,
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """Delete entry by slug."""
+    service = request.app.state.entry_service
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     if global_key_auth:
@@ -477,10 +423,10 @@ async def delete_entry(
 async def download_entry_files(
     slug: str,
     request: Request,
-    service: EntryService = Depends(_get_service),
     current_user: User | None = Depends(get_current_user),
 ):
     """Download all entry files as a zip archive."""
+    service = request.app.state.entry_service
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     if global_key_auth:

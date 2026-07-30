@@ -9,14 +9,15 @@ import re
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
-from sqlmodel import Session, select
 
+from peekview.api._shared import (
+    _is_global_api_key_auth,
+    _record_read_async,
+)
 from peekview.auth import get_current_user
-from peekview.database import get_engine
 from peekview.exceptions import NotFoundError
 from peekview.language import detect_language
-from peekview.models import API_KEY_PREFIX, Entry, EntryRawResponse, File, RawFileItem, User
-from peekview.services.entry_service import EntryService, get_entry_service
+from peekview.models import EntryRawResponse, File, RawFileItem, User
 from peekview.services.html_render_service import (
     SiblingFileData,
     inject_resources,
@@ -25,28 +26,6 @@ from peekview.services.html_render_service import (
 from peekview.storage import StorageManager
 
 logger = logging.getLogger(__name__)
-
-
-async def _record_read_async(
-    app_state,
-    entry_id: int,
-    entry_owner_id: int | None,
-    action: str,
-    channel: str,
-    reader_id: int | None,
-    reader_ip: str | None,
-) -> None:
-    try:
-        app_state.read_tracking_service.record_read(
-            entry_id=entry_id,
-            entry_owner_id=entry_owner_id,
-            action=action,
-            channel=channel,
-            reader_id=reader_id,
-            reader_ip=reader_ip,
-        )
-    except Exception as e:
-        logger.warning("Failed to record read event: %s", e)
 
 
 RENDER_CSP = (
@@ -137,38 +116,6 @@ def _determine_content_type(file_record: File) -> str:
     return "application/octet-stream"
 
 
-def _looks_like_jwt(token: str) -> bool:
-    """Heuristic: JWTs have 3 base64url-encoded segments separated by dots."""
-    return len(token.split(".")) == 3
-
-
-def _is_global_api_key_auth(request: Request, current_user: User | None) -> bool:
-    """Check if request is authenticated via global master API key (no user binding).
-
-    Only returns True for global master key — it bypasses ownership checks.
-    User-level API keys (pv_ prefix) have current_user set, treated like JWT.
-    """
-    if current_user is not None:
-        return False
-
-    x_key = request.headers.get("X-API-Key", "")
-    if x_key and not x_key.startswith(API_KEY_PREFIX):
-        return True
-
-    auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        token = auth[7:]
-        if not _looks_like_jwt(token) and not token.startswith(API_KEY_PREFIX):
-            return True
-
-    return False
-
-
-def _get_service(request: Request) -> EntryService:
-    """Get EntryService from app state."""
-    return get_entry_service(request.app)
-
-
 def _resolve_entry(request: Request, slug: str, current_user: User | None) -> int:
     """Resolve entry with visibility check via EntryService.
 
@@ -181,17 +128,14 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
     Also checks share cookie for sub-resource access when user is
     not the owner/admin.
     """
-    config = request.app.state.config
-    engine = get_engine(config)
-    service = _get_service(request)
+    service = request.app.state.entry_service
     global_key_auth = _is_global_api_key_auth(request, current_user)
 
     if global_key_auth:
-        with Session(engine) as session:
-            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
-            if not entry:
-                raise NotFoundError(f"Entry not found: {slug}")
-            return entry.id
+        entry = service.get_entry_by_slug(slug)
+        if not entry:
+            raise NotFoundError(f"Entry not found: {slug}")
+        return entry.id
     else:
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
@@ -206,20 +150,17 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
             pass
 
         # Check share cookie for sub-resource access
-        with Session(engine) as session:
-            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
-            if not entry:
-                raise NotFoundError(f"Entry not found: {slug}")
+        entry = service.get_entry_by_slug(slug)
+        if not entry:
+            raise NotFoundError(f"Entry not found: {slug}")
 
-            cookie_name = f"peekview_share_{slug}"
-            cookie_value = request.cookies.get(cookie_name)
-            if cookie_value:
-                from peekview.services.share_service import ShareService
-
-                share_service = ShareService(engine=engine, config=config)
-                share = share_service.verify_share_cookie(entry.id, cookie_value)
-                if share:
-                    return entry.id
+        cookie_name = f"peekview_share_{slug}"
+        cookie_value = request.cookies.get(cookie_name)
+        if cookie_value:
+            share_service = request.app.state.share_service
+            share = share_service.verify_share_cookie(entry.id, cookie_value)
+            if share:
+                return entry.id
 
         raise NotFoundError(f"Entry not found: {slug}")
 
@@ -232,42 +173,37 @@ async def download_file(
     current_user: User | None = Depends(get_current_user),
 ):
     """Download a single file (with Content-Disposition: attachment)."""
-    config = request.app.state.config
-    engine = get_engine(config)
-    storage = StorageManager(config=config)
+    service = request.app.state.entry_service
 
     entry_id = _resolve_entry(request, slug, current_user)
 
-    with Session(engine) as session:
-        file_record = session.exec(
-            select(File).where(File.id == file_id, File.entry_id == entry_id)
-        ).first()
-        if not file_record:
-            raise NotFoundError(f"File not found: {file_id}")
+    file_record = service.get_file_record(entry_id, file_id)
+    if not file_record:
+        raise NotFoundError(f"File not found: {file_id}")
 
-        content = storage.read_file(entry_id, file_record.filename, file_record.path)
-        safe_name = _sanitize_filename(file_record.filename)
+    content = service.read_file_content(entry_id, file_record.filename, file_record.path)
+    safe_name = _sanitize_filename(file_record.filename)
 
-        entry_record = session.exec(select(Entry).where(Entry.id == entry_id)).first()
-        channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
-        current_user_id_dl = current_user.id if current_user else None
-        asyncio.create_task(
-            _record_read_async(
-                request.app.state,
-                entry_id=entry_id,
-                entry_owner_id=entry_record.owner_id if entry_record else None,
-                action="download",
-                channel=channel,
-                reader_id=current_user_id_dl,
-                reader_ip=request.client.host if request.client else None,
-            )
+    entry_record = service.get_entry_record(entry_id)
+    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    current_user_id_dl = current_user.id if current_user else None
+    asyncio.create_task(
+        _record_read_async(
+            request.app.state,
+            entry_id=entry_id,
+            entry_owner_id=entry_record.owner_id if entry_record else None,
+            action="download",
+            channel=channel,
+            reader_id=current_user_id_dl,
+            reader_ip=request.client.host if request.client else None,
         )
+    )
 
-        return Response(
-            content=content,
-            media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
-        )
+    return Response(
+        content=content,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
 
 
 @router.get("/{slug}/files/{file_id}/content")
@@ -282,23 +218,17 @@ async def get_file_content(
     Returns the file content with an appropriate Content-Type based on
     language. No Content-Disposition header — suitable for inline display.
     """
-    config = request.app.state.config
-    engine = get_engine(config)
-    storage = StorageManager(config=config)
+    service = request.app.state.entry_service
 
     entry_id = _resolve_entry(request, slug, current_user)
 
-    with Session(engine) as session:
-        file_record = session.exec(
-            select(File).where(File.id == file_id, File.entry_id == entry_id)
-        ).first()
-        if not file_record:
-            raise NotFoundError(f"File not found: {file_id}")
+    file_record = service.get_file_record(entry_id, file_id)
+    if not file_record:
+        raise NotFoundError(f"File not found: {file_id}")
 
-    content = storage.read_file(entry_id, file_record.filename, file_record.path)
+    content = service.read_file_content(entry_id, file_record.filename, file_record.path)
 
-    with Session(engine) as session:
-        entry_record = session.exec(select(Entry).where(Entry.id == entry_id)).first()
+    entry_record = service.get_entry_record(entry_id)
     channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
     current_user_id_fc = current_user.id if current_user else None
     asyncio.create_task(
@@ -367,37 +297,28 @@ async def render_html_file(
     scripts/styles and https/blob/data resources, plus `frame-ancestors 'self'`
     so the result can be embedded in a same-origin iframe.
     """
-    config = request.app.state.config
-    engine = get_engine(config)
-    storage = StorageManager(config=config)
+    service = request.app.state.entry_service
+    storage = service.storage
 
     entry_id = _resolve_entry(request, slug, current_user)
 
-    with Session(engine) as session:
-        file_record = session.exec(
-            select(File).where(File.id == file_id, File.entry_id == entry_id)
-        ).first()
-        if not file_record:
-            raise NotFoundError(f"File not found: {file_id}")
+    file_record = service.get_file_record(entry_id, file_id)
+    if not file_record:
+        raise NotFoundError(f"File not found: {file_id}")
 
-        detected = file_record.language or detect_language(file_record.path or file_record.filename)
-        if detected != "html":
-            raise NotFoundError("Render endpoint only available for HTML files")
+    detected = file_record.language or detect_language(file_record.path or file_record.filename)
+    if detected != "html":
+        raise NotFoundError("Render endpoint only available for HTML files")
 
-        inject_ids = parse_inject_ids(inject, file_id)
+    inject_ids = parse_inject_ids(inject, file_id)
 
-        siblings: list[SiblingFileData] = []
-        if inject_ids:
-            sibling_records = session.exec(
-                select(File).where(
-                    File.id.in_(inject_ids),
-                    File.entry_id == entry_id,
-                )
-            ).all()
-            for f in sibling_records:
-                data = _build_sibling_data(f, storage)
-                if data is not None:
-                    siblings.append(data)
+    siblings: list[SiblingFileData] = []
+    if inject_ids:
+        sibling_records = service.get_files_by_ids(entry_id, inject_ids)
+        for f in sibling_records:
+            data = _build_sibling_data(f, storage)
+            if data is not None:
+                siblings.append(data)
 
     html_bytes = storage.read_file(entry_id, file_record.filename, file_record.path)
     html = html_bytes.decode("utf-8", errors="replace")
@@ -419,25 +340,22 @@ async def render_html_file(
 async def resolve_entry_raw(request: Request, slug: str) -> Response:
     import json as _json
 
-    config = request.app.state.config
-    engine = get_engine(config)
-    storage = StorageManager(config=config)
-    service = _get_service(request)
+    service = request.app.state.entry_service
+    storage = service.storage
     current_user = get_current_user(request)
 
     global_key_auth = _is_global_api_key_auth(request, current_user)
     entry_owner_id: int | None = None
     if global_key_auth:
-        with Session(engine) as session:
-            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
-            if not entry:
-                raise NotFoundError(f"Entry not found: {slug}")
-            entry_id = entry.id
-            entry_slug = entry.slug
-            entry_summary = entry.summary
-            entry_tags = entry.tags or []
-            entry_created_at = entry.created_at
-            entry_owner_id = entry.owner_id
+        entry_record = service.get_entry_by_slug(slug)
+        if not entry_record:
+            raise NotFoundError(f"Entry not found: {slug}")
+        entry_id = entry_record.id
+        entry_slug = entry_record.slug
+        entry_summary = entry_record.summary
+        entry_tags = entry_record.tags or []
+        entry_created_at = entry_record.created_at
+        entry_owner_id = entry_record.owner_id
     else:
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
@@ -460,8 +378,7 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
     base = str(request.base_url).rstrip("/")
     raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
 
-    with Session(engine) as session:
-        db_files = session.exec(select(File).where(File.entry_id == entry_id)).all()
+    db_files = service.get_entry_files(entry_id)
 
     raw_files: list[RawFileItem] = []
     for f in db_files:

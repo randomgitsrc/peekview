@@ -68,7 +68,7 @@ async function handleSubmit() {
     newPassword.value = ''
     confirmPassword.value = ''
   } catch (err: any) {
-    const detail = err?.response?.data?.detail
+    const detail = err?.response?.data?.error?.message
     toast.error(detail || 'Failed to change password')
   } finally {
     submitting.value = false

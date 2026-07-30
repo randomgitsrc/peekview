@@ -18,6 +18,7 @@ from fastapi import Depends, Request
 from jose import JWTError, jwt
 from sqlmodel import Session, select
 
+from peekview.api._shared import _looks_like_jwt
 from peekview.models import API_KEY_PREFIX, User
 
 logger = logging.getLogger(__name__)
@@ -179,20 +180,12 @@ def get_current_user(request: Request) -> User | None:
     # 3. User-level API key (pv_ prefix)
     key_value = x_api_key or (auth_header[7:] if auth_header.startswith("Bearer ") else "")
     if key_value and key_value.startswith(API_KEY_PREFIX):
-        from peekview.services.apikey_service import ApiKeyService
-
-        engine = request.app.state.engine
-        service = ApiKeyService(engine=engine)
+        service = request.app.state.apikey_service
         user, _api_key_obj = service.verify_api_key(key_value)
         if user is not None:
             return user
 
     return None
-
-
-def _looks_like_jwt(token: str) -> bool:
-    """Heuristic: JWTs have 3 base64url-encoded segments separated by dots."""
-    return len(token.split(".")) == 3
 
 
 def require_auth(user: User | None = Depends(get_current_user)) -> User:

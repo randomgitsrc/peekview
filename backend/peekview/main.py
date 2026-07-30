@@ -213,11 +213,18 @@ def create_app(
 
     backfill_fts_content(engine, storage)
 
-    entry_service = EntryService(engine=engine, storage=storage, config=config)
-    apikey_service = ApiKeyService(engine=engine)
-    admin_service = AdminService(engine=engine, storage=storage, config=config)
     share_service = ShareService(engine=engine, config=config)
     read_tracking_service = ReadTrackingService(engine=engine)
+    entry_service = EntryService(
+        engine=engine, storage=storage, config=config,
+        read_tracking_service=read_tracking_service,
+        share_service=share_service,
+    )
+    apikey_service = ApiKeyService(engine=engine)
+    admin_service = AdminService(
+        engine=engine, storage=storage, config=config,
+        entry_service=entry_service,
+    )
     app.state.entry_service = entry_service
     app.state.apikey_service = apikey_service
     app.state.admin_service = admin_service
@@ -487,7 +494,7 @@ def create_app(
                 "error": {
                     "code": exc.error_code,
                     "message": str(exc),
-                    "details": None,
+                    "details": getattr(exc, "details", None),
                 }
             },
         )

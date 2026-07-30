@@ -1,798 +1,215 @@
 <template>
   <div class="entry-detail" :class="{ 'zen-mode': zenMode }">
     <span class="sr-only" aria-live="polite">{{ zenAriaText }}</span>
-    <!-- Mobile sticky header -->
-    <div v-if="isMobile" v-show="!zenMode" class="mobile-sticky-header">
-      <router-link to="/" class="mobile-logo-link" aria-label="Back to home">
-        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </router-link>
-      <span class="sticky-title two-line">{{ entryTitle }}</span>
-      <a
-        v-if="authState === 'anonymous'"
-        class="mobile-signin-link"
-        @click="showLogin = true"
-      >Sign in</a>
-    </div>
 
-    <!-- Desktop/Tablet header -->
-    <header v-if="isDesktop" v-show="!zenMode" class="detail-header">
-      <div class="title-row">
-        <router-link to="/" class="detail-logo" title="Back to home">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="var(--c-accent)"/><path d="M12 23.5V9.5h5.4a4.6 4.6 0 0 1 0 9.2H12" stroke="var(--text-on-accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="detail-logo-word">PeekView</span>
-        </router-link>
-        <span class="brand-sep"></span>
-        <div class="title-group">
-          <h1 class="title">{{ entryTitle }}</h1>
-        </div>
-        <div class="actions-area">
-          <button
-            v-if="entryStore.isMultiFile"
-            :class="['toggle-btn', { active: isFileTreeOpen }]"
-            @click="isFileTreeOpen = !isFileTreeOpen"
-            aria-label="Toggle file tree"
-            :aria-expanded="isFileTreeOpen"
-          >
-            <FolderIcon :size="16" />
-            <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
-            <span class="tooltip">Toggle file tree</span>
-          </button>
-          <button
-            v-if="isMarkdown && tocHeadings.length > 0"
-            :class="['toggle-btn', { active: isTocOpen }]"
-            @click="isTocOpen = !isTocOpen"
-            aria-label="Table of Contents"
-            :aria-expanded="isTocOpen"
-          >
-            <ListIcon :size="16" />
-            <span class="tooltip">Table of Contents</span>
-          </button>
-          <span class="action-sep"></span>
-          <button
-            v-if="entryStore.canCopy"
-            class="icon-btn"
-            @click="copyContent"
-            aria-label="Copy"
-          >
-            <CopyIcon :size="16" />
-            <span class="tooltip">Copy</span>
-          </button>
-          <button
-            v-if="showShareButton"
-            ref="shareBtnRef"
-            class="icon-btn share-btn"
-            @click="shareDialogOpen = !shareDialogOpen"
-            aria-label="Share"
-          >
-            <Share2Icon :size="16" />
-            <span v-if="activeShareCount > 0" class="share-badge">{{ activeShareCount }}</span>
-            <span class="tooltip">Share</span>
-          </button>
-          <ShareDialog
-            v-if="showShareButton"
-            v-model:open="shareDialogOpen"
-            :entry-slug="slug"
-            :trigger-ref="shareBtnRef"
-            variant="popover"
-          />
-          <span class="action-sep"></span>
-          <OverflowMenu :items="overflowItems" variant="dropdown" />
-          <BaseButton
-            v-if="authState === 'anonymous'"
-            variant="primary"
-            size="small"
-            @click="showLogin = true"
-          >Sign in</BaseButton>
-          <router-link to="/explore" class="icon-btn" title="Explore">
-            <CompassIcon :size="16" />
-            <span class="tooltip">Explore</span>
-          </router-link>
-          <ThemeToggle />
-        </div>
-      </div>
-      <div class="meta-row">
-        <router-link
-          v-if="entryStore.currentEntry?.username"
-          :to="`/users/${entryStore.currentEntry.username}`"
-          class="entry-owner-link"
-        >@{{ entryStore.currentEntry.username }}</router-link>
-        <span class="meta-dot"></span>
-        <span :title="fullTime">{{ relativeTime }}</span>
-        <template v-if="entryStore.currentEntry?.status === 'archived'">
-          <span class="meta-dot"></span>
-          <span class="status-tag">Archived</span>
-        </template>
-        <template v-else-if="isExpiredButActive">
-          <span class="meta-dot"></span>
-          <span class="status-tag" style="color:var(--c-warning)">Expired</span>
-        </template>
-        <template v-else-if="entryStore.currentEntry?.expiresAt">
-          <span class="meta-dot"></span>
-          <span>Expires {{ formatExpiresIn(entryStore.currentEntry.expiresAt) }}</span>
-        </template>
-        <span class="meta-sep"></span>
-        <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
-        <span class="meta-dot"></span>
-        <span :class="['status-tag', entryStore.currentEntry?.isPublic ? 'public' : 'private']">
-          {{ entryStore.currentEntry?.isPublic ? 'Public' : 'Private' }}
-        </span>
-        <template v-for="tag in currentEntry?.tags ?? []" :key="tag">
-          <span class="meta-dot"></span>
-          <span class="meta-tag">{{ tag }}</span>
-        </template>
-      </div>
-    </header>
-
-    <!-- Expired warning banner -->
-    <div v-if="isExpiredButActive" class="expired-warning-banner">
-      <span class="expired-warning-text">此条目已过期，等待清理</span>
-      <button v-if="authStore.isOwner(entryStore.currentEntry?.ownerId ?? null)" class="expired-edit-btn" @click="showExpiresInDialog = true">重新设置过期时间</button>
-    </div>
-
-    <!-- Archived banner -->
-    <div v-if="entryStore.currentEntry?.status === 'archived'" class="archived-banner">
-      <span class="archived-banner-text">This entry has expired</span>
-      <button v-if="authStore.isOwner(entryStore.currentEntry.ownerId)" class="reactivate-btn" @click="showExpiresInDialog = true">Reactivate</button>
-    </div>
-
-    <!-- Content -->
-    <div class="detail-content">
-      <!-- File Sidebar (desktop) -->
-      <aside v-if="isFileTreeOpen && entryStore.isMultiFile" class="file-sidebar">
-        <FileTree
-          :files="entryStore.currentEntry?.files || []"
-          :activeFileId="entryStore.activeFile?.id ?? null"
-          :fileCount="currentEntry?.files.length"
-          @select="entryStore.selectFile"
-        />
-      </aside>
-
-      <!-- Main Content Area -->
-      <main class="content-area entry-content" tabindex="-1">
-        <!-- Loading State -->
-        <div v-if="entryStore.loading" class="loading-state">
-          <div class="skeleton-header">
-            <div class="skeleton-bar skeleton-title-bar"></div>
-            <div class="skeleton-bar skeleton-meta-bar"></div>
-          </div>
-          <div class="skeleton-content">
-            <div class="skeleton-bar skeleton-content-block"></div>
-          </div>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="entryStore.error" class="error-state" :class="{ 'share-error': shareErrorState }">
-          <span>{{ entryStore.error }}</span>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="!entryStore.currentEntry" class="empty-state">
-          <span>Entry not found</span>
-        </div>
-
-        <!-- Content -->
-        <template v-else-if="entryStore.activeFile">
-          <!-- HTML File -->
-          <HtmlViewer
-            v-if="isHtml"
-            :slug="slug"
-            :file-id="entryStore.activeFile.id"
-            :content="entryStore.fileContent"
-            :sibling-file-ids="siblingFileIds"
-          />
-
-          <!-- Markdown File -->
-          <MarkdownViewer
-            v-else-if="isMarkdown"
-            :content="entryStore.fileContent"
-            :path-map="pathMap"
-            :slug="slug"
-            :headings="tocHeadings"
-            @select-heading="scrollToHeading"
-            @navigate-file="handleNavigateFile"
-          />
-
-          <!-- Image File -->
-          <ImageViewer
-            v-else-if="isImage"
-            :filename="entryStore.activeFile.filename"
-            :slug="slug"
-            :file-id="entryStore.activeFile.id"
-          />
-
-          <!-- Code File -->
-          <CodeViewer
-            v-else
-            :content="entryStore.fileContent"
-            :filename="entryStore.activeFile.filename"
-            :language="entryStore.activeFile.language"
-            :wrap="entryStore.wrapEnabled"
-            :can-wrap="entryStore.canWrap"
-            :loading="entryStore.loading"
-            @toggle-wrap="entryStore.toggleWrap()"
-          />
-        </template>
-
-        <!-- No file selected -->
-        <div v-else class="empty-state">
-          <span>Select a file to view</span>
-        </div>
-      </main>
-
-      <!-- TOC Sidebar (desktop) -->
-      <aside v-if="isTocOpen && isMarkdown && tocHeadings.length > 0" class="toc-sidebar">
-        <TocNav
-          :headings="tocHeadings"
-          :activeId="null"
-          @select="scrollToHeading"
-        />
-      </aside>
-    </div>
-
-    <!-- Mobile meta-tags-bar (scroll-hide) -->
-    <div v-if="isMobile" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
-      <router-link
-        v-if="entryStore.currentEntry?.username"
-        :to="`/users/${entryStore.currentEntry.username}`"
-        class="owner-link"
-      >@{{ entryStore.currentEntry.username }}</router-link>
-      <span class="meta-dot"></span>
-      <span>{{ relativeTime }}</span>
-      <span class="meta-sep"></span>
-      <span v-if="currentEntry?.readStats">{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span>
-      <span class="meta-dot"></span>
-      <span :class="['status-tag', entryStore.currentEntry?.isPublic ? 'public' : 'private']">
-        {{ entryStore.currentEntry?.isPublic ? 'Public' : 'Private' }}
-      </span>
-      <template v-for="tag in currentEntry?.tags ?? []" :key="tag">
-        <span class="meta-dot"></span>
-        <span class="meta-tag">{{ tag }}</span>
-      </template>
-    </div>
-
-    <!-- Mobile bottom bar -->
-    <div v-if="isMobile && entryStore.currentEntry" v-show="!zenMode" class="mobile-bottom-bar">
-      <button v-if="entryStore.isMultiFile"
-        :class="['toggle-btn', { active: showFileDrawer }]"
-        @click="showFileDrawer = !showFileDrawer"
-        aria-label="Files">
-        <FolderIcon :size="16" />
-        <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
-      </button>
-      <button v-if="isMarkdown && tocHeadings.length > 0"
-        :class="['toggle-btn', { active: showTocDrawer }]"
-        @click="showTocDrawer = !showTocDrawer"
-        aria-label="Table of Contents">
-        <ListIcon :size="16" />
-      </button>
-      <div class="flex-spacer"></div>
-      <template v-if="!isBinary">
-        <button v-if="entryStore.canWrap" :class="['bottom-btn', entryStore.wrapEnabled && 'primary']" @click="entryStore.toggleWrap()">
-          Wrap
-        </button>
-        <button v-if="entryStore.canCopy" class="bottom-btn primary" @click="copyContent" aria-label="Copy">
-          <CopyIcon :size="14" /> Copy
-        </button>
-      </template>
-      <OverflowMenu :items="overflowItems" variant="sheet" />
-    </div>
-
-    <!-- File Drawer (mobile) -->
-    <div v-if="showFileDrawer" class="drawer-overlay" @click="showFileDrawer = false"></div>
-    <aside v-if="showFileDrawer" class="drawer drawer-left">
-      <div class="drawer-header">
-        <span>Files · {{ currentEntry?.files.length ?? 0 }}</span>
-        <span class="drawer-close" @click="showFileDrawer = false">&times;</span>
-      </div>
-      <FileTree
-        :files="entryStore.currentEntry?.files || []"
-        :activeFileId="entryStore.activeFile?.id ?? null"
-        :fileCount="currentEntry?.files.length"
-        @select="selectFileAndCloseDrawer"
-      />
-    </aside>
-
-    <!-- TOC Drawer (mobile) -->
-    <div v-if="showTocDrawer" class="drawer-overlay" @click="showTocDrawer = false"></div>
-    <aside v-if="showTocDrawer" class="drawer drawer-right">
-      <div class="drawer-header">
-        <span>Table of Contents · {{ tocHeadings.length }}</span>
-        <span class="drawer-close" @click="showTocDrawer = false">&times;</span>
-      </div>
-      <TocNav
-        :headings="tocHeadings"
-        :activeId="null"
-        @select="selectTocAndCloseDrawer"
-      />
-    </aside>
-
-    <!-- Confirm dialog for delete -->
-    <ConfirmDialog
-      v-model:visible="showConfirmDelete"
-      title="Delete Entry"
-      :message="deleteMessage"
-      confirm-label="Delete"
-      variant="destructive"
-      @confirm="handleDelete"
-      @cancel="cancelDelete"
+    <EntryDetailHeader
+      :entry-title="entryTitle"
+      :relative-time="relativeTime"
+      :full-time="fullTime"
+      :is-expired-but-active="isExpiredButActive"
+      :meta-tags-hidden="metaTagsHidden"
+      :is-file-tree-open="isFileTreeOpen"
+      :is-toc-open="isTocOpen"
+      :is-markdown="isMarkdown"
+      :toc-headings="tocHeadings"
+      :is-multi-file="entryDetailStore.isMultiFile"
+      :can-copy="entryDetailStore.canCopy"
+      :show-share-button="showShareButton"
+      :share-dialog-open="shareDialogOpen"
+      :active-share-count="activeShareCount"
+      :overflow-items="overflowItems"
+      :auth-state="authState"
+      :current-entry="currentEntry"
+      :slug="slug"
+      @toggle-file-tree="isFileTreeOpen = !isFileTreeOpen"
+      @toggle-toc="isTocOpen = !isTocOpen"
+      @copy-content="copyContent"
+      @toggle-share-dialog="shareDialogOpen = $event"
+      @open-login="showLogin = true"
     />
 
-    <!-- Expires In Dialog -->
-    <ExpiresInDialog
-      v-model:visible="showExpiresInDialog"
-      :entry-slug="slug"
+    <EntryDetailBanners
+      :is-expired-but-active="isExpiredButActive"
       :is-archived="currentEntry?.status === 'archived'"
-      @updated="handleExpiresInUpdated"
+      :is-owner="authStore.isOwner(currentEntry?.ownerId ?? null)"
+      @show-expires-in-dialog="actions.showExpiresInDialog.value = true"
     />
 
-    <!-- Login Dialog -->
-    <LoginDialog v-model:visible="showLogin" :allow-registration="true" />
+    <EntryDetailContent
+      :is-file-tree-open="isFileTreeOpen"
+      :is-toc-open="isTocOpen"
+      :show-file-drawer="showFileDrawer"
+      :show-toc-drawer="showTocDrawer"
+      :current-entry="currentEntry"
+      :active-file="activeFile"
+      :file-content="fileContent"
+      :file-loading="entryDetailStore.loading"
+      :file-error="entryDetailStore.error"
+      :share-error-state="shareErrorState"
+      :slug="slug"
+      :is-markdown="isMarkdown"
+      :is-html="isHtml"
+      :is-image="isImage"
+      :is-binary="isBinary"
+      :path-map="pathMap"
+      :toc-headings="tocHeadings"
+      :sibling-file-ids="siblingFileIds"
+      :wrap-enabled="entryDetailStore.wrapEnabled"
+      :can-wrap="entryDetailStore.canWrap"
+      :is-multi-file="entryDetailStore.isMultiFile"
+      @select-file="entryDetailStore.selectFile"
+      @navigate-file="handleNavigateFile"
+      @scroll-to-heading="scrollToHeading"
+      @toggle-wrap="entryDetailStore.toggleWrap()"
+      @close-file-drawer="showFileDrawer = false"
+      @close-toc-drawer="showTocDrawer = false"
+    />
 
-    <!-- Share watermark (non-owner share access only) -->
-    <div v-if="isShareAccess" class="share-watermark">
-      Shared by @{{ currentEntry?.shareContext?.sharedBy }}
-    </div>
+    <EntryDetailMobileBar
+      :is-multi-file="entryDetailStore.isMultiFile"
+      :is-markdown="isMarkdown"
+      :toc-headings="tocHeadings"
+      :is-binary="isBinary"
+      :can-wrap="entryDetailStore.canWrap"
+      :can-copy="entryDetailStore.canCopy"
+      :wrap-enabled="entryDetailStore.wrapEnabled"
+      :show-file-drawer="showFileDrawer"
+      :show-toc-drawer="showTocDrawer"
+      :overflow-items="overflowItems"
+      :current-entry="currentEntry"
+      @toggle-file-drawer="showFileDrawer = !showFileDrawer"
+      @toggle-toc-drawer="showTocDrawer = !showTocDrawer"
+      @toggle-wrap="entryDetailStore.toggleWrap()"
+      @copy-content="copyContent"
+    />
+
+    <EntryDetailDialogs
+      :show-confirm-delete="actions.showConfirmDelete.value"
+      :delete-message="deleteMessage"
+      :show-expires-in-dialog="actions.showExpiresInDialog.value"
+      :show-login="showLogin"
+      :is-share-access="isShareAccess"
+      :slug="slug"
+      :is-archived="currentEntry?.status === 'archived'"
+      :shared-by="currentEntry?.shareContext?.sharedBy ?? null"
+      @update:show-confirm-delete="actions.showConfirmDelete.value = $event"
+      @confirm-delete="actions.handleDelete(router)"
+      @cancel-delete="actions.cancelDelete()"
+      @update:show-expires-in-dialog="actions.showExpiresInDialog.value = $event"
+      @expires-in-updated="actions.handleExpiresInUpdated(slug)"
+      @update:show-login="showLogin = $event"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, provide, toRef } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useEntryStore } from '@/stores/entry'
+import { useEntryDetailStore } from '@/stores/entryDetail'
 import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
-import { useToast } from '@/composables/useToast'
-import OverflowMenu from '@/components/OverflowMenu.vue'
-import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
-import CodeViewer from '@/components/CodeViewer.vue'
-import MarkdownViewer from '@/components/MarkdownViewer.vue'
-import HtmlViewer from '@/components/HtmlViewer.vue'
-import ImageViewer from '@/components/ImageViewer.vue'
-import { guessMimeType } from '@/utils/mime'
-import { buildPathMap } from '@/utils/path-map'
-import type { PathMap } from '@/utils/path-map'
-import { formatExpiresIn, isExpired } from '@/utils/expires'
-import { useRelativeTime } from '@/composables/useRelativeTime'
-import { shouldHandleZenShortcut, redirectFocusIfHidden } from '@/utils/zen-shortcut'
-import FileTree from '@/components/FileTree.vue'
-import TocNav from '@/components/TocNav.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ShareDialog from '@/components/ShareDialog.vue'
-import ExpiresInDialog from '@/components/ExpiresInDialog.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
-import BaseButton from '@/components/BaseButton.vue'
 import { useShareStore } from '@/stores/share'
+import { isExpired } from '@/utils/expires'
+import { useRelativeTime } from '@/composables/useRelativeTime'
+import { useZenMode } from '@/composables/useZenMode'
+import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
+import { useEntryDetailComputed } from '@/composables/useEntryDetailComputed'
+import { useEntryDetailActions } from '@/composables/useEntryDetailActions'
+import { ZenModeKey, IsMobileKey, ZenAriaTextKey } from '@/composables/entryDetailKeys'
+import EntryDetailHeader from '@/components/EntryDetailHeader.vue'
+import EntryDetailBanners from '@/components/EntryDetailBanners.vue'
+import EntryDetailContent from '@/components/EntryDetailContent.vue'
+import EntryDetailMobileBar from '@/components/EntryDetailMobileBar.vue'
+import EntryDetailDialogs from '@/components/EntryDetailDialogs.vue'
 import type { ShareInfo } from '@/types'
-import type { TocHeading } from '@/types'
-import {
-  Folder as FolderIcon,
-  List as ListIcon,
-  Copy as CopyIcon,
-  Share2 as Share2Icon,
-  Compass as CompassIcon,
-} from 'lucide-vue-next'
 
-const props = defineProps<{
-  slug: string
-}>()
+const props = defineProps<{ slug: string }>()
+const slug = toRef(props, 'slug')
 
 const router = useRouter()
 const route = useRoute()
-const entryStore = useEntryStore()
+const entryDetailStore = useEntryDetailStore()
 const authStore = useAuthStore()
 const shareStore = useShareStore()
-const toast = useToast()
-const { currentEntry, activeFile } = storeToRefs(entryStore)
+const { currentEntry, activeFile, fileContent } = storeToRefs(entryDetailStore)
 const { authState } = storeToRefs(authStore)
 
-const showLogin = ref(false)
+const { zenMode, zenAriaText, handleZenKeydown } = useZenMode()
+const { isMobile, isDesktop, metaTagsHidden, handleResize, setupScrollHide } = useResponsiveLayout()
 
+provide(ZenModeKey, zenMode)
+provide(IsMobileKey, isMobile)
+provide(ZenAriaTextKey, zenAriaText)
+
+const {
+  isMarkdown, isHtml, isImage, isBinary, pathMap, siblingFileIds,
+  entryTitle, tocHeadings, copyContent, downloadFile, downloadPack,
+  scrollToHeading, handleNavigateFile,
+} = useEntryDetailComputed(slug, currentEntry, activeFile)
+
+const actions = useEntryDetailActions(currentEntry, activeFile, downloadFile, downloadPack)
+const { deleteMessage, overflowItems } = actions
+
+const showLogin = ref(false)
 const showFileDrawer = ref(false)
 const showTocDrawer = ref(false)
-
 const shareDialogOpen = ref(false)
-const shareBtnRef = ref<HTMLElement>()
 const shareErrorState = ref(false)
-const showExpiresInDialog = ref(false)
-
 const isFileTreeOpen = ref(false)
 const isTocOpen = ref(false)
 
-const viewportWidth = ref(window.innerWidth)
-let resizeTimer = 0
-function handleResize() {
-  if (resizeTimer) cancelAnimationFrame(resizeTimer)
-  resizeTimer = requestAnimationFrame(() => {
-    viewportWidth.value = window.innerWidth
-  })
+function isShareExpired(share: ShareInfo): boolean {
+  return share.expiresAt ? new Date(share.expiresAt) <= new Date() : false
 }
 
-const isMobile = computed(() => viewportWidth.value <= 640)
-const isDesktop = computed(() => viewportWidth.value > 640)
-
-const metaTagsHidden = ref(false)
-let scrollContainer: HTMLElement | null = null
-let tagsScrollHandler: (() => void) | null = null
-
+const activeShareCount = computed(() =>
+  shareStore.shares.filter(s => s.revokedAt === null && !isShareExpired(s)).length
+)
 const isShareAccess = computed(() => {
-  if (!currentEntry.value) return false
-  if (authStore.isOwner(currentEntry.value.ownerId)) return false
+  if (!currentEntry.value || authStore.isOwner(currentEntry.value.ownerId)) return false
   return currentEntry.value.shareContext?.isShareAccess === true
 })
-
 const showShareButton = computed(() => {
-  if (!currentEntry.value) return false
-  if (!authStore.isOwner(currentEntry.value.ownerId)) return false
+  if (!currentEntry.value || !authStore.isOwner(currentEntry.value.ownerId)) return false
   if (currentEntry.value.status === 'archived') return false
   return !currentEntry.value.isPublic
 })
-
-function isShareExpired(share: ShareInfo): boolean {
-  if (!share.expiresAt) return false
-  return new Date(share.expiresAt) <= new Date()
-}
-
-const activeShareCount = computed(() => {
-  return shareStore.shares.filter(s => s.revokedAt === null && !isShareExpired(s)).length
-})
-
-const isExpiredButActive = computed(() => {
-  if (!currentEntry.value) return false
-  return isExpired(currentEntry.value)
-})
-
-const zenMode = ref(false)
-const zenAriaText = ref('')
-
-function updateZenAria(zen: boolean) {
-  zenAriaText.value = zen ? 'Zen mode on. Press f or Escape to exit.' : 'Zen mode off.'
-}
-
-function handleZenKeydown(event: KeyboardEvent) {
-  if (!shouldHandleZenShortcut(event)) return
-  if (event.key === 'Escape' && zenMode.value) {
-    zenMode.value = false
-    updateZenAria(false)
-    event.preventDefault()
-    return
-  }
-  if (event.key === 'f' || event.key === 'F') {
-    zenMode.value = !zenMode.value
-    if (zenMode.value) {
-      redirectFocusIfHidden()
-    }
-    updateZenAria(zenMode.value)
-    event.preventDefault()
-  }
-}
-
-const siblingFileIds = computed<number[]>(() => {
-  if (!currentEntry.value || !activeFile.value) return []
-  if (activeFile.value.language !== 'html') return []
-  return currentEntry.value.files
-    .filter(f => f.id !== activeFile.value!.id)
-    .map(f => f.id)
-})
-
-const showConfirmDelete = ref(false)
-const deleteMessage = computed(() =>
-  currentEntry.value
-    ? `Are you sure you want to delete "${currentEntry.value.summary}"?`
-    : ''
-)
-
-function confirmDeleteEntry() {
-  showConfirmDelete.value = true
-}
-
-async function handleDelete() {
-  if (!currentEntry.value) return
-  const success = await entryStore.deleteEntry(currentEntry.value.slug)
-  if (success) {
-    toast.show('Entry deleted', 'success')
-    router.push('/explore')
-  } else {
-    toast.show('Failed to delete entry', 'error')
-  }
-}
-
-function cancelDelete() {
-}
-
-async function handleToggleVisibility() {
-  if (!currentEntry.value) return
-  const wasPublic = currentEntry.value.isPublic
-  const success = await entryStore.toggleVisibility(currentEntry.value)
-  if (success) {
-    if (!wasPublic) {
-    } else {
-      toast.show('Entry made private', 'success')
-    }
-  } else {
-    toast.show('Failed to change visibility', 'error')
-  }
-}
-
-async function handleExpiresInUpdated() {
-  await entryStore.loadEntry(props.slug)
-  toast.show('Entry updated', 'success')
-}
-
+const isExpiredButActive = computed(() => currentEntry.value ? isExpired(currentEntry.value) : false)
 const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
-
-const entryTitle = computed(() => {
-  return currentEntry.value?.summary || props.slug
-})
-
-const isMarkdown = computed(() => {
-  return activeFile.value?.language === 'markdown'
-})
-
-const isHtml = computed(() => {
-  return activeFile.value?.language === 'html'
-})
-
-const isImage = computed(() => {
-  const file = activeFile.value
-  if (!file) return false
-  const mime = guessMimeType(file.filename)
-  if (mime === 'image/svg+xml') return true
-  return file.isBinary && (mime?.startsWith('image/') ?? false)
-})
-
-const pathMap = computed<PathMap | null>(() => {
-  if (!currentEntry.value) return null
-  return buildPathMap(currentEntry.value.files, currentEntry.value.slug)
-})
-
-function handleNavigateFile(fileId: number) {
-  const file = currentEntry.value?.files.find(f => f.id === fileId)
-  if (file) {
-    entryStore.selectFile(file)
-  }
-}
-
-const isBinary = computed(() => {
-  return activeFile.value?.isBinary ?? false
-})
-
-const overflowItems = computed(() => {
-  const items: OverflowMenuItem[] = []
-  const themeStore = useThemeStore()
-  // Group 1: Display
-  items.push({
-    label: themeStore.theme === 'dark' ? 'Light theme' : 'Dark theme',
-    icon: themeStore.theme === 'dark' ? 'sun' : 'moon',
-    hint: 'Tap to toggle',
-    divider: false,
-    action: () => themeStore.toggle(),
-  })
-  // Group 2: Owner-only
-  if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
-    items.push({
-      label: currentEntry.value.isPublic ? 'Make Private' : 'Make Public',
-      icon: currentEntry.value.isPublic ? 'lock' : 'globe',
-      hint: currentEntry.value.isPublic ? 'Currently Public' : 'Currently Private',
-      divider: true,
-      action: handleToggleVisibility,
-    })
-  }
-  // Group 3: File actions
-  if (entryStore.canDownload) {
-    items.push({
-      label: 'Download',
-      icon: 'download',
-      hint: activeFile.value?.filename ?? '',
-      divider: !!(currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)),
-      action: downloadFile,
-    })
-  }
-  if (currentEntry.value) {
-    items.push({
-      label: 'Raw',
-      icon: 'file-text',
-      hint: 'Structured JSON',
-      href: `/api/v1/entries/${currentEntry.value.slug}/raw`,
-      target: '_blank',
-      rel: 'noopener noreferrer',
-    })
-  }
-  if (entryStore.canPack && currentEntry.value) {
-    items.push({
-      label: 'Download as Pack',
-      icon: 'package',
-      hint: `${currentEntry.value.files.length} files`,
-      action: downloadPack,
-    })
-  }
-  // Group 4: Danger
-  if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
-    items.push({
-      label: 'Delete entry',
-      icon: 'trash-2',
-      hint: 'Permanently',
-      variant: 'danger',
-      divider: true,
-      action: confirmDeleteEntry,
-    })
-  }
-  return items
-})
-
-const tocHeadings = computed<TocHeading[]>(() => {
-  if (!isMarkdown.value || !entryStore.fileContent) {
-    return []
-  }
-  return extractHeadings(entryStore.fileContent)
-})
-
-function selectFileAndCloseDrawer(file: { id: number }) {
-  entryStore.selectFile(file as { id: number; path: string; filename: string; language: string | null; isBinary: boolean; size: number; lineCount: number })
-  showFileDrawer.value = false
-}
-
-function selectTocAndCloseDrawer(heading: TocHeading) {
-  scrollToHeading(heading)
-  showTocDrawer.value = false
-}
-
-function scrollToHeading(heading: TocHeading) {
-  const element = document.getElementById(heading.id)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' })
-  }
-}
-
-function copyContent() {
-  if (entryStore.fileContent) {
-    navigator.clipboard.writeText(entryStore.fileContent)
-  }
-}
-
-function downloadFile() {
-  if (!activeFile.value || !currentEntry.value) return
-
-  const blob = new Blob([entryStore.fileContent], { type: 'text/plain' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = activeFile.value.filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
-
-async function downloadPack() {
-  if (!currentEntry.value) return
-
-  try {
-    const response = await fetch(`/api/v1/entries/${currentEntry.value.slug}/download`)
-    if (!response.ok) {
-      throw new Error(`Download failed: ${response.status}`)
-    }
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${currentEntry.value.slug}.zip`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    toast.show('Pack downloaded', 'success')
-  } catch (e) {
-    console.error('Pack download error:', e)
-    toast.show('Failed to download pack', 'error')
-  }
-}
-
-function extractHeadings(content: string): TocHeading[] {
-  const headings: TocHeading[] = []
-  const lines = content.split('\n')
-  const usedIds = new Set<string>()
-
-  for (const line of lines) {
-    const match = line.match(/^(#{1,6})\s+(.+)$/)
-    if (match) {
-      const level = match[1].length
-      if (level < 2 || level > 4) continue
-
-      const text = match[2].trim()
-      let id = text.toLowerCase()
-        .replace(/[^\w\s一-龥぀-ゟ゠-ヿ-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .substring(0, 50) || 'heading'
-
-      let uniqueId = id
-      let counter = 1
-      while (usedIds.has(uniqueId)) {
-        uniqueId = `${id}-${counter}`
-        counter++
-      }
-      usedIds.add(uniqueId)
-
-      headings.push({ level, text, id: uniqueId })
-    }
-  }
-
-  return headings
-}
 
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined
   const firstFileId = route.query.firstFileId ? Number(route.query.firstFileId) : undefined
   shareErrorState.value = false
-  await entryStore.loadEntry(props.slug, firstFileId, shareToken)
-  if (shareToken && !currentEntry.value && entryStore.error) {
-    shareErrorState.value = true
-  }
-  if (firstFileId || shareToken) {
-    router.replace({ path: route.path, query: {} })
-  }
+  await entryDetailStore.loadEntry(props.slug, firstFileId, shareToken)
+  if (shareToken && !currentEntry.value && entryDetailStore.error) shareErrorState.value = true
+  if (firstFileId || shareToken) router.replace({ path: route.path, query: {} })
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
   await nextTick()
-  // Desktop defaults: open TOC and file tree on page load
   if (isDesktop.value) {
-    if (entryStore.isMultiFile) isFileTreeOpen.value = true
+    if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true
     if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
   }
-  // Set up scroll listener for meta-tags-bar hide
   const content = document.querySelector('.content-area')
-  if (content) {
-    // Find the first scrollable child (markdown-viewer, code-viewer, etc.)
-    const findScrollable = (parent: Element): HTMLElement | null => {
-      for (const child of parent.children) {
-        if (child instanceof HTMLElement) {
-          const ov = getComputedStyle(child).overflowY
-          if ((ov === 'auto' || ov === 'scroll') && child.scrollHeight > child.clientHeight) {
-            return child
-          }
-        }
-      }
-      return null
-    }
-    scrollContainer = findScrollable(content)
-    if (!scrollContainer) {
-      // Fallback: listen on content-area itself
-      scrollContainer = content as HTMLElement
-    }
-    const onScroll = () => {
-      metaTagsHidden.value = (scrollContainer?.scrollTop ?? 0) > 10
-    }
-    scrollContainer.addEventListener('scroll', onScroll, { passive: true })
-    tagsScrollHandler = () => scrollContainer?.removeEventListener('scroll', onScroll)
-  }
+  if (content) onUnmounted(setupScrollHide(content as HTMLElement))
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleZenKeydown)
   window.removeEventListener('resize', handleResize)
-  if (resizeTimer) cancelAnimationFrame(resizeTimer)
-  if (tagsScrollHandler) tagsScrollHandler()
 })
 
 watch(() => props.slug, async (newSlug) => {
-  // Reset toggles before loading new entry
   isFileTreeOpen.value = false
   isTocOpen.value = false
-  await entryStore.loadEntry(newSlug)
+  await entryDetailStore.loadEntry(newSlug)
 })
-
 watch(() => showShareButton.value, (show) => {
-  if (show && props.slug) {
-    shareStore.fetchShares(props.slug)
-  }
+  if (show && props.slug) shareStore.fetchShares(props.slug)
 }, { immediate: true })
-
-watch(() => entryStore.currentEntry, async (entry) => {
+watch(() => entryDetailStore.currentEntry, (entry) => {
   document.querySelectorAll('link[data-peekview-raw]').forEach(el => el.remove())
   if (entry) {
     const link = document.createElement('link')
@@ -802,202 +219,18 @@ watch(() => entryStore.currentEntry, async (entry) => {
     link.setAttribute('data-peekview-raw', '1')
     document.head.appendChild(link)
   }
-  // Apply desktop defaults: open TOC and file tree
   if (isDesktop.value) {
-    if (entryStore.isMultiFile) isFileTreeOpen.value = true
+    if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true
     if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
   }
 }, { immediate: true })
 </script>
 
 <style scoped>
-.entry-owner-link {
-  font-size: 12px;
-  color: var(--c-accent);
-  text-decoration: none;
-  font-family: var(--font-mono);
-}
-
-.entry-owner-link:hover {
-  text-decoration: underline;
-}
-
-.title-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.title-group .title {
-  margin: 0;
-  padding: 0;
-}
-
-.expired-warning-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--c-warning-surface);
-  border-bottom: 1px solid var(--c-warning);
-  width: 100%;
-}
-
-.expired-warning-text {
-  font-size: var(--font-sm);
-  color: var(--c-warning);
-  font-weight: 600;
-}
-
-.expired-edit-btn {
-  padding: var(--space-1) var(--space-3);
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-}
-
-.expired-edit-btn:hover {
-  opacity: 0.9;
-}
-
-.archived-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--c-error-surface);
-  border-bottom: 1px solid var(--c-error);
-  width: 100%;
-}
-
-.archived-banner-text {
-  font-size: var(--font-sm);
-  color: var(--c-error);
-  font-weight: 600;
-}
-
-.reactivate-btn {
-  padding: var(--space-1) var(--space-3);
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-}
-
-.reactivate-btn:hover {
-  opacity: 0.9;
-}
-
-.share-btn {
-  position: relative;
-}
-
-.share-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  pointer-events: none;
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-}
-
-.bottom-btn.share-btn {
-  position: relative;
-}
-
-.bottom-btn.share-btn .share-badge {
-  top: 2px;
-  right: 2px;
-}
-
-.share-watermark {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  background: var(--c-surface);
-  color: var(--c-text-secondary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  z-index: 9999;
-  pointer-events: none;
-  user-select: none;
-}
-
-.share-error {
-  color: var(--c-error);
-  font-size: 15px;
-  text-align: center;
-  padding: 40px 16px;
-}
-
-.meta-tag {
-  display: inline-flex;
-  align-items: center;
-  background: var(--c-tag-bg);
-  color: var(--c-text-tertiary);
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-size: 10px;
-}
-
-.loading-state {
-  padding: var(--space-5);
-}
-
-.skeleton-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-bottom: var(--space-5);
-}
-
-.skeleton-bar {
-  border-radius: 6px;
-  background: var(--c-border);
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-title-bar {
-  height: 24px;
-  width: 50%;
-}
-
-.skeleton-meta-bar {
-  height: 14px;
-  width: 35%;
-}
-
-.skeleton-content-block {
-  height: 300px;
-  width: 100%;
-}
-
-@keyframes shimmer {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
+.entry-detail { display: flex; flex-direction: column; min-height: 100vh; background: var(--c-bg); }
+.entry-detail.zen-mode :deep(.detail-header),
+.entry-detail.zen-mode :deep(.mobile-sticky-header),
+.entry-detail.zen-mode :deep(.mobile-bottom-bar),
+.entry-detail.zen-mode :deep(.meta-tags-bar) { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
 </style>

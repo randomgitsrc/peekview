@@ -188,7 +188,7 @@ class TestChangePasswordSession:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 400
-        assert "incorrect" in resp.json()["detail"].lower()
+        assert "incorrect" in resp.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_session_valid_after_password_change(self, me_client):

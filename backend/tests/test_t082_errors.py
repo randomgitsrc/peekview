@@ -51,10 +51,11 @@ async def test_bdd_9_auth_endpoint_returns_peekerror(app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # First register/login a user
-        from peekview.auth import hash_password
         from sqlmodel import Session, select
-        from peekview.models import User
+
+        from peekview.auth import hash_password
         from peekview.database import get_engine
+        from peekview.models import User
 
         config = app.state.config
         engine = get_engine(config.db_path)
@@ -70,9 +71,6 @@ async def test_bdd_9_auth_endpoint_returns_peekerror(app):
                 session.add(user)
                 session.commit()
                 session.refresh(user)
-                user_id = user.id
-            else:
-                user_id = user.id
 
         # Login to get JWT cookie
         login_resp = await ac.post(
@@ -100,10 +98,11 @@ async def test_bdd_10_admin_endpoint_returns_peekerror(app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # Create an admin user
-        from peekview.auth import hash_password
         from sqlmodel import Session, select
-        from peekview.models import User
+
+        from peekview.auth import hash_password
         from peekview.database import get_engine
+        from peekview.models import User
 
         config = app.state.config
         engine = get_engine(config.db_path)

@@ -115,10 +115,16 @@ def _read_captcha_secret_for_backup(config: PeekConfig) -> bytes | None:
 
 
 class AdminService:
-    def __init__(self, engine, storage: StorageManager, config: PeekConfig):
+    def __init__(self, engine, storage: StorageManager, config: PeekConfig, entry_service=None):
         self.engine = engine
         self.storage = storage
         self.config = config
+        self._entry_service = entry_service
+
+    def _get_entry_service(self):
+        if self._entry_service is not None:
+            return self._entry_service
+        return EntryService(self.engine, self.storage, self.config)
 
     def get_stats(self) -> AdminStatsResponse:
         now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -223,7 +229,7 @@ class AdminService:
                     size_bytes = self.storage.get_entry_size(e.id)
                     to_delete.append((e.slug, e.id, size_bytes))
 
-        entry_service = EntryService(engine=self.engine, storage=self.storage, config=self.config)
+        entry_service = self._get_entry_service()
 
         for slug, _entry_id, size_bytes in to_delete:
             try:
@@ -272,7 +278,7 @@ class AdminService:
             entry_slugs = [
                 e.slug for e in session.exec(select(Entry).where(Entry.owner_id == user_id)).all()
             ]
-        entry_service = EntryService(engine=self.engine, storage=self.storage, config=self.config)
+        entry_service = self._get_entry_service()
         for slug in entry_slugs:
             with contextlib.suppress(NotFoundError):
                 entry_service.delete_entry(slug, is_api_key_auth=True)

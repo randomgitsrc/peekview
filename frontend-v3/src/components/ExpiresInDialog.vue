@@ -63,7 +63,7 @@ async function handleSubmit() {
     emit('updated')
     visible.value = false
   } catch (e: any) {
-    error.value = e.response?.data?.detail || e.message || 'Failed to update'
+    error.value = e.response?.data?.error?.message || e.message || 'Failed to update'
   } finally {
     loading.value = false
   }

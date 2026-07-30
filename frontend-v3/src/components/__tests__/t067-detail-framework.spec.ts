@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 
 const mockAuthState = ref<'loading' | 'authenticated' | 'anonymous'>('anonymous')
 const mockUser = ref<any>(null)
@@ -38,13 +38,14 @@ vi.mock('@/stores/auth', () => ({
   }),
 }))
 
-vi.mock('@/stores/entry', () => ({
-  useEntryStore: () => ({
+vi.mock('@/stores/entryDetail', () => ({
+  useEntryDetailStore: () => ({
     loading: mockLoading,
     error: mockError,
     currentEntry: mockCurrentEntry,
     activeFile: mockActiveFile,
     fileContent: mockFileContent,
+    wrapEnabled: ref(false),
     isMultiFile: mockIsMultiFile,
     canWrap: false,
     canCopy: true,
@@ -52,9 +53,25 @@ vi.mock('@/stores/entry', () => ({
     canPack: false,
     loadEntry: vi.fn(),
     selectFile: vi.fn(),
-    deleteEntry: vi.fn(),
-    toggleVisibility: vi.fn(),
+    clearEntry: vi.fn(),
     toggleWrap: vi.fn(),
+    syncVisibility: vi.fn(),
+    clearIfSlug: vi.fn(),
+  }),
+}))
+
+vi.mock('@/stores/entryList', () => ({
+  useEntryListStore: () => ({
+    entries: ref([]),
+    loading: ref(false),
+    error: ref(null),
+    ownerFound: ref(null),
+    page: ref(1),
+    perPage: ref(20),
+    total: ref(0),
+    loadEntries: vi.fn(),
+    toggleVisibility: vi.fn(),
+    deleteEntry: vi.fn(),
   }),
 }))
 
@@ -96,6 +113,54 @@ vi.mock('@/utils/mime', () => ({
 
 vi.mock('@/utils/path-map', () => ({
   buildPathMap: () => null,
+}))
+
+vi.mock('@/composables/useZenMode', () => ({
+  useZenMode: () => ({ zenMode: ref(false), zenAriaText: ref(''), handleZenKeydown: vi.fn(), updateZenAria: vi.fn() }),
+}))
+
+vi.mock('@/composables/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({
+    viewportWidth: ref(window.innerWidth),
+    isMobile: computed(() => window.innerWidth <= 640),
+    isDesktop: computed(() => window.innerWidth > 640),
+    metaTagsHidden: ref(false),
+    handleResize: vi.fn(),
+    setupScrollHide: vi.fn(() => () => {}),
+  }),
+}))
+
+vi.mock('@/composables/useEntryDetailComputed', () => ({
+  useEntryDetailComputed: () => ({
+    isMarkdown: ref(false),
+    isHtml: ref(false),
+    isImage: ref(false),
+    isBinary: ref(false),
+    pathMap: ref(null),
+    siblingFileIds: ref([]),
+    entryTitle: ref('Test Entry'),
+    tocHeadings: ref([]),
+    extractHeadings: vi.fn(),
+    copyContent: vi.fn(),
+    downloadFile: vi.fn(),
+    downloadPack: vi.fn(),
+    scrollToHeading: vi.fn(),
+    handleNavigateFile: vi.fn(),
+  }),
+}))
+
+vi.mock('@/composables/useEntryDetailActions', () => ({
+  useEntryDetailActions: () => ({
+    showConfirmDelete: ref(false),
+    showExpiresInDialog: ref(false),
+    deleteMessage: ref(''),
+    confirmDeleteEntry: vi.fn(),
+    handleDelete: vi.fn(),
+    cancelDelete: vi.fn(),
+    handleToggleVisibility: vi.fn(),
+    handleExpiresInUpdated: vi.fn(),
+    overflowItems: ref([]),
+  }),
 }))
 
 vi.mock('vue-router', () => ({

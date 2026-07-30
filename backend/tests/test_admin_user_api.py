@@ -96,7 +96,7 @@ async def test_admin_cannot_delete_self(client):
         f"/api/v1/admin/users/{admin_id}", headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert resp.status_code == 400
-    assert "self" in resp.json()["detail"].lower() or "yourself" in resp.json()["detail"].lower()
+    assert "self" in resp.json()["error"]["message"].lower() or "yourself" in resp.json()["error"]["message"].lower()
 
 
 @pytest.mark.asyncio
@@ -108,7 +108,7 @@ async def test_unique_admin_delete_self_requires_confirm(client):
         "/api/v1/auth/me", headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert resp1.status_code == 409
-    assert resp1.json()["detail"]["code"] == "last_admin"
+    assert resp1.json()["error"]["code"] == "LAST_ADMIN"
 
     resp2 = await client.delete(
         "/api/v1/auth/me?confirm_username=adminuser",

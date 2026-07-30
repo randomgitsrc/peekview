@@ -1,0 +1,131 @@
+<template>
+  <div v-if="isMobile && currentEntry" v-show="!zenMode" class="mobile-bottom-bar">
+    <button v-if="isMultiFile"
+      :class="['toggle-btn', { active: showFileDrawer }]"
+      @click="$emit('toggle-file-drawer')"
+      aria-label="Files">
+      <FolderIcon :size="16" />
+      <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
+    </button>
+    <button v-if="isMarkdown && tocHeadings.length > 0"
+      :class="['toggle-btn', { active: showTocDrawer }]"
+      @click="$emit('toggle-toc-drawer')"
+      aria-label="Table of Contents">
+      <ListIcon :size="16" />
+    </button>
+    <div class="flex-spacer"></div>
+    <template v-if="!isBinary">
+      <button v-if="canWrap" :class="['bottom-btn', wrapEnabled && 'primary']" @click="$emit('toggle-wrap')">
+        Wrap
+      </button>
+      <button v-if="canCopy" class="bottom-btn primary" @click="$emit('copy-content')" aria-label="Copy">
+        <CopyIcon :size="14" /> Copy
+      </button>
+    </template>
+    <OverflowMenu :items="overflowItems" variant="sheet" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { inject } from 'vue'
+import OverflowMenu from '@/components/OverflowMenu.vue'
+import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
+import type { Entry, TocHeading } from '@/types'
+import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
+import {
+  Folder as FolderIcon,
+  List as ListIcon,
+  Copy as CopyIcon,
+} from 'lucide-vue-next'
+
+defineProps<{
+  isMultiFile: boolean
+  isMarkdown: boolean
+  tocHeadings: TocHeading[]
+  isBinary: boolean
+  canWrap: boolean
+  canCopy: boolean
+  wrapEnabled: boolean
+  showFileDrawer: boolean
+  showTocDrawer: boolean
+  overflowItems: OverflowMenuItem[]
+  currentEntry: Entry | null
+}>()
+
+defineEmits<{
+  'toggle-file-drawer': []
+  'toggle-toc-drawer': []
+  'toggle-wrap': []
+  'copy-content': []
+}>()
+
+const zenMode = inject(ZenModeKey)!
+const isMobile = inject(IsMobileKey)!
+</script>
+
+<style scoped>
+.mobile-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+}
+
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  color: var(--c-text-secondary);
+}
+
+.toggle-btn.active {
+  color: var(--c-accent);
+}
+
+.toggle-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-accent);
+  color: var(--text-on-accent);
+  border-radius: 7px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.flex-spacer {
+  flex: 1;
+}
+
+.bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-text);
+  cursor: pointer;
+  font-size: var(--font-sm);
+}
+
+.bottom-btn.primary {
+  background: var(--c-accent);
+  color: var(--text-on-accent);
+  border-color: var(--c-accent);
+}
+</style>

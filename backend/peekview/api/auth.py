@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -16,7 +16,13 @@ from peekview.auth import (
     require_auth,
     verify_password,
 )
-from peekview.exceptions import InvalidCredentialsError, RegistrationError
+from peekview.exceptions import (
+    InvalidCredentialsError,
+    InvalidPasswordError,
+    LastAdminError,
+    NotFoundError,
+    RegistrationError,
+)
 from peekview.models import (
     RESERVED_USERNAMES,
     AuthResponse,
@@ -205,7 +211,7 @@ async def update_profile(
     with Session(engine) as session:
         user = session.get(User, current_user.id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise NotFoundError("User not found")
         if data.display_name is not None:
             trimmed = data.display_name.strip()
             user.display_name = trimmed if trimmed else None
@@ -237,13 +243,9 @@ async def delete_self(
             admin_count = s.exec(select(User).where(User.is_admin.is_(True))).all()
             admin_count = len(admin_count)
         if admin_count == 1 and confirm_username != current_user.username:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "message": "这是最后一个管理员，注销将清空所有数据",
-                    "code": "last_admin",
-                    "confirm_required": True,
-                },
+            raise LastAdminError(
+                "这是最后一个管理员，注销将清空所有数据",
+                details={"confirm_required": True},
             )
 
     admin_service.delete_user(current_user.id, current_user_id=-1)
@@ -258,12 +260,12 @@ async def change_password(
     engine = request.app.state.engine
 
     if not verify_password(data.old_password, current_user.password_hash):
-        raise HTTPException(status_code=400, detail="Old password is incorrect")
+        raise InvalidPasswordError("Old password is incorrect")
 
     with Session(engine) as session:
         user = session.get(User, current_user.id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise NotFoundError("User not found")
         user.password_hash = hash_password(data.new_password)
         session.add(user)
         session.commit()

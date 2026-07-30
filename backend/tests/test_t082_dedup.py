@@ -11,7 +11,6 @@ Currently these functions exist in 2-3 files each.
 import re
 from pathlib import Path
 
-
 BACKEND_ROOT = Path(__file__).resolve().parent.parent / "peekview"
 
 

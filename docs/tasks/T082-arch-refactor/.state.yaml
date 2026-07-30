@@ -1,5 +1,5 @@
 task_id: T082
-phase: P3
+phase: P4
 status: in_progress
 created: 2026-07-30
 updated: 2026-07-30
@@ -15,3 +15,5 @@ history:
   - {phase: P2, action: revised, date: "2026-07-30", note: "3 BLOCKER 全修: ParameterValidationError(422), Pinia action内引用, 完整props/emit契约表"}
   - {phase: P2, action: review_approved, date: "2026-07-30", note: "eng+design review均approved, 组长汇总P2-review.md status:approved, gate exit 2"}
   - {phase: P3, action: started, date: "2026-07-30", note: "TDD test phase"}
+  - {phase: P3, action: completed, date: "2026-07-30", note: "32红灯测试, check-tdd-red.sh exit 0, committed"}
+  - {phase: P4, action: started, date: "2026-07-30", note: "Implementation phase"}

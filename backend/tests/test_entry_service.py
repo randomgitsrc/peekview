@@ -309,7 +309,7 @@ class TestDeleteEntry:
 
 class TestGetEntryService:
     def test_get_entry_service_from_app_state(self, tmp_path):
-        """get_entry_service() should use app.state services, not create new instances."""
+        """app.state.entry_service should be available and singleton per app."""
 
         from peekview.main import create_app
 
@@ -319,10 +319,8 @@ class TestGetEntryService:
 
         app = create_app(data_dir=data_dir, db_path=db_path)
 
-        from peekview.services.entry_service import get_entry_service
-
-        service = get_entry_service(app)
+        service = app.state.entry_service
         assert service is not None
-        # Second call should return the same instance
-        service2 = get_entry_service(app)
+        # app.state.entry_service is a singleton
+        service2 = app.state.entry_service
         assert service is service2

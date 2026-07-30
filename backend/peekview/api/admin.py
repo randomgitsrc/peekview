@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from peekview.auth import require_admin
+from peekview.exceptions import ValidationError
 from peekview.models import (
     AdminCleanupResponse,
     AdminStatsResponse,
@@ -54,7 +55,7 @@ async def delete_user(
     try:
         request.app.state.admin_service.delete_user(user_id=user_id, current_user_id=admin.id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from None
+        raise ValidationError(str(e)) from None
 
 
 @router.post("/users/{user_id}/reset-password")

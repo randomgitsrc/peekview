@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from peekview.config import PeekConfig
-from peekview.database import FTS_CONTENT_MAX_PER_ENTRY, FTS_CONTENT_TRUNCATE, get_engine
+from peekview.database import FTS_CONTENT_MAX_PER_ENTRY, FTS_CONTENT_TRUNCATE
 from peekview.exceptions import (
     ConflictError,
     InvalidSlugError,
@@ -48,39 +48,22 @@ logger = logging.getLogger(__name__)
 SLUG_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 
 
-def get_entry_service(app: Any) -> EntryService:
-    """Get or create EntryService from app.state (singleton per app).
-
-    This avoids creating new service instances on every request.
-
-    Args:
-        app: FastAPI app instance with .state.
-
-    Returns:
-        EntryService instance.
-    """
-    if not hasattr(app.state, "entry_service"):
-        from peekview.config import PeekConfig
-
-        # Use app.state.config if available, otherwise create new config
-        config = getattr(app.state, "config", None) or PeekConfig()
-        engine = get_engine(config.db_path)
-        storage = StorageManager(config=config)
-        app.state.entry_service = EntryService(
-            engine=engine,
-            storage=storage,
-            config=config,
-        )
-    return app.state.entry_service
-
-
 class EntryService:
     """Business logic for entry operations."""
 
-    def __init__(self, engine, storage: StorageManager, config: PeekConfig):
+    def __init__(
+        self,
+        engine,
+        storage: StorageManager,
+        config: PeekConfig,
+        read_tracking_service=None,
+        share_service=None,
+    ):
         self.engine = engine
         self.storage = storage
         self.config = config
+        self._read_tracking_service = read_tracking_service
+        self._share_service = share_service
 
     def _update_fts_content(self, entry_id: int) -> None:
         """Aggregate text file content for an entry and update FTS content column.
@@ -226,7 +209,7 @@ class EntryService:
         try:
             with Session(self.engine) as session:
                 session.add(entry)
-                session.commit()
+                session.flush()
                 session.refresh(entry)
                 entry_id = entry.id
                 entry_slug = entry.slug
@@ -994,9 +977,11 @@ class EntryService:
 
         read_stats = None
         if include_read_stats:
-            from peekview.services.read_tracking_service import ReadTrackingService
+            tracking_service = self._read_tracking_service
+            if tracking_service is None:
+                from peekview.services.read_tracking_service import ReadTrackingService
 
-            tracking_service = ReadTrackingService(engine=self.engine)
+                tracking_service = ReadTrackingService(self.engine)
             read_stats = tracking_service.get_read_stats(entry.id)
 
         return EntryResponse(
@@ -1017,9 +1002,11 @@ class EntryService:
         )
 
     def _get_share_service(self):
+        if self._share_service is not None:
+            return self._share_service
         from peekview.services.share_service import ShareService
 
-        return ShareService(engine=self.engine, config=self.config)
+        return ShareService(self.engine, self.config)
 
     def get_entry_with_share(
         self, slug: str, share_token: str, share_service
@@ -1064,3 +1051,41 @@ class EntryService:
                 shared_by=shared_by,
             )
             return response, entry_share
+
+    def get_file_record(self, entry_id: int, file_id: int) -> File | None:
+        """Query a file record by entry_id and file_id."""
+        with Session(self.engine) as session:
+            return session.exec(
+                select(File).where(File.id == file_id, File.entry_id == entry_id)
+            ).first()
+
+    def read_file_content(self, entry_id: int, filename: str, path: str | None) -> bytes:
+        """Read file content from disk via storage."""
+        return self.storage.read_file(entry_id, filename, path)
+
+    def get_entry_record(self, entry_id: int) -> Entry | None:
+        """Query an entry record by ID."""
+        with Session(self.engine) as session:
+            return session.exec(select(Entry).where(Entry.id == entry_id)).first()
+
+    def get_entry_by_slug(self, slug: str) -> Entry | None:
+        """Query an entry record by slug."""
+        with Session(self.engine) as session:
+            return session.exec(select(Entry).where(Entry.slug == slug)).first()
+
+    def get_entry_files(self, entry_id: int) -> list[File]:
+        """Query all files for an entry."""
+        with Session(self.engine) as session:
+            return list(session.exec(select(File).where(File.entry_id == entry_id)).all())
+
+    def get_files_by_ids(self, entry_id: int, file_ids: list[int]) -> list[File]:
+        """Query files by IDs within an entry."""
+        with Session(self.engine) as session:
+            return list(
+                session.exec(
+                    select(File).where(
+                        File.id.in_(file_ids),
+                        File.entry_id == entry_id,
+                    )
+                ).all()
+            )

@@ -11,7 +11,6 @@ import ast
 import re
 from pathlib import Path
 
-
 BACKEND_ROOT = Path(__file__).resolve().parent.parent / "peekview"
 FILES_PY = BACKEND_ROOT / "api" / "files.py"
 ENTRIES_PY = BACKEND_ROOT / "api" / "entries.py"
