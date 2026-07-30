@@ -1,6 +1,6 @@
-phase: P8
+phase: DONE
 task_id: T083
-status: in_progress
+status: completed
 created: 2026-07-30
 updated: 2026-07-31
 history:
@@ -12,4 +12,5 @@ history:
   - {phase: P5, status: completed, ts: "2026-07-31T01:10:00Z", note: "make test-quick: 1001 passed + 2 skipped + failed=0，零回归"}
   - {phase: P6, status: completed, ts: "2026-07-31T01:20:00Z", note: "17 BDD 全 PASS + P6-evidence 非空 + provenance 审计通过"}
   - {phase: P7, status: completed, ts: "2026-07-31T01:30:00Z", note: "11 设计点全落地 + 2 GAP REVIEWED + 17 BDD 数量匹配，无 BLOCKER"}
-  - {phase: P8, status: in_progress, ts: "2026-07-31T01:35:00Z", note: "P7 gate passed, 推进 P8 发布准备"}
+  - {phase: P8, status: completed, ts: "2026-07-31T01:45:00Z", note: "patch bump 0.12.2→0.12.3 + CHANGELOG + tag v0.12.3 + P5 重跑全绿"}
+  - {phase: DONE, status: completed, ts: "2026-07-31T01:50:00Z", note: "T083 完成，v0.12.3 已 tag"}
