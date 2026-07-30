@@ -14,7 +14,7 @@
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
-| T079 | interaction-consistency | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
+| T079 | interaction-consistency | 🔄进行中 | P1 | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
 | T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |

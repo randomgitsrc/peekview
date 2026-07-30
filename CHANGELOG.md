@@ -14,6 +14,20 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-31
+
+### 新增
+
+- AuthButton 共享组件：按 DESIGN.md §6 自动选择 variant（marketing=primary, functional desktop=secondary, functional mobile=ghost）(T079)
+- UserMenu 共享组件：统一 Settings + Logout 菜单 + admin badge (T079)
+- Detail 页 tag 改用 BaseTag 可点击组件 (T079)
+
+### 修复
+
+- 登录按钮 variant 不一致：Landing/Explore/Detail 三页统一 (T079)
+- 用户菜单内容不一致：Explore 有 API Keys + Logout，Landing 只有 Logout → 统一 Settings + Logout (T079)
+- Detail 页冗余 Explore 按钮移除（logo 已覆盖导航）(T079)
+
 ## [0.12.3] - 2026-07-31
 
 ### 修复
