@@ -24,3 +24,4 @@ history:
   - {phase: P6, action: started, date: "2026-07-30", note: "Acceptance phase"}
   - {phase: P6, action: completed, date: "2026-07-30", note: "41 BDD全PASS, gate exit 2, evidence+provenance exit 0"}
   - {phase: P7, action: started, date: "2026-07-30", note: "Consistency phase"}
+  - {phase: P7, action: completed, date: "2026-07-30", note: "3 DESIGN_GAP全REVIEWED, 0 BLOCKER, gate exit 0"}
