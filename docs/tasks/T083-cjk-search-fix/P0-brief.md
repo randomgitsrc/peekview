@@ -105,6 +105,24 @@ FTS tags: "google gemini gemini"                  ← 连字符→空格
 - Given 现有英文 tag 的 entry，When 搜索和过滤，Then 行为不变（零回归）
 - Given 执行 `make test-quick`，When 所有测试运行完毕，Then 全部通过
 
+## 四字段
+
+```yaml
+task: "修复中文 tag 过滤（json_each 精确匹配）+ FTS5 中文搜索（jieba 预分词）+ 连字符复合 tag 搜索盲区（FTS 索引文本连字符→空格）"
+known_risks:
+  - "jieba 首次加载 dict 约 0.4s，需预加载避免首请求延迟"
+  - "jieba 分词不完美，专有名词可能切错（PostgreSQL→Postgre+SQL），但比 unicode61 不分词好得多"
+  - "FTS5 查询净化逻辑需配合 jieba 分词后的查询做安全处理"
+  - "启动时需 rebuild FTS 索引（复用 backfill_fts_content 机制）"
+executor_env:
+  platform: "opencode"
+  has_task_tool: true
+  has_local_runtime: true
+  network: "full"
+env_constraints:
+  debug_env: "make debug（:8888，/tmp/peekview-debug/）；make test-quick（venv pytest）；make lint（系统 python3 ruff）"
+```
+
 ## 关联
 
 - 调查结论：本次会话中完整复现 + 验证（python3 脚本 + SQLite 3.45.1）

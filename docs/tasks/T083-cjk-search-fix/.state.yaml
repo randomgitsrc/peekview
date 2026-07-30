@@ -1,0 +1,10 @@
+phase: P3
+task_id: T083
+status: in_progress
+created: 2026-07-30
+updated: 2026-07-31
+history:
+  - {phase: P0, status: completed, ts: "2026-07-31T00:00:00Z", note: "P0-brief 四字段齐全，环境自检通过"}
+  - {phase: P1, status: completed, ts: "2026-07-31T00:10:00Z", note: "17 BDD + 15 隐含需求 + medium risk，review approved（1 次修订）"}
+  - {phase: P2, status: completed, ts: "2026-07-31T00:30:00Z", note: "方案 A trigger 降级 + 6 项最小验证全 confirmed，review approved"}
+  - {phase: P3, status: in_progress, ts: "2026-07-31T00:35:00Z", note: "P2 gate passed, 推进 P3 TDD 红灯"}
