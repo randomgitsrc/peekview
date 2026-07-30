@@ -1,6 +1,6 @@
 task_id: T082
-phase: P8
-status: in_progress
+phase: READY
+status: completed
 created: 2026-07-30
 updated: 2026-07-30
 retries: {}
@@ -26,3 +26,5 @@ history:
   - {phase: P7, action: started, date: "2026-07-30", note: "Consistency phase"}
   - {phase: P7, action: completed, date: "2026-07-30", note: "3 DESIGN_GAP全REVIEWED, 0 BLOCKER, gate exit 0"}
   - {phase: P8, action: started, date: "2026-07-30", note: "Release phase"}
+  - {phase: P8, action: completed, date: "2026-07-30", note: "bump 0.12.1, P5重跑全绿, CHANGELOG更新, committed"}
+  - {phase: READY, action: completed, date: "2026-07-30", note: "T082 架构重构完成"}
