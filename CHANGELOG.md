@@ -14,6 +14,17 @@
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-07-31
+
+### 修复
+
+- 中文 tag 过滤失效：SQLModel JSON ensure_ascii 转义导致 LIKE 匹配失败，改用 SQLite json_each 精确匹配 (T083)
+- FTS5 中文子词搜索失效：unicode61 tokenizer 不分词 CJK，改用 jieba 应用层预分词（写入 + 查询端）(T083)
+- 连字符复合 tag 搜索盲区：FTS 索引文本连字符→空格，使 `google-gemini` 可被 `gemini` 搜到 (T083)
+- FTS trigger 降级为仅 DELETE：消除 trigger 与应用层竞态窗口 + 垃圾 FTS token (T083)
+- backfill 版本标记：PRAGMA user_version 确保 FTS 格式变化时全量重建 (T083)
+- 新增 jieba>=0.42.1 依赖 (T083)
+
 ## [0.12.2] - 2026-07-31
 
 ### 修复
