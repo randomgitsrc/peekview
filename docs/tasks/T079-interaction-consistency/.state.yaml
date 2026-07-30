@@ -1,6 +1,6 @@
-phase: P5
+phase: DONE
 task_id: T079
-status: in_progress
+status: completed
 created: 2026-07-30
 updated: 2026-07-31
 history:
@@ -9,4 +9,8 @@ history:
   - {phase: P2, status: completed, ts: "2026-07-31T02:20:00Z", note: "follows_existing_pattern，review approved"}
   - {phase: P3, status: completed, ts: "2026-07-31T02:30:00Z", note: "TDD 红灯确认"}
   - {phase: P4, status: completed, ts: "2026-07-31T02:40:00Z", note: "AuthButton + UserMenu + BaseTag + 移除 Explore，1125 passed 零回归，design-review approved"}
-  - {phase: P5, status: in_progress, ts: "2026-07-31T02:45:00Z", note: "推进 P5 技术验证"}
+  - {phase: P5, status: completed, ts: "2026-07-31T02:45:00Z", note: "make test-frontend: 1125 passed + 1 skipped 零回归"}
+  - {phase: P6, status: completed, ts: "2026-07-31T02:50:00Z", note: "17 BDD 全 PASS + P6-evidence 非空"}
+  - {phase: P7, status: completed, ts: "2026-07-31T02:55:00Z", note: "6 DESIGN_GAP REVIEWED + 17 BDD 匹配，无 BLOCKER"}
+  - {phase: P8, status: completed, ts: "2026-07-31T03:00:00Z", note: "minor bump 0.12.3→0.13.0 + CHANGELOG + tag v0.13.0 + P5 重跑全绿"}
+  - {phase: DONE, status: completed, ts: "2026-07-31T03:05:00Z", note: "T079 完成，v0.13.0 已 tag"}

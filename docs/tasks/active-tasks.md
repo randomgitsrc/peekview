@@ -14,7 +14,7 @@
 | T075 | structured-data-viewer | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
-| T079 | interaction-consistency | 🔄进行中 | P1 | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
+| T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
 | T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
@@ -80,6 +80,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| T079 | interaction-consistency | v0.13.0 | 🟠 | 2026-07-31 |
 | T083 | cjk-search-fix | v0.12.3 | 🟡 | 2026-07-31 |
 | T076 | entry-card-interaction | v0.12.0 | 🟠 | 2026-07-30 |
 | T073 | ruff-sqlalchemy-regression | v0.11.1 | 🔴 | 2026-07-26 |
@@ -193,6 +194,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-07-31 | 完成 T079 | interaction-consistency → v0.13.0（AuthButton + UserMenu 共享组件 + 移除 Explore + tag 改 BaseTag；17 BDD 全 PASS + 1125 passed 零回归）|
 | 2026-07-31 | 完成 T083 | cjk-search-fix → v0.12.3（json_each 精确匹配 + jieba 预分词 + 连字符→空格 + trigger 降级 + backfill 版本标记；17 BDD 全 PASS + 1001 passed 零回归）|
 | 2026-07-30 | 立项 T082 | arch-refactor：后端 DI 统一+错误格式统一+重复代码提取+create_entry 事务；前端 entry store 拆分+EntryDetailView 拆分。多维度架构审计发现 6 项结构性问题 |
 | 2026-07-30 | 立项 T079+T080+T081 | T079 交互一致性修复（AuthButton/UserMenu 统一 + tag 可点击 + Explore 按钮移除）；T080 admin 用户管理（后端 disable/enable/promote/demote + CLI + 前端 /admin 页面）；T081 详情页侧边栏可拖拽调整宽度；roadmap #46 删除（需求弱）/#47→T081 |
