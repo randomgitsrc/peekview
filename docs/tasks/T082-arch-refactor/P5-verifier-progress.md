@@ -1,0 +1,4 @@
+- [make test-quick] exit=0, passed=985, failed=0 (2 skipped)
+- [make test-frontend] exit=0, passed=1078, failed=0 (1 skipped)
+- [make typecheck] exit=0, passed=N/A, failed=0
+- [make lint] exit=0, passed=N/A, failed=0
