@@ -1,0 +1,10 @@
+- BLOCKER-1 已修改（BDD-5 拆分为 BDD-5 + BDD-6）
+- BLOCKER-4 已修改（BDD-7 状态码改为 422）
+- BLOCKER-5 已修改（BDD-7 移除 VALIDATION_ERROR，改为 <ERROR_CODE> 占位符）
+- BLOCKER-6 已修改（BDD-18 拆分为 BDD-19 结构验证 + BDD-20 行为验证）
+- BLOCKER-7 已修改（BDD-19 拆分为 BDD-21 单测验证 + BDD-22 URL 恢复行为验证）
+- BLOCKER-2 已修改（BDD-22~28 各拆为 2 条，共 14 条）
+- 建议-8 已修改（BDD-28/37 移除 .hidden class，改为不可见/可见）
+- BLOCKER-3 已修改（BDD-29 合并为单条 BDD-39）
+- 建议-9 已修改（§8 标题改为 P0 约束复述）
+- 建议-10 已修改（packages 声明移除候选文件名）

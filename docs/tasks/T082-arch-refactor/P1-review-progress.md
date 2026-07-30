@@ -1,0 +1,11 @@
+- [P1-requirements.md] 31 条 BDD（BDD-1~31），无裁剪，risk=high，domains=backend+frontend，[NO_NEED_CONFIRM]。需重点审 BDD 可二值判定性、隐含需求覆盖、P1 纯净性
+- [AGENTS.md] 项目约定确认：DI 模式=app.state，认证三层，权限模型 404 防枚举。BDD 需符合这些架构约束
+- [P0-brief.md] 6 项重构问题明确：DI 混用、错误格式两套、重复代码 3 处、事务不完整、store 过载、god component。约束=不改行为/API/schema/MCP
+- [代码验证] _looks_like_jwt=3份(entries:102,files:140,auth:193)、_is_global_api_key_auth=2份(entries:108,files:145)、_record_read_async=2份(entries:47,files:30)——BDD-10/11/12 行号引用准确
+- [代码验证] 前端 .detail 依赖：ExpiresInDialog:66、SecurityTab:71、ProfileTab:74 读 response.data.detail；LoginDialog:157/161 读 e.detail(DOM CustomEvent)——P1 §2.2 声明准确
+- [代码验证] entry_service.py:229 entry commit 在 file 写入之前（line 277），BDD-13 事务问题描述准确。loadSeq 在 entry.ts:7/56/62/69/75——BDD-18 锚点正确
+- [代码验证] HTTPException 分布：entries.py:205(1处)、auth.py:208/240/261/266(4处)、admin.py:57(1处)、main.py:535/580(2处基础设施层)。BDD-6~9 覆盖 entries/auth/admin，main.py 在 packages 声明中标注'可能保留'——合理
+- [代码验证] EntryDetailView.vue=1003行、entry.ts=223行——BDD-17(<150行/store)、BDD-20(<300行/main)、BDD-21(<200行/sub) 基线准确
+- [代码验证] BDD-7 声明 HTTP 400，但当前 entries.py:206 用 status_code=422。BDD 描述的是重构后目标状态，但 422→400 变更本身是行为变更，与'不改行为'约束存在张力
+- [代码验证] 后端测试函数数=976，BDD-15 声明 976 条全绿——数字准确
+- [P1-review.md] 评审完成，status=needs-revision。7 项 BLOCKER（9 条 BDD 结构违规 + BDD-7 状态码/设计混入 + BDD-18/19 不可二值判定），3 项建议修改。事实锚点全部经代码验证

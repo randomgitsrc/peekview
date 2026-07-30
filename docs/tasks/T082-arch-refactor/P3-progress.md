@@ -1,0 +1,15 @@
+- [P1-requirements.md] 41 条 BDD：BDD-1~6 DI统一, BDD-7~10 错误格式, BDD-11~13 去重, BDD-14~15 事务, BDD-16 测试通过, BDD-17~22 store拆分, BDD-23~24 component行数, BDD-25~38 行为零回归, BDD-39 错误格式兼容, BDD-40~41 前端测试
+- [P2-design.md] 7 项重构方案 R1~R7 已 approved, ui_affected=false, gate_commands: P5=make test-quick, P5_frontend=make test-frontend, P5_typecheck=make typecheck
+- [P0-brief.md] 6 个结构问题: DI三模式混用/错误格式两套/重复3处/事务不完整/store过载/god component
+- [conftest.py] autouse isolate_config_file 隔离到 tmp_path; fixtures: engine/session/test_config/app/client; client 用 AsyncClient+ASGITransport
+- [factories.py] EntryFactory/FileFactory + create_test_entry/create_test_file 便捷函数
+- [entry.ts] 223 行, loadSeq:7 模块级, state: entries/currentEntry/activeFile/fileContent/wrapEnabled/loading/error/ownerFound/page/perPage/total; getters: isMultiFile/canWrap/canCopy/canDownload/canPack; actions: loadEntries/loadEntry/selectFile/toggleWrap/clearEntry/toggleVisibility/deleteEntry
+- [EntryDetailView.vue] 1003 行(335 template+473 script+195 style), 职责: zen mode/resize/file tree/TOC/share/delete/copy/download/pack/scroll/login/content rendering/overflow menu
+- [开始设计测试] 后端: BDD-1~13 grep/HTTP测试, BDD-14 事务回滚mock测试; 前端: BDD-17~22 store拆分, BDD-23~24 行数, BDD-39 错误格式兼容
+- [源码审查完成] 确认当前状态: files.py 4处 StorageManager+Session, entries.py Depends(_get_service), auth.py ApiKeyService new, entry_service.py ReadTrackingService/ShareService new, admin_service.py EntryService new, 3个去重函数各2-3份, entries.py:205 HTTPException, api/auth.py 4处 HTTPException, admin.py:57 HTTPException, entry_service.py:229 commit先于文件写入
+- [开始写测试代码] 后端: test_t082_di.py, test_t082_errors.py, test_t082_dedup.py, test_t082_transaction.py; 前端: t082-store-split.spec.ts, t082-error-format.spec.ts
+- [测试代码已写] 后端 4 文件 14 测试全 RED; 前端 2 文件 21 测试(18 RED + 3 标注已有覆盖)
+- [红灯验证完成] 后端: 14 failed; 前端: 18 failed | 3 passed (deferred BDDs)
+- [开始写 P3-test-cases.md] 汇总测试用例清单
+- [P3-test-cases.md 已写] test_code_dir 声明: backend/tests/ + frontend-v3/src/; 每条 BDD 有对应测试或标注已有覆盖
+- [完成] 14 后端 RED + 18 前端 RED = 32 条红灯测试，覆盖 BDD-1~14, BDD-17~19, BDD-23~24, BDD-39
