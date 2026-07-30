@@ -14,6 +14,19 @@
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-07-31
+
+### 修复
+
+- 详情页 `.meta-sep` 被错误覆盖为 `flex:1` 导致灰色长条，恢复为全局 1px 竖线样式 (T082)
+- explore 页 meta 分隔符从文本点 ` · ` 统一为 `meta-dot` 圆点，与详情页一致 (T082)
+- 详情页 meta-tag 前多余的 meta-dot 移除（tag 自带背景样式天然分隔）(T082)
+- Landing 页 logo 字号 21px → 20px，与 explore/detail 页统一 (T082)
+- E2E 测试预存缺陷修复：`.btn-login` 选择器失效（T028 后移除）→ `button:has-text("Sign in"|"Login")` (T082)
+- E2E 测试路由修复：`page.goto('/')` → `/explore`（LandingView 上线后 `/` 不再是列表页）(T082)
+- Playwright config 支持 CDP 模式：`cdpEndpoint` 字段 + `run-e2e-tests.sh` 自动检测 Chrome CDP :18800 (T082)
+
+
 ## [0.12.1] - 2026-07-30
 
 ### 重构
