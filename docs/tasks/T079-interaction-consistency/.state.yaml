@@ -1,0 +1,11 @@
+phase: P3
+task_id: T079
+status: completed
+created: 2026-07-30
+updated: 2026-07-31
+history:
+  - {phase: P0, status: completed, ts: "2026-07-31T02:00:00Z", note: "P0-brief 四字段齐全"}
+  - {phase: P1, status: completed, ts: "2026-07-31T02:10:00Z", note: "17 BDD，review approved（1 次修订）"}
+  - {phase: P2, status: completed, ts: "2026-07-31T02:20:00Z", note: "follows_existing_pattern，review approved"}
+  - {phase: P3, status: completed, ts: "2026-07-31T02:30:00Z", note: "TDD 红灯确认（2 failed = import 不存在的组件）"}
+  - {phase: P4, status: in_progress, ts: "2026-07-31T02:35:00Z", note: "推进 P4 实现"}

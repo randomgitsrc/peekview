@@ -31,7 +31,25 @@ DESIGN.md §6 定义了前端交互规则，但多处代码未遵守：
 - 各页面导航结构不同（Landing 无 sticky header，Explore 有搜索栏，Detail 有三栏布局），共享组件需适配不同布局
 - 移动端适配需逐页面验证
 
+## 四字段
+
+```yaml
+task: "修复 4 处前端交互不一致：AuthButton 共享组件 + UserMenu 共享组件 + 移除冗余 Explore 按钮 + Detail tag 可点击"
+known_risks:
+  - "各页面导航结构不同（Landing 无 sticky header，Explore 有搜索栏，Detail 有三栏布局），共享组件需适配"
+  - "移动端适配需逐页面验证"
+  - "Detail 页 tag 不可点击修为 BaseTag 可点击（复用 T076 的 BaseTag 组件）"
+executor_env:
+  platform: "opencode"
+  has_task_tool: true
+  has_local_runtime: true
+  network: "full"
+env_constraints:
+  debug_env: "make debug（:8888，/tmp/peekview-debug/）；make test-frontend（vitest 非 watch）；make typecheck（vue-tsc）；make build-frontend（构建+复制 static/）"
+```
+
 ## 关联
 
 - DESIGN.md §6 Component & Pattern Rules / Navigation & Auth State
 - T076（EntryCard/EntryListRow tag 可点击已修，此 task 修 Detail 页 tag）
+- T083（中文 tag 过滤已修，json_each 精确匹配，tag 点击跳转后端正常工作）
