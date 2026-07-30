@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T083
 status: in_progress
 created: 2026-07-30
@@ -10,4 +10,5 @@ history:
   - {phase: P3, status: completed, ts: "2026-07-31T00:45:00Z", note: "16 测试用例覆盖 BDD-1~15+17，check-tdd-red 经典红灯（16 assertion failures）"}
   - {phase: P4, status: completed, ts: "2026-07-31T01:00:00Z", note: "text_utils.py + trigger 降级 + json_each + jieba 分词，16 红灯全绿 + 1001 passed 零回归，review approved"}
   - {phase: P5, status: completed, ts: "2026-07-31T01:10:00Z", note: "make test-quick: 1001 passed + 2 skipped + failed=0，零回归"}
-  - {phase: P6, status: in_progress, ts: "2026-07-31T01:15:00Z", note: "P5 gate passed, 推进 P6 BDD 验收"}
+  - {phase: P6, status: completed, ts: "2026-07-31T01:20:00Z", note: "17 BDD 全 PASS + P6-evidence 非空 + provenance 审计通过"}
+  - {phase: P7, status: in_progress, ts: "2026-07-31T01:25:00Z", note: "P6 gate passed, 推进 P7 一致性检查"}
