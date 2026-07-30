@@ -61,10 +61,10 @@ c) **超时意识缺乏**：
 | 能力 | 评价 |
 |------|------|
 | vision-helper 截图分析 | 准确，blocker_count=0 判断可靠 |
-| vision-analyzer CLI | 产生 YAML 格式不匹配 gate 期望 |
+| vision-engine skill | 准确，已统一替代原 vision-analyzer + vision-analyst |
 | 主 Agent 看图 | 不支持，但系统 prompt 已禁止 |
 
-**建议**：vision-analyzer CLI 的产出格式需要与 provenance 审计的期望对齐（`summary.blocker_count` vs `vision_analysis.summary.blocker_count`）。
+**已解决**：vision-engine skill 统一替代了原 vision-analyzer CLI 和 vision-analyst 角色，YAML 格式与 provenance 审计对齐。
 
 ---
 
@@ -100,7 +100,7 @@ T048–T052 总计约 154 sessions、6612 messages，大量是 subagent 派发�
 | Skill | T048–T052 使用 | 评价 |
 |-------|---------------|------|
 | playwright-cdp | ✅ T052 P5/P6 验证 | 核心，不可或缺 |
-| vision-analyzer | ✅ T052 截图分析 | 工作，但 YAML 格式需对齐 |
+| vision-analyzer | ✅ T052 截图分析 | 已统一为 vision-engine skill |
 | brainstorming | ❌ 未使用 | 可能适用于 T049 清洗规则设计 |
 | test-driven-development | ❌ 未使用 | P3 自动 TDD，但 skill 未加载 |
 | systematic-debugging | ❌ 未使用 | 应加载用于 T049 归零分析 |
@@ -115,7 +115,7 @@ T048–T052 总计约 154 sessions、6612 messages，大量是 subagent 派发�
 | agate 执行角色 | 对应 Skill | 关系 |
 |---------------|-----------|------|
 | verifier (P6) | 无 | 角色文件 + prompt 手动注入 |
-| vision-analyst | vision-analyzer | 冗余：vision-analyzer skill 已经包含分析能力 |
+| vision-analyst | vision-engine | 已统一：vision-engine skill 替代原 vision-analyzer + vision-analyst 角色 |
 | test-designer (P3) | test-driven-development | 重叠：TDD skill 提供了详细的测试设计流程 |
 
 ### 3.3 子 Agent 模型差异

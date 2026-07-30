@@ -84,10 +84,7 @@ make test-mcp-unit        # 单元测试
 
 # Playwright CDP 截图 + vision 分析（Chrome :18800, Windows GPU）
 NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script.ts
-# Vision 分析（3 种方式，优先用 ①）
-# ① vision-helper subagent（推荐）：Task 工具，subagent_type: vision-helper
-# ② vision-analyzer skill：skill 工具加载后按 SKILL.md 使用
-# ③ vision-analyze CLI：python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py -i <path> -p "描述"
+# Vision 分析：vision-engine skill（skill 工具加载后按 SKILL.md 使用）
 ```
 
 ## 调试流程

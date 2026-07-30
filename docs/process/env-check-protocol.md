@@ -27,7 +27,7 @@ cd backend && python3 -m ruff --version
 # 1d. MCP node_modules
 ls packages/mcp-server/node_modules/.package-lock.json 2>/dev/null && echo "OK" || echo "npm ci needed"
 
-# 1e. 全局 skill 目录（playwright-cdp / vision-analyzer 等）
+# 1e. 全局 skill 目录（playwright-cdp / vision-engine 等）
 ls ~/.config/opencode/skills/ 2>/dev/null || echo "no global skills"
 ls .opencode/skills/ 2>/dev/null || echo "no project skills"
 ```
@@ -130,11 +130,9 @@ Task 工具调用：
   prompt: "分析 /tmp/env-check/desktop.png。检查以下 3 点：1) 页面顶部有 PeekView logo 和导航 2) 搜索框可见 3) 有内容区域。全部满足回复 PASS，任一不满足回复 FAIL + 具体哪项失败。"
 ```
 
-**Claude Code**：vision-analyze CLI
+**Claude Code / OpenCode**：vision-engine skill
 ```bash
-python3 ~/.claude/skills/vision-analyzer/scripts/vision-analyze.py \
-  -i /tmp/env-check/desktop.png \
-  -p "检查：1) 页面顶部有 PeekView logo 2) 搜索框可见 3) 有内容区域。全部满足输出 PASS，否则 FAIL"
+# skill 工具加载 vision-engine，按 SKILL.md 使用
 ```
 
 ### 4d. Vision 降级检查（仅 4a FAIL 时执行）
