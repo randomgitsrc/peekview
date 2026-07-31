@@ -1,0 +1,23 @@
+phase: P3
+task_id: T084
+task_name: detail-scroll-architecture
+status: in_progress
+created: 2026-07-31
+updated: 2026-07-31
+history:
+  - phase: P0
+    date: 2026-07-31
+    status: done
+    note: P0-brief 完成，滚动架构统一：content-area 唯一滚动容器，viewer 不抢滚动
+  - phase: P1
+    date: 2026-07-31
+    status: done
+    note: 14 BDD，8 IR，review approved（1 轮修订），gate exit 2
+  - phase: P2
+    date: 2026-07-31
+    status: done
+    note: 方案 A（content-area 保留 padding + viewer 不抢滚动），[SCOPE+] BDD-08 修订，review approved（1 轮修订），gate exit 2
+  - phase: P3
+    date: 2026-07-31
+    status: in_progress
+    note: 派发 test-designer subagent，产出 P3-test-cases.md
