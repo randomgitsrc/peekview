@@ -1,0 +1,18 @@
+vision_analysis:
+  analysis:
+    heading_not_hidden_behind_header: true
+    heading_positioned_below_header: true
+    page_scrolled_to_section_10: true
+    section_10_heading_visible: true
+    toc_shows_sections:
+    - Section 1
+    - Section 20
+    toc_sidebar_present: true
+  anomalies: []
+  bdd_id: BDD-07
+  description: TOC anchor jump to correct position
+  screenshot: screenshots/bdd-07-toc-anchor.png
+  summary:
+    blocker_count: 0
+    verdict: Section 10 heading visible near top of content area, not hidden behind
+      sticky header, TOC sidebar present

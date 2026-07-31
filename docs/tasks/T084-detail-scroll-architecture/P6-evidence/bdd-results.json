@@ -1,0 +1,82 @@
+[
+  {
+    "id": "BDD-01",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-01-markdown-scroll.png"
+    ],
+    "detail": "ca: scrollHeight=13232 clientHeight=703 scrollTop before=0 after=200; mv: scrollTop=0 overflow=visible height=13199.7px"
+  },
+  {
+    "id": "BDD-02",
+    "status": "FAIL",
+    "evidence": [
+      "screenshots/bdd-02-code-scroll.png"
+    ],
+    "detail": "ca: scrollHeight=703 clientHeight=703 scrollTop after=0; cb: scrollTop=0 overflowY=auto overflowX=auto"
+  },
+  {
+    "id": "BDD-03",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-03-horizontal-scroll.png"
+    ],
+    "detail": "cb: scrollWidth=372 clientWidth=372 overflowX=auto scrollLeft=0; pre: scrollWidth=678 clientWidth=324 overflowX=auto scrollLeft=100"
+  },
+  {
+    "id": "BDD-04",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-04-scroll-hide.png"
+    ],
+    "detail": "initial: hiddenClass=false opacity=1; after scroll down: hiddenClass=true opacity=0 maxHeight=0px"
+  },
+  {
+    "id": "BDD-05",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-05-scroll-restore.png"
+    ],
+    "detail": "hidden: hasHiddenClass=true; restored: hasHiddenClass=false opacity=1 maxHeight=none"
+  },
+  {
+    "id": "BDD-06",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-06-desktop-no-mtb.png"
+    ],
+    "detail": "meta-tags-bar exists in DOM: false (expected: false)"
+  },
+  {
+    "id": "BDD-07",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-07-toc-anchor.png"
+    ],
+    "detail": "ca.scrollTop=2034 heading=H2 offsetTop=80 text=\"Section 10\" (expected 75-85px, allowed 70-95px)"
+  },
+  {
+    "id": "BDD-08",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-08-padding.png"
+    ],
+    "detail": "markdown-body paddingTop=0px (expected 0px); content-area paddingTop=12px"
+  },
+  {
+    "id": "BDD-09",
+    "status": "FAIL",
+    "evidence": [
+      "screenshots/bdd-09-html-iframe.png"
+    ],
+    "detail": "content-area clientHeight=703; iframe height=671; htmlViewer height=671"
+  },
+  {
+    "id": "BDD-10",
+    "status": "PASS",
+    "evidence": [
+      "screenshots/bdd-10-image-viewer.png"
+    ],
+    "detail": "img: natural=1x1 offset=1x1 complete=true; imageViewer height=671"
+  }
+]

@@ -1,0 +1,19 @@
+vision_analysis:
+  analysis:
+    content_at_top: true
+    meta_tags_bar_shows:
+    - 8h ago
+    - Public
+    - t084
+    - test
+    meta_tags_bar_visible: true
+    mobile_viewport: true
+    scrollbar_at_top: true
+  anomalies: []
+  bdd_id: BDD-05
+  description: Mobile scroll up restores meta-tags-bar
+  screenshot: screenshots/bdd-05-scroll-restore.png
+  summary:
+    blocker_count: 0
+    verdict: Meta-tags-bar is visible on mobile after scroll up, showing timestamp
+      and tags

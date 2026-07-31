@@ -1,0 +1,16 @@
+vision_analysis:
+  analysis:
+    background_color: light gray/off-white
+    content_area_filled: true
+    image_position: center of content area
+    image_size: 1x1 pixel (test image)
+    image_viewer_present: true
+    image_visible: true
+  anomalies: []
+  bdd_id: BDD-10
+  description: ImageViewer image displays correctly
+  screenshot: screenshots/bdd-10-image-viewer.png
+  summary:
+    blocker_count: 0
+    verdict: Image viewer displays correctly, 1x1 test image visible at center, content
+      area filled with image viewer background

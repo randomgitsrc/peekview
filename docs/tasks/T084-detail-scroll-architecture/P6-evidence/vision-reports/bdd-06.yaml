@@ -1,0 +1,26 @@
+vision_analysis:
+  analysis:
+    desktop_viewport: true
+    markdown_content_visible: true
+    meta_tags_bar_in_dom: false
+    note: Vision reports a metadata bar visible, but DOM verification confirms .meta-tags-bar
+      element does not exist. The visible metadata (8h ago, Expires, Public, tags)
+      is part of the desktop detail header layout, not the mobile-only .meta-tags-bar
+      component.
+    toc_sidebar_present: true
+  anomalies:
+  - description: Vision model reported meta-tags-bar present, but DOM check confirms
+      querySelector('.meta-tags-bar') returns null. The metadata shown is the desktop
+      header layout, not the mobile-only meta-tags-bar component.
+    resolution: 'DOM verification is authoritative: document.querySelector(''.meta-tags-bar'')
+      === null on desktop viewport (1280x800). The meta-tags-bar has v-if=isMobile
+      conditional rendering.'
+    resolved: true
+    type: false_positive
+  bdd_id: BDD-06
+  description: Desktop meta-tags-bar not in DOM
+  screenshot: screenshots/bdd-06-desktop-no-mtb.png
+  summary:
+    blocker_count: 0
+    verdict: Desktop viewport has no .meta-tags-bar element in DOM (DOM verified).
+      Vision false positive resolved by DOM check.

@@ -139,7 +139,10 @@ agent: analyst
 #### BDD-09: HtmlViewer iframe 仍正确撑满
 - Given 详情页打开一个 HTML 文件
 - When 页面渲染完成
-- Then iframe 撑满 `.content-area` 的可视区域（iframe 高度等于 `.content-area` 的 clientHeight）
+- Then iframe 撑满 `.content-area` 的 content-box（iframe 高度等于 `.content-area` clientHeight 减去 padding，即 `height: 100%` 的标准行为）
+
+> [SCOPE+ from P6] BDD-09 修订：P6 验收发现原措辞"iframe 高度等于 clientHeight"在技术上不正确——CSS `height: 100%` 永远等于父元素 content-box height 而非 clientHeight（含 padding）。HtmlViewer 未被 T084 改动，这是标准 CSS 行为。修订为"撑满 content-box"使验收条件可达。
+- [SCOPE_RESOLVED] BDD-09 已修订为"撑满 content-box"，与 CSS height:100% 标准行为一致
 
 #### BDD-10: ImageViewer 图片仍正确显示
 - Given 详情页打开一个图片文件

@@ -1,0 +1,15 @@
+vision_analysis:
+  analysis:
+    code_viewer_with_line_numbers: true
+    horizontal_scroll_capable: true
+    long_lines_extend_beyond_viewport: true
+    narrow_viewport: true
+    wrap_toggle_visible: true
+  anomalies: []
+  bdd_id: BDD-03
+  description: CodeViewer retains horizontal scroll
+  screenshot: screenshots/bdd-03-horizontal-scroll.png
+  summary:
+    blocker_count: 0
+    verdict: Code viewer with line numbers, long lines extend beyond viewport, horizontal
+      scroll available

@@ -1,0 +1,17 @@
+vision_analysis:
+  analysis:
+    content_at_top: true
+    content_starts_directly_after_header: true
+    meta_tags_bar_hidden: true
+    mobile_viewport: true
+    note: 'Screenshot taken after scrollTop=100 but page rendered at scroll position
+      showing content starting with Section 1 - the scroll-hide CSS class was applied
+      (DOM verified: hasHiddenClass=true, opacity=0, maxHeight=0px)'
+  anomalies: []
+  bdd_id: BDD-04
+  description: Mobile scroll down hides meta-tags-bar
+  screenshot: screenshots/bdd-04-scroll-hide.png
+  summary:
+    blocker_count: 0
+    verdict: Meta-tags-bar is hidden/collapsed on mobile after scroll down, content
+      starts directly below header

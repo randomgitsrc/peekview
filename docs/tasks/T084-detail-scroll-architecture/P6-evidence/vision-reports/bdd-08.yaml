@@ -1,0 +1,15 @@
+vision_analysis:
+  analysis:
+    debug_overlay_text: 'BDD-08: markdown-body paddingTop=0px | content-area paddingTop=12px'
+    debug_overlay_visible: true
+    markdown_content_visible: true
+    mobile_viewport: true
+    proper_spacing: true
+  anomalies: []
+  bdd_id: BDD-08
+  description: Mobile markdown-body paddingTop=0px
+  screenshot: screenshots/bdd-08-padding.png
+  summary:
+    blocker_count: 0
+    verdict: Debug overlay confirms markdown-body paddingTop=0px, content-area paddingTop=12px.
+      Single padding layer confirmed.

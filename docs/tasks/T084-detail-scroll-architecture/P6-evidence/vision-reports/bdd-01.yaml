@@ -1,0 +1,16 @@
+vision_analysis:
+  analysis:
+    content_area_is_scroll_container: true
+    content_scrolled: true
+    markdown_headings_visible:
+    - Section 2
+    - Section 3
+    - Section 4
+    toc_sidebar_present: true
+  anomalies: []
+  bdd_id: BDD-01
+  description: MarkdownViewer content scrolled by content-area
+  screenshot: screenshots/bdd-01-markdown-scroll.png
+  summary:
+    blocker_count: 0
+    verdict: Content is scrolled, markdown headings visible, TOC sidebar present
