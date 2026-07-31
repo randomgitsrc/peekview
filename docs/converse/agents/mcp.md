@@ -1,7 +1,6 @@
 ---
 name: mcp
 description: MCP Server 专项 Agent，负责 Node.js/TypeScript MCP Server 的实现和测试
-model: inherit
 color: warning
 mode: subagent
 permission:

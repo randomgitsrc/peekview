@@ -1,7 +1,6 @@
 ---
 name: security
 description: 安全审计 Agent，识别安全漏洞和权限问题
-model: inherit
 color: error
 mode: subagent
 hidden: true
