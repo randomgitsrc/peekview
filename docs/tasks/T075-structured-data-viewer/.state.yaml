@@ -1,11 +1,23 @@
-phase: P0
+phase: P3
 task_id: T075
 task_name: structured-data-viewer
-status: pending
+status: in_progress
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-01
 history:
   - phase: P0
     date: 2026-07-28
+    status: done
+    note: P0-brief 完成
+  - phase: P1
+    date: 2026-08-01
+    status: done
+    note: 53 BDD, 11 IR, review approved, gate exit 2
+  - phase: P2
+    date: 2026-08-01
+    status: done
+    note: 方案 A (4 组子方案), plan-design-review approved (1 轮修订), gate exit 2
+  - phase: P3
+    date: 2026-08-01
     status: in_progress
-    note: P0-brief 完成，TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口
+    note: 派发 test-designer

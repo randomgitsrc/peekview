@@ -391,15 +391,7 @@ agent: analyst
 
 ```yaml
 risk_level: medium
-phases:
-  - P1  # 需求基线（当前）
-  - P2  # 方案设计（不可裁剪 — 新增 2 渲染器 + 切换机制 + 后端修正，需设计评审）
-  - P3  # TDD 测试（保留 — 新增解析逻辑有可测试行为：CSV parse、YAML safe load、格式检测）
-  - P4  # 代码实现
-  - P5  # 技术验证（保留 — vitest + vue-tsc + build 必须全绿）
-  - P6  # 验收（不可裁剪 — UI 任务必须 Playwright 截图验证）
-  - P7  # 一致性检查（保留 — 多文件改动：language.py + useEntryDetailComputed + EntryDetailContent + EntryDetailHeader + 新组件）
-  - P8  # 发布准备
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 ```
 
 裁剪理由：无阶段裁剪。任务涉及新增渲染器、统一切换机制、后端修正，risk=medium，走完整 agate 阶段链。
