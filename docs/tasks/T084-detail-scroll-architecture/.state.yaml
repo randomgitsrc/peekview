@@ -1,4 +1,4 @@
-phase: P4
+phase: P5
 task_id: T084
 task_name: detail-scroll-architecture
 status: in_progress
@@ -20,8 +20,12 @@ history:
   - phase: P3
     date: 2026-07-31
     status: done
-    note: 11 测试用例 (4 vitest + 7 E2E), check-tdd-red exit 0
+    note: 11 测试用例, check-tdd-red exit 0
   - phase: P4
     date: 2026-07-31
+    status: done
+    note: 6 文件改动, design-review approved, gate 通过
+  - phase: P5
+    date: 2026-07-31
     status: in_progress
-    note: 派发 implementer subagent
+    note: 派发 verifier subagent

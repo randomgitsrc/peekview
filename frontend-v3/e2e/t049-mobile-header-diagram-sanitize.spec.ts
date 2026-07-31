@@ -5,15 +5,27 @@ const EVIDENCE_DIR = 'docs/tasks/T049-mobile-header-diagram-sanitize/evidences'
 
 test.describe('T049 Mobile Header Shrink (A-BDD)', () => {
   test.beforeAll(async ({ request }) => {
+    // Delete existing entry first (content may have changed between test runs)
+    await request.delete(`${BASE_URL}/api/v1/entries/t049-multi-tag`).catch(() => {})
     // Create an entry with many tags for truncation testing
     const tags = Array.from({ length: 10 }, (_, i) => `tag-${i + 1}`)
+    const longContent = '# Test\n\nThis entry has many tags for mobile header truncation testing.\n\n' +
+      '## Section 1\n\n' + Array.from({ length: 20 }, (_, i) =>
+        `Paragraph ${i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. ` +
+        `Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ` +
+        `Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`
+      ).join('\n\n') +
+      '\n\n## Section 2\n\n' + Array.from({ length: 20 }, (_, i) =>
+        `Line ${i + 1}: More content to ensure the page is scrollable on mobile viewport. ` +
+        `Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.`
+      ).join('\n\n')
     await request.post(`${BASE_URL}/api/v1/entries`, {
       data: {
         summary: 'T049 mobile header test',
         slug: 't049-multi-tag',
         tags,
         is_public: true,
-        content: '# Test\n\nThis entry has many tags for mobile header truncation testing.',
+        files: [{ filename: 'README.md', content: longContent }],
       },
     }).catch(() => {
       // May already exist, ignore
@@ -125,9 +137,9 @@ test.describe('T049 Mobile Header Shrink (A-BDD)', () => {
       })
       await page.waitForTimeout(500)
 
-      // Header tags should remain visible (desktop: no scroll-to-hide)
+      // Desktop: meta-tags-bar is not rendered (v-if="isMobile", BDD-06)
       const metaTagsBar = page.locator('.meta-tags-bar')
-      await expect(metaTagsBar).toBeVisible()
+      await expect(metaTagsBar).toHaveCount(0)
     })
   })
 })
