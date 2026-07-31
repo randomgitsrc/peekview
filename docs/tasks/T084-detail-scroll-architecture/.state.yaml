@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T084
 task_name: detail-scroll-architecture
 status: in_progress
@@ -12,11 +12,11 @@ history:
   - phase: P1
     date: 2026-07-31
     status: done
-    note: 14 BDD, 8 IR, review approved, gate exit 2
+    note: 14 BDD, 8 IR, review approved
   - phase: P2
     date: 2026-07-31
     status: done
-    note: 方案 A, [SCOPE+] BDD-08, review approved, gate exit 2
+    note: 方案 A, [SCOPE+] BDD-08, review approved
   - phase: P3
     date: 2026-07-31
     status: done
@@ -24,12 +24,16 @@ history:
   - phase: P4
     date: 2026-07-31
     status: done
-    note: 6 文件改动 + P4 回退修复 E2E A-BDD-3/5, design-review approved
+    note: 6 文件改动 + P4 回退修复 E2E + BDD-02 overflow 修复
   - phase: P5
     date: 2026-07-31
     status: done
-    note: vitest 1128+1flaky, typecheck 0, build ok, E2E A-BDD-3/4/5 全绿, gate exit 2
+    note: vitest 1129 passed, typecheck 0, build ok, E2E A-BDD-3/4/5 全绿
   - phase: P6
     date: 2026-07-31
+    status: done
+    note: 14/14 PASS, [SCOPE+] BDD-09, provenance 通过
+  - phase: P7
+    date: 2026-07-31
     status: in_progress
-    note: 派发 verifier subagent, BDD 验收
+    note: 派发 consistency-reviewer
