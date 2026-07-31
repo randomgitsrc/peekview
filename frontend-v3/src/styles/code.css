@@ -36,7 +36,6 @@
 }
 
 .code-body {
-  overflow-x: auto;
 }
 
 /* Code container with line numbers - using table for perfect alignment */
