@@ -12,7 +12,18 @@
 - 修复 ruff `--fix --unsafe-fixes` 导致的 SQLAlchemy 查询语法回归：19 处 `not Column`/`Column is None`/`Column is not None`/裸 Column 误改恢复为 `~Column`/`.is_(None)`/`.isnot(None)`/`.is_(True)` (T073)
 - pyproject.toml 添加 E711/E712 到 ruff lint ignore 列表，防止 ruff 再次"修复"SQLAlchemy 比较语法 (T073)
 
-## [Unreleased]
+## [0.13.1] - 2026-08-01
+
+### 修复
+
+- 详情页滚动架构统一：MarkdownViewer 移除 `height:100%; overflow:auto`，CodeViewer 移除 `min-height:300px; flex:1; overflow:auto`，`.content-area` 成为唯一纵向滚动容器 (T084)
+- 移动端 scroll-hide 修复：`useResponsiveLayout.setupScrollHide` 移除 `findScrollable` 子元素查找，直接监听 `.content-area` scroll 事件 (T084)
+- TOC 锚点跳转偏移修复：`.content-area` 成为唯一滚动容器后，`scroll-margin-top: 80px` 参考系自动正确，标题不再被 sticky header 遮挡 (T084)
+- 移动端双层 padding 消除：`.markdown-body` scoped + 全局 padding 移除，padding 归属 `.content-area` 单层（移动端从 40px 降到 8px 水平 padding）(T084)
+
+### 新增
+
+- DESIGN.md §9 新增 Scroll Architecture 小节：显式声明 `.content-area` 为唯一纵向滚动容器 + viewer 滚动职责约定 (T084)
 
 ## [0.13.0] - 2026-07-31
 
