@@ -19,6 +19,7 @@
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T083 | cjk-search-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-07-31 |
+| T084 | detail-scroll-architecture | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-31 | 2026-07-31 |
 
 ### T071: Docker 部署（合并原 T071+T072）
 
@@ -59,6 +60,10 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 ### T082: 架构重构
 
 后端 DI 三种模式统一为 `app.state` 注入（files.py 走 service、跨 service 调用用注入实例、去掉 fallback new）。错误格式统一为 PeekError。重复代码提取（_looks_like_jwt 等 3 处）。create_entry 事务完整性修复。前端 entry store 拆分为 EntryListStore + EntryDetailStore。EntryDetailView 1003 行 god component 拆分为子组件（目标 < 300 行）。
+
+### T084: 详情页滚动架构统一
+
+详情页多层 overflow:auto 导致滚动容器不明确，引发 scroll-hide 失效 + padding 双层叠加 + TOC 锚点偏移三个连锁问题。统一为 content-area 唯一滚动容器，viewer 组件不抢滚动。补充 DESIGN.md §9 滚动架构决策。
 
 ---
 
