@@ -24,25 +24,9 @@ export function useResponsiveLayout(): {
   const metaTagsHidden = ref(false)
 
   function setupScrollHide(container: HTMLElement): () => void {
-    const findScrollable = (parent: Element): HTMLElement | null => {
-      for (const child of parent.children) {
-        if (child instanceof HTMLElement) {
-          const ov = getComputedStyle(child).overflowY
-          if ((ov === 'auto' || ov === 'scroll') && child.scrollHeight > child.clientHeight) {
-            return child
-          }
-        }
-      }
-      return null
-    }
-
-    let scrollContainer: HTMLElement | null = findScrollable(container)
-    if (!scrollContainer) {
-      scrollContainer = container as HTMLElement
-    }
     let lastScrollTop = 0
     const onScroll = () => {
-      const current = scrollContainer?.scrollTop ?? 0
+      const current = container.scrollTop
       if (current > lastScrollTop && current > 10) {
         metaTagsHidden.value = true
       } else if (current < lastScrollTop) {
@@ -50,10 +34,10 @@ export function useResponsiveLayout(): {
       }
       lastScrollTop = current
     }
-    scrollContainer.addEventListener('scroll', onScroll, { passive: true })
+    container.addEventListener('scroll', onScroll, { passive: true })
 
     return () => {
-      scrollContainer?.removeEventListener('scroll', onScroll)
+      container.removeEventListener('scroll', onScroll)
       if (resizeTimer) cancelAnimationFrame(resizeTimer)
     }
   }

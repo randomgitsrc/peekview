@@ -122,13 +122,7 @@ watch(() => [props.content, theme.value, props.pathMap, props.slug], async () =>
 </script>
 
 <style scoped>
-.markdown-viewer {
-  height: 100%;
-  overflow: auto;
-}
-
 .markdown-body {
-  padding: 2rem;
   max-width: 900px;
   margin: 0 auto;
 }

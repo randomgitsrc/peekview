@@ -265,6 +265,15 @@ This section defines which components exist, what variants they support, and beh
 - Overflow menus: dropdown on desktop, bottom sheet on mobile.
 - Settings: horizontal tabs on desktop, stacked sections on mobile.
 
+### Scroll Architecture
+
+- Detail page `.content-area` is the **sole vertical scroll container**.
+- Viewer components (MarkdownViewer, CodeViewer) must **not** declare `overflow-y: auto` or `height: 100%` — content flows naturally and `.content-area` handles scrolling.
+- CodeViewer retains `overflow-x: auto` for horizontal code scrolling.
+- HtmlViewer and ImageViewer are exceptions: they use `height: 100%; overflow: hidden` to fill `.content-area` without stealing scroll (iframe/image internal scroll is isolated).
+- `scroll-margin-top: 80px` on headings is calibrated for `.content-area` as the scroll container (matches sticky header height).
+- Scroll-hide behavior (`useResponsiveLayout.setupScrollHide`) binds directly to `.content-area`'s scroll event — no child element traversal needed.
+
 ---
 
 ## 10. Accessibility

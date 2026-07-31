@@ -59,12 +59,15 @@ test.describe('T049 Mobile Header Shrink (A-BDD)', () => {
       await page.waitForTimeout(1000)
 
       // Scroll down past 50px
-      await page.evaluate(() => window.scrollTo(0, 100))
+      await page.evaluate(() => {
+        const ca = document.querySelector('.content-area') as HTMLElement
+        if (ca) ca.scrollTop = 100
+      })
       await page.waitForTimeout(500)
 
-      const headerTags = page.locator('.header-tags')
+      const metaTagsBar = page.locator('.meta-tags-bar')
       // Should be hidden (opacity 0, max-height 0, or display none)
-      await expect(headerTags).toBeHidden()
+      await expect(metaTagsBar).toBeHidden()
 
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile-scroll-down-header-hidden.png`, fullPage: true })
     })
@@ -75,15 +78,21 @@ test.describe('T049 Mobile Header Shrink (A-BDD)', () => {
       await page.waitForTimeout(1000)
 
       // Scroll down first
-      await page.evaluate(() => window.scrollTo(0, 100))
+      await page.evaluate(() => {
+        const ca = document.querySelector('.content-area') as HTMLElement
+        if (ca) ca.scrollTop = 100
+      })
       await page.waitForTimeout(300)
 
       // Scroll back to top
-      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.evaluate(() => {
+        const ca = document.querySelector('.content-area') as HTMLElement
+        if (ca) ca.scrollTop = 0
+      })
       await page.waitForTimeout(500)
 
-      const headerTags = page.locator('.header-tags')
-      await expect(headerTags).toBeVisible()
+      const metaTagsBar = page.locator('.meta-tags-bar')
+      await expect(metaTagsBar).toBeVisible()
 
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile-scroll-up-header-restored.png`, fullPage: true })
     })
@@ -110,12 +119,15 @@ test.describe('T049 Mobile Header Shrink (A-BDD)', () => {
       await page.waitForTimeout(1000)
 
       // Scroll down
-      await page.evaluate(() => window.scrollTo(0, 200))
+      await page.evaluate(() => {
+        const ca = document.querySelector('.content-area') as HTMLElement
+        if (ca) ca.scrollTop = 200
+      })
       await page.waitForTimeout(500)
 
       // Header tags should remain visible (desktop: no scroll-to-hide)
-      const headerTags = page.locator('.header-tags')
-      await expect(headerTags).toBeVisible()
+      const metaTagsBar = page.locator('.meta-tags-bar')
+      await expect(metaTagsBar).toBeVisible()
     })
   })
 })

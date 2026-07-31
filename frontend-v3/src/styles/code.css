@@ -6,15 +6,6 @@
   background: var(--bg-code);
   display: flex;
   flex-direction: column;
-  min-height: 300px;
-  flex: 1; /* Fill available space */
-}
-
-/* Mobile: ensure code viewer fills space */
-@media (max-width: 1023px) {
-  .code-viewer {
-    min-height: 0; /* Allow shrink on mobile */
-  }
 }
 
 .code-header {
@@ -45,9 +36,7 @@
 }
 
 .code-body {
-  overflow: auto;
-  flex: 1;
-  min-height: 0;
+  overflow-x: auto;
 }
 
 /* Code container with line numbers - using table for perfect alignment */
