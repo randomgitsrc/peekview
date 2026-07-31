@@ -177,6 +177,6 @@ function navigateToTag(href: string) {
 .status-tag.public { background: var(--c-accent-surface); color: var(--c-accent); }
 .status-tag.private { background: var(--c-surface-lower); color: var(--c-text-secondary); }
 .meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); overflow-x: auto; transition: opacity var(--transition-fast); }
-.meta-tags-bar.hidden { opacity: 0; pointer-events: none; }
+.meta-tags-bar.hidden { max-height: 0; padding: 0; overflow: hidden; border-bottom: none; opacity: 0; }
 .owner-link { color: var(--c-accent); text-decoration: none; font-family: var(--font-mono); font-size: 12px; }
 </style>

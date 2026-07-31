@@ -158,6 +158,7 @@ defineEmits<{
 .detail-content { display: flex; flex: 1; overflow: hidden; }
 .file-sidebar { width: 200px; border-right: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
 .content-area { flex: 1; overflow-y: auto; outline: none; padding: var(--space-4); }
+@media (max-width: 640px) { .content-area { padding: var(--space-3) var(--space-2); } }
 .toc-sidebar { width: 240px; border-left: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
 .loading-state { padding: var(--space-5); }
 .skeleton-header { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); }

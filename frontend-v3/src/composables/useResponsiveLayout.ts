@@ -40,8 +40,15 @@ export function useResponsiveLayout(): {
     if (!scrollContainer) {
       scrollContainer = container as HTMLElement
     }
+    let lastScrollTop = 0
     const onScroll = () => {
-      metaTagsHidden.value = (scrollContainer?.scrollTop ?? 0) > 10
+      const current = scrollContainer?.scrollTop ?? 0
+      if (current > lastScrollTop && current > 10) {
+        metaTagsHidden.value = true
+      } else if (current < lastScrollTop) {
+        metaTagsHidden.value = false
+      }
+      lastScrollTop = current
     }
     scrollContainer.addEventListener('scroll', onScroll, { passive: true })
 
