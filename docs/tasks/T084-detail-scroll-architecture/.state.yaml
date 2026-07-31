@@ -1,7 +1,7 @@
-phase: P8
+phase: READY
 task_id: T084
 task_name: detail-scroll-architecture
-status: in_progress
+status: done
 created: 2026-07-31
 updated: 2026-07-31
 history:
@@ -39,5 +39,5 @@ history:
     note: BLOCKER=0, SCOPE+ 闭环, gate exit 0
   - phase: P8
     date: 2026-07-31
-    status: in_progress
-    note: 派发 implementer P8 模式
+    status: done
+    note: patch v0.13.0→v0.13.1, tag v0.13.1, READY 收尾完成
