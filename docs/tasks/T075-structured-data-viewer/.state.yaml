@@ -1,7 +1,7 @@
-phase: P8
+phase: DONE
 task_id: T075
 task_name: structured-data-viewer
-status: in_progress
+status: done
 created: 2026-07-28
 updated: 2026-08-01
 history:
@@ -25,7 +25,7 @@ history:
     date: 2026-08-01
     status: done
     note: 实现完成, backend review approved + frontend design-review approved (3 BLOCKER+11 MINOR 修订), gate exit 0
-  - phase: P8
+  - phase: DONE
     date: 2026-08-01
-    status: in_progress
+    status: done
     note: 派发 verifier
