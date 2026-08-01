@@ -1,0 +1,37 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/bdd-24-json-tree.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-01T18:06:00"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/bdd-24-json-tree.png"
+      size: "1280x800"
+      page:
+        title: "T075 JSON (PeekView)"
+        loading_state: "loaded"
+      components:
+        - type: "tree"
+          label: "JSON 树视图：根键 name/age/admin/notes/tags/meta"
+          state: "normal"
+          position: "内容区"
+        - type: "expand-toggle"
+          label: "tags 与 meta 节点左侧右向箭头（折叠态）"
+          state: "collapsed"
+        - type: "type-tag"
+          label: "类型标签 string(绿)/number(蓝)/boolean(黄)/null(灰)/array(蓝)/object(蓝)"
+          state: "normal"
+        - type: "search-input"
+          label: "Search nodes... 搜索框"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-24: JSON 文件渲染为树视图，根节点可展开/折叠，子节点显示类型标签"
+      result: "pass"
+      evidence: "截图显示树节点结构 + 展开箭头 + 6 种类型标签，无布局异常"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

@@ -1,0 +1,45 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/bdd-51-dark-table.png", "P6-evidence/screenshots/bdd-51-light-yaml.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-01T18:08:00"
+  viewports:
+    - id: "dark-table"
+      file: "P6-evidence/screenshots/bdd-51-dark-table.png"
+      page:
+        title: "T075 CSV 深色主题表格"
+        loading_state: "loaded"
+      colors:
+        background_page: "深色（暗色系）"
+        contrast_issues: []
+      components:
+        - type: "table"
+          label: "深色主题下表格表头+数据行可辨识"
+          state: "normal"
+      anomalies: []
+    - id: "light-yaml"
+      file: "P6-evidence/screenshots/bdd-51-light-yaml.png"
+      page:
+        title: "T075 YAML 浅色主题树视图（meta 节点已展开）"
+        loading_state: "loaded"
+      colors:
+        background_page: "极浅灰/白"
+        contrast_issues: []
+      components:
+        - type: "tree"
+          label: "浅色主题 YAML 树节点 + 类型标签，meta 子节点（level: 3）已展开"
+          state: "normal"
+        - type: "type-tag"
+          label: "类型标签颜色可区分，文字对比度良好"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-51: 深色/浅色双主题下 TableView 和 TreeView 正常显示，无对比度问题"
+      result: "pass"
+      evidence: "深色表格与浅色 YAML 树均正常显示，类型标签可辨识，无对比度异常"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

@@ -1,0 +1,34 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/bdd-12-table-view.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-01T18:05:00"
+  viewports:
+    - id: "desktop"
+      file: "P6-evidence/screenshots/bdd-12-table-view.png"
+      size: "1280x800"
+      page:
+        title: "T075 CSV (PeekView)"
+        loading_state: "loaded"
+      components:
+        - type: "table"
+          label: "CSV 数据表格（表头 name/age/city + 数据行 user0..user16）"
+          state: "normal"
+          position: "内容区"
+        - type: "table-header"
+          label: "列头 name / age / city，各带筛选输入框"
+          state: "normal"
+        - type: "toolbar"
+          label: "顶部含 <> 源码按钮、复制、更多、Sign in、主题切换"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-12: CSV 文件渲染为表格视图（表头行+数据行）而非代码高亮"
+      result: "pass"
+      evidence: "截图显示表格渲染：表头 name/age/city + 数据行交替斑马纹，非代码视图"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

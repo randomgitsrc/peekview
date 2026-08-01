@@ -1,0 +1,13 @@
+{
+  "bdd": 53,
+  "entry": "t075-tsv",
+  "table_view_visible": true,
+  "code_viewer_count": 0,
+  "headers": [
+    "name",
+    "age",
+    "city"
+  ],
+  "header_count": 3,
+  "first_row_contains_alice": true
+}

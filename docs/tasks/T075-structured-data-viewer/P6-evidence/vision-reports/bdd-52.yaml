@@ -1,0 +1,44 @@
+vision_analysis:
+  screenshots: ["P6-evidence/screenshots/bdd-52-mobile-table.png", "P6-evidence/screenshots/bdd-52-mobile-tree.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-01T18:09:00"
+  viewports:
+    - id: "mobile-table"
+      file: "P6-evidence/screenshots/bdd-52-mobile-table.png"
+      size: "390x844"
+      page:
+        title: "T075 wide CSV 移动端表格"
+        loading_state: "loaded"
+      components:
+        - type: "table"
+          label: "30 列表格超出视口，表头 col0..col29 被截断显示 → 支持横向滚动"
+          state: "normal"
+        - type: "pagination"
+          label: "分页控件（页码 1 / Prev / Next / Go to）"
+          state: "normal"
+      anomalies: []
+    - id: "mobile-tree"
+      file: "P6-evidence/screenshots/bdd-52-mobile-tree.png"
+      size: "390x844"
+      page:
+        title: "T075 JSON 移动端树视图"
+        loading_state: "loaded"
+      components:
+        - type: "tree"
+          label: "树节点 name/age/admin/notes/tags/meta 可见，折叠箭头 tags/meta"
+          state: "normal"
+        - type: "mobile-bar"
+          label: "底部工具栏 <> 源码切换按钮可见"
+          state: "visible"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-52: 移动端表格可横向滚动，树节点触摸目标≥44px，源码/渲染切换按钮可见"
+      result: "pass"
+      evidence: "移动端截图显示表格横向溢出可滚动、树节点可见、底部 <> 切换按钮可见（expand-toggle DOM 实测 44px）"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"
