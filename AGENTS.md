@@ -89,20 +89,32 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 
 ## 调试流程
 
+**开发迭代（看效果，~20s）**：
 ```
-make build-frontend          # 1. 前端构建 → static/（改了前端必须跑，改了后端可跳）
-make debug-start              # 2. 启动 :8888 调试服务（自动用 .venv Python）
-make debug-seed               # 3. 灌入测试数据（3 用户 + 12 条目：公开/私有/归档/多文件）
-make debug-verify-isolation   # 4. 验证数据隔离（依赖 :8080 在线；不在线就用 sqlite3 /tmp/peekview-debug/peekview.db 手动查）
-make debug-test               # 5. E2E 测试（或指定单个 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
-make debug-stop               # 6. 停止 + 清理 /tmp/peekview-debug/
+make debug-quick    # build-fast + start + seed，跳过 E2E/MCP/clean
+# 浏览器访问 http://127.0.0.1:8888
+make debug-stop
 ```
 
-一键版：`make debug`（= build + start + verify-isolation + test + test-mcp）
+**发布前验证（CI 级，~5min）**：
+```
+make debug          # clean + build + start + verify-isolation + E2E + MCP
+make debug-stop
+```
 
-快速版：`make debug-quick`（= build-fast + start + seed，跳过 E2E/MCP/clean，~20s，仅供视觉检查）
+**分步操作**：
+```
+make debug-start              # 启动 :8888（用已有 static）
+make debug-seed               # 灌入测试数据
+make debug-stop               # 停止 + 清理 /tmp/peekview-debug/
+make debug-test               # 单独跑 E2E（需先 debug-start）
+E2E_SPEC=e2e/search.spec.ts make debug-test   # 只跑一个 spec
+make debug-verify-isolation   # 验证数据隔离（依赖 :8080 在线）
+```
 
-测试数据：`make debug-seed` 创建 alice/bob/carol（密码 testpass123）+ 12 个条目（公开 ×9、私有 ×2、归档 ×1），含 Python/Vue/K8s/Mermaid/PlantUML/SQLite/多文件模板等不同类型
+改了前端后必须 `make build-frontend` 重建 static（或用 `make debug-quick` 一步到位）。
+
+测试数据：`make debug-seed` 从 `scripts/seed-data/` 目录加载（20 个 entry：Markdown/HTML/SVG/Mermaid/PlantUML/Python/CSV/TSV/JSON/YAML/XML/图片/边界数据等），用户 alice/bob/carol（密码 testpass123）。新增/修改数据只需编辑 seed-data/ 下的文件，不改 Python 代码。
 
 ## 发布流程
 

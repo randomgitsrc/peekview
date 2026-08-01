@@ -11,17 +11,34 @@
 
 ## 快速开始
 
-```bash
-# 一键完整调试（推荐）
-make debug
+### 开发迭代（看效果，~20s）
 
-# 或分步执行（推荐用于问题排查）
-make debug-build       # 步骤1: 构建并检查 static 文件
-make debug-start       # 步骤2: 启动调试服务 (:8888)
-make debug-verify-isolation  # 步骤3: 验证数据隔离（v0.1.22+ 新增！）
-make debug-test        # 步骤4: 运行 E2E 测试（自动创建测试数据）
-# 步骤5: 用户人工验证 http://127.0.0.1:8888
-make debug-stop        # 步骤6: 停止调试服务（自动清理数据）
+改了前端/后端代码后快速看效果，不跑 E2E：
+
+```bash
+make debug-quick    # build-fast + start + seed
+# 浏览器访问 http://127.0.0.1:8888
+make debug-stop
+```
+
+### 发布前验证（CI 级，~5min）
+
+发布前完整验证，含 E2E + MCP 集成测试：
+
+```bash
+make debug          # clean + build + start + verify-isolation + E2E + MCP
+make debug-stop
+```
+
+### 分步执行（问题排查）
+
+```bash
+make debug-build       # 构建并检查 static 文件
+make debug-start       # 启动调试服务 (:8888)
+make debug-seed        # 灌入测试数据（从 scripts/seed-data/ 加载）
+make debug-verify-isolation  # 验证数据隔离
+make debug-test        # E2E 测试（或指定 spec：E2E_SPEC=e2e/search.spec.ts make debug-test）
+make debug-stop        # 停止 + 清理 /tmp/peekview-debug/
 ```
 
 **⚠️ 重要: 数据隔离验证必须通过**
