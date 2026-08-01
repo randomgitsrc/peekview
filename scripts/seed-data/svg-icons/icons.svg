@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <symbol id="icon-success" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="#16a34a" fill="#dcfce7"/>
+        <path d="M9 12l2 2 4-4" stroke="#16a34a"/>
+    </symbol>
+    <symbol id="icon-fail" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="#dc2626" fill="#fee2e2"/>
+        <path d="M15 9l-6 6M9 9l6 6" stroke="#dc2626"/>
+    </symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24">
+        <path d="M12 2L2 22h20L12 2z" stroke="#d97706" fill="#fef3c7"/>
+        <path d="M12 9v5M12 17v.5" stroke="#d97706"/>
+    </symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="#2563eb" fill="#dbeafe"/>
+        <path d="M12 11v5M12 7v.5" stroke="#2563eb"/>
+    </symbol>
+    <symbol id="icon-arrow" viewBox="0 0 48 24">
+        <path d="M2 12h36M30 4l10 8-10 8" stroke="#64748b" fill="none"/>
+    </symbol>
+    <use href="#icon-success" x="0" y="0" width="24" height="24"/>
+    <use href="#icon-fail" x="32" y="0" width="24" height="24"/>
+    <use href="#icon-warning" x="64" y="0" width="24" height="24"/>
+    <use href="#icon-info" x="96" y="0" width="24" height="24"/>
+    <use href="#icon-arrow" x="0" y="32" width="48" height="24"/>
+</svg>

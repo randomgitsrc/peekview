@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP Sandbox 渲染测试</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; background: #f9fafb; }
+        .btn { background: #2563eb; color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #1d4ed8; }
+        output { display: block; margin-top: 1rem; padding: 0.75rem; background: #e0f2fe; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>CSP Sandbox 测试</h1>
+        <p>此页面在 iframe sandbox 中渲染，测试内联脚本与表单交互。</p>
+        <form id="demo-form" onsubmit="return handleSubmit(event)">
+            <label for="name">名称：</label>
+            <input type="text" id="name" name="name" placeholder="输入你的名字" required>
+            <button type="submit" class="btn">提交</button>
+        </form>
+        <output id="result"></output>
+    </div>
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            var name = document.getElementById('name').value;
+            document.getElementById('result').textContent = '你好，' + name + '! 脚本在沙箱中正常运行。';
+            return false;
+        }
+    </script>
+</body>
+</html>

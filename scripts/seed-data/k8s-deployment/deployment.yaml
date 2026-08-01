@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peekview-backend
+  namespace: peekview
+  labels:
+    app: peekview
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: peekview
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: peekview
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          image: peekview/backend:1.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PEEKVIEW_STORAGE__DATA_DIR
+              value: /data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30

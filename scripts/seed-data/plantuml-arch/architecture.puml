@@ -1,0 +1,41 @@
+@startuml
+!theme plain
+skinparam componentStyle rectangle
+skinparam packageStyle frame
+
+package "前端 (frontend-v3)" {
+    [Vue 3 SPA] as vue
+    [CodeViewer\n(Shiki)] as shiki
+    [MermaidDiagram] as mermaid
+    [MarkdownViewer] as md
+}
+
+package "后端 (backend)" {
+    [FastAPI App] as api
+    [Entry Service] as entry_svc
+    [File Service] as file_svc
+    [HTML Render Service] as html_svc
+    database "SQLite\n(WAL+FTS5)" as db
+}
+
+package "MCP Server" {
+    [MCP Transport\n(Streamable HTTP)] as mcp
+    [PeekView Client] as pv_client
+    [Tools\n(create/get/list/delete)] as tools
+}
+
+vue --> api : REST /api/v1
+shiki --> api : GET /raw
+md --> api : GET /{slug}
+html_svc --> api : sibling 注入
+
+api --> entry_svc
+api --> file_svc
+entry_svc --> db
+file_svc --> db
+
+mcp --> pv_client
+pv_client --> api : HTTP (API Key)
+tools --> pv_client
+
+@enduml

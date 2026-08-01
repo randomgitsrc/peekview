@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  app:
+    image: peekview/backend:1.2.0
+    ports:
+      - "8080:8080"
+    environment:
+      - PEEKVIEW_STORAGE__DATA_DIR=/data
+      - PEEKVIEW_AUTH__SECRET_KEY=${SECRET_KEY}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - app-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - peekview-net
+
+  worker:
+    image: peekview/worker:1.2.0
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PEEKVIEW_STORAGE__DATA_DIR=/data
+    volumes:
+      - app-data:/data:ro
+    depends_on:
+      - redis
+    deploy:
+      replicas: 4
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    networks:
+      - peekview-net
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - peekview-net
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+    deploy:
+      replicas: 1
+    networks:
+      - peekview-net
+
+volumes:
+  app-data:
+  redis-data:
+
+networks:
+  peekview-net:
+    driver: bridge

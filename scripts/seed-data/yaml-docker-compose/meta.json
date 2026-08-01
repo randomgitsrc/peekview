@@ -1,0 +1,11 @@
+{
+  "summary": "Docker Compose 编排（YAML 树视图）",
+  "tags": [
+    "yaml",
+    "docker",
+    "编排",
+    "TreeView"
+  ],
+  "is_public": true,
+  "owner": "alice"
+}

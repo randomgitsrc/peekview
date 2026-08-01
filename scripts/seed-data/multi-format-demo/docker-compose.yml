@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  app:
+    image: peekview/backend:1.2.0
+    ports:
+      - "8080:8080"
+    environment:
+      - PEEKVIEW_STORAGE__DATA_DIR=/data
+    volumes:
+      - ./data:/data
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

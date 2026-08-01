@@ -1,0 +1,11 @@
+{
+  "summary": "Kubernetes 部署配置",
+  "tags": [
+    "k8s",
+    "devops",
+    "yaml",
+    "部署"
+  ],
+  "is_public": true,
+  "owner": "bob"
+}

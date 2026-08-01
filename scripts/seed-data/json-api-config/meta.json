@@ -1,0 +1,10 @@
+{
+  "summary": "API 服务配置（JSON 树视图）",
+  "tags": [
+    "json",
+    "配置",
+    "TreeView"
+  ],
+  "is_public": true,
+  "owner": "bob"
+}

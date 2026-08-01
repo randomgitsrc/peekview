@@ -1,0 +1,31 @@
+id,name,age,department,salary,city,hire_date
+1,Alice Smith,29,Marketing,53500,San Francisco, CA,2023-02-08
+2,Bob Johnson,36,Design,62000,Seattle, WA,2024-03-15
+3,Carol Williams,43,Sales,70500,Los Angeles, CA,2022-04-22
+4,David Brown,50,Management,79000,Chicago, IL,2023-05-01
+5,Eve Davis,57,HR,87500,"Boston, MA",2024-06-08
+6,Frank Miller,64,Finance,96000,Austin, TX,2022-07-15
+7,Grace Lee,26,Engineering,104500,Denver, CO,2023-08-22
+8,Henry Wilson,33,Marketing,113000,Portland, OR,2024-09-01
+9,"Ivy ""Quick"" Brown",40,Design,121500,New York, NY,2022-10-08
+10,Jack Anderson,47,Sales,130000,"San Francisco, CA",2023-11-15
+11,Karen Taylor,54,Management,138500,Seattle, WA,2024-12-22
+12,Leo Martinez,61,HR,147000,Los Angeles, CA,2022-01-01
+13,Mia Garcia,23,Finance,45500,Chicago, IL,2023-02-08
+14,Nick Robinson,30,Engineering,54000,Boston, MA,2024-03-15
+15,Olivia Park,37,Marketing,62500,"Austin, TX",2022-04-22
+16,Paul Wright,44,Design,71000,Denver, CO,2023-05-01
+17,Quinn Adams,51,Sales,79500,Portland, OR,2024-06-08
+18,Rachel Green,58,Management,88000,New York, NY,2022-07-15
+19,Sam Turner,65,HR,96500,San Francisco, CA,2023-08-22
+20,Tom Harris,27,Finance,105000,"Seattle, WA",2024-09-01
+21,Uma Patel,34,Engineering,113500,Los Angeles, CA,2022-10-08
+22,Victor Kim,41,Marketing,122000,Chicago, IL,2023-11-15
+23,Wendy Scott,48,Design,130500,Boston, MA,2024-12-22
+24,Xavier Cruz,55,Sales,139000,Austin, TX,2022-01-01
+25,Yuki Tanaka,62,Management,147500,"Denver, CO",2023-02-08
+26,Zoe Baker,24,HR,46000,Portland, OR,2024-03-15
+27,Amy Foster,31,Finance,54500,New York, NY,2022-04-22
+28,Ben Howard,38,Engineering,63000,San Francisco, CA,2023-05-01
+29,Cindy Cole,45,Marketing,71500,Seattle, WA,2024-06-08
+30,Dan Reed,52,Design,80000,"Los Angeles, CA",2022-07-15

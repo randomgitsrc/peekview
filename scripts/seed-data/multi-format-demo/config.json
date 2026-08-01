@@ -1,0 +1,24 @@
+{
+  "service": "peekview",
+  "version": "1.2.0",
+  "environment": "production",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "workers": 4
+  },
+  "storage": {
+    "data_dir": "/var/lib/peekview",
+    "db_path": "/var/lib/peekview/peekview.db",
+    "max_file_size_mb": 50
+  },
+  "auth": {
+    "jwt_expiry_hours": 24,
+    "api_key_prefix": "pv_",
+    "max_keys_per_user": 10
+  },
+  "rate_limit": {
+    "enabled": true,
+    "requests_per_minute": 60
+  }
+}
