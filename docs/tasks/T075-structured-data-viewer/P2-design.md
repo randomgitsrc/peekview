@@ -47,9 +47,9 @@ ui_e2e_points:
 
 ```yaml
 gate_commands:
-  P3_backend: "cd backend && python -m pytest tests/test_language.py -q --tb=no"
+  P3_backend: "cd backend && .venv/bin/python -m pytest tests/test_language.py -q --tb=no"
   P3_frontend: "cd frontend-v3 && npx vitest run --reporter=dot 2>&1 | tail -30"
-  P5_backend: "cd backend && python -m pytest tests/test_language.py -q --tb=no"
+  P5_backend: "cd backend && .venv/bin/python -m pytest tests/test_language.py -q --tb=no"
   P5_frontend: "cd frontend-v3 && npx vitest run --reporter=dot 2>&1 | tail -30"
   P5_typecheck: "cd frontend-v3 && npx vue-tsc --noEmit"
   P5_build: "cd frontend-v3 && npm run build"

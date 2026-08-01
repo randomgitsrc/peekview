@@ -95,6 +95,30 @@ class TestDetectLanguage:
         assert detect_language("Makefile") == "makefile"
         assert detect_language("README") == "text"
 
+    def test_bdd_01_csv_returns_csv(self):
+        """BDD-01: .csv files return language='csv'."""
+        assert detect_language("data.csv") == "csv"
+
+    def test_bdd_02_tsv_returns_tsv(self):
+        """BDD-02: .tsv files return language='tsv' (not 'csv')."""
+        assert detect_language("data.tsv") == "tsv"
+
+    def test_bdd_03_json_returns_json(self):
+        """BDD-03: .json files return language='json'."""
+        assert detect_language("data.json") == "json"
+
+    def test_bdd_04_yaml_returns_yaml(self):
+        """BDD-04: .yaml files return language='yaml'."""
+        assert detect_language("data.yaml") == "yaml"
+
+    def test_bdd_05_yml_returns_yaml(self):
+        """BDD-05: .yml files return language='yaml'."""
+        assert detect_language("data.yml") == "yaml"
+
+    def test_bdd_06_xml_returns_xml(self):
+        """BDD-06: .xml files return language='xml'."""
+        assert detect_language("data.xml") == "xml"
+
 
 class TestIsBinaryContent:
     """Test binary content detection."""
@@ -216,6 +240,10 @@ class TestPlainTextLanguages:
         """Contains 'csv'."""
         assert "csv" in PLAIN_TEXT_LANGS
 
+    def test_contains_tsv(self):
+        """Contains 'tsv'."""
+        assert "tsv" in PLAIN_TEXT_LANGS
+
     def test_contains_all_no_grammar_langs(self):
         """All languages without Shiki grammar are in PLAIN_TEXT_LANGS."""
         no_grammar_langs = {
@@ -235,8 +263,8 @@ class TestPlainTextLanguages:
             assert lang in PLAIN_TEXT_LANGS, f"Missing no-grammar language: {lang}"
 
     def test_plain_text_langs_count(self):
-        """PLAIN_TEXT_LANGS has expected size (5 original + 9 new = 14)."""
-        assert len(PLAIN_TEXT_LANGS) == 14
+        """PLAIN_TEXT_LANGS has expected size (5 original + 9 new + 1 tsv = 15)."""
+        assert len(PLAIN_TEXT_LANGS) == 15
 
 
 class TestShikiLanguageIdAlignment:
