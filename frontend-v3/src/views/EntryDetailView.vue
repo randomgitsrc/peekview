@@ -21,8 +21,11 @@
       :auth-state="authState"
       :current-entry="currentEntry"
       :slug="slug"
+      :source-view-mode="sourceViewMode"
+      :is-rich-renderable="isRichRenderable"
       @toggle-file-tree="isFileTreeOpen = !isFileTreeOpen"
       @toggle-toc="isTocOpen = !isTocOpen"
+      @toggle-source-view="sourceViewMode = !sourceViewMode"
       @copy-content="copyContent"
       @toggle-share-dialog="shareDialogOpen = $event"
       @open-login="showLogin = true"
@@ -49,6 +52,11 @@
       :slug="slug"
       :is-markdown="isMarkdown"
       :is-html="isHtml"
+      :is-csv="isCsv"
+      :is-tsv="isTsv"
+      :is-json="isJson"
+      :is-yaml="isYaml"
+      :is-xml="isXml"
       :is-image="isImage"
       :is-binary="isBinary"
       :path-map="pathMap"
@@ -57,6 +65,8 @@
       :wrap-enabled="entryDetailStore.wrapEnabled"
       :can-wrap="entryDetailStore.canWrap"
       :is-multi-file="entryDetailStore.isMultiFile"
+      :source-view-mode="sourceViewMode"
+      :download-file="downloadFile"
       @select-file="entryDetailStore.selectFile"
       @navigate-file="handleNavigateFile"
       @scroll-to-heading="scrollToHeading"
@@ -77,8 +87,11 @@
       :show-toc-drawer="showTocDrawer"
       :overflow-items="overflowItems"
       :current-entry="currentEntry"
+      :source-view-mode="sourceViewMode"
+      :is-rich-renderable="isRichRenderable"
       @toggle-file-drawer="showFileDrawer = !showFileDrawer"
       @toggle-toc-drawer="showTocDrawer = !showTocDrawer"
+      @toggle-source-view="sourceViewMode = !sourceViewMode"
       @toggle-wrap="entryDetailStore.toggleWrap()"
       @copy-content="copyContent"
     />
@@ -142,7 +155,8 @@ provide(IsMobileKey, isMobile)
 provide(ZenAriaTextKey, zenAriaText)
 
 const {
-  isMarkdown, isHtml, isImage, isBinary, pathMap, siblingFileIds,
+  isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isRichRenderable,
+  isImage, isBinary, pathMap, siblingFileIds,
   entryTitle, tocHeadings, copyContent, downloadFile, downloadPack,
   scrollToHeading, handleNavigateFile,
 } = useEntryDetailComputed(slug, currentEntry, activeFile)
@@ -157,6 +171,11 @@ const shareDialogOpen = ref(false)
 const shareErrorState = ref(false)
 const isFileTreeOpen = ref(false)
 const isTocOpen = ref(false)
+const sourceViewMode = ref(false)
+
+watch(() => entryDetailStore.activeFile?.id, () => {
+  sourceViewMode.value = false
+})
 
 function isShareExpired(share: ShareInfo): boolean {
   return share.expiresAt ? new Date(share.expiresAt) <= new Date() : false

@@ -17,6 +17,14 @@ export function useEntryDetailComputed(
 
   const isMarkdown: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'markdown')
   const isHtml: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'html')
+  const isCsv: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'csv')
+  const isTsv: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'tsv')
+  const isJson: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'json')
+  const isYaml: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'yaml')
+  const isXml: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'xml')
+  const isRichRenderable: ComputedRef<boolean> = computed(() =>
+    isCsv.value || isTsv.value || isJson.value || isYaml.value || isXml.value || isMarkdown.value,
+  )
   const isImage: ComputedRef<boolean> = computed(() => {
     const file = activeFile.value
     if (!file) return false
@@ -118,7 +126,8 @@ export function useEntryDetailComputed(
   }
 
   return {
-    isMarkdown, isHtml, isImage, isBinary, pathMap, siblingFileIds,
+    isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isRichRenderable,
+    isImage, isBinary, pathMap, siblingFileIds,
     entryTitle, tocHeadings, extractHeadings,
     copyContent, downloadFile, downloadPack, scrollToHeading, handleNavigateFile,
   }

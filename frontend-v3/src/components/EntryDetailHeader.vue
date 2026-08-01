@@ -27,6 +27,11 @@
         <button v-if="isMarkdown && tocHeadings.length > 0" :class="['toggle-btn', { active: isTocOpen }]" @click="$emit('toggle-toc')" aria-label="Table of Contents" :aria-expanded="isTocOpen">
           <ListIcon :size="16" /><span class="tooltip">Table of Contents</span>
         </button>
+        <button v-if="isRichRenderable" :class="['toggle-btn', { active: sourceViewMode }]" @click="$emit('toggle-source-view')" :aria-label="sourceViewMode ? 'Show rendered view' : 'Show source code'" :aria-pressed="sourceViewMode">
+          <CodeIcon v-if="!sourceViewMode" :size="16" />
+          <EyeIcon v-else :size="16" />
+          <span class="tooltip">{{ sourceViewMode ? 'Render' : 'Source' }}</span>
+        </button>
         <span class="action-sep"></span>
         <button v-if="canCopy" class="icon-btn" @click="$emit('copy-content')" aria-label="Copy">
           <CopyIcon :size="16" /><span class="tooltip">Copy</span>
@@ -97,9 +102,11 @@ import {
   List as ListIcon,
   Copy as CopyIcon,
   Share2 as Share2Icon,
+  Code as CodeIcon,
+  Eye as EyeIcon,
 } from 'lucide-vue-next'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   entryTitle: string
   relativeTime: string
   fullTime: string
@@ -118,11 +125,17 @@ const props = defineProps<{
   authState: string
   currentEntry: Entry | null
   slug: string
-}>()
+  sourceViewMode?: boolean
+  isRichRenderable?: boolean
+}>(), {
+  sourceViewMode: false,
+  isRichRenderable: false,
+})
 
 const emit = defineEmits<{
   'toggle-file-tree': []
   'toggle-toc': []
+  'toggle-source-view': []
   'copy-content': []
   'toggle-share-dialog': [value: boolean]
   'open-login': []

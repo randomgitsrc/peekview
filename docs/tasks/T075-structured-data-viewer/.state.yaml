@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T075
 task_name: structured-data-viewer
 status: in_progress
@@ -16,8 +16,12 @@ history:
   - phase: P2
     date: 2026-08-01
     status: done
-    note: 方案 A (4 组子方案), plan-design-review approved (1 轮修订), gate exit 2
+    note: 方案 A (4 组子方案), plan-design-review approved (1 轮修订), gate exit 2, gate_commands python→venv 修正
   - phase: P3
     date: 2026-08-01
+    status: done
+    note: 94 测试用例 (52 vitest + 42 E2E), backend 3 failed + frontend 6 failed, check-tdd-red exit 0
+  - phase: P4
+    date: 2026-08-01
     status: in_progress
-    note: 派发 test-designer
+    note: 派发 implementer

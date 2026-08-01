@@ -13,6 +13,15 @@
       aria-label="Table of Contents">
       <ListIcon :size="16" />
     </button>
+    <button
+      v-if="isRichRenderable"
+      :class="['toggle-btn', { active: sourceViewMode }]"
+      @click="$emit('toggle-source-view')"
+      :aria-label="sourceViewMode ? 'Show rendered view' : 'Show source code'"
+      :aria-pressed="sourceViewMode">
+      <CodeIcon v-if="!sourceViewMode" :size="16" />
+      <EyeIcon v-else :size="16" />
+    </button>
     <div class="flex-spacer"></div>
     <template v-if="!isBinary">
       <button v-if="canWrap" :class="['bottom-btn', wrapEnabled && 'primary']" @click="$emit('toggle-wrap')">
@@ -36,6 +45,8 @@ import {
   Folder as FolderIcon,
   List as ListIcon,
   Copy as CopyIcon,
+  Code as CodeIcon,
+  Eye as EyeIcon,
 } from 'lucide-vue-next'
 
 defineProps<{
@@ -50,11 +61,14 @@ defineProps<{
   showTocDrawer: boolean
   overflowItems: OverflowMenuItem[]
   currentEntry: Entry | null
+  sourceViewMode: boolean
+  isRichRenderable: boolean
 }>()
 
 defineEmits<{
   'toggle-file-drawer': []
   'toggle-toc-drawer': []
+  'toggle-source-view': []
   'toggle-wrap': []
   'copy-content': []
 }>()
@@ -76,6 +90,7 @@ const isMobile = inject(IsMobileKey)!
 .toggle-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   position: relative;
   background: none;
   border: none;
@@ -83,6 +98,8 @@ const isMobile = inject(IsMobileKey)!
   padding: var(--space-1);
   border-radius: var(--radius-sm);
   color: var(--c-text-secondary);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .toggle-btn.active {
