@@ -145,3 +145,27 @@ else → CodeViewer
 **自查结果**：`vue-tsc --noEmit` 零错误；`npm run build` 成功；TableView+TreeView spec 26/26 全绿；相关回归 spec（T079 22 / t082 9 / zebra-stripe 15 / useTreeData 11 / useCsvParser 9 / useEntryDetailComputed 6 / t067 28 / t031-detail-view 1）全部通过。测试选择器改动已同步 P3-test-code 副本（TableView.spec.ts、structured-data-viewer.spec.ts 两处 diff 为空）。
 
 `[PROD_NOT_TOUCHED]` 本轮全程只读代码 + 本地 vitest/build，未触碰任何运行环境。
+
+## 10. BDD-42 回退修复记录（2026-08-01，P4 重试轮）
+
+**根因**：`entryDetail.selectFile()` 异步加载——`fileContent.value = ''` 先清空再 await fetch。期间 TreeView 以空 content mount，`watch(immediate)` 执行 `JSON.parse('')` 抛 SyntaxError → `emit('parse-error')` → `EntryDetailContent.parseError` 置位。之后 content 加载完成、TreeView 内部 parse 成功，但 `parseError` 无清除逻辑 → `showSourceView` 恒 true → 停留 CodeViewer。
+
+**修复**（`src/components/TreeView.vue` `parseTree()` 开头）：空/空白 content 视为「加载中」状态而非「解析失败」：
+
+```typescript
+function parseTree() {
+  if (truncated.value) return
+  if (!props.content.trim()) {
+    treeData.value = []
+    emptyMessage.value = '无数据'
+    return
+  }
+  // ... 原有逻辑
+}
+```
+
+**效果**：加载中（content=''）→ 不 emit parse-error，显示空树；fetch 完成后 content 更新 → watch 重触发 → parse 成功 → 渲染树。真正格式损坏仍 emit parse-error → 降级 CodeViewer + banner（BDD-49/50 保留）。
+
+**自查结果**：`npx vue-tsc --noEmit` 零错误；TreeView.spec 13/13 全绿；E2E `-g bdd_42` chromium + Mobile Chrome 2/2 passed（先 `make build-frontend` 重建 dist，E2E 加载旧产物会误报失败）。
+
+`[PROD_NOT_TOUCHED]` 本轮仅修改 TreeView.vue + 重建前端产物，未触碰生产服务/数据库。

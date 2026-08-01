@@ -78,6 +78,11 @@ provide(TreeExpandKey, { expandedPaths, togglePath })
 
 function parseTree() {
   if (truncated.value) return
+  if (!props.content.trim()) {
+    treeData.value = []
+    emptyMessage.value = '无数据'
+    return
+  }
   try {
     let root: unknown = null
     if (props.format === 'json') {

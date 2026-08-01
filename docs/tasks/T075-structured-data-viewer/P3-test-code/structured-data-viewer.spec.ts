@@ -10,6 +10,7 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 const EVIDENCE_DIR = 'docs/tasks/T075-structured-data-viewer/evidences'
 
 const CSV_120 = `name,age,city\n${Array.from({ length: 120 }, (_, i) => `user${i},${20 + (i % 60)},city${i % 10}`).join('\n')}`
+const CSV_300 = `name,age,city\n${Array.from({ length: 300 }, (_, i) => `user${i},${20 + (i % 60)},city${i % 10}`).join('\n')}`
 const CSV_QUOTED = `a,b\n"hello, world",x\n"line1\nline2",y\n"say ""hi""",z`
 const TSV_CONTENT = 'name\tage\tcity\nalice\t30\tbeijing\nbob\t25\tshanghai'
 const JSON_CONTENT = JSON.stringify({ name: 'alice', age: 30, admin: true, notes: null, tags: ['a', 'b'], meta: { level: 3 } }, null, 2)
@@ -33,6 +34,7 @@ async function createEntry(request: APIRequestContext, slug: string, summary: st
 test.beforeAll(async ({ request }) => {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
   await createEntry(request, 't075-csv', 'T075 CSV', [{ filename: 'data.csv', content: CSV_120 }])
+  await createEntry(request, 't075-csv-300', 'T075 CSV 300', [{ filename: 'data300.csv', content: CSV_300 }])
   await createEntry(request, 't075-csv-quoted', 'T075 CSV quoted', [{ filename: 'quoted.csv', content: CSV_QUOTED }])
   await createEntry(request, 't075-tsv', 'T075 TSV', [{ filename: 'data.tsv', content: TSV_CONTENT }])
   await createEntry(request, 't075-json', 'T075 JSON', [{ filename: 'data.json', content: JSON_CONTENT }])
@@ -128,8 +130,8 @@ test.describe('T075 Desktop 1280x800', () => {
     await expect(filter).toBeVisible()
     await filter.fill('user5')
     const rows = page.locator('tbody tr')
-    expect(await rows.count()).toBe(6)
-    for (let i = 0; i < 6; i++) {
+    expect(await rows.count()).toBe(11)
+    for (let i = 0; i < 11; i++) {
       await expect(rows.nth(i)).toContainText('user5')
     }
   })
@@ -143,11 +145,12 @@ test.describe('T075 Desktop 1280x800', () => {
   })
 
   test('test_bdd_20_per_page_switch_page_one', async ({ page }) => {
-    await gotoEntry(page, 't075-csv')
+    await gotoEntry(page, 't075-csv-300')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
     await page.locator('.page-num', { hasText: '3' }).first().click()
+    await expect(page.locator('tbody tr').first()).toContainText('user200')
     await page.locator('select.per-page-select').selectOption('50')
-    expect(await page.locator('tbody tr').count()).toBe(50)
+    await expect(page.locator('tbody tr')).toHaveCount(50)
     await expect(page.locator('.page-num.active')).toHaveText('1')
   })
 
@@ -228,7 +231,7 @@ test.describe('T075 Desktop 1280x800', () => {
     await expect(search).toBeVisible()
     await search.fill('alice')
     expect(await page.locator('.search-highlight').count()).toBeGreaterThan(0)
-    await expect(page.locator('[aria-live="polite"]').first()).toContainText(/\d+/)
+    await expect(page.locator('.search-match-count')).toContainText(/\d+/)
   })
 
   test('test_bdd_31_click_copy_value', async ({ page, context }) => {
@@ -430,7 +433,7 @@ test.describe('T075 Mobile 390x844', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test('test_bdd_52_mobile_responsive', async ({ page }) => {
-    await gotoEntry(page, 't075-csv')
+    await gotoEntry(page, 't075-csv-wide')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
 
     // 表格可横向滚动

@@ -1,0 +1,28 @@
+# T075 frontend P5 fail-list
+
+单元测试 (vitest): 0 真失败。
+- 全量合跑 2 个 unhandled errors（[vitest-worker]: Timeout calling "onTaskUpdate"，源自 TableView.spec.ts test_bdd_22 50000 行测试）→ RPC 通信超时，环境问题。分离验证（TableView 单独 13/13 exit 0 + 排除后 1168 passed exit 0）证明 0 断言失败。
+
+E2E (Playwright, 5 唯一失败 × chromium + Mobile Chrome = 10 次失败):
+
+FAILED test_bdd_18_filter_contains
+- 现象: filter 'user5' 期望 6 行，实际 11 行
+- 定性: spec 断言错误。CSV_120 中匹配 'user5' 的行 = user5 + user50~user59 = 11 行，实现行为正确，spec 期望值 6 错误（应 11）
+
+FAILED test_bdd_20_per_page_switch_page_one
+- 现象: 等待 .page-num 文本 '3' 超时
+- 定性: spec 测试数据不足。CSV_120 仅 120 数据行，per_page=100 只有 2 页，不存在第 3 页。spec 应改用 >200 行数据
+
+FAILED test_bdd_30_search_highlight
+- 现象: locator('[aria-live="polite"]').first() 匹配到页面中其他组件的空 sr-only span（""），期望 /\d+/ 失败
+- 定性: spec 选择器缺陷。TreeView 的搜索播报元素是 .search-match-count（实现存在且正常），spec 用通用 [aria-live="polite"] 且 .first() 选错元素，应定位 .search-match-count
+
+FAILED test_bdd_42_file_switch_resets_render
+- 现象: 点击 data.json 后 .tree-view 未出现，出现 parse-error-banner（"Unexpected end of JSON input"）+ code-viewer
+- 定性: **真 bug（实现缺陷）**。selectFile 异步加载：fileContent 先置 ''，TreeView 以空 content mount → JSON.parse('') 抛错 → emit parse-error → EntryDetailContent.parseError 残留；content 加载完成后 parseError 未被清除（watch 仅监听 activeFile.id / sourceViewMode），showSourceView 恒 true → 停留在源码视图。文件切换重置为渲染视图的行为失败
+
+FAILED test_bdd_52_mobile_responsive
+- 现象: t075-csv（3 列）在 390px 下 .table-scroll scrollWidth > clientWidth 为 false
+- 定性: spec 测试数据错误。3 列短内容在 390px 不溢出，应像 test_bdd_21 一样用 30 列 CSV_WIDE 测横向滚动
+
+EXIT_CODE: 1

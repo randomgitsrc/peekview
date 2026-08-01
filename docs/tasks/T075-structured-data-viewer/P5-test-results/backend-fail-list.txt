@@ -1,0 +1,3 @@
+# P5 后端失败测试清单 — T075 structured-data-viewer
+# 无失败：test_language.py 63 passed（0 failed），全量 tests/ 1008 passed, 2 skipped（0 failed）
+EXIT_CODE: 0
