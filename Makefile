@@ -4,7 +4,7 @@
 # Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
 # Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-quick debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
 
 # Default target
 help:
@@ -24,6 +24,7 @@ help:
 	@echo ""
 	@echo "DEBUG (before release, see docs/process/debug-workflow.md):"
 	@echo "  make debug          - Full debug: build + start + E2E test"
+	@echo "  make debug-quick    - Quick debug: build-fast + start + seed (no E2E, ~20s)"
 	@echo "  make debug-build    - Build and verify static files"
 	@echo "  make debug-start    - Start dev server on port 8888"
 	@echo "  make debug-stop     - Stop dev server"
@@ -494,6 +495,15 @@ debug: debug-build debug-start debug-verify-isolation debug-test debug-test-mcp
 	@echo "  make debug-stop     - 停止调试服务"
 	@echo "  make pre-publish    - 预发布检查"
 	@echo "  make publish        - 发布到 PyPI"
+
+# Quick debug: build (skip clean/npm-ci) + start + seed — for visual inspection only
+debug-quick: build-frontend-fast debug-start debug-seed
+	@echo ""
+	@echo "=== 快速调试就绪 ==="
+	@echo "✓ 服务运行在 http://127.0.0.1:8888"
+	@echo "✓ 测试数据已灌入"
+	@echo ""
+	@echo "停止: make debug-stop"
 
 debug-build: clean build-frontend
 	@echo ""

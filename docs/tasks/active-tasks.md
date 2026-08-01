@@ -12,6 +12,7 @@
 |------|----------|------|------|--------|------|----------|----------|
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
+| T085 | render-regression-fix | 🔄 进行中 | P0 | 🟠 | T075✅ | 2026-08-01 | 2026-08-01 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
@@ -28,6 +29,10 @@ PeekView 后端镜像 + MCP Server 镜像 + docker-compose 模板 + CI 自动推
 ### T074: display_name null 修复 ✅ hotfixed
 
 ≤3 行改动 + 现有测试覆盖，直接 hotfix 不走 agate。ProfileTab.vue `trim() || null`，BDD-03 测试已绿。
+
+### T085: 详情页渲染回归修复
+
+T075 上线后发现的 4 个渲染缺陷：①SVG 被渲染为 TreeView（调度链 isXml 截获 isImage）；②源码视图竖向无法滚动（T084 移除 code-body flex/min-height）；③Markdown 渲染边距丢失（T084 移除 markdown-body padding，content-area 16px 不够 DESIGN.md 要求的 32px）；④滚动到底端抖动（setupScrollHide 无边界保护 + 无 overscroll-behavior）。3 个是 T084 回归，1 个是 T075 调度链缺陷。53 BDD 全 PASS 未覆盖——根因是测试数据丰富度不足。
 
 ### T075: 结构化数据查看器
 
@@ -200,6 +205,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-01 | 立项 T085 | render-regression-fix：SVG→TreeView / 源码视图不滚动 / Markdown 边距丢失 / 滚动抖动（T084 回归 + T075 调度链缺陷）|
 | 2026-08-01 | 完成 T075 | structured-data-viewer → v0.14.0（TableView CSV/TSV + TreeView JSON/YAML/XML + 源码/渲染切换 + .tsv 映射修正；53 BDD 全 PASS + 1008 backend + 1177 frontend + E2E 84/84）|
 | 2026-07-31 | 完成 T079 | interaction-consistency → v0.13.0（AuthButton + UserMenu 共享组件 + 移除 Explore + tag 改 BaseTag；17 BDD 全 PASS + 1125 passed 零回归）|
 | 2026-07-31 | 完成 T083 | cjk-search-fix → v0.12.3（json_each 精确匹配 + jieba 预分词 + 连字符→空格 + trigger 降级 + backfill 版本标记；17 BDD 全 PASS + 1001 passed 零回归）|

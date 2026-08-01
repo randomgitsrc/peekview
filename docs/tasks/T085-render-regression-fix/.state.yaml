@@ -1,0 +1,11 @@
+phase: P0
+task_id: T085
+task_name: render-regression-fix
+status: in_progress
+created: 2026-08-01
+updated: 2026-08-01
+history:
+  - phase: P0
+    date: 2026-08-01
+    status: done
+    note: P0-brief 完成

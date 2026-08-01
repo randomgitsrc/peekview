@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#bg)"/>
+
+  <text x="400" y="50" font-family="system-ui, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">PeekView 架构图</text>
+
+  <g transform="translate(50, 100)">
+    <rect width="180" height="100" rx="12" fill="#1e293b" stroke="url(#accent)" stroke-width="2" filter="url(#glow)"/>
+    <text x="90" y="40" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#a5b4fc" text-anchor="middle">前端</text>
+    <text x="90" y="65" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">Vue 3 + TS</text>
+    <text x="90" y="82" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">Shiki + Mermaid</text>
+  </g>
+
+  <g transform="translate(310, 100)">
+    <rect width="180" height="100" rx="12" fill="#1e293b" stroke="url(#accent)" stroke-width="2" filter="url(#glow)"/>
+    <text x="90" y="40" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#a5b4fc" text-anchor="middle">后端</text>
+    <text x="90" y="65" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">FastAPI + SQLModel</text>
+    <text x="90" y="82" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">SQLite WAL + FTS5</text>
+  </g>
+
+  <g transform="translate(570, 100)">
+    <rect width="180" height="100" rx="12" fill="#1e293b" stroke="url(#accent)" stroke-width="2" filter="url(#glow)"/>
+    <text x="90" y="40" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#a5b4fc" text-anchor="middle">MCP Server</text>
+    <text x="90" y="65" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">Node.js + TS</text>
+    <text x="90" y="82" font-family="monospace" font-size="11" fill="#94a3b8" text-anchor="middle">Streamable HTTP</text>
+  </g>
+
+  <line x1="230" y1="150" x2="310" y2="150" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="490" y1="150" x2="570" y2="150" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <g transform="translate(150, 280)">
+    <rect width="500" height="250" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="250" y="35" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" text-anchor="middle">数据流</text>
+
+    <rect x="20" y="60" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="90" y="90" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">create_entry</text>
+
+    <rect x="180" y="60" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="250" y="90" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">SQLModel</text>
+
+    <rect x="340" y="60" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="410" y="90" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">SQLite WAL</text>
+
+    <line x1="160" y1="85" x2="180" y2="85" stroke="#475569" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+    <line x1="320" y1="85" x2="340" y2="85" stroke="#475569" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+    <rect x="20" y="140" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="90" y="170" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">FTS5 搜索</text>
+
+    <rect x="180" y="140" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="250" y="170" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">jieba 分词</text>
+
+    <rect x="340" y="140" width="140" height="50" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="410" y="170" font-family="monospace" font-size="12" fill="#cbd5e1" text-anchor="middle">MATCH 查询</text>
+
+    <line x1="160" y1="165" x2="180" y2="165" stroke="#475569" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+    <line x1="320" y1="165" x2="340" y2="165" stroke="#475569" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  </g>
+
+  <text x="400" y="570" font-family="system-ui, sans-serif" font-size="12" fill="#475569" text-anchor="middle">PeekView v0.14.0 — 2026-08-01</text>
+</svg>
