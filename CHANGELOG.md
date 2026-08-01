@@ -5,6 +5,25 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.14.0] - 2026-08-01
+
+### 新增
+
+- 结构化数据富渲染：CSV/TSV 文件渲染为可分页/排序/筛选/横向滚动的表格（TableView，TanStack Table v8 headless + 复用 Pagination.vue）(T075)
+- JSON/YAML/XML 文件渲染为递归树视图（TreeView，展开/折叠/类型标签/路径搜索/点击复制）(T075)
+- 源码/渲染统一切换机制：所有富渲染格式（含 Markdown）支持源码 ↔ 渲染视图切换，文件切换时重置为渲染视图 (T075)
+- 截断保护：CSV >50000 行 / JSON/YAML/XML >2MB 显示截断提示 + 下载完整文件按钮 (T075)
+
+### 修复
+
+- 后端 language.py 扩展名映射修正：`.tsv` 从错误的 `'csv'` 修正为 `'tsv'`，TSV 文件可正确渲染为表格（tab 分隔）(T075)
+- 解析失败降级：CSV/JSON 解析失败时显示错误提示 + 自动降级源码视图，页面不崩溃 (T075)
+- 文件切换时 parse-error 残留：TreeView 空 content（加载中）不再误报解析失败 (T075)
+
+### 依赖
+
+- 新增 @tanstack/vue-table + js-yaml（前端结构化数据解析/表格渲染）(T075)
+
 ## [0.11.1] - 2026-07-26
 
 ### 修复
