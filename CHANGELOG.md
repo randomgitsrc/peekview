@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.14.1] - 2026-08-02
+
+### 修复
+
+- SVG 文件恢复图片预览渲染（T084/T075 调度链回归修复）(T085)
+- 源码视图竖向滚动恢复（.code-body flex:1 + min-height:0 恢复）(T085)
+- Markdown 渲染视图边距恢复（scoped padding 32px/16px）(T085)
+- 滚动到底端抖动修复（overscroll-behavior + 边界保护）(T085)
+- TableView per-page 下拉框改自定义组件 + 真实点击验证（修复选不中）(T085)
+
 ## [0.14.0] - 2026-08-01
 
 ### 新增
