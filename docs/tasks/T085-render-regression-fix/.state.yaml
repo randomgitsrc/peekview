@@ -1,7 +1,7 @@
-phase: P8
+phase: DONE
 task_id: T085
 task_name: render-regression-fix
-status: in_progress
+status: done
 created: 2026-08-01
 updated: 2026-08-02
 history:
@@ -36,8 +36,8 @@ history:
   - phase: P7
     date: 2026-08-02
     status: done
-    note: 一致性检查 approved, BLOCKER=0, gate exit 0
+    note: 一致性检查 approved, BLOCKER=0
   - phase: P8
     date: 2026-08-02
-    status: in_progress
-    note: 发布准备
+    status: done
+    note: bump patch v0.14.0→v0.14.1, tag v0.14.1

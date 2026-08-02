@@ -12,7 +12,7 @@
 |------|----------|------|------|--------|------|----------|----------|
 | T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
-| T085 | render-regression-fix | 🔄 进行中 | P0 | 🟠 | T075✅ | 2026-08-01 | 2026-08-01 |
+| T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
@@ -90,6 +90,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| T085 | render-regression-fix | v0.14.1 | 🟠 | 2026-08-02 |
 | T075 | structured-data-viewer | v0.14.0 | 🟠 | 2026-08-01 |
 | T079 | interaction-consistency | v0.13.0 | 🟠 | 2026-07-31 |
 | T083 | cjk-search-fix | v0.12.3 | 🟡 | 2026-07-31 |
@@ -205,6 +206,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-02 | 完成 T085 | render-regression-fix → v0.14.1（SVG调度/源码滚动/Markdown边距/滚动抖动/per-page下拉框 5项修复；11 BDD 全 PASS）|
 | 2026-08-01 | 立项 T085 | render-regression-fix：SVG→TreeView / 源码视图不滚动 / Markdown 边距丢失 / 滚动抖动（T084 回归 + T075 调度链缺陷）|
 | 2026-08-01 | 完成 T075 | structured-data-viewer → v0.14.0（TableView CSV/TSV + TreeView JSON/YAML/XML + 源码/渲染切换 + .tsv 映射修正；53 BDD 全 PASS + 1008 backend + 1177 frontend + E2E 84/84）|
 | 2026-07-31 | 完成 T079 | interaction-consistency → v0.13.0（AuthButton + UserMenu 共享组件 + 移除 Explore + tag 改 BaseTag；17 BDD 全 PASS + 1125 passed 零回归）|
