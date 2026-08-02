@@ -13,7 +13,7 @@ agent: main
 
 ## 1. 任务背景
 
-T075（structured-data-viewer v0.14.0）上线后，用户在实际使用中发现 4 个用户可见的渲染缺陷。经排查，3 个是 T084（detail-scroll-architecture）的回归，1 个是 T075 新增调度链引入的缺陷。这些缺陷在 T075 的 53 BDD 验收中未被覆盖——根因是测试数据丰富度不足，SVG/图片等格式的调度链路径未被测试。
+T075（structured-data-viewer v0.14.0）上线后，用户在实际使用中发现 5 个用户可见的渲染缺陷。经排查，3 个是 T084（detail-scroll-architecture）的回归，2 个是 T075 新增功能引入的缺陷（SVG 调度链 + per-page 下拉框）。这些缺陷在 T075 的 53 BDD 验收中未被覆盖——根因是测试数据丰富度不足 + E2E 用程序化方法（selectOption）绕过真实交互。
 
 ## 2. 问题清单
 
@@ -54,6 +54,28 @@ T075（structured-data-viewer v0.14.0）上线后，用户在实际使用中发�
 - 方案 B：MarkdownViewer 的 `.markdown-body` 恢复 scoped padding（`var(--space-5)` 桌面 / 移动端 media query）——只影响 Markdown，不影响其他 viewer
 - 推荐 B：各 viewer 独立管理自身 padding，content-area 只提供基础边距
 
+### P5: TableView per-page 下拉框不符合 DESIGN.md 且真实点击无法选中
+
+**现象**：TableView 底部"每页行数"下拉框（`select.per-page-select`，50/100/500）：
+1. 使用原生 `<select>` 元素，样式简陋，无设计感——未遵循 DESIGN.md 的组件规范
+2. 真实浏览器点击无法弹出选项列表，无法选中——"选不中"
+
+**根因**：
+1. **原生 select 未样式化**：直接用了 `<select>` 裸元素，仅加了少量 padding/border，没有遵循 DESIGN.md 的交互组件规范（自定义下拉、触达目标 ≥44px 等）
+2. **E2E 测试用 `selectOption()` 程序化方法**：Playwright 的 `selectOption()` 直接设置 select 值并触发 change，**不经过真实用户点击**——所以 E2E 显示 PASS，但真实点击无法弹出。这是测试盲区
+
+**E2E 测试盲区确认**：
+- `frontend-v3/e2e/structured-data-viewer.spec.ts` 的 `test_bdd_20_per_page_switch_page_one` 用 `page.locator('select.per-page-select').selectOption('50')`——程序化设置，绕过真实 UI 交互
+- 同文件 `test_bdd_19_default_per_page_100` 用 `toHaveValue('100')`——只验证初始值，不验证下拉交互
+- 所以 P6 验收 53/53 PASS 但用户真实点击仍然失败
+
+**修复方向**：
+- 方案 A（推荐）：用自定义下拉组件（如 BaseSelect / 复用现有 Dropdown 模式）替代原生 select，遵循 DESIGN.md 交互规范（触达目标 ≥44px、hover/focus 状态、选项列表样式）
+- E2E 测试改为真实点击流程（`click()` 打开 → `click()` 选项），不再用 `selectOption()` 绕过
+- 或保留原生 select 但增加 `appearance: none` + 自定义箭头 + 足够触达区域
+
+**P6 验收要求**：per-page 下拉框必须通过真实点击验证（点击弹出 → 点击选项 → 行数变化 → 回到第一页）
+
 ### P4: 滚动到底端抖动
 
 **现象**：在详情页内容区滚动到底端后继续滚动（滚轮/触控板），页面出现抖动/弹跳。
@@ -83,7 +105,8 @@ prod_not_touched: "[PROD_NOT_TOUCHED]"
 | P2 修复可能引入 CodeViewer 在非切换路径（fallback）的高度问题 | fallback CodeViewer 也用同一 CSS | 两个路径都要验证 |
 | P3 padding 修复可能与其他 viewer 的 padding 冲突 | TableView/TreeView 也有边距 | 方案 B 只改 MarkdownViewer 不影响其他 |
 | P1 SVG 修复后 isImage 分支需要验证 SVG 的特殊渲染 | SVG 既是图片又是代码 | ImageViewer 已有 SVG 支持（可切换代码/预览） |
-| 4 个修复可能互相影响 | content-area padding + overflow + scroll-hide 联动 | P6 必须 Playwright 实跑验收 |
+| P5 下拉框修复可能引入新组件依赖 | 自定义下拉组件 vs 原生 select | 优先复用现有 Dropdown/BaseSelect 模式 |
+| 5 个修复可能互相影响 | content-area padding + overflow + scroll-hide + select 联动 | P6 必须 Playwright 实跑验收（真实点击，非 selectOption） |
 
 ## 5. 裁剪倾向
 
@@ -112,6 +135,8 @@ phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 | `frontend-v3/src/styles/markdown.css` | 全局 padding 移动端 media query 恢复 | P3 |
 | `frontend-v3/src/composables/useResponsiveLayout.ts` | setupScrollHide 边界保护 | P4 |
 | `frontend-v3/src/components/EntryDetailContent.vue` | content-area overscroll-behavior | P4 |
+| `frontend-v3/src/components/TableView.vue` | per-page 下拉框改自定义组件 + E2E 改真实点击 | P5 |
+| `frontend-v3/e2e/structured-data-viewer.spec.ts` | BDD-19/20 改真实点击验证 select | P5 |
 
 ### 不改什么
 

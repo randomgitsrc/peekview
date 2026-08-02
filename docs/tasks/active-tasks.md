@@ -32,7 +32,7 @@ PeekView 后端镜像 + MCP Server 镜像 + docker-compose 模板 + CI 自动推
 
 ### T085: 详情页渲染回归修复
 
-T075 上线后发现的 4 个渲染缺陷：①SVG 被渲染为 TreeView（调度链 isXml 截获 isImage）；②源码视图竖向无法滚动（T084 移除 code-body flex/min-height）；③Markdown 渲染边距丢失（T084 移除 markdown-body padding，content-area 16px 不够 DESIGN.md 要求的 32px）；④滚动到底端抖动（setupScrollHide 无边界保护 + 无 overscroll-behavior）。3 个是 T084 回归，1 个是 T075 调度链缺陷。53 BDD 全 PASS 未覆盖——根因是测试数据丰富度不足。
+T075 上线后发现的 5 个渲染缺陷：①SVG 被渲染为 TreeView（调度链 isXml 截获 isImage）；②源码视图竖向无法滚动（T084 移除 code-body flex/min-height）；③Markdown 渲染边距丢失（T084 移除 markdown-body padding）；④滚动到底端抖动（setupScrollHide 无边界保护）；⑤TableView per-page 下拉框不符合 DESIGN.md 且真实点击无法选中（原生 select + E2E selectOption 绕过真实交互）。3 个是 T084 回归，2 个是 T075 缺陷。53 BDD 全 PASS 未覆盖——根因是测试数据丰富度不足 + E2E 程序化方法绕过真实点击。
 
 ### T075: 结构化数据查看器
 
