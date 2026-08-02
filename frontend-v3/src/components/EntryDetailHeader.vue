@@ -68,8 +68,8 @@
     </div>
   </header>
 
-  <!-- Mobile meta-tags-bar (scroll-hide) -->
-  <div v-if="isMobile" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
+  <!-- Mobile meta-tags-bar (scroll-hide) — always rendered for scroll-hide state, hidden on desktop via v-show -->
+  <div v-show="isMobile" class="meta-tags-bar" :class="{ hidden: metaTagsHidden }">
     <router-link v-if="currentEntry?.username" :to="`/users/${currentEntry.username}`" class="owner-link">@{{ currentEntry.username }}</router-link>
     <span class="meta-dot"></span><span>{{ relativeTime }}</span>
     <span class="meta-sep"></span>

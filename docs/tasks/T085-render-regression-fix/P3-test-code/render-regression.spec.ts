@@ -28,7 +28,7 @@ const XML_CONTENT = `<?xml version="1.0" encoding="UTF-8"?>
   <item id="3">Third item</item>
 </root>`
 
-const CSV_150 = `name,age,city\n${Array.from({ length: 150 }, (_, i) => `user${i},${20 + (i % 60)},city${i % 10}`).join('\n')}`
+const CSV_300 = `name,age,city\n${Array.from({ length: 300 }, (_, i) => `user${i},${20 + (i % 60)},city${i % 10}`).join('\n')}`
 
 const LONG_TEXT_LINES = Array.from({ length: 200 }, (_, i) => `Line ${i + 1}: This is a long text file for testing vertical scroll in source view.`).join('\n')
 
@@ -46,13 +46,13 @@ test.beforeAll(async ({ request }) => {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
   await createEntry(request, 't085-svg', 'T085 SVG', [{ filename: 'icon.svg', content: SVG_CONTENT }])
   await createEntry(request, 't085-xml', 'T085 XML', [{ filename: 'data.xml', content: XML_CONTENT }])
-  await createEntry(request, 't085-csv-150', 'T085 CSV 150', [{ filename: 'data.csv', content: CSV_150 }])
+  await createEntry(request, 't085-csv-300', 'T085 CSV 300', [{ filename: 'data.csv', content: CSV_300 }])
   await createEntry(request, 't085-long-text', 'T085 Long Text', [{ filename: 'long.txt', content: LONG_TEXT_LINES }])
   await createEntry(request, 't085-markdown', 'T085 Markdown', [{ filename: 'readme.md', content: MARKDOWN_LONG }])
   await createEntry(request, 't085-multi', 'T085 Multi', [
     { filename: 'icon.svg', content: SVG_CONTENT },
     { filename: 'data.xml', content: XML_CONTENT },
-    { filename: 'data.csv', content: CSV_150 },
+    { filename: 'data.csv', content: CSV_300 },
   ])
 })
 
@@ -93,7 +93,7 @@ test.describe('T085 Desktop 1280x800', () => {
 
   // ---------- BDD-4: 富渲染格式源码视图可纵向滚动到底 ----------
   test('test_bdd_4_source_view_scroll_to_bottom', async ({ page }) => {
-    await gotoEntry(page, 't085-csv-150')
+    await gotoEntry(page, 't085-csv-300')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
 
     await page.locator('button[aria-label="Show source code"]').click()
@@ -204,7 +204,7 @@ test.describe('T085 Desktop 1280x800', () => {
 
   // ---------- BDD-9: 真实点击可选中每页行数并回到第 1 页 ----------
   test('test_bdd_9_real_click_per_page_select', async ({ page }) => {
-    await gotoEntry(page, 't085-csv-150')
+    await gotoEntry(page, 't085-csv-300')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
 
     const page3 = page.locator('.page-num', { hasText: '3' }).first()
@@ -229,7 +229,7 @@ test.describe('T085 Desktop 1280x800', () => {
 
   // ---------- BDD-11: 每页行数控件支持键盘操作 ----------
   test('test_bdd_11_keyboard_per_page_e2e', async ({ page }) => {
-    await gotoEntry(page, 't085-csv-150')
+    await gotoEntry(page, 't085-csv-300')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
 
     const trigger = page.locator('button.per-page-trigger')
@@ -286,7 +286,7 @@ test.describe('T085 Mobile 390x844', () => {
 
   // ---------- BDD-10: 每页行数控件触达目标 ≥44px ----------
   test('test_bdd_10_per_page_touch_target_44px', async ({ page }) => {
-    await gotoEntry(page, 't085-csv-150')
+    await gotoEntry(page, 't085-csv-300')
     await expect(page.locator('.table-view')).toBeVisible({ timeout: 10000 })
 
     const trigger = page.locator('button.per-page-trigger')

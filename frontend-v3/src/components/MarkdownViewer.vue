@@ -127,6 +127,13 @@ watch(() => [props.content, theme.value, props.pathMap, props.slug], async () =>
   margin: 0 auto;
   padding: var(--space-5);
 }
+
+@media (max-width: 640px) {
+  .markdown-body {
+    margin: 0 var(--space-4);
+    padding: var(--space-4);
+  }
+}
 </style>
 
 <style>
