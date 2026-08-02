@@ -1,4 +1,4 @@
-phase: P7
+phase: P8
 task_id: T085
 task_name: render-regression-fix
 status: in_progress
@@ -20,11 +20,11 @@ history:
   - phase: P3
     date: 2026-08-02
     status: done
-    note: 11 BDD 1:1 映射, 12 红灯, check-tdd-red exit 0
+    note: 11 BDD 1:1 映射, 12 红灯
   - phase: P4
     date: 2026-08-02
     status: done
-    note: 5 缺陷修复 + P5 回退修复, design-review approved
+    note: 5 缺陷修复 + P5 回退, design-review approved
   - phase: P5
     date: 2026-08-02
     status: done
@@ -32,8 +32,12 @@ history:
   - phase: P6
     date: 2026-08-02
     status: done
-    note: 11/11 BDD PASS, vision blocker=0, gate 4项全过
+    note: 11/11 BDD PASS, vision blocker=0
   - phase: P7
     date: 2026-08-02
+    status: done
+    note: 一致性检查 approved, BLOCKER=0, gate exit 0
+  - phase: P8
+    date: 2026-08-02
     status: in_progress
-    note: 派发 consistency-reviewer
+    note: 发布准备
