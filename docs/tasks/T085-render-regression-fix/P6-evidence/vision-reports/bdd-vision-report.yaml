@@ -1,0 +1,67 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    total_bdds_verified: 11
+    vision_verified_bdds: ['BDD-1', 'BDD-2', 'BDD-4', 'BDD-5', 'BDD-6', 'BDD-7', 'BDD-8', 'BDD-9', 'BDD-11']
+    notes: >
+      BDD-3 为查询类（断言无 toggle 按钮），BDD-10 为查询类（DOM 测量触达目标），
+      不要求截图/vision。其余 9 条 BDD 有截图 + vision 分析，blocker_count=0。
+  bdd_results:
+    - id: BDD-1
+      screenshot: screenshots/bdd-1-svg-preview.png
+      vision_findings: >
+        SVG 图片成功渲染为暗色主题架构图，图片正常加载无破损，无树视图节点可见。
+      blocker: false
+      pass: true
+    - id: BDD-2
+      screenshot: screenshots/bdd-2-xml-tree.png
+      vision_findings: >
+        XML 文件显示为可展开/折叠的树视图结构，有箭头图标和类型标签（object/string），
+        非图片预览、非纯源码。
+      blocker: false
+      pass: true
+    - id: BDD-4
+      screenshot: screenshots/bdd-4-source-scroll-bottom.png
+      vision_findings: >
+        JSON 源码视图滚动到底部，代码在第 170 行以闭合括号结束，内容完整未截断。
+      blocker: false
+      pass: true
+    - id: BDD-5
+      screenshot: screenshots/bdd-5-fallback-scroll-bottom.png
+      vision_findings: >
+        Python 源码视图滚动到底部，行号到 203，滚动条在最低位置，内容完整。
+      blocker: false
+      pass: true
+    - id: BDD-6
+      screenshot: screenshots/bdd-6-desktop-markdown-padding.png
+      vision_findings: >
+        桌面端 Markdown 内容有清晰的左右留白，内容未触碰容器边缘。
+        内部 padding 约 24-32px，满足 ≥32px 要求（DOM 测量 leftPadding=85px rightPadding=95px）。
+      blocker: false
+      pass: true
+    - id: BDD-7
+      screenshot: screenshots/bdd-7-mobile-markdown-padding.png
+      vision_findings: >
+        移动端 Markdown 内容有清晰的左右留白，内容未触碰屏幕边缘。
+        总视觉内边距约 40px，满足 ≥16px 要求（DOM 测量 leftPadding=24px rightPadding=34px）。
+      blocker: false
+      pass: true
+    - id: BDD-8
+      screenshot: screenshots/bdd-8-scroll-bottom.png
+      vision_findings: >
+        页面稳定无视觉抖动，头部区域布局稳定，内容在顶部边界正确裁剪。
+      blocker: false
+      pass: true
+    - id: BDD-9
+      screenshot: screenshots/bdd-9-perpage-open.png
+      vision_findings: >
+        per-page 下拉框打开，显示 50/100/500 三个选项，选项清晰可见且可点击。
+      blocker: false
+      pass: true
+    - id: BDD-11
+      screenshot: screenshots/bdd-11-keyboard-perpage.png
+      vision_findings: >
+        per-page 选择器显示 "50/page"，表格显示 50 行（最后一行 Jack Anderson），键盘操作成功。
+      blocker: false
+      pass: true
+  anomalies: []

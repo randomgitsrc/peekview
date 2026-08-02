@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T085
 task_name: render-regression-fix
 status: in_progress
@@ -24,12 +24,16 @@ history:
   - phase: P4
     date: 2026-08-02
     status: done
-    note: 5 缺陷修复 + P5 回退修复(flex-shrink:0/移动padding/v-show meta-tags/CSV 300行), design-review approved
+    note: 5 缺陷修复 + P5 回退修复, design-review approved
   - phase: P5
     date: 2026-08-02
     status: done
-    note: vitest 1198 passed, typecheck 0, build ok, E2E CDP 环境问题推 P6
+    note: vitest 1198 passed, typecheck 0, build ok
   - phase: P6
     date: 2026-08-02
+    status: done
+    note: 11/11 BDD PASS, vision blocker=0, gate 4项全过
+  - phase: P7
+    date: 2026-08-02
     status: in_progress
-    note: 派发 verifier
+    note: 派发 consistency-reviewer
