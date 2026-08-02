@@ -37,7 +37,7 @@
           <MarkdownViewer v-if="!sourceViewMode" :content="fileContent" :path-map="pathMap" :slug="slug" :headings="tocHeadings" @select-heading="$emit('scroll-to-heading', $event)" @navigate-file="$emit('navigate-file', $event)" />
           <CodeViewer v-else :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
         </template>
-        <template v-else-if="isCsv || isTsv || isJson || isYaml || isXml">
+        <template v-else-if="isCsv || isTsv || isJson || isYaml || (isXml && !isSvg)">
           <CodeViewer v-if="showSourceView" :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
           <TableView v-else-if="isCsv || isTsv" :content="fileContent" :delimiter="isTsv ? '\t' : ','" :filename="activeFile.filename" :download-fn="downloadFile" @parse-error="onParseError" />
           <TreeView v-else :content="fileContent" :format="treeFormat" :filename="activeFile.filename" :download-fn="downloadFile" @parse-error="onParseError" />
@@ -124,6 +124,7 @@ const props = defineProps<{
   isJson: boolean
   isYaml: boolean
   isXml: boolean
+  isSvg: boolean
   isImage: boolean
   isBinary: boolean
   pathMap: PathMap | null
@@ -171,7 +172,7 @@ watch(() => props.sourceViewMode, () => {
 <style scoped>
 .detail-content { display: flex; flex: 1; overflow: hidden; }
 .file-sidebar { width: 200px; border-right: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
-.content-area { flex: 1; overflow-y: auto; outline: none; padding: var(--space-4); }
+.content-area { flex: 1; overflow-y: auto; outline: none; padding: var(--space-4); overscroll-behavior: y none; }
 @media (max-width: 640px) { .content-area { padding: var(--space-3) var(--space-2); } }
 .toc-sidebar { width: 240px; border-left: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
 .loading-state { padding: var(--space-5); }

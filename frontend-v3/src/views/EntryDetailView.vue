@@ -57,6 +57,7 @@
       :is-json="isJson"
       :is-yaml="isYaml"
       :is-xml="isXml"
+      :is-svg="isSvg"
       :is-image="isImage"
       :is-binary="isBinary"
       :path-map="pathMap"
@@ -155,7 +156,7 @@ provide(IsMobileKey, isMobile)
 provide(ZenAriaTextKey, zenAriaText)
 
 const {
-  isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isRichRenderable,
+  isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isSvg, isRichRenderable,
   isImage, isBinary, pathMap, siblingFileIds,
   entryTitle, tocHeadings, copyContent, downloadFile, downloadPack,
   scrollToHeading, handleNavigateFile,

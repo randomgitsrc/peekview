@@ -125,6 +125,7 @@ watch(() => [props.content, theme.value, props.pathMap, props.slug], async () =>
 .markdown-body {
   max-width: 900px;
   margin: 0 auto;
+  padding: var(--space-5);
 }
 </style>
 

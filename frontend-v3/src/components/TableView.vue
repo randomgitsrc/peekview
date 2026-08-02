@@ -58,11 +58,39 @@
       </div>
 
       <div class="table-controls" v-if="!parsed.truncated">
-        <select class="per-page-select" :value="perPage" @change="onPerPageChange" aria-label="Rows per page">
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-          <option :value="500">500</option>
-        </select>
+        <div class="per-page-wrapper" ref="perPageWrapper">
+          <button
+            type="button"
+            class="per-page-trigger"
+            :aria-haspopup="'listbox'"
+            :aria-expanded="perPageOpen"
+            @click="togglePerPage"
+            @keydown="onTriggerKeydown"
+          >
+            <span>{{ perPage }}/page</span>
+            <span class="per-page-arrow" :class="{ 'arrow-open': perPageOpen }">&#9662;</span>
+          </button>
+          <ul
+            v-if="perPageOpen"
+            class="per-page-listbox"
+            role="listbox"
+            @keydown="onListboxKeydown"
+          >
+            <li
+              v-for="opt in perPageOptions"
+              :key="opt"
+              role="option"
+              :data-value="opt"
+              :aria-selected="perPage === opt"
+              :class="{ 'option-active': perPage === opt, 'option-focused': focusedIndex === perPageOptions.indexOf(opt) }"
+              tabindex="0"
+              @click="selectPerPage(opt)"
+              @keydown.enter.prevent.stop="selectPerPage(opt)"
+            >
+              {{ opt }}
+            </li>
+          </ul>
+        </div>
         <Pagination
           :page="page"
           :per-page="perPage"
@@ -75,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
   useVueTable,
   getCoreRowModel,
@@ -131,6 +159,10 @@ const table = useVueTable({
 
 const page = ref(1)
 const perPage = ref(100)
+const perPageOpen = ref(false)
+const focusedIndex = ref(0)
+const perPageOptions = [50, 100, 500] as const
+const perPageWrapper = ref<HTMLElement>()
 
 const totalCount = computed(() => table.getRowModel().rows.length)
 
@@ -162,10 +194,69 @@ function onPageChange(newPage: number) {
   page.value = newPage
 }
 
-function onPerPageChange(event: Event) {
-  perPage.value = Number((event.target as HTMLSelectElement).value)
-  page.value = 1
+function togglePerPage() {
+  perPageOpen.value = !perPageOpen.value
+  if (perPageOpen.value) {
+    focusedIndex.value = perPageOptions.indexOf(perPage.value as 50 | 100 | 500)
+    if (focusedIndex.value < 0) focusedIndex.value = 0
+  }
 }
+
+function selectPerPage(value: number) {
+  perPage.value = value
+  page.value = 1
+  perPageOpen.value = false
+}
+
+function onTriggerKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+    event.preventDefault()
+    if (!perPageOpen.value) {
+      perPageOpen.value = true
+      focusedIndex.value = perPageOptions.indexOf(perPage.value as 50 | 100 | 500)
+      if (focusedIndex.value < 0) focusedIndex.value = 0
+    }
+  } else if (event.key === 'ArrowDown' && perPageOpen.value) {
+    event.preventDefault()
+    focusedIndex.value = Math.min(focusedIndex.value + 1, perPageOptions.length - 1)
+  } else if (event.key === 'ArrowUp' && perPageOpen.value) {
+    event.preventDefault()
+    focusedIndex.value = Math.max(focusedIndex.value - 1, 0)
+  } else if (event.key === 'Escape' && perPageOpen.value) {
+    event.preventDefault()
+    perPageOpen.value = false
+  }
+}
+
+function onListboxKeydown(event: KeyboardEvent) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusedIndex.value = Math.min(focusedIndex.value + 1, perPageOptions.length - 1)
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    focusedIndex.value = Math.max(focusedIndex.value - 1, 0)
+  } else if (event.key === 'Enter') {
+    event.preventDefault()
+    selectPerPage(perPageOptions[focusedIndex.value])
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    perPageOpen.value = false
+  }
+}
+
+function onDocumentClick(event: MouseEvent) {
+  if (perPageWrapper.value && !perPageWrapper.value.contains(event.target as Node)) {
+    perPageOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
 
 function sortAttr(sort: false | 'asc' | 'desc'): 'ascending' | 'descending' | undefined {
   if (sort === 'asc') return 'ascending'
@@ -275,13 +366,84 @@ function sortAttr(sort: false | 'asc' | 'desc'): 'ascending' | 'descending' | un
   flex-wrap: wrap;
 }
 
-.per-page-select {
-  padding: var(--space-1) var(--space-2);
+.per-page-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.per-page-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--font-sm);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.per-page-trigger:hover {
+  border-color: var(--accent-color);
+}
+
+.per-page-trigger:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 2px;
+}
+
+.per-page-arrow {
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+.per-page-arrow.arrow-open {
+  transform: rotate(180deg);
+}
+
+.per-page-listbox {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 100%;
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  z-index: 200;
+}
+
+.per-page-listbox li {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-sm);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.per-page-listbox li:hover,
+.per-page-listbox li.option-focused {
+  background: var(--c-surface-lower);
+}
+
+.per-page-listbox li.option-active {
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.per-page-listbox li:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
 }
 
 .no-data {
@@ -297,8 +459,13 @@ function sortAttr(sort: false | 'asc' | 'desc'): 'ascending' | 'descending' | un
     align-items: stretch;
   }
 
-  .per-page-select {
+  .per-page-wrapper {
     width: 100%;
+  }
+
+  .per-page-trigger {
+    width: 100%;
+    justify-content: center;
   }
 
   .th-filter {

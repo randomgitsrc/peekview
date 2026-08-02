@@ -24,3 +24,7 @@
 .markdown-body img { max-width: 100%; border-radius: var(--radius-md); }
 .markdown-body .mermaid { text-align: center; padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-4); }
 .markdown-body .mermaid svg { max-width: 100%; }
+
+@media (max-width: 640px) {
+  .markdown-body { padding: var(--space-4); }
+}

@@ -9,7 +9,7 @@ import TableView from '@/components/TableView.vue'
 //   - 根容器 class="table-view"，内部语义 table/thead/tbody/tr/th/td
 //   - 列头 th 绑定 aria-sort（ascending/descending，原序时无 aria-sort）
 //   - 列头筛选输入框 aria-label="Filter {列名}"
-//   - 每页行数选择器 select.per-page-select（50/100/500，默认 100）
+//   - 每页行数选择器 button.per-page-trigger（50/100/500，默认 100）+ 自定义 listbox
 //   - 分页复用 Pagination 组件（class="pagination"）
 //   - 截断提示条 class="truncation-banner" + 下载按钮
 
@@ -132,8 +132,9 @@ describe('T075 TableView 分页（BDD-19/20）', () => {
     const wrapper = mountTable({ content: csvRows(250) })
     await flushPromises()
     expect(wrapper.findAll('tbody tr').length).toBe(100)
-    const perPageSelect = wrapper.find('select.per-page-select')
-    expect((perPageSelect.element as HTMLSelectElement).value).toBe('100')
+    const perPageSelect = wrapper.find('button.per-page-trigger')
+    expect(perPageSelect.exists()).toBe(true)
+    expect(perPageSelect.text()).toContain('100')
     expect(wrapper.find('.pagination').exists()).toBe(true)
   })
 
@@ -149,8 +150,11 @@ describe('T075 TableView 分页（BDD-19/20）', () => {
     expect(wrapper.findAll('tbody tr').length).toBe(100)
 
     // 切换每页行数 → 回第一页
-    const perPageSelect = wrapper.find('select.per-page-select')
-    await perPageSelect.setValue('50')
+    const trigger = wrapper.find('button.per-page-trigger')
+    await trigger.trigger('click')
+    await flushPromises()
+    const option50 = wrapper.find('[role="option"][data-value="50"]')
+    await option50.trigger('click')
     await flushPromises()
 
     expect(wrapper.findAll('tbody tr').length).toBe(50)

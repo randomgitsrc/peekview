@@ -22,8 +22,9 @@ export function useEntryDetailComputed(
   const isJson: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'json')
   const isYaml: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'yaml')
   const isXml: ComputedRef<boolean> = computed(() => activeFile.value?.language === 'xml')
+  const isSvg: ComputedRef<boolean> = computed(() => guessMimeType(activeFile.value?.filename ?? '') === 'image/svg+xml')
   const isRichRenderable: ComputedRef<boolean> = computed(() =>
-    isCsv.value || isTsv.value || isJson.value || isYaml.value || isXml.value || isMarkdown.value,
+    isCsv.value || isTsv.value || isJson.value || isYaml.value || (isXml.value && !isSvg.value) || isMarkdown.value,
   )
   const isImage: ComputedRef<boolean> = computed(() => {
     const file = activeFile.value
@@ -126,7 +127,7 @@ export function useEntryDetailComputed(
   }
 
   return {
-    isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isRichRenderable,
+    isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isSvg, isRichRenderable,
     isImage, isBinary, pathMap, siblingFileIds,
     entryTitle, tocHeadings, extractHeadings,
     copyContent, downloadFile, downloadPack, scrollToHeading, handleNavigateFile,

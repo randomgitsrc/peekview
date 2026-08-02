@@ -10,6 +10,8 @@ describe('T084 useResponsiveLayout.setupScrollHide', () => {
     container = document.createElement('div')
     container.style.height = '400px'
     container.style.overflowY = 'auto'
+    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true })
+    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true })
     document.body.appendChild(container)
 
     scrollableChild = document.createElement('div')

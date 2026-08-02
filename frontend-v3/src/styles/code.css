@@ -36,6 +36,8 @@
 }
 
 .code-body {
+  flex: 1;
+  min-height: 0;
 }
 
 /* Code container with line numbers - using table for perfect alignment */

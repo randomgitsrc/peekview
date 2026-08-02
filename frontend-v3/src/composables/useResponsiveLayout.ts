@@ -25,8 +25,22 @@ export function useResponsiveLayout(): {
 
   function setupScrollHide(container: HTMLElement): () => void {
     let lastScrollTop = 0
+    let atBottom = false
     const onScroll = () => {
       const current = container.scrollTop
+      const isBottom = current + container.clientHeight >= container.scrollHeight - 5
+      const isTop = current <= 5
+      if (isBottom && atBottom) {
+        lastScrollTop = current
+        return
+      }
+      if (isTop) {
+        metaTagsHidden.value = false
+        atBottom = false
+        lastScrollTop = current
+        return
+      }
+      atBottom = isBottom
       if (current > lastScrollTop && current > 10) {
         metaTagsHidden.value = true
       } else if (current < lastScrollTop) {
