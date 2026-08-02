@@ -114,7 +114,7 @@ make debug-verify-isolation   # 验证数据隔离（依赖 :8080 在线）
 
 改了前端后必须 `make build-frontend` 重建 static（或用 `make debug-quick` 一步到位）。
 
-测试数据：`make debug-seed` 从 `scripts/seed-data/` 目录加载（20 个 entry：Markdown/HTML/SVG/Mermaid/PlantUML/Python/CSV/TSV/JSON/YAML/XML/图片/边界数据等），用户 alice/bob/carol（密码 testpass123）。新增/修改数据只需编辑 seed-data/ 下的文件，不改 Python 代码。
+测试数据：`make debug-seed` 从 `scripts/seed-data/` 目录加载（每子目录一个 entry，含 meta.json + 内容文件），用户 alice/bob/carol（密码 testpass123）。新增/修改数据只需编辑 seed-data/ 下的文件，不改 Python 代码。
 
 ## 发布流程
 
