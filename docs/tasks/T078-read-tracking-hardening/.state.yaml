@@ -1,11 +1,19 @@
-phase: P0
+phase: P2
 task_id: T078
 task_name: read-tracking-hardening
-status: pending
+status: in_progress
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-08-03
 history:
   - phase: P0
     date: 2026-07-28
     status: in_progress
     note: 聚合表+by_action+清理+admin stats+迁移
+  - phase: P0
+    date: 2026-08-03
+    status: completed
+    note: 代码审计发现 5 个探针准确性问题，范围前置探针修复。删 display_name（T074 已 hotfix）。删 entry 保留聚合统计。4 phase 结构
+  - phase: P1
+    date: 2026-08-03
+    status: completed
+    note: 34 条 BDD，6 质疑点回答，needs-revision 1 轮（BDD-19/22 修正 + BDD-31~34 新增），review approved
