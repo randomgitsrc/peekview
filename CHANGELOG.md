@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.14.2] - 2026-08-03
+
+### 修复
+
+- TableView 分页性能修复：TanStack Table 只接收当前页数据（不再为全部行创建 Row 对象），vitest 全量 170s→13.5s（hotfix）
+- TableView BDD-22 截断测试降数据量：maxRows 可配置 prop，测试用 5 行替代 50001 行
+
 ## [0.14.1] - 2026-08-02
 
 ### 修复
