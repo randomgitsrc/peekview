@@ -2,7 +2,7 @@
   <div class="table-view">
     <TruncationBanner
       v-if="parsed.truncated"
-      :message="`数据量过大，已显示前 ${MAX_ROWS.toLocaleString()} 行`"
+      :message="`数据量过大，已显示前 ${props.maxRows.toLocaleString()} 行`"
       :download-fn="downloadFn"
     />
 
@@ -116,15 +116,15 @@ import TruncationBanner from '@/components/TruncationBanner.vue'
 import { parseCsv } from '@/composables/useCsvParser'
 import type { CsvParseResult } from '@/types/structured-data'
 
-const MAX_ROWS = 50000
-
 const props = withDefaults(defineProps<{
   content: string
   delimiter?: ',' | '\t'
   filename: string
   downloadFn: () => void
+  maxRows?: number
 }>(), {
   delimiter: ',',
+  maxRows: 50000,
 })
 
 const emit = defineEmits<{
@@ -145,9 +145,22 @@ const columns = computed<ColumnDef<CsvRow>[]>(() =>
   })),
 )
 
+const page = ref(1)
+const perPage = ref(100)
+
+const totalCount = computed(() => parsed.value.rows.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / perPage.value)))
+
+const pagedData = computed<CsvRow[]>(() => {
+  if (parsed.value.truncated) return []
+  const current = Math.min(page.value, totalPages.value)
+  const start = (current - 1) * perPage.value
+  return parsed.value.rows.slice(start, start + perPage.value)
+})
+
 const table = useVueTable({
   get data() {
-    return parsed.value.rows
+    return pagedData.value
   },
   get columns() {
     return columns.value
@@ -157,23 +170,12 @@ const table = useVueTable({
   getFilteredRowModel: getFilteredRowModel(),
 })
 
-const page = ref(1)
-const perPage = ref(100)
 const perPageOpen = ref(false)
 const focusedIndex = ref(0)
 const perPageOptions = [50, 100, 500] as const
 const perPageWrapper = ref<HTMLElement>()
 
-const totalCount = computed(() => table.getRowModel().rows.length)
-
-const pageRows = computed<Row<CsvRow>[]>(() => {
-  if (parsed.value.truncated) return []
-  const rows = table.getRowModel().rows
-  const totalPages = Math.max(1, Math.ceil(rows.length / perPage.value))
-  const current = Math.min(page.value, totalPages)
-  const start = (current - 1) * perPage.value
-  return rows.slice(start, start + perPage.value)
-})
+const pageRows = computed<Row<CsvRow>[]>(() => table.getRowModel().rows)
 
 watch(
   () => props.content,
@@ -181,7 +183,7 @@ watch(
     parsed.value = { headers: [], rows: [], totalRows: 0, truncated: false }
     page.value = 1
     try {
-      parsed.value = parseCsv(props.content, props.delimiter)
+      parsed.value = parseCsv(props.content, props.delimiter, props.maxRows)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       emit('parse-error', message)
