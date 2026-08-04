@@ -170,6 +170,7 @@ ui_interaction_points:
   - "resize handle ArrowLeft/Right 键盘调整宽度"
 gate_commands:
   P3: "cd frontend-v3 && npx vitest run --reporter=dot src/composables/__tests__/useSidebarResize.spec.ts"
+  P3_formatter: "vitest.sh"
   P5: "cd frontend-v3 && npx vitest run --reporter=dot"
   P5_e2e: "cd frontend-v3 && npx playwright test e2e/t081-resizable-sidebars.spec.ts --reporter=line"
   project_module: "src/"
