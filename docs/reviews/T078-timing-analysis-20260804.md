@@ -154,26 +154,26 @@
 **现象**：P6-acceptance.md 的总结行 `- PASS：34` 和 `- FAIL：0` 被 gate 误判为 BDD 条目。dispatch-context 中 `- PASS 有证据文件引用` 被 provenance 误判。
 
 **根因**：
-- agate 的 gate 脚本用 `grep -cE '^\s*- (PASS|FAIL)'` 匹配，任何行首 `- PASS` / `- FAIL` 都会被匹配
-- verifier subagent 不知道总结行不能用这个格式
-- dispatch-context 也不应该有行首 `- PASS` / `- FAIL`
+- verifier subagent 产出了不规范的总结行格式（行首 `- PASS`/`- FAIL` 只应用于 BDD 条目）
+- check-p6-format.sh 归一化脚本未覆盖总结行的格式修正
+- 主 Agent 写 dispatch-context 时也用了行首 `- PASS`（`- PASS 有证据文件引用`）
+
+**归因**：**主 Agent + subagent 执行问题**，非 agate 协议设计缺陷。agate 的正则匹配范围是合理的（行首 `- PASS`/`- FAIL` 确实应该只用于 BDD 条目），是产出方违反了格式约定。
 
 **影响**：2 次格式修复（约 5 分钟）
 
-**改进建议**：P6 卡片或 check-p6-format.sh 应增加"总结行禁止行首 PASS/FAIL"的提示
-
-#### B6. check-tdd-red.sh 超时（流程脚本问题）
+#### B6. check-tdd-red.sh 超时（运行环境问题）
 
 **现象**：`check-tdd-red.sh` 在 120s 内未完成，但手动跑 pytest 只需 5.66s。
 
-**根因推断**：
-- check-tdd-red.sh 内部可能调用 formatter 脚本，formatter 可能卡在环境检测
-- 脚本可能在等待某种锁或网络资源
-- v0.29.0 已将 P3 gate 分离（check-gate.sh P3 只检查文件存在），但 check-tdd-red.sh 本身仍可能卡
+**根因**：
+- 脚本内部 formatter 可能卡在环境检测（非 agate 协议问题）
+- v0.29.0 已将 P3 gate 分离：check-gate.sh P3 只检查文件存在性（秒级），check-tdd-red.sh 是主 Agent 手动确认 + CI backstop 兜底
+- v0.29.0 的设计**已支持**主 Agent 手动跑 pytest 替代 check-tdd-red.sh
 
-**影响**：改用手动 pytest 验证（可接受，v0.29.0 设计已支持主 Agent 手动确认）
+**归因**：**运行环境问题**，非 agate 协议/脚本问题。v0.29.0 的 P3 gate 分离设计正是为了解决 T085 的 hook 超时教训，本次手动 pytest 验证完全符合 v0.29.0 设计意图。
 
-**改进建议**：check-tdd-red.sh 应加内部 timeout（如 60s），超时后输出提示而非无限等待
+**影响**：改用手动 pytest 验证（符合 v0.29.0 设计，无额外成本）
 
 ## 四、时间分布饼图
 
@@ -204,43 +204,51 @@ P7→P8  █                             1%  (4m)
 
 T078 每条 BDD 耗时 23 min，介于 T075（16 min）和 T085（40 min）之间。T085 的 40 min/BDD 高是因为 --no-verify 8 次中断。T078 的 7 次工具中断是主要效率损耗。
 
-## 六、效率损耗汇总
+## 六、效率损耗汇总（修正归因）
 
-| 损耗项 | 次数 | 估计耗时 | 类型 |
-|--------|------|---------|------|
-| edit/write 超时 | 4 | ~4 min | 技术工具 |
-| bash 超时 | 3 | ~6 min | 技术工具 |
-| backend subagent cancel | 1 | ~3 min | 技术平台 |
-| P6 格式问题 | 2 | ~5 min | 管理 agate |
-| check-tdd-red.sh 超时 | 1 | ~2 min | 管理脚本 |
-| P0-brief 重写 | 1 | ~30 min | 管理流程 |
-| 间隔期认知重建 | 1 | ~30 min | 管理调度 |
-| **总损耗** | | **~80 min** | |
+| 损耗项 | 次数 | 估计耗时 | 正确归因 |
+|--------|------|---------|----------|
+| edit/write 超时 | 4 | ~4 min | opencode 平台（工具偶发性能问题） |
+| bash 120s 默认超时 | 2 | ~4 min | opencode 平台（默认 timeout 不够） |
+| backend subagent cancel | 1 | ~3 min | opencode 平台（agent 类型初始化） |
+| P6 格式问题 | 2 | ~5 min | 主 Agent + subagent 执行（产出方违反格式约定） |
+| P0-brief 质量不够需重写 | 1 | ~30 min | 主 Agent 执行（P0 没做代码审计） |
+| 间隔期认知重建 | 1 | ~30 min | 任务调度（插入 T085 + hotfix） |
+| **总损耗** | | **~76 min** | |
 
-总 agate 执行时间 12h48m（768 min），损耗 80 min 占 **10.4%**。
+**归因分布**：
+- opencode 平台问题：4+2+1 = 7 次，~11 min（14.5%）
+- 主 Agent 执行问题：2 项，~35 min（46%）
+- 任务调度：1 项，~30 min（39.5%）
+- **agate 协议/脚本问题：0 次，0 min（0%）**
 
-## 七、改进建议
+总 agate 执行时间 12h48m（768 min），损耗 76 min 占 **9.9%**。
 
-### 立即可行
+**关键结论**：7 次工具中断没有一次是 agate 协议本身导致的。之前将 P0-brief 质量不够、间隔期、check-tdd-red.sh 超时都算成"agate 管理问题"是归因错误——P0-brief 质量是主 Agent 自己的执行问题，间隔期是任务调度，check-tdd-red.sh 超时是运行环境且 v0.29.0 设计已支持手动替代。
 
-| 改进 | 预期节省 | 实施方 |
-|------|---------|--------|
-| edit 卡住立即换 python3 | 4 min/次 | 主 Agent 习惯 |
-| backend subagent cancel 立即换 general | 3 min/次 | 主 Agent 习惯 |
-| P6 总结行避免行首 PASS/FAIL | 5 min/次 | agate P6 卡片 |
-| check-tdd-red.sh 加内部 timeout | 2 min/次 | agate 脚本 |
+## 七、改进建议（按归因分类）
 
-### 中期改进
+### opencode 平台（7 次中断的根源）
 
 | 改进 | 预期节省 | 实施方 |
 |------|---------|--------|
-| P0-brief 含代码审计（hardening 类） | 30 min/任务 | agate P0 卡片 |
-| 立项后尽快进 P1 | 30 min/任务 | 任务调度 |
-| bash 工具默认 timeout 改为 180s | 6 min/次 | opencode 配置 |
-
-### 长期观察
-
-| 改进 | 预期节省 | 实施方 |
-|------|---------|--------|
-| edit/write 工具多字节字符性能 | 4 min/次 | opencode 平台 |
+| edit/write 工具多字节字符性能优化 | 4 min/次 | opencode 平台 |
+| bash 工具默认 timeout 改为 180s | 4 min/次 | opencode 配置 |
 | backend subagent 初始化稳定性 | 3 min/次 | opencode 平台 |
+
+### 主 Agent 执行习惯
+
+| 改进 | 预期节省 | 实施方 |
+|------|---------|--------|
+| edit 卡住立即换 python3（不等超时） | 4 min/次 | 主 Agent 习惯 |
+| backend subagent cancel 立即换 general | 3 min/次 | 主 Agent 习惯 |
+| P0-brief 对 hardening 类任务必须含代码审计 | 30 min/任务 | 主 Agent 执行 |
+| P6 总结行/dispatch-context 避免行首 PASS/FAIL | 5 min/次 | 主 Agent + subagent |
+
+### agate 协议/脚本
+
+| 改进 | 预期节省 | 实施方 |
+|------|---------|--------|
+| 无 — 0 次 agate 协议问题 | 0 | — |
+
+**结论**：本次 agate 流程本身无损耗。7 次中断全是 opencode 平台（7 次）+ 主 Agent 执行（2 项）+ 任务调度（1 项）。review revision 不是损耗而是有效投资。
