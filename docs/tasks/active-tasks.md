@@ -14,7 +14,7 @@
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
-| T078 | read-tracking-hardening | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-07-28 | 2026-07-28 |
+| T078 | read-tracking-hardening | ⬜ 待开始 | P0✅ | 🟠 | 无 | 2026-07-28 | 2026-08-03 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
 | T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
@@ -46,9 +46,9 @@ Card `<a>` 拆分：card-body 变 div，title/username/tag 各自独立 `<a>`，
 
 entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推断 project（git remote → cwd → null）+ listEntries 支持 project 过滤。Agent 通过 `listEntries(project=xxx)` 读取项目演进脉络，等价 git log。前端无改动（Phase 1）。
 
-### T078: 读取追踪强化 + display_name 修复
+### T078: 读取追踪强化
 
-新增 `entry_read_stats` 聚合表（每个 entry 一行，写时更新，查询 O(1)）。`read_stats` 返回 `by_action`/`by_source` 维度。原始事件 90 天清理。Admin stats 加全局读取概览。启动时从现有 entry_reads 回填聚合表。
+先修探针准确性（window_key 跨 action 合并 / share channel 错误 / discover 无查询），再加聚合表（O(1) 查询）+ 扩展统计维度（by_action/by_channel/by_source）+ 原始事件 90 天清理 + admin stats 全局读取概览 + 来源分类（Referer 推断）。删 entry 时保留聚合统计（存在即合理）。display_name null 修复已由 T074 hotfix 完成，不再纳入。
 
 ### T079: 交互一致性修复
 
@@ -214,6 +214,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 | 2026-07-30 | 立项 T082 | arch-refactor：后端 DI 统一+错误格式统一+重复代码提取+create_entry 事务；前端 entry store 拆分+EntryDetailView 拆分。多维度架构审计发现 6 项结构性问题 |
 | 2026-07-30 | 立项 T079+T080+T081 | T079 交互一致性修复（AuthButton/UserMenu 统一 + tag 可点击 + Explore 按钮移除）；T080 admin 用户管理（后端 disable/enable/promote/demote + CLI + 前端 /admin 页面）；T081 详情页侧边栏可拖拽调整宽度；roadmap #46 删除（需求弱）/#47→T081 |
 | 2026-07-30 | 完成 T076 | entry-card-interaction → v0.12.0（EntryCard/EntryListRow <a> 拆分 + BaseTag 可点击 + Explore tag 过滤 + tooltip；完整 agate P0-P8，21 BDD 验收全 PASS，vision×19 全 blocker=0） |
+| 2026-08-03 | P0 T078 | read-tracking-hardening P0 更新：代码审计发现 5 个探针准确性问题（window_key 不含 action / share channel 错误 / discover 无查询 / files.py channel 不走 _detect_channel / 测试名矛盾），范围前置探针修复。display_name null 已由 T074 hotfix 移除。删 entry 保留聚合统计 |
 | 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |
 | 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |
 | 2026-07-28 | 立项 T075 | structured-data-viewer：TableView(CSV/TSV)+TreeView(JSON/YAML/XML)+源码切换+Markdown补缺口；T076 code-search 降级 roadmap |

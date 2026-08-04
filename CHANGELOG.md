@@ -5,6 +5,31 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.15.0] - 2026-08-04
+
+### 新增
+
+- 读取统计聚合表（`entry_read_stats`）：每 entry 一行 O(1) 查询，写时更新 total_reads/unique_readers/by_action/by_channel/by_source/last_read_at (T078)
+- `ReadStatsResponse` 新增 `by_action` 和 `by_source` 维度，与现有 `by_channel` 并列 (T078)
+- 来源分类（source）：`_classify_source` 从 Referer 提取来源类别（direct/internal/search/social/other），`entry_reads` 表新增 `source` 列 (T078)
+- `entry_reads` 90 天自动清理：`PEEKVIEW_CLEANUP__READS_RETENTION_DAYS`（默认 90，0=永不清理），清理后聚合表不受影响 (T078)
+- Admin stats 新增 `reads` 维度：`reads.total/today/by_action/by_channel/by_source`，total 含已删 entry 历史流量 + discover 流量 (T078)
+- 启动时一次性回填：`entry_read_stats` 为空且 `entry_reads` 有数据时自动聚合回填，历史 source 归 unknown (T078)
+- Restore merge 模式导入 `entry_read_stats` 聚合表行（PK 冲突跳过策略）(T078)
+
+### 修复
+
+- window_key 加入 action 维度：同一分钟内同一人同一 channel 的 read 和 download 不再被错误合并 (T078)
+- 公开 entry 带 `?share=token` 访问 channel 修正为 "share"（原硬编码 "api"）(T078)
+- files.py 三处端点（raw/download/content）channel 统一走 `_detect_channel(request, slug)`，覆盖 share cookie 场景 (T078)
+- `_detect_channel` 从 entries.py 提取到 `_shared.py` 共享，消除 files.py 三处内联 channel 判断 (T078)
+- 测试名修正：`test_get_read_stats_total_count_excludes_self_reads` → `..._includes_self_reads`（断言含 self_read，函数名修正）(T078)
+
+### 变更
+
+- `get_read_stats()` 改为从聚合表读取，不再查原始 `entry_reads` 表（O(1) 查询）(T078)
+- 删 entry 时保留 `entry_read_stats` 聚合行（明细删除，汇总数字保留证明"这里曾有流量"）(T078)
+
 ## [0.14.2] - 2026-08-03
 
 ### 修复
