@@ -1,4 +1,4 @@
-phase: P7
+phase: P8
 task_id: T078
 task_name: read-tracking-hardening
 status: in_progress
@@ -37,3 +37,7 @@ history:
     date: 2026-08-03
     status: completed
     note: 34/34 BDD PASS，evidence + provenance 通过
+  - phase: P7
+    date: 2026-08-03
+    status: completed
+    note: 跨文件一致性检查通过，无 DESIGN_GAP
