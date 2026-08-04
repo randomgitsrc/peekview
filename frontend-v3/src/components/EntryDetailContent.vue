@@ -8,6 +8,15 @@
         :fileCount="currentEntry?.files.length"
         @select="$emit('select-file', $event)"
       />
+      <div
+        class="resize-handle resize-handle-right"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        aria-label="Resize file sidebar"
+        @mousedown="fileResize.startDrag($event)"
+        @dblclick="fileResize.onDoubleClick()"
+      ></div>
     </aside>
 
     <!-- Main Content Area -->
@@ -53,6 +62,15 @@
 
     <!-- TOC Sidebar (desktop) -->
     <aside v-if="isTocOpen && isMarkdown && !sourceViewMode && tocHeadings.length > 0" class="toc-sidebar">
+      <div
+        class="resize-handle resize-handle-left"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        aria-label="Resize table of contents"
+        @mousedown="tocResize.startDrag($event)"
+        @dblclick="tocResize.onDoubleClick()"
+      ></div>
       <TocNav
         :headings="tocHeadings"
         :activeId="null"
@@ -92,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import CodeViewer from '@/components/CodeViewer.vue'
@@ -104,6 +122,7 @@ import TreeView from '@/components/TreeView.vue'
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next'
 import type { Entry, File, TocHeading } from '@/types'
 import type { PathMap } from '@/utils/path-map'
+import { useSidebarResize } from '@/composables/useSidebarResize'
 
 const props = defineProps<{
   isFileTreeOpen: boolean
@@ -167,14 +186,40 @@ watch(() => props.activeFile?.id, () => {
 watch(() => props.sourceViewMode, () => {
   parseError.value = null
 })
+
+const fileResize = useSidebarResize({
+  storageKey: 'peekview-sidebar-width',
+  cssVar: '--sidebar-width',
+  defaultPx: 260,
+  minPx: 160,
+  maxPx: 500,
+  side: 'left',
+})
+
+const tocResize = useSidebarResize({
+  storageKey: 'peekview-toc-width',
+  cssVar: '--toc-width',
+  defaultPx: 240,
+  minPx: 150,
+  maxPx: 400,
+  side: 'right',
+})
+
+onMounted(() => {
+  fileResize.loadWidth()
+  tocResize.loadWidth()
+})
+
+onUnmounted(() => {
+  fileResize.cleanup()
+  tocResize.cleanup()
+})
 </script>
 
 <style scoped>
 .detail-content { display: flex; flex: 1; overflow: hidden; }
-.file-sidebar { width: 200px; border-right: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
 .content-area { flex: 1; overflow-y: auto; outline: none; padding: var(--space-4); overscroll-behavior: y none; }
 @media (max-width: 640px) { .content-area { padding: var(--space-3) var(--space-2); } }
-.toc-sidebar { width: 240px; border-left: 1px solid var(--c-border); overflow-y: auto; flex-shrink: 0; }
 .loading-state { padding: var(--space-5); }
 .skeleton-header { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); }
 .skeleton-bar { border-radius: 6px; background: var(--c-border); animation: shimmer 1.5s infinite; }

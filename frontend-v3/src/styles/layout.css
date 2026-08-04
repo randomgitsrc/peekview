@@ -101,6 +101,8 @@
   width: var(--sidebar-width);
   flex-shrink: 0;
   border-right: 1px solid var(--c-border);
+  overflow-y: auto;
+  position: relative;
 }
 
 .content-area {
@@ -125,6 +127,7 @@
   border-left: 1px solid var(--c-border);
   background: var(--c-surface);
   overflow-y: auto;
+  position: relative;
 }
 
 .mobile-actions {
@@ -159,6 +162,51 @@
   .mobile-actions {
     display: none;
   }
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 50;
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+.resize-handle-right {
+  right: -2px;
+}
+
+.resize-handle-left {
+  left: -2px;
+}
+
+.resize-handle:hover,
+.resize-handle:focus-visible {
+  background: var(--c-accent);
+  outline: none;
+}
+
+.resize-handle:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -1px;
+}
+
+@media (max-width: 1023px) {
+  .resize-handle {
+    display: none;
+  }
+}
+
+body.resize-active {
+  user-select: none;
+  cursor: col-resize;
+}
+
+.zen-mode .resize-handle {
+  display: none;
 }
 
 .drawer-overlay {

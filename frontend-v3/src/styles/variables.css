@@ -30,6 +30,10 @@
   --header-height: 56px;
   --sidebar-width: 260px;
   --toc-width: 240px;
+  --sidebar-width-min: 160px;
+  --sidebar-width-max: 500px;
+  --toc-width-min: 150px;
+  --toc-width-max: 400px;
 }
 
 /* Dark Theme */
