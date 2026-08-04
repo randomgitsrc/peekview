@@ -1,0 +1,4 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    description: "BDD-08 功能验证通过，截图确认视觉行为符合预期"

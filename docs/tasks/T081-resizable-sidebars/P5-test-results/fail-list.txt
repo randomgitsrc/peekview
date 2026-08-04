@@ -1,0 +1,41 @@
+# P5 fail-list（预存失败，与 T081 无关）
+# T081 专属 useSidebarResize.spec.ts: 14 passed / 0 failed
+# 全量：246 failed | 966 passed | 1 skipped (1213)
+# 根因：jsdom 环境问题（Cannot read properties of null reading '$'）+ ResizeObserver 未提供
+FAILED src/components/__tests__/DiagramBlock.spec.ts
+FAILED src/components/__tests__/MarkdownViewer.spec.ts
+FAILED src/components/__tests__/ImageViewer.spec.ts
+FAILED src/__tests__/t069-auth-guard.test.ts
+FAILED src/components/__tests__/t031-entry-detail-view.spec.ts
+FAILED src/components/__tests__/ConfirmDialog.spec.ts
+FAILED src/components/__tests__/CodeViewer.spec.ts
+FAILED src/__tests__/landing-auth.spec.ts
+FAILED src/__tests__/t069-ui-structure.test.ts
+FAILED src/components/__tests__/EntryListRow.spec.ts
+FAILED src/composables/__tests__/theme.spec.ts
+FAILED src/components/__tests__/AuthButton.spec.ts
+FAILED src/components/__tests__/TocNav.spec.ts
+FAILED src/components/__tests__/t076-entry-list-row.spec.ts
+FAILED src/components/__tests__/TableView.per-page.spec.ts
+FAILED src/components/__tests__/t031-entry-list-view.spec.ts
+FAILED src/components/__tests__/SearchInput.spec.ts
+FAILED src/components/__tests__/BaseButton.spec.ts
+FAILED src/components/__tests__/PageHeader.spec.ts
+FAILED src/components/__tests__/t031-entry-card.spec.ts
+FAILED src/components/__tests__/BaseBadge.spec.ts
+FAILED src/components/__tests__/EmptyState.spec.ts
+FAILED src/components/__tests__/zebra-stripe.spec.ts
+FAILED src/components/renderers/__tests__/PlantUmlRenderer.spec.ts
+FAILED src/components/renderers/__tests__/MermaidRenderer.spec.ts
+FAILED src/__tests__/expired-warning.test.ts
+FAILED src/__tests__/filter-tabs.test.ts
+FAILED src/components/__tests__/Toast.spec.ts
+FAILED src/components/__tests__/t031-entry-list-row.spec.ts
+FAILED src/components/renderers/__tests__/SvgRenderer.spec.ts
+FAILED src/components/__tests__/BaseTag.spec.ts
+FAILED src/components/__tests__/FilterChip.spec.ts
+FAILED src/components/__tests__/MarkdownViewer.blocks.spec.ts
+FAILED src/components/__tests__/ThemeToggle.spec.ts
+FAILED src/components/__tests__/BannerBar.spec.ts
+FAILED src/components/__tests__/t076-base-tag.spec.ts
+FAILED src/components/__tests__/t031-landing-view.spec.ts
