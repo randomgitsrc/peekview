@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T078
 task_name: read-tracking-hardening
 status: in_progress
@@ -32,4 +32,8 @@ history:
   - phase: P5
     date: 2026-08-03
     status: completed
-    note: 全量 1042 passed 0 failed，verifier 确认
+    note: 全量 1042 passed 0 failed
+  - phase: P6
+    date: 2026-08-03
+    status: completed
+    note: 34/34 BDD PASS，evidence + provenance 通过
