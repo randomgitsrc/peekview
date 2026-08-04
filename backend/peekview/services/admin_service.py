@@ -33,9 +33,11 @@ from peekview.models import (
     ConflictInfo,
     Entry,
     EntryRead,
+    EntryReadStats,
     EntryShare,
     EntryStats,
     File,
+    ReadsStats,
     RestorePreview,
     RestoreResult,
     StorageStats,
@@ -169,6 +171,48 @@ class AdminService:
         if db_path.exists():
             db_mb = round(db_path.stat().st_size / (1024 * 1024), 2)
 
+        with Session(self.engine) as session:
+            stats_rows = session.exec(select(EntryReadStats)).all()
+
+            total_reads = sum(s.total_reads for s in stats_rows)
+            by_action_agg, by_channel_agg, by_source_agg = {}, {}, {}
+            for s in stats_rows:
+                for k, v in json.loads(s.by_action or "{}").items():
+                    by_action_agg[k] = by_action_agg.get(k, 0) + v
+                for k, v in json.loads(s.by_channel or "{}").items():
+                    by_channel_agg[k] = by_channel_agg.get(k, 0) + v
+                for k, v in json.loads(s.by_source or "{}").items():
+                    by_source_agg[k] = by_source_agg.get(k, 0) + v
+
+            discover_rows = session.exec(
+                select(EntryRead.action, EntryRead.channel, func.sum(EntryRead.count))
+                .where(EntryRead.entry_id.is_(None))
+                .group_by(EntryRead.action, EntryRead.channel)
+            ).all()
+            discover_total = 0
+            for action, channel, count in discover_rows:
+                by_action_agg[action] = by_action_agg.get(action, 0) + count
+                by_channel_agg[channel] = by_channel_agg.get(channel, 0) + count
+                discover_total += count
+            total_reads += discover_total
+
+            today_start = datetime.now(timezone.utc).replace(
+                hour=0, minute=0, second=0, microsecond=0, tzinfo=None
+            )
+            today_count = session.exec(
+                select(func.coalesce(func.sum(EntryRead.count), 0)).where(
+                    EntryRead.read_at >= today_start
+                )
+            ).one()
+
+            reads = ReadsStats(
+                total=total_reads,
+                today=today_count,
+                by_action=by_action_agg,
+                by_channel=by_channel_agg,
+                by_source=by_source_agg,
+            )
+
         return AdminStatsResponse(
             users=user_count,
             entries=EntryStats(
@@ -187,6 +231,7 @@ class AdminService:
                 data_dir_mb=data_dir_mb,
                 db_mb=db_mb,
             ),
+            reads=reads,
         )
 
     def cleanup_expired(self) -> AdminCleanupResponse:
@@ -239,12 +284,24 @@ class AdminService:
             except NotFoundError:
                 pass
 
+        reads_retention = self.config.cleanup.reads_retention_days
+        reads_cleaned = 0
+        if reads_retention > 0:
+            cutoff = now_naive - timedelta(days=reads_retention)
+            with Session(self.engine) as session:
+                result = session.exec(
+                    text("DELETE FROM entry_reads WHERE read_at < :cutoff").bindparams(cutoff=cutoff)
+                )
+                reads_cleaned = result.rowcount or 0
+                session.commit()
+
         return AdminCleanupResponse(
             archived_count=len(archived_slugs),
             archived_slugs=archived_slugs,
             deleted_count=len(deleted_slugs),
             deleted_slugs=deleted_slugs,
             freed_mb=round(total_freed / (1024 * 1024), 2),
+            reads_cleaned=reads_cleaned,
         )
 
     def list_users(
@@ -568,6 +625,11 @@ class AdminService:
                     if _table_exists(backup_conn, "entry_reads")
                     else 0
                 )
+                read_stats_count = (
+                    backup_conn.execute("SELECT COUNT(*) FROM entry_read_stats").fetchone()[0]
+                    if _table_exists(backup_conn, "entry_read_stats")
+                    else 0
+                )
 
                 conflicts = self._detect_conflicts(backup_conn)
 
@@ -577,6 +639,7 @@ class AdminService:
                     api_key_count=api_key_count,
                     share_count=share_count,
                     read_count=read_count,
+                    read_stats_count=read_stats_count,
                     conflicts=conflicts,
                     version_check=version_check,
                 )
@@ -644,6 +707,7 @@ class AdminService:
         api_keys_imported = 0
         shares_imported = 0
         reads_imported = 0
+        read_stats_imported = 0
 
         with Session(self.engine) as session:
             try:
@@ -789,6 +853,7 @@ class AdminService:
                             entry_id=entry_map.get(entry_id) if entry_id else entry_id,
                             action=_row_get(row, "action", "read"),
                             channel=_row_get(row, "channel", "api"),
+                            source=_row_get(row, "source"),
                             reader_type=_row_get(row, "reader_type", "anonymous"),
                             reader_id=remapped_reader,
                             is_self_read=bool(_row_get(row, "is_self_read", 0)),
@@ -801,6 +866,36 @@ class AdminService:
                         if window_key:
                             existing_window_keys.add(window_key)
                         reads_imported += 1
+
+                if _table_exists(backup_conn, "entry_read_stats"):
+                    existing_stats_ids = set()
+                    if _table_exists_raw(session, "entry_read_stats"):
+                        existing_stats_ids = set(session.exec(select(EntryReadStats.entry_id)).all())
+
+                    for row in backup_conn.execute("SELECT * FROM entry_read_stats"):
+                        entry_id = _row_get(row, "entry_id")
+                        if entry_id is None:
+                            continue
+                        new_entry_id = entry_map.get(entry_id, entry_id)
+                        if new_entry_id in existing_stats_ids:
+                            continue
+                        if new_entry_id not in entry_map and entry_id not in entry_map:
+                            continue
+
+                        new_stats = EntryReadStats(
+                            entry_id=new_entry_id,
+                            total_reads=_row_get(row, "total_reads", 0),
+                            unique_readers=_row_get(row, "unique_readers", 0),
+                            by_action=_row_get(row, "by_action", "{}"),
+                            by_channel=_row_get(row, "by_channel", "{}"),
+                            by_source=_row_get(row, "by_source", "{}"),
+                            reader_fingerprints=_row_get(row, "reader_fingerprints", ""),
+                            last_read_at=_parse_db_datetime(_row_get(row, "last_read_at")),
+                            updated_at=_parse_db_datetime(_row_get(row, "updated_at")),
+                        )
+                        session.add(new_stats)
+                        existing_stats_ids.add(new_entry_id)
+                        read_stats_imported += 1
 
                 if _table_exists(backup_conn, "api_keys"):
                     for row in backup_conn.execute("SELECT * FROM api_keys"):
@@ -847,6 +942,7 @@ class AdminService:
             api_keys_imported=api_keys_imported,
             shares_imported=shares_imported,
             reads_imported=reads_imported,
+            read_stats_imported=read_stats_imported,
             conflicts_resolved=conflicts_resolved,
             fts_rebuilt=True,
             version_check=version_check,
@@ -923,7 +1019,7 @@ class AdminService:
         if old_data_backup.exists():
             shutil.rmtree(old_data_backup, ignore_errors=True)
 
-        engine = init_db(target_db)
+        engine = init_db(target_db, run_migrations=True)
         rebuild_fts_index(engine, self.storage)
 
         with Session(engine) as session:

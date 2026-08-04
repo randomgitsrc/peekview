@@ -18,8 +18,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from peekview.models import Entry, EntryRead  # noqa: F401 — registers all models with SQLModel.metadata
-
+from peekview.models import (  # noqa: F401 — registers all models with SQLModel.metadata
+    Entry,
+    EntryRead,
+)
 
 # ============================================================
 # Fixtures
@@ -127,7 +129,6 @@ class TestBDD01WindowKeyAction:
     def test_bdd_01_different_actions_same_minute_not_merged(
         self, read_tracking_service, tracking_session
     ):
-        from peekview.models import EntryRead
 
         read_tracking_service.record_read(
             entry_id=1,
@@ -156,7 +157,6 @@ class TestBDD01WindowKeyAction:
     def test_bdd_02_same_action_same_minute_merged(
         self, read_tracking_service, tracking_session
     ):
-        from peekview.models import EntryRead
 
         for _ in range(3):
             read_tracking_service.record_read(
@@ -189,7 +189,6 @@ class TestBDD03ShareChannel:
 
     @pytest.mark.asyncio
     async def test_bdd_03_public_entry_with_share_token_channel_share(self, client_and_app):
-        from peekview.models import EntryRead
 
         client, app = client_and_app
         owner = await _register(client, username="bdd03owner", password="testpass123")
@@ -217,7 +216,6 @@ class TestBDD03ShareChannel:
 
     @pytest.mark.asyncio
     async def test_bdd_04_share_cookie_download_channel_share(self, client_and_app):
-        from peekview.models import EntryRead
 
         client, app = client_and_app
         owner = await _register(client, username="bdd04owner", password="testpass123")
@@ -249,7 +247,6 @@ class TestBDD03ShareChannel:
 
     @pytest.mark.asyncio
     async def test_bdd_05_share_cookie_file_content_channel_share(self, client_and_app):
-        from peekview.models import EntryRead
 
         client, app = client_and_app
         owner = await _register(client, username="bdd05owner", password="testpass123")
@@ -290,7 +287,6 @@ class TestBDD03ShareChannel:
 
     @pytest.mark.asyncio
     async def test_bdd_06_share_cookie_raw_channel_share(self, client_and_app):
-        from peekview.models import EntryRead
 
         client, app = client_and_app
         owner = await _register(client, username="bdd06owner", password="testpass123")
@@ -339,8 +335,9 @@ class TestBDD07DiscoverData:
         await _wait_for_async_write()
 
         admin = await _register(client, username="bdd07admin", password="testpass123")
-        from peekview.models import User
         from sqlmodel import Session as SSession
+
+        from peekview.models import User
 
         with SSession(app.state.engine) as session:
             admin_user = session.exec(select(User).where(User.username == "bdd07admin")).first()
@@ -450,7 +447,6 @@ class TestBDD10SourceClassification:
     """
 
     def test_bdd_10_no_referer_source_direct(self, read_tracking_service, tracking_session):
-        from peekview.models import EntryRead
 
         read_tracking_service.record_read(
             entry_id=1,
@@ -652,7 +648,7 @@ class TestBDD17BackfillAndMigration:
     def test_bdd_17_backfill_on_startup_when_stats_empty(
         self, read_tracking_service, tracking_session
     ):
-        from peekview.models import EntryRead, EntryReadStats
+        from peekview.models import EntryReadStats
 
         record = EntryRead(
             entry_id=1,
@@ -688,7 +684,7 @@ class TestBDD17BackfillAndMigration:
     def test_bdd_18_no_backfill_when_stats_already_exist(
         self, read_tracking_service, tracking_session
     ):
-        from peekview.models import EntryRead, EntryReadStats
+        from peekview.models import EntryReadStats
 
         existing_stats = EntryReadStats(
             entry_id=1,
@@ -749,7 +745,6 @@ class TestBDD20CleanupExpired:
         return AdminService(engine, storage, config, entry_service)
 
     def test_bdd_20_old_reads_cleaned_up(self, tracking_engine, tracking_session):
-        from peekview.models import EntryRead
 
         old_date = datetime.now(timezone.utc) - timedelta(days=91)
         record = EntryRead(
@@ -775,7 +770,7 @@ class TestBDD20CleanupExpired:
         assert remaining is None
 
     def test_bdd_21_stats_unaffected_after_cleanup(self, tracking_engine, tracking_session):
-        from peekview.models import EntryRead, EntryReadStats
+        from peekview.models import EntryReadStats
 
         old_date = datetime.now(timezone.utc) - timedelta(days=91)
         record = EntryRead(
@@ -818,7 +813,6 @@ class TestBDD20CleanupExpired:
         assert by_action.get("read") == 5
 
     def test_bdd_22_get_read_events_after_cleanup(self, tracking_engine, tracking_session):
-        from peekview.models import EntryRead
         from peekview.services.read_tracking_service import ReadTrackingService
 
         old_date = datetime.now(timezone.utc) - timedelta(days=91)
@@ -856,7 +850,6 @@ class TestBDD20CleanupExpired:
         assert len(result.items) == 1
 
     def test_bdd_23_configurable_retention_days(self, tracking_engine, tracking_session):
-        from peekview.models import EntryRead
 
         old_date = datetime.now(timezone.utc) - timedelta(days=31)
         record = EntryRead(
@@ -895,9 +888,8 @@ class TestBDD24DeleteStrategy:
     """
 
     def test_bdd_24_delete_entry_removes_raw_reads(self, tracking_engine, tracking_session):
-        from peekview.models import Entry, EntryRead, EntryReadStats
-        from peekview.services.entry_service import EntryService
         from peekview.config import PeekConfig
+        from peekview.services.entry_service import EntryService
         from peekview.storage import StorageManager
 
         config = PeekConfig()
@@ -932,9 +924,9 @@ class TestBDD24DeleteStrategy:
         assert len(reads) == 0
 
     def test_bdd_25_delete_entry_preserves_aggregation(self, tracking_engine, tracking_session):
-        from peekview.models import Entry, EntryRead, EntryReadStats
-        from peekview.services.entry_service import EntryService
         from peekview.config import PeekConfig
+        from peekview.models import EntryReadStats
+        from peekview.services.entry_service import EntryService
         from peekview.storage import StorageManager
 
         config = PeekConfig()
@@ -1071,7 +1063,7 @@ class TestBDD28RestoreAggregation:
 
     def test_bdd_28_restore_merge_imports_read_stats(self, tracking_engine, tracking_session):
         from peekview.config import PeekConfig
-        from peekview.models import Entry, EntryReadStats
+        from peekview.models import EntryReadStats
         from peekview.services.admin_service import AdminService
         from peekview.services.entry_service import EntryService
         from peekview.storage import StorageManager
@@ -1118,7 +1110,7 @@ class TestBDD28RestoreAggregation:
         backup_conn = sqlite3.connect(str(staging_dir / "peekview.db"))
         backup_conn.row_factory = sqlite3.Row
 
-        result = admin_service._restore_merge(
+        admin_service._restore_merge(
             staging_path=staging_dir,
             backup_conn=backup_conn,
             version_check="compatible",
@@ -1134,7 +1126,7 @@ class TestBDD28RestoreAggregation:
 
     def test_bdd_29_restore_replace_imports_read_stats(self, tracking_engine, tracking_session):
         from peekview.config import PeekConfig
-        from peekview.models import Entry, EntryReadStats
+        from peekview.models import EntryReadStats
         from peekview.services.admin_service import AdminService
         from peekview.services.entry_service import EntryService
         from peekview.storage import StorageManager
@@ -1181,7 +1173,7 @@ class TestBDD28RestoreAggregation:
         backup_conn = sqlite3.connect(str(staging_dir / "peekview.db"))
         backup_conn.row_factory = sqlite3.Row
 
-        result = admin_service._restore_replace(
+        admin_service._restore_replace(
             staging_path=staging_dir,
             backup_conn=backup_conn,
             version_check="compatible",
@@ -1208,7 +1200,6 @@ class TestBDD30TotalCountSemantics:
     def test_bdd_30_total_count_includes_self_read(
         self, read_tracking_service, tracking_session
     ):
-        from peekview.models import EntryRead
 
         for reader_id in [5, 6, 7]:
             read_tracking_service.record_read(

@@ -219,6 +219,7 @@ def create_app(
 
     share_service = ShareService(engine=engine, config=config)
     read_tracking_service = ReadTrackingService(engine=engine)
+    read_tracking_service.backfill_stats()
     entry_service = EntryService(
         engine=engine, storage=storage, config=config,
         read_tracking_service=read_tracking_service,

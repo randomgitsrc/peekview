@@ -13,7 +13,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydantic import field_validator
-from sqlalchemy import Column, ForeignKey, Index, text
+from sqlalchemy import Column, ForeignKey, Index, Text, text
 from sqlalchemy.dialects.sqlite import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -270,6 +270,7 @@ class EntryRead(SQLModel, table=True):
     entry_id: int | None = Field(default=None, index=True)
     action: str = Field(default="read", max_length=20)
     channel: str = Field(default="api", max_length=20)
+    source: str | None = Field(default=None, max_length=20)
     reader_type: str = Field(default="anonymous", max_length=20)
     reader_id: int | None = Field(default=None)
     is_self_read: bool = Field(default=False)
@@ -280,10 +281,26 @@ class EntryRead(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=now_utc)
 
 
+class EntryReadStats(SQLModel, table=True):
+    __tablename__ = "entry_read_stats"
+
+    entry_id: int = Field(primary_key=True)
+    total_reads: int = Field(default=0)
+    unique_readers: int = Field(default=0)
+    by_action: str = Field(default="{}", sa_column=Column(Text))
+    by_channel: str = Field(default="{}", sa_column=Column(Text))
+    by_source: str = Field(default="{}", sa_column=Column(Text))
+    reader_fingerprints: str = Field(default="")
+    last_read_at: datetime | None = Field(default=None)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
 class ReadStatsResponse(SQLModel):
     total_count: int = 0
     unique_readers: int = 0
     by_channel: dict[str, int] = {}
+    by_action: dict[str, int] = {}
+    by_source: dict[str, int] = {}
     last_read_at: datetime | None = None
 
 
@@ -710,11 +727,20 @@ class StorageStats(SQLModel):
     db_mb: float
 
 
+class ReadsStats(SQLModel):
+    total: int = 0
+    today: int = 0
+    by_action: dict[str, int] = {}
+    by_channel: dict[str, int] = {}
+    by_source: dict[str, int] = {}
+
+
 class AdminStatsResponse(SQLModel):
     users: int
     entries: EntryStats
     api_keys: ApiKeyStats
     storage: StorageStats
+    reads: ReadsStats | None = None
 
 
 class AdminCleanupResponse(SQLModel):
@@ -723,6 +749,7 @@ class AdminCleanupResponse(SQLModel):
     deleted_count: int = 0
     deleted_slugs: list[str] = Field(default_factory=list)
     freed_mb: float = 0.0
+    reads_cleaned: int = 0
 
 
 class ResetPasswordRequest(SQLModel):
@@ -796,6 +823,7 @@ class RestorePreview(SQLModel):
     api_key_count: int
     share_count: int
     read_count: int
+    read_stats_count: int = 0
     conflicts: list[ConflictInfo]
     version_check: str
 
@@ -807,6 +835,7 @@ class RestoreResult(SQLModel):
     api_keys_imported: int
     shares_imported: int
     reads_imported: int
+    read_stats_imported: int = 0
     conflicts_resolved: int
     fts_rebuilt: bool
     version_check: str = "compatible"

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
 
 from peekview.api._shared import (
+    _detect_channel,
     _is_global_api_key_auth,
     _record_read_async,
 )
@@ -185,7 +186,7 @@ async def download_file(
     safe_name = _sanitize_filename(file_record.filename)
 
     entry_record = service.get_entry_record(entry_id)
-    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    channel = _detect_channel(request, slug=slug)
     current_user_id_dl = current_user.id if current_user else None
     asyncio.create_task(
         _record_read_async(
@@ -196,6 +197,7 @@ async def download_file(
             channel=channel,
             reader_id=current_user_id_dl,
             reader_ip=request.client.host if request.client else None,
+            request=request,
         )
     )
 
@@ -229,7 +231,7 @@ async def get_file_content(
     content = service.read_file_content(entry_id, file_record.filename, file_record.path)
 
     entry_record = service.get_entry_record(entry_id)
-    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    channel = _detect_channel(request, slug=slug)
     current_user_id_fc = current_user.id if current_user else None
     asyncio.create_task(
         _record_read_async(
@@ -240,6 +242,7 @@ async def get_file_content(
             channel=channel,
             reader_id=current_user_id_fc,
             reader_ip=request.client.host if request.client else None,
+            request=request,
         )
     )
 
@@ -429,7 +432,7 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
     ).replace("</", "<\\/")
 
     current_user_id_raw = current_user.id if current_user else None
-    channel = "mcp" if request.headers.get("X-PeekView-Source", "").lower() == "mcp" else "api"
+    channel = _detect_channel(request, slug=entry_slug)
     reader_ip = request.client.host if request.client else None
     asyncio.create_task(
         _record_read_async(
@@ -440,6 +443,7 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
             channel=channel,
             reader_id=current_user_id_raw,
             reader_ip=reader_ip,
+            request=request,
         )
     )
 

@@ -147,6 +147,15 @@ def _run_migrations(engine: Engine) -> None:
         conn.commit()
         logger.info("Migration: dropped FTS INSERT/UPDATE triggers for jieba tokenization")
 
+        # entry_reads.source column migration
+        read_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(entry_reads)"))}
+        if "source" not in read_columns:
+            conn.execute(
+                text("ALTER TABLE entry_reads ADD COLUMN source VARCHAR(20) DEFAULT NULL")
+            )
+            conn.commit()
+            logger.info("Migration: added source column to entry_reads")
+
 
 FTS_VERSION = 2  # v1 = original (unicode61, no jieba), v2 = jieba tokenized
 

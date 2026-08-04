@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from peekview.api._shared import (
+    _detect_channel,
     _is_global_api_key_auth,
     _record_read_async,
 )
@@ -31,15 +32,6 @@ from peekview.services.entry_service import EntryService
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
-
-
-def _detect_channel(request: Request) -> str:
-    source = request.headers.get("X-PeekView-Source", "").lower()
-    if source == "mcp":
-        return "mcp"
-    if "share=" in str(request.url.query):
-        return "share"
-    return "api"
 
 
 def _check_share_cookie(request: Request, slug: str, service: EntryService):
@@ -177,6 +169,7 @@ async def list_entries(
             channel=channel,
             reader_id=current_user_id,
             reader_ip=reader_ip,
+            request=request,
         )
     )
 
@@ -228,9 +221,10 @@ async def get_entry(
                         entry_id=entry.id,
                         entry_owner_id=entry.owner_id,
                         action="read",
-                        channel="api",
+                        channel="share",
                         reader_id=current_user_id,
                         reader_ip=request.client.host if request.client else None,
+                        request=request,
                     )
                 )
                 return resp
@@ -258,6 +252,7 @@ async def get_entry(
                 channel="share",
                 reader_id=current_user_id,
                 reader_ip=request.client.host if request.client else None,
+                request=request,
             )
         )
 
@@ -281,6 +276,7 @@ async def get_entry(
                         channel="share",
                         reader_id=current_user_id,
                         reader_ip=request.client.host if request.client else None,
+                        request=request,
                     )
                 )
         return cookie_result
@@ -295,7 +291,7 @@ async def get_entry(
         slug, current_user_id=current_user_id, is_admin=is_admin, include_read_stats=include_stats
     )
 
-    channel = _detect_channel(request)
+    channel = _detect_channel(request, slug=slug)
     asyncio.create_task(
         _record_read_async(
             request.app.state,
@@ -305,6 +301,7 @@ async def get_entry(
             channel=channel,
             reader_id=current_user_id,
             reader_ip=request.client.host if request.client else None,
+            request=request,
         )
     )
 
@@ -470,7 +467,7 @@ async def download_entry_files(
 
     filename = _sanitize_filename(f"{entry.slug}.zip")
 
-    channel = _detect_channel(request)
+    channel = _detect_channel(request, slug=slug)
     current_user_id_dl = current_user.id if current_user else None
     asyncio.create_task(
         _record_read_async(
@@ -481,6 +478,7 @@ async def download_entry_files(
             channel=channel,
             reader_id=current_user_id_dl,
             reader_ip=request.client.host if request.client else None,
+            request=request,
         )
     )
 
