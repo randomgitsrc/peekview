@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: T078
 task_name: read-tracking-hardening
 status: in_progress
@@ -28,4 +28,8 @@ history:
   - phase: P4
     date: 2026-08-03
     status: completed
-    note: 34/34 绿灯，全量 1042 passed，lint 通过，review approved
+    note: 34/34 绿灯，全量 1042 passed，review approved
+  - phase: P5
+    date: 2026-08-03
+    status: completed
+    note: 全量 1042 passed 0 failed，verifier 确认
