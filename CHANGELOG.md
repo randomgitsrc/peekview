@@ -30,6 +30,10 @@
 - `get_read_stats()` 改为从聚合表读取，不再查原始 `entry_reads` 表（O(1) 查询）(T078)
 - 删 entry 时保留 `entry_read_stats` 聚合行（明细删除，汇总数字保留证明"这里曾有流量"）(T078)
 
+### 已知限制
+
+- MCP `getEntry` 返回的 `raw_url`/`file_url` 若被 Agent 用自身 HTTP client 直接访问（非 MCP client），后端无法识别为 MCP 来源，channel 会记为 "api"。这是 HTTP 无状态的设计限制，非 bug (T078)
+
 ## [0.14.2] - 2026-08-03
 
 ### 修复
