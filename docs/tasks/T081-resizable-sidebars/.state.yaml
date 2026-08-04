@@ -1,9 +1,10 @@
-phase: P1
+phase: P2
 task_id: T081
 task_name: resizable-sidebars
 status: active
 created: 2026-08-04T00:00:00Z
 updated: 2026-08-04T00:00:00Z
 history:
-  - {phase: P0, action: created, ts: "2026-08-04T00:00:00Z", note: "P0-brief written, env check passed (debug :8888 + vitest + Playwright CDP)"}
-  - {phase: P1, action: completed, ts: "2026-08-04T00:00:00Z", note: "16 BDD, requirements-review approved, domains: frontend, risk_level: medium"}
+  - {phase: P0, action: created, ts: "2026-08-04T00:00:00Z", note: "P0-brief written, env check passed"}
+  - {phase: P1, action: completed, ts: "2026-08-04T00:00:00Z", note: "16 BDD, requirements-review approved"}
+  - {phase: P2, action: completed, ts: "2026-08-04T00:00:00Z", note: "follows_existing_pattern, plan-design-review approved after revision"}

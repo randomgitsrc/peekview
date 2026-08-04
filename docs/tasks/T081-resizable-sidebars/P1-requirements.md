@@ -154,6 +154,7 @@ agent: analyst
 risk_level: low
 phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 P1_simplified: false
+follows_existing_pattern: [useViewMode.ts, useResponsiveLayout.ts]
 ```
 
 **阶段裁剪理由**：
