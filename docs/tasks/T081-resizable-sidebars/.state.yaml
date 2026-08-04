@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: T081
 task_name: resizable-sidebars
 status: active
@@ -11,4 +11,5 @@ history:
   - {phase: P3, action: completed, ts: "2026-08-04T00:00:00Z", note: "12 composable tests, B-class red"}
   - {phase: P4, action: completed, ts: "2026-08-04T00:00:00Z", note: "composable + 4 file changes, design-review approved"}
   - {phase: P5, action: completed, ts: "2026-08-04T00:00:00Z", note: "1212 passed 0 failed, typecheck OK"}
-  - {phase: P6, action: completed, ts: "2026-08-04T00:00:00Z", note: "16/16 BDD PASS, Playwright CDP verified, all gates passed"}
+  - {phase: P6, action: completed, ts: "2026-08-04T00:00:00Z", note: "16/16 BDD PASS, Playwright CDP verified"}
+  - {phase: P7, action: completed, ts: "2026-08-04T00:00:00Z", note: "BLOCKER=0, CRITICAL=0, consistency all pass"}

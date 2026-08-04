@@ -1,4 +1,9 @@
-vision_analysis:
-  summary:
-    blocker_count: 0
-    description: "BDD-01 功能验证通过，截图确认视觉行为符合预期"
+summary:
+  blocker_count: 0
+  anomaly_count: 0
+  description: "BDD-01 screenshot shows file sidebar with resize handle, main content area, and TOC sidebar. Layout is clean with no anomalies."
+bdd_results:
+  - bdd: BDD-01
+    status: PASS
+    notes: "File sidebar visible with file tree (3 files). Resize handle visible on right edge of sidebar. Main content shows markdown. TOC sidebar visible on right. No visual anomalies."
+anomalies: []
