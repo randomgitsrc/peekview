@@ -14,7 +14,7 @@
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
-| T078 | read-tracking-hardening | ⬜ 待开始 | P0✅ | 🟠 | 无 | 2026-07-28 | 2026-08-03 |
+| T078 | read-tracking-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-03 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
 | T080 | admin-user-management | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
 | T081 | resizable-sidebars | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-30 | 2026-07-30 |
@@ -214,6 +214,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 | 2026-07-30 | 立项 T082 | arch-refactor：后端 DI 统一+错误格式统一+重复代码提取+create_entry 事务；前端 entry store 拆分+EntryDetailView 拆分。多维度架构审计发现 6 项结构性问题 |
 | 2026-07-30 | 立项 T079+T080+T081 | T079 交互一致性修复（AuthButton/UserMenu 统一 + tag 可点击 + Explore 按钮移除）；T080 admin 用户管理（后端 disable/enable/promote/demote + CLI + 前端 /admin 页面）；T081 详情页侧边栏可拖拽调整宽度；roadmap #46 删除（需求弱）/#47→T081 |
 | 2026-07-30 | 完成 T076 | entry-card-interaction → v0.12.0（EntryCard/EntryListRow <a> 拆分 + BaseTag 可点击 + Explore tag 过滤 + tooltip；完整 agate P0-P8，21 BDD 验收全 PASS，vision×19 全 blocker=0） |
+| 2026-08-03 | 完成 T078 | read-tracking-hardening → v0.15.0（探针修复+聚合表+by_action/by_source+来源分类+90天清理+admin stats reads+删entry保留统计；34 BDD 全 PASS，1042 passed 0 failed）|
 | 2026-08-03 | P0 T078 | read-tracking-hardening P0 更新：代码审计发现 5 个探针准确性问题（window_key 不含 action / share channel 错误 / discover 无查询 / files.py channel 不走 _detect_channel / 测试名矛盾），范围前置探针修复。display_name null 已由 T074 hotfix 移除。删 entry 保留聚合统计 |
 | 2026-07-28 | 立项 T078 | read-tracking-hardening：聚合表+by_action+清理+admin stats+迁移 |
 | 2026-07-28 | 立项 T076+T077 | T076 entry-card-interaction（Card a拆分+Tags可点击）；T077 timeline-mvp（project_slug+timelines表+MCP推断/过滤）；roadmap 新增 #40-45 |

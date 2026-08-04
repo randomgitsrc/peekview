@@ -1,7 +1,7 @@
-phase: P8
+phase: DONE
 task_id: T078
 task_name: read-tracking-hardening
-status: in_progress
+status: completed
 created: 2026-07-28
 updated: 2026-08-03
 history:
@@ -41,3 +41,7 @@ history:
     date: 2026-08-03
     status: completed
     note: 跨文件一致性检查通过，无 DESIGN_GAP
+  - phase: P8
+    date: 2026-08-03
+    status: completed
+    note: bump_type=minor v0.14.2→v0.15.0，CHANGELOG 更新，tag v0.15.0
