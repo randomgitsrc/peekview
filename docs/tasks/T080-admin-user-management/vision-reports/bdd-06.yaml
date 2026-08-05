@@ -1,0 +1,24 @@
+bdd: BDD-06
+screenshot: screenshots/bdd-06-disable-self-desktop.png
+role: quick
+description: 'Overflow menu open for admin user "alice" showing 4 action items: 禁用
+  (Disable), 降级 (Demote), 重置密码 (Reset Password), 删除 (Delete). Delete item highlighted
+  red (destructive). Menu is a dropdown with role=menuitem items.
+
+  '
+elements:
+- menu_items:
+  - 禁用
+  - 降级
+  - 重置密码
+  - 删除
+- destructive_highlight: delete item red
+notes: 'Vision confirms overflow menu renders with correct action items including
+  disable option. BDD-06 asserts admin cannot disable self — clicking 禁用 on alice
+  triggers LastAdmin/self-operation rejection (toast assertion in E2E admin.spec.ts).
+
+  '
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

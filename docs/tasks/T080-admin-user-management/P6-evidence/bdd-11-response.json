@@ -1,0 +1,2 @@
+HTTP: 409 body: {"error":{"code":"LAST_ADMIN","message":"Cannot delete the last active admin","details":null}}
+delete_self with confirm_username HTTP: 409 body: {"error":{"code":"LAST_ADMIN","message":"Cannot delete the last active admin","details":null}}

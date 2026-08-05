@@ -1,0 +1,17 @@
+bdd: BDD-15
+screenshot: screenshots/bdd-15-unauth-redirect.png
+role: quick
+description: 'Unauthenticated user accessing /admin is redirected to landing page
+  (/). Vision confirms PeekView landing/home page with hero "Agent writes. You read.
+  Agents read too." and Sign in button. No admin content visible.
+
+  '
+elements:
+- page_type: landing/home
+- hero_headline: Agent writes. You read. Agents read too.
+- sign_in_button: present
+- admin_content: absent
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

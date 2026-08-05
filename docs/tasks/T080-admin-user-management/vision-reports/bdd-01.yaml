@@ -1,0 +1,25 @@
+bdd: BDD-01
+screenshot: screenshots/bdd-01-desktop.png
+role: quick
+description: 'Admin user management page (/admin) renders correctly on desktop 1280x800.
+  Page title "用户管理" visible. User list shows 3 rows (alice, bob, carol). alice has
+  "Admin" badge. Each row has overflow menu ("...") trigger. Pagination component
+  not visible (3 users < 20 per_page threshold, expected).
+
+  '
+elements:
+- title: 用户管理
+- user_rows:
+  - alice
+  - bob
+  - carol
+- admin_badge: present on alice
+- overflow_menu: present on all rows
+notes: 'Seed data has 3 users, so pagination is conditionally hidden (BDD-01 spec
+  allows count <= 20). Vision confirms list rendering + badges + menu triggers.
+
+  '
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

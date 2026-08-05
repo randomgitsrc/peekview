@@ -1,0 +1,13 @@
+bdd: BDD-14
+screenshot: screenshots/bdd-14-nonadmin-redirect.png
+role: quick
+description: 'Non-admin user (bob) accessing /admin is redirected to /explore. Assertion
+  log confirms: bob /auth/me is_admin=false, final URL after /admin is http://127.0.0.1:8888/explore.
+  No admin content visible.
+
+  '
+assertion_log: bdd-14-assertion.log
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

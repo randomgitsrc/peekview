@@ -1,0 +1,23 @@
+bdd: BDD-12
+screenshot: screenshots/bdd-12-reset-dialog-desktop.png
+role: quick
+description: 'Password reset dialog open for user "bob". Dialog title "重置密码" (Reset
+  Password). Subtitle "为用户 bob 设置新密码". Input field labeled "新密码" with eye toggle.
+  Buttons: 取消 (Cancel) and 确认 (Confirm). Background dimmed (modal state).
+
+  '
+elements:
+- dialog_title: 重置密码
+- target_user: bob
+- password_input: present with eye toggle
+- cancel_button: 取消
+- confirm_button: 确认
+notes: 'Vision confirms password reset dialog renders as modal with password input.
+  Dialog has alertdialog role (verified in E2E admin.spec.ts via aria-labelledby attribute
+  check). Confirm button disabled until password >= 8 chars (E2E verified).
+
+  '
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

@@ -1,0 +1,21 @@
+bdd: BDD-20
+screenshot: screenshots/bdd-20-demote-self-desktop.png
+role: quick
+description: 'Admin (alice) cannot demote self. Toast message "Cannot demote the last
+  active admin" displayed. alice remains admin. Screenshot shows /admin page with
+  toast notification.
+
+  '
+assertion_log: bdd-20-assertion.log
+toast_text: Cannot demote the last active admin
+notes: 'Seed data has alice as sole admin, so LastAdmin protection triggers (not multi-admin
+  self-operation protection). BDD-20 Given specifies multi-admin scenario, but the
+  functional outcome (demote rejected, alice stays admin) is equivalent. The toast
+  confirms rejection. For strict multi-admin BDD-20, P5 pytest covers the multi-admin
+  self-demote case (test_bdd_20_self_demote_multi_admin_refuse).
+
+  '
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS

@@ -1,0 +1,3 @@
+tempuser id: 4
+delete tempuser HTTP: 204
+tempuser in list: False

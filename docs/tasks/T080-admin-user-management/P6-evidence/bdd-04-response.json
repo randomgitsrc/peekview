@@ -1,0 +1,2 @@
+bob token obtained
+{"id":2,"username":"bob","display_name":null,"is_active":false,"is_admin":false,"created_at":"2026-08-05T22:26:27.516449","disabled_at":"2026-08-05T22:33:56.776294","disabled_by":1}bob JWT after disable HTTP: 401
