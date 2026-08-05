@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-08-06
+
 ### 新增
 
 - Admin 用户管理页面（/admin）：用户列表 + 分页 + 状态 badge（active/disabled/admin）+ OverflowMenu 操作菜单（禁用/启用/promote/demote/重置密码/删除）(T080)
@@ -25,6 +27,12 @@
 - **破坏性**：DELETE /api/v1/auth/me 移除 confirm_username 旁路——最后一个活跃 admin 绝对不可自删，即使提供 confirm_username 也返回 409 (T080)
 - admin 计数修正：从 COUNT(is_admin=True) 改为 COUNT(is_admin=True AND is_active=True)，修复禁用 admin 仍被计入的 bug (T080)
 - GET /api/v1/admin/users 返回结构从 list[UserResponse] 改为 UserListResponse {items, total, page, per_page} (T080)
+
+### 修复
+
+- LastAdmin 保护补齐 demote/disable/delete 三者统一（原仅 delete_self 有，delete_user/promote/demote 缺失）(T080)
+- `_check_last_active_admin` 缺 is_active 条件，导致禁用 admin 误触 LastAdmin 保护（决策 B 修正）(T080)
+- `delete_user` 删除曾禁用其他用户的 admin 时 disabled_by FK 约束失败返回 500，现清理 FK 引用后删除 (T080)
 
 ## [0.16.0] - 2026-08-05
 
