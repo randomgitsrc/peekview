@@ -1,0 +1,9 @@
+phase: P1
+task_id: T080
+task_name: admin-user-management
+status: in_progress
+created: 2026-08-05T00:00:00Z
+updated: 2026-08-06T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-05T00:00:00Z", note: "P0-brief written (agate 4 fields complete), env check passed: pytest/vue-tsc/ruff/CDP/vision all OK"}
+  - {phase: P1, action: completed, ts: "2026-08-06T00:00:00Z", note: "24 BDD (BDD-01..24), 8 CONFIRMED decisions (audit fields/LastAdmin x3/redirect/list_users struct/password/OverflowMenu + decision A remove confirm_username bypass + decision B admin count rule), requirements-review approved retry#1, domains=backend/frontend/cli/security, risk=medium-high, P0-P8 full"}
