@@ -1,7 +1,7 @@
-phase: READY
+phase: DONE
 task_id: T081
 task_name: resizable-sidebars
-status: active
+status: completed
 created: 2026-08-04T00:00:00Z
 updated: 2026-08-05T00:00:00Z
 history:
@@ -14,3 +14,4 @@ history:
   - {phase: P6, action: completed, ts: "2026-08-04T00:00:00Z", note: "16/16 BDD PASS, Playwright CDP verified"}
   - {phase: P7, action: completed, ts: "2026-08-04T00:00:00Z", note: "BLOCKER=0, CRITICAL=0, consistency all pass"}
   - {phase: P8, action: completed, ts: "2026-08-05T00:00:00Z", note: "bump 0.15.0→0.16.0 minor, CHANGELOG updated, P5 rerun 23 tests green + typecheck OK"}
+  - {phase: READY, action: cleanup, ts: "2026-08-05T00:00:00Z", note: "debug backend stopped, /tmp/peekview-debug/ removed, temp scripts removed, tag v0.16.0 created, workspace clean"}
