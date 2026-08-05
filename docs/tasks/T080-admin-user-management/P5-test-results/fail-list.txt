@@ -1,0 +1,3 @@
+FAILED tests/test_t073_bdd09_10_ruff_regression.py::TestBdd10RuffCheckSelectE711E712::test_bdd_10_existing_code_passes_e711_e712_check
+FAILED e2e/admin.spec.ts:49:7 › T080: Admin user management › desktop viewport (1280x800) › BDD-01: admin sees paginated user list on /admin [desktop] (chromium)
+FAILED e2e/admin.spec.ts:49:7 › T080: Admin user management › desktop viewport (1280x800) › BDD-01: admin sees paginated user list on /admin [desktop] (Mobile Chrome)

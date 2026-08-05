@@ -20,17 +20,18 @@
     />
 
     <template v-else>
-      <div class="user-list">
+      <div class="user-list" data-testid="admin-user-list">
         <div
           v-for="user in users"
           :key="user.id"
           class="user-row"
+          data-testid="admin-user-row"
         >
           <div class="user-info">
             <span class="user-name">{{ user.username }}</span>
             <div class="user-badges">
-              <BaseBadge v-if="user.isAdmin" status="admin" />
-              <BaseBadge v-if="!user.isActive" status="disabled" />
+              <BaseBadge v-if="user.isAdmin" status="admin" data-testid="user-badge" />
+              <BaseBadge v-if="!user.isActive" status="disabled" data-testid="user-badge" />
               <span v-if="!user.isActive && user.disabledAt" class="disabled-time">{{ formatDisabledAt(user.disabledAt) }}</span>
             </div>
           </div>
@@ -48,6 +49,7 @@
         v-model:page="currentPage"
         :per-page="perPage"
         :total="total"
+        data-testid="pagination"
       />
     </template>
 

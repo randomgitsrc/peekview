@@ -6,6 +6,7 @@
       :disabled="disabled"
       :aria-disabled="disabled ? 'true' : undefined"
       ref="triggerRef"
+      data-testid="overflow-menu-trigger"
       @click="toggle"
       @keydown.enter="open"
       @keydown.space.prevent="open"
