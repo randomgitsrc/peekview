@@ -66,7 +66,9 @@ async def test_admin_delete_user_cascade(client):
         "/api/v1/admin/users?username=alice", headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert list_resp.status_code == 200
-    alice_id = list_resp.json()[0]["id"]
+    list_data = list_resp.json()
+    list_items = list_data["items"] if isinstance(list_data, dict) else list_data
+    alice_id = list_items[0]["id"]
 
     del_resp = await client.delete(
         f"/api/v1/admin/users/{alice_id}", headers={"Authorization": f"Bearer {admin_token}"}
@@ -81,7 +83,9 @@ async def test_admin_delete_user_cascade(client):
     list_resp2 = await client.get(
         "/api/v1/admin/users?username=alice", headers={"Authorization": f"Bearer {admin_token}"}
     )
-    assert list_resp2.json() == []
+    list2_data = list_resp2.json()
+    list2_items = list2_data["items"] if isinstance(list2_data, dict) else list2_data
+    assert list2_items == []
 
 
 @pytest.mark.asyncio
@@ -101,6 +105,11 @@ async def test_admin_cannot_delete_self(client):
 
 @pytest.mark.asyncio
 async def test_unique_admin_delete_self_requires_confirm(client):
+    """BDD-11: last active admin delete_self is absolutely refused (decision A).
+
+    The confirm_username bypass is removed. Even with confirm_username matching,
+    the last active admin cannot delete self.
+    """
     admin_token = await _register(client, "adminuser")
     _make_admin(client._app, "adminuser")
 
@@ -114,10 +123,11 @@ async def test_unique_admin_delete_self_requires_confirm(client):
         "/api/v1/auth/me?confirm_username=adminuser",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-    assert resp2.status_code == 204
+    assert resp2.status_code == 409
+    assert resp2.json()["error"]["code"] == "LAST_ADMIN"
 
     with Session(client._app.state.engine) as s:
-        assert s.exec(select(User).where(User.username == "adminuser")).first() is None
+        assert s.exec(select(User).where(User.username == "adminuser")).first() is not None
 
 
 @pytest.mark.asyncio
@@ -220,8 +230,9 @@ async def test_admin_list_users_by_username(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert len(data) == 1
-    assert data[0]["username"] == "alice"
+    items = data["items"] if isinstance(data, dict) else data
+    assert len(items) == 1
+    assert items[0]["username"] == "alice"
 
 
 @pytest.mark.asyncio

@@ -16,7 +16,7 @@
 | T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-03 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
-| T080 | admin-user-management | 🔄 进行中 | P2 | 🟡 | 无 | 2026-07-30 | 2026-08-06 |
+| T080 | admin-user-management | 🔄 进行中 | P3 | 🟡 | 无 | 2026-07-30 | 2026-08-06 |
 | T081 | resizable-sidebars | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-08-05 |
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T083 | cjk-search-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-07-31 |
