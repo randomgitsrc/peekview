@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-08-06
+
+### 新增
+
+-
+
+
 ### 新增
 
 - Admin 用户管理页面（/admin）：用户列表 + 分页 + 状态 badge（active/disabled/admin）+ OverflowMenu 操作菜单（禁用/启用/promote/demote/重置密码/删除）(T080)
