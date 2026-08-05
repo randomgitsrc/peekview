@@ -102,6 +102,7 @@ Admin 登录后缺少完整的用户管理能力，本任务补齐三端缺口�
 - Given admin 已登录
 - When admin 在 /admin 页面对自己执行禁用操作
 - Then 操作被拒绝，返回错误提示，admin 自身状态仍为 active
+- 注：sole admin 自操作时 LastAdmin 保护优先，返回 409 (LAST_ADMIN)；多 admin 场景下自操作返回 400 (VALIDATION_ERROR)
 
 ### 角色变更（promote/demote）
 

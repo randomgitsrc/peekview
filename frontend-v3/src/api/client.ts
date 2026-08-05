@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios'
-import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult } from '@/types'
-import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse } from './types'
+import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult } from '@/types'
+import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -99,6 +99,8 @@ class PeekAPI {
       isActive: user.is_active,
       isAdmin: user.is_admin,
       createdAt: user.created_at,
+      disabledAt: user.disabled_at ?? null,
+      disabledBy: user.disabled_by ?? null,
     }
   }
 
@@ -314,6 +316,58 @@ class PeekAPI {
   async getDiagramConfig(): Promise<import('./types').DiagramConfigResponse> {
     const response = await this.client.get('/config/diagram')
     return response.data
+  }
+
+  // --- Admin User API --- //
+
+  async listUsers(params?: ListUsersParams): Promise<UserListResponse> {
+    const response = await this.client.get<UserListApiResponse>('/admin/users', {
+      params: {
+        username: params?.username,
+        page: params?.page,
+        per_page: params?.perPage,
+      },
+    })
+    return {
+      items: response.data.items.map(u => this.transformUser(u)),
+      total: response.data.total,
+      page: response.data.page,
+      perPage: response.data.per_page,
+    }
+  }
+
+  async disableUser(id: number, reason?: string): Promise<User> {
+    const response = await this.client.post<UserApiResponse>(
+      `/admin/users/${id}/disable`,
+      reason ? { reason } : undefined,
+    )
+    return this.transformUser(response.data)
+  }
+
+  async enableUser(id: number): Promise<User> {
+    const response = await this.client.post<UserApiResponse>(`/admin/users/${id}/enable`)
+    return this.transformUser(response.data)
+  }
+
+  async promoteUser(id: number): Promise<User> {
+    const response = await this.client.post<UserApiResponse>(`/admin/users/${id}/promote`)
+    return this.transformUser(response.data)
+  }
+
+  async demoteUser(id: number): Promise<User> {
+    const response = await this.client.post<UserApiResponse>(`/admin/users/${id}/demote`)
+    return this.transformUser(response.data)
+  }
+
+  async resetUserPassword(id: number, newPassword: string): Promise<{ newPassword: string }> {
+    const response = await this.client.post(`/admin/users/${id}/reset-password`, {
+      new_password: newPassword,
+    })
+    return { newPassword: response.data.new_password }
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await this.client.delete(`/admin/users/${id}`)
   }
 }
 

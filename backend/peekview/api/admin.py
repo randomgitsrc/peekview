@@ -9,8 +9,10 @@ from peekview.exceptions import ValidationError
 from peekview.models import (
     AdminCleanupResponse,
     AdminStatsResponse,
+    DisableUserRequest,
     ResetPasswordRequest,
     User,
+    UserListResponse,
     UserResponse,
 )
 
@@ -33,14 +35,14 @@ async def cleanup_expired_entries(
     return request.app.state.admin_service.cleanup_expired()
 
 
-@router.get("/users", response_model=list[UserResponse])
+@router.get("/users", response_model=UserListResponse)
 async def list_users(
     request: Request,
     username: str | None = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     admin: User = Depends(require_admin),
-) -> list[UserResponse]:
+) -> UserListResponse:
     return request.app.state.admin_service.list_users(
         username=username, page=page, per_page=per_page
     )
@@ -56,6 +58,48 @@ async def delete_user(
         request.app.state.admin_service.delete_user(user_id=user_id, current_user_id=admin.id)
     except ValueError as e:
         raise ValidationError(str(e)) from None
+
+
+@router.post("/users/{user_id}/disable", response_model=UserResponse)
+async def disable_user(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(require_admin),
+    body: DisableUserRequest | None = None,
+) -> UserResponse:
+    reason = body.reason if body else None
+    return request.app.state.admin_service.disable_user(
+        user_id=user_id, current_user_id=admin.id, reason=reason
+    )
+
+
+@router.post("/users/{user_id}/enable", response_model=UserResponse)
+async def enable_user(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(require_admin),
+) -> UserResponse:
+    return request.app.state.admin_service.enable_user(user_id=user_id)
+
+
+@router.post("/users/{user_id}/promote", response_model=UserResponse)
+async def promote_user(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(require_admin),
+) -> UserResponse:
+    return request.app.state.admin_service.promote_user(user_id=user_id)
+
+
+@router.post("/users/{user_id}/demote", response_model=UserResponse)
+async def demote_user(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(require_admin),
+) -> UserResponse:
+    return request.app.state.admin_service.demote_user(
+        user_id=user_id, current_user_id=admin.id
+    )
 
 
 @router.post("/users/{user_id}/reset-password")

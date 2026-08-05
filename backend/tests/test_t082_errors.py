@@ -129,9 +129,9 @@ async def test_bdd_10_admin_endpoint_returns_peekerror(app):
         )
         assert login_resp.status_code == 200
 
-        # Try to delete yourself — raises ValueError("Cannot delete yourself")
+        # Try to delete yourself — LastAdmin protection returns 409 (sole admin)
         resp = await ac.delete(f"/api/v1/admin/users/{admin_id}")
-        assert resp.status_code == 400
+        assert resp.status_code == 409
         data = resp.json()
         assert "error" in data, f"BDD-10: expected 'error' key, got: {data}"
         assert "code" in data["error"], f"BDD-10: error.code missing: {data}"

@@ -97,6 +97,18 @@ def _run_migrations(engine: Engine) -> None:
                 conn.commit()
                 logger.info("Migration: promoted first user to admin")
 
+        for col, col_type in [
+            ("disabled_at", "DATETIME"),
+            ("disabled_by", "INTEGER"),
+            ("disabled_reason", "VARCHAR(500)"),
+        ]:
+            if col not in user_columns:
+                conn.execute(
+                    text(f"ALTER TABLE users ADD COLUMN {col} {col_type} DEFAULT NULL")
+                )
+                conn.commit()
+                logger.info(f"Migration: added {col} column to users")
+
         # Check existing indexes
         indexes = {
             row[0]

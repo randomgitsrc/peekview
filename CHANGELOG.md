@@ -5,6 +5,27 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- Admin 用户管理页面（/admin）：用户列表 + 分页 + 状态 badge（active/disabled/admin）+ OverflowMenu 操作菜单（禁用/启用/promote/demote/重置密码/删除）(T080)
+- 后端 disable/enable/promote/demote API 端点（POST /api/v1/admin/users/{id}/{action}）(T080)
+- 用户禁用审计字段：disabled_at/disabled_by/disabled_reason + migration (T080)
+- LastAdmin 保护：最后一个活跃 admin 不可被 disable/demote/delete（API 层）(T080)
+- CLI user disable/enable 子命令 (T080)
+- CLI user demote 补 LastAdmin 保护 (T080)
+- PasswordResetDialog 组件：密码输入 + show/hide + ≥8 字符校验 + alertdialog role (T080)
+- 路由守卫：/admin meta.requiresAdmin，非 admin 跳 /explore，未登录跳 / (T080)
+- Toast aria-live 按 variant 动态：error=assertive，其他=polite (T080)
+- BaseBadge 新增 disabled/admin variant (T080)
+
+### 变更
+
+- **破坏性**：DELETE /api/v1/auth/me 移除 confirm_username 旁路——最后一个活跃 admin 绝对不可自删，即使提供 confirm_username 也返回 409 (T080)
+- admin 计数修正：从 COUNT(is_admin=True) 改为 COUNT(is_admin=True AND is_active=True)，修复禁用 admin 仍被计入的 bug (T080)
+- GET /api/v1/admin/users 返回结构从 list[UserResponse] 改为 UserListResponse {items, total, page, per_page} (T080)
+
 ## [0.16.0] - 2026-08-05
 
 ### 新增

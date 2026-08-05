@@ -24,6 +24,12 @@ const routes: RouteRecordRaw[] = [
     redirect: { path: '/settings', query: { tab: 'apikeys' } },
   },
   {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('./views/AdminView.vue'),
+    meta: { requiresAdmin: true },
+  },
+  {
     path: '/users/:username',
     name: 'user-entries',
     component: () => import('./views/EntryListView.vue'),
@@ -82,6 +88,10 @@ router.beforeEach(async (to) => {
   }
   if (to.path === '/settings') {
     if (authStore.authState !== 'authenticated') return '/'
+  }
+  if (to.meta.requiresAdmin) {
+    if (authStore.authState !== 'authenticated') return '/'
+    if (!authStore.isAdmin) return '/explore'
   }
 })
 

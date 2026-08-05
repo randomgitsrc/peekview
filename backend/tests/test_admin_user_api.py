@@ -99,8 +99,8 @@ async def test_admin_cannot_delete_self(client):
     resp = await client.delete(
         f"/api/v1/admin/users/{admin_id}", headers={"Authorization": f"Bearer {admin_token}"}
     )
-    assert resp.status_code == 400
-    assert "self" in resp.json()["error"]["message"].lower() or "yourself" in resp.json()["error"]["message"].lower()
+    assert resp.status_code == 409
+    assert "last" in resp.json()["error"]["message"].lower() or "admin" in resp.json()["error"]["message"].lower()
 
 
 @pytest.mark.asyncio

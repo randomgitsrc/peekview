@@ -1,11 +1,12 @@
 <template>
-  <div class="toast-container" aria-live="polite">
+  <div class="toast-container">
     <TransitionGroup name="toast">
       <div
         v-for="toast in messages"
         :key="toast.id"
         :class="['toast', `toast--${toast.variant}`]"
-        role="alert"
+        role="status"
+        :aria-live="toast.variant === 'error' ? 'assertive' : 'polite'"
       >
         <span class="toast__message">{{ toast.message }}</span>
         <button class="toast__close" @click="remove(toast.id)" aria-label="Dismiss">&times;</button>

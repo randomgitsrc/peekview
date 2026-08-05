@@ -79,6 +79,15 @@ export interface UserApiResponse {
   is_active: boolean
   is_admin: boolean
   created_at: string
+  disabled_at: string | null
+  disabled_by: number | null
+}
+
+export interface UserListApiResponse {
+  items: UserApiResponse[]
+  total: number
+  page: number
+  per_page: number
 }
 
 // API Key API response types

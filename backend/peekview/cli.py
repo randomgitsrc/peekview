@@ -15,6 +15,7 @@ import platform
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1602,6 +1603,8 @@ def user_promote(username: str) -> None:
 @click.argument("username")
 def user_demote(username: str) -> None:
     """Demote user from admin."""
+    from sqlalchemy import func as sa_func
+
     config = PeekConfig()
     engine = init_db(config.db_path)
     check_schema(engine)
@@ -1614,10 +1617,81 @@ def user_demote(username: str) -> None:
         if not user.is_admin:
             click.echo(f"User '{username}' is not admin")
             return
+        if user.is_admin and user.is_active:
+            count = session.exec(
+                select(sa_func.count()).where(
+                    User.is_admin.is_(True), User.is_active.is_(True)
+                )
+            ).one()
+            if count <= 1:
+                click.echo("Error: cannot demote the last active admin", err=True)
+                sys.exit(1)
         user.is_admin = False
         session.add(user)
         session.commit()
     click.echo(f"✓ Demoted {username} from admin")
+
+
+@user_cmd.command(name="disable")
+@click.argument("username")
+@click.option("--reason", "-r", default=None, help="Disable reason")
+def user_disable(username: str, reason: str | None) -> None:
+    """Disable a user (cannot login while disabled)."""
+    from sqlalchemy import func as sa_func
+
+    config = PeekConfig()
+    engine = init_db(config.db_path)
+    check_schema(engine)
+
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == username)).first()
+        if not user:
+            click.echo(f"Error: User '{username}' not found", err=True)
+            sys.exit(1)
+        if not user.is_active:
+            click.echo(f"User '{username}' is already disabled")
+            return
+        if user.is_admin and user.is_active:
+            count = session.exec(
+                select(sa_func.count()).where(
+                    User.is_admin.is_(True), User.is_active.is_(True)
+                )
+            ).one()
+            if count <= 1:
+                click.echo("Error: cannot disable the last active admin", err=True)
+                sys.exit(1)
+        user.is_active = False
+        user.disabled_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        user.disabled_by = None
+        user.disabled_reason = reason
+        session.add(user)
+        session.commit()
+    click.echo(f"✓ Disabled {username}")
+
+
+@user_cmd.command(name="enable")
+@click.argument("username")
+def user_enable(username: str) -> None:
+    """Enable a disabled user."""
+    config = PeekConfig()
+    engine = init_db(config.db_path)
+    check_schema(engine)
+
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == username)).first()
+        if not user:
+            click.echo(f"Error: User '{username}' not found", err=True)
+            sys.exit(1)
+        if user.is_active:
+            click.echo(f"User '{username}' is already active")
+            return
+        user.is_active = True
+        user.disabled_at = None
+        user.disabled_by = None
+        user.disabled_reason = None
+        session.add(user)
+        session.commit()
+    click.echo(f"✓ Enabled {username}")
 
 
 @user_cmd.command(name="delete")

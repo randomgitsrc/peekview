@@ -18,12 +18,14 @@ from pathlib import Path
 
 from packaging.version import Version
 from sqlalchemy import case, func, text
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import update as sa_update
 from sqlmodel import Session, select
 
 from peekview.auth import SECRET_KEY_FILE, _load_or_generate_secret_key, hash_password
 from peekview.config import CONFIG_FILE, PeekConfig
 from peekview.database import init_db, rebuild_fts_index
-from peekview.exceptions import NotFoundError
+from peekview.exceptions import LastAdminError, NotFoundError, ValidationError
 from peekview.models import (
     AdminCleanupResponse,
     AdminStatsResponse,
@@ -42,6 +44,7 @@ from peekview.models import (
     RestoreResult,
     StorageStats,
     User,
+    UserListResponse,
     UserResponse,
 )
 from peekview.services.entry_service import EntryService
@@ -306,29 +309,149 @@ class AdminService:
 
     def list_users(
         self, username: str | None = None, page: int = 1, per_page: int = 20
-    ) -> list[UserResponse]:
+    ) -> UserListResponse:
         with Session(self.engine) as session:
             query = select(User)
+            count_query = select(func.count()).select_from(User)
             if username is not None:
                 query = query.where(User.username == username)
+                count_query = count_query.where(User.username == username)
+            total = session.exec(count_query).one()
             query = query.order_by(User.id).offset((page - 1) * per_page).limit(per_page)
             users = session.exec(query).all()
-            return [
-                UserResponse(
-                    id=u.id,
-                    username=u.username,
-                    display_name=u.display_name,
-                    is_active=u.is_active,
-                    is_admin=u.is_admin,
-                    created_at=u.created_at,
-                )
-                for u in users
-            ]
+            return UserListResponse(
+                items=[
+                    UserResponse(
+                        id=u.id,
+                        username=u.username,
+                        display_name=u.display_name,
+                        is_active=u.is_active,
+                        is_admin=u.is_admin,
+                        created_at=u.created_at,
+                        disabled_at=u.disabled_at,
+                        disabled_by=u.disabled_by,
+                    )
+                    for u in users
+                ],
+                total=total,
+                page=page,
+                per_page=per_page,
+            )
+
+    @staticmethod
+    def _check_self_operation(admin_id: int, target_id: int, action: str) -> None:
+        if admin_id == target_id:
+            raise ValidationError(f"Cannot {action} yourself")
+
+    @staticmethod
+    def _check_last_active_admin(session: Session, target_user_id: int, action: str) -> None:
+        user = session.get(User, target_user_id)
+        if not user:
+            raise NotFoundError(f"User {target_user_id} not found")
+        if user.is_admin and user.is_active:
+            count = session.exec(
+                select(func.count()).where(User.is_admin.is_(True), User.is_active.is_(True))
+            ).one()
+            if count <= 1:
+                raise LastAdminError(f"Cannot {action} the last active admin")
+
+    def disable_user(
+        self, user_id: int, current_user_id: int, reason: str | None = None
+    ) -> UserResponse:
+        with Session(self.engine) as session:
+            self._check_last_active_admin(session, user_id, "disable")
+            self._check_self_operation(current_user_id, user_id, "disable")
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            user.is_active = False
+            user.disabled_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            user.disabled_by = current_user_id
+            user.disabled_reason = reason
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return UserResponse(
+                id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                is_active=user.is_active,
+                is_admin=user.is_admin,
+                created_at=user.created_at,
+                disabled_at=user.disabled_at,
+                disabled_by=user.disabled_by,
+            )
+
+    def enable_user(self, user_id: int) -> UserResponse:
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            user.is_active = True
+            user.disabled_at = None
+            user.disabled_by = None
+            user.disabled_reason = None
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return UserResponse(
+                id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                is_active=user.is_active,
+                is_admin=user.is_admin,
+                created_at=user.created_at,
+                disabled_at=user.disabled_at,
+                disabled_by=user.disabled_by,
+            )
+
+    def promote_user(self, user_id: int) -> UserResponse:
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            user.is_admin = True
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return UserResponse(
+                id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                is_active=user.is_active,
+                is_admin=user.is_admin,
+                created_at=user.created_at,
+                disabled_at=user.disabled_at,
+                disabled_by=user.disabled_by,
+            )
+
+    def demote_user(self, user_id: int, current_user_id: int) -> UserResponse:
+        with Session(self.engine) as session:
+            self._check_last_active_admin(session, user_id, "demote")
+            self._check_self_operation(current_user_id, user_id, "demote")
+            user = session.get(User, user_id)
+            if not user:
+                raise NotFoundError(f"User {user_id} not found")
+            user.is_admin = False
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return UserResponse(
+                id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                is_active=user.is_active,
+                is_admin=user.is_admin,
+                created_at=user.created_at,
+                disabled_at=user.disabled_at,
+                disabled_by=user.disabled_by,
+            )
 
     def delete_user(self, user_id: int, current_user_id: int) -> None:
-        if user_id == current_user_id:
-            raise ValueError("Cannot delete yourself")
         with Session(self.engine) as session:
+            self._check_last_active_admin(session, user_id, "delete")
+            if user_id == current_user_id:
+                raise ValueError("Cannot delete yourself")
             user = session.get(User, user_id)
             if not user:
                 raise NotFoundError(f"User {user_id} not found")
@@ -340,9 +463,10 @@ class AdminService:
             with contextlib.suppress(NotFoundError):
                 entry_service.delete_entry(slug, is_api_key_auth=True)
         with Session(self.engine) as session:
-            from sqlalchemy import delete as sa_delete
-
             session.exec(sa_delete(ApiKey).where(ApiKey.user_id == user_id))
+            session.exec(
+                sa_update(User).where(User.disabled_by == user_id).values(disabled_by=None)
+            )
             user = session.get(User, user_id)
             if user:
                 session.delete(user)

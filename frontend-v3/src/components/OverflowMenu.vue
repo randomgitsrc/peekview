@@ -3,6 +3,8 @@
     <button
       class="icon-btn overflow-trigger"
       :class="{ 'is-open': isOpen }"
+      :disabled="disabled"
+      :aria-disabled="disabled ? 'true' : undefined"
       ref="triggerRef"
       @click="toggle"
       @keydown.enter="open"
@@ -85,11 +87,13 @@ export interface OverflowMenuItem {
   action?: () => void
 }
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   items: OverflowMenuItem[]
   variant?: 'dropdown' | 'sheet'
+  disabled?: boolean
 }>(), {
   variant: 'dropdown',
+  disabled: false,
 })
 
 const IconRenderer = (props: { name: string; class?: string }) => {
@@ -106,10 +110,12 @@ const menuRef = ref<HTMLElement>()
 const triggerRef = ref<HTMLElement>()
 
 function toggle() {
+  if (props.disabled) return
   isOpen.value = !isOpen.value
 }
 
 function open() {
+  if (props.disabled) return
   isOpen.value = true
 }
 

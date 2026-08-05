@@ -106,6 +106,9 @@ class UserBase(SQLModel):
     display_name: str | None = Field(default=None, max_length=64)
     is_active: bool = Field(default=True, sa_column_kwargs={"server_default": "1"})
     is_admin: bool = Field(default=False, sa_column_kwargs={"server_default": "0"})
+    disabled_at: datetime | None = Field(default=None)
+    disabled_by: int | None = Field(default=None, foreign_key="users.id")
+    disabled_reason: str | None = Field(default=None, max_length=500)
 
 
 class User(UserBase, table=True):
@@ -646,6 +649,17 @@ class UserResponse(SQLModel):
     is_active: bool
     is_admin: bool
     created_at: datetime
+    disabled_at: datetime | None = None
+    disabled_by: int | None = None
+
+
+class UserListResponse(SQLModel):
+    """Schema for paginated user list response."""
+
+    items: list[UserResponse]
+    total: int
+    page: int
+    per_page: int
 
 
 class AuthResponse(SQLModel):
@@ -754,6 +768,10 @@ class AdminCleanupResponse(SQLModel):
 
 class ResetPasswordRequest(SQLModel):
     new_password: str = Field(..., min_length=8, max_length=72)
+
+
+class DisableUserRequest(SQLModel):
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class ChangePasswordRequest(SQLModel):

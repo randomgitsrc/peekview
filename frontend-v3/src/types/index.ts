@@ -107,12 +107,27 @@ export interface User {
   isActive: boolean
   isAdmin: boolean
   createdAt: string
+  disabledAt?: string | null
+  disabledBy?: number | null
 }
 
 export interface AuthResponse {
   accessToken: string
   tokenType: string
   user: User
+}
+
+export interface UserListResponse {
+  items: User[]
+  total: number
+  page: number
+  perPage: number
+}
+
+export interface ListUsersParams {
+  page?: number
+  perPage?: number
+  username?: string
 }
 
 export type AuthState = 'loading' | 'authenticated' | 'anonymous'

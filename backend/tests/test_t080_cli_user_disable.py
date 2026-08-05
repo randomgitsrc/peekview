@@ -64,6 +64,7 @@ def _make_admin(isolated_fs):
 
 
 def test_bdd_17_cli_disable_user_cannot_login(runner, isolated_fs):
+    _create_user(runner, "admin17", "adminpass123", admin=True)
     _create_user(runner, "eve17", "evepass123")
 
     result = runner.invoke(cli, ["user", "disable", "eve17"])
@@ -89,6 +90,7 @@ def test_bdd_17_cli_disable_user_cannot_login(runner, isolated_fs):
 
 
 def test_bdd_18_cli_enable_user_can_login(runner, isolated_fs):
+    _create_user(runner, "admin18", "adminpass123", admin=True)
     _create_user(runner, "eve18", "evepass123")
 
     runner.invoke(cli, ["user", "disable", "eve18"])

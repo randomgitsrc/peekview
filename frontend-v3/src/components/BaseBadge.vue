@@ -1,13 +1,19 @@
 <template>
-  <span class="base-badge" :class="`badge-${status}`">{{ status }}</span>
+  <span class="base-badge" :class="`badge-${status}`">{{ label }}</span>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  status?: 'public' | 'private' | 'shared' | 'archived' | 'expired'
+const props = withDefaults(defineProps<{
+  status?: 'public' | 'private' | 'shared' | 'archived' | 'expired' | 'disabled' | 'admin'
 }>(), {
   status: 'public',
 })
+
+const labelMap: Record<string, string> = {
+  disabled: 'disabled',
+  admin: 'admin',
+}
+const label = labelMap[props.status] ?? props.status
 </script>
 
 <style scoped>
@@ -43,6 +49,16 @@ withDefaults(defineProps<{
 
 .badge-expired {
   background: var(--c-badge-expired-bg);
+  color: var(--c-warning);
+}
+
+.badge-disabled {
+  background: var(--c-badge-archived-bg);
+  color: var(--c-text-tertiary);
+}
+
+.badge-admin {
+  background: var(--c-badge-shared-bg);
   color: var(--c-warning);
 }
 </style>

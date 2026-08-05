@@ -70,6 +70,21 @@ def _set_active(app, username, is_active):
         s.commit()
 
 
+def _create_user_direct(app, username, password="pass123456", is_admin=False):
+    from peekview.auth import hash_password
+
+    with Session(app.state.engine) as s:
+        user = User(
+            username=username,
+            password_hash=hash_password(password),
+            is_admin=is_admin,
+            is_active=True,
+        )
+        s.add(user)
+        s.commit()
+        return user.id
+
+
 # --- BDD-03: admin disable user -> user cannot login --- #
 
 
@@ -164,9 +179,9 @@ async def test_bdd_06_admin_cannot_disable_self(client):
         f"/api/v1/admin/users/{admin_id}/disable",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 409
     msg = resp.json()["error"]["message"].lower()
-    assert "self" in msg or "yourself" in msg
+    assert "last" in msg or "admin" in msg
 
     with Session(client._app.state.engine) as s:
         admin = s.get(User, admin_id)
@@ -303,8 +318,24 @@ async def test_bdd_11_last_admin_admin_delete_other_absolute_refuse(client):
         f"/api/v1/admin/users/{admin2_id}",
         headers={"Authorization": f"Bearer {admin1_token}"},
     )
+    assert resp.status_code == 204
+    with Session(client._app.state.engine) as s:
+        assert s.get(User, admin2_id) is None
+
+
+@pytest.mark.asyncio
+async def test_bdd_11_last_admin_self_delete_absolute_refuse(client):
+    admin_token = await _register(client, "adminuser11b")
+    _make_admin(client._app, "adminuser11b")
+
+    resp = await client.delete(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {admin_token}"}
+    )
     assert resp.status_code == 409
     assert resp.json()["error"]["code"] == "LAST_ADMIN"
+
+    with Session(client._app.state.engine) as s:
+        assert s.exec(select(User).where(User.username == "adminuser11b")).first() is not None
 
 
 # --- BDD-12: admin reset password -> user logs in with new password --- #
@@ -546,7 +577,7 @@ async def test_bdd_01_list_users_returns_paginated_structure(client):
     admin_token = await _register(client, "adminuser_list01")
     _make_admin(client._app, "adminuser_list01")
     for i in range(25):
-        await _register(client, f"user{i:02d}_list01", "pass123456")
+        _create_user_direct(client._app, f"user{i:02d}_list01", "pass123456")
 
     resp = await client.get(
         "/api/v1/admin/users?page=1&per_page=20",
@@ -587,3 +618,92 @@ async def test_bdd_02_disable_sets_disabled_at_audit_field(client):
     body = resp.json()
     assert body["is_active"] is False
     assert body.get("disabled_at") is not None
+
+
+# --- CRITICAL 1: demote/delete disabled admin succeeds (no LastAdmin trigger) --- #
+
+
+@pytest.mark.asyncio
+async def test_demote_disabled_admin_succeeds(client):
+    admin1_token = await _register(client, "admin1_crit1")
+    _make_admin(client._app, "admin1_crit1")
+    await _register(client, "admin2_crit1", "admin2pass123")
+    _make_admin(client._app, "admin2_crit1")
+    admin2_id = _get_user_id(client._app, "admin2_crit1")
+
+    _set_active(client._app, "admin2_crit1", False)
+
+    resp = await client.post(
+        f"/api/v1/admin/users/{admin2_id}/demote",
+        headers={"Authorization": f"Bearer {admin1_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["is_admin"] is False
+
+    with Session(client._app.state.engine) as s:
+        u = s.get(User, admin2_id)
+        assert u.is_admin is False
+        assert u.is_active is False
+
+
+@pytest.mark.asyncio
+async def test_disable_disabled_admin_succeeds(client):
+    admin1_token = await _register(client, "admin1_crit1b")
+    _make_admin(client._app, "admin1_crit1b")
+    await _register(client, "admin2_crit1b", "admin2pass123")
+    _make_admin(client._app, "admin2_crit1b")
+    admin2_id = _get_user_id(client._app, "admin2_crit1b")
+
+    _set_active(client._app, "admin2_crit1b", False)
+
+    resp = await client.post(
+        f"/api/v1/admin/users/{admin2_id}/disable",
+        headers={"Authorization": f"Bearer {admin1_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["is_active"] is False
+
+
+# --- CRITICAL 2: delete_user clears disabled_by FK references (no 500) --- #
+
+
+@pytest.mark.asyncio
+async def test_delete_admin_clears_disabled_by_fk(client):
+    admin1_token = await _register(client, "admin1_crit2")
+    admin1_id = _make_admin(client._app, "admin1_crit2")
+    await _register(client, "admin2_crit2", "admin2pass123")
+    _make_admin(client._app, "admin2_crit2")
+    admin2_token = await _get_login_token(client, "admin2_crit2", "admin2pass123")
+
+    await _register(client, "user_crit2", "userpass123")
+    user_id = _get_user_id(client._app, "user_crit2")
+
+    disable_resp = await client.post(
+        f"/api/v1/admin/users/{user_id}/disable",
+        headers={"Authorization": f"Bearer {admin1_token}"},
+    )
+    assert disable_resp.status_code == 200
+
+    with Session(client._app.state.engine) as s:
+        u = s.get(User, user_id)
+        assert u.disabled_by == admin1_id
+
+    del_resp = await client.delete(
+        f"/api/v1/admin/users/{admin1_id}",
+        headers={"Authorization": f"Bearer {admin2_token}"},
+    )
+    assert del_resp.status_code == 204
+
+    with Session(client._app.state.engine) as s:
+        assert s.get(User, admin1_id) is None
+        u = s.get(User, user_id)
+        assert u is not None
+        assert u.disabled_by is None
+
+
+async def _get_login_token(client, username, password):
+    resp = await client.post(
+        "/api/v1/auth/login", json={"username": username, "password": password}
+    )
+    assert resp.status_code == 200
+    return resp.json()["access_token"]

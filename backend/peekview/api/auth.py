@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -231,22 +231,22 @@ async def update_profile(
 @router.delete("/me", status_code=204)
 async def delete_self(
     request: Request,
-    confirm_username: str | None = Query(None),
     current_user: User = Depends(require_auth),
 ) -> None:
     engine = request.app.state.engine
     admin_service = request.app.state.admin_service
 
     if current_user.is_admin:
-        admin_count = 0
+        from sqlalchemy import func as sa_func
+
         with Session(engine) as s:
-            admin_count = s.exec(select(User).where(User.is_admin.is_(True))).all()
-            admin_count = len(admin_count)
-        if admin_count == 1 and confirm_username != current_user.username:
-            raise LastAdminError(
-                "这是最后一个管理员，注销将清空所有数据",
-                details={"confirm_required": True},
-            )
+            count = s.exec(
+                select(sa_func.count()).where(
+                    User.is_admin.is_(True), User.is_active.is_(True)
+                )
+            ).one()
+        if count <= 1:
+            raise LastAdminError("Cannot delete the last active admin")
 
     admin_service.delete_user(current_user.id, current_user_id=-1)
 
