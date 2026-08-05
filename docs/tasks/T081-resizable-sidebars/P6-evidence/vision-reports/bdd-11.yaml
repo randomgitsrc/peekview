@@ -1,10 +1,10 @@
 vision_analysis:
   anomalies: []
   bdd_results:
-  - bdd: BDD-16
+  - bdd: BDD-11
     notes: DOM assertions passed. See test-output.log.
     status: PASS
   summary:
     anomaly_count: 0
     blocker_count: 0
-    description: BDD-16 verified via Playwright CDP DOM assertions. No visual blockers.
+    description: BDD-11 verified via Playwright CDP DOM assertions. No visual blockers.

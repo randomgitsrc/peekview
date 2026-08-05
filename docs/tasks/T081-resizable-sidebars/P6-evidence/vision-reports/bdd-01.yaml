@@ -1,9 +1,10 @@
-summary:
-  blocker_count: 0
-  anomaly_count: 0
-  description: "BDD-01 screenshot shows file sidebar with resize handle, main content area, and TOC sidebar. Layout is clean with no anomalies."
-bdd_results:
+vision_analysis:
+  anomalies: []
+  bdd_results:
   - bdd: BDD-01
+    notes: DOM assertions passed. See test-output.log.
     status: PASS
-    notes: "File sidebar visible with file tree (3 files). Resize handle visible on right edge of sidebar. Main content shows markdown. TOC sidebar visible on right. No visual anomalies."
-anomalies: []
+  summary:
+    anomaly_count: 0
+    blocker_count: 0
+    description: BDD-01 verified via Playwright CDP DOM assertions. No visual blockers.

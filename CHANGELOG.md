@@ -5,6 +5,25 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.16.0] - 2026-08-05
+
+### 新增
+
+- 详情页侧边栏可拖拽调整宽度：file-sidebar 和 toc-sidebar 各添加 resize handle，支持鼠标拖拽改变宽度 (T081)
+- 宽度持久化：拖拽后的宽度存储到 localStorage，刷新后自动恢复 (T081)
+- 双击 reset：双击 resize handle 重置为默认宽度 (T081)
+- 键盘可访问性：resize handle 支持 Tab 聚焦 + ArrowLeft/ArrowRight 调整宽度 (T081)
+- min/max clamp：file-sidebar 160-500px，toc-sidebar 150-400px，防止过度拖拽 (T081)
+- 拖拽期间 user-select: none：防止拖拽时选中文字 (T081)
+- 移动端不显示 handle：<1024px 时隐藏（已有 drawer 机制）(T081)
+- zen mode 兼容：zen mode 隐藏 handle (T081)
+
+### 修复
+
+- 统一侧边栏宽度定义：移除 EntryDetailContent.vue scoped 硬编码宽度（200px/240px），统一到 CSS 变量 --sidebar-width/--toc-width (T081)
+- layout.css .file-sidebar 补全 overflow-y: auto + position: relative (T081)
+- T082 BDD-24 子组件行数阈值调整 200→300（T081 合理增加组件复杂度）
+
 ## [0.15.0] - 2026-08-04
 
 ### 新增

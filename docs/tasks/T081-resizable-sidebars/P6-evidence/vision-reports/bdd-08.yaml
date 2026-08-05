@@ -1,4 +1,10 @@
 vision_analysis:
+  anomalies: []
+  bdd_results:
+  - bdd: BDD-08
+    notes: DOM assertions passed. See test-output.log.
+    status: PASS
   summary:
+    anomaly_count: 0
     blocker_count: 0
-    description: "BDD-08 功能验证通过，截图确认视觉行为符合预期"
+    description: BDD-08 verified via Playwright CDP DOM assertions. No visual blockers.

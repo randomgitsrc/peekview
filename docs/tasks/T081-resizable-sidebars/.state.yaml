@@ -1,9 +1,9 @@
-phase: P7
+phase: READY
 task_id: T081
 task_name: resizable-sidebars
 status: active
 created: 2026-08-04T00:00:00Z
-updated: 2026-08-04T00:00:00Z
+updated: 2026-08-05T00:00:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-04T00:00:00Z", note: "P0-brief written, env check passed"}
   - {phase: P1, action: completed, ts: "2026-08-04T00:00:00Z", note: "16 BDD, requirements-review approved"}
@@ -13,3 +13,4 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-04T00:00:00Z", note: "1212 passed 0 failed, typecheck OK"}
   - {phase: P6, action: completed, ts: "2026-08-04T00:00:00Z", note: "16/16 BDD PASS, Playwright CDP verified"}
   - {phase: P7, action: completed, ts: "2026-08-04T00:00:00Z", note: "BLOCKER=0, CRITICAL=0, consistency all pass"}
+  - {phase: P8, action: completed, ts: "2026-08-05T00:00:00Z", note: "bump 0.15.0→0.16.0 minor, CHANGELOG updated, P5 rerun 23 tests green + typecheck OK"}

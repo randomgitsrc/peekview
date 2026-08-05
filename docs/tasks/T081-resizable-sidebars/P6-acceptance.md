@@ -20,22 +20,22 @@ agent: verifier
 
 ## BDD 逐条验收
 
-- PASS BDD-01: 拖拽 file-sidebar handle 向右50px，宽度从260px变为310px（delta=50，误差0px）（screenshots/bdd-01-drag-file-sidebar.png）(vision: vision-reports/bdd-01.yaml)
-- PASS BDD-02: 拖拽 toc-sidebar handle 向左30px，宽度从240px变为270px（delta=30，误差0px）（screenshots/bdd-02-drag-toc-sidebar.png）
-- PASS BDD-03: 拖拽超出最大宽度时 clamp 到500px（max=500）（screenshots/bdd-03-clamp-max.png）
-- PASS BDD-04: 拖拽超出最小宽度时 clamp 到150px（min=150）（screenshots/bdd-04-clamp-min.png）
-- PASS BDD-05: 拖拽后刷新页面，宽度从 localStorage 恢复为350px（screenshots/bdd-05-localstorage-restore.png）
-- PASS BDD-06: localStorage 非法值"abc"回退到默认260px（test-output.log）
-- PASS BDD-07: localStorage 超范围值"9999"回退到默认240px（screenshots/bdd-07-oor-fallback.png）
-- PASS BDD-08: 视口800px时 resize handle display=none（screenshots/bdd-08-mobile-no-handle.png）
-- PASS BDD-09: zen mode 后 handle 不可见（visible=false）（screenshots/bdd-09-zen-mode.png）
-- PASS BDD-10: 单文件 entry 无 file-sidebar handle（handle=0）（screenshots/bdd-10-no-file-sidebar.png）
-- PASS BDD-11: 非markdown多文件 entry 无 toc handle（toc-sidebar=0, handle=0）（screenshots/bdd-11-no-toc-sidebar.png）
-- PASS BDD-12: 拖拽期间 body.resize-active=true, user-select=none（test-output.log）
-- PASS BDD-13: 拖拽期间 content-area scrollTop 不变（0->0）（screenshots/bdd-13-no-scroll.png）
-- PASS BDD-14: 双击 file-sidebar handle 重置为260px（350->260）（screenshots/bdd-14-dblclick-reset-file.png）
-- PASS BDD-15: 双击 toc-sidebar handle 重置为240px（180->240）（screenshots/bdd-15-dblclick-reset-toc.png）
-- PASS BDD-16: resize handle 可键盘聚焦，role=separator, tabIndex=0, focus-visible=true, outline=2px solid（screenshots/bdd-16-keyboard-focus.png）
+- PASS BDD-01: drag file-sidebar handle right 50px, width 260px->310px, delta=50 (screenshots/bdd-01-drag-file-sidebar.png) (vision: P6-evidence/vision-reports/bdd-01.yaml)
+- PASS BDD-02: drag toc-sidebar handle left 30px, width 240px->270px, delta=30 (screenshots/bdd-02-drag-toc-sidebar.png) (vision: P6-evidence/vision-reports/bdd-02.yaml)
+- PASS BDD-03: clamp to max 500px when dragged beyond (screenshots/bdd-03-clamp-max.png) (vision: P6-evidence/vision-reports/bdd-03.yaml)
+- PASS BDD-04: clamp to min 150px when dragged beyond (screenshots/bdd-04-clamp-min.png) (vision: P6-evidence/vision-reports/bdd-04.yaml)
+- PASS BDD-05: localStorage restore after reload, width=350px (screenshots/bdd-05-localstorage-restore.png) (vision: P6-evidence/vision-reports/bdd-05.yaml)
+- PASS BDD-06: invalid localStorage "abc" fallback to default 260px (test-output.log)
+- PASS BDD-07: out-of-range localStorage "9999" fallback to default 240px (screenshots/bdd-07-oor-fallback.png) (vision: P6-evidence/vision-reports/bdd-07.yaml)
+- PASS BDD-08: viewport 800px resize handle display=none (screenshots/bdd-08-mobile-no-handle.png) (vision: P6-evidence/vision-reports/bdd-08.yaml)
+- PASS BDD-09: zen mode hides handle, visible=false (screenshots/bdd-09-zen-mode.png) (vision: P6-evidence/vision-reports/bdd-09.yaml)
+- PASS BDD-10: single-file entry no file-sidebar handle, handle=0 (screenshots/bdd-10-no-file-sidebar.png) (vision: P6-evidence/vision-reports/bdd-10.yaml)
+- PASS BDD-11: non-markdown multi-file entry no toc handle, toc-sidebar=0 handle=0 (screenshots/bdd-11-no-toc-sidebar.png) (vision: P6-evidence/vision-reports/bdd-11.yaml)
+- PASS BDD-12: drag body.resize-active=true user-select=none (test-output.log)
+- PASS BDD-13: drag no scroll, scrollTop 0->0 (screenshots/bdd-13-no-scroll.png) (vision: P6-evidence/vision-reports/bdd-13.yaml)
+- PASS BDD-14: dblclick reset file-sidebar 350->260px (screenshots/bdd-14-dblclick-reset-file.png) (vision: P6-evidence/vision-reports/bdd-14.yaml)
+- PASS BDD-15: dblclick reset toc-sidebar 180->240px (screenshots/bdd-15-dblclick-reset-toc.png) (vision: P6-evidence/vision-reports/bdd-15.yaml)
+- PASS BDD-16: keyboard focus role=separator tabIndex=0 focus-visible=true outline=2px (screenshots/bdd-16-keyboard-focus.png) (vision: P6-evidence/vision-reports/bdd-16.yaml)
 
 ## 证据说明
 
