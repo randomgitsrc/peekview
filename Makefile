@@ -404,7 +404,7 @@ publish:
 	@echo "→ Step 4/4: 发布到 PyPI..."
 	@TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
-		for f in "$HOME/.env" "$HOME/.bash_env" "$HOME/.peekview/.release-env"; do \
+		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
 				TOKEN=$$(bash -c 'set -a && source "$$1" 2>/dev/null && echo $$PYPI_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
@@ -430,7 +430,7 @@ publish-test: clean build test check-version
 	@echo "→ Publishing to TestPyPI..."
 	@TOKEN="$$PYPI_TEST_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
-		for f in "$HOME/.env" "$HOME/.bash_env" "$HOME/.peekview/.release-env"; do \
+		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
 				TOKEN=$$(bash -c 'source "$$1" 2>/dev/null && echo $$PYPI_TEST_API_TOKEN' _ "$$f"); \
 				[ -n "$$TOKEN" ] && break; \
