@@ -1,7 +1,7 @@
-phase: P8
+phase: DONE
 task_id: T080
 task_name: admin-user-management
-status: in_progress
+status: completed
 created: 2026-08-05T00:00:00Z
 updated: 2026-08-06T00:00:00Z
 history:
@@ -13,3 +13,5 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-06T00:00:00Z", note: "gate_commands.P5: pytest 1068 passed/1 pre-existing ruff env fail (known-failures.md) + vitest 1217 passed + typecheck clean; P5_e2e: admin.spec.ts 27 passed/0 failed (data-testid fix); PROD_NOT_TOUCHED; N5 signature verified"}
   - {phase: P6, action: completed, ts: "2026-08-06T00:00:00Z", note: "24/24 BDD PASS, 8 screenshots (md5 unique) + vision YAMLs (blocker_count=0) + API response.json + CLI logs, check-gate/evidence/provenance all pass, PROD_NOT_TOUCHED"}
   - {phase: P7, action: completed, ts: "2026-08-06T00:00:00Z", note: "BLOCKER=0, 4/4 DESIGN_GAP_REVIEWED paired, SCOPE_RESOLVED (no SCOPE+), P1 24 BDD = P2 24 = P6 24 PASS, P2 packages match P8, no residual NEED_CONFIRM, check-gate P7 exit 0"}
+  - {phase: P8, action: completed, ts: "2026-08-06T00:00:00Z", note: "bump 0.16.0→0.17.0 minor, CHANGELOG [0.17.0] Added/Changed/Fixed, tag v0.17.0, P5 rerun T080 37/37 green, P8 gate exit 2 self-judge pass"}
+  - {phase: READY, action: cleanup, ts: "2026-08-06T00:00:00Z", note: "debug :8888 stopped, /tmp/peekview-debug cleaned, temp scripts rm, git clean, tag v0.17.0 created, PROD_NOT_TOUCHED"}
