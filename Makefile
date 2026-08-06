@@ -4,7 +4,12 @@
 # Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
 # Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-quick debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry
+# === Progress visibility (T080 followup) ===
+# All tee/tail commands write logs here. Override: make LOG_DIR=/path/to/logs <target>
+LOG_DIR ?= /tmp/peekview-bg
+$(shell mkdir -p $(LOG_DIR))
+
+.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-quick debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry bg-clean
 
 # Default target
 help:
@@ -71,9 +76,17 @@ build-fast: build-frontend-fast build-backend-fast
 
 # Build frontend (full)
 build-frontend:
-	@echo "→ Building frontend..."
-	cd frontend-v3 && npm ci
-	cd frontend-v3 && npm run build
+	@echo "→ [1/2] npm ci (~2-3 min)..."
+	@set -o pipefail; \
+	mkdir -p $(LOG_DIR); \
+	LOG=$(LOG_DIR)/build-frontend.log; \
+	cd frontend-v3 && npm ci --no-audit --no-fund 2>&1 | tee $$LOG | tail -5 \
+		|| { echo "✗ npm ci failed, last 30 lines of log:"; tail -30 $$LOG; exit 1; }
+	@echo "→ [2/2] vite build (~10s)..."
+	@set -o pipefail; \
+	cd frontend-v3 && npm run build 2>&1 | tee -a $(LOG_DIR)/build-frontend.log | tail -10 \
+		|| { echo "✗ vite build failed, last 30 lines of log:"; tail -30 $(LOG_DIR)/build-frontend.log; exit 1; }
+	@echo "  ✓ $$(ls frontend-v3/dist/assets/ 2>/dev/null | wc -l) static files"
 	@echo "→ Copying static files to backend..."
 	rm -rf backend/peekview/static/*
 	cp -r frontend-v3/dist/* backend/peekview/static/
@@ -94,8 +107,12 @@ build-frontend-fast:
 	else \
 		echo "→ Using existing node_modules"; \
 	fi
-	@echo "→ Building frontend..."
-	cd frontend-v3 && npm run build
+	@echo "→ vite build (cached, ~10s)..."
+	@set -o pipefail; \
+	mkdir -p $(LOG_DIR); \
+	cd frontend-v3 && npm run build 2>&1 | tee $(LOG_DIR)/build-frontend-fast.log | tail -5 \
+		|| { echo "✗ vite build failed, last 30 lines:"; tail -30 $(LOG_DIR)/build-frontend-fast.log; exit 1; }
+	@echo "  ✓ $$(ls frontend-v3/dist/assets/ 2>/dev/null | wc -l) static files"
 	@echo "→ Copying static files to backend..."
 	rm -rf backend/peekview/static/*
 	cp -r frontend-v3/dist/* backend/peekview/static/
@@ -107,15 +124,18 @@ build-backend:
 	cd backend && rm -rf dist *.egg-info .pytest_cache build
 	find backend -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find backend -type f -name "*.pyc" -delete
-	@echo "→ Building backend wheel..."
-	cd backend && /usr/bin/python3 -m build --wheel
+	@echo "→ Building backend wheel (~5-10s)..."
+	@cd backend && /usr/bin/python3 -m build --wheel --verbose 2>&1 | tee $(LOG_DIR)/build-backend.log | tail -5 \
+		|| { echo "✗ build failed, last 30 lines of log:"; tail -30 $(LOG_DIR)/build-backend.log; exit 1; }
 	@echo "✓ Backend wheel built"
 
 # Build backend wheel (fast) - minimal cleanup
 build-backend-fast:
-	@echo "→ Building backend wheel (fast)..."
-	cd backend && rm -rf dist *.egg-info build
-	cd backend && /usr/bin/python3 -m build --wheel
+	@echo "→ Building backend wheel (fast, ~5s)..."
+	@cd backend && rm -rf dist *.egg-info build
+	@set -o pipefail; \
+	cd backend && /usr/bin/python3 -m build --wheel 2>&1 | tee $(LOG_DIR)/build-backend-fast.log | tail -5 \
+		|| { echo "✗ build failed, last 30 lines of log:"; tail -30 $(LOG_DIR)/build-backend-fast.log; exit 1; }
 	@echo "✓ Backend wheel built"
 
 # =============================================================================
@@ -138,8 +158,8 @@ test: build-backend test-backend test-frontend
 
 # Quick test - run tests without rebuilding
 test-quick: guard-venv
-	@echo "→ Running backend tests (quick)..."
-	cd backend && .venv/bin/python -m pytest tests/ -v --tb=short
+	@echo "→ Running backend tests (~30-60s with xdist, 1068 tests)..."
+	cd backend && .venv/bin/python -m pytest tests/ -n auto --tb=short
 	@echo "✓ Tests passed"
 
 # Run only failed tests (no guard-venv: if tests ran before, venv is fine)
@@ -151,7 +171,7 @@ test-frontend:
 	@if [ ! -d "frontend-v3/node_modules" ]; then \
 		echo "→ Installing frontend dependencies..."; cd frontend-v3 && npm ci; \
 	fi
-	@echo "→ Running frontend tests..."
+	@echo "→ Running frontend tests (~30-60s)..."
 	cd frontend-v3 && npx vitest run
 
 test-backend: guard-venv
@@ -168,8 +188,12 @@ lint-fix:
 	cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/
 
 typecheck:
-	@echo "→ Running vue-tsc type check..."
-	cd frontend-v3 && npx vue-tsc --noEmit
+	@echo "→ Running vue-tsc type check (~30-60s)..."
+	@set -o pipefail; \
+	mkdir -p $(LOG_DIR); \
+	cd frontend-v3 && npx vue-tsc --noEmit 2>&1 | tee $(LOG_DIR)/typecheck.log | tail -10 \
+		|| { echo "✗ type check failed, last 30 lines:"; tail -30 $(LOG_DIR)/typecheck.log; exit 1; }
+	@echo "  ✓ type check passed"
 
 # =============================================================================
 # Verification Targets
@@ -212,6 +236,10 @@ verify-wheel:
 	@echo "→ Verifying wheel contents..."
 	@cd backend && python3 scripts/verify_wheel.py
 
+bg-clean:
+	@echo "→ Cleaning bg logs older than 7 days..."
+	@find $(LOG_DIR) -name '*.log' -mtime +7 -delete 2>/dev/null || true
+	@echo "  ✓ Done"
 # =============================================================================
 # Release Targets
 # =============================================================================
@@ -229,7 +257,7 @@ bump-version:
 	@echo "→ Step 2/5: 验证同步结果..."
 	@python3 scripts/sync_versions.py --check || (echo "  ✗ 同步验证失败"; exit 1)
 	@echo "→ Step 3/5: 构建前端并更新静态文件..."
-	@make build-frontend-fast > /tmp/build.log 2>&1 && echo "  ✓ 前端构建成功" || (echo "  ✗ 前端构建失败，查看 /tmp/build.log"; exit 1)
+	@make build-frontend-fast > $(LOG_DIR)/bump-build.log 2>&1 && echo "  ✓ 前端构建成功" || (echo "  ✗ 前端构建失败，查看 $(LOG_DIR)/bump-build.log"; exit 1)
 	@echo "→ Step 4/5: 提交版本和静态文件..."
 	@git add -A
 	@git commit -m "chore(release): bump to v$(NEW_VERSION)" --quiet
@@ -359,6 +387,11 @@ doc-checklist:
 
 # Quick pre-publish check (no rebuild) - use after code fixes
 pre-publish-quick: dev check-version check-changelog test-quick verify-wheel
+	@echo "→ [1/5] dev (venv check) ~1-3 min..."
+	@echo "→ [2/5] check-version ~1s..."
+	@echo "→ [3/5] check-changelog ~1s..."
+	@echo "→ [4/5] test-quick (~30-60s with xdist)..."
+	@echo "→ [5/5] verify-wheel (~5s)..."
 	@echo ""
 	@echo "✓ Quick pre-publish checks passed"
 	@echo "  Use this after code fixes to avoid full rebuild"
@@ -367,6 +400,7 @@ pre-publish-quick: dev check-version check-changelog test-quick verify-wheel
 
 # Full pre-publish check (clean build + test) - use for final verification
 pre-publish: clean build dev check-version check-changelog test verify-wheel
+	@echo "→ clean + build + dev + check-version + check-changelog + test + verify-wheel (~5-10 min)..."
 	@echo ""
 	@echo "✓ Full pre-publish checks passed"
 	@echo "  - Clean build: OK"
@@ -401,7 +435,7 @@ publish:
 	fi
 	@echo "→ Step 3/4: 运行最终检查..."
 	@make check-version check-changelog verify-wheel
-	@echo "→ Step 4/4: 发布到 PyPI..."
+	@echo "→ Step 4/4: 发布到 PyPI (filtering ANSI escape codes)..."
 	@TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
@@ -419,8 +453,11 @@ publish:
 		echo ""; \
 		exit 1; \
 	fi; \
+	# 注意：以下仅适用于 publish 的 twine upload（用 \r 覆盖同一行做进度条）。
+	# sed 删 ANSI 码并将 \r 转 \n，让进度数字可见。不适用于其他命令。
 	cd backend && pipx run twine upload dist/* \
-		-u __token__ -p "$$TOKEN" --non-interactive
+		-u __token__ -p "$$TOKEN" --non-interactive 2>&1 \
+		| sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r/\n/g'
 	@echo ""
 	@echo "✅ Published to PyPI"
 	@echo "   URL: https://pypi.org/project/peekview/$$(cd backend && python3 -c 'from peekview import __version__; print(__version__)')/"
@@ -451,8 +488,9 @@ publish-test: clean build test check-version
 
 # Install locally (for development)
 install:
-	@echo "→ Installing locally..."
+	@echo "→ [1/2] Building backend..."
 	make build
+	@echo "→ [2/2] Installing via pipx..."
 	pipx install backend/ --force
 	@echo "✓ Installed peekview from source"
 
@@ -462,8 +500,9 @@ dev:
 		echo "→ Creating venv..."; \
 		cd backend && python3 -m venv .venv; \
 	fi
-	@echo "→ Installing editable (in venv, isolated from system/pipx)..."
-	cd backend && .venv/bin/pip install -e ".[test]"
+	@echo "→ Installing editable + test deps (~1-3 min)..."
+	@cd backend && .venv/bin/pip install -e ".[test]" 2>&1 | tail -3 \
+		|| { echo "✗ install failed"; exit 1; }
 	@echo "✓ Installed in backend/.venv (isolated)"
 	@echo "  Activate: source backend/.venv/bin/activate"
 	@echo "  Test:     backend/.venv/bin/python -m pytest tests/"
@@ -486,10 +525,13 @@ try: build install
 debug: debug-build debug-start debug-verify-isolation debug-test debug-test-mcp
 	@echo ""
 	@echo "=== 调试流程完成 ==="
-	@echo "✓ 服务运行在 http://127.0.0.1:8888"
-	@echo "✓ 数据隔离验证通过"
-	@echo "✓ E2E 测试通过"
-	@echo "✓ MCP Server 集成测试通过"
+	@echo "  ✓ [1/5] debug-build"
+	@echo "  ✓ [2/5] debug-start"
+	@echo "  ✓ [3/5] debug-verify-isolation"
+	@echo "  ✓ [4/5] debug-test"
+	@echo "  ✓ [5/5] debug-test-mcp"
+	@echo ""
+	@echo "服务运行在 http://127.0.0.1:8888"
 	@echo ""
 	@echo "请进行人工验证，确认无误后:"
 	@echo "  make debug-stop     - 停止调试服务"
@@ -506,28 +548,33 @@ debug-quick: build-frontend-fast debug-start debug-seed
 	@echo "停止: make debug-stop"
 
 debug-build: clean build-frontend
-	@echo ""
-	@echo "→ 验证静态文件..."
+	@echo "→ [1/3] clean + build-frontend (~1-3 min, depends on cache)..."
+	@echo "→ [2/3] 验证静态文件..."
 	@if [ ! -f "backend/peekview/static/index.html" ]; then \
 		echo "✗ 错误: index.html 不存在"; \
 		exit 1; \
 	fi
-	@echo "✓ 静态文件已更新"
-	@echo ""
+	@echo "  ✓ 静态文件已更新"
+	@echo "→ [3/3] Done"
 	@echo "=== 调试构建完成 ==="
 	@echo "下一步: make debug-start"
 
 debug-start:
-	@bash scripts/dev-server.sh start
-	@echo ""
+	@echo "→ 启动 debug backend (:8888, ~5s)..."
+	@set -o pipefail; \
+	mkdir -p $(LOG_DIR); \
+	bash scripts/dev-server.sh start 2>&1 | tee $(LOG_DIR)/debug-start.log | tail -5 \
+		|| { echo "✗ 启动失败, last 30 lines:"; tail -30 $(LOG_DIR)/debug-start.log; exit 1; }
 	@echo "→ 等待服务稳定..."
 	@sleep 2
 
 debug-seed:
-	@echo ""
-	@echo "=== 灌入测试数据 ==="
-	@python3 scripts/seed-debug.py
-	@echo "✓ 测试数据已灌入 (alice/bob/carol, password: testpass123)"
+	@echo "=== 灌入测试数据 (~30s) ==="
+	@set -o pipefail; \
+	mkdir -p $(LOG_DIR); \
+	python3 scripts/seed-debug.py 2>&1 | tee $(LOG_DIR)/debug-seed.log | tail -10 \
+		|| { echo "✗ seed 失败, last 30 lines:"; tail -30 $(LOG_DIR)/debug-seed.log; exit 1; }
+	@echo "✓ 测试数据已灌入 (alice/bob/carol/dave, dave disabled)"
 
 debug-verify-isolation:
 	@echo ""
