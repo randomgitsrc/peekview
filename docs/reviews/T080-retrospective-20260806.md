@@ -269,7 +269,7 @@
 | 指标 | 值 |
 |------|-----|
 | commit 跨度 | 3h40m |
-| subagent 总数 | 14 角色 / 21 dispatch |
+| subagent 总 wall-clock | 228.6 min（含并行）|
 | subagent 崩溃 | 1（P6 verifier 429）|
 | retry 总次数 | 7 |
 | DESIGN_GAP | 4（全部 REVIEWED）|
@@ -285,3 +285,72 @@
 ## 6. 结论
 
 T080 全流程走完 P0-P8，24/24 BDD 验收通过，v0.17.0 发布。gate 机制有效拦截了所有质量问题（需求矛盾、实现 bug、格式不符），没流向下游或生产。主要损耗在 P4 的 3 次重试（需求矛盾 + 实现 bug + 契约偏差）和 P6 的格式拉锯（gate 正则不透明 + verifier 崩溃）。建议按 §4 待落地项改进 agate 协议，可显著降低同类任务的 retry 次数和格式拉锯时间。
+
+---
+
+## 7. 耗时分析
+
+### 7.1 各阶段 subagent wall-clock
+
+| 阶段 | subagent | 耗时(min) | 说明 |
+|------|---------|----------|------|
+| P0-pre | Explore 现状调研 | 4.7 | 主 Agent 派 Explore 预调研 |
+| P1 | analyst 首轮 | 7.9 | 24 BDD + 6 NEED_CONFIRM |
+| P1 | requirements-review 首轮 | 8.9 | 发现 6 问题打回 |
+| P1 retry1 | analyst 修订 | 4.7 | 修 6 问题 |
+| P1 retry1 | requirements-review 复审 | 3.3 | approved |
+| P2 | architect 首轮 | 6.3 | 候选方案 A |
+| P2 | plan-design-review 首轮 | 2.4 | BDD-12 BLOCKER 打回 |
+| P2 retry1 | architect 修订 | 6.8 | 补 PasswordResetDialog |
+| P2 retry1 | plan-design-review 复审 | 2.7 | approved |
+| P3 | test-designer | **14.4** | 24 BDD 测试 + 跑红灯 |
+| **P4** | **implementer 首轮** | **26.3** | 三端实现（后端6文件+前端8文件）|
+| P4 retry1 | implementer 修 DESIGN_GAP | 16.0 | 4 测试矛盾 |
+| P4 review | review(backend) | 8.8 | 2 CRITICAL（并行）|
+| P4 review | design-review(frontend) | 6.5 | 3 MUST-FIX（并行）|
+| P4 review | cso(security) | 8.6 | 2 MEDIUM（并行）|
+| P4 retry2 | implementer 修 BLOCKER | 15.8 | 5 bug |
+| P4 review-lead | 组长汇总 | 2.0 | 确认修复 |
+| P4 retry3 | implementer 修 E2E 选择器 | 9.3 | data-testid |
+| P5 | verifier | 9.3 | pytest+vitest+E2E |
+| **P6** | **verifier（含 vision）** | **36.1** | 崩溃 + 主 Agent 接管 |
+| P7 | consistency-reviewer | 4.5 | 一致性检查 |
+| P8 | releaser | 2.6 | 发布准备 |
+| 复盘 | retrospective-reviewer | 18.2 | 跨文件核对 |
+| 复盘复审 | review 复审 | 2.7 | approved |
+
+### 7.2 耗时瓶颈
+
+**总 wall-clock = 228.6 min，commit 跨度 = 220 min（3h40m）**
+
+subagent 总 wall-clock 略大于 commit 跨度（228 vs 220min），原因是 P4 三角色并行评审（review+design-review+cso 同时跑，并行节省 ~9min 抵消主 Agent 串行开销）。
+
+**三大瓶颈**：
+
+1. **P6 verifier 36.1 min（最大）**：verifier 429 崩溃后主 Agent 接管修格式（vision YAML 结构 + 引用括号 + dispatch-context 预判）。若不崩溃，P6 正常约 15-20min（截图 + vision + 写验收报告）。崩溃 + 接管额外消耗 ~16-20min。
+2. **P4 implementer 首轮 26.3 min**：三端实现（后端 6 文件 + 前端 8 文件），是单次工作量最大的 subagent。本身耗时合理（复杂度高），但首轮产出 4 DESIGN_GAP 导致后续 2 次重试。
+3. **P4 阶段总耗时 93.3 min（8 个 subagent）**：占全程 40%。retry 3 次 + 3 评审 + 组长 = 8 次派发。这是 retry 机制的代价——每次重试都是完整 subagent 调用。
+
+### 7.3 慢的根因
+
+| 根因 | 影响 | 可优化空间 |
+|------|------|-----------|
+| **P4 retry 3 次** | 3×implementer(26+16+16+9=67min) + 3 review(24min) + lead(2min) = 93min | 若 P1 BDD 无矛盾 + P4 首轮无 bug，P4 可压缩到 ~35min（首轮 + 单轮 review），节省 ~58min |
+| **P6 verifier 崩溃** | 36min（含崩溃 + 主 Agent 接管）| 若不崩溃 ~18min，节省 ~18min |
+| **P6 gate 格式拉锯** | 主 Agent 修 vision YAML + 括号 + 预判 ~10min | 若角色文件给 gate 正则模板，节省 ~8min |
+| **P1/P2 各 retry 1 次** | P1 额外 8min + P2 额外 9.5min = 17.5min | 若 P1 BDD 一致 + P2 spec 完整，节省 ~17min |
+| **复盘评审 18.2min** | 跨文件核对耗时 | 属必要质量投入，不压缩 |
+
+**理论最快**（消除 retry + 崩溃 + 格式拉锯）：
+- P1(17) + P2(9) + P3(14) + P4(35) + P5(9) + P6(18) + P7(5) + P8(3) + 复盘(21) ≈ 131 min（2h11m）
+- 实际 220 min，慢了 ~70min（+53%），主要来自 4 个 retry + 1 崩溃 + 格式拉锯
+
+### 7.4 优化建议（按耗时影响排序）
+
+1. **P1 BDD 跨条一致性检查**（节省 ~58min，最大）：P1 analyst + review 增加同场景 BDD 矛盾检测，避免 P4 才发现 DESIGN_GAP。这是最大的耗时杀手。
+2. **gate 格式契约透明化**（节省 ~8min）：角色文件给 gate 正则模板，verifier 一次写对格式，避免反复修。
+3. **P6 verifier 抗崩**（节省 ~18min）：分阶段落盘 + 断点续做，或减小单次 dispatch 范围规避限流。
+4. **P2 spec 完整性**（节省 ~9min）：P2 design 一次写全（如 PasswordResetDialog），避免 review 打回。
+
+**结论**：本次慢的主因不是 agate 流程本身臃肿，而是**质量问题的延迟发现**——P1 的 BDD 矛盾到 P4 才暴露（3 次重试），P6 的格式问题到 gate 才暴露（崩溃 + 拉锯）。agate 的 retry 机制是质量兜底，但每次 retry 都是完整 subagent 调用，成本高。优化重心应放在**前移质量门**（P1 一致性检查、P2 spec 完整性、gate 格式契约透明），而非压缩单次 subagent 时长。
+
