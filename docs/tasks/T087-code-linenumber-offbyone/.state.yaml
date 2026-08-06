@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: T087
 task_name: code-linenumber-offbyone
 status: in_progress
@@ -14,3 +14,5 @@ history:
   - {phase: P4, action: completed, ts: "2026-08-07T00:00:00Z", note: "方案A 实现: highlight+highlightCode 加 replace(/\\n$/,'') 共享 trim, renderLineNumbers 不改, 9 测试全绿 (5 红转绿+4 保持), design-review approved (5 维度无 BLOCKER, 独立复跑 9/9 + 现有 18 passed 无回归), gate exit 0"}
   - {phase: P5, action: started, ts: "2026-08-07T00:00:00Z", note: "verifier 待派发，gate_commands.P5=vitest+typecheck, P5_e2e=viewer.spec.ts"}
   - {phase: P5, action: completed, ts: "2026-08-07T00:00:00Z", note: "vitest 1226 passed/0 failed/1 skipped exit 0, typecheck exit 0, E2E T087 专用 6 passed (BDD-1/2/5/6/7/9 + 6 截图), N5 签名 2>0, viewer.spec.ts 预存失败登记 known-failures (路由 #/entry/{slug} vs /{slug} + 硬编码 slug 失效), verifier 补跑 make build-frontend 重建 static (P4 未重建), PROD_NOT_TOUCHED, gate exit 2"}
+  - {phase: P6, action: started, ts: "2026-08-07T00:00:00Z", note: "verifier 待派发，10 BDD 逐条验收 + vision 截图分析"}
+  - {phase: P6, action: completed, ts: "2026-08-07T00:00:00Z", note: "10/10 BDD PASS, 6 vision reports blocker_count=0, 6 截图 md5 去重, 复用 P5 evidence, check-gate/evidence/provenance 全 exit 0 (4 组视觉相似 WARNING 非阻断 + 1 处预判 WARNING 非阻断), PROD_NOT_TOUCHED"}

@@ -1,0 +1,16 @@
+screenshot: screenshots/t087-tc001.png
+bdd: BDD-1
+description: 末尾换行 3+3 对齐
+observations:
+  line_number_count: 3
+  highlighted_line_count: 3
+  expected_logical_lines: 3
+  trailing_empty_line_number: false
+  trailing_empty_highlighted_line: false
+  rows_aligned: true
+  anomalies: []
+vision_analysis:
+  summary:
+    blocker_count: 0
+    pass: true
+  notes: "Vision confirms line-number column shows exactly 1/2/3 and code column shows exactly 3 rows (def hello / print / return), no trailing empty line number '4' and no trailing empty highlighted row; rows aligned row-by-row."

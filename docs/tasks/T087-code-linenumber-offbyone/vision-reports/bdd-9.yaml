@@ -1,0 +1,16 @@
+screenshot: screenshots/t087-tc006.png
+bdd: BDD-9
+description: wrap 模式 3+3 对齐
+observations:
+  line_number_count: 3
+  highlighted_line_count: 3
+  expected_logical_lines: 3
+  trailing_empty_line_number: false
+  trailing_empty_highlighted_line: false
+  rows_aligned: true
+  anomalies: []
+vision_analysis:
+  summary:
+    blocker_count: 0
+    pass: true
+  notes: "Line-number column shows exactly 3 numbers (1,2,3) and code column shows exactly 3 .line rows (def hello(): / print(...) / return 42). No trailing empty line number, no trailing empty highlighted row. All numbers and code rows aligned row-by-row with matching height and padding."
