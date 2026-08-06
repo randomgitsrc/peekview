@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 变更
+
+- Explore 页 footer 文案：`Built for sharing code & docs` → `Built for sharing what agents ship`（原文案未覆盖数据查看器/图表等能力）
+
 ## [0.17.0] - 2026-08-06
 
 ### 新增

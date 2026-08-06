@@ -196,7 +196,7 @@
         </a>
       </div>
       <div class="footer-info">
-        <span class="footer-tagline">Built for sharing code &amp; docs</span>
+        <span class="footer-tagline">Built for sharing what agents ship</span>
         <span class="footer-meta">
           <span class="version">v{{ appVersion }}</span>
           <span class="separator">·</span>
