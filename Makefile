@@ -1,6 +1,9 @@
 # PeekView 项目根级 Makefile
 # 统一前后端构建和发布
 
+# Use bash so `set -o pipefail` works (sh/dash rejects it)
+SHELL := /bin/bash
+
 # Tokens are resolved at publish time from env vars or ~/.bash_env / ~/.peekview/.release-env
 # Do NOT pre-read with ?= — empty string counts as "set" and blocks the fallback
 
@@ -181,11 +184,11 @@ test-backend: guard-venv
 # Lint and type checking
 lint:
 	@echo "→ Running ruff check..."
-	cd backend && python3 -m ruff check peekview/ tests/
+	cd backend && ruff check peekview/ tests/
 
 lint-fix:
 	@echo "→ Running ruff check --fix + format..."
-	cd backend && python3 -m ruff check --fix peekview/ tests/ && python3 -m ruff format peekview/ tests/
+	cd backend && ruff check --fix peekview/ tests/ && ruff format peekview/ tests/
 
 typecheck:
 	@echo "→ Running vue-tsc type check (~30-60s)..."

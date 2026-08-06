@@ -127,7 +127,6 @@ def ensure_changelog(versions: dict, check_only: bool, verbose: bool) -> bool:
             continue
 
         today = date.today().isoformat()
-        section = "新增" if ver_key == "peekview" else "变更"
         # 在 [Unreleased] 下方插入新版本节标题（保留空 Unreleased 在上，新版本节在下继承原内容）
         new_section = f"\n## {marker} - {today}\n"
         if "## [Unreleased]" in content:
