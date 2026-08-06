@@ -1,4 +1,4 @@
-phase: P6
+phase: P8
 task_id: T087
 task_name: code-linenumber-offbyone
 status: in_progress
@@ -16,3 +16,6 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-07T00:00:00Z", note: "vitest 1226 passed/0 failed/1 skipped exit 0, typecheck exit 0, E2E T087 专用 6 passed (BDD-1/2/5/6/7/9 + 6 截图), N5 签名 2>0, viewer.spec.ts 预存失败登记 known-failures (路由 #/entry/{slug} vs /{slug} + 硬编码 slug 失效), verifier 补跑 make build-frontend 重建 static (P4 未重建), PROD_NOT_TOUCHED, gate exit 2"}
   - {phase: P6, action: started, ts: "2026-08-07T00:00:00Z", note: "verifier 待派发，10 BDD 逐条验收 + vision 截图分析"}
   - {phase: P6, action: completed, ts: "2026-08-07T00:00:00Z", note: "10/10 BDD PASS, 6 vision reports blocker_count=0, 6 截图 md5 去重, 复用 P5 evidence, check-gate/evidence/provenance 全 exit 0 (4 组视觉相似 WARNING 非阻断 + 1 处预判 WARNING 非阻断), PROD_NOT_TOUCHED"}
+  - {phase: P7, action: started, ts: "2026-08-07T00:00:00Z", note: "consistency-reviewer 待派发"}
+  - {phase: P7, action: completed, ts: "2026-08-07T00:00:00Z", note: "跨文件一致性检查 approved, BLOCKER=0, 无 DESIGN_GAP (P4 无声明), 无 SCOPE+, P1 BDD=10=P6 PASS=10, P2 packages=frontend-v3 匹配, P4 实现匹配 P2 方案A, 未决项清零, gate exit 0"}
+  - {phase: P8, action: started, ts: "2026-08-07T00:00:00Z", note: "releaser 待派发，patch bump v0.17.0→v0.17.1"}

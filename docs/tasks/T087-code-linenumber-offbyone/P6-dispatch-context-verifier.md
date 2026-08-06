@@ -50,10 +50,7 @@ P5-test-results/evidence/ 含 6 张截图：
 
 ## P6-acceptance.md 格式
 
-每条 BDD 只允许 PASS 或 FAIL：
-```
-- PASS BDD-1: 末尾换行 2+2 对齐 (screenshots/t087-tc001.png, vision: vision-reports/bdd-1.yaml)
-```
+每条 BDD 只允许 PASS 或 FAIL，格式示例见 P6-acceptance.md 产出规格（行首 `- PASS BDD-N: 描述 (screenshots/x.png) (vision: vision-reports/x.yaml)`）。
 
 总结行用 `**Summary**: 10/10 PASS, 0 FAIL`（不用行首 - PASS/- FAIL）。
 

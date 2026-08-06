@@ -48,8 +48,9 @@ cd frontend-v3 && BASE_URL=http://127.0.0.1:8888 CDP_ENDPOINT=http://127.0.0.1:1
 
 - **exit code**: 0
 - **Tests**: 6 passed (6)
-- **Duration**: 4.4s
+- **Duration**: 4.6s
 - **CDP Chrome**: http://127.0.0.1:18800（Chrome/151.0.7922.76，Windows GPU）
+- **验证 spec**: `frontend-v3/e2e/t087-verify.spec.ts`（verifier 编写，已保留供 P6 复用）
 
 ### 测试详情（核心断言：`.line` count == `.line-number` count）
 
@@ -75,14 +76,14 @@ cd frontend-v3 && BASE_URL=http://127.0.0.1:8888 CDP_ENDPOINT=http://127.0.0.1:1
 
 ### 截图路径
 
-所有截图位于 `/home/kity/oclab/peekview/frontend-v3/test-results/`：
+所有截图位于 `docs/tasks/T087-code-linenumber-offbyone/P5-test-results/evidence/`（1280x720 PNG，CDP Chrome 截图）：
 
-- `t087-tc001-trailing-newline.png`（20483 bytes）— BDD-1 末尾换行，3 行对齐
+- `t087-tc001-trailing-newline.png`（20407 bytes）— BDD-1 末尾换行，3 行对齐
 - `t087-tc002-no-trailing-nl.png`（19429 bytes）— BDD-2 无换行，3 行对齐
 - `t087-tc003-newline-only.png`（15045 bytes）— BDD-5 仅换行符，1 行
-- `t087-tc004-mid-empty.png`（16790 bytes）— BDD-6 中间空行，2 行对齐
+- `t087-tc004-mid-empty.png`（15386 bytes）— BDD-6 中间空行，2 行对齐
 - `t087-tc005-md-block.png`（19631 bytes）— BDD-7 Markdown 代码块，2 行对齐
-- `t087-tc006-nowrap.png`（25172 bytes）— BDD-9 wrap 模式，3 行对齐
+- `t087-tc006-nowrap.png`（24744 bytes）— BDD-9 wrap 模式，3 行对齐
 
 viewer.spec.ts 预存失败截图：
 - `test-results/viewer-Code-Viewer-TC-001-Python-code-syntax-highlighting-chromium/test-failed-1.png`
