@@ -34,6 +34,10 @@ def isolate_config_file(monkeypatch, tmp_path):
     test_db_path = tmp_path / "test.db"
     monkeypatch.setenv("PEEKVIEW_STORAGE__DATA_DIR", str(test_data_dir))
     monkeypatch.setenv("PEEKVIEW_STORAGE__DB_PATH", str(test_db_path))
+    monkeypatch.setenv("PEEKVIEW_SERVER__RATE_LIMIT_ENABLED", "false")
+    # Speed up bcrypt hashing: rounds=4 (~1ms) vs production rounds=12 (~175ms).
+    # bcrypt verify is rounds-agnostic, so cross-test verification still works.
+    monkeypatch.setattr("peekview.auth.BCRYPT_ROUNDS", 4)
 
 
 def pytest_configure(config):
@@ -113,9 +117,34 @@ def app(test_config):
 
 
 @pytest.fixture
+def app_with_rate_limit(test_config, monkeypatch):
+    """Test app with rate limiting ENABLED (for rate limit tests).
+
+    Most tests use the rate-limit-disabled `app` fixture. Rate limit tests
+    (test_t054_b, test_security.TestRateLimiting) explicitly request this fixture.
+    """
+    monkeypatch.setenv("PEEKVIEW_SERVER__RATE_LIMIT_ENABLED", "true")
+    monkeypatch.setenv("PEEKVIEW_SERVER__RATE_LIMIT_PER_MINUTE", "5")
+    from peekview.main import create_app
+
+    return create_app(
+        data_dir=test_config.data_dir,
+        db_path=test_config.db_path,
+    )
+
+
+@pytest.fixture
 async def client(app) -> AsyncClient:
     """Provide an async HTTP client for API testing."""
     transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+async def client_with_rate_limit(app_with_rate_limit) -> AsyncClient:
+    """HTTP client bound to app_with_rate_limit (for rate limit tests)."""
+    transport = ASGITransport(app=app_with_rate_limit)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 

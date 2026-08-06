@@ -26,8 +26,9 @@ from peekview.auth import (
 class TestPasswordHashing:
     """Test bcrypt password hashing."""
 
-    def test_hash_password(self):
+    def test_hash_password(self, monkeypatch):
         """Password hash should be bcrypt format."""
+        monkeypatch.setattr("peekview.auth.BCRYPT_ROUNDS", 12)
         h = hash_password("testpassword123")
         assert h.startswith("$2b$12$")
 

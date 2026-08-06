@@ -508,21 +508,21 @@ async def test_bdd_21_admin_cannot_delete_self(client):
 
 @pytest.mark.asyncio
 async def test_bdd_22_two_admins_disable_one_succeeds(client):
-    adminA_token = await _register(client, "adminA_22")
+    admina_token = await _register(client, "adminA_22")
     _make_admin(client._app, "adminA_22")
     await _register(client, "adminB_22", "adminBpass123")
     _make_admin(client._app, "adminB_22")
-    adminB_id = _get_user_id(client._app, "adminB_22")
+    adminb_id = _get_user_id(client._app, "adminB_22")
 
     resp = await client.post(
-        f"/api/v1/admin/users/{adminB_id}/disable",
-        headers={"Authorization": f"Bearer {adminA_token}"},
+        f"/api/v1/admin/users/{adminb_id}/disable",
+        headers={"Authorization": f"Bearer {admina_token}"},
     )
     assert resp.status_code == 200
     assert resp.json()["is_active"] is False
 
     with Session(client._app.state.engine) as s:
-        b = s.get(User, adminB_id)
+        b = s.get(User, adminb_id)
         assert b.is_admin is True
         assert b.is_active is False
         assert s.get(User, _get_user_id(client._app, "adminA_22")).is_active is True
@@ -533,38 +533,38 @@ async def test_bdd_22_two_admins_disable_one_succeeds(client):
 
 @pytest.mark.asyncio
 async def test_bdd_23_remaining_sole_admin_protected(client):
-    adminA_token = await _register(client, "adminA_23")
-    adminA_id = _make_admin(client._app, "adminA_23")
+    admina_token = await _register(client, "adminA_23")
+    admina_id = _make_admin(client._app, "adminA_23")
     await _register(client, "adminB_23", "adminBpass123")
     _make_admin(client._app, "adminB_23")
-    adminB_id = _get_user_id(client._app, "adminB_23")
+    adminb_id = _get_user_id(client._app, "adminB_23")
 
     await client.post(
-        f"/api/v1/admin/users/{adminB_id}/disable",
-        headers={"Authorization": f"Bearer {adminA_token}"},
+        f"/api/v1/admin/users/{adminb_id}/disable",
+        headers={"Authorization": f"Bearer {admina_token}"},
     )
 
     disable_resp = await client.post(
-        f"/api/v1/admin/users/{adminA_id}/disable",
-        headers={"Authorization": f"Bearer {adminA_token}"},
+        f"/api/v1/admin/users/{admina_id}/disable",
+        headers={"Authorization": f"Bearer {admina_token}"},
     )
     assert disable_resp.status_code == 409
     assert disable_resp.json()["error"]["code"] == "LAST_ADMIN"
 
     demote_resp = await client.post(
-        f"/api/v1/admin/users/{adminA_id}/demote",
-        headers={"Authorization": f"Bearer {adminA_token}"},
+        f"/api/v1/admin/users/{admina_id}/demote",
+        headers={"Authorization": f"Bearer {admina_token}"},
     )
     assert demote_resp.status_code == 409
 
     delete_resp = await client.delete(
-        f"/api/v1/admin/users/{adminA_id}",
-        headers={"Authorization": f"Bearer {adminA_token}"},
+        f"/api/v1/admin/users/{admina_id}",
+        headers={"Authorization": f"Bearer {admina_token}"},
     )
     assert delete_resp.status_code == 409
 
     with Session(client._app.state.engine) as s:
-        a = s.get(User, adminA_id)
+        a = s.get(User, admina_id)
         assert a.is_active is True
         assert a.is_admin is True
 

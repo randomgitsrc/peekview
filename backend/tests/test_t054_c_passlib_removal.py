@@ -39,7 +39,9 @@ class TestBDDC2BcryptBackwardCompat:
         old_hash = hash_password("myoldpassword123")
         assert verify_password("myoldpassword123", old_hash)
 
-    def test_bcrypt_hash_format_compatible(self):
+    def test_bcrypt_hash_format_compatible(self, monkeypatch):
+        # Restore production rounds for this assertion (conftest sets 4 globally for speed).
+        monkeypatch.setattr("peekview.auth.BCRYPT_ROUNDS", 12)
         h = hash_password("testpassword")
         assert h.startswith("$2b$12$")
         assert verify_password("testpassword", h)

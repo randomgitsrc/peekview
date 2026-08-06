@@ -717,9 +717,9 @@ class TestRateLimiting:
     """Rate limiting tests."""
 
     @pytest.mark.asyncio
-    async def test_login_rate_limited(self, app):
+    async def test_login_rate_limited(self, app_with_rate_limit):
         """Login endpoint should be rate limited after exceeding the limit."""
-        transport = ASGITransport(app=app)
+        transport = ASGITransport(app=app_with_rate_limit)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
             # Make more than 10 rapid login requests (limit is 10/minute)
             got_429 = False
@@ -775,12 +775,13 @@ class TestRateLimiting:
                 assert resp.status_code in (401, 400), f"Expected 401/400, got {resp.status_code}"
 
     @pytest.mark.asyncio
-    async def test_login_rate_limit_respects_config_value(self):
+    async def test_login_rate_limit_respects_config_value(self, monkeypatch):
         """login limit should respect the config value passed to create_app."""
         from pathlib import Path
 
         from peekview.main import create_app
 
+        monkeypatch.setenv("PEEKVIEW_SERVER__RATE_LIMIT_ENABLED", "true")
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(
@@ -806,12 +807,13 @@ class TestRateLimiting:
             assert got_429, "Expected 429 after exceeding rate_limit_login_per_minute=3"
 
     @pytest.mark.asyncio
-    async def test_captcha_challenge_rate_limited(self):
+    async def test_captcha_challenge_rate_limited(self, monkeypatch):
         """Captcha challenge endpoint should be rate limited."""
         from pathlib import Path
 
         from peekview.main import create_app
 
+        monkeypatch.setenv("PEEKVIEW_SERVER__RATE_LIMIT_ENABLED", "true")
         data_dir = Path(tempfile.mkdtemp())
         db_path = Path(tempfile.mktemp(suffix=".db"))
         app = create_app(

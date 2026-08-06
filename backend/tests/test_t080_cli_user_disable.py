@@ -43,10 +43,10 @@ def _create_user(runner, username, password="pass123456", admin=False):
 
 
 def _make_admin(isolated_fs):
-    from peekview.config import PeekConfig
-    from peekview.database import check_schema, init_db
     from sqlmodel import Session, select
 
+    from peekview.config import PeekConfig
+    from peekview.database import check_schema, init_db
     from peekview.models import User
 
     config = PeekConfig()
@@ -71,10 +71,10 @@ def test_bdd_17_cli_disable_user_cannot_login(runner, isolated_fs):
     assert result.exit_code == 0, result.output
     assert "disabled" in result.output.lower() or "✓" in result.output
 
-    from peekview.config import PeekConfig
-    from peekview.database import check_schema, init_db
     from sqlmodel import Session, select
 
+    from peekview.config import PeekConfig
+    from peekview.database import check_schema, init_db
     from peekview.models import User
 
     config = PeekConfig()
@@ -99,10 +99,10 @@ def test_bdd_18_cli_enable_user_can_login(runner, isolated_fs):
     assert result.exit_code == 0, result.output
     assert "enabled" in result.output.lower() or "✓" in result.output
 
-    from peekview.config import PeekConfig
-    from peekview.database import check_schema, init_db
     from sqlmodel import Session, select
 
+    from peekview.config import PeekConfig
+    from peekview.database import check_schema, init_db
     from peekview.models import User
 
     config = PeekConfig()
@@ -124,10 +124,10 @@ def test_bdd_19_cli_demote_last_admin_refused(runner, isolated_fs):
     assert result.exit_code != 0, result.output
     assert "last" in result.output.lower() or "admin" in result.output.lower()
 
-    from peekview.config import PeekConfig
-    from peekview.database import check_schema, init_db
     from sqlmodel import Session, select
 
+    from peekview.config import PeekConfig
+    from peekview.database import check_schema, init_db
     from peekview.models import User
 
     config = PeekConfig()
@@ -149,10 +149,10 @@ def test_bdd_24_cli_disable_last_admin_refused(runner, isolated_fs):
     assert result.exit_code != 0, result.output
     assert "last" in result.output.lower() or "admin" in result.output.lower()
 
-    from peekview.config import PeekConfig
-    from peekview.database import check_schema, init_db
     from sqlmodel import Session, select
 
+    from peekview.config import PeekConfig
+    from peekview.database import check_schema, init_db
     from peekview.models import User
 
     config = PeekConfig()
