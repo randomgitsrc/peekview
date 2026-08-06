@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T087
 task_name: code-linenumber-offbyone
 status: in_progress
@@ -10,3 +10,5 @@ history:
   - {phase: P2, action: completed, ts: "2026-08-07T00:00:00Z", note: "follows_existing_pattern useShiki.ts, 方案A 调用方共享 trim (replace /\\n$/), renderLineNumbers 不改, minimal_validation confirmed (P1 实测), gate_commands P3=vitest P5=vitest+typecheck P5_e2e=viewer.spec.ts, plan-design-review approved (47/50, renderLineNumbers 未 export 无外部绕过), gate exit 2, P1 补 follows_existing_pattern yaml 字段供 gate 检测"}
   - {phase: P3, action: started, ts: "2026-08-07T00:00:00Z", note: "TDD test-designer 待派发，gate_commands.P3=vitest"}
   - {phase: P3, action: completed, ts: "2026-08-07T00:00:00Z", note: "9 测试用例覆盖 BDD-1~7, 5 真红灯 (B 类 assertion failure, 末尾换行 case), 4 绿 (not-broken 回归 case), vi.mock shiki 模拟真实行为, 三联对齐断言, check-tdd-red.sh exit 0, gate exit 2, BDD-8/9/10 走现有 viewer.spec.ts"}
+  - {phase: P4, action: started, ts: "2026-08-07T00:00:00Z", note: "implementer 待派发，方案A 调用方共享 trim"}
+  - {phase: P4, action: completed, ts: "2026-08-07T00:00:00Z", note: "方案A 实现: highlight+highlightCode 加 replace(/\\n$/,'') 共享 trim, renderLineNumbers 不改, 9 测试全绿 (5 红转绿+4 保持), design-review approved (5 维度无 BLOCKER, 独立复跑 9/9 + 现有 18 passed 无回归), gate exit 0"}

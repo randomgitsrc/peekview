@@ -182,12 +182,13 @@ export function useShiki() {
     const highlighter = await getHighlighter()
     const effectiveLang = await ensureLanguage(highlighter, lang)
 
-    const html = highlighter.codeToHtml(code, {
+    const trimmedCode = code.replace(/\n$/, '')
+    const html = highlighter.codeToHtml(trimmedCode, {
       lang: effectiveLang,
       theme
     })
 
-    const lineNumbersHtml = renderLineNumbers(code)
+    const lineNumbersHtml = renderLineNumbers(trimmedCode)
     return `<div class="code-container">${lineNumbersHtml}${html}</div>`
   }
 
@@ -199,12 +200,13 @@ export function useShiki() {
     const highlighter = await getHighlighter()
     const effectiveLang = await ensureLanguage(highlighter, lang)
 
-    const html = highlighter.codeToHtml(code, {
+    const trimmedCode = code.replace(/\n$/, '')
+    const html = highlighter.codeToHtml(trimmedCode, {
       lang: effectiveLang,
       theme
     })
 
-    const lineNumbersHtml = renderLineNumbers(code)
+    const lineNumbersHtml = renderLineNumbers(trimmedCode)
     return `<div class="code-container">${lineNumbersHtml}${html}</div>`
   }
 
