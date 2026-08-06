@@ -1,4 +1,4 @@
-phase: P8
+phase: READY
 task_id: T087
 task_name: code-linenumber-offbyone
 status: in_progress
@@ -19,3 +19,5 @@ history:
   - {phase: P7, action: started, ts: "2026-08-07T00:00:00Z", note: "consistency-reviewer 待派发"}
   - {phase: P7, action: completed, ts: "2026-08-07T00:00:00Z", note: "跨文件一致性检查 approved, BLOCKER=0, 无 DESIGN_GAP (P4 无声明), 无 SCOPE+, P1 BDD=10=P6 PASS=10, P2 packages=frontend-v3 匹配, P4 实现匹配 P2 方案A, 未决项清零, gate exit 0"}
   - {phase: P8, action: started, ts: "2026-08-07T00:00:00Z", note: "releaser 待派发，patch bump v0.17.0→v0.17.1"}
+  - {phase: P8, action: completed, ts: "2026-08-07T00:00:00Z", note: "patch bump 0.17.0→0.17.1, CHANGELOG [0.17.1] 修复(T087 行号)+变更(explore 文案), P5 重跑 1226 passed exit 0, git log 对照无遗漏, gate exit 0"}
+  - {phase: READY, action: cleanup, ts: "2026-08-07T00:00:00Z", note: "debug :8888 已停, /tmp/peekview-debug 已清理, t087-verify.spec.ts 已删, static 重建, git clean, tag v0.17.1 待建, PROD_NOT_TOUCHED"}

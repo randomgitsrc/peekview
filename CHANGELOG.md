@@ -9,6 +9,10 @@
 
 ## [0.17.1] - 2026-08-07
 
+### 修复
+
+- 代码块行号 off-by-one：末尾换行（POSIX 规范）导致行号比实际代码多一行。修复 `useShiki.ts` 的 `highlight()`/`highlightCode()` 在调用方对 `code` 做 `replace(/\n$/,'')` 共享 trim，trim 后的 code 同时传给 `codeToHtml` 和 `renderLineNumbers`，保证行号列与高亮列逐行对齐 (T087)
+
 ### 变更
 
 - Explore 页 footer 文案：`Built for sharing code & docs` → `Built for sharing what agents ship`（原文案未覆盖数据查看器/图表等能力）
