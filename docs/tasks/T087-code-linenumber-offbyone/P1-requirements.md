@@ -105,7 +105,9 @@ P0-brief 与 dispatch-context 称"Shiki 高亮列不多，两者错位"。**实�
 
 ```yaml
 phases: [P1, P2, P3, P4, P5, P6, P7, P8]
+follows_existing_pattern: frontend-v3/src/composables/useShiki.ts
 ```
+[BASELINE_CHANGE: 补 follows_existing_pattern yaml 字段供 P2 gate 检测，不改语义，P1 §5 文字已声明此倾向]
 
 不裁剪任何阶段。理由：
 

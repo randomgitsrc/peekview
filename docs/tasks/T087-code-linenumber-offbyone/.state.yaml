@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: T087
 task_name: code-linenumber-offbyone
 status: in_progress
@@ -6,4 +6,5 @@ created: 2026-08-06T00:00:00Z
 updated: 2026-08-07T00:00:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-06T00:00:00Z", note: "P0-brief written (4 fields + audit), bugfix: renderLineNumbers off-by-one, 3 render paths affected, no backend change, risk low-medium"}
-  - {phase: P1, action: completed, ts: "2026-08-07T00:00:00Z", note: "10 BDD, P1_simplified, Shiki codeToHtml+split both trailing empty line, trim must apply to both inputs, DESIGN_CONSTRAINT result-oriented, needs-revision retry#1 (3 wording fixes), requirements-review approved, gate exit 2"}
+  - {phase: P1, action: completed, ts: "2026-08-07T00:00:00Z", note: "10 BDD, P1_simplified, Shiki codeToHtml+split both trailing empty line, trim must apply to both inputs, DESIGN_CONSTRAINT result-oriented, needs-revision retry#1 (3 wording fixes), requirements-review approved, gate exit 2, committed"}
+  - {phase: P2, action: completed, ts: "2026-08-07T00:00:00Z", note: "follows_existing_pattern useShiki.ts, 方案A 调用方共享 trim (replace /\\n$/), renderLineNumbers 不改, minimal_validation confirmed (P1 实测), gate_commands P3=vitest P5=vitest+typecheck P5_e2e=viewer.spec.ts, plan-design-review approved (47/50, renderLineNumbers 未 export 无外部绕过), gate exit 2, P1 补 follows_existing_pattern yaml 字段供 gate 检测"}
