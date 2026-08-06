@@ -155,8 +155,12 @@ stop_server() {
     # 清理端口占用
     PORT_PID=$(lsof -t -i :$PORT 2>/dev/null || echo "")
     if [ -n "$PORT_PID" ]; then
-        echo "→ 清理端口 $PORT 占用 (PID: $PORT_PID)..."
+        echo "-> 清理端口 $PORT 占用 (PID: $PORT_PID)..."
         kill $PORT_PID 2>/dev/null || true
+        sleep 1
+        # kill -0 对多 PID（lsof -t 可能返回多个换行分隔 PID）全部存活才返回 0；
+        # 单 PID（uvicorn 默认单进程）场景足够。多 worker 场景需 xargs 逐个处理。
+        kill -0 $PORT_PID 2>/dev/null && kill -9 $PORT_PID 2>/dev/null || true
     fi
 
     rm -f "$PID_FILE"

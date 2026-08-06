@@ -1,0 +1,6 @@
+{
+  "summary": "Dave 的私有笔记（disabled 用户名下 entry 样例）",
+  "tags": ["disabled", "private", "测试"],
+  "is_public": false,
+  "owner": "dave"
+}

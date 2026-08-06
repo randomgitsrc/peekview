@@ -65,13 +65,15 @@ BINARY_OVERRIDES = {
 }
 
 
-def register(username: str, password: str = "testpass123") -> str:
+def register(username: str, password: str = "testpass123") -> str | None:
     r = requests.post(f"{BASE}/api/v1/auth/login", json={"username": username, "password": password})
     if r.ok:
         return r.json()["access_token"]
     r = requests.post(f"{BASE}/api/v1/auth/register", json={"username": username, "password": password})
-    r.raise_for_status()
-    return r.json()["access_token"]
+    if r.ok:
+        return r.json()["access_token"]
+    # login + register both failed: user exists but disabled (rerun scenario)
+    return None
 
 
 def load_entry_files(slug_dir: Path, slug: str) -> list[dict]:
@@ -112,6 +114,9 @@ def create_entry(token: str, slug: str, meta: dict, files: list[dict]) -> dict |
         headers={"Authorization": f"Bearer {token}"},
         json=payload,
     )
+    if r.status_code == 409:
+        # idempotency_key already used by another user (rerun disabled-user fallback), skip
+        return None
     r.raise_for_status()
     return r.json()
 
@@ -123,8 +128,9 @@ def main():
     alice = register("alice")
     bob = register("bob")
     carol = register("carol")
-    tokens = {"alice": alice, "bob": bob, "carol": carol}
-    print("Users: alice, bob, carol")
+    dave = register("dave")
+    tokens = {"alice": alice, "bob": bob, "carol": carol, "dave": dave}
+    print("Users: alice, bob, carol, dave")
 
     # Load all entry directories
     entry_dirs = sorted(
@@ -137,7 +143,10 @@ def main():
         slug = entry_dir.name
         meta = json.loads((entry_dir / "meta.json").read_text(encoding="utf-8"))
         owner = meta.get("owner", "alice")
-        token = tokens.get(owner, alice)
+        token = tokens.get(owner)
+        if token is None:
+            print(f"  SKIP {slug}: owner disabled (rerun)")
+            continue
 
         files = load_entry_files(entry_dir, slug)
         if not files:
@@ -146,6 +155,9 @@ def main():
 
         try:
             result = create_entry(token, slug, meta, files)
+            if result is None:
+                print(f"  SKIP {slug}: idempotency conflict (409)")
+                continue
             file_count = len(files)
             print(f"  OK   {slug}: {meta['summary'][:40]} ({file_count} files)")
 
@@ -160,11 +172,36 @@ def main():
         except requests.HTTPError as e:
             print(f"  FAIL {slug}: {e}")
 
+    # Disable dave (disabled user sample) -- must be after entry creation
+    if dave is None:
+        print("  SKIP disable dave: already disabled (rerun)")
+    else:
+        try:
+            r = requests.get(
+                f"{BASE}/api/v1/admin/users",
+                headers={"Authorization": f"Bearer {alice}"},
+            )
+            users_data = r.json()
+            users_list = users_data.get("items", users_data) if isinstance(users_data, dict) else users_data
+            dave_user = next((u for u in users_list if u["username"] == "dave"), None)
+            if dave_user:
+                resp = requests.post(
+                    f"{BASE}/api/v1/admin/users/{dave_user['id']}/disable",
+                    headers={"Authorization": f"Bearer {alice}"},
+                    json={"reason": "seed: disabled user sample"},
+                )
+                if resp.ok:
+                    print("  OK   disable dave (disabled user sample)")
+                else:
+                    print(f"  WARN disable dave: {resp.status_code} (may already be disabled)")
+        except Exception as e:
+            print(f"  WARN disable dave: {e}")
+
     # Summary
     r = requests.get(f"{BASE}/api/v1/entries", headers={"Authorization": f"Bearer {alice}"})
     total = r.json().get("total", "?")
     print(f"\nDone. Total entries: {total}")
-    print("Users: alice/bob/carol (password: testpass123)")
+    print("Users: alice/bob/carol/dave (password: testpass123, dave disabled)")
     print(f"Entries: {len(entry_dirs)} loaded from seed-data/")
 
 

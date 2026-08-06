@@ -128,19 +128,12 @@ def ensure_changelog(versions: dict, check_only: bool, verbose: bool) -> bool:
 
         today = date.today().isoformat()
         section = "新增" if ver_key == "peekview" else "变更"
-        template = f"""
-## {marker} - {today}
-
-### {section}
-
--
-
-"""
+        # 在 [Unreleased] 下方插入新版本节标题（保留空 Unreleased 在上，新版本节在下继承原内容）
+        new_section = f"\n## {marker} - {today}\n"
         if "## [Unreleased]" in content:
-            content = content.replace("## [Unreleased]\n", f"## [Unreleased]\n{template}", 1)
+            content = content.replace("## [Unreleased]\n", f"## [Unreleased]\n{new_section}", 1)
             changelog.write_text(content)
-            print(f"  ✅ CHANGELOG.md: 已插入 {marker} 模板")
-            print(f"     ⚠️  请编辑 CHANGELOG.md 填写 {marker} 的具体内容")
+            print(f"  ✅ CHANGELOG.md: 已插入 {marker} 版本节（[Unreleased] 内容自动归入此节）")
         else:
             print(f"  ⚠️  CHANGELOG.md: 未找到 [Unreleased] 节，请手动添加 {marker}")
 

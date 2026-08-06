@@ -14,7 +14,6 @@ def reset_rate_limiter():
     """Reset rate limiter storage between tests to prevent cross-test rate limiting."""
     from peekview.api.rate_limit import limiter
 
-    # Reset in-memory storage so rate limits don't accumulate across tests
     if limiter._limiter and limiter._limiter.storage:
         with contextlib.suppress(Exception):
             limiter._limiter.storage.reset()

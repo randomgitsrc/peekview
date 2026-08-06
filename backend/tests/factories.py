@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from sqlmodel import Session
 
-from peekview.models import Entry, File
+from peekview.models import Entry, File, User
 
 
 class EntryFactory:
@@ -102,3 +102,27 @@ def create_test_file(session: Session, entry_id: int, **kwargs) -> File:
     """Quick helper to create a single test file."""
     factory = FileFactory(session)
     return factory.create(entry_id=entry_id, **kwargs)
+
+
+def create_test_user(
+    session: Session,
+    username: str = "testuser",
+    password: str = "testpass123",
+    is_admin: bool = False,
+    is_active: bool = True,
+    display_name: str | None = None,
+) -> User:
+    """Create a test user (direct DB insert, bypasses /auth/register to avoid rate limit)."""
+    from peekview.auth import hash_password
+
+    user = User(
+        username=username,
+        password_hash=hash_password(password),
+        display_name=display_name,
+        is_admin=is_admin,
+        is_active=is_active,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user

@@ -23,8 +23,10 @@ rules, leaving the working tree dirty). This way the test has zero side
 effects regardless of pass/fail.
 """
 
+import shutil
 from pathlib import Path
 
+import pytest
 import tomllib
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -46,11 +48,14 @@ class TestBdd09RuffConfigIgnoresE711E712:
 
 class TestBdd10RuffCheckSelectE711E712:
     def test_bdd_10_existing_code_passes_e711_e712_check(self):
-        """读性检查现有代码不触发 E711/E712 违规。replace `make lint-fix` → `ruff check --select E711,E712`。"""
+        """读性检查现有代码不触发 E711/E712 违规。replace `make lint-fix` -> `ruff check --select E711,E712`。"""
         import subprocess
 
+        ruff = shutil.which("ruff")
+        if not ruff:
+            pytest.skip("ruff not in PATH")
         result = subprocess.run(
-            ["python3", "-m", "ruff", "check", "--select", "E711,E712", "peekview/", "tests/"],
+            [ruff, "check", "--select", "E711,E712", "peekview/", "tests/"],
             capture_output=True,
             text=True,
             cwd=str(BACKEND_DIR),

@@ -1,0 +1,6 @@
+{
+  "summary": "Admin 私有配置（权限边界样例）",
+  "tags": ["admin", "private", "配置"],
+  "is_public": false,
+  "owner": "alice"
+}
