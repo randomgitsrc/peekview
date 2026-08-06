@@ -1,0 +1,8 @@
+phase: P0
+task_id: T086
+task_name: admin-settings-consolidation
+status: pending
+created: 2026-08-06T00:00:00Z
+updated: 2026-08-06T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-06T00:00:00Z", note: "P0-brief written (4 fields + audit), admin/settings consolidation, delete /admin route, isAdmin tab visibility, no backend change, risk medium"}

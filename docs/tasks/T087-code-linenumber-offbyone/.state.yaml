@@ -1,0 +1,9 @@
+phase: P1
+task_id: T087
+task_name: code-linenumber-offbyone
+status: in_progress
+created: 2026-08-06T00:00:00Z
+updated: 2026-08-07T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-06T00:00:00Z", note: "P0-brief written (4 fields + audit), bugfix: renderLineNumbers off-by-one, 3 render paths affected, no backend change, risk low-medium"}
+  - {phase: P1, action: completed, ts: "2026-08-07T00:00:00Z", note: "10 BDD, P1_simplified, Shiki codeToHtml+split both trailing empty line, trim must apply to both inputs, DESIGN_CONSTRAINT result-oriented, needs-revision retry#1 (3 wording fixes), requirements-review approved, gate exit 2"}

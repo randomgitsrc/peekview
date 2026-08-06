@@ -21,6 +21,8 @@
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T083 | cjk-search-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-07-31 |
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
+| T086 | admin-settings-consolidation | 🔄 进行中 | P0 | 🟡 | T080✅ | 2026-08-06 | 2026-08-06 |
+| T087 | code-linenumber-offbyone | 🔄 进行中 | P1 | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 
 ### T071: Docker 部署（合并原 T071+T072）
 
