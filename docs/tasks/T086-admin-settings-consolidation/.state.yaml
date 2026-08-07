@@ -1,7 +1,17 @@
 phase: P4
 task_id: T086
 task_name: admin-settings-consolidation
-status: approved
+status: retreated
+retries:
+  P4:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "design-review needs-revision: UserManagerTab.vue title area CSS not aligned to ApiKeySettingsTab.vue"
+    - round: 2
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "P5 retreat: router.ts /:slug intercepted /admin before catch-all, added explicit /admin -> NotFoundView route"
 created: 2026-08-06T00:00:00Z
 updated: 2026-08-07T00:00:00Z
 history:
@@ -13,3 +23,6 @@ history:
   - {phase: P2, action: gate-fix, ts: "2026-08-07T00:00:00Z", note: "check-gate.sh P2 failed twice: (1) P1-requirements.md missing machine-readable follows_existing_pattern: field -> BASELINE_CHANGE formatfix2 on P1-requirements.md; (2) P2-design.md candidate heading '### 方案：' (fullwidth colon) didn't match gate regex -> headingfix renamed to '### 方案一：'. Both additive/minimal, verified via check-gate.sh P2 exit 2 + grep of 4 fields + P2-review approved agent=plan-design-review."}
   - {phase: P3, action: completed, ts: "2026-08-07T00:00:00Z", note: "test-designer rewrote e2e/admin.spec.ts (18 test(), scoped .desktop-only/.mobile-only selectors per Advisory Note #1) + t080-admin-route-guard.test.ts (7 real + 3 DESIGN_GAP skip). check-tdd-red.sh exit 0 (true red light). check-gate.sh P3 exit 2."}
   - {phase: P4, action: completed, ts: "2026-08-07T00:00:00Z", note: "implementer: router.ts/SettingsView.vue/UserManagerTab.vue(new)/AdminView.vue(deleted)/UserMenu.vue. DESIGN_GAP: fixed t068-account-settings.spec.ts mock (isAdmin literal->computed, exposed by first real consumption). vitest 94/1228 passed (verified independently), typecheck 0, build-frontend rebuilt (verified static mtime > src mtime). design-review: needs-revision (2 CSS deviations in UserManagerTab.vue title area) -> retry1 minimal fix -> approved. check-gate.sh P4 exit 0."}
+  - {phase: P5, action: dispatched, ts: "2026-08-07T00:00:00Z", note: "verifier: unit 1228 passed (verified independently, N5 signature check passed), typecheck 0, E2E FAIL (exit 2, 2 real failures + 10 cascaded skip)."}
+  - {phase: P5, action: retreat, ts: "2026-08-07T00:00:00Z", note: "root cause: router.ts /:slug registered before /:pathMatch(.*)* catch-all, so /admin gets intercepted as entry slug instead of falling to real 404 (NotFoundView .not-found class). This is a P2 design assumption error (P2-design.md §3.1 assumed catch-all works naturally) not caught by P4 implementer or design-review (visual-only scope). diff=1 retreat P5->P4, no PAUSED needed per state-machine.md. P5-gate-diagnosis.md written. retry #2 dispatched to implementer: add explicit /admin route before /:slug pointing to NotFoundView."}
+  - {phase: P4, action: retry2-completed, ts: "2026-08-07T00:00:00Z", note: "implementer added explicit /admin route (name: admin-not-found) before /:slug, pointing to NotFoundView. Only router.ts touched (verified via git diff, main agent independently reran vue-tsc + vitest, both pass). DECISION: skipped re-dispatching design-review for this retry -- diff is a pure router config entry with zero visual/component surface, design-review's checklist (AI Slop/Typography/Spacing/interaction states) has no applicable target; prior P4-review.md approval (retry1) remains valid for all visual aspects, which are unchanged by this fix. check-gate.sh P4 exit 0."}

@@ -30,6 +30,11 @@ const routes: RouteRecordRaw[] = [
     props: (route) => ({ owner: route.params.username as string }),
   },
   {
+    path: '/admin',
+    name: 'admin-not-found',
+    component: () => import('./views/NotFoundView.vue'),
+  },
+  {
     path: '/:slug',
     name: 'detail',
     component: () => import('./views/EntryDetailView.vue'),
