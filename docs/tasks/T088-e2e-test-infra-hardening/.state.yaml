@@ -1,0 +1,8 @@
+phase: P0
+task_id: T088
+task_name: e2e-test-infra-hardening
+status: pending
+created: 2026-08-07T00:00:00Z
+updated: 2026-08-07T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-07T00:00:00Z", note: "P0-brief written (4 fields + audit), T087 复盘发现的两项测试基础设施缺口: viewer.spec.ts 路由/slug 过时(选择器核实未过时) + debug-test 加 static mtime 校验, risk low-medium"}

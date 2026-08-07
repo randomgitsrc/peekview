@@ -23,6 +23,7 @@
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
 | T086 | admin-settings-consolidation | 🔄 进行中 | P0 | 🟡 | T080✅ | 2026-08-06 | 2026-08-06 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
+| T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
 
 ### T071: Docker 部署（合并原 T071+T072）
 
@@ -208,6 +209,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-07 | 立项 T088 | e2e-test-infra-hardening：源自 T087 复盘（3.1/3.2 节）。子任务 A 修复 `viewer.spec.ts`（路由 `/#/entry/{slug}` 过时 + `lu4prg`/`ngajri` slug 失效，选择器已核实未过时）；子任务 B 在 `make debug-test` 前置检查加 static mtime 校验（防前端改动未 build-frontend 导致验收假通过）|
 | 2026-08-02 | 完成 T085 | render-regression-fix → v0.14.1（SVG调度/源码滚动/Markdown边距/滚动抖动/per-page下拉框 5项修复；11 BDD 全 PASS）|
 | 2026-08-01 | 立项 T085 | render-regression-fix：SVG→TreeView / 源码视图不滚动 / Markdown 边距丢失 / 滚动抖动（T084 回归 + T075 调度链缺陷）|
 | 2026-08-01 | 完成 T075 | structured-data-viewer → v0.14.0（TableView CSV/TSV + TreeView JSON/YAML/XML + 源码/渲染切换 + .tsv 映射修正；53 BDD 全 PASS + 1008 backend + 1177 frontend + E2E 84/84）|
