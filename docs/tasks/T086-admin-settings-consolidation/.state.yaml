@@ -1,8 +1,11 @@
-phase: P0
+phase: P1
 task_id: T086
 task_name: admin-settings-consolidation
-status: pending
+status: approved
 created: 2026-08-06T00:00:00Z
-updated: 2026-08-06T00:00:00Z
+updated: 2026-08-07T00:00:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-06T00:00:00Z", note: "P0-brief written (4 fields + audit), admin/settings consolidation, delete /admin route, isAdmin tab visibility, no backend change, risk medium"}
+  - {phase: P1, action: dispatched, ts: "2026-08-07T00:00:00Z", note: "analyst dispatched, dispatch-context written + AGATE_CARD injected"}
+  - {phase: P1, action: completed, ts: "2026-08-07T00:00:00Z", note: "analyst: 17 BDD, 0 NEED_CONFIRM (3 SUGGEST adoptable). requirements-review: approved, gate exit 2. risk_level=medium confirmed (backend defense-in-depth). Ready for P2."}
+  - {phase: P1, action: gate-fix, ts: "2026-08-07T00:00:00Z", note: "check-pruning.sh failed on missing machine-readable phases: field (prose-only declaration). diagnosed + dispatched minimal formatfix (analyst, additive only). verified: check-pruning.sh exit 0, check-gate.sh P1 exit 2, diff additive-only."}
