@@ -1,0 +1,8 @@
+phase: P0
+task_id: T089
+task_name: unicode-filename-link-fix
+status: pending
+created: 2026-08-07T00:00:00Z
+updated: 2026-08-07T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-07T00:00:00Z", note: "用户报告非 ASCII 文件名本地资源链接解析失败（附生产数据复现参考）。派发只读 Explore agent 定位根因：frontend-v3/src/utils/path-map.ts 的 resolvePath/normalizeRef 未 decode markdown-it 已 percent-encode 的 href/src，与 pathMap 未编码的 Unicode key 不匹配。改动面单文件，零现成测试覆盖，不满足 hotfix 裁剪条件，用户选择新建独立小型 task。risk_level=low-medium"}
