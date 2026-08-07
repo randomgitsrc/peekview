@@ -273,7 +273,7 @@ test.describe('T086 (migrated from T080): Admin user management via /settings?ta
     await page.locator('.user-menu-trigger').click()
     await page.locator('[data-testid="user-menu-settings-item"]').click()
     await page.waitForURL('**/settings?tab=user-manager', { timeout: 10000 })
-    await expect(page.locator('[data-testid="user-manager-content"]')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('.desktop-only [data-testid="user-manager-content"]')).toBeVisible({ timeout: 10000 })
   })
 
   test('T086 BDD-12: non-admin UserMenu Settings entry does not land on user-manager tab', async ({ page }) => {
