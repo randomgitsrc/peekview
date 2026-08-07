@@ -1,0 +1,191 @@
+---
+phase: P6
+task_id: T086-admin-settings-consolidation
+type: dispatch-context
+role: verifier
+trace_id: T086-P6-20260807
+created: 2026-08-07
+---
+
+# P6 派发指引 — verifier（验收，P6 模式）
+
+## 目标
+
+把 P1-requirements.md 的 17 条 BDD 逐条实跑验收（用户视角：行为对不对，不是"测试绿不绿"）。P5 已全量技术验证通过（36/36 E2E 用例 pass，1228 单测 pass，typecheck 0 错误），本阶段是**独立的行为验收**，不能直接复用 P5 的"测试通过"结论当作 P6 的"BDD 通过"——P5 问"测试过了吗"，P6 问"用户要的行为做到了吗"，必须重新对照 BDD 原文实跑（可以复用 P5 的技术验证结果作为参考，但每条 BDD 仍需独立验证证据）。
+
+## 约束
+
+- **17 条 BDD 全部要有 PASS/FAIL 结果**（二值，不接受中间态），编号 BDD-1 至 BDD-17
+- **UI 类 BDD 必须 Playwright 实跑 + 截图**：涉及可见性判断的 BDD-4/5/6/8/9/10/11/12/13/14 都是纯 DOM 可见性/落地页面判断，必须截图佐证，不能只用代码审查
+- **截图必须互不相同**（md5 去重）：不同角色（admin/非 admin/未登录）、不同视口（桌面/移动）的截图内容天然不同，正常操作下不会重复；若发现某两张截图 md5 相同，说明截图脚本有 bug（如没等页面真正切换），需修复重截
+- **BDD-1/2/3**（功能对等：列表/操作/自我保护）：DOM 结构验证优先（元素存在性/状态变化），辅以截图
+- **BDD-15/16**（元 BDD，验收方式=整套测试跑通）：可直接引用 P5-test-results/e2e.md（36/36 pass）和 P5-test-results/unit.md（t080 测试 7 passed 3 skipped）作为证据，不需要重新跑，但需在 P6-acceptance.md 中明确写出引用路径
+- **BDD-17**（grep 无遗留引用）：可直接引用 P4-implementation.md 里已做过的 grep 结果作为证据，或重新跑一遍 grep 确认（成本很低，建议重跑一遍确保是验收时刻的事实）
+- **vision-analyst 派发**：截图完成后，派发 vision-analyst 分析（purpose=acceptance，传入对应的 BDD 条件列表），`summary.blocker_count` 必须为 0 才能让对应 BDD 判 PASS
+- **environment**：调试环境用 `make debug-start`（若已停止）+ `make debug-seed`，测试完成后 `make debug-stop`。截图前确保用不同测试账号登录对应角色（admin: alice 或已知 admin 账号；非 admin: bob；未登录：不登录直接访问）——具体账号信息参考 `scripts/seed-debug.py` 或 `e2e/admin.spec.ts` 里的 `adminLogin()`/`nonAdminLogin()` helper
+- **verification_env 字段必填**（ui_affected=true）：列出验收环境（debug backend :8888）与生产环境的已知差异
+
+## 上游关联
+
+parent: P5-test-results/（P5 技术验证结果，已全量通过）
+祖先: P1-requirements.md（17 条 BDD 权威来源）、P2-design.md（§4 UI 测试标识清单，供截图定位元素）、P4-implementation.md + P4-implementation-retry2.md（实现改动，供理解应验证什么）
+
+## 输入文件（按顺序读取）
+
+1. `docs/tasks/T086-admin-settings-consolidation/P1-requirements.md`（第 3 节，17 条 BDD 权威定义）
+2. `docs/tasks/T086-admin-settings-consolidation/P2-design.md`（§4 UI 测试标识清单，§9 Definition of Done）
+3. `docs/tasks/T086-admin-settings-consolidation/P5-test-results/e2e.md`（P5 全量 E2E 结果，可引用作为 BDD-15/16 证据）
+4. `docs/tasks/T086-admin-settings-consolidation/P5-test-results/unit.md`（P5 单测结果）
+5. `docs/tasks/T086-admin-settings-consolidation/P4-implementation.md` + `P4-implementation-retry2.md`（实现改动清单）
+6. `frontend-v3/e2e/admin.spec.ts`（了解现有 E2E 用例的账号/URL 约定，供设计截图脚本参考）
+
+## 客观查证信息
+
+- P5 已确认：全量单测 1228 passed，E2E 36/36 全部真正执行且 pass（含 BDD-11/12），typecheck 0 错误，无 PROD_TOUCHED
+- 测试数据：`make debug-seed` 灌入 alice/bob/carol/dave（dave disabled），admin 账号需查证具体是哪个测试用户（`e2e/admin.spec.ts` 的 `adminLogin()` helper 会显示用的账号）
+- BDD-17 的 grep 排除范围：`router.ts` 自身路由定义、`src/api/client.ts` 的后端 API 路径 `/admin/users` 等
+
+<!-- AGATE_CARD_START -->
+## 当前阶段卡片：P6
+
+路径：phase-cards/P6-acceptance.md
+---
+# P6 — 验收
+
+> 当前状态：[首次 / 重试 #N / 裁剪跳阶]
+> 裁剪跳阶 → P6 不可裁剪。no_behavior_change 可简化（快速验收），不可省略。
+
+## 如果是首次进入本阶段
+
+1. 派发 verifier subagent → 产出 P6-acceptance.md + P6-evidence/
+   1.1 写 P6-dispatch-context-verifier.md（派发指引：目标/约束/上游关联/输入文件 + 客观查证信息）
+2. UI 任务：派 vision-analyst → 产出 vision-reports/
+3. 主 Agent 逐条核实 BDD 对照结果
+4. **功能验证和 gate 格式都必须满足**（T046 教训：先做功能验证，不要只凑格式）
+5. **运行 `bash $AGATE_ROOT/scripts/check-p6-format.sh --fix "$TASK_DIR/P6-acceptance.md"`** 归一化 PASS/FAIL 大小写和行首空白（verifier 产出后、gate 前，① 自动格式化）
+6. 预跑 check-gate.sh P6 + check-p6-evidence.sh + check-p6-provenance.sh
+7. 更新 .state.yaml phase=P6 → P7
+8. git add docs/tasks/{Txxx}/（含 .state.yaml + 产出文件，若 .gitignore 忽略需 git add -f）
+9. git commit -m "wf({Txxx}-P6): {摘要}"
+
+## 如果是重试
+
+确认上一轮失败原因（BDD 不覆盖 / 证据不足 / gate 格式拦截）
+→ 读 agate/rules/state-transitions.md 确认 retry 上限（P6 MAX=2）
+
+## 核心原则 ⚠️
+
+**功能验证和 gate 格式都必须满足。** T046 教训：花 2 小时凑 PASS 格式，没花 5 分钟检查 API 响应头。不接受只满足格式不验证功能，也不接受只验证功能不满足格式。gate 是必要条件（格式不对 → commit 不了），不是充分条件（格式对了 ≠ 功能正确）。
+
+**验收报告记录的是验收时的事实，不是修复后的状态。** P6-acceptance.md 的 PASS/FAIL 声明必须基于 evidence 文件的实际输出。如果验收时 BDD 为 FAIL，写 FAIL——修复后重新验收时再改 PASS。不能在同一个 P6 acceptance 里写"修复后 PASS"。
+
+## 前置条件
+
+- [ ] P1-requirements.md BDD 验收条件完整（含 SCOPE+ 增补）
+- [ ] P1 声明的 capability_requirements 中 ability 为 available
+
+## 派发
+
+- **角色**：verifier（`{agate_root}/assets/execution-roles/verifier.md`）
+- **UI 任务追加**：vision-analyst（`{agate_root}/assets/execution-roles/vision-analyst.md`）
+- **输入**：P1-requirements.md + P5-test-results/
+- **输出**：P6-acceptance.md + P6-evidence/
+
+## 产出规格
+
+### P6-acceptance.md
+
+- BDD 逐条对照，每条只允许 PASS 或 FAIL（不允许"调整/跳过/覆盖"）
+- 所有 PASS 必须有文件引用：`- PASS Bxx: 描述 (p6-bxx.png)` 或响应日志/断言文件
+- UI 任务：操作类 BDD 截图必须互不相同（md5 去重），查询类 BDD 可不截图但须有断言记录文件
+- UI 任务：每条 UI 类 PASS 含 vision 引用：`(vision: vision-reports/bxx.yaml)`
+
+**PASS 行最小格式规范**：
+
+```
+- PASS BDD-NN: {描述} ({证据路径})
+```
+
+证据路径格式：
+- 截图：`(screenshots/{filename}.png)`
+- vision：`(vision: vision-reports/{filename}.yaml)`
+- 其他：`(result.json)` / `(assert.log)` / `(P6-evidence/{filename})` / ...
+- 多文件引用（逗号分隔）：`(file1.json, file2.log)` / `(screenshots/a.png, screenshots/b.png)`
+
+描述文本可自由添加，不影响解析（provenance 脚本用精确正则提取路径）。
+
+**总结行格式**：行首 `- PASS`/`- FAIL` 只用于 BDD 条目，不得用于总结行。总结行用其他格式（如 `**Summary**: 34/34 PASS, 0 FAIL`）。check-p6-format.sh `--fix` 会自动修正违规总结行。
+
+### P6-evidence/
+
+- 必须非空，每个文件含实质内容（截图 >1KB，断言文件含实际输出）
+- 不接受 1 行文本文件充数（T046 教训：15 个 1 行 txt 文件凑 provenance 数量）
+- 元素级截图建议使用父级元素 + padding，避免过小截图（≤1KB 虽不阻断但会触发 WARNING）
+- 操作类 BDD 截图必须互不相同（md5 完全重复会被 hook 硬阻断，无例外）。
+  若某个行为差异类 BDD 天然会产出视觉相同的页面（如两个不同查询都命中同一个空状态），
+  优先改用非截图证据（断言日志 / response.json）而非截图，或截图时带上能体现差异的元素
+  （如带时间戳的调试面板、高亮差异区域），确保截图本身逐字节不同。
+  查询类 BDD 本来就可以不截图，这类场景应优先归为查询类而非勉强用截图。
+
+### vision-helper 结论绑定 ⚠️
+
+- `ui_affected: true` 时至少一条 PASS 基于 vision-helper 报告
+- vision-helper 报 `blocker_count > 0`：不能仅用程序化指标（naturalWidth>0, complete=true, HTTP 200）反驳
+- 必须追查根因（curl -I 检查响应头 / DevTools Network / API 日志），追查结果写入 P6-acceptance.md
+
+## gate 规则
+
+```bash
+check-p6-format.sh --fix $TASK_DIR/P6-acceptance.md  # ① 自动格式化（verifier 产出后、gate 前）
+check-gate.sh P6 $TASK_DIR      # FAIL=0 / 总数>0
+check-p6-evidence.sh $TASK_DIR  # 证据目录非空 / UI截图>1KB / md5去重
+check-p6-provenance.sh $TASK_DIR # 证据-结论对应 / dispatch-context审计 / BDD对照
+```
+
+- FAIL > 0 → gate exit 1 → 回 P4
+
+格式问题 → 运行 check-p6-format.sh --fix 归一化 → 再验 gate → … → 通过（⑩迭代循环，格式迭代和 gate 重试共享 retry 预算）
+
+**⚠️ FAIL > 0 时，主 Agent 不能直接改项目源码让它变绿**：P6 是 self-authored gate（判定对象是 verifier 自己写的 P6-acceptance.md），验收阶段本身不应该有代码变更——`pre-commit-gate.sh` 会硬拦截 phase=P6 时暂存的非证据文件（不在 `P6-evidence/` 下的文件）。正确流程：诊断问题出在哪个上游阶段 → 退回该阶段（`agate/rules/state-transitions.md` 回退规则，退回前须先跑 `agate-archive-stale-outputs.sh` 归档当前 P6 产出，或用 `agate-retreat-to.sh` 自动化多步回退）→ 重新派发对应角色 subagent 修复 → 重新走到 P6 时，旧的 P6-acceptance.md/P6-evidence/ 已被归档清空，verifier 必须重新产出真实证据，不存在"挑几条改改、其余沿用旧结论"的空间。
+
+## 按包拆分并行（条件触发，受限模式）
+
+> 仅当 P2 packages > 1 且包间无依赖时适用。单包任务跳过本节。
+
+P6 采用**证据并行、验收文件不并行**模式：
+
+1. 各包 verifier 并行跑 BDD 验证，证据写入 P6-evidence/{pkg}/，同时写 P6-evidence/{pkg}/results.md（PASS/FAIL 行 + 证据引用，不进 gate）
+2. 所有 verifier 返回后，派一个汇总 verifier 逐包读取 results.md，转抄整合进唯一的 P6-acceptance.md
+3. 汇总 verifier 确认各包 BDD 编号合集 = P1 全部 BDD 编号，无重复/遗漏，**必须在 P6-acceptance.md 中记录交叉核对结果**
+
+基础设施隔离同 P5（端口/数据库/截图目录独立）。
+
+## 推进条件（全部满足才写 phase: P7）
+
+- [ ] 所有 BDD PASS（FAIL=0）
+- [ ] P6-evidence/ 目录非空 + 证据文件被引用
+- [ ] UI 任务：vision-helper blocker_count=0；blocker>0 时须在 P6-acceptance.md 写明追查命令 + 输出 + 根因结论（仅写"已追查"不合规）
+- [ ] provenance 审计通过
+
+## 常见错误（T046 实证）
+
+1. **用 DOM 属性替代视觉验证**：img.src 被重写 = 图片显示正常。不对——还有 Content-Type、CORS、CSP 等 100 种原因导致图片不渲染。**vision-helper 说破了就是破了**
+2. **凑 PASS 数量**：deferred BDD 标 PASS、用 1 行文本文件充证据 → provenance 审计能通过但功能不对
+3. **只验证中间指标不验证用户结果**：naturalWidth>0, complete=true, API 返回 200 → 结论"功能正常"。用户看到的：破图。**问自己：用户看到了什么**
+4. **收到视觉否定先反驳**：vision-helper 报异常 → 先 curl -I 查响应头 → 再决定是 vision 误报还是真问题。T046：三次视觉否定被三次程序化指标反驳，15 分钟浪费
+5. **验收失败自己动手改代码**：这和上面几条本质是同一类问题（判定证据和判定对象由同一人在同一时间点生产），只是这次改的是真代码而非假 markdown，反而更难被察觉。正确动作是退回重新派发，见上方 FAIL > 0 的处理说明
+
+gate 不过 ≠ 你失败了。红灯指向工作/设计的问题，不指向你。正确动作是诊断→退回/重试/PAUSED，不是修改产出让它变绿。
+
+## 下游影响
+
+- P7 一致性检查依赖 P6 的 BDD 对照结果
+- 验收结果是判定任务成败的最终依据——P8 发布只是机械步骤
+
+## 自查≠gate
+写完验证脚本后应自跑确认脚本可执行（自查），但自查通过 ≠ P6 gate 通过。
+P6 gate 由主 Agent 亲自跑 gate 脚本（check-gate.sh P6 + check-p6-evidence.sh + check-p6-provenance.sh），验证的是 verifier subagent 的产出。结果以主 Agent 跑的 gate 脚本为准。
+不要在返回中声称"验收已通过"或"全部 BDD PASS"——只返回路径 + 摘要。
+
+> 完成 → 读 phase-cards/P7-consistency.md
+<!-- AGATE_CARD_END -->

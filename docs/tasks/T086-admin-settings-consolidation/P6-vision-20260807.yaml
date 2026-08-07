@@ -1,0 +1,1573 @@
+vision_analysis:
+  screenshots:
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-01-admin-userlist.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-02-admin-reset-password-dialog.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-03-self-protection-toast.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-04-admin-tabnav.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-05-nonadmin-tabnav.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-06-nonadmin-fallback-profile.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-07-unauth-redirect.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-08-admin-404.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-09-nonadmin-404.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-10-unauth-404.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-11a-admin-usermenu-open.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-12a-nonadmin-usermenu-open.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-12b-nonadmin-landed-apikeys.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-13-admin-mobile-usermanager.png"
+    - "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-14-nonadmin-mobile-nousermanager.png"
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-07T12:00:00"
+
+  viewports:
+    - id: "bdd-01-admin-userlist"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-01-admin-userlist.png"
+      size: "1280x800"
+      page:
+        title: "用户管理"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏: PeekView（左上，带方形圆角 P logo）
+          导航栏右侧: 主题切换图标（月亮图标）
+          Tab栏: Profile  Security  API Keys  用户管理（当前激活，蓝色下划线）
+          页面标题: 用户管理
+          列表项1: alice  Admin
+          列表项2: bob
+          列表项3: carol
+          列表项4: dave  Disabled  8小时前
+          每个列表项右侧: ... 图标 + 展开箭头(v)图标
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            estimated_height: "约60px"
+            z_layer: "normal"
+          - id: "tabnav"
+            position: "top，navbar下方"
+            estimated_height: "约50px"
+            z_layer: "normal"
+          - id: "user-list"
+            position: "center，左对齐"
+            estimated_width: "约768px"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "page-title"
+            approx_size: "约24px"
+            weight: "600"
+            color: "#111827"
+          - level: "tab-label"
+            approx_size: "约14px"
+            weight: "400"
+            color: "#6b7280"
+          - level: "list-item-username"
+            approx_size: "约16px"
+            weight: "500"
+            color: "#111827"
+          - level: "badge-text"
+            approx_size: "约12px"
+            weight: "500"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "tabnav"
+          label: "Profile / Security / API Keys / 用户管理"
+          state: "用户管理 active"
+          position: "顶部"
+          style:
+            active_color: "#3b82f6"
+            active_underline: "约2px"
+            inactive_color: "#6b7280"
+        - type: "list-item"
+          label: "用户行（4条：alice/bob/carol/dave）"
+          state: "normal"
+          style:
+            height: "约60px"
+            border_radius: "约8px"
+            background: "#ffffff"
+            border: "1px solid #e5e7eb"
+            padding: "约16px 20px"
+        - type: "badge"
+          label: "Admin"
+          state: "normal"
+          position: "alice 行内，用户名下方"
+          style:
+            background: "#fdf1d8"
+            text_color: "#a16207"
+            border_radius: "约4px"
+            font_size: "约11px"
+        - type: "badge"
+          label: "Disabled"
+          state: "normal"
+          position: "dave 行内，用户名下方"
+          style:
+            background: "#e5e7eb"
+            text_color: "#6b7280"
+            border_radius: "约4px"
+            font_size: "约11px"
+        - type: "text"
+          label: "8小时前"
+          state: "normal"
+          position: "Disabled 徽章右侧"
+          style:
+            color: "#9ca3af"
+            font_size: "约12px"
+        - type: "icon-button"
+          label: "更多操作（...）"
+          state: "normal"
+          position: "每行右侧"
+          style:
+            icon: "三个点，线性"
+        - type: "icon"
+          label: "展开箭头（v）"
+          state: "normal"
+          position: "每行最右侧"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一约8px（卡片），约4px（徽章）"
+        shadow_usage: "无明显阴影"
+        gradient_usage: "无"
+        icon_style: "线性，统一风格"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-02-admin-reset-password-dialog"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-02-admin-reset-password-dialog.png"
+      size: "1280x800"
+      page:
+        title: "重置密码对话框"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          背景（半透明遮罩下）: PeekView 导航栏，用户管理 tab，alice/bob/carol/dave 列表
+          对话框标题: 重置密码
+          对话框副标题: 为用户 bob 设置新密码
+          输入框标签: 新密码
+          输入框内容: 圆点掩码字符（约10个）
+          输入框右侧: 眼睛图标（显示/隐藏密码）
+          按钮: 取消
+          按钮: 确认
+      layout:
+        type: "absolute"
+        regions:
+          - id: "backdrop-mask"
+            position: "全屏"
+            estimated_height: "800px"
+            z_layer: "overlay"
+          - id: "dialog"
+            position: "屏幕中央"
+            estimated_width: "约400px"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#9ca3af"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "dialog-title"
+            approx_size: "约18px"
+            weight: "500"
+            color: "#9ca3af"
+          - level: "dialog-subtitle"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#9ca3af"
+          - level: "input-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "modal-dialog"
+          label: "重置密码"
+          state: "open"
+          position: "屏幕中央"
+          style:
+            width: "约400px"
+            border_radius: "约8px"
+            background: "#ffffff"
+            shadow: "轻微"
+        - type: "input"
+          label: "新密码"
+          state: "focused（带蓝色边框）"
+          style:
+            width: "约300px"
+            height: "约40px"
+            border: "1px solid #3b82f6"
+            border_radius: "约6px"
+        - type: "icon-button"
+          label: "密码可见性切换（眼睛图标）"
+          state: "normal"
+          position: "输入框右侧"
+        - type: "button"
+          label: "取消"
+          state: "normal"
+          style:
+            background: "#ffffff"
+            border: "1px solid #e5e7eb"
+            text_color: "#6b7280"
+        - type: "button"
+          label: "确认"
+          state: "normal"
+          style:
+            background: "#3b82f6"
+            text_color: "#ffffff"
+            border_radius: "约6px"
+      overlay:
+        modal_open: true
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: true
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一约6-8px"
+        shadow_usage: "轻微"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-03-self-protection-toast"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-03-self-protection-toast.png"
+      size: "1280x800"
+      page:
+        title: "用户管理（带 toast 提示）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Toast文字: Cannot disable the last active admin  ×
+          Tab栏: Profile  Security  API Keys  用户管理（激活）
+          页面标题: 用户管理
+          列表项1: alice  Admin
+          列表项2: bob
+          列表项3: carol
+          列表项4: dave  Disabled  8小时前
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "toast"
+            position: "顶部居中，覆盖navbar区域"
+            estimated_height: "约36px"
+            z_layer: "overlay"
+          - id: "tabnav"
+            position: "top"
+            estimated_height: "约50px"
+            z_layer: "normal"
+          - id: "user-list"
+            position: "center"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: "#fef2f2（浅红色toast背景，半透明）"
+        success: null
+        contrast_issues:
+          - element: "toast文字"
+            foreground: "淡粉/半透明文字色"
+            background: "#fef2f2"
+            issue: "toast处于低透明度状态（疑似渐隐动画中途），文字对比度低，肉眼勉强可辨"
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "toast-text"
+            approx_size: "约13px"
+            weight: "400"
+            color: "淡粉色，半透明"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "toast"
+          label: "Cannot disable the last active admin"
+          state: "visible（半透明，疑似渐隐中）"
+          position: "顶部居中偏左，覆盖导航栏区域"
+          style:
+            width: "约390px"
+            height: "约36px"
+            background: "浅红/粉色，半透明"
+            border_radius: "约6px"
+            close_icon: "×，右侧"
+        - type: "tabnav"
+          label: "Profile / Security / API Keys / 用户管理"
+          state: "用户管理 active"
+        - type: "list-item"
+          label: "用户行（4条）"
+          state: "normal"
+        - type: "badge"
+          label: "Admin / Disabled"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: true
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无明显"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies:
+        - type: "wrong_state"
+          location: "顶部 toast 组件"
+          description: "toast 文案为英文（Cannot disable the last active admin），与页面其余中文文案（用户管理/重置密码等）语言不一致"
+          severity: "info"
+        - type: "layout_break"
+          location: "顶部 toast 组件"
+          description: "toast 呈半透明状态，疑似截图捕捉到渐隐动画的中间帧，导致文字对比度偏低但仍可辨认"
+          severity: "info"
+
+    - id: "bdd-04-admin-tabnav"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-04-admin-tabnav.png"
+      size: "1280x800"
+      page:
+        title: "Profile（admin 视角 tab 导航）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Tab栏: Profile（激活，蓝色）  Security  API Keys  用户管理
+          表单标签: Username
+          输入框: alice
+          表单标签: Display Name
+          输入框占位符: Enter display name
+          表单标签: Role
+          值: Admin
+          表单标签: Member Since
+          值: 2026年8月7日
+          按钮: Save
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "tabnav"
+            position: "top"
+            estimated_height: "约50px"
+            z_layer: "normal"
+          - id: "profile-form"
+            position: "center"
+            estimated_width: "约768px"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#eef1f5"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "form-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+          - level: "form-value"
+            approx_size: "约14px"
+            weight: "400"
+            color: "#111827"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "tabnav"
+          label: "Profile / Security / API Keys / 用户管理"
+          state: "Profile active，用户管理 可见且未激活"
+          style:
+            active_color: "#3b82f6"
+            inactive_color: "#6b7280"
+        - type: "input"
+          label: "Username（禁用态，值为 alice）"
+          state: "disabled"
+          style:
+            background: "#eef1f5"
+            border: "1px solid #e5e7eb"
+        - type: "input"
+          label: "Display Name（占位符态）"
+          state: "normal"
+        - type: "badge"
+          label: "Role: Admin"
+          state: "normal"
+          style:
+            background: "#fdf1d8"
+            text_color: "#a16207"
+        - type: "text"
+          label: "Member Since: 2026年8月7日"
+          state: "normal"
+        - type: "button"
+          label: "Save"
+          state: "normal"
+          style:
+            width: "约768px"
+            height: "约44px"
+            background: "#3b82f6"
+            text_color: "#ffffff"
+            border_radius: "约6px"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一约6px"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-05-nonadmin-tabnav"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-05-nonadmin-tabnav.png"
+      size: "1280x800"
+      page:
+        title: "Profile（非 admin 视角 tab 导航）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Tab栏: Profile（激活，蓝色）  Security  API Keys
+          表单标签: Username
+          输入框: bob
+          表单标签: Display Name
+          输入框占位符: Enter display name
+          表单标签: Role
+          值: Member
+          表单标签: Member Since
+          值: 2026年8月7日
+          按钮: Save
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "tabnav"
+            position: "top"
+            estimated_height: "约50px"
+            z_layer: "normal"
+          - id: "profile-form"
+            position: "center"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#eef1f5"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "form-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "tabnav"
+          label: "Profile / Security / API Keys（仅3项，无用户管理）"
+          state: "Profile active"
+        - type: "input"
+          label: "Username（禁用态，值为 bob）"
+          state: "disabled"
+        - type: "badge"
+          label: "Role: Member"
+          state: "normal"
+          style:
+            background: "#dcfce7"
+            text_color: "#16a34a"
+        - type: "button"
+          label: "Save"
+          state: "normal"
+          style:
+            background: "#3b82f6"
+            text_color: "#ffffff"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-06-nonadmin-fallback-profile"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-06-nonadmin-fallback-profile.png"
+      size: "1280x800"
+      page:
+        title: "Profile（非 admin 直接访问 ?tab=user-manager 的回退结果）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Tab栏: Profile（激活，蓝色）  Security  API Keys
+          表单标签: Username
+          输入框: bob
+          表单标签: Display Name
+          输入框占位符: Enter display name
+          表单标签: Role
+          值: Member
+          表单标签: Member Since
+          值: 2026年8月7日
+          按钮: Save
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "tabnav"
+            position: "top"
+            z_layer: "normal"
+          - id: "profile-form"
+            position: "center"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#eef1f5"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "form-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "tabnav"
+          label: "Profile / Security / API Keys（仅3项，无用户管理，且Profile为激活tab而非请求的user-manager）"
+          state: "Profile active"
+        - type: "input"
+          label: "Username（禁用态，值为 bob）"
+          state: "disabled"
+        - type: "badge"
+          label: "Role: Member"
+          state: "normal"
+        - type: "button"
+          label: "Save"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-07-unauth-redirect"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-07-unauth-redirect.png"
+      size: "1280x800"
+      page:
+        title: "PeekView 首页/落地页"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏左: PeekView
+          导航栏中: GitHub  PyPI  npm  Changelog
+          导航栏右: Sign in  （主题切换图标）
+          小标签: CODE · DOCS · DATA · HTML
+          大标题: Agent writes. You read. Agents read too.
+          正文: Your agents generate code, docs and data around the clock.
+          正文: PeekView renders every artifact into a fast, beautiful view you can share with one link — readable by humans and agents alike.
+          按钮: Browse public
+          代码按钮: $ pipx install peekview  （右侧复制图标）
+          提示文字: For humans. Wiring up an agent? Connect the MCP server →
+          预览窗口标题栏: peekview.dev/p/agent-runbook
+          预览窗口侧栏: FILES  README.md  architecture.mmd
+          预览窗口内容: Agent Runbook
+          预览窗口副标题: README.md · rendered with Mermaid
+          预览窗口正文（部分可见）: The planner loops until the task reads complete. Every step is logged
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            estimated_height: "约60px"
+            z_layer: "normal"
+          - id: "hero"
+            position: "center"
+            z_layer: "normal"
+          - id: "preview-window"
+            position: "hero下方，居中，部分被视口截断"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#9ca3af（大标题为浅灰色）"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues:
+          - element: "大标题 Agent writes. You read. Agents read too."
+            foreground: "约#9ca3af"
+            background: "#f8fafc"
+            issue: "大字号浅灰色文字，与背景对比度偏低（大字号WCAG阈值较宽松，仅记录观察）"
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "hero-title"
+            approx_size: "约56px"
+            weight: "700"
+            color: "约#9ca3af"
+          - level: "hero-subtitle"
+            approx_size: "约16px"
+            weight: "400"
+            color: "#6b7280"
+          - level: "eyebrow"
+            approx_size: "约12px"
+            weight: "500"
+            color: "#3b82f6"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "button"
+          label: "Sign in"
+          state: "normal"
+          position: "导航栏右上角"
+          style:
+            background: "#3b82f6"
+            text_color: "#ffffff"
+            border_radius: "约6px"
+        - type: "button"
+          label: "Browse public"
+          state: "normal"
+          position: "hero中央"
+          style:
+            background: "#3b82f6"
+            text_color: "#ffffff"
+        - type: "code-badge"
+          label: "$ pipx install peekview"
+          state: "normal"
+          style:
+            icon: "复制图标，右侧"
+        - type: "window-mockup"
+          label: "peekview.dev/p/agent-runbook 预览窗口"
+          state: "normal"
+          position: "hero下方，被视口下边缘截断"
+          style:
+            traffic_lights: "红黄绿圆点，左上角"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "预览窗口轻微阴影"
+        gradient_usage: "hero区域顶部有淡蓝色径向渐变光斑"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-08-admin-404"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-08-admin-404.png"
+      size: "1280x800"
+      page:
+        title: "404 Page not found（admin 访问 /admin）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          标题: Page not found
+          路径: /admin
+          按钮: 返回首页
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "error-block"
+            position: "屏幕垂直水平居中"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: null
+        primary: "#3b82f6"
+        primary_text: "#374151"
+        secondary_text: "#9ca3af"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "error-title"
+            approx_size: "约22px"
+            weight: "700"
+            color: "#374151"
+          - level: "error-path"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#9ca3af（等宽字体）"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "text"
+          label: "Page not found"
+          state: "normal"
+        - type: "text"
+          label: "/admin（等宽字体路径）"
+          state: "normal"
+        - type: "button"
+          label: "返回首页"
+          state: "normal"
+          style:
+            width: "约94px"
+            height: "约36px"
+            background: "#ffffff"
+            border: "1px solid #e5e7eb"
+            border_radius: "约6px"
+            text_color: "#3b82f6"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "无图标"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-09-nonadmin-404"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-09-nonadmin-404.png"
+      size: "1280x800"
+      page:
+        title: "404 Page not found（非 admin 访问 /admin）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          标题: Page not found
+          路径: /admin
+          按钮: 返回首页
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "error-block"
+            position: "屏幕垂直水平居中"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: null
+        primary: "#3b82f6"
+        primary_text: "#374151"
+        secondary_text: "#9ca3af"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "error-title"
+            approx_size: "约22px"
+            weight: "700"
+            color: "#374151"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "text"
+          label: "Page not found"
+          state: "normal"
+        - type: "text"
+          label: "/admin"
+          state: "normal"
+        - type: "button"
+          label: "返回首页"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "无图标"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-10-unauth-404"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-10-unauth-404.png"
+      size: "1280x800"
+      page:
+        title: "404 Page not found（未登录访问 /admin）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          标题: Page not found
+          路径: /admin
+          按钮: 返回首页
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "error-block"
+            position: "屏幕垂直水平居中"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: null
+        primary: "#3b82f6"
+        primary_text: "#374151"
+        secondary_text: "#9ca3af"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "error-title"
+            approx_size: "约22px"
+            weight: "700"
+            color: "#374151"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "text"
+          label: "Page not found"
+          state: "normal"
+        - type: "text"
+          label: "/admin"
+          state: "normal"
+        - type: "button"
+          label: "返回首页"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "无图标"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-11a-admin-usermenu-open"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-11a-admin-usermenu-open.png"
+      size: "1280x800"
+      page:
+        title: "条目列表页（admin，UserMenu 下拉打开）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏左: PeekView
+          导航栏中: All  Mine  Archived
+          导航栏右: 搜索框占位符 Search titles, tags...
+          用户徽章: alice  ADMIN
+          下拉菜单: Settings
+          下拉菜单: Logout
+          卡片标题（部分可见，多张）: Docker Compose 编排（YAML 树视图） / Maven 项目配置（XML 树视图） / 服务器监控指标（TSV 表格视图） / SVG 矢量图独立展示 / SVG 图标库示例 / 安全审计记录 Q3 / Entry Service 源码（Python） / 产品截图与设计稿 / PlantUML 架构图 / 多格式混合（源码/渲染切换验证） / Mermaid 图表示例集 / Markdown 渲染测试集 / Kubernetes 部署配置 / API 服务配置（JSON 树视图） / HTML 渲染与 CSP 测试 / 边界数据测试（空/损坏/解析失败）
+          卡片元信息（示例）: @alice · 8h ago · 1 file / @carol · 8h ago · 2 files
+          卡片标签（示例）: yaml docker 编排 +1 / Public / Private
+      layout:
+        type: "grid"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            estimated_height: "约60px"
+            z_layer: "normal"
+          - id: "filter-tabs"
+            position: "navbar下方左侧"
+            z_layer: "normal"
+          - id: "entry-grid"
+            position: "主内容区"
+            z_layer: "normal"
+          - id: "usermenu-dropdown"
+            position: "右上角用户徽章下方"
+            estimated_width: "约130px"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "card-title"
+            approx_size: "约16px"
+            weight: "600"
+            color: "#111827"
+          - level: "card-meta"
+            approx_size: "约12px"
+            weight: "400"
+            color: "#9ca3af"
+          - level: "dropdown-item"
+            approx_size: "约14px"
+            weight: "400"
+            color: "#374151"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "avatar-chip"
+          label: "alice ADMIN"
+          state: "active（触发下拉打开）"
+          position: "右上角"
+          style:
+            avatar_bg: "#3b82f6"
+            badge_bg: "#3b82f6"
+            badge_text: "#ffffff"
+        - type: "dropdown-menu"
+          label: "Settings / Logout"
+          state: "open"
+          position: "用户徽章正下方"
+          style:
+            width: "约130px"
+            background: "#ffffff"
+            border: "1px solid #e5e7eb"
+            border_radius: "约6px"
+            shadow: "轻微"
+        - type: "menu-item"
+          label: "Settings"
+          state: "normal"
+        - type: "menu-item"
+          label: "Logout"
+          state: "normal"
+        - type: "card"
+          label: "条目卡片（多张网格排列）"
+          state: "normal"
+          style:
+            columns: "4列网格"
+            border_radius: "约8px"
+            border: "1px solid #e5e7eb"
+        - type: "tag-chip"
+          label: "各类标签（如 yaml/docker/编排/Public/Private）"
+          state: "normal"
+        - type: "search-input"
+          label: "Search titles, tags..."
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: true
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平/卡片式"
+        border_radius_usage: "统一约8px"
+        shadow_usage: "卡片与下拉菜单轻微阴影"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-12a-nonadmin-usermenu-open"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-12a-nonadmin-usermenu-open.png"
+      size: "1280x800"
+      page:
+        title: "条目列表页（非admin，UserMenu 下拉打开）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏左: PeekView
+          导航栏中: All  Mine  Archived
+          导航栏右: 搜索框占位符 Search titles, tags...
+          用户徽章: bob（无ADMIN标签）
+          下拉菜单: Settings
+          下拉菜单: Logout
+          卡片标题（部分可见，多张）: Docker Compose 编排（YAML 树视图） / Maven 项目配置（XML 树视图） / 服务器监控指标（TSV 表格视图） / SVG 矢量图独立展示 / SVG 图标库示例 / Entry Service 源码（Python） / 产品截图与设计稿 / PlantUML 架构图 / 多格式混合（源码/渲染切换验证） / Mermaid 图表示例集 / Markdown 渲染测试集 / Kubernetes 部署配置 / API 服务配置（JSON 树视图） / HTML 渲染与 CSP 测试 / 边界数据测试（空/损坏/解析失败） / 员工数据表（CSV 表格视图）
+      layout:
+        type: "grid"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            z_layer: "normal"
+          - id: "entry-grid"
+            position: "主内容区"
+            z_layer: "normal"
+          - id: "usermenu-dropdown"
+            position: "右上角用户徽章下方"
+            estimated_width: "约130px"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#ffffff"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "card-title"
+            approx_size: "约16px"
+            weight: "600"
+            color: "#111827"
+          - level: "dropdown-item"
+            approx_size: "约14px"
+            weight: "400"
+            color: "#374151"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "avatar-chip"
+          label: "bob（无ADMIN标签）"
+          state: "active（触发下拉打开）"
+          position: "右上角"
+          style:
+            avatar_bg: "#8b5cf6（紫色，与alice的蓝色区分）"
+        - type: "dropdown-menu"
+          label: "Settings / Logout（仅两项，无用户管理相关文字）"
+          state: "open"
+          position: "用户徽章正下方"
+          style:
+            width: "约130px"
+            background: "#ffffff"
+            border: "1px solid #e5e7eb"
+        - type: "menu-item"
+          label: "Settings"
+          state: "normal"
+        - type: "menu-item"
+          label: "Logout"
+          state: "normal"
+        - type: "card"
+          label: "条目卡片（多张网格排列）"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: true
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平/卡片式"
+        border_radius_usage: "统一"
+        shadow_usage: "轻微"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-12b-nonadmin-landed-apikeys"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-12b-nonadmin-landed-apikeys.png"
+      size: "1280x800"
+      page:
+        title: "API Keys（非admin点击Settings后落地页）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Tab栏: Profile  Security  API Keys（激活，蓝色）
+          页面标题: API Keys
+          右上按钮: Create Key
+          空状态标题: No API keys yet
+          空状态说明: Create one to automate entry creation.
+          按钮: Create Key（居中）
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "tabnav"
+            position: "top"
+            z_layer: "normal"
+          - id: "empty-state"
+            position: "页面中央偏上"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: null
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "page-title"
+            approx_size: "约22px"
+            weight: "600"
+            color: "#111827"
+          - level: "empty-state-title"
+            approx_size: "约18px"
+            weight: "600"
+            color: "#111827"
+          - level: "empty-state-desc"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "tabnav"
+          label: "Profile / Security / API Keys（API Keys为激活tab，非用户管理）"
+          state: "API Keys active"
+        - type: "button"
+          label: "Create Key（右上角）"
+          state: "normal"
+          style:
+            background: "#3b82f6"
+            text_color: "#ffffff"
+            border_radius: "约6px"
+        - type: "empty-state"
+          label: "No API keys yet"
+          state: "visible"
+          position: "页面中央"
+          style:
+            icon: "圆柱数据库图标，线性，约48px，灰色"
+        - type: "button"
+          label: "Create Key（居中，第二个）"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd-13-admin-mobile-usermanager"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-13-admin-mobile-usermanager.png"
+      size: "380x1733"
+      page:
+        title: "Settings（admin，移动端堆叠布局）"
+        loading_state: "loaded"
+        scroll_state: "top（全页截图，含滚动内容）"
+        visible_text_complete: |
+          导航栏左: PeekView
+          导航栏右: 主题切换图标
+          区块标题: Profile
+          表单标签: Username  值: alice
+          表单标签: Display Name  占位符: Enter display name
+          表单标签: Role  值: Admin
+          表单标签: Member Since  值: 2026年8月7日
+          按钮: Save
+          分隔线
+          区块标题: Security
+          表单标签: Old Password（空）
+          表单标签: New Password（空）
+          表单标签: Confirm New Password（空）
+          按钮: Change Password（禁用态，浅蓝色）
+          分隔线
+          区块小标签: API Keys
+          区块标题: API Keys
+          按钮: Create Key
+          空状态标题: No API keys yet
+          空状态说明: Create one to automate entry creation.
+          按钮: Create Key
+          分隔线
+          区块小标签: 用户管理
+          区块标题: 用户管理
+          用户行1: alice  Admin
+          用户行2: bob
+          用户行3: carol
+          用户行4: dave  Disabled  8小时前
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            estimated_height: "约60px"
+            z_layer: "normal"
+          - id: "profile-section"
+            position: "堆叠第1块"
+            z_layer: "normal"
+          - id: "security-section"
+            position: "堆叠第2块"
+            z_layer: "normal"
+          - id: "apikeys-section"
+            position: "堆叠第3块"
+            z_layer: "normal"
+          - id: "usermanager-section"
+            position: "堆叠第4块（最底部）"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#eef1f5"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "section-title"
+            approx_size: "约20px"
+            weight: "700"
+            color: "#111827"
+          - level: "section-eyebrow"
+            approx_size: "约14px"
+            weight: "500"
+            color: "#111827"
+          - level: "form-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "section-block"
+          label: "Profile"
+          state: "normal"
+        - type: "section-block"
+          label: "Security"
+          state: "normal"
+        - type: "button"
+          label: "Change Password"
+          state: "disabled（浅蓝色，透明度降低）"
+          style:
+            background: "约#93c5fd"
+            text_color: "#ffffff"
+        - type: "section-block"
+          label: "API Keys"
+          state: "normal"
+        - type: "empty-state"
+          label: "No API keys yet"
+          state: "visible"
+        - type: "section-block"
+          label: "用户管理"
+          state: "normal"
+        - type: "list-item"
+          label: "用户行（4条：alice/bob/carol/dave，与桌面端用户管理tab数据一致）"
+          state: "normal"
+        - type: "badge"
+          label: "Admin / Disabled"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一，各区块标题呈现\"小标签+大标题\"重复模式（API Keys、用户管理均如此），属一致设计模式而非异常"
+      anomalies: []
+
+    - id: "bdd-14-nonadmin-mobile-nousermanager"
+      file: "docs/tasks/T086-admin-settings-consolidation/P6-evidence/screenshots/bdd-14-nonadmin-mobile-nousermanager.png"
+      size: "380x1296"
+      page:
+        title: "Settings（非admin，移动端堆叠布局）"
+        loading_state: "loaded"
+        scroll_state: "top（全页截图，含滚动内容）"
+        visible_text_complete: |
+          导航栏左: PeekView
+          导航栏右: 主题切换图标
+          区块标题: Profile
+          表单标签: Username  值: bob
+          表单标签: Display Name  占位符: Enter display name
+          表单标签: Role  值: Member
+          表单标签: Member Since  值: 2026年8月7日
+          按钮: Save
+          分隔线
+          区块标题: Security
+          表单标签: Old Password（空）
+          表单标签: New Password（空）
+          表单标签: Confirm New Password（空）
+          按钮: Change Password（禁用态，浅蓝色）
+          分隔线
+          区块小标签: API Keys
+          区块标题: API Keys
+          按钮: Create Key
+          空状态标题: No API keys yet
+          空状态说明: Create one to automate entry creation.
+          按钮: Create Key
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "navbar"
+            position: "top-full-width"
+            z_layer: "normal"
+          - id: "profile-section"
+            position: "堆叠第1块"
+            z_layer: "normal"
+          - id: "security-section"
+            position: "堆叠第2块"
+            z_layer: "normal"
+          - id: "apikeys-section"
+            position: "堆叠第3块（页面最底部）"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f8fafc"
+        background_card: "#eef1f5"
+        primary: "#3b82f6"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "section-title"
+            approx_size: "约20px"
+            weight: "700"
+            color: "#111827"
+          - level: "form-label"
+            approx_size: "约13px"
+            weight: "400"
+            color: "#6b7280"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "section-block"
+          label: "Profile"
+          state: "normal"
+        - type: "section-block"
+          label: "Security"
+          state: "normal"
+        - type: "button"
+          label: "Change Password"
+          state: "disabled"
+        - type: "section-block"
+          label: "API Keys（页面最后一个区块，其后无用户管理区块）"
+          state: "normal"
+        - type: "empty-state"
+          label: "No API keys yet"
+          state: "visible"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简/扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+  responsive_comparison:
+    - dimension: "admin 用户管理入口"
+      desktop: "bdd-04：tab栏内 Profile/Security/API Keys/用户管理 四项横向平铺"
+      mobile: "bdd-13：堆叠布局内 Profile/Security/API Keys/用户管理 四个区块纵向排列，用户管理为最后一块，含与desktop一致的4条用户数据"
+      expected_behavior: "符合"
+    - dimension: "非admin用户管理入口"
+      desktop: "bdd-05：tab栏内仅 Profile/Security/API Keys 三项，无用户管理"
+      mobile: "bdd-14：堆叠布局内仅 Profile/Security/API Keys 三个区块，无用户管理区块"
+      expected_behavior: "符合"
+
+  bdd_results:
+    - condition: "BDD-1: Given 已登录的 admin 用户访问 /settings?tab=user-manager，When 页面加载完成，Then 页面显示分页的用户列表，列表包含每个用户的用户名和状态徽章（admin/disabled）"
+      result: "pass"
+      evidence: "bdd-01-admin-userlist.png：用户管理tab激活，列表显示alice(Admin徽章)/bob(无徽章)/carol(无徽章)/dave(Disabled徽章+8小时前)，用户名与状态徽章均可见"
+      screenshot_region: "页面中央用户列表"
+    - condition: "BDD-2: Given 已登录的 admin 用户在 /settings?tab=user-manager 的列表中存在一个非自己的目标用户，When admin 执行重置密码操作，Then 弹出重置密码对话框，含密码输入框和确认按钮"
+      result: "pass"
+      evidence: "bdd-02-admin-reset-password-dialog.png：对话框标题\"重置密码\"，副标题\"为用户 bob 设置新密码\"，含新密码输入框（掩码显示）和\"确认\"按钮（另有\"取消\"按钮）"
+      screenshot_region: "屏幕中央对话框"
+    - condition: "BDD-3: Given 已登录的 admin 用户在列表中看到自己，When admin 尝试对自己执行禁用操作，Then 操作被拒绝，界面提示不能对自己执行该操作（应显示 toast 提示文字）"
+      result: "pass"
+      evidence: "bdd-03-self-protection-toast.png：顶部可见toast文字\"Cannot disable the last active admin\"，用户列表仍显示alice为Admin未被禁用，操作被拒绝"
+      screenshot_region: "顶部居中toast"
+    - condition: "BDD-4: Given 已登录的 admin 用户访问 /settings，When 页面加载完成，Then 桌面端 tab 导航栏中可见\"用户管理\"选项，与 Profile/Security/API Keys 并列"
+      result: "pass"
+      evidence: "bdd-04-admin-tabnav.png：tab栏显示 Profile / Security / API Keys / 用户管理 四项并列"
+      screenshot_region: "顶部tab导航栏"
+    - condition: "BDD-5: Given 已登录的非 admin 用户访问 /settings，When 页面加载完成，Then 桌面端 tab 导航栏中不出现\"用户管理\"选项"
+      result: "pass"
+      evidence: "bdd-05-nonadmin-tabnav.png：tab栏仅显示 Profile / Security / API Keys 三项，无用户管理"
+      screenshot_region: "顶部tab导航栏"
+    - condition: "BDD-6: Given 已登录的非 admin 用户，When 该用户直接访问 /settings?tab=user-manager，Then 页面显示 profile tab 的内容（Username/Display Name/Role/Member Since 表单），不渲染任何用户管理相关数据或界面"
+      result: "pass"
+      evidence: "bdd-06-nonadmin-fallback-profile.png：Profile tab被激活显示，表单含Username(bob)/Display Name/Role(Member)/Member Since字段，tab栏无用户管理选项，页面无任何用户列表或管理界面"
+      screenshot_region: "全页"
+    - condition: "BDD-7: Given 未登录用户，When 访问 /settings?tab=user-manager，Then 被重定向到 /（应显示首页/落地页内容，不是 settings 页面）"
+      result: "pass"
+      evidence: "bdd-07-unauth-redirect.png：页面显示PeekView首页内容（Sign in按钮、Agent writes...大标题、Browse public按钮等），无settings相关tab或表单，确认已重定向到首页"
+      screenshot_region: "全页"
+    - condition: "BDD-8: Given 已登录的 admin 用户，When 访问 /admin，Then 页面显示 404（Page not found），不渲染任何用户管理内容"
+      result: "pass"
+      evidence: "bdd-08-admin-404.png：页面显示\"Page not found\"标题、路径\"/admin\"、\"返回首页\"按钮，无用户管理内容"
+      screenshot_region: "屏幕中央"
+    - condition: "BDD-9: Given 已登录的非 admin 用户，When 访问 /admin，Then 页面显示 404"
+      result: "pass"
+      evidence: "bdd-09-nonadmin-404.png：页面显示\"Page not found\"标题、路径\"/admin\"、\"返回首页\"按钮"
+      screenshot_region: "屏幕中央"
+    - condition: "BDD-10: Given 未登录用户，When 访问 /admin，Then 页面显示 404"
+      result: "pass"
+      evidence: "bdd-10-unauth-404.png：页面显示\"Page not found\"标题、路径\"/admin\"、\"返回首页\"按钮"
+      screenshot_region: "屏幕中央"
+    - condition: "BDD-11: Given 已登录的 admin 用户，When 打开 UserMenu 下拉菜单，Then 菜单中存在一个可点击的 \"Settings\" 项（此截图仅验证菜单打开状态）"
+      result: "pass"
+      evidence: "bdd-11a-admin-usermenu-open.png：用户徽章\"alice ADMIN\"下方下拉菜单打开，显示\"Settings\"和\"Logout\"两个菜单项，Settings为可点击文字项；本截图仅验证菜单打开状态，落地页验证见程序化日志（非本截图职责）"
+      screenshot_region: "右上角下拉菜单"
+    - condition: "BDD-12: Given 已登录的非 admin 用户，When 打开 UserMenu 下拉菜单，Then 菜单中不出现任何指向\"用户管理\"的选项；点击 Settings 后应落地到 API Keys tab（不是用户管理 tab）"
+      result: "pass"
+      evidence: "bdd-12a-nonadmin-usermenu-open.png：用户徽章\"bob\"（无ADMIN标签）下方下拉菜单仅显示\"Settings\"和\"Logout\"，无用户管理文字；bdd-12b-nonadmin-landed-apikeys.png：点击后落地页tab栏\"API Keys\"处于激活状态（蓝色下划线），页面标题为\"API Keys\"，显示空状态\"No API keys yet\"，确认落地于API Keys而非用户管理"
+      screenshot_region: "右上角下拉菜单 + 全页"
+    - condition: "BDD-13: Given 已登录的 admin 用户，视口宽度 390px（移动端），When 访问 /settings，Then 堆叠布局中包含\"用户管理\"区块（含用户列表），与桌面端 user-manager tab 内容一致"
+      result: "pass"
+      evidence: "bdd-13-admin-mobile-usermanager.png（视口380px，全页截图1733px高）：页面底部堆叠区块\"用户管理\"标题下显示alice(Admin)/bob/carol/dave(Disabled+8小时前)四条用户数据，与桌面端bdd-01内容一致"
+      screenshot_region: "页面底部堆叠区块"
+    - condition: "BDD-14: Given 已登录的非 admin 用户，视口宽度 390px（移动端），When 访问 /settings，Then 堆叠布局中不出现\"用户管理\"区块/文字（应只有 Profile/Security/API Keys 三个区块）"
+      result: "pass"
+      evidence: "bdd-14-nonadmin-mobile-nousermanager.png（视口380px，全页截图1296px高）：堆叠布局仅含Profile/Security/API Keys三个区块，API Keys区块为页面最后一块，其后无用户管理区块或文字"
+      screenshot_region: "全页"
+
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 14
+    bdd_fail: 0
+    bdd_need_confirm: 0
+    overall_status: "pass"

@@ -1,0 +1,18 @@
+=== T086 P6 BDD-17 grep verification (rerun at verification time) ===
+Command: grep -rn "'/admin'" frontend-v3/src --include='*.vue' --include='*.ts' | grep -v router.ts | grep -v api/client.ts
+--- output ---
+(no output above = no offending matches, exit as expected)
+
+=== AdminView.vue existence check ===
+
+=== T086 P6 BDD-16 rerun: t080-admin-route-guard.test.ts ===
+
+ RUN  v1.6.1 /home/kity/oclab/peekview/frontend-v3
+
+ ✓ src/__tests__/t080-admin-route-guard.test.ts  (10 tests | 3 skipped) 73ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed | 3 skipped (10)
+   Start at  10:53:25
+   Duration  1.34s (transform 285ms, setup 0ms, collect 435ms, tests 73ms, environment 478ms, prepare 57ms)
+

@@ -1,0 +1,19 @@
+T086 P6 verification run started 2026-08-07T02:52:24.129Z
+BDD-4: admin desktop tab-nav [data-testid="tab-user-manager"] count=1
+BDD-5: non-admin desktop tab-nav [data-testid="tab-user-manager"] count=0
+BDD-6: non-admin ?tab=user-manager -> user-manager-content count=0, active-profile-tab count=1
+BDD-8: admin visits /admin -> url=http://127.0.0.1:8888/admin, .not-found visible=true
+BDD-9: non-admin visits /admin -> url=http://127.0.0.1:8888/admin, .not-found visible=true
+BDD-10: unauthenticated visits /admin -> url=http://127.0.0.1:8888/admin, .not-found visible=true
+BDD-7: unauthenticated /settings?tab=user-manager -> redirected to url=http://127.0.0.1:8888/
+BDD-11: admin UserMenu Settings click -> url=http://127.0.0.1:8888/settings?tab=user-manager, user-manager-content visible=true
+BDD-12: non-admin UserMenu dropdown text="SettingsLogout" (contains 用户管理: false)
+BDD-12: non-admin Settings click -> landed url=http://127.0.0.1:8888/settings?tab=apikeys
+BDD-13: admin mobile (390x844) .mobile-stacked user-manager-content count=1
+BDD-14: non-admin mobile (390x844) .mobile-stacked user-manager-content count=0
+BDD-1: admin user-manager tab -> row count=4, badge count=2
+BDD-3: self row overflow menu opened, disable-item visible=true
+BDD-3: self-disable toast text="cannot disable the last active admin×"
+BDD-2: admin opened reset-password dialog for bob, valid password -> confirm button enabled=true
+BDD-2: dialog cancelled, no destructive change committed
+All screenshots captured.
