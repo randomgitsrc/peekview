@@ -1,7 +1,7 @@
-phase: READY
+phase: DONE
 task_id: T086
 task_name: admin-settings-consolidation
-status: ready
+status: done
 retries:
   P4:
     - round: 1
