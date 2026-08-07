@@ -27,6 +27,7 @@
         <ProfileTab v-if="activeTab === 'profile'" />
         <SecurityTab v-else-if="activeTab === 'security'" />
         <ApiKeySettingsTab v-else-if="activeTab === 'apikeys'" />
+        <UserManagerTab v-else-if="activeTab === 'user-manager'" />
       </div>
 
       <div class="mobile-stacked mobile-only">
@@ -42,6 +43,10 @@
           <h2 class="mobile-section-title">API Keys</h2>
           <ApiKeySettingsTab />
         </section>
+        <section v-if="isAdmin" class="mobile-section">
+          <h2 class="mobile-section-title">用户管理</h2>
+          <UserManagerTab />
+        </section>
       </div>
     </div>
   </div>
@@ -50,29 +55,37 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import ProfileTab from '@/components/settings/ProfileTab.vue'
 import SecurityTab from '@/components/settings/SecurityTab.vue'
 import ApiKeySettingsTab from '@/components/settings/ApiKeySettingsTab.vue'
+import UserManagerTab from '@/components/settings/UserManagerTab.vue'
 
 const authStore = useAuthStore()
 const authState = toRef(authStore, 'authState')
+const { isAdmin } = storeToRefs(authStore)
 const route = useRoute()
 const router = useRouter()
 
-const tabs = [
-  { key: 'profile' as const, label: 'Profile' },
-  { key: 'security' as const, label: 'Security' },
-  { key: 'apikeys' as const, label: 'API Keys' },
-]
-
-const validTabs = ['profile', 'security', 'apikeys'] as const
+const validTabs = ['profile', 'security', 'apikeys', 'user-manager'] as const
 type TabName = typeof validTabs[number]
+
+const tabs = computed(() => {
+  const base: { key: TabName; label: string }[] = [
+    { key: 'profile', label: 'Profile' },
+    { key: 'security', label: 'Security' },
+    { key: 'apikeys', label: 'API Keys' },
+  ]
+  if (isAdmin.value) base.push({ key: 'user-manager', label: '用户管理' })
+  return base
+})
 
 const activeTab = computed<TabName>({
   get: () => {
     const tab = route.query.tab as string
+    if (tab === 'user-manager' && !isAdmin.value) return 'profile'
     return validTabs.includes(tab as TabName) ? (tab as TabName) : 'profile'
   },
   set: (tab: TabName) => {

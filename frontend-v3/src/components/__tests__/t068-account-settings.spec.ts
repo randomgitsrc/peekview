@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref, nextTick, defineComponent } from 'vue'
+import { ref, computed, nextTick, defineComponent } from 'vue'
 
 const mockAuthState = ref<'loading' | 'authenticated' | 'anonymous'>('authenticated')
 const mockUser = ref<any>({
@@ -21,7 +21,7 @@ vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
     user: mockUser,
     authState: mockAuthState,
-    isAdmin: false,
+    isAdmin: computed(() => mockUser.value?.isAdmin ?? false),
     isOwner: () => false,
     updateProfile: mockUpdateProfile,
     login: mockLogin,

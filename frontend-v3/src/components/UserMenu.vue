@@ -7,7 +7,7 @@
     </button>
     <Transition name="dropdown">
       <div v-if="showUserMenu" class="user-dropdown">
-        <button class="dropdown-item" @click="navigateToSettings">Settings</button>
+        <button class="dropdown-item" data-testid="user-menu-settings-item" @click="navigateToSettings">Settings</button>
         <button class="dropdown-item" @click="handleLogout">Logout</button>
       </div>
     </Transition>
@@ -51,7 +51,7 @@ function closeUserMenu(e: MouseEvent) {
 
 function navigateToSettings() {
   showUserMenu.value = false
-  router.push('/settings?tab=apikeys')
+  router.push(isAdmin.value ? '/settings?tab=user-manager' : '/settings?tab=apikeys')
 }
 
 function handleLogout() {

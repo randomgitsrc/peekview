@@ -1,7 +1,7 @@
 <template>
-  <div class="admin-view">
-    <div class="admin-header">
-      <h1>用户管理</h1>
+  <div class="user-manager-tab" data-testid="user-manager-content">
+    <div class="page-title-bar">
+      <h1 class="page-title">用户管理</h1>
     </div>
 
     <div v-if="loading" class="loading-state" role="status" aria-live="polite">
@@ -285,18 +285,21 @@ fetchUsers()
 </script>
 
 <style scoped>
-.admin-view {
+.user-manager-tab {
   max-width: 800px;
   margin: 0 auto;
-  padding: var(--space-6);
 }
 
-.admin-header {
-  margin-bottom: var(--space-6);
+.page-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
 }
 
-.admin-header h1 {
+.page-title {
   font-size: 24px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -371,10 +374,6 @@ fetchUsers()
 }
 
 @media (max-width: 640px) {
-  .admin-view {
-    padding: var(--space-3);
-  }
-
   .user-row {
     flex-direction: row;
     align-items: center;

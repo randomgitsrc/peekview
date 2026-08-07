@@ -1,7 +1,7 @@
-phase: P3
+phase: P4
 task_id: T086
 task_name: admin-settings-consolidation
-status: red-confirmed
+status: approved
 created: 2026-08-06T00:00:00Z
 updated: 2026-08-07T00:00:00Z
 history:
@@ -12,3 +12,4 @@ history:
   - {phase: P2, action: dispatched, ts: "2026-08-07T00:00:00Z", note: "architect dispatched: single-candidate design (follows_existing_pattern), 3 directions explored + 2 excluded. plan-design-review approved (found real E2E double-mount count-assertion risk, Advisory Note for P4)."}
   - {phase: P2, action: gate-fix, ts: "2026-08-07T00:00:00Z", note: "check-gate.sh P2 failed twice: (1) P1-requirements.md missing machine-readable follows_existing_pattern: field -> BASELINE_CHANGE formatfix2 on P1-requirements.md; (2) P2-design.md candidate heading '### 方案：' (fullwidth colon) didn't match gate regex -> headingfix renamed to '### 方案一：'. Both additive/minimal, verified via check-gate.sh P2 exit 2 + grep of 4 fields + P2-review approved agent=plan-design-review."}
   - {phase: P3, action: completed, ts: "2026-08-07T00:00:00Z", note: "test-designer rewrote e2e/admin.spec.ts (18 test(), scoped .desktop-only/.mobile-only selectors per Advisory Note #1) + t080-admin-route-guard.test.ts (7 real + 3 DESIGN_GAP skip). check-tdd-red.sh exit 0 (true red light). check-gate.sh P3 exit 2."}
+  - {phase: P4, action: completed, ts: "2026-08-07T00:00:00Z", note: "implementer: router.ts/SettingsView.vue/UserManagerTab.vue(new)/AdminView.vue(deleted)/UserMenu.vue. DESIGN_GAP: fixed t068-account-settings.spec.ts mock (isAdmin literal->computed, exposed by first real consumption). vitest 94/1228 passed (verified independently), typecheck 0, build-frontend rebuilt (verified static mtime > src mtime). design-review: needs-revision (2 CSS deviations in UserManagerTab.vue title area) -> retry1 minimal fix -> approved. check-gate.sh P4 exit 0."}
