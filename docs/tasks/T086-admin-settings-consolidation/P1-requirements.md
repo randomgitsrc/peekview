@@ -166,6 +166,12 @@ agent: analyst
 phases: [P0, P1, P2, P3, P4, P5, P6, P7, P8]
 ```
 
+[BASELINE_CHANGE: 补充 check-gate.sh P2 解析所需的机器可读字段，不改变第 157 行已声明的裁剪意图]
+
+```yaml
+follows_existing_pattern: [frontend-v3/src/views/SettingsView.vue]
+```
+
 ## 6. 范围声明
 
 ```yaml

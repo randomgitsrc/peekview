@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: T086
 task_name: admin-settings-consolidation
 status: approved
@@ -9,3 +9,5 @@ history:
   - {phase: P1, action: dispatched, ts: "2026-08-07T00:00:00Z", note: "analyst dispatched, dispatch-context written + AGATE_CARD injected"}
   - {phase: P1, action: completed, ts: "2026-08-07T00:00:00Z", note: "analyst: 17 BDD, 0 NEED_CONFIRM (3 SUGGEST adoptable). requirements-review: approved, gate exit 2. risk_level=medium confirmed (backend defense-in-depth). Ready for P2."}
   - {phase: P1, action: gate-fix, ts: "2026-08-07T00:00:00Z", note: "check-pruning.sh failed on missing machine-readable phases: field (prose-only declaration). diagnosed + dispatched minimal formatfix (analyst, additive only). verified: check-pruning.sh exit 0, check-gate.sh P1 exit 2, diff additive-only."}
+  - {phase: P2, action: dispatched, ts: "2026-08-07T00:00:00Z", note: "architect dispatched: single-candidate design (follows_existing_pattern), 3 directions explored + 2 excluded. plan-design-review approved (found real E2E double-mount count-assertion risk, Advisory Note for P4)."}
+  - {phase: P2, action: gate-fix, ts: "2026-08-07T00:00:00Z", note: "check-gate.sh P2 failed twice: (1) P1-requirements.md missing machine-readable follows_existing_pattern: field -> BASELINE_CHANGE formatfix2 on P1-requirements.md; (2) P2-design.md candidate heading '### 方案：' (fullwidth colon) didn't match gate regex -> headingfix renamed to '### 方案一：'. Both additive/minimal, verified via check-gate.sh P2 exit 2 + grep of 4 fields + P2-review approved agent=plan-design-review."}
