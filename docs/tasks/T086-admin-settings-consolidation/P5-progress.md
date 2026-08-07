@@ -41,3 +41,18 @@ START make test-frontend
 - unit: PASS (94 files / 1228 passed / 0 failed)
 - typecheck: PASS (0 错误)
 - E2E: FAIL (exit 2, 2 failed + 10 did not run，根因已定位为 router.ts /:slug 与 /:pathMatch(.*)* 顺序问题，导致 /admin 未落到真 404 页面) — 判定真 bug，需回 P4 修复，不可推进 P6
+
+---
+
+## 重试 #1（全量重跑）— trace_id: T086-P5-20260807-retry1
+
+- 时间: 2026-08-07 10:20 - 10:25
+- gate_commands.P5 (`make test-frontend`): exit 0, 1228 passed, 4 skipped, 0 failed
+- gate_commands.P5_e2e (`E2E_SPEC=e2e/admin.spec.ts make debug-test`): exit 2
+  - 36 total, 30 passed, 2 failed（真失败）, 2 flaky（重试后过，同上一轮同类）, 2 did not run（级联跳过）
+  - 路由修复目标（T086 BDD-8/9/10）本轮全部真正执行并通过，确认 P4-retry2 修复生效，无回归
+  - 新发现真失败：T086 BDD-11（admin.spec.ts:269，UserMenu → user-manager tab 断言未做视口 scope，撞上 desktop/mobile 双渲染既有模式，strict-mode violation）
+  - 级联未执行：T086 BDD-12（admin.spec.ts:279，因同 describe 内 BDD-11 失败被 serial 模式跳过）
+- gate_commands.P6_typecheck (`make typecheck`): exit 0, 0 错误
+- [PROD_NOT_TOUCHED]（生产库 entries 计数运行前后均 41，未变化）
+- 结论：单测+typecheck 全绿；E2E 未过，需回 P4 处理 BDD-11（大概率是测试选择器缺少 scope，非产品 bug；需主 Agent 判定）
