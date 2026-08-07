@@ -2,14 +2,14 @@
 phase: P5
 task_id: T086-admin-settings-consolidation
 type: test-results
-parent: P4-implementation-retry2.md
-trace_id: T086-P5-20260807-retry1
+parent: P3-fix-record.md
+trace_id: T086-P5-20260807-retry2
 status: draft
 created: 2026-08-07
 agent: verifier
 ---
 
-# P5 E2E 测试结果（Playwright）— T086（重试 #1，全量重跑）
+# P5 E2E 测试结果（Playwright）— T086（重试 #2，PAUSED 恢复后第三轮全量重跑）
 
 ## 命令
 
@@ -18,112 +18,75 @@ agent: verifier
 ## 环境
 
 - debug backend: `make debug-start` → http://127.0.0.1:8888
-- 测试数据: `make debug-seed` → 20 entries, users alice/bob/carol/dave (dave disabled)
+- 测试数据: `make debug-seed` → 22 entries loaded from seed-data/（Total entries: 20 + 2 svg），users alice/bob/carol/dave（dave disabled）
 - Playwright projects: chromium + Mobile Chrome，2 workers，CDP Chrome (`http://127.0.0.1:18800`)
 - e2e-safety-check.sh 前置检查全部通过（运行方式正确 / 调试服务运行中 / 使用独立数据库）
-- 生产数据库快照：运行前 41 条 entries，运行后（`make debug-stop` 之后手工核查）仍为 41 条，未变化
+- 生产数据库快照：运行前 `SELECT COUNT(*) FROM entries` = 41，`make debug-stop` 后手工核查仍为 41，未变化
+
+## 前置修复核查
+
+`git diff -- frontend-v3/e2e/admin.spec.ts` 无输出（P3-fix-record.md 的选择器修复已在暂存区/工作区外，属已确认状态，非本轮新改）。核实第 276 行现状：
+
+```
+await expect(page.locator('.desktop-only [data-testid="user-manager-content"]')).toBeVisible({ timeout: 10000 })
+```
+
+`.desktop-only` 前缀消歧已生效，BDD-12（第 279 行起）未改动。
 
 ## 结果（原始输出，全量重跑）
 
-exit code: 2（`make: *** [Makefile:638：debug-test] 错误 1`）
+exit code: 0（`=== ✓ 所有 E2E 测试通过 ===`）
 
 test runner 输出签名（可 grep，Playwright line reporter 原始行）：
 ```
-2 failed
-2 flaky
-2 did not run
-30 passed (40.3s)
+1 flaky
+35 passed (31.5s)
 ```
 
 test runner 输出签名（可 grep 前缀形式）：
 ```
-passed: 30
-failed: 2
+passed: 35
+failed: 0
 ```
 
-- Running 36 tests using 2 workers（chromium + Mobile Chrome 各 18 条，符合预期约 36 条）
-- 30 passed
-- 2 failed（真失败，非 flaky，各重试 2 次后仍失败）
-- 2 flaky（首次超时，重试后通过）
-- 2 did not run（因 `test.describe.configure({ mode: 'serial' })` 全文件单一 describe，BDD-11 在两个 project 各自失败后，同 project 内后续 BDD-12 级联跳过）
+- Running 36 tests using 2 workers（chromium 18 条 + Mobile Chrome 18 条，符合预期约 36 条）
+- 35 passed（含 1 条经 retry 后计入 passed 的 flaky 用例，Playwright 汇总口径为 `1 flaky` + `35 passed`，两者合计 36，无独立 failed 计数）
+- 0 failed
+- 0 did not run（本轮首次无级联跳过——BDD-11 修复后不再阻塞 BDD-12）
 
-## 与上一轮对照：路由修复（BDD-8/9/10）已验证真正修复
+## 关键结论：T086 BDD-11 与 BDD-12 本轮均真正执行并通过
 
-上一轮真失败的 3 条（同根因，`/admin` 被 `/:slug` 拦截）本轮**全部真正执行并通过**：
+| 用例 | retry1（上一轮） | retry2（本轮） |
+|------|------|------|
+| T086 BDD-11（`admin.spec.ts:269`，admin 通过 UserMenu → Settings 到达 user-manager） | **FAILED**（2 projects，strict-mode violation，选择器命中 2 元素） | **PASSED**（chromium + Mobile Chrome 均通过） |
+| T086 BDD-12（`admin.spec.ts:279`，非 admin UserMenu Settings 入口不落到 user-manager tab） | did not run（因 BDD-11 失败被 serial 模式级联跳过，三轮以来从未真正执行过） | **PASSED**（chromium + Mobile Chrome 均通过，三轮以来首次真正执行并通过） |
 
-| 用例 | 上一轮 | 本轮 |
-|------|--------|------|
-| BDD-14 → T086 BDD-9（non-admin 访问 /admin 得 404，无 redirect） | FAILED（2 projects，超时等 `.not-found`） | **PASSED**（2 projects） |
-| BDD-15 → T086 BDD-10（未登录访问 /admin 得 404） | did not run（级联跳过） | **PASSED**（2 projects） |
-| T086 BDD-08（admin 访问 /admin 也得 404） | did not run（级联跳过） | **PASSED**（2 projects） |
+P3-fix-record.md 记录的 `.desktop-only` 选择器前缀修复已确认生效：BDD-11 的 `[data-testid="user-manager-content"]` 断言不再因桌面/移动双 DOM 渲染而触发 Playwright strict-mode violation。
 
-`router.ts` 新增的 `/admin` → `NotFoundView` 显式路由（插在 `/:slug` 之前）已确认生效，`.not-found` 断言真正通过，非级联误判。
+## 与前两轮全量对照（累计验证矩阵）
 
-其余上一轮因级联未执行、判断"大概率不受根因影响"的用例，本轮也真正执行：
+| 用例 | 第一轮 | retry1 | retry2（本轮） |
+|------|--------|--------|--------|
+| BDD-01/02（desktop+mobile viewport） | passed（含 flaky） | passed（含 2 flaky） | passed（含 1 flaky，见下） |
+| BDD-06/12/20/21（desktop+mobile viewport） | passed | passed | passed |
+| T086 BDD-08（admin 访问 /admin 得 404） | did not run | passed | passed |
+| T086 BDD-09（原 BDD-14，non-admin 访问 /admin 得 404） | **FAILED**（路由拦截根因） | passed | passed |
+| T086 BDD-10（原 BDD-15，未登录访问 /admin 得 404） | did not run | passed | passed |
+| T086 BDD-07（未登录访问 /settings?tab=user-manager 重定向到 /） | did not run | passed | passed |
+| T086 BDD-11（admin UserMenu → user-manager） | did not run | **FAILED**（选择器 scope 缺陷） | **passed** |
+| T086 BDD-12（非 admin UserMenu Settings 入口） | did not run | did not run（级联跳过） | **passed**（首次真正执行） |
 
-| 用例 | 上一轮 | 本轮 |
-|------|--------|------|
-| T086 BDD-07（未登录访问 /settings?tab=user-manager 重定向到 /） | did not run | **PASSED**（2 projects） |
-| T086 BDD-11（admin 通过 UserMenu → Settings 到达 user-manager） | did not run | **FAILED（新真失败，见下）** |
-| T086 BDD-12（非 admin UserMenu Settings 入口不落到 user-manager tab） | did not run | **did not run（本轮再次因 BDD-11 失败被级联跳过）** |
+三轮问题链路（路由拦截 → 选择器 scope）本轮全部闭环，无新增失败。
 
-## 新发现的真失败（2 failed，均为 T086 BDD-11）
+## Flaky 详情（1 flaky，重试后通过，不计入失败）
 
-`e2e/admin.spec.ts:269:3` — **T086 BDD-11**：`admin reaches user-manager via UserMenu Settings entry`
+- `[Mobile Chrome] BDD-02: user list shows status badges [desktop]`（`admin.spec.ts:113`）— 首次 `waitForSelector('.desktop-only .admin-user-row, .desktop-only [data-testid="admin-user-row"]')` 超时（10000ms exceeded）
+- 触发原因：本文件 `test.describe.configure({ mode: 'serial' })`，BDD-02 失败后 Playwright 对该 project（Mobile Chrome）整个 serial 分组（18 条用例）触发整组重试（日志 `[37/36]`–`[54/36] (retries)`），重试后全部 18 条（含 BDD-11/BDD-12）真正重新执行并通过
+- 与前两轮记录的 BDD-01/02 首屏渲染超时 flaky 同类（环境时序抖动，非选择器/路由缺陷），本轮仅出现 1 次（前两轮各 2 次），判定为环境时序抖动，不算真失败
 
-- 失败于 `[chromium]` 和 `[Mobile Chrome]` 两个 project，各自初次尝试 + 2 次重试（共 3 次）均失败，非偶发，判定为**真失败**
-- 报错：
-  ```
-  Error: expect(locator).toBeVisible() failed
+## Passed（35，含 1 flaky retry 后计入）
 
-  Locator: locator('[data-testid="user-manager-content"]')
-  Expected: visible
-  Error: strict mode violation: locator('[data-testid="user-manager-content"]') resolved to 2 elements:
-      1) <div ... class="user-manager-tab" data-testid="user-manager-content">…</div> aka getByTestId('user-manager-content').first()
-      2) <div ... class="user-manager-tab" data-testid="user-manager-content">…</div> aka locator('section').filter({ hasText: '用户管理用户管理' }).getByTestId('user-manager-content')
-
-    274 |     await page.locator('[data-testid="user-menu-settings-item"]').click()
-    275 |     await page.waitForURL('**/settings?tab=user-manager', { timeout: 10000 })
-  > 276 |     await expect(page.locator('[data-testid="user-manager-content"]')).toBeVisible({ timeout: 10000 })
-        |                                                                        ^
-  ```
-
-### 根因排查（只读代码核查，未做修复）
-
-`frontend-v3/src/views/SettingsView.vue`（14/26/33 行）：桌面版 tab 内容和移动端堆叠展示是**两套并存的 DOM 结构**，靠纯 CSS `display` 切换，不是 `v-if`：
-
-```
-26:  <div class="tab-content desktop-only">   ← 内含 <UserManagerTab> 等 tab 组件
-33:  <div class="mobile-stacked mobile-only"> ← 也内含 <UserManagerTab> 等 tab 组件（堆叠展示）
-185: .desktop-only { display: block; }
-186: .mobile-only { display: none; }
-189/190: @media(...) { .desktop-only:none; .mobile-only:block; }
-```
-
-`UserManagerTab.vue` 根元素 `<div class="user-manager-tab" data-testid="user-manager-content">`（第 2 行）在 `isAdmin` 且 `tab=user-manager` 时，会同时被 `desktop-only` 和 `mobile-only` 两个容器各渲染一份 —— **两份都在 DOM 里，只是 CSS 控制可见性，不是移除节点**。所以任何不带视口 scope 的 `[data-testid="user-manager-content"]` 选择器必然命中 2 个元素，触发 Playwright strict-mode violation。
-
-这与 BDD-01/02 的测试写法形成对照：BDD-01/02（`admin.spec.ts:95-125`）已经用 `scopeOf(vp.name)`（即 `.desktop-only` / `.mobile-only` 前缀）来消歧同一个组件的两份渲染，说明这个"桌面/移动双渲染 + CSS 切换"是**已知的既有模式**（P0-brief"移动端：settings 移动端是堆叠式全展示"已列为 known_risk）。但 **T086 BDD-11/BDD-12（第 269/279 行）的选择器没有加视口 scope**，直接查 `[data-testid="user-manager-content"]`，因而撞上这个已知模式导致的歧义。
-
-### 判定：真失败，不是 flaky，不是环境问题
-
-- 3 次尝试（1 初次 + 2 重试）× 2 projects 全部同样报错，模式完全一致（strict-mode violation，非超时/网络类抖动）
-- 非本次路由修复引入（`git diff` 只改了 `router.ts`，未碰 `SettingsView.vue`/`UserManagerTab.vue`/`admin.spec.ts`），是**测试代码本身的选择器缺陷**（未跟随既有的 desktop/mobile scope 约定），在 BDD-11 首次真正被执行时才暴露（上一轮因级联跳过从未跑到过）
-- 是否需要回 P4（改测试选择器）或算作 P1/P3 遗留缺口，由主 Agent 判定；本报告只客观记录现象与根因，未做任何修复
-
-## 级联未执行（2 did not run）
-
-`T086 BDD-12`（`admin.spec.ts:279`，非 admin UserMenu Settings 入口不落到 user-manager tab）在两个 project 均因同 describe 内 BDD-11 失败而被 `serial` 模式级联跳过，本轮仍未能真正验证。**这是本轮唯一仍未被真正执行验证的 BDD**。
-
-## Flaky 详情（2 flaky，重试后通过，不计入失败，与上一轮同类）
-
-- `[Mobile Chrome] BDD-01: admin sees paginated user list on user-manager tab [desktop]`（`admin.spec.ts:95`）— 首次 `waitForSelector('.desktop-only .admin-user-list, ...')` 超时，retry 后通过
-- `[Mobile Chrome] BDD-02: user list shows status badges [desktop]`（`admin.spec.ts:113`）— 首次 `waitForSelector('.desktop-only .admin-user-row, ...')` 超时，retry 后通过
-
-与上一轮完全同类（同用例、同 project、同选择器、同超时模式），判定为环境时序抖动，不算真失败，继续记录在案供 P6 关注。
-
-## Passed（30）
-
-覆盖 BDD-01/02/06/12/20/21（desktop+mobile 双 viewport，含 2 条 flaky 重试后通过）+ BDD-07/08/09/10（原 BDD-14/15 legacy 编号）全部真正执行并通过。**路由修复（P4-retry2）目标达成**：`/admin` 现在对所有角色（admin/非 admin/未登录）都真正落到 `NotFoundView`（`.not-found` 可见），无 redirect。
+覆盖全部 36 条用例对应的 18 个 BDD 场景（desktop+mobile 双 viewport，路由 404 场景，UserMenu 入口场景）：BDD-01/02/06/12/20/21（×2 viewport）+ T086 BDD-07/08/09/10/11/12，chromium 与 Mobile Chrome 两个 project 全部真正执行并通过。
 
 ## 环境隔离核查
 
@@ -136,10 +99,12 @@ failed: 2
 
 ## 结论
 
-E2E gate **仍未通过**（exit 2）。但本轮全量重跑证实：
+E2E gate **本轮通过**（exit 0，failed=0，全部 36 条用例真正执行）。
 
-1. **P4-retry2 的路由修复已生效**：T086 BDD-8/9/10（原根因所在的 3 条用例）全部真正执行并通过，无回归、无级联跳过
-2. **发现一个新的、独立的真失败**：T086 BDD-11（UserMenu → user-manager tab 断言未做视口 scope，撞上 desktop/mobile 双渲染的已知既有模式），导致 BDD-12 继续被级联跳过，是本轮唯一仍未验证的 BDD
-3. 单测（1228 passed）与 typecheck（0 错误）均全绿，无回归
+1. **P3-fix-record.md 的选择器修复已生效**：T086 BDD-11 不再触发 strict-mode violation，chromium + Mobile Chrome 均 PASSED
+2. **T086 BDD-12 三轮以来首次真正被执行**：不再因 BDD-11 失败被 serial 模式级联跳过，chromium + Mobile Chrome 均 PASSED
+3. 单测（1228 passed, 4 skipped）与 typecheck（0 错误）均全绿，无回归（详见 unit.md）
+4. 本轮出现 1 条 flaky（BDD-02 Mobile Chrome desktop viewport，与前两轮同类环境时序抖动），重试后通过，不计入失败
+5. 三轮累计问题链路（路由拦截 BDD-8/9/10 → 选择器 scope BDD-11/12）本轮全部闭环，无新增失败、无遗留级联跳过
 
-判定：**真失败，需回 P4**（或由主 Agent 判定是否属于测试代码缺陷，走针对性修复：为 BDD-11/BDD-12 的 `[data-testid="user-manager-content"]` 选择器加视口 scope，与 BDD-01/02 一致）。修复后需再次全量重跑本 spec，覆盖被级联跳过的 BDD-12。
+判定：**gate 通过，可推进 P6**。

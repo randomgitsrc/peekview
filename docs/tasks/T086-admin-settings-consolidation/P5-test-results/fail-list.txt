@@ -1,2 +1,0 @@
-FAILED [chromium] e2e/admin.spec.ts:269:3 › T086 (migrated from T080): Admin user management via /settings?tab=user-manager › T086 BDD-11: admin reaches user-manager via UserMenu Settings entry
-FAILED [Mobile Chrome] e2e/admin.spec.ts:269:3 › T086 (migrated from T080): Admin user management via /settings?tab=user-manager › T086 BDD-11: admin reaches user-manager via UserMenu Settings entry

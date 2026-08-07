@@ -56,3 +56,17 @@ START make test-frontend
 - gate_commands.P6_typecheck (`make typecheck`): exit 0, 0 错误
 - [PROD_NOT_TOUCHED]（生产库 entries 计数运行前后均 41，未变化）
 - 结论：单测+typecheck 全绿；E2E 未过，需回 P4 处理 BDD-11（大概率是测试选择器缺少 scope，非产品 bug；需主 Agent 判定）
+
+---
+
+## 重试 #2（trace_id: T086-P5-20260807-retry2，PAUSED 恢复后第三轮全量重跑）
+
+- 前置：核实 admin.spec.ts:276 已含 `.desktop-only` 前缀修复（P3-fix-record.md），BDD-12 未改动
+- `make test-frontend`：1228 passed, 4 skipped, 0 failed，exit 0
+- `make typecheck`：0 错误
+- `E2E_SPEC=e2e/admin.spec.ts make debug-test`：36/36 全部真正执行，35 passed + 1 flaky（BDD-02 Mobile Chrome，重试后通过，环境时序抖动同类前两轮），0 failed，0 did not run，exit 0
+- **T086 BDD-11**：PASSED（chromium + Mobile Chrome）—— 选择器 scope 修复生效
+- **T086 BDD-12**：PASSED（chromium + Mobile Chrome）—— 三轮以来首次真正执行，不再被级联跳过
+- 生产库核查：运行前后 entries 均为 41，未变化
+- [PROD_NOT_TOUCHED]
+- 结论：**gate 通过，可推进 P6**
