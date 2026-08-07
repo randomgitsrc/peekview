@@ -21,7 +21,7 @@
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T083 | cjk-search-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-07-31 |
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
-| T086 | admin-settings-consolidation | 🔄 进行中 | P6 | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
+| T086 | admin-settings-consolidation | 🔄 进行中 | P7 | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
 

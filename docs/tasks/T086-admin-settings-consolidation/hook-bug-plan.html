@@ -1,0 +1,419 @@
+<title>pre-commit hook exit-code 语义丢失 — 修复提案</title>
+<style>
+  :root {
+    --bg: #f6f7f6;
+    --bg-panel: #ffffff;
+    --bg-code: #eef0ee;
+    --text: #1c211f;
+    --text-dim: #565f5b;
+    --text-faint: #8a938e;
+    --border: #dbe0dc;
+    --accent: #b5720f;
+    --accent-soft: #f3e3cc;
+    --ok: #2f7a4f;
+    --ok-soft: #dfeee3;
+    --block: #b23a34;
+    --block-soft: #f6dfdd;
+    --warn: #b5720f;
+    --warn-soft: #f3e3cc;
+    --link: #3a6a52;
+    font-synthesis: none;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14171a;
+    --bg-panel: #1b1f22;
+    --bg-code: #101314;
+    --text: #e7ebe8;
+    --text-dim: #a4aca7;
+    --text-faint: #6d766f;
+    --border: #2b3134;
+    --accent: #e0a03f;
+    --accent-soft: #3a2f1a;
+    --ok: #63b98a;
+    --ok-soft: #16261d;
+    --block: #e0776f;
+    --block-soft: #2c1a19;
+    --warn: #e0a03f;
+    --warn-soft: #3a2f1a;
+    --link: #7fc4a3;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171a;
+      --bg-panel: #1b1f22;
+      --bg-code: #101314;
+      --text: #e7ebe8;
+      --text-dim: #a4aca7;
+      --text-faint: #6d766f;
+      --border: #2b3134;
+      --accent: #e0a03f;
+      --accent-soft: #3a2f1a;
+      --ok: #63b98a;
+      --ok-soft: #16261d;
+      --block: #e0776f;
+      --block-soft: #2c1a19;
+      --warn: #e0a03f;
+      --warn-soft: #3a2f1a;
+      --link: #7fc4a3;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  .kicker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 18px;
+  }
+  .kicker::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: var(--text-faint);
+  }
+
+  h1 {
+    font-size: 28px;
+    line-height: 1.28;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+    font-weight: 650;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 16px;
+    margin: 0 0 28px;
+    max-width: 62ch;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .meta dt {
+    display: inline;
+    color: var(--text-faint);
+    margin-right: 6px;
+  }
+  .meta dd {
+    display: inline;
+    margin: 0;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-item { white-space: nowrap; }
+
+  h2 {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 650;
+    margin: 52px 0 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  h2 .num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 650;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+
+  p { margin: 0 0 14px; max-width: 66ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 64ch; }
+  li { margin-bottom: 6px; }
+
+  code {
+    font-family: ui-monospace, "SFMono-Regular", "Consolas", "Menlo", monospace;
+    font-size: 0.88em;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+  }
+
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+    font-family: ui-monospace, "SFMono-Regular", "Consolas", "Menlo", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 1em;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 0 0 20px;
+  }
+
+  .file-label {
+    font-family: ui-monospace, "SFMono-Regular", "Consolas", "Menlo", monospace;
+    font-size: 12.5px;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: ui-monospace, "SFMono-Regular", "Consolas", "Menlo", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 1px 8px 2px;
+    border-radius: 20px;
+    line-height: 1.5;
+    white-space: nowrap;
+    vertical-align: 0.05em;
+  }
+  .chip::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .chip-ok { background: var(--ok-soft); color: var(--ok); }
+  .chip-ok::before { background: var(--ok); }
+  .chip-block { background: var(--block-soft); color: var(--block); }
+  .chip-block::before { background: var(--block); }
+  .chip-warn { background: var(--warn-soft); color: var(--warn); }
+  .chip-warn::before { background: var(--warn); }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 0 0 20px;
+    font-size: 14.5px;
+    color: var(--text);
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout strong { color: var(--accent); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 20px;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 600;
+  }
+  td code { white-space: nowrap; }
+  .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  .table-wrap table { margin-bottom: 0; }
+
+  .diff-old { color: var(--block); }
+  .diff-new { color: var(--ok); }
+
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .arrow-row .chip { font-size: 13px; padding: 3px 12px 4px; }
+  .arrow-row .sep { color: var(--text-faint); }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+
+  a { color: var(--link); }
+
+  ::selection { background: var(--accent-soft); }
+</style>
+
+<div class="wrap">
+  <div class="kicker">agate 协议 · pre-commit hook · 修复提案</div>
+  <h1>check-p6-evidence.sh 的 WARNING 被当成阻塞处理</h1>
+  <p class="subtitle">pre-commit-gate.sh 第 258 行用 <code>|| exit 1</code> 吞掉了子脚本的三态退出码，把设计上"仅提醒"的 exit 2 和"必须拦截"的 exit 1 混为一谈。</p>
+
+  <dl class="meta">
+    <div class="meta-item"><dt>触发任务</dt><dd>peekview T086</dd></div>
+    <div class="meta-item"><dt>触发阶段</dt><dd>P6 验收 / P7 一致性检查</dd></div>
+    <div class="meta-item"><dt>影响文件</dt><dd>~/.agate/scripts/pre-commit-gate.sh:258</dd></div>
+    <div class="meta-item"><dt>影响面</dt><dd>所有已安装该 hook 的仓库</dd></div>
+  </dl>
+
+  <h2><span class="num">01</span>问题来源</h2>
+  <p>
+    <code>.git/hooks/pre-commit</code> 不是项目本地文件，而是 <code>install-hook.sh</code> 用
+    <code>ln -sf</code> 建立的符号链接，指向 agate 框架的共享源文件：
+  </p>
+  <div class="panel">
+    <div class="file-label">$ ls -la .git/hooks/pre-commit</div>
+    <pre><code>lrwxrwxrwx  .git/hooks/pre-commit -> /home/kity/.agate/scripts/pre-commit-gate.sh</code></pre>
+  </div>
+  <p>因此这不是 peekview 项目的局部问题——改动会影响机器上所有已安装此 hook 的仓库。</p>
+
+  <h2><span class="num">02</span>现象</h2>
+  <p>
+    任务进入 P6 阶段后（<code>P6-acceptance.md</code> 已存在于任务目录），此后<strong>任何一次</strong>
+    <code>git commit</code>（无论改动内容是否涉及 P6 证据）都被拦截：
+  </p>
+  <div class="panel">
+    <div class="file-label">$ git commit -m "..." <span class="chip chip-block">exit 1</span></div>
+    <pre><code>GATE P6-EVIDENCE: 17 条 BDD，证据目录非空
+GATE P6-EVIDENCE WARNING: bdd-09-nonadmin-404.png 像素方差 31（&lt;50，疑似纯色/占位图，请确认非充数）
+GATE P6-EVIDENCE WARNING: bdd-10-unauth-404.png 像素方差 25（&lt;50，疑似纯色/占位图，请确认非充数）
+GATE P6-EVIDENCE WARNING: bdd-01-admin-userlist.png 像素方差 48（&lt;50，疑似纯色/占位图，请确认非充数）
+GATE P6-EVIDENCE WARNING: bdd-08-admin-404.png 像素方差 44（&lt;50，疑似纯色/占位图，请确认非充数）</code></pre>
+  </div>
+  <p>
+    四条全部标注为 <span class="chip chip-warn">WARNING</span>，人工逐张打开核实均为真实渲染内容
+    （404 页 / 用户列表页），非空白或占位图——方差偏低只是页面本身极简设计（大面积浅色背景 + 小块深色文字）的自然结果。
+  </p>
+
+  <h2><span class="num">03</span>问题机理</h2>
+
+  <h3>check-p6-evidence.sh 自身的契约是三态的，设计正确</h3>
+  <div class="arrow-row">
+    <span class="chip chip-ok">exit 0</span><span>全部通过</span>
+    <span class="sep">/</span>
+    <span class="chip chip-block">exit 1</span><span>真失败，必须阻断</span>
+    <span class="sep">/</span>
+    <span class="chip chip-warn">exit 2</span><span>WARNING，仅提醒</span>
+  </div>
+  <p><code>exit 1</code> 对应的是三种真实阻断条件——证据目录为空、无 <code>PASS/FAIL</code> 行、截图 md5 完全重复。<code>exit 2</code> 对应的是两种"请人工确认，但不阻断"的场景——像素方差 &lt; 50 疑似占位图、截图 ≤ 1KB。这与 agate 协议里 <code>check-gate.sh</code> 的 P1/P2/P5 分支统一采用的 "exit 2 = 需人工判断，不阻断" 惯例一致。</p>
+
+  <h3>调用处把两种退出码等同处理</h3>
+  <div class="panel">
+    <div class="file-label">pre-commit-gate.sh:258</div>
+    <pre><code>bash "$AGATE_ROOT/scripts/check-p6-evidence.sh" "$TASK_DIR" || exit 1</code></pre>
+  </div>
+  <p><code>||</code> 只要左侧命令退出码非 0 就执行 <code>exit 1</code>——<span class="chip chip-block">exit 1</span> 和 <span class="chip chip-warn">exit 2</span> 被一视同仁地当成阻塞。</p>
+
+  <h3>同一文件里已有正确的三态处理先例，自相矛盾</h3>
+  <p>主 gate 结果处理逻辑（约第 304 行）本就是三态 <code>case</code> 分支：</p>
+  <div class="panel">
+    <div class="file-label">pre-commit-gate.sh:304（既有正确写法）</div>
+    <pre><code>case "$GATE_EXIT" in
+    0) echo "GATE $PHASE ($TASK_ID): 通过" >&2 ;;
+    1) echo "GATE $PHASE ($TASK_ID): 未通过" >&2; echo "$GATE_OUTPUT" >&2; exit 1 ;;
+    2) echo "GATE $PHASE ($TASK_ID): 需主 Agent 手动判断" >&2; echo "$GATE_OUTPUT" >&2 ;;
+esac</code></pre>
+  </div>
+  <p>第 258 行没有沿用同样的写法——大概率是给 <code>check-p6-evidence.sh</code> 新增 exit 2 语义时，忘了同步调用处的处理逻辑。</p>
+
+  <h2><span class="num">04</span>影响范围</h2>
+  <ul>
+    <li>任何任务只要 P6 截图触发像素方差或小图 WARNING（低对比度/极简设计页面容易触发，非充数场景下也会误伤），P6 及其后所有阶段（P7/P8）的 commit 都会被无差别拦截</li>
+    <li>影响所有安装此 hook 的仓库——<code>.git/hooks/pre-commit</code> 全部指向同一个符号链接目标，不是 peekview 独有问题</li>
+  </ul>
+
+  <h2><span class="num">05</span>修改措施（待审核）</h2>
+  <p>把第 258 行的调用方式改为与文件内既有三态 <code>case</code> 模式一致：</p>
+
+  <div class="table-wrap panel" style="padding:0; overflow:hidden;">
+    <table>
+      <thead><tr><th style="width:64px">状态</th><th>处理</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip chip-ok">exit 0</span></td><td>无输出，继续</td></tr>
+        <tr><td><span class="chip chip-block">exit 1</span></td><td>打印输出，<strong>阻断提交</strong>（不变）</td></tr>
+        <tr><td><span class="chip chip-warn">exit 2</span></td><td>打印输出，<strong>仅警告，不阻断</strong>（新增区分）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="file-label">拟改为</div>
+  <pre><code>EVIDENCE_OUTPUT=$(bash "$AGATE_ROOT/scripts/check-p6-evidence.sh" "$TASK_DIR" 2>&1)
+EVIDENCE_EXIT=$?
+case "$EVIDENCE_EXIT" in
+    0) ;;
+    1) echo "$EVIDENCE_OUTPUT" >&2; exit 1 ;;   <span class="diff-old"># 真失败：证据缺失/md5重复/无PASS行——照样拦截</span>
+    2) echo "$EVIDENCE_OUTPUT" >&2 ;;            <span class="diff-new"># WARNING：低方差/小图——只警告，不阻断</span>
+esac</code></pre>
+
+  <h3>修改范围与风险</h3>
+  <ul>
+    <li><strong>改动文件</strong>：仅 <code>~/.agate/scripts/pre-commit-gate.sh</code>（符号链接无需单独改）</li>
+    <li><strong>是否放宽真失败判定</strong>：否。三种真实阻断条件对应的 <code>exit 1</code> 在新逻辑里仍然阻断，不受影响</li>
+    <li><strong>行为变化</strong>：仅 <code>exit 2</code>（像素方差低、截图 ≤ 1KB）从"误阻断"变为"仅打印 WARNING、不阻断"，与脚本自身设计和 P6 phase-card 文档描述（"≤1KB 虽不阻断但会触发 WARNING"）一致</li>
+    <li><strong>附带修正建议（非必须）</strong>：脚本头部第 6 行过期注释 <code>exit 2 = 无 P6 文件</code> 应同步更新为准确描述</li>
+    <li><strong>影响面</strong>：所有使用 <code>~/.agate</code> 安装此 hook 的项目仓库，行为变得更宽松，不会有项目因此被更严格地拦截</li>
+  </ul>
+
+  <div class="callout">
+    <p><strong>本次 workaround（未修复期间）</strong>：T086 任务在 P6/P7 commit 时使用 <code>git commit --no-verify</code> 绕过，经用户明确批准（非默认选择），已在对应 commit message 中注明绕过原因。</p>
+  </div>
+
+  <h2><span class="num">06</span>复现验证命令</h2>
+  <pre><code>cd &lt;repo&gt;
+bash .git/hooks/pre-commit; echo "EXIT: $?"
+
+# 单独验证子脚本的三态语义
+bash ~/.agate/scripts/check-p6-evidence.sh &lt;task_dir&gt;; echo "EXIT: $?"</code></pre>
+
+  <footer>peekview · T086 admin-settings-consolidation · 2026-08-07</footer>
+</div>
