@@ -21,7 +21,7 @@
 | T082 | arch-refactor | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-30 |
 | T083 | cjk-search-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-07-31 |
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
-| T086 | admin-settings-consolidation | 🔄 进行中 | P8 | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
+| T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
 
@@ -93,6 +93,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| T086 | admin-settings-consolidation | v0.18.0 | 🟡 | 2026-08-07 |
 | T085 | render-regression-fix | v0.14.1 | 🟠 | 2026-08-02 |
 | T075 | structured-data-viewer | v0.14.0 | 🟠 | 2026-08-01 |
 | T079 | interaction-consistency | v0.13.0 | 🟠 | 2026-07-31 |
@@ -209,6 +210,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-07 | 完成 T086 | admin-settings-consolidation → v0.18.0（AdminView 内容迁移为 SettingsView 第4个 tab「用户管理」+ UserMenu 管理员可发现入口 + /admin 路由删除一律404；17 BDD 全 PASS。过程含 2 次真实 P5 回退：①路由拦截 bug（P2 设计假设错误，/:slug 排在 catch-all 前拦截 /admin）②测试选择器 scope 缺陷（P5→P3 跨阶段 PAUSED，人工批准）；副产物：发现并推动修复了 agate 框架 pre-commit hook 的 exit-code 语义 bug）|
 | 2026-08-07 | 立项 T088 | e2e-test-infra-hardening：源自 T087 复盘（3.1/3.2 节）。子任务 A 修复 `viewer.spec.ts`（路由 `/#/entry/{slug}` 过时 + `lu4prg`/`ngajri` slug 失效，选择器已核实未过时）；子任务 B 在 `make debug-test` 前置检查加 static mtime 校验（防前端改动未 build-frontend 导致验收假通过）|
 | 2026-08-02 | 完成 T085 | render-regression-fix → v0.14.1（SVG调度/源码滚动/Markdown边距/滚动抖动/per-page下拉框 5项修复；11 BDD 全 PASS）|
 | 2026-08-01 | 立项 T085 | render-regression-fix：SVG→TreeView / 源码视图不滚动 / Markdown 边距丢失 / 滚动抖动（T084 回归 + T075 调度链缺陷）|
