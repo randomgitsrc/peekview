@@ -439,7 +439,8 @@ publish:
 	@echo "→ Step 3/4: 运行最终检查..."
 	@make check-version check-changelog verify-wheel
 	@echo "→ Step 4/4: 发布到 PyPI (filtering ANSI escape codes)..."
-	@TOKEN="$$PYPI_API_TOKEN"; \
+	@set -o pipefail; \
+	TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
 			if [ -f "$$f" ]; then \
