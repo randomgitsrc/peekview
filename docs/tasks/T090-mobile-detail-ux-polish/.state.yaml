@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: T090
 task_name: mobile-detail-ux-polish
 status: in_progress
@@ -15,8 +15,14 @@ retries:
       failure_mode: quality
       prompt_changed: true
       adjustment: "P1最后一次retry（MAX=3）：BDD-8公式与示例自洽化 + iOS safe-area理由重新论证"
+  P2:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "3必须项(files_to_read路径错误/zen-mode override缺选择器/缺可访问性说明)+3建议项定向修订"
 retry_count:
   P1: 2
+  P2: 1
 history:
   - {phase: P0, action: created, ts: "2026-08-08T00:00:00Z", note: "用户在 T089 P1 派发前插播需求：移动端详情页三处体验问题——①meta-tags-bar 滚动隐藏导致跳变（用户要求改为嵌入内容流随滚动划走）②底部操作栏显示不稳定（DESIGN.md:263 已声明 fixed bottom bar 但实际实现在顶部 sticky header，需 P1 核实范围）③markdown 正文移动端边距三层叠加约 40px 过大。用户明确选择：新建独立 task（非拆分为两个）、且优先于 T089 执行（T089 保持 P0 pending 不动）。risk_level 倾向 medium（跨多组件+涉及 DESIGN.md 变更+浏览器兼容性坑点）"}
   - {phase: P1, action: dispatched, ts: "2026-08-08T01:00:00Z", note: "analyst 首轮产出 P1-requirements.md，10条BDD，纠正P0-brief误判（EntryDetailMobileBar.vue 实已存在只缺position:fixed）"}
@@ -27,3 +33,8 @@ history:
   - {phase: P1, action: review_3, ts: "2026-08-09T02:00:00Z", note: "requirements-review第3轮（最终轮）approved，12条BDD完整锚点+覆盖维度，采纳[SUGGEST]（底部操作栏=修复现有EntryDetailMobileBar.vue定位机制，非新建）"}
   - {phase: P1, action: gate_format_fix, ts: "2026-08-09T03:00:00Z", note: "check-gate.sh P1首次exit 1：第140行字面提及[NEED_CONFIRM]被误判为不合规标记（纯措辞非内容），改写后gate exit 2通过"}
   - {phase: P1, action: gate_pass, ts: "2026-08-09T04:00:00Z", note: "check-gate.sh P1 exit 2通过，1个WARNING(SUGGEST不阻塞)，phase P1->P2"}
+  - {phase: P2, action: dispatched, ts: "2026-08-09T05:00:00Z", note: "architect产出P2-design.md，6候选方案(问题1/2/3各2个)，minimal_validation用Playwright CDP实测(assumption_1 confirmed/assumption_2 inconclusive)"}
+  - {phase: P2, action: review_1, ts: "2026-08-09T06:00:00Z", note: "plan-design-review needs-revision：3必须项(files_to_read路径错误/zen-mode override缺选择器/缺可访问性说明)+3建议项，候选方案本身合格不需重新评估"}
+  - {phase: P2, action: revised_1, ts: "2026-08-09T07:00:00Z", note: "architect第1轮修订，6处问题全改（3必须+3建议）"}
+  - {phase: P2, action: review_2, ts: "2026-08-09T08:00:00Z", note: "plan-design-review第2轮approved，发现1个新minor问题(zen-mode override缺mobile media query guard会误伤桌面端)标为不阻塞建议，留给P4实现时处理"}
+  - {phase: P2, action: gate_pass, ts: "2026-08-09T09:00:00Z", note: "check-gate.sh P2 exit 2通过，gate_commands命令存在性检查无WARNING，phase P2->P3"}
