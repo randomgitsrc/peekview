@@ -1,8 +1,29 @@
-phase: P0
+phase: P1
 task_id: T090
 task_name: mobile-detail-ux-polish
-status: pending
+status: in_progress
 created: 2026-08-08T00:00:00Z
-updated: 2026-08-08T00:00:00Z
+updated: 2026-08-09T00:00:00Z
+retries:
+  P1:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "5处缺口定向修订：BDD-2范围收窄声明/BDD-6拆出BDD-7覆盖wrap/BDD-8数值降级/BDD-11消歧/4项边界风险收口"
+      note: "review#1 needs-revision → analyst 修订 → review#2 needs-revision（3/5 缺口修复成立，剩 BDD-8 算术自证矛盾 + iOS safe-area 理由与[CORRECTION]矛盾）"
+    - round: 2
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "P1最后一次retry（MAX=3）：BDD-8公式与示例自洽化 + iOS safe-area理由重新论证"
+retry_count:
+  P1: 2
 history:
   - {phase: P0, action: created, ts: "2026-08-08T00:00:00Z", note: "用户在 T089 P1 派发前插播需求：移动端详情页三处体验问题——①meta-tags-bar 滚动隐藏导致跳变（用户要求改为嵌入内容流随滚动划走）②底部操作栏显示不稳定（DESIGN.md:263 已声明 fixed bottom bar 但实际实现在顶部 sticky header，需 P1 核实范围）③markdown 正文移动端边距三层叠加约 40px 过大。用户明确选择：新建独立 task（非拆分为两个）、且优先于 T089 执行（T089 保持 P0 pending 不动）。risk_level 倾向 medium（跨多组件+涉及 DESIGN.md 变更+浏览器兼容性坑点）"}
+  - {phase: P1, action: dispatched, ts: "2026-08-08T01:00:00Z", note: "analyst 首轮产出 P1-requirements.md，10条BDD，纠正P0-brief误判（EntryDetailMobileBar.vue 实已存在只缺position:fixed）"}
+  - {phase: P1, action: review_1, ts: "2026-08-08T02:00:00Z", note: "requirements-review needs-revision：BDD-2缺跨viewer范围声明/BDD-6 wrap结构性测不到/BDD-7数值硬锁与用户委托语气冲突/BDD-9判定标准自相矛盾/4项边界风险未收口"}
+  - {phase: P1, action: revised_1, ts: "2026-08-08T03:00:00Z", note: "analyst第1轮修订，BDD扩展到12条（拆出BDD-7覆盖wrap）"}
+  - {phase: P1, action: review_2, ts: "2026-08-09T00:00:00Z", note: "requirements-review第2轮 needs-revision：3/5缺口修复成立，剩BDD-8(11px/12px示例与≥75%公式矛盾)+iOS safe-area理由与[CORRECTION]矛盾"}
+  - {phase: P1, action: revised_2, ts: "2026-08-09T01:00:00Z", note: "analyst第2轮修订（P1最后一次retry）：BDD-8删除矛盾示例只留公式，iOS safe-area理由改口承认风险由position:fixed引入+归因CDP环境限制+补capability_requirements supplementable声明"}
+  - {phase: P1, action: review_3, ts: "2026-08-09T02:00:00Z", note: "requirements-review第3轮（最终轮）approved，12条BDD完整锚点+覆盖维度，采纳[SUGGEST]（底部操作栏=修复现有EntryDetailMobileBar.vue定位机制，非新建）"}
+  - {phase: P1, action: gate_format_fix, ts: "2026-08-09T03:00:00Z", note: "check-gate.sh P1首次exit 1：第140行字面提及[NEED_CONFIRM]被误判为不合规标记（纯措辞非内容），改写后gate exit 2通过"}
+  - {phase: P1, action: gate_pass, ts: "2026-08-09T04:00:00Z", note: "check-gate.sh P1 exit 2通过，1个WARNING(SUGGEST不阻塞)，phase P1->P2"}
