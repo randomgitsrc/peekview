@@ -24,7 +24,12 @@
 | T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
-| T089 | unicode-filename-link-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-07 |
+| T089 | unicode-filename-link-fix | ⬜ 待开始（暂停，让位 T090） | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-08 |
+| T090 | mobile-detail-ux-polish | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-08 | 2026-08-08 |
+
+### T090: 移动端详情页 UX 打磨
+
+用户插播需求，优先于 T089。三处移动端体验问题：①meta-tags-bar 滚动隐藏（`max-height` 折叠）引发内容跳变，要求改为嵌入正文 content 区随滚动自然划走，不做独立显示/隐藏（跨 markdown/code 等所有 viewer，公共 header 组件）；②DESIGN.md:263 已声明"primary actions → fixed bottom bar on mobile"但实际实现在顶部 sticky header，操作栏可见性受浏览器地址栏位置影响不稳定，需核实范围后落实为真正的底部固定栏 + safe-area 兼容；③移动端 markdown 正文边距三层叠加（content-area padding + markdown-body margin + padding）约 40px 过大，需缩减并可能新增移动端间距 token。涉及 DESIGN.md 变更（`[BASELINE_CHANGE]`），risk_level 倾向 medium。
 
 ### T071: Docker 部署（合并原 T071+T072）
 
