@@ -20,7 +20,8 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="content-area entry-content" tabindex="-1">
+    <main class="content-area entry-content" data-testid="content-area" tabindex="-1">
+      <EntryMetaTagsBar v-if="isMobile && currentEntry" :current-entry="currentEntry" :relative-time="relativeTime" />
       <div v-if="fileLoading" class="loading-state">
         <div class="skeleton-header">
           <div class="skeleton-bar skeleton-title-bar"></div>
@@ -110,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
 import FileTree from '@/components/FileTree.vue'
 import TocNav from '@/components/TocNav.vue'
 import CodeViewer from '@/components/CodeViewer.vue'
@@ -119,10 +120,12 @@ import HtmlViewer from '@/components/HtmlViewer.vue'
 import ImageViewer from '@/components/ImageViewer.vue'
 import TableView from '@/components/TableView.vue'
 import TreeView from '@/components/TreeView.vue'
+import EntryMetaTagsBar from '@/components/EntryMetaTagsBar.vue'
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next'
 import type { Entry, File, TocHeading } from '@/types'
 import type { PathMap } from '@/utils/path-map'
 import { useSidebarResize } from '@/composables/useSidebarResize'
+import { IsMobileKey } from '@/composables/entryDetailKeys'
 
 const props = defineProps<{
   isFileTreeOpen: boolean
@@ -153,8 +156,11 @@ const props = defineProps<{
   canWrap: boolean
   isMultiFile: boolean
   sourceViewMode: boolean
+  relativeTime: string
   downloadFile: () => void
 }>()
+
+const isMobile = inject(IsMobileKey)!
 
 defineEmits<{
   'select-file': [file: File]
@@ -219,7 +225,12 @@ onUnmounted(() => {
 <style scoped>
 .detail-content { display: flex; flex: 1; overflow: hidden; }
 .content-area { flex: 1; overflow-y: auto; outline: none; padding: var(--space-4); overscroll-behavior: y none; }
-@media (max-width: 640px) { .content-area { padding: var(--space-3) var(--space-2); } }
+@media (max-width: 640px) {
+  .content-area {
+    padding: var(--space-3) var(--space-2);
+    padding-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom, 0px));
+  }
+}
 .loading-state { padding: var(--space-5); }
 .skeleton-header { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); }
 .skeleton-bar { border-radius: 6px; background: var(--c-border); animation: shimmer 1.5s infinite; }

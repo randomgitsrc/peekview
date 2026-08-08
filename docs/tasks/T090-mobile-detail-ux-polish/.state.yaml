@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: T090
 task_name: mobile-detail-ux-polish
 status: in_progress
@@ -42,3 +42,10 @@ history:
   - {phase: P3, action: gate_note, ts: "2026-08-09T11:00:00Z", note: "check-gate.sh P3 exit 2（文件存在性检查通过）。项目本地scripts/check-tdd-red.sh是过期副本(硬编码pytest)，改用~/.agate/scripts/check-tdd-red.sh读取P2 gate_commands.P3=\"make test-frontend\"(vitest)，但该命令不含新增E2E spec，误报exit2(绿灯)——已识别为P2 gate_commands.P3范围疏漏(UI任务未声明E2E专用红灯确认命令)"}
   - {phase: P3, action: manual_verify, ts: "2026-08-09T12:00:00Z", note: "主Agent亲自跑debug-quick环境下的完整Playwright E2E(BASE_URL=127.0.0.1:8888 npx playwright test e2e/t090-mobile-detail-ux-polish.spec.ts)，独立确认12/12失败，全文grep扫描无SyntaxError/Cannot find module/ReferenceError/TS编译错误等A类信号，均为locator超时/找不到的B类红灯，与subagent自检结论一致，未盲信自我报告"}
   - {phase: P3, action: gate_pass, ts: "2026-08-09T13:00:00Z", note: "TDD红灯人工确认通过(B类，12/12)，phase P3->P4。已知限制记录：gate_commands.P3声明范围疏漏留待P4/P5阶段注意，P5_e2e已正确声明可用于P5验证"}
+  - {phase: P4, action: dispatched, ts: "2026-08-09T14:00:00Z", note: "implementer完成9处实现要点，自查vue-tsc/test-frontend(92/92,1215测试)通过，E2E自查10/12，2条标[DESIGN_GAP]交主Agent（未擅自改测试/设计）"}
+  - {phase: P4, action: diagnosis, ts: "2026-08-09T15:00:00Z", note: "主Agent诊断2处DESIGN_GAP根因：BDD-8是P1/P3计量口径不一致(基线40单侧 vs 测试两侧相加)非设计缺陷，候选3-A物理已达80%缩减；BDD-6是FileTree.vue既有h3标题与抽屉头部选择器歧义，与本次改动无关。批准最小化修复(P1追加[BASELINE_CHANGE]澄清注释不改语义+E2E测试2处代码修复)"}
+  - {phase: P4, action: fix_round1, ts: "2026-08-09T16:00:00Z", note: "test-designer完成3处授权修复，额外发现修复1处抽屉关闭坐标bug，暴露第3个问题(copy按钮从未有toast反馈，既有行为非回归)，标记交主Agent，结果11/12"}
+  - {phase: P4, action: diagnosis_2, ts: "2026-08-09T17:00:00Z", note: "主Agent确认copy无toast是既有行为(读useEntryDetailComputed.ts/EntryDetailHeader.vue/EntryDetailMobileBar.vue核实)，不需要新增toast实现(超范围)，批准测试断言改用剪贴板内容校验(项目已有viewer.spec.ts等标准写法)"}
+  - {phase: P4, action: fix_round2_partial, ts: "2026-08-09T18:00:00Z", note: "fix2 subagent触发月度API额度上限提前终止，但核心代码编辑已落盘(剪贴板校验逻辑生效)。主Agent未重派subagent(规避额度限制)，亲自核实：grep确认P1 BDD-8原文未改，亲自跑完整E2E确认12/12通过，vue-tsc/test-frontend/lint全部通过"}
+  - {phase: P4, action: review, ts: "2026-08-09T19:00:00Z", note: "design-review approved，1个不阻塞发现(底部栏按钮触控高度38px<DESIGN.md要求44px，git diff核实为既有问题非T090回归，记入backlog)，5项重点检查(AI Slop/Spacing/交互状态/可访问性/zen-mode media query保护)均核实通过"}
+  - {phase: P4, action: gate_pass, ts: "2026-08-09T20:00:00Z", note: "check-gate.sh P4 exit 0通过，暂存区含代码文件，无SCOPE+待处理，phase P4->P5"}

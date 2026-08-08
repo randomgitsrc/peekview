@@ -237,21 +237,25 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile_390x844_bdd5.png` })
     })
 
-    test('test_bdd_6_bottom_bar_markdown_buttons_functional', async ({ page }) => {
+    test('test_bdd_6_bottom_bar_markdown_buttons_functional', async ({ page, context }) => {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+
       await page.goto(`${BASE_URL}/t090-md-multifile`)
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(1000)
 
-      // file-tree drawer
+      // file-tree drawer (drawer-left, occupies x:0-280 of the 390px viewport;
+      // click the overlay on the opposite side to avoid the drawer intercepting the click)
       await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
-      await expect(page.getByText(/^Files ·/)).toBeVisible()
-      await page.locator('body').click({ position: { x: 5, y: 5 } })
+      await expect(page.locator('.drawer-header').getByText(/^Files ·/)).toBeVisible()
+      await page.locator('.drawer-overlay').click({ position: { x: 350, y: 400 } })
       await page.waitForTimeout(200)
 
-      // toc drawer
+      // toc drawer (drawer-right, occupies x:110-390 of the 390px viewport;
+      // click the overlay on the opposite side to avoid the drawer intercepting the click)
       await page.locator('[data-testid="mobile-bar-toc-btn"]').click()
       await expect(page.getByText(/^Table of Contents ·/)).toBeVisible()
-      await page.locator('body').click({ position: { x: 5, y: 5 } })
+      await page.locator('.drawer-overlay').click({ position: { x: 40, y: 400 } })
       await page.waitForTimeout(200)
 
       // source-toggle
@@ -262,9 +266,12 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       await sourceBtn.click()
       await expect(sourceBtn).toHaveAttribute('aria-pressed', 'false')
 
-      // copy
+      // copy (no toast/visual feedback in current implementation — verify the
+      // actual clipboard content instead of waiting for a role="status" toast;
+      // see P4-gate-diagnosis.md "追加诊断" for why)
       await page.locator('[data-testid="mobile-bar-copy-btn"]').click()
-      await expect(page.getByRole('status')).toBeVisible()
+      const clipboardText = await page.evaluate(() => navigator.clipboard.readText())
+      expect(clipboardText).toContain('Heading 1')
 
       // overflow (more actions)
       const overflowTrigger = page.locator('[data-testid="overflow-menu-trigger"]')
@@ -307,9 +314,12 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       const viewportWidth = 390
       const leftInset = mdBox!.x
       const rightInset = viewportWidth - (mdBox!.x + mdBox!.width)
-      const totalInset = leftInset + rightInset
+      // Layout is left/right symmetric: verify that premise, then use the
+      // single-sided leftInset (matching the single-sided baseline constant)
+      // rather than summing both sides. See P1-requirements.md BDD-8 [BASELINE_CHANGE].
+      expect(Math.abs(leftInset - rightInset)).toBeLessThanOrEqual(2)
 
-      const reductionRatio = (MARKDOWN_MOBILE_BASELINE_INSET_PX - totalInset) / MARKDOWN_MOBILE_BASELINE_INSET_PX
+      const reductionRatio = (MARKDOWN_MOBILE_BASELINE_INSET_PX - leftInset) / MARKDOWN_MOBILE_BASELINE_INSET_PX
       expect(reductionRatio).toBeGreaterThanOrEqual(MARKDOWN_REDUCTION_TARGET_RATIO)
 
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile_390x844_bdd8.png` })

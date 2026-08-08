@@ -1,7 +1,7 @@
 <template>
   <div class="markdown-viewer">
     <slot name="toc" :headings="headings" />
-    <div ref="contentRef" class="markdown-body">
+    <div ref="contentRef" class="markdown-body" data-testid="markdown-body">
       <template v-for="(block, i) in blocks" :key="i">
         <div v-if="block.type === 'html'" v-html="block.html" />
         <DiagramBlock v-else-if="block.type === 'diagram'" :block="block" :theme="theme" />
@@ -130,8 +130,8 @@ watch(() => [props.content, theme.value, props.pathMap, props.slug], async () =>
 
 @media (max-width: 640px) {
   .markdown-body {
-    margin: 0 var(--space-4);
-    padding: var(--space-4);
+    margin: 0;
+    padding: 0;
   }
 }
 </style>

@@ -215,8 +215,12 @@ This section defines which components exist, what variants they support, and beh
 ### Drawers (Mobile)
 - File tree: left drawer. TOC: right drawer. Overlay backdrop, swipe-to-dismiss.
 
-### Scroll-Hide Meta Bar
-- On mobile detail page, metadata/tags bar hides on scroll-down, reappears on scroll-up.
+### Meta Tags Bar (Mobile)
+- On mobile detail page, the metadata/tags bar (`EntryMetaTagsBar`) is a normal in-flow element rendered as the first child of `.content-area`, scrolling together with the viewer content. Visibility is determined purely by scroll position in the document flow — no independent show/hide toggle bound to scroll direction.
+
+### Markdown Body Spacing (Mobile)
+- Desktop: `.markdown-body` uses `padding: var(--space-5)` (24px), centered with `max-width: 900px`.
+- Mobile (≤640px): `.markdown-body` has no additional margin/padding of its own — horizontal inset comes solely from `.content-area`'s mobile padding (`var(--space-2)`, 8px), avoiding the triple-layer stacking (content-area + margin + padding) that previously produced ~40px of total inset per side.
 
 ### HTML Viewer Security
 - Sandboxed iframe: `sandbox="allow-scripts allow-forms"` — **no `allow-same-origin`**. Opaque origin cannot access main page credentials.
@@ -260,7 +264,7 @@ This section defines which components exist, what variants they support, and beh
 - Navigation: hide secondary links on mobile, keep brand + theme toggle + primary CTA.
 - Touch targets: minimum 44px.
 - Hover-only action buttons must be visible on touch devices.
-- Detail page: file tree → dropdown selector on mobile; TOC → right drawer on mobile; primary actions → fixed bottom bar on mobile.
+- Detail page: file tree → dropdown selector on mobile; TOC → right drawer on mobile; primary actions → fixed bottom bar on mobile (`position: fixed; bottom: 0`, `padding-bottom: env(safe-area-inset-bottom, 0px)` for safe-area compatibility; `.content-area` reserves matching bottom clearance via `--mobile-bar-height`).
 - Sticky headers on mobile: translucent background + backdrop blur.
 - Overflow menus: dropdown on desktop, bottom sheet on mobile.
 - Settings: horizontal tabs on desktop, stacked sections on mobile.
@@ -272,7 +276,6 @@ This section defines which components exist, what variants they support, and beh
 - CodeViewer retains `overflow-x: auto` for horizontal code scrolling.
 - HtmlViewer and ImageViewer are exceptions: they use `height: 100%; overflow: hidden` to fill `.content-area` without stealing scroll (iframe/image internal scroll is isolated).
 - `scroll-margin-top: 80px` on headings is calibrated for `.content-area` as the scroll container (matches sticky header height).
-- Scroll-hide behavior (`useResponsiveLayout.setupScrollHide`) binds directly to `.content-area`'s scroll event — no child element traversal needed.
 
 ---
 

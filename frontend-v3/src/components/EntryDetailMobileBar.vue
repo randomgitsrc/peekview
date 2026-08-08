@@ -1,16 +1,18 @@
 <template>
-  <div v-if="isMobile && currentEntry" v-show="!zenMode" class="mobile-bottom-bar">
+  <div v-if="isMobile && currentEntry" v-show="!zenMode" class="mobile-bottom-bar" data-testid="mobile-bottom-bar">
     <button v-if="isMultiFile"
       :class="['toggle-btn', { active: showFileDrawer }]"
       @click="$emit('toggle-file-drawer')"
-      aria-label="Files">
+      aria-label="Files"
+      data-testid="mobile-bar-filetree-btn">
       <FolderIcon :size="16" />
       <span v-if="currentEntry?.files.length" class="toggle-badge">{{ currentEntry.files.length }}</span>
     </button>
     <button v-if="isMarkdown && tocHeadings.length > 0"
       :class="['toggle-btn', { active: showTocDrawer }]"
       @click="$emit('toggle-toc-drawer')"
-      aria-label="Table of Contents">
+      aria-label="Table of Contents"
+      data-testid="mobile-bar-toc-btn">
       <ListIcon :size="16" />
     </button>
     <button
@@ -18,16 +20,17 @@
       :class="['toggle-btn', { active: sourceViewMode }]"
       @click="$emit('toggle-source-view')"
       :aria-label="sourceViewMode ? 'Show rendered view' : 'Show source code'"
-      :aria-pressed="sourceViewMode">
+      :aria-pressed="sourceViewMode"
+      data-testid="mobile-bar-source-toggle-btn">
       <CodeIcon v-if="!sourceViewMode" :size="16" />
       <EyeIcon v-else :size="16" />
     </button>
     <div class="flex-spacer"></div>
     <template v-if="!isBinary">
-      <button v-if="canWrap" :class="['bottom-btn', wrapEnabled && 'primary']" @click="$emit('toggle-wrap')">
+      <button v-if="canWrap" :class="['bottom-btn', wrapEnabled && 'primary']" @click="$emit('toggle-wrap')" data-testid="mobile-bar-wrap-btn">
         Wrap
       </button>
-      <button v-if="canCopy" class="bottom-btn primary" @click="$emit('copy-content')" aria-label="Copy">
+      <button v-if="canCopy" class="bottom-btn primary" @click="$emit('copy-content')" aria-label="Copy" data-testid="mobile-bar-copy-btn">
         <CopyIcon :size="14" /> Copy
       </button>
     </template>
@@ -83,8 +86,15 @@ const isMobile = inject(IsMobileKey)!
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--c-surface);
   border-top: 1px solid var(--c-border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  min-height: var(--mobile-bar-height);
 }
 
 .toggle-btn {

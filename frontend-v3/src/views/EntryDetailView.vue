@@ -7,7 +7,6 @@
       :relative-time="relativeTime"
       :full-time="fullTime"
       :is-expired-but-active="isExpiredButActive"
-      :meta-tags-hidden="metaTagsHidden"
       :is-file-tree-open="isFileTreeOpen"
       :is-toc-open="isTocOpen"
       :is-markdown="isMarkdown"
@@ -67,6 +66,7 @@
       :can-wrap="entryDetailStore.canWrap"
       :is-multi-file="entryDetailStore.isMultiFile"
       :source-view-mode="sourceViewMode"
+      :relative-time="relativeTime"
       :download-file="downloadFile"
       @select-file="entryDetailStore.selectFile"
       @navigate-file="handleNavigateFile"
@@ -149,7 +149,7 @@ const { currentEntry, activeFile, fileContent } = storeToRefs(entryDetailStore)
 const { authState } = storeToRefs(authStore)
 
 const { zenMode, zenAriaText, handleZenKeydown } = useZenMode()
-const { isMobile, isDesktop, metaTagsHidden, handleResize, setupScrollHide } = useResponsiveLayout()
+const { isMobile, isDesktop, handleResize } = useResponsiveLayout()
 
 provide(ZenModeKey, zenMode)
 provide(IsMobileKey, isMobile)
@@ -212,8 +212,6 @@ onMounted(async () => {
     if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true
     if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
   }
-  const content = document.querySelector('.content-area')
-  if (content) onUnmounted(setupScrollHide(content as HTMLElement))
 })
 
 onUnmounted(() => {
@@ -252,5 +250,8 @@ watch(() => entryDetailStore.currentEntry, (entry) => {
 .entry-detail.zen-mode :deep(.mobile-sticky-header),
 .entry-detail.zen-mode :deep(.mobile-bottom-bar),
 .entry-detail.zen-mode :deep(.meta-tags-bar) { display: none; }
+@media (max-width: 640px) {
+  .entry-detail.zen-mode :deep(.content-area) { padding-bottom: var(--space-3); }
+}
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
 </style>

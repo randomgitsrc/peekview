@@ -9,6 +9,9 @@
   --space-6: 32px;
   --space-7: 48px;
 
+  /* Mobile bottom bar */
+  --mobile-bar-height: 64px;
+
   /* Typography */
   --font-xs: 12px;
   --font-sm: 14px;

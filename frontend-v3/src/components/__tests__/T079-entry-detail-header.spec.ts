@@ -79,7 +79,6 @@ function createWrapper(options: {
       relativeTime: '2 hours ago',
       fullTime: '2024-01-01 00:00:00 UTC',
       isExpiredButActive: false,
-      metaTagsHidden: false,
       isFileTreeOpen: false,
       isTocOpen: false,
       isMarkdown: true,
@@ -267,26 +266,6 @@ describe('EntryDetailHeader — T079', () => {
     })
   })
 
-  describe('BDD-15: Detail mobile tags are clickable BaseTag', () => {
-    it('meta-tags-bar tags use BaseTag not span.meta-tag', () => {
-      const wrapper = createWrapper({ isMobile: true, entry: mockEntry })
-      const metaTagsBar = wrapper.find('.meta-tags-bar')
-      const baseTags = metaTagsBar.findAll('.base-tag')
-      expect(baseTags.length).toBe(mockEntry.tags.length)
-
-      const oldMetaTags = metaTagsBar.findAll('.meta-tag')
-      expect(oldMetaTags.length).toBe(0)
-    })
-
-    it('meta-tags-bar BaseTag href points to /explore?tags=<encoded>', () => {
-      const wrapper = createWrapper({ isMobile: true, entry: mockEntry })
-      const metaTagsBar = wrapper.find('.meta-tags-bar')
-      const baseTags = metaTagsBar.findAll('.base-tag')
-
-      expect(baseTags[0].attributes('href')).toBe('/explore?tags=vue')
-    })
-  })
-
   describe('BDD-16: Detail Chinese tag is properly URL-encoded', () => {
     it('Chinese tag href is URL-encoded', () => {
       const entryWithChineseTag: Entry = {
@@ -339,14 +318,6 @@ describe('EntryDetailHeader — T079', () => {
       const wrapper = createWrapper({ isMobile: false, entry: entryNoTags })
       const metaRow = wrapper.find('.meta-row')
       const baseTags = metaRow.findAll('.base-tag')
-      expect(baseTags.length).toBe(0)
-    })
-
-    it('mobile meta-tags-bar renders without error when entry has no tags', () => {
-      const entryNoTags: Entry = { ...mockEntry, tags: [] }
-      const wrapper = createWrapper({ isMobile: true, entry: entryNoTags })
-      const metaTagsBar = wrapper.find('.meta-tags-bar')
-      const baseTags = metaTagsBar.findAll('.base-tag')
       expect(baseTags.length).toBe(0)
     })
   })
