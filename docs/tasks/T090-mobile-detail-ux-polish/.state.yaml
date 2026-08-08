@@ -1,4 +1,4 @@
-phase: P2
+phase: P3
 task_id: T090
 task_name: mobile-detail-ux-polish
 status: in_progress
@@ -38,3 +38,7 @@ history:
   - {phase: P2, action: revised_1, ts: "2026-08-09T07:00:00Z", note: "architect第1轮修订，6处问题全改（3必须+3建议）"}
   - {phase: P2, action: review_2, ts: "2026-08-09T08:00:00Z", note: "plan-design-review第2轮approved，发现1个新minor问题(zen-mode override缺mobile media query guard会误伤桌面端)标为不阻塞建议，留给P4实现时处理"}
   - {phase: P2, action: gate_pass, ts: "2026-08-09T09:00:00Z", note: "check-gate.sh P2 exit 2通过，gate_commands命令存在性检查无WARNING，phase P2->P3"}
+  - {phase: P3, action: dispatched, ts: "2026-08-09T10:00:00Z", note: "test-designer产出P3-test-cases.md，12条BDD各1个Playwright E2E用例，自检发现并修正1处假绿(BDD-12负向断言恒真)+1处测试数据格式错误(顶层content字段不存在)"}
+  - {phase: P3, action: gate_note, ts: "2026-08-09T11:00:00Z", note: "check-gate.sh P3 exit 2（文件存在性检查通过）。项目本地scripts/check-tdd-red.sh是过期副本(硬编码pytest)，改用~/.agate/scripts/check-tdd-red.sh读取P2 gate_commands.P3=\"make test-frontend\"(vitest)，但该命令不含新增E2E spec，误报exit2(绿灯)——已识别为P2 gate_commands.P3范围疏漏(UI任务未声明E2E专用红灯确认命令)"}
+  - {phase: P3, action: manual_verify, ts: "2026-08-09T12:00:00Z", note: "主Agent亲自跑debug-quick环境下的完整Playwright E2E(BASE_URL=127.0.0.1:8888 npx playwright test e2e/t090-mobile-detail-ux-polish.spec.ts)，独立确认12/12失败，全文grep扫描无SyntaxError/Cannot find module/ReferenceError/TS编译错误等A类信号，均为locator超时/找不到的B类红灯，与subagent自检结论一致，未盲信自我报告"}
+  - {phase: P3, action: gate_pass, ts: "2026-08-09T13:00:00Z", note: "TDD红灯人工确认通过(B类，12/12)，phase P3->P4。已知限制记录：gate_commands.P3声明范围疏漏留待P4/P5阶段注意，P5_e2e已正确声明可用于P5验证"}
