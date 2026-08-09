@@ -1,0 +1,793 @@
+vision_analysis:
+  screenshots:
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd4_mobile_bar_top.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd4_mobile_bar_mid.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd4_mobile_bar_bottom.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd5_mobile_height_844.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd5_mobile_height_700.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_filetree_open.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_toc_open.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_source_toggle_on.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_overflow_menu.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd7_mobile_wrap_before.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd7_mobile_wrap_after.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd8_mobile_markdown_margin.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd9_mobile_375_no_overflow.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd10_desktop_scroll.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd12_mobile_bar_present.png"
+    - "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd12_desktop_bar_absent.png"
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-09T07:56:48+08:00"
+  analysis_method: "vision-engine skill (google-free/gemini-3.6-flash, one call: alibailian/qwen3.7-plus fallback), role=comprehensive, one call per representative screenshot per BDD. Raw model outputs saved under scratchpad (not committed); this YAML is the analyst's structured transcription of those actual model responses, not fabricated."
+
+  viewports:
+    - id: "bdd4_mid"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd4_mobile_bar_mid.png"
+      size: "390x844"
+      page:
+        title: "T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "scrolled (mid, around Heading 30/31)"
+        visible_text_complete: |
+          Header: P  T090 long markdown  alice  ADMIN
+          Body: Paragraph 29 content lorem ipsum...
+          Heading 30 / Paragraph 30 content (x4, first 3 end with "## Heading 30")
+          Heading 31 / Paragraph 31 content (x4, first 3 end with "## Heading 31")
+          Heading 32 (partially visible at bottom edge)
+          Bottom bar icons: list icon, code icon, Copy (blue button), ... v (overflow)
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "header"
+            position: "top-full-width"
+            estimated_height: "约56px"
+            z_layer: "normal"
+          - id: "content-area"
+            position: "center, scrollable"
+            estimated_width: "390px"
+            z_layer: "normal"
+          - id: "mobile-bottom-bar"
+            position: "bottom-full-width, fixed"
+            estimated_height: "约64px"
+            z_layer: "elevated"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx, blue accents on ADMIN tag / Copy button)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "heading"
+            approx_size: "约20px"
+            weight: "700"
+            color: "#111827"
+          - level: "body"
+            approx_size: "约14px"
+            weight: "400"
+            color: "#374151"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "bottom-bar"
+          label: "mobile-bottom-bar"
+          state: "fixed, fully visible, not clipped"
+          position: "视口最底部"
+          style:
+            width: "390px (full width)"
+            height: "约64px"
+            border_top: "1px solid #e5e7eb"
+            background: "#ffffff"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无明显阴影"
+        gradient_usage: "无"
+        icon_style: "线性，统一风格"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd5_height_700"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd5_mobile_height_700.png"
+      size: "390x700"
+      page:
+        title: "T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 long markdown  alice  ADMIN
+          Body: Heading 1/2/3 + paragraph text (repeated lorem ipsum with "## Heading N" markers)
+          Bottom bar icons: list icon, code icon, Copy (blue button), ... v (overflow)
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "mobile-bottom-bar"
+            position: "bottom-full-width, fixed"
+            estimated_height: "约64px"
+            z_layer: "elevated"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "bottom-bar"
+          label: "mobile-bottom-bar"
+          state: "fully within 700px viewport, no clipping, adequate top/bottom/side margins observed"
+          position: "视口最底部"
+          style:
+            width: "390px (full width)"
+            height: "约64px"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无明显阴影"
+        gradient_usage: "无"
+        icon_style: "线性，统一风格"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd6_filetree"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_filetree_open.png"
+      size: "390x844"
+      page:
+        title: "Files drawer over T090 multi-file markdown"
+        loading_state: "loaded"
+        scroll_state: "unknown"
+        visible_text_complete: |
+          Drawer header: Files · 2
+          Drawer group label: FILES · 2
+          File items: index.md (selected, highlighted), notes.md
+          Background (dimmed): alice, ADMIN, body text, bottom bar Copy button (partially covered), ... v
+      layout:
+        type: "absolute (drawer overlay)"
+        regions:
+          - id: "drawer"
+            position: "left, ~70% width"
+            estimated_width: "约270px"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx, selected file highlight)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "drawer"
+          label: "file-tree drawer"
+          state: "open, correctly titled 'Files · 2'"
+          position: "左侧"
+          style: {}
+        - type: "list-item"
+          label: "index.md (selected)"
+          state: "active/highlighted"
+        - type: "list-item"
+          label: "notes.md"
+          state: "normal"
+      overlay:
+        modal_open: false
+        dropdown_open: true
+        tooltip_visible: false
+        mask_present: true
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "轻微"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd6_toc"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_toc_open.png"
+      size: "390x844"
+      page:
+        title: "TOC drawer over T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "unknown"
+        visible_text_complete: |
+          Drawer header: Table of Contents · 60
+          Sub-label: ON THIS PAGE
+          Heading 1 ... Heading 22 (Heading 23 partially visible at bottom)
+          Background (dimmed): T090 mu..., Heading 1/2/3, paragraph text
+        components_note: "right-side scrollbar thumb visible in drawer"
+      layout:
+        type: "absolute (drawer overlay)"
+        regions:
+          - id: "drawer"
+            position: "right/full"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "drawer"
+          label: "toc drawer"
+          state: "open, correctly titled 'Table of Contents · 60'"
+      overlay:
+        modal_open: false
+        dropdown_open: true
+        tooltip_visible: false
+        mask_present: true
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "轻微"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd6_source"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_source_toggle_on.png"
+      size: "390x844"
+      page:
+        title: "T090 multi-file markdown (source view)"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 multi-file markdown  alice  ADMIN
+          Metadata: 14h ago  46 reads  Public
+          Line numbers 1-30 with raw markdown source: "## Heading 1" (highlighted), paragraph lines, "## Heading 2", "## Heading 3"
+          Bottom bar: folder icon with badge "2", list icon, eye icon (highlighted blue = active), Copy button, ... v
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "code-viewer"
+            position: "center"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (eye icon active state)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "monospace (source body), sans-serif (chrome)"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "toggle-button"
+          label: "source-toggle (eye icon)"
+          state: "active/highlighted (blue)"
+          position: "bottom bar"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd6_overflow"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd6_mobile_overflow_menu.png"
+      size: "390x844"
+      page:
+        title: "More actions sheet over T090 multi-file markdown"
+        loading_state: "loaded"
+        scroll_state: "unknown"
+        visible_text_complete: |
+          Sheet title: More actions (with X close icon)
+          Menu items: Dark theme (Tap to toggle), Make Private (Currently Public),
+          Download (index.md), Raw (Structured JSON), Download as Pack (2 files),
+          Delete entry (Permanently, red)
+      layout:
+        type: "absolute (bottom sheet overlay)"
+        regions:
+          - id: "sheet"
+            position: "bottom, covers lower half"
+            z_layer: "overlay"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: "#dc2626 (Delete entry row)"
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "bottom-sheet"
+          label: "OverflowMenuSheet"
+          state: "open, all 6 menu items visible and legible"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: true
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角（sheet 顶部）"
+        shadow_usage: "轻微"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd7_wrap_after"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd7_mobile_wrap_after.png"
+      size: "390x844"
+      page:
+        title: "T090 multi-file python"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 multi-file python  alice  ADMIN
+          Metadata: 14h ago  36 reads  Public
+          Code lines 1-16 (python), long comment lines wrapped onto multiple visual lines
+          Bottom bar: folder icon badge 2, Wrap (blue/primary), Copy (blue/primary), ... v
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx, Wrap/Copy buttons)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "monospace (code)"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "toggle-button"
+          label: "mobile-bar-wrap-btn"
+          state: "active (solid blue background matches Copy button's primary style)"
+        - type: "code-block"
+          label: "wrapped long comment lines"
+          state: "long lines visibly wrap across 3 sub-lines instead of overflowing horizontally"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd8_margin"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd8_mobile_markdown_margin.png"
+      size: "390x844"
+      page:
+        title: "T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 long markdown  alice  ADMIN
+          Metadata: 14h ago  200 reads  Public
+          Heading 1 / paragraph text / Heading 2 / paragraph text / Heading 3 (bottom edge)
+          Bottom bar: list icon, code icon, Copy (blue), ... v
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "text-block"
+          label: "markdown-body horizontal inset"
+          state: "visually narrow inset, estimated ~2-3% of 390px viewport width per side (qualitatively consistent with an ~8px inset), no desktop-style wide (~24px) margin observed"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd9_375"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd9_mobile_375_no_overflow.png"
+      size: "375x812"
+      page:
+        title: "T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 long markdown  alice  ADMIN
+          Metadata: 14h ago  202 reads  Public
+          Heading 1 / paragraph text (x4) / Heading 2 / paragraph text (x4)
+          Bottom bar: list icon, code icon, Copy (blue), ... v
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "text-block"
+          label: "markdown body at 375px width"
+          state: "no visible horizontal overflow, no text clipping/edge overlap, all body text fully contained within viewport"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd10_desktop"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd10_desktop_scroll.png"
+      size: "1280x800"
+      page:
+        title: "T090 long markdown (desktop)"
+        loading_state: "loaded"
+        scroll_state: "scrolled"
+        visible_text_complete: |
+          Header: PeekView  T090 long markdown  · 14h ago · Expires in 15d | 204 reads ·  Public
+          Toolbar icons: toc, code, copy, overflow  |  alice  ADMIN  theme toggle
+          Body: Heading 1-4 + paragraph text
+          Right sidebar: ON THIS PAGE  Heading 1..5+
+      layout:
+        type: "flex-row (main + right TOC sidebar)"
+        regions:
+          - id: "header"
+            position: "top-full-width"
+            z_layer: "normal"
+          - id: "toc-sidebar"
+            position: "right"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f9fafb (approx, page background)"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "meta-tags-bar (mobile-only)"
+          label: "meta-tags-bar"
+          state: "absent — metadata is inline in the header row instead, no separate mobile-style bar/chip row present"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "轻微卡片阴影"
+        gradient_usage: "无"
+        icon_style: "线性，统一"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd12_mobile_present"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd12_mobile_bar_present.png"
+      size: "390x844"
+      page:
+        title: "T090 long markdown"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: P  T090 long markdown  alice  ADMIN
+          Metadata: 14h ago  206 reads  Public
+          Heading 1/2/3 + paragraph text
+          Bottom bar: list icon, code icon, Copy (blue), ... v
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "mobile-bottom-bar"
+            position: "bottom-full-width, fixed"
+            z_layer: "elevated"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "bottom-bar"
+          label: "mobile-bottom-bar"
+          state: "present at viewport bottom"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "bdd12_desktop_absent"
+      file: "docs/tasks/T090-mobile-detail-ux-polish/P6-evidence/screenshots/bdd12_desktop_bar_absent.png"
+      size: "1280x800"
+      page:
+        title: "T090 long markdown (desktop)"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          Header: PeekView  T090 long markdown  · 14h ago · Expires in 15d | 206 reads ·  Public
+          Toolbar icons (top): toc, code, copy, overflow | alice | ADMIN | theme toggle
+          Body: Heading 1/2/3 + paragraph text
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#f9fafb (approx)"
+        background_card: "#ffffff"
+        primary: "#1a56db (approx)"
+        primary_text: "#111827"
+        secondary_text: "#6b7280"
+        border: "#e5e7eb"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "mobile-bottom-bar"
+          label: "mobile-bottom-bar"
+          state: "absent — action icons are in the top header instead, no fixed bottom bar / floating action bar present at viewport bottom"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "极简"
+        border_radius_usage: "统一圆角"
+        shadow_usage: "轻微卡片阴影"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+  responsive_comparison:
+    - dimension: "meta-tags-bar"
+      desktop: "不存在独立 meta-tags-bar，元信息内联在 header 标题下方一行"
+      mobile: "存在，作为 content-area 内第一个子节点随正文滚动"
+      expected_behavior: "符合"
+    - dimension: "primary actions bar"
+      desktop: "位于顶部 header 区域的图标按钮组"
+      mobile: "位于视口底部固定的 mobile-bottom-bar"
+      expected_behavior: "符合"
+    - dimension: "markdown body 水平内边距"
+      desktop: "24px（padding token --space-5，未在本组截图中精确测量，由 assert-log.json 断言值佐证）"
+      mobile: "视觉上明显更窄，约 8px 量级，无桌面端常见宽边距"
+      expected_behavior: "符合"
+
+  comparison:
+    reference: null
+    deviations: []
+
+  bdd_results:
+    - condition: "BDD-4: Given 移动端 viewport 下打开一个正文内容超过一屏的 entry, When 用户将正文滚动到顶部、中间、底部三个位置, Then 底部操作栏在视口中的屏幕坐标保持不变"
+      result: "pass"
+      evidence: "bdd4_mid 截图显示底部操作栏固定悬浮于正文之上、完整可见未被裁切；assert-log.json 中 top/mid/bottom 三次采样 boundingBox 的 x/y 完全相等（780,0 / 390x64），与截图观察一致"
+      screenshot_region: "视口底部"
+    - condition: "BDD-5: Given 移动端 viewport 下，分别模拟两种不同的可视高度打开同一 entry, When 页面渲染完成, Then 两种可视高度下，底部操作栏整体均完全落在可视区域内且可点击"
+      result: "pass"
+      evidence: "bdd5_height_700 截图（更小可视高度场景）显示底部操作栏（列表/代码图标、Copy 按钮、更多图标）完整落在可视区域内，未被裁切或遮挡，上下左右边距正常；assert-log.json 中两种高度下 y+height 均不超出对应视口高度"
+    - condition: "BDD-6: Given 移动端 viewport 下打开一个多文件、含至少一个标题的 markdown entry, When 用户依次点击底部操作栏 file-tree/toc/source-toggle/copy/overflow 按钮, Then 各按钮触发的功能与改动前一致"
+      result: "pass"
+      evidence: "bdd6_filetree 截图确认 Files · 2 抽屉正确打开；bdd6_toc 截图确认 Table of Contents · 60 抽屉正确打开；bdd6_source 截图确认切换到源码视图且 source-toggle 图标呈激活蓝色状态；bdd6_overflow 截图确认 More actions 菜单正确弹出且 6 个菜单项完整可见；copy 剪贴板内容由 assert-log.json 断言（含 'Heading 1'）佐证"
+    - condition: "BDD-7: Given 移动端 viewport 下打开一个多文件、非 markdown 且非 html 的代码类 entry, When 用户点击底部操作栏的 wrap 按钮, Then wrap 按钮正确切换代码换行开启/关闭状态"
+      result: "pass"
+      evidence: "bdd7_wrap_after 截图确认 Wrap 按钮呈实心蓝色（primary）激活样式，与 Copy 按钮视觉一致，且代码区长注释行确实已换行显示为多行；assert-log.json 记录 class 从 'bottom-btn' 变为 'bottom-btn primary'"
+    - condition: "BDD-8: Given 移动端 viewport 下打开一个 markdown entry, When 测量正文可见文字区域左右间距, Then 左右两侧间距之和相对基线（约40px单侧）缩减 ≥75%"
+      result: "pass"
+      evidence: "bdd8_margin 截图目视确认正文左右留白显著收窄（视觉估算约屏幕宽度2-3%），未见桌面端常见宽边距；assert-log.json 精确测量 leftInset=8px, rightInset=8px, symmetric=true, reductionRatio=0.8（≥0.75 门槛）。注：初次自动化测量因验证环境（CDP 连接的真实 Chrome 在移动模拟下渲染非 overlay 滚动条，占用10px布局宽度）产生 leftInset=8/rightInset=18 的不对称假象，经注入 ::-webkit-scrollbar{display:none} 隐藏该滚动条后复测为对称 8/8，确认为验证环境artifact而非产品缺陷（详见 P6-acceptance.md BDD-8 小节根因说明）"
+    - condition: "BDD-9: Given 移动端 viewport 宽度为 375px 下打开一个正文含长段落文字的 markdown entry, When 页面渲染完成, Then 页面内容不产生水平方向溢出，且正文文字完整可见不被截断"
+      result: "pass"
+      evidence: "bdd9_375 截图确认无水平溢出迹象，正文文字完整可见无截断或贴边重叠；assert-log.json 记录 document.documentElement.scrollWidth=375（等于视口宽度，无溢出），markdown-body 边界完全落在 [0,375] 内"
+    - condition: "BDD-10: Given 桌面端 viewport 下打开任意 entry, When 用户滚动正文内容, Then 桌面端 header/meta-row 的展示行为与改动前一致（不出现移动端专属 meta-tags-bar）"
+      result: "pass"
+      evidence: "bdd10_desktop 截图确认顶部及侧边均未出现移动端专属的 meta-tags-bar 横条组件，元信息内联展示在 header 标题下方；assert-log.json 记录 metaBarCount=0 且滚动位移与 scrollDelta 完全线性对应（maxDeviation=0）"
+    - condition: "BDD-12: Given 桌面端 viewport 下打开任意 entry, When 页面渲染完成, Then 视口底部不出现 mobile-bottom-bar；操作按钮保持在顶部 header 区域"
+      result: "pass"
+      evidence: "bdd12_mobile_present 截图确认移动端视口下底部操作栏正常存在（正向对照）；bdd12_desktop_absent 截图确认切换至桌面视口后视口底部不再出现固定操作栏，操作图标集中于顶部 header；assert-log.json 记录 mobileBarVisible=true（mobile）且 desktopBarCount=0（desktop）"
+
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 8
+    bdd_fail: 0
+    bdd_need_confirm: 0
+    overall_status: "pass"
