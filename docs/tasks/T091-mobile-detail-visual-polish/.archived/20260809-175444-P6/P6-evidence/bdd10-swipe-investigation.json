@@ -1,0 +1,21 @@
+{
+  "purpose": "BDD-10 核查：mobile_390x844_bdd10_firstscreen.png 与 mobile_390x844_bdd10_afterswipe.png 逐字节完全相同（md5 e22a669971f174600334ae11d94536e4），核查这是「内容本身没有可滚动空间的合法零位移」还是「滑动手势未生效」",
+  "entry": "svg-standalone",
+  "viewport": "390x844",
+  "measurements": {
+    "content_area_before_swipe": { "scrollHeight": 788, "clientHeight": 788, "scrollTop": 0, "overflowY": "auto" },
+    "image_viewer_before": { "offsetHeight": 629, "top": 150.515625, "bottom": 780 },
+    "meta_bar_before": { "offsetHeight": 83, "top": 68, "bottom": 150.515625 },
+    "after_mouse_drag_swipe_250px": { "scrollTop": 0 },
+    "after_real_touch_swipe_250px": { "scrollTop": 0 },
+    "after_direct_scrollTop_assign_250": { "scrollTop": 0 }
+  },
+  "method": "1) 测量 content-area 的 scrollHeight(788) vs clientHeight(788)，二者相等，即当前视口下该 entry 无可滚动内容；2) 复现 e2e spec 里 BDD-10 用的 page.mouse move/down/move/up 拖拽手势；3) 额外用真实 TouchEvent(touchstart/touchmove/touchend) 派发在同一坐标，验证不是「用了错误的鼠标事件而非触摸事件」导致手势不生效；4) 额外直接对 content-area.scrollTop 赋值 250 作为最终排除法——若容器物理上可滚动，直接赋值必定成功变为某个 >0 的 clamp 值；三种方式后 scrollTop 均恒为 0，与 scrollHeight===clientHeight 完全吻合",
+  "conclusion": "NO_SCROLLABLE_CONTENT_ZERO_DIFF_IS_LEGITIMATE：content-area.scrollHeight(788) === content-area.clientHeight(788)，物理上没有可滚动的溢出内容。三种滑动/滚动方式（鼠标拖拽模拟、真实 TouchEvent、直接 scrollTop 赋值）均确认 scrollTop 恒为 0，不是手势实现的 bug，而是该 entry 在此视口尺寸下内容本身不需要滚动。BDD-10 首屏/滑动后截图逐字节相同是符合预期的正确结果（零滚动=零重影，而非手势失效的证据）。",
+  "cross_check_bdd11": {
+    "entry": "html-csp-test",
+    "content_area_scrollHeight": 788,
+    "content_area_clientHeight": 788,
+    "note": "html-csp-test 的外层 content-area 同样不可滚动（788===788），但 mobile_390x844_bdd11_firstscreen.png 与 mobile_390x844_bdd11_afterswipe.png 的 md5 不同（66d86d9552463ff08e2169374f764a4e vs 1823fcd26c22f8dd577f26d6aeb1f4ab），说明滑动手势确实作用到了 HtmlViewer 内部的 iframe（其内部文档有自己独立的滚动上下文，不依赖外层 content-area 是否可滚动），这从侧面印证：滑动手势派发机制本身是有效的（能在 html-csp-test 上产生真实可见的变化），BDD-10 的零差异并非因为手势管线整体失效，而是 svg-standalone 这个具体 entry 内容确实短于视口。"
+  }
+}

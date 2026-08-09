@@ -2,46 +2,151 @@ phase: P5
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
-created: 2026-08-10T00:00:00Z
-updated: 2026-08-10T20:00:00Z
+created: 2026-08-10 00:00:00+00:00
+updated: 2026-08-10 20:05:00+00:00
 retries:
   P1:
-    - round: 1
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: "4处定向修订：BDD-1重新归类为DOM断言/BDD-2补DOM辅助阈值/BDD-10-11补显式vision-engine声明+判定标准具体化/BDD-9补全10个entry"
-    - round: 2
-      failure_mode: quality
-      prompt_changed: true
-      adjustment: "P1最后一次retry（MAX=3）：BDD-2的40px阈值经reviewer独立核算发现公式反推基线~34px与实测17px基线对不上，orchestrator亲自用CDP live-patch方式实测真实数值（89px），交给analyst基于真实数据重新定阈值"
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: 4处定向修订：BDD-1重新归类为DOM断言/BDD-2补DOM辅助阈值/BDD-10-11补显式vision-engine声明+判定标准具体化/BDD-9补全10个entry
+  - round: 2
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: P1最后一次retry（MAX=3）：BDD-2的40px阈值经reviewer独立核算发现公式反推基线~34px与实测17px基线对不上，orchestrator亲自用CDP
+      live-patch方式实测真实数值（89px），交给analyst基于真实数据重新定阈值
+  P5:
+  - attempt: 1
+    reason: P6验收发现真实缺陷：EntryMetaTagsBar.vue的scoped flex-wrap规则与frontend-v3/src/styles/layout.css:466-478的全局.meta-tags-bar遗留规则(overflow-x:auto;white-space:nowrap)冲突，导致content-area可滚动时(真实使用场景，如markdown文件实际激活/csv/tsv/xml/plantuml等)meta-tags-bar高度坍缩到33px、标签被裁切丢失。orchestrator已用CDP独立复测确认(scrollHeight=18488>clientHeight=788时metaBarOffsetHeight=33，且overflowX/whiteSpace仍是auto/nowrap未被scoped规则覆盖)。BDD-2/BDD-9两条FAIL，11/13
+      PASS。P5的50/50全绿是因为E2E测试BDD-1/2导航markdown-test时未加?firstFileId=参数，落在默认的architecture.svg文件(非markdown、内容短、content-area不可滚动)，从未触发该bug路径——已核实E2E代码确认此覆盖盲区
 retry_count:
   P1: 2
 history:
-  - {phase: P0, action: created, ts: "2026-08-10T00:00:00Z", note: "T090发布后用户实机走查发现视觉观感差(meta-bar挤压/正文边距太紧/底部栏padding不对称bug/Copy-Wrap按钮风格不统一违反DESIGN.md)。orchestrator用Playwright CDP截图+DOM实测复核，逐条与用户讨论定型修复方案(含2个真实实现bug：底部栏padding-bottom用env()替换而非叠加导致上下不对称；Copy/Wrap按钮绕过DESIGN.md规定的BaseButton/.icon-btn/.toggle-btn体系自建.bottom-btn样式)。用户已确认：Copy改纯图标.icon-btn(对齐桌面端)，Wrap改图标toggle-btn(对齐source-toggle，用WrapText图标)。risk_level倾向low-medium，P6视觉验收不可裁(本任务存在理由就是补上T090缺失的真实视觉验收)"}
-  - {phase: P0, action: scope_expand, ts: "2026-08-10T01:00:00Z", note: "用户要求举一反三，确认范围扩到详情页全部9种viewer（不含Landing/Explore/Settings/Admin全应用审计，那个留独立后续task），并入T091一起做。更新P0-brief加入9个测试entry映射+ImageViewer/HtmlViewer滚动架构例外风险点，risk_level上调medium"}
-  - {phase: P1, action: dispatched, ts: "2026-08-10T02:00:00Z", note: "analyst产出13条BDD，覆盖4处修复+9viewer(7常规合并BDD-9+Image/Html各自独立BDD-10/11)+跨端不回归，自评视觉断言占比69%"}
-  - {phase: P1, action: review_1, ts: "2026-08-10T03:00:00Z", note: "requirements-review needs-revision：BDD-1被误计入视觉断言分子导致占比虚高(真实46%~61.5%)/BDD-2是唯一无DOM兜底的纯主观判定/BDD-10-11判定标准不够具体+未显式声明vision-engine/BDD-9的3个entry只在脚注不在Given"}
-  - {phase: P1, action: revised_1, ts: "2026-08-10T04:00:00Z", note: "analyst第1轮修订4处，新占比自报61.5%(8/13)"}
-  - {phase: P1, action: review_2, ts: "2026-08-10T05:00:00Z", note: "requirements-review第2轮：4/5项独立核实confirmed，占比8/13重新核算一致；但BDD-2的40px阈值理论公式反推基线~34px与P0-brief实测基线17px对不上2倍，怀疑测量口径问题，needs-revision"}
-  - {phase: P1, action: main_investigate, ts: "2026-08-10T06:00:00Z", note: "orchestrator亲自用CDP诊断：最高子元素是.base-tag(26px)非.status-tag(17px)，理论单行公式从根上不适用(实际会换行成多行)；用page.addStyleTag实时注入T091目标CSS(padding16/16+flex-wrap+去横滚)直接测出真实值89px，交给analyst基于实测数据定阈值，不再用理论推算"}
-  - {phase: P1, action: revised_2, ts: "2026-08-10T07:00:00Z", note: "analyst第2轮修订（P1最后一次retry）：BDD-2阈值改为71px(89px实测×0.8)，专门锚定markdown-test entry，写明数据来源"}
-  - {phase: P1, action: review_3, ts: "2026-08-10T08:00:00Z", note: "requirements-review第3轮（最终轮）approved：71px阈值来源从理论公式换成CDP实测数据后逻辑链自洽，entry锚定明确，其余12条BDD核对未变，视觉断言占比8/13≈61.5%不变"}
-  - {phase: P1, action: gate_pass, ts: "2026-08-10T09:00:00Z", note: "check-gate.sh P1 exit 2通过，2个WARNING(SUGGEST不阻塞，均采纳)，phase P1->P2"}
-  - {phase: P2, action: dispatch_failed, ts: "2026-08-10T10:00:00Z", note: "architect subagent触发月度API额度上限提前终止，未落盘任何文件(P2-progress.md/P2-design.md均不存在)。orchestrator亲自用CDP完成minimal_validation：html-csp-test确认.html-viewer高度623px无遮挡；product-screenshots/image-gallery在当前debug环境无真实二进制图片文件不可用；额外发现svg-standalone实际走ImageViewer路径(isImage对image/svg+xml返回true)，height:623px无遮挡，可作为BDD-10的实际测试对象。数据直接喂给重新派发，减少subagent重复劳动"}
-  - {phase: P2, action: redispatched, ts: "2026-08-10T11:00:00Z", note: "重新派发architect(带预采集数据)，产出P2-design.md：candidate_count=1(follows_existing_pattern充分论证)，5处DESIGN.md精确修订，前瞻发现T090遗留E2E会被本次改动直接证伪(BDD-7 class断言/BDD-8缩减比例方向相反)，gate_commands.P3用E2E_SPEC=e2e/t09子串匹配同时覆盖新旧spec吸取T090教训"}
-  - {phase: P2, action: review_1, ts: "2026-08-10T12:00:00Z", note: "plan-design-review needs-revision：5项重点检查全部核实通过，但发现Wrap按钮图标化后缺失aria-label/aria-pressed(真实可访问性回归)+新.icon-btn的tooltip去留未落笔+E2E_SPEC脆弱性未显式承认为技术债，3处均为补丁式文档缺口不涉及重新选型"}
-  - {phase: P2, action: revised_1, ts: "2026-08-10T13:00:00Z", note: "architect第1轮修订3处：Wrap补aria-label/aria-pressed(对齐source-toggle)+Copy显式声明不带tooltip+E2E_SPEC技术债显式承认"}
-  - {phase: P2, action: review_2, ts: "2026-08-10T14:00:00Z", note: "plan-design-review第2轮approved：3处缺口核实真实落笔(写法与source-toggle既有模式逐字符对应非表面应付)"}
-  - {phase: P2, action: gate_pass, ts: "2026-08-10T15:00:00Z", note: "check-gate.sh P2 exit 2通过，无WARNING，phase P2->P3"}
-  - {phase: P3, action: dispatched, ts: "2026-08-10T16:00:00Z", note: "test-designer完成两项任务：手术式修改t090 spec的BDD-7(class 'primary'->'active')/BDD-8(缩减比例->对称性+24px定值断言)；新建t091 spec覆盖13条BDD全部用data-testid选择器(2处有理由例外：desktop Copy按钮用role选择器/HtmlViewer根节点用非改动class)"}
-  - {phase: P3, action: main_verify_red, ts: "2026-08-10T17:00:00Z", note: "orchestrator独立验证：canonical check-tdd-red.sh因120s内部超时只能推断红灯(非确证)，遂亲自跑E2E_SPEC=e2e/t09 make debug-test(耗时约不到2分钟)，结果22 failed/28 passed，与subagent自报完全一致；grep确认0处A类错误(SyntaxError/TypeError/import失败均为0)，全部22处失败为Playwright expect()断言不符，真红灯确认"}
-  - {phase: P3, action: gate_pass, ts: "2026-08-10T17:05:00Z", note: "check-gate.sh P3 exit 2通过，phase P3->P4"}
-  - {phase: P4, action: dispatched, ts: "2026-08-10T17:30:00Z", note: "implementer完成4文件改动(EntryMetaTagsBar/MarkdownViewer/EntryDetailMobileBar/DESIGN.md)，自查vue-tsc通过+E2E 46 passed/4 failed"}
-  - {phase: P4, action: design_gap_found, ts: "2026-08-10T18:00:00Z", note: "implementer正确遵守约束未擅自改测试，标记[DESIGN_GAP:]报告：剩余4处失败(t090 BDD-8+t091 BDD-3各×2 browser)是P3测试代码CSS盒模型缺陷——markdown-body自身boundingBox().x不受自身padding影响，测量目标选错不是实现问题。orchestrator独立核实(直接读测试代码)确认诊断正确"}
-  - {phase: P4, action: test_fix_dispatched, ts: "2026-08-10T18:10:00Z", note: "派发test-designer角色定向修复2处断言测量目标(改测第一个子元素而非markdown-body自身)，未改动阈值/常量/其他测试。修复过程额外发现t090长内容entry触发content-area纵向滚动条挤占右侧10px布局宽度，改用content-area.clientWidth而非硬编码390视口宽度计算rightInset"}
-  - {phase: P4, action: main_verify_fix, ts: "2026-08-10T18:30:00Z", note: "orchestrator独立验证：git diff逐行核对两处spec文件确认只改测量目标未改阈值，亲自重跑E2E_SPEC=e2e/t09 make debug-test得50 passed/0 failed(与subagent自报一致)，亲自跑vue-tsc --noEmit通过、make lint通过，亲自查sqlite确认subagent声称清理的临时校验entry确已删除"}
-  - {phase: P4, action: review_1, ts: "2026-08-10T19:00:00Z", note: "C8映射(domain=frontend)派design-review：6项逐条核对(padding数值/DESIGN.md 5处逐字比对/aria写法与source-toggle逐字符对齐/9个data-testid保留/测试修正越权检查/不改什么核查)全部符合，重点核查的测试修正未越权(未删断言未调松阈值)，approved"}
-  - {phase: P4, action: gate_pass, ts: "2026-08-10T19:05:00Z", note: "check-gate.sh P4 exit 0通过(暂存区含代码文件)，phase P4->P5"}
-  - {phase: P5, action: dispatched, ts: "2026-08-10T19:30:00Z", note: "verifier执行两条gate_commands.P5：make test-frontend(92文件1215 passed/4 skipped/0 failed，无预存失败)+E2E_SPEC=e2e/t09 make debug-test(50 passed/0 failed，25条唯一BDD×2 browser)。[PROD_NOT_TOUCHED]，测试前后生产库entries数均52无变化"}
-  - {phase: P5, action: main_verify, ts: "2026-08-10T20:00:00Z", note: "orchestrator独立验证：unit.md签名grep计数=3达标；e2e.md签名grep计数=0，verifier如实说明为Playwright内置reporter无TAP等价物的固有格式限制(已核实无reporter产出行首^passed文本)非隐瞒，orchestrator不满足于文档解释，亲自重跑E2E_SPEC=e2e/t09 make debug-test独立确认50 passed/0 failed与verifier产出完全一致，真实性确认"}
-  - {phase: P5, action: gate_pass, ts: "2026-08-10T20:05:00Z", note: "check-gate.sh P5 exit 2(需主Agent自行判定)，两条gate_commands均已执行且全通过，无预存失败无需known-failures.md，phase P5->P6"}
+- phase: P0
+  action: created
+  ts: '2026-08-10T00:00:00Z'
+  note: T090发布后用户实机走查发现视觉观感差(meta-bar挤压/正文边距太紧/底部栏padding不对称bug/Copy-Wrap按钮风格不统一违反DESIGN.md)。orchestrator用Playwright
+    CDP截图+DOM实测复核，逐条与用户讨论定型修复方案(含2个真实实现bug：底部栏padding-bottom用env()替换而非叠加导致上下不对称；Copy/Wrap按钮绕过DESIGN.md规定的BaseButton/.icon-btn/.toggle-btn体系自建.bottom-btn样式)。用户已确认：Copy改纯图标.icon-btn(对齐桌面端)，Wrap改图标toggle-btn(对齐source-toggle，用WrapText图标)。risk_level倾向low-medium，P6视觉验收不可裁(本任务存在理由就是补上T090缺失的真实视觉验收)
+- phase: P0
+  action: scope_expand
+  ts: '2026-08-10T01:00:00Z'
+  note: 用户要求举一反三，确认范围扩到详情页全部9种viewer（不含Landing/Explore/Settings/Admin全应用审计，那个留独立后续task），并入T091一起做。更新P0-brief加入9个测试entry映射+ImageViewer/HtmlViewer滚动架构例外风险点，risk_level上调medium
+- phase: P1
+  action: dispatched
+  ts: '2026-08-10T02:00:00Z'
+  note: analyst产出13条BDD，覆盖4处修复+9viewer(7常规合并BDD-9+Image/Html各自独立BDD-10/11)+跨端不回归，自评视觉断言占比69%
+- phase: P1
+  action: review_1
+  ts: '2026-08-10T03:00:00Z'
+  note: requirements-review needs-revision：BDD-1被误计入视觉断言分子导致占比虚高(真实46%~61.5%)/BDD-2是唯一无DOM兜底的纯主观判定/BDD-10-11判定标准不够具体+未显式声明vision-engine/BDD-9的3个entry只在脚注不在Given
+- phase: P1
+  action: revised_1
+  ts: '2026-08-10T04:00:00Z'
+  note: analyst第1轮修订4处，新占比自报61.5%(8/13)
+- phase: P1
+  action: review_2
+  ts: '2026-08-10T05:00:00Z'
+  note: requirements-review第2轮：4/5项独立核实confirmed，占比8/13重新核算一致；但BDD-2的40px阈值理论公式反推基线~34px与P0-brief实测基线17px对不上2倍，怀疑测量口径问题，needs-revision
+- phase: P1
+  action: main_investigate
+  ts: '2026-08-10T06:00:00Z'
+  note: orchestrator亲自用CDP诊断：最高子元素是.base-tag(26px)非.status-tag(17px)，理论单行公式从根上不适用(实际会换行成多行)；用page.addStyleTag实时注入T091目标CSS(padding16/16+flex-wrap+去横滚)直接测出真实值89px，交给analyst基于实测数据定阈值，不再用理论推算
+- phase: P1
+  action: revised_2
+  ts: '2026-08-10T07:00:00Z'
+  note: analyst第2轮修订（P1最后一次retry）：BDD-2阈值改为71px(89px实测×0.8)，专门锚定markdown-test entry，写明数据来源
+- phase: P1
+  action: review_3
+  ts: '2026-08-10T08:00:00Z'
+  note: requirements-review第3轮（最终轮）approved：71px阈值来源从理论公式换成CDP实测数据后逻辑链自洽，entry锚定明确，其余12条BDD核对未变，视觉断言占比8/13≈61.5%不变
+- phase: P1
+  action: gate_pass
+  ts: '2026-08-10T09:00:00Z'
+  note: check-gate.sh P1 exit 2通过，2个WARNING(SUGGEST不阻塞，均采纳)，phase P1->P2
+- phase: P2
+  action: dispatch_failed
+  ts: '2026-08-10T10:00:00Z'
+  note: architect subagent触发月度API额度上限提前终止，未落盘任何文件(P2-progress.md/P2-design.md均不存在)。orchestrator亲自用CDP完成minimal_validation：html-csp-test确认.html-viewer高度623px无遮挡；product-screenshots/image-gallery在当前debug环境无真实二进制图片文件不可用；额外发现svg-standalone实际走ImageViewer路径(isImage对image/svg+xml返回true)，height:623px无遮挡，可作为BDD-10的实际测试对象。数据直接喂给重新派发，减少subagent重复劳动
+- phase: P2
+  action: redispatched
+  ts: '2026-08-10T11:00:00Z'
+  note: 重新派发architect(带预采集数据)，产出P2-design.md：candidate_count=1(follows_existing_pattern充分论证)，5处DESIGN.md精确修订，前瞻发现T090遗留E2E会被本次改动直接证伪(BDD-7
+    class断言/BDD-8缩减比例方向相反)，gate_commands.P3用E2E_SPEC=e2e/t09子串匹配同时覆盖新旧spec吸取T090教训
+- phase: P2
+  action: review_1
+  ts: '2026-08-10T12:00:00Z'
+  note: plan-design-review needs-revision：5项重点检查全部核实通过，但发现Wrap按钮图标化后缺失aria-label/aria-pressed(真实可访问性回归)+新.icon-btn的tooltip去留未落笔+E2E_SPEC脆弱性未显式承认为技术债，3处均为补丁式文档缺口不涉及重新选型
+- phase: P2
+  action: revised_1
+  ts: '2026-08-10T13:00:00Z'
+  note: architect第1轮修订3处：Wrap补aria-label/aria-pressed(对齐source-toggle)+Copy显式声明不带tooltip+E2E_SPEC技术债显式承认
+- phase: P2
+  action: review_2
+  ts: '2026-08-10T14:00:00Z'
+  note: plan-design-review第2轮approved：3处缺口核实真实落笔(写法与source-toggle既有模式逐字符对应非表面应付)
+- phase: P2
+  action: gate_pass
+  ts: '2026-08-10T15:00:00Z'
+  note: check-gate.sh P2 exit 2通过，无WARNING，phase P2->P3
+- phase: P3
+  action: dispatched
+  ts: '2026-08-10T16:00:00Z'
+  note: test-designer完成两项任务：手术式修改t090 spec的BDD-7(class 'primary'->'active')/BDD-8(缩减比例->对称性+24px定值断言)；新建t091
+    spec覆盖13条BDD全部用data-testid选择器(2处有理由例外：desktop Copy按钮用role选择器/HtmlViewer根节点用非改动class)
+- phase: P3
+  action: main_verify_red
+  ts: '2026-08-10T17:00:00Z'
+  note: orchestrator独立验证：canonical check-tdd-red.sh因120s内部超时只能推断红灯(非确证)，遂亲自跑E2E_SPEC=e2e/t09
+    make debug-test(耗时约不到2分钟)，结果22 failed/28 passed，与subagent自报完全一致；grep确认0处A类错误(SyntaxError/TypeError/import失败均为0)，全部22处失败为Playwright
+    expect()断言不符，真红灯确认
+- phase: P3
+  action: gate_pass
+  ts: '2026-08-10T17:05:00Z'
+  note: check-gate.sh P3 exit 2通过，phase P3->P4
+- phase: P4
+  action: dispatched
+  ts: '2026-08-10T17:30:00Z'
+  note: implementer完成4文件改动(EntryMetaTagsBar/MarkdownViewer/EntryDetailMobileBar/DESIGN.md)，自查vue-tsc通过+E2E
+    46 passed/4 failed
+- phase: P4
+  action: design_gap_found
+  ts: '2026-08-10T18:00:00Z'
+  note: implementer正确遵守约束未擅自改测试，标记[DESIGN_GAP:]报告：剩余4处失败(t090 BDD-8+t091 BDD-3各×2
+    browser)是P3测试代码CSS盒模型缺陷——markdown-body自身boundingBox().x不受自身padding影响，测量目标选错不是实现问题。orchestrator独立核实(直接读测试代码)确认诊断正确
+- phase: P4
+  action: test_fix_dispatched
+  ts: '2026-08-10T18:10:00Z'
+  note: 派发test-designer角色定向修复2处断言测量目标(改测第一个子元素而非markdown-body自身)，未改动阈值/常量/其他测试。修复过程额外发现t090长内容entry触发content-area纵向滚动条挤占右侧10px布局宽度，改用content-area.clientWidth而非硬编码390视口宽度计算rightInset
+- phase: P4
+  action: main_verify_fix
+  ts: '2026-08-10T18:30:00Z'
+  note: orchestrator独立验证：git diff逐行核对两处spec文件确认只改测量目标未改阈值，亲自重跑E2E_SPEC=e2e/t09 make
+    debug-test得50 passed/0 failed(与subagent自报一致)，亲自跑vue-tsc --noEmit通过、make lint通过，亲自查sqlite确认subagent声称清理的临时校验entry确已删除
+- phase: P4
+  action: review_1
+  ts: '2026-08-10T19:00:00Z'
+  note: C8映射(domain=frontend)派design-review：6项逐条核对(padding数值/DESIGN.md 5处逐字比对/aria写法与source-toggle逐字符对齐/9个data-testid保留/测试修正越权检查/不改什么核查)全部符合，重点核查的测试修正未越权(未删断言未调松阈值)，approved
+- phase: P4
+  action: gate_pass
+  ts: '2026-08-10T19:05:00Z'
+  note: check-gate.sh P4 exit 0通过(暂存区含代码文件)，phase P4->P5
+- phase: P5
+  action: dispatched
+  ts: '2026-08-10T19:30:00Z'
+  note: verifier执行两条gate_commands.P5：make test-frontend(92文件1215 passed/4 skipped/0
+    failed，无预存失败)+E2E_SPEC=e2e/t09 make debug-test(50 passed/0 failed，25条唯一BDD×2 browser)。[PROD_NOT_TOUCHED]，测试前后生产库entries数均52无变化
+- phase: P5
+  action: main_verify
+  ts: '2026-08-10T20:00:00Z'
+  note: orchestrator独立验证：unit.md签名grep计数=3达标；e2e.md签名grep计数=0，verifier如实说明为Playwright内置reporter无TAP等价物的固有格式限制(已核实无reporter产出行首^passed文本)非隐瞒，orchestrator不满足于文档解释，亲自重跑E2E_SPEC=e2e/t09
+    make debug-test独立确认50 passed/0 failed与verifier产出完全一致，真实性确认
+- phase: P5
+  action: gate_pass
+  ts: '2026-08-10T20:05:00Z'
+  note: check-gate.sh P5 exit 2(需主Agent自行判定)，两条gate_commands均已执行且全通过，无预存失败无需known-failures.md，phase
+    P5->P6
+- phase: P5
+  action: split_commit_fix
+  ts: '2026-08-10T20:10:00Z'
+  note: pre-commit hook拦截：phase已bump到P6但暂存区含fail-list.txt(非.md文件，P5合法产出)触发P6分支'不应直接改代码'拦截。拆成两次commit：先以phase=P5提交P5-test-results等产出，再单独提交phase
+    bump到P6(仅.state.yaml)

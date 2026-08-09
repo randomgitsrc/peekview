@@ -1,0 +1,76 @@
+{
+  "BDD-1": {
+    "scrollWidth": 354,
+    "clientWidth": 354,
+    "offsetHeight": 33,
+    "pass": true
+  },
+  "BDD-2-offsetHeight": {
+    "offsetHeight": 33,
+    "threshold_px": 71,
+    "pass": false
+  },
+  "BDD-4": {
+    "paddingTop": "4px",
+    "paddingBottom": "4px",
+    "pass": true
+  },
+  "BDD-6": {
+    "boundingBox": {
+      "x": 288,
+      "y": 790.5,
+      "width": 44,
+      "height": 44
+    },
+    "pass": true
+  },
+  "BDD-8": {
+    "boundingBox": {
+      "x": 236,
+      "y": 790.5,
+      "width": 44,
+      "height": 44
+    },
+    "pass": true
+  },
+  "BDD-10-investigation": {
+    "contentAreaBefore": {
+      "scrollHeight": 788,
+      "clientHeight": 788,
+      "scrollTop": 0,
+      "overflowY": "auto"
+    },
+    "imageViewerBefore": {
+      "offsetHeight": 629,
+      "top": 150.515625,
+      "bottom": 780
+    },
+    "metaBarBefore": {
+      "offsetHeight": 83,
+      "top": 68,
+      "bottom": 150.515625
+    },
+    "afterMouseDragSwipe": {
+      "scrollTop": 0
+    },
+    "afterTouchSwipe": {
+      "scrollTop": 0
+    },
+    "afterDirectScrollTopAssign250": {
+      "scrollTop": 0
+    },
+    "diagnosis": "NO_SCROLLABLE_CONTENT: scrollHeight <= clientHeight, zero-diff screenshots are legitimate (nothing to scroll)"
+  },
+  "BDD-11-comparison-content-area": {
+    "scrollHeight": 788,
+    "clientHeight": 788
+  },
+  "BDD-12": {
+    "padding": "24px",
+    "paddingTop": "24px",
+    "paddingRight": "24px",
+    "paddingBottom": "24px",
+    "paddingLeft": "24px",
+    "pass": true
+  }
+}

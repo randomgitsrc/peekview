@@ -1,0 +1,29 @@
+{
+  "purpose": "BDD-9 独立 DOM 复核：10 个 viewer 逐一测量 meta-tags-bar 高度、tag 数量、以及有多少个 tag 的 bottom 超出容器自身 bounding box（即被裁切/不可见）。measured via Playwright CDP, mobile 390x844, 2026-08-09",
+  "method": "对每个 entry: 1) CDP mobile viewport override 390x844; 2) goto {slug}; 3) waitForLoadState('networkidle') + 600ms; 4) 读取 [data-testid=meta-tags-bar'] 的 offsetHeight + 内部 .base-tag 元素数量 + 有多少个 .base-tag 的 getBoundingClientRect().bottom > 容器自身 rect.bottom + 2px（即被推出容器可视区域之外）; 5) 同时读取 [data-testid='content-area'] 的 scrollHeight/clientHeight 判断该 entry 在 390x844 视口下是否需要滚动",
+  "results": [
+    { "label": "markdown", "slug": "markdown-test", "metaBarHeight": 83, "tagCount": 4, "clippedTags": 0, "contentAreaScrollable": false },
+    { "label": "code", "slug": "python-entry-service", "metaBarHeight": 33, "tagCount": 4, "clippedTags": 4, "contentAreaScrollable": true },
+    { "label": "csv", "slug": "csv-employees", "metaBarHeight": 33, "tagCount": 4, "clippedTags": 4, "contentAreaScrollable": true },
+    { "label": "tsv", "slug": "tsv-server-metrics", "metaBarHeight": 33, "tagCount": 4, "clippedTags": 4, "contentAreaScrollable": true },
+    { "label": "json", "slug": "json-api-config", "metaBarHeight": 89, "tagCount": 3, "clippedTags": 0, "contentAreaScrollable": false },
+    { "label": "yaml", "slug": "yaml-docker-compose", "metaBarHeight": 89, "tagCount": 4, "clippedTags": 0, "contentAreaScrollable": false },
+    { "label": "xml", "slug": "xml-maven-pom", "metaBarHeight": 33, "tagCount": 4, "clippedTags": 4, "contentAreaScrollable": true },
+    { "label": "svg", "slug": "svg-standalone", "metaBarHeight": 83, "tagCount": 3, "clippedTags": 0, "contentAreaScrollable": false },
+    { "label": "mermaid", "slug": "mermaid-charts", "metaBarHeight": 89, "tagCount": 3, "clippedTags": 0, "contentAreaScrollable": false },
+    { "label": "plantuml", "slug": "plantuml-arch", "metaBarHeight": 33, "tagCount": 2, "clippedTags": 2, "contentAreaScrollable": true }
+  ],
+  "summary": {
+    "broken_count": 5,
+    "broken_entries": ["code", "csv", "tsv", "xml", "plantuml"],
+    "fine_count": 5,
+    "fine_entries": ["markdown(default svg file)", "json", "yaml", "svg", "mermaid"],
+    "pattern": "meta-tags-bar 高度坍缩到 33px（所有 tag 被推出容器可视区域外）当且仅当 [data-testid=content-area] 的 scrollHeight > clientHeight（即该 entry 在 390x844 视口下需要滚动）。不可滚动的短内容 entry 渲染正常（83-89px，0 个 tag 被裁切）。10 个 BDD-9 测试 entry 中 5 个命中该条件，构成系统性视觉不一致。"
+  },
+  "root_cause": {
+    "finding": "frontend-v3/src/styles/layout.css:466-478 存在一条未被清理的全局旧版 .meta-tags-bar 规则（padding:6px 12px; overflow-x:auto; white-space:nowrap;），与 EntryMetaTagsBar.vue 内新的 scoped 规则 .meta-tags-bar[data-v-hash]（padding:16px 16px; flex-wrap:wrap）并存。padding/flex-wrap 两个属性因 scoped 选择器（含属性选择器）specificity 更高而被新规则覆盖生效，但 overflow-x:auto（隐含 overflow-y:auto，CSS 溢出属性配对规则）未被新规则触碰，因此仍然生效。",
+    "empirical_proof": "用 page.addStyleTag 注入 '.meta-tags-bar { overflow-x: visible !important; overflow-y: visible !important; }' 后，markdown-test（firstFileId=18，MarkdownViewer 激活）的 meta-tags-bar offsetHeight 从 33px 立即变为 89px（与 P1/P2 引用的实测锚点值完全一致）。单独只加 white-space:normal（不动 overflow）则高度仍为 33px，证明 overflow-x/y:auto 才是真正病因，而非 white-space。",
+    "trigger_condition": "只有当 [data-testid=content-area] 自身因内容过长而需要垂直滚动（scrollHeight > clientHeight）时，meta-tags-bar 的自动高度计算才会被这条遗留的 overflow-x:auto 规则错误地坍缩到约 33px（约等于 padding-top(16) + 单行文字行高(18) 的高度，第二行起的全部 tag 被推出容器 box 之外，视觉上要么完全不可见、要么被其后的 viewer 内容遮盖），content-area 不需要滚动时该 bug 不触发",
+    "not_yet_fixed_by": "本任务 P4 的改动仅限于 EntryMetaTagsBar.vue 自身的 scoped 样式（padding/flex-wrap），未清理 layout.css 中的遗留全局规则，这是本任务范围声明里未列出、但客观存在的一处技术债/遗漏"
+  }
+}
