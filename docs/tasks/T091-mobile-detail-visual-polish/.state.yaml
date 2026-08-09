@@ -3,7 +3,7 @@ task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10T00:00:00Z
-updated: 2026-08-10T19:00:00Z
+updated: 2026-08-10T20:00:00Z
 retries:
   P1:
     - round: 1
@@ -42,3 +42,6 @@ history:
   - {phase: P4, action: main_verify_fix, ts: "2026-08-10T18:30:00Z", note: "orchestrator独立验证：git diff逐行核对两处spec文件确认只改测量目标未改阈值，亲自重跑E2E_SPEC=e2e/t09 make debug-test得50 passed/0 failed(与subagent自报一致)，亲自跑vue-tsc --noEmit通过、make lint通过，亲自查sqlite确认subagent声称清理的临时校验entry确已删除"}
   - {phase: P4, action: review_1, ts: "2026-08-10T19:00:00Z", note: "C8映射(domain=frontend)派design-review：6项逐条核对(padding数值/DESIGN.md 5处逐字比对/aria写法与source-toggle逐字符对齐/9个data-testid保留/测试修正越权检查/不改什么核查)全部符合，重点核查的测试修正未越权(未删断言未调松阈值)，approved"}
   - {phase: P4, action: gate_pass, ts: "2026-08-10T19:05:00Z", note: "check-gate.sh P4 exit 0通过(暂存区含代码文件)，phase P4->P5"}
+  - {phase: P5, action: dispatched, ts: "2026-08-10T19:30:00Z", note: "verifier执行两条gate_commands.P5：make test-frontend(92文件1215 passed/4 skipped/0 failed，无预存失败)+E2E_SPEC=e2e/t09 make debug-test(50 passed/0 failed，25条唯一BDD×2 browser)。[PROD_NOT_TOUCHED]，测试前后生产库entries数均52无变化"}
+  - {phase: P5, action: main_verify, ts: "2026-08-10T20:00:00Z", note: "orchestrator独立验证：unit.md签名grep计数=3达标；e2e.md签名grep计数=0，verifier如实说明为Playwright内置reporter无TAP等价物的固有格式限制(已核实无reporter产出行首^passed文本)非隐瞒，orchestrator不满足于文档解释，亲自重跑E2E_SPEC=e2e/t09 make debug-test独立确认50 passed/0 failed与verifier产出完全一致，真实性确认"}
+  - {phase: P5, action: gate_pass, ts: "2026-08-10T20:05:00Z", note: "check-gate.sh P5 exit 2(需主Agent自行判定)，两条gate_commands均已执行且全通过，无预存失败无需known-failures.md，phase P5->P6"}
