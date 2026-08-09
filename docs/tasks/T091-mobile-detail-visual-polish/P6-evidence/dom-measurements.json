@@ -1,0 +1,190 @@
+{
+  "bdd1_2_markdown_scrollable": {
+    "found": true,
+    "offsetHeight": 89,
+    "scrollWidth": 364,
+    "clientWidth": 364,
+    "overflowX": "visible",
+    "whiteSpace": "normal",
+    "contentAreaScrollHeight": 18544,
+    "contentAreaClientHeight": 788,
+    "contentAreaScrollable": true,
+    "tagTexts": 8
+  },
+  "bdd4_bottom_bar_padding": {
+    "found": true,
+    "paddingTop": "4px",
+    "paddingBottom": "4px"
+  },
+  "bdd6_copy_hitarea": {
+    "x": 288,
+    "y": 790.5,
+    "width": 44,
+    "height": 44
+  },
+  "bdd5_copy_btn_class": "icon-btn",
+  "bdd8_wrap_hitarea": {
+    "x": 236,
+    "y": 790.5,
+    "width": 44,
+    "height": 44
+  },
+  "bdd7_wrap_on_class": "toggle-btn active",
+  "bdd3_markdown_padding_mobile": {
+    "found": true,
+    "paddingLeft": "16px",
+    "paddingRight": "16px",
+    "contentAreaPaddingLeft": "8px"
+  },
+  "bdd9_viewers": {
+    "markdown": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 18544,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 8
+    },
+    "code": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 4732,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 8
+    },
+    "csv": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 1590,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 8
+    },
+    "tsv": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 2730,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 8
+    },
+    "json": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 374,
+      "clientWidth": 374,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 788,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": false,
+      "tagTexts": 7
+    },
+    "yaml": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 374,
+      "clientWidth": 374,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 788,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": false,
+      "tagTexts": 8
+    },
+    "xml": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 993,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 8
+    },
+    "svg": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 374,
+      "clientWidth": 374,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 788,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": false,
+      "tagTexts": 7
+    },
+    "mermaid": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 374,
+      "clientWidth": 374,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 788,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": false,
+      "tagTexts": 7
+    },
+    "plantuml": {
+      "found": true,
+      "offsetHeight": 89,
+      "scrollWidth": 364,
+      "clientWidth": 364,
+      "overflowX": "visible",
+      "whiteSpace": "normal",
+      "contentAreaScrollHeight": 1127,
+      "contentAreaClientHeight": 788,
+      "contentAreaScrollable": true,
+      "tagTexts": 6
+    }
+  },
+  "bdd10_image_firstscreen": {
+    "barOffsetHeight": 89,
+    "contentAreaClientHeight": 788,
+    "imgViewerOffsetHeight": 623,
+    "imgViewerFound": true,
+    "imgViewerClass": "image-viewer"
+  },
+  "bdd10_image_afterswipe": {
+    "barVisible": true,
+    "barRectTop": 68
+  },
+  "bdd11_html_firstscreen": {
+    "barOffsetHeight": 89,
+    "contentAreaClientHeight": 788,
+    "htmlViewerOffsetHeight": 623,
+    "htmlViewerFound": true,
+    "htmlViewerClass": "html-viewer"
+  },
+  "bdd13_desktop_check": {
+    "mobileBottomBar": false,
+    "metaTagsBar": false,
+    "headerMetaRow": true
+  },
+  "bdd12_desktop_padding": {
+    "found": true,
+    "paddingLeft": "24px",
+    "paddingRight": "24px",
+    "paddingTop": "24px"
+  }
+}

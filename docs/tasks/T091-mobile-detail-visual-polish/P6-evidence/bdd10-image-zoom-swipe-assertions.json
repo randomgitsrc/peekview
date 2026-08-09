@@ -1,0 +1,26 @@
+{
+  "unzoomed_pre_swipe": {
+    "containerScrollTop": 0,
+    "containerOverflowY": "hidden",
+    "isZoomedClass": "image-container",
+    "barRectTop": 68
+  },
+  "unzoomed_post_swipe": {
+    "containerScrollTop": 0,
+    "containerOverflowY": "hidden",
+    "isZoomedClass": "image-container",
+    "barRectTop": 68
+  },
+  "unzoomed_swipe_produced_dom_change": false,
+  "zoomed_state": {
+    "isZoomedClass": "image-container image-zoomed",
+    "overflowY": "auto",
+    "scrollHeight": 613,
+    "clientHeight": 613
+  },
+  "zoomed_after_swipe": {
+    "scrollTop": 0,
+    "barRectTop": 68,
+    "barVisible": true
+  }
+}

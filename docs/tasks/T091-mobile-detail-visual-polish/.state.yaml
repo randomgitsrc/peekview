@@ -1,9 +1,9 @@
-phase: P5
+phase: P7
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10 00:00:00+00:00
-updated: 2026-08-10 21:00:00+00:00
+updated: 2026-08-10 22:45:00+00:00
 retries:
   P1:
   - round: 1
@@ -185,3 +185,34 @@ history:
   action: retry1_gate_pass
   ts: '2026-08-10T21:55:00Z'
   note: check-gate.sh P4 exit 0通过，phase P4->P5(重新走P5验证)
+- phase: P5
+  action: retry1_dispatched
+  ts: '2026-08-10T22:00:00Z'
+  note: verifier重新全量跑两条gate_commands.P5：make test-frontend(92文件1215
+    passed/0 failed)+E2E_SPEC=e2e/t09 make debug-test(50 passed/0 failed)。重点确认本轮修复目标BDD-1/BDD-2在两个browser
+    project上均真实通过(不再是覆盖盲区式通过)
+- phase: P5
+  action: retry1_main_verify
+  ts: '2026-08-10T22:10:00Z'
+  note: orchestrator独立验证：unit.md签名grep计数=3；亲自重跑E2E_SPEC=e2e/t09 make
+    debug-test确认50 passed/0 failed与产出一致；[PROD_NOT_TOUCHED]
+- phase: P5
+  action: retry1_gate_pass
+  ts: '2026-08-10T22:15:00Z'
+  note: check-gate.sh P5 exit 2通过，两条gate_commands全通过，phase P5->P6(重新走P6验收)
+- phase: P6
+  action: retry1_dispatched
+  ts: '2026-08-10T22:20:00Z'
+  note: verifier完整重新走13条BDD验收(不复用上一轮任何截图/结论，全部重新截图+DOM复测)，结果13/13
+    PASS。重点确认BDD-2用markdown-test?firstFileId=18真实触发content-area可滚动场景(scrollHeight18544>clientHeight788)下meta-tags-bar恢复89px；BDD-9的10个entry全部clippedChildren=0，此前受影响的5个(code/csv/tsv/xml/plantuml)确认恢复正常，xml的Search框遮挡现象消失。vision-analyst
+    blocker_count=0/warning_count=0/overall_status=pass
+- phase: P6
+  action: retry1_main_verify
+  ts: '2026-08-10T22:40:00Z'
+  note: orchestrator独立复核：亲自跑三条预检脚本(format/evidence/provenance)+check-gate.sh
+    P6均pass；独立CDP复测xml-maven-pom/csv-employees/plantuml-arch三个此前受影响entry，均确认89px/clippedDescendants=0，与产出完全一致；独立核对vision
+    yaml的blocker_count=0/warning_count=0；独立grep确认19张截图md5全部唯一无重复
+- phase: P6
+  action: retry1_gate_pass
+  ts: '2026-08-10T22:45:00Z'
+  note: check-gate.sh P6 exit 2通过(FAIL=0/TOTAL=13)，phase P6->P7

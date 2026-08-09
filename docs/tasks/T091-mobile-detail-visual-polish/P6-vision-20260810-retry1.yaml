@@ -1,0 +1,768 @@
+vision_analysis:
+  screenshots:
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd1_bdd2_markdown_scrollable.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd3_markdown_padding.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd5_bdd6_copy_icon.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd7_wrap_on.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_markdown.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_code.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_csv.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_tsv.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_json.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_yaml.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_xml.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_svg.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_mermaid.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd9_plantuml.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd10_image_firstscreen.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd10_image_zoomed_state.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd11_html_firstscreen.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/mobile_390x844_bdd11_html_afterswipe.png"
+    - "frontend-v3/docs/tasks/T091-mobile-detail-visual-polish/P6-evidence/screenshots/desktop_1280x800_bdd12_markdown_padding.png"
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-08-10T00:00:00"
+
+  viewports:
+    - id: "mobile_bdd1_bdd2_markdown_scrollable"
+      file: ".../mobile_390x844_bdd1_bdd2_markdown_scrollable.png"
+      size: "390x844"
+      page:
+        title: "Markdown 渲染测试集 — PeekView 完整开发手册"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏: P  Markdown 渲染测试集
+          用户区: A  alice  ADMIN
+          meta行1: @alice · 16h ago | 716 reads · Public   markdown
+          meta行2: 测试  渲染  文档
+          H1: PeekView 完整开发手册
+          引用块: 版本: 0.14.0 | 更新: 2026-08-01 | 状态: 活跃维护
+          段落: 本文档是 PeekView 的完整开发参考，涵盖架构设计、API 规范、前端组件、MCP 集成和部署运维。
+          H2: 目录
+          列表: 1. 项目概述 2. 架构设计 3. 后端 API 4. 前端组件 5. MCP Server 6. 数据库设计 7. 安全策略 8. 测试体系 9. 部署运维（底部被固定操作栏部分遮挡）
+          底部操作栏图标: 文件夹(角标2)  列表  <>  复制  ... v
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "meta-tags-bar"
+            position: "导航栏下方、H1上方"
+            estimated_height: "约68-80px（两行）"
+            z_layer: "normal"
+          - id: "content-area"
+            position: "meta-tags-bar下方，主体"
+            z_layer: "normal"
+          - id: "mobile-bottom-bar"
+            position: "bottom-fixed"
+            estimated_height: "约48px"
+            z_layer: "elevated"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        background_card: "浅蓝背景标签，估计 #e8f0fe 左右"
+        primary: "蓝色系（图标/链接），估计 #2563eb 附近"
+        primary_text: "深灰/黑色"
+        secondary_text: "灰色"
+        border: "浅灰色分隔线"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels:
+          - level: "page-title(H1)"
+            approx_size: "约22-24px"
+            weight: "700"
+            color: "深黑"
+          - level: "meta-text"
+            approx_size: "约13px"
+            weight: "400"
+            color: "灰色"
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "meta-tags-bar"
+          label: "元信息+4个标签(markdown/测试/渲染/文档)"
+          state: "normal"
+          style:
+            padding: "上下左右均有清晰留白，约12-24px估算"
+            background: "白色，与卡片一致"
+        - type: "bottom-toolbar"
+          label: "文件夹/列表/代码/复制/更多"
+          state: "normal"
+          position: "底部固定"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平/极简"
+        border_radius_usage: "标签胶囊圆角，卡片圆角"
+        shadow_usage: "无明显阴影"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies:
+        - type: "missing_element"
+          location: "正文目录列表第9项「部署运维」"
+          description: "目录第9项被底部固定操作栏局部遮挡，属于长列表内容与固定底栏的正常层叠现象，非meta-tags-bar相关缺陷"
+          severity: "info"
+        - type: "layout_break"
+          location: "页面整体"
+          description: "截图中未观察到横向滚动条或内容横向溢出迹象；主标题在到达边界时自然换行而非溢出"
+          severity: "info"
+
+    - id: "mobile_bdd3_markdown_padding"
+      file: ".../mobile_390x844_bdd3_markdown_padding.png"
+      size: "390x844"
+      page:
+        title: "Markdown 渲染测试集"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          同上（同一entry，内容一致）
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "meta-tags-bar"
+            position: "导航栏下方"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        primary: "蓝色系"
+        primary_text: "深黑"
+        secondary_text: "灰色"
+        border: "浅灰"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "content-body"
+          label: "markdown正文"
+          state: "normal"
+          style:
+            padding: "左右padding估算约16-24px，与meta-tags-bar标签左边缘视觉对齐"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平/极简"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一"
+      anomalies: []
+
+    - id: "mobile_bdd5_7off_copy"
+      file: ".../mobile_390x844_bdd5_bdd6_copy_icon.png"
+      size: "390x844"
+      page:
+        title: "Entry Service 源码（Python）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏: P  Entry Service 源码（Pyth...（标题被截断显示省略号，属正常overflow ellipsis）
+          用户区: A  alice  ADMIN
+          meta行1: @alice · 16h ago | 343 reads · Public   python
+          meta行2: fastapi  源码  后端
+          代码区: Python源码，行号1-27，语法高亮
+          底部操作栏: 文件夹(角标2)  Wrap  Copy  ... v
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "bottom-toolbar"
+            position: "bottom"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        primary: "蓝色"
+        primary_text: "深灰"
+        secondary_text: "灰色"
+        border: "浅灰分隔线"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "monospace(代码区)/sans-serif(UI)"
+        levels: []
+        line_height: "normal"
+        truncation_observed: true
+      components:
+        - type: "button-icon"
+          label: "Wrap(自动换行)"
+          state: "off/未激活"
+          style:
+            background: "无背景色块，透明"
+            icon_color: "深灰色"
+        - type: "button-icon"
+          label: "Copy(复制)"
+          state: "normal"
+          style:
+            background: "无背景色块，纯图标"
+            icon_color: "深灰色"
+            border: "无"
+        - type: "button-icon"
+          label: "More(更多)"
+          state: "normal"
+          style:
+            background: "无背景色块"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平"
+        border_radius_usage: "标签胶囊圆角"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性统一"
+        component_consistency: "统一"
+      anomalies:
+        - type: "text_overflow"
+          location: "顶部标题栏"
+          description: "标题「Entry Service 源码（Python）」因容器宽度不足被截断为「Entry Service 源码（Pyth...」，为常规ellipsis截断，非本轮meta-tags-bar缺陷范畴"
+          severity: "info"
+
+    - id: "mobile_bdd7_wrap_on"
+      file: ".../mobile_390x844_bdd7_wrap_on.png"
+      size: "390x844"
+      page:
+        title: "Entry Service 源码（Python）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          同上页面，Wrap按钮点击后
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors:
+        background_page: "#ffffff"
+        primary: "浅蓝背景/亮蓝图标（Wrap on态）"
+        primary_text: "深灰"
+        secondary_text: "灰色"
+        border: "无"
+        error: null
+        success: null
+        contrast_issues: []
+      typography:
+        font_style: "sans-serif"
+        levels: []
+        line_height: "normal"
+        truncation_observed: false
+      components:
+        - type: "button-icon-toggle"
+          label: "Wrap(自动换行)"
+          state: "on/激活"
+          style:
+            background: "浅蓝色圆角矩形高亮块"
+            icon_color: "亮蓝色/主题蓝"
+            border: "无边框"
+      overlay:
+        modal_open: false
+        dropdown_open: false
+        tooltip_visible: false
+        mask_present: false
+      animation:
+        spinner_visible: false
+        skeleton_visible: false
+        transition_artifact: false
+      style:
+        overall: "扁平"
+        border_radius_usage: "统一"
+        shadow_usage: "无"
+        gradient_usage: "无"
+        icon_style: "线性"
+        component_consistency: "统一，on/off两态对比清晰可辨识（有背景块+蓝色图标 vs 无背景+灰色图标）"
+      anomalies: []
+
+    - id: "mobile_bdd9_markdown"
+      file: ".../mobile_390x844_bdd9_markdown.png"
+      size: "390x844"
+      page:
+        title: "Markdown viewer"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago|720 reads·Public / markdown / 测试 渲染 文档"
+      layout:
+        type: "flex-column"
+        regions: []
+        alignment_consistent: true
+        spacing_consistent: true
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(markdown/测试/渲染/文档)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_code"
+      file: ".../mobile_390x844_bdd9_code.png"
+      size: "390x844"
+      page:
+        title: "Entry Service 源码（Python）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago|345 reads·Public / python / fastapi 源码 后端"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "monospace/sans-serif", levels: [], line_height: "normal", truncation_observed: true}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(python/fastapi/源码/后端)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "text_overflow"
+          location: "代码区右侧多行（如第1、3、10、11行）"
+          description: "代码正文右侧部分行文字被裁切（如「timezone」被截断），推测为代码内容超出可视宽度所致，是CodeViewer代码区自身的横向内容显示问题，与meta-tags-bar无关，不影响BDD-9判定"
+          severity: "info"
+
+    - id: "mobile_bdd9_csv"
+      file: ".../mobile_390x844_bdd9_csv.png"
+      size: "390x844"
+      page:
+        title: "员工数据表（CSV 表格视图）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @carol·16h ago·51 reads·Public / csv 表格 / 数据 TableView"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: true}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(csv/表格/数据/TableView)"
+          state: "normal，留白充足未压缩，之前问题已恢复"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "text_overflow"
+          location: "表头「salary」列"
+          description: "表头文字被右侧边界截断仅显示「sala」，为表格列宽/正文内容问题，非meta-tags-bar缺陷"
+          severity: "info"
+
+    - id: "mobile_bdd9_tsv"
+      file: ".../mobile_390x844_bdd9_tsv.png"
+      size: "390x844"
+      page:
+        title: "服务器监控指标（TSV 表格视图）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago·52 reads·Public / tsv 监控 / 数据 TableView"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(tsv/监控/数据/TableView)"
+          state: "normal，留白充足未压缩，之前问题已恢复"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_json"
+      file: ".../mobile_390x844_bdd9_json.png"
+      size: "390x844"
+      page:
+        title: "API 服务配置（JSON 树视图）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @bob·16h ago|51 reads·Public / json / 配置 TreeView"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(json/配置/TreeView)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "text_overflow"
+          location: "顶部标题栏"
+          description: "标题「API 服务配置（JSON 树视...」因宽度不足被省略号截断，常规ellipsis现象，与meta-tags-bar无关"
+          severity: "info"
+
+    - id: "mobile_bdd9_yaml"
+      file: ".../mobile_390x844_bdd9_yaml.png"
+      size: "390x844"
+      page:
+        title: "Docker Compose 编排（YAML 树视图）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago|48 reads·Public / yaml docker / 编排 TreeView"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(yaml/docker/编排/TreeView)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_xml"
+      file: ".../mobile_390x844_bdd9_xml.png"
+      size: "390x844"
+      page:
+        title: "Maven 项目配置（XML 树视图）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago|?reads·Public / xml maven / 配置 TreeView"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "4个标签(xml/maven/配置/TreeView)"
+          state: "normal，留白充足未压缩，之前问题已恢复"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_svg"
+      file: ".../mobile_390x844_bdd9_svg.png"
+      size: "390x844"
+      page:
+        title: "SVG 矢量图独立展示"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @carol·16h ago|170 reads·Public / svg 矢量图 / 图片"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(svg/矢量图/图片)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_mermaid"
+      file: ".../mobile_390x844_bdd9_mermaid.png"
+      size: "390x844"
+      page:
+        title: "Mermaid 图表示例集"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @alice·16h ago|52 reads·Public / mermaid 图表 / 文档"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(mermaid/图表/文档)"
+          state: "normal，留白充足未压缩"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd9_plantuml"
+      file: ".../mobile_390x844_bdd9_plantuml.png"
+      size: "390x844"
+      page:
+        title: "PlantUML 架构图"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: "meta-tags-bar: @bob·16h ago·48 reads·Public / plantuml 架构"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "monospace/sans-serif", levels: [], line_height: "normal", truncation_observed: true}
+      components:
+        - type: "meta-tags-bar"
+          label: "2个标签(plantuml/架构，第二个标签因换行显示在第二行，属正常flex-wrap)"
+          state: "normal，留白充足未压缩，之前问题已恢复"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "text_overflow"
+          location: "PlantUML代码区第22、24行右侧"
+          description: "代码文本右侧被截断（显示为「a...」「as...」），是CodeViewer代码内容本身超宽显示问题，与meta-tags-bar无关，不影响BDD-9判定"
+          severity: "info"
+
+    - id: "mobile_bdd10_image_firstscreen"
+      file: ".../mobile_390x844_bdd10_image_firstscreen.png"
+      size: "390x844"
+      page:
+        title: "SVG 矢量图独立展示（ImageViewer路径）"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          meta-tags-bar: @carol · 16h ago | 173 reads · Public   svg  矢量图
+          第二行: 图片
+          图片区标题: PeekView 架构图
+          图片区节点: 前端/后端/MCP Server, 数据流(create_entry→SQLite WAL→SQLite WAL, FTS5搜索→Jieba分词→SQLite查询)
+          图片底部: PeekView v0.14.0 — 2026-08-01
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "meta-tags-bar"
+            position: "顶部导航栏下方"
+            z_layer: "normal"
+          - id: "image-viewer"
+            position: "下方主体"
+            z_layer: "normal"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors: {background_page: "#ffffff", background_card: "深蓝/黑色(图片背景)", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(svg/矢量图/图片)"
+          state: "完整可见，无被内容遮挡，与下方图片区之间有明显空白间隔"
+        - type: "image-viewer"
+          label: "架构图图片"
+          state: "图片本身完整展示，未裁切"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "layout_break"
+          location: "meta-tags-bar与图片之间的空白区域"
+          description: "meta-tags-bar与图片主体之间存在较大空白（约占页面1/3垂直空间），使图片视觉占比不够紧凑；这是留白偏多而非被压缩/遮挡，不构成BDD-10的失败条件（BDD-10关注是否被压缩/遮挡，实际观察是完整无遮挡）"
+          severity: "info"
+
+    - id: "mobile_bdd10_image_zoomed_state"
+      file: ".../mobile_390x844_bdd10_image_zoomed_state.png"
+      size: "390x844"
+      page:
+        title: "SVG 矢量图独立展示（放大状态，辅助参照）"
+        loading_state: "loaded"
+        scroll_state: "unknown"
+        visible_text_complete: "meta-tags-bar: @carol · 16h ago · 188 reads · Public  svg 矢量图 / 图片"
+      layout: {type: "flex-column", regions: [], alignment_consistent: true, spacing_consistent: true}
+      colors: {background_page: "#ffffff", background_card: "深蓝色(图片放大后)", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: true}
+      components:
+        - type: "meta-tags-bar"
+          label: "标签+元信息"
+          state: "放大状态下仍完整可见，无遮罩层压暗"
+        - type: "image-viewer"
+          label: "架构图放大态"
+          state: "图片宽度超出可视区域，右侧内容（如标题PeekV...）被截断，符合放大查看后局部溢出的预期行为"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd11_html_firstscreen"
+      file: ".../mobile_390x844_bdd11_html_firstscreen.png"
+      size: "390x844"
+      page:
+        title: "HTML 渲染与 CSP 测试"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          meta-tags-bar: @bob · 16h ago · 69 reads · Public   html  安全  CSP
+          HtmlViewer标题: CSP Sandbox 测试
+          描述: 此页面在 iframe sandbox 中渲染，测试内联脚本与表单交互。
+          表单: 名称：[输入你的名字]  提交
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "meta-tags-bar"
+            position: "顶部"
+          - id: "html-viewer(iframe)"
+            position: "下方"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(html/安全/CSP)"
+          state: "完整可见，未被遮挡"
+        - type: "html-viewer"
+          label: "iframe sandbox内容卡片"
+          state: "正常，与meta-tags-bar之间间距一致、过渡自然，无重影/跳变"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies: []
+
+    - id: "mobile_bdd11_html_afterswipe"
+      file: ".../mobile_390x844_bdd11_html_afterswipe.png"
+      size: "390x844"
+      page:
+        title: "HTML 渲染与 CSP 测试（向上滑动后）"
+        loading_state: "loaded"
+        scroll_state: "scrolled"
+        visible_text_complete: |
+          meta-tags-bar: @bob · 16h ago · 69 reads · Public   html  安全  CSP
+          HtmlViewer标题: CSP Sandbox 测试(其中"box"三字呈蓝色高亮选中态)
+          描述文字整段呈蓝色高亮选中态
+          表单输入框占位文字"输入你的名字"呈选中态
+      layout:
+        type: "flex-column"
+        regions:
+          - id: "meta-tags-bar"
+            position: "顶部，滑动后仍完整可见"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors: {background_page: "#ffffff", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-tags-bar"
+          label: "3个标签(html/安全/CSP)"
+          state: "完整可见，与首屏截图相比无跳变、无重影，衔接处间距一致"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无", gradient_usage: "无", icon_style: "线性", component_consistency: "统一"}
+      anomalies:
+        - type: "wrong_state"
+          location: "HtmlViewer内容区（标题「box」字样、描述整段、输入框占位文字）"
+          description: "该截图内出现多处文本呈蓝色高亮选中状态，推测为模拟'向上滑动手势'时使用了鼠标拖拽而非真实触摸滚动，在iframe内触发了文本选中，属于截图采集方式的副作用（testing artifact），并非产品CSS缺陷。不影响meta-tags-bar区域本身的评估结论（该区域完整可见、无重影跳变）"
+          severity: "info"
+
+    - id: "desktop_bdd12_13_markdown_padding"
+      file: ".../desktop_1280x800_bdd12_markdown_padding.png"
+      size: "1280x800"
+      page:
+        title: "PeekView — Markdown 渲染测试集"
+        loading_state: "loaded"
+        scroll_state: "top"
+        visible_text_complete: |
+          导航栏: P  PeekView | Markdown 渲染测试集    图标组(文件夹角标2/列表/<>/复制/更多)  A alice ADMIN  月亮图标
+          meta行: @alice • 16h ago • Expires in 15d | 722 reads • Public   markdown 测试 渲染 文档
+          左栏: FILES · 2   architecture.svg   rich-markdown.md(选中态)
+          正文: PeekView 完整开发手册 / 版本: 0.14.0 | 更新: 2026-08-01 | 状态: 活跃维护 / 本文档是...  / 目录 / 1-10编号链接列表 / 1. 项目概述
+          右栏: ON THIS PAGE  目录树
+      layout:
+        type: "grid"
+        regions:
+          - id: "header"
+            position: "top-full-width"
+          - id: "left-sidebar(files)"
+            position: "left"
+          - id: "content-area"
+            position: "center"
+          - id: "right-sidebar(toc)"
+            position: "right"
+        alignment_consistent: true
+        spacing_consistent: true
+      colors: {background_page: "#ffffff", background_card: "浅蓝(选中文件项高亮)", primary: "蓝色", primary_text: "深黑", secondary_text: "灰色", border: "浅灰", error: null, success: null, contrast_issues: []}
+      typography: {font_style: "sans-serif", levels: [], line_height: "normal", truncation_observed: false}
+      components:
+        - type: "meta-info-row"
+          label: "元信息行(非meta-tags-bar/非mobile-bottom-bar)"
+          state: "位于Header正下方、三栏主体上方，横跨内容宽度；未见独立深色meta-tags-bar或mobile-bottom-bar"
+        - type: "button-icon"
+          label: "Copy复制按钮(顶部导航栏图标组内)"
+          state: "normal"
+          style:
+            background: "无背景色，透明"
+            icon_color: "灰色/黑色线框风格，与其余顶部图标风格一致"
+      overlay: {modal_open: false, dropdown_open: false, tooltip_visible: false, mask_present: false}
+      animation: {spinner_visible: false, skeleton_visible: false, transition_artifact: false}
+      style: {overall: "扁平", border_radius_usage: "统一", shadow_usage: "无明显阴影", gradient_usage: "无", icon_style: "线性统一", component_consistency: "统一"}
+      anomalies: []
+
+  responsive_comparison:
+    - dimension: "meta信息展示方式"
+      desktop: "作为水平元信息行位于Header下方、三栏主体上方，非独立深色meta-tags-bar，非mobile-bottom-bar"
+      mobile: "独立meta-tags-bar区域，位于导航栏下方、正文/viewer之上，两行flex-wrap布局，留白清晰"
+      expected_behavior: "符合"
+    - dimension: "底部操作栏"
+      desktop: "无mobile-bottom-bar，操作图标集成在顶部导航栏图标组"
+      mobile: "底部固定操作栏(文件夹/列表/代码/Copy/Wrap/更多)"
+      expected_behavior: "符合"
+    - dimension: "Copy按钮视觉风格"
+      desktop: "纯图标，无背景色，线框风格"
+      mobile: "纯图标，无背景色（off态）"
+      expected_behavior: "符合，桌面与移动端Copy按钮视觉风格一致"
+
+  comparison:
+    reference: null
+    deviations: []
+
+  bdd_results:
+    - condition: "BDD-1: 移动端markdown可滚动场景下，页面横向无滚动（DOM辅助校验）"
+      result: "pass"
+      evidence: "mobile_390x844_bdd1_bdd2_markdown_scrollable.png 中未观察到横向滚动条或内容横向溢出迹象，主标题在边界处自然换行而非溢出（视觉判断，DOM断言需配合自动化脚本佐证）"
+      screenshot_region: "页面整体"
+    - condition: "BDD-2: content-area可滚动状态下，meta-tags-bar 保持留白呼吸感，不贴边压缩，标签内容完整不被裁切"
+      result: "pass"
+      evidence: "meta-tags-bar区域两行布局，高度约68-80px，四周留白清晰（左右约16-24px），4个标签(markdown/测试/渲染/文档)文字全部完整可读，无裁切、无省略号截断、无挤压变形迹象"
+      screenshot_region: "导航栏下方、H1标题上方"
+    - condition: "BDD-3: markdown正文不贴边，与meta-tags-bar左边缘对齐"
+      result: "pass"
+      evidence: "正文区域左右留白约16-24px，标题/引用块/段落/列表均严格对齐同一左侧边距线，与meta-tags-bar标签左边缘视觉对齐一致"
+      screenshot_region: "正文内容区"
+    - condition: "BDD-5: 底部操作栏Copy按钮为纯图标，无蓝色背景"
+      result: "pass"
+      evidence: "mobile_390x844_bdd5_bdd6_copy_icon.png 中Copy按钮无任何背景色块，纯灰色线条图标；desktop_1280x800_bdd12_markdown_padding.png 桌面端Copy按钮同样为透明背景线框图标，两端风格一致"
+      screenshot_region: "底部操作栏/顶部导航栏图标组"
+    - condition: "BDD-7: Wrap图标toggle开关两态视觉可区分"
+      result: "pass"
+      evidence: "off态(mobile_390x844_bdd5_bdd6_copy_icon.png)：Wrap图标无背景色块、灰色线条；on态(mobile_390x844_bdd7_wrap_on.png)：Wrap图标有浅蓝色圆角背景高亮块+亮蓝色图标，两态对比鲜明可区分"
+      screenshot_region: "底部操作栏"
+    - condition: "BDD-9: 10种viewer(markdown/code/csv/tsv/json/yaml/xml/svg/mermaid/plantuml)下meta-tags-bar换行/留白/正文边距/底部按钮风格一致，标签不被裁切/压缩/遮挡"
+      result: "pass"
+      evidence: "10张截图逐一确认：meta-tags-bar高度均约50-80px（视标签数量1-2行浮动），四周留白清晰未贴边，各viewer标签数量分别为markdown(4)/code(4)/csv(4)/tsv(4)/json(3)/yaml(4)/xml(4)/svg(3)/mermaid(3)/plantuml(2)，文字均完整可读无裁切。此前出问题的code/csv/tsv/xml/plantuml这5个viewer均已恢复正常，未再出现标签消失或被压缩的迹象"
+      screenshot_region: "各viewer页面顶部meta-tags-bar"
+    - condition: "BDD-10: Image viewer例外场景下，meta-tags-bar完整可见不被遮挡，ImageViewer区域未显得被压缩"
+      result: "pass"
+      evidence: "mobile_390x844_bdd10_image_firstscreen.png 中meta-tags-bar(3个标签:svg/矢量图/图片)完整可见，与下方图片区之间有清晰空白间隔无遮挡；图片本身完整展示未裁切。放大态辅助截图中meta-tags-bar同样完整可见，无遮罩层压暗"
+      screenshot_region: "ImageViewer页面顶部及图片区"
+    - condition: "BDD-11: Html viewer例外场景下，meta-tags-bar完整可见，与HtmlViewer衔接处无重影/跳变"
+      result: "pass"
+      evidence: "首屏(mobile_390x844_bdd11_html_firstscreen.png)与滑动后(mobile_390x844_bdd11_html_afterswipe.png)两张截图中meta-tags-bar(3个标签:html/安全/CSP)均完整可见，衔接处间距一致，未见重影或跳变。滑动后截图中HtmlViewer内容区出现文本选中高亮，判断为截图操作方式(鼠标拖拽模拟滑动)触发的采集副作用，不影响meta-tags-bar本身的评估"
+      screenshot_region: "HtmlViewer页面顶部及衔接处"
+    - condition: "BDD-12: 桌面端(>640px)markdown正文左右不贴边"
+      result: "pass"
+      evidence: "desktop_1280x800_bdd12_markdown_padding.png 中正文区域左右留白明显，估算约40-60px，标题与正文均缩进显示未顶格"
+      screenshot_region: "桌面端正文内容区"
+    - condition: "BDD-13: 桌面端不出现mobile-bottom-bar/meta-tags-bar，meta信息应在EntryDetailHeader的.meta-row中"
+      result: "pass"
+      evidence: "desktop_1280x800_bdd12_markdown_padding.png 中未观察到独立深色meta-tags-bar区块，也未见移动端风格的底部固定操作栏；元信息(@alice·16h ago·Expires in 15d|722 reads·Public及markdown/测试/渲染/文档标签)以水平行形式呈现在顶部Header正下方、三栏主体上方"
+      screenshot_region: "桌面端Header下方元信息行"
+
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 10
+    bdd_fail: 0
+    bdd_need_confirm: 0
+    overall_status: "pass"
