@@ -25,6 +25,11 @@
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
 | T089 | unicode-filename-link-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-10 |
+| T091 | mobile-detail-visual-polish | ⬜ 待开始 | P0 | 🟠 | T090✅ | 2026-08-10 | 2026-08-10 |
+
+### T091: 移动端详情页视觉打磨（T090 后续修正）
+
+T090 发布（v0.18.1）后用户实机走查发现视觉观感差。orchestrator 用 Playwright CDP 截图+DOM 实测复核，确认 4 处问题并与用户逐条讨论定型：①meta-tags-bar padding 16/16 + 去掉横向滚动改为换行；②markdown-body 移动端补回 16px padding（而非 margin，因相邻块级兄弟节点 margin 会折叠）；③底部操作栏 `padding-bottom: env(safe-area-inset-bottom)` 是真实现 bug（替换而非叠加基础 padding，导致上下不对称），需改为 `calc()` 叠加；④Copy/Wrap 按钮绕过 DESIGN.md 规定的 BaseButton/.icon-btn/.toggle-btn 体系自建 `.bottom-btn` 样式，违反"No new variants without design review"，已确认改为 Copy→纯图标 `.icon-btn`（对齐桌面端）、Wrap→图标 toggle `.toggle-btn`（对齐 source-toggle，用 WrapText 图标）。DESIGN.md 需同步修订 3 处描述。P6 视觉验收（真实截图+vision分析）是本任务核心，不可裁剪——这是 T090 缺失的一环。
 
 ### T071: Docker 部署（合并原 T071+T072）
 

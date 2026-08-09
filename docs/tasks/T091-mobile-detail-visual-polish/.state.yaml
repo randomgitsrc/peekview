@@ -1,0 +1,8 @@
+phase: P0
+task_id: T091
+task_name: mobile-detail-visual-polish
+status: pending
+created: 2026-08-10T00:00:00Z
+updated: 2026-08-10T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-10T00:00:00Z", note: "T090发布后用户实机走查发现视觉观感差(meta-bar挤压/正文边距太紧/底部栏padding不对称bug/Copy-Wrap按钮风格不统一违反DESIGN.md)。orchestrator用Playwright CDP截图+DOM实测复核，逐条与用户讨论定型修复方案(含2个真实实现bug：底部栏padding-bottom用env()替换而非叠加导致上下不对称；Copy/Wrap按钮绕过DESIGN.md规定的BaseButton/.icon-btn/.toggle-btn体系自建.bottom-btn样式)。用户已确认：Copy改纯图标.icon-btn(对齐桌面端)，Wrap改图标toggle-btn(对齐source-toggle，用WrapText图标)。risk_level倾向low-medium，P6视觉验收不可裁(本任务存在理由就是补上T090缺失的真实视觉验收)"}
