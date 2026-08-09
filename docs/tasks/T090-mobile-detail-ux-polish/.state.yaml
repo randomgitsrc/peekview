@@ -1,4 +1,4 @@
-phase: P7
+phase: P8
 task_id: T090
 task_name: mobile-detail-ux-polish
 status: in_progress
@@ -57,3 +57,5 @@ history:
   - {phase: P6, action: gate_pass, ts: "2026-08-10T01:00:00Z", note: "12/12 BDD PASS，P6阶段未触碰任何产品代码(git status核实)，phase P6->P7"}
   - {phase: P7, action: dispatched, ts: "2026-08-10T02:00:00Z", note: "consistency-reviewer完成4项检查：3条DESIGN_GAP标准格式转抄+REVIEWED配对(附代码级复核非仅采信自述)；SCOPE+自动满足(无声明)；P1 12BDD与P6 12PASS逐条内容核对(非仅数量)；P4三处实现均对应P2候选1-B/2-A/3-A未偷换被否决候选；额外核实2处[BASELINE_CHANGE]已落实"}
   - {phase: P7, action: gate_pass, ts: "2026-08-10T03:00:00Z", note: "check-gate.sh P7 exit 0通过，BLOCKER=0 DEVIATION-CRITICAL=0 DESIGN_GAP未配对=0，phase P7->P8"}
+  - {phase: P8, action: dispatched, ts: "2026-08-10T04:00:00Z", note: "releaser产出P8-release.md：bump_type=patch(0.18.0->0.18.1)，仅peekview包(mcp_server不动)，CHANGELOG已移动Unreleased 3条到[0.18.1]段落(工作区未commit)，lint/typecheck重跑通过，临时资源清单(debug backend :8888 + 121条t090*测试entry，均debug库隔离)"}
+  - {phase: P8, action: main_verify, ts: "2026-08-10T05:00:00Z", note: "主Agent亲自执行4项发布验证：①lint/typecheck重跑通过 ②P5 gate重跑(vitest 92/92 1215/1215 + E2E 12/12全绿) ③git log v0.18.0..HEAD对照CHANGELOG无遗漏(唯一额外commit 781f2726是T090前的release工具fix，非用户可见不需CHANGELOG) ④version文件路径核实(VERSIONS.json+backend/pyproject.toml+backend/peekview/__init__.py+frontend-v3/package.json+README.md+backend/README.md，与packages:[frontend-v3]范围一致)"}
