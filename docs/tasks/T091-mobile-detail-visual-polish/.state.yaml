@@ -1,9 +1,9 @@
-phase: READY
+phase: DONE
 task_id: T091
 task_name: mobile-detail-visual-polish
-status: in_progress
+status: done
 created: 2026-08-10 00:00:00+00:00
-updated: 2026-08-09 19:00:00+00:00
+updated: 2026-08-09 19:05:00+00:00
 retries:
   P1:
   - round: 1
@@ -248,3 +248,8 @@ history:
   action: cleanup
   ts: '2026-08-09T19:00:00Z'
   note: READY收尾检查全部实际执行确认——debug服务(PID 158008)已用make debug-stop停止+/tmp/peekview-debug清理；生产库entries数52不变(全程[PROD_NOT_TOUCHED])；git工作区clean；active-tasks.md已更新(移出活跃任务表+移入已完成表v0.18.2+更新日志追加)
+- phase: DONE
+  action: task_complete
+  ts: '2026-08-09T19:05:00Z'
+  note: T091任务完成，v0.18.2已tag。全程含1次真实P6->P5->P4规范回退(发现并修复真实CSS冲突bug)，13/13 BDD最终PASS。经验：本次P6视觉验收真正发挥了作用——独立截图+DOM实测发现了P5
+    E2E套件因导航覆盖盲区(未加firstFileId)而完全漏掉的坍缩bug，验证了T091存在的核心价值(补上T090缺失的真实视觉验收环节)
