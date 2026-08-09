@@ -1,9 +1,9 @@
-phase: P7
+phase: READY
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10 00:00:00+00:00
-updated: 2026-08-10 23:15:00+00:00
+updated: 2026-08-09 19:00:00+00:00
 retries:
   P1:
   - round: 1
@@ -228,3 +228,23 @@ history:
   action: gate_pass
   ts: '2026-08-10T23:15:00Z'
   note: check-gate.sh P7 exit 0通过，无BLOCKER/DEVIATION-CRITICAL，DESIGN_GAP已配对，phase P7->P8
+- phase: P8
+  action: dispatched
+  ts: '2026-08-09T18:30:00Z'
+  note: releaser产出P8-release.md，确认bump_type=patch/target=0.18.2(仅peekview主包，mcp_server不涉及)，CHANGELOG
+    [Unreleased]写入5条用户可读条目(3修复+2变更)，发布前置检查(vue-tsc/lint/git
+    log覆盖核对)全通过，未执行任何commit/tag
+- phase: P8
+  action: main_verify
+  ts: '2026-08-09T18:40:00Z'
+  note: orchestrator独立验证CHANGELOG diff/vue-tsc/lint/git log覆盖，全部一致；亲自重跑P5两条gate_commands(make
+    test-frontend 1215 passed/0 failed + E2E_SPEC=e2e/t09 50 passed/0 failed)确认代码仍全绿
+- phase: P8
+  action: bump_version
+  ts: '2026-08-09T18:58:00Z'
+  note: 主Agent亲自执行make bump-version NEW_VERSION=0.18.2，同步9个文件版本号+CHANGELOG插入[0.18.2]节(自动归入Unreleased内容)，构建前端，commit(00fcaefa)+创建tag
+    v0.18.2
+- phase: READY
+  action: cleanup
+  ts: '2026-08-09T19:00:00Z'
+  note: READY收尾检查全部实际执行确认——debug服务(PID 158008)已用make debug-stop停止+/tmp/peekview-debug清理；生产库entries数52不变(全程[PROD_NOT_TOUCHED])；git工作区clean；active-tasks.md已更新(移出活跃任务表+移入已完成表v0.18.2+更新日志追加)

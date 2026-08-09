@@ -25,11 +25,6 @@
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
 | T089 | unicode-filename-link-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-10 |
-| T091 | mobile-detail-visual-polish | ⬜ 待开始 | P0 | 🟠 | T090✅ | 2026-08-10 | 2026-08-10 |
-
-### T091: 移动端详情页视觉打磨（T090 后续修正）
-
-T090 发布（v0.18.1）后用户实机走查发现视觉观感差。orchestrator 用 Playwright CDP 截图+DOM 实测复核，确认 4 处问题并与用户逐条讨论定型：①meta-tags-bar padding 16/16 + 去掉横向滚动改为换行；②markdown-body 移动端补回 16px padding（而非 margin，因相邻块级兄弟节点 margin 会折叠）；③底部操作栏 `padding-bottom: env(safe-area-inset-bottom)` 是真实现 bug（替换而非叠加基础 padding，导致上下不对称），需改为 `calc()` 叠加；④Copy/Wrap 按钮绕过 DESIGN.md 规定的 BaseButton/.icon-btn/.toggle-btn 体系自建 `.bottom-btn` 样式，违反"No new variants without design review"，已确认改为 Copy→纯图标 `.icon-btn`（对齐桌面端）、Wrap→图标 toggle `.toggle-btn`（对齐 source-toggle，用 WrapText 图标）。DESIGN.md 需同步修订 3 处描述。P6 视觉验收（真实截图+vision分析）是本任务核心，不可裁剪——这是 T090 缺失的一环。
 
 ### T071: Docker 部署（合并原 T071+T072）
 
@@ -99,6 +94,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| T091 | mobile-detail-visual-polish | v0.18.2 | 🟠 | 2026-08-09 |
 | T090 | mobile-detail-ux-polish | v0.18.1 | 🟠 | 2026-08-10 |
 | T086 | admin-settings-consolidation | v0.18.0 | 🟡 | 2026-08-07 |
 | T085 | render-regression-fix | v0.14.1 | 🟠 | 2026-08-02 |
@@ -217,6 +213,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-09 | 完成 T091 | mobile-detail-visual-polish → v0.18.2（meta-tags-bar padding16/16+换行不横滚/markdown-body移动端16px padding/底部栏padding对称性bug修复/Copy改icon-btn+Wrap改toggle-btn图标化；13 BDD 全PASS。过程含1次真实P6→P5→P4回退：P6视觉验收发现EntryMetaTagsBar.vue的flex-wrap与layout.css:466-478遗留全局规则冲突，content-area可滚动时meta-tags-bar坍缩到33px标签丢失——P5的50/50全绿因E2E测试BDD-1/2未加firstFileId落在默认svg文件从未触发；用agate-retreat-to.sh规范回退+定向修复(仅1行CSS)+重新走完整P5→P6独立验证，13/13 PASS）|
 | 2026-08-07 | 立项 T089 | unicode-filename-link-fix：用户报告非 ASCII 文件名（中文等）本地图片/附件在 markdown 中链接解析失败，英文文件名正常。只读 Explore agent 已定位根因：`frontend-v3/src/utils/path-map.ts` 的 `resolvePath`/`normalizeRef` 未 decode markdown-it 已 percent-encode 的 href/src，与 pathMap 未编码的 Unicode key 不匹配。改动面单文件，零现成测试覆盖（不满足 hotfix 裁剪条件），用户选择新建独立小型 task，risk_level=low-medium |
 | 2026-08-07 | 完成 T086 | admin-settings-consolidation → v0.18.0（AdminView 内容迁移为 SettingsView 第4个 tab「用户管理」+ UserMenu 管理员可发现入口 + /admin 路由删除一律404；17 BDD 全 PASS。过程含 2 次真实 P5 回退：①路由拦截 bug（P2 设计假设错误，/:slug 排在 catch-all 前拦截 /admin）②测试选择器 scope 缺陷（P5→P3 跨阶段 PAUSED，人工批准）；副产物：发现并推动修复了 agate 框架 pre-commit hook 的 exit-code 语义 bug）|
 | 2026-08-07 | 立项 T088 | e2e-test-infra-hardening：源自 T087 复盘（3.1/3.2 节）。子任务 A 修复 `viewer.spec.ts`（路由 `/#/entry/{slug}` 过时 + `lu4prg`/`ngajri` slug 失效，选择器已核实未过时）；子任务 B 在 `make debug-test` 前置检查加 static mtime 校验（防前端改动未 build-frontend 导致验收假通过）|
