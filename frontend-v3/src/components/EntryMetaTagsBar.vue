@@ -32,7 +32,7 @@ function navigateToTag(href: string) {
 </script>
 
 <style scoped>
-.meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); overflow-x: auto; }
+.meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-4) var(--space-4); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); flex-wrap: wrap; }
 .owner-link { color: var(--c-accent); text-decoration: none; font-family: var(--font-mono); font-size: 12px; }
 .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--c-text-tertiary); flex-shrink: 0; }
 .status-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--c-tag-bg); color: var(--c-text-tertiary); }

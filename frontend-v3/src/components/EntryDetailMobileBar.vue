@@ -27,11 +27,16 @@
     </button>
     <div class="flex-spacer"></div>
     <template v-if="!isBinary">
-      <button v-if="canWrap" :class="['bottom-btn', wrapEnabled && 'primary']" @click="$emit('toggle-wrap')" data-testid="mobile-bar-wrap-btn">
-        Wrap
+      <button v-if="canWrap"
+        :class="['toggle-btn', { active: wrapEnabled }]"
+        @click="$emit('toggle-wrap')"
+        :aria-label="wrapEnabled ? 'Disable line wrap' : 'Enable line wrap'"
+        :aria-pressed="wrapEnabled"
+        data-testid="mobile-bar-wrap-btn">
+        <WrapTextIcon :size="16" />
       </button>
-      <button v-if="canCopy" class="bottom-btn primary" @click="$emit('copy-content')" aria-label="Copy" data-testid="mobile-bar-copy-btn">
-        <CopyIcon :size="14" /> Copy
+      <button v-if="canCopy" class="icon-btn" @click="$emit('copy-content')" aria-label="Copy" data-testid="mobile-bar-copy-btn">
+        <CopyIcon :size="16" />
       </button>
     </template>
     <OverflowMenu :items="overflowItems" variant="sheet" />
@@ -50,6 +55,7 @@ import {
   Copy as CopyIcon,
   Code as CodeIcon,
   Eye as EyeIcon,
+  WrapText as WrapTextIcon,
 } from 'lucide-vue-next'
 
 defineProps<{
@@ -85,8 +91,8 @@ const isMobile = inject(IsMobileKey)!
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding: var(--space-1) var(--space-3);
+  padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
   background: var(--c-surface);
   border-top: 1px solid var(--c-border);
   position: fixed;
@@ -137,22 +143,18 @@ const isMobile = inject(IsMobileKey)!
   flex: 1;
 }
 
-.bottom-btn {
+.icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--c-text);
+  justify-content: center;
+  position: relative;
+  background: none;
+  border: none;
   cursor: pointer;
-  font-size: var(--font-sm);
-}
-
-.bottom-btn.primary {
-  background: var(--c-accent);
-  color: var(--text-on-accent);
-  border-color: var(--c-accent);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  color: var(--c-text-secondary);
+  min-width: 44px;
+  min-height: 44px;
 }
 </style>

@@ -308,13 +308,28 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(1000)
 
+      // .markdown-body's own boundingBox().x sits at content-area's padding
+      // edge regardless of .markdown-body's own padding (CSS box model: an
+      // element's padding pushes its children, not its own box). Measure the
+      // first child instead — its box is what actually reflects the padding.
       const md = page.locator('[data-testid="markdown-body"]')
-      const mdBox = await md.boundingBox()
+      const firstChild = md.locator('> *').first()
+      const mdBox = await firstChild.boundingBox()
       expect(mdBox).not.toBeNull()
 
-      const viewportWidth = 390
+      // Use content-area's clientWidth (scrollbar-excluded) rather than the
+      // raw 390 viewport width: this fixture's long content overflows
+      // content-area's overflow-y:auto, and this CDP-connected desktop Chrome
+      // reserves real scrollbar width on the right only, which would skew
+      // rightInset. clientWidth nets that out and is a no-op when no
+      // scrollbar is present. See P3-test-cases.md P4 note.
+      const contentArea = page.locator('[data-testid="content-area"]')
+      const caBox = await contentArea.boundingBox()
+      const caClientWidth = await contentArea.evaluate((el) => (el as HTMLElement).clientWidth)
+      const availableRight = caBox!.x + caClientWidth
+
       const leftInset = mdBox!.x
-      const rightInset = viewportWidth - (mdBox!.x + mdBox!.width)
+      const rightInset = availableRight - (mdBox!.x + mdBox!.width)
       // T091 restores mobile .markdown-body padding (0 -> var(--space-4)=16px),
       // stacking with .content-area's 8px horizontal padding for a total 24px
       // inset per side. This is the opposite direction from T090's "smaller is

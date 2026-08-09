@@ -112,6 +112,7 @@ This section defines what each color *means* and *why*. The complete token regis
 - **Max width**: 1120px for marketing; 1280px for functional views.
 - **Padding**: 32px desktop, 16px mobile.
 - **Centered** with `margin: 0 auto`.
+- **Exception**: the detail page's `.content-area` intentionally uses `var(--space-3) var(--space-2)` (12px/8px) on mobile instead of the 16px general rule — kept deliberately tight because `MarkdownViewer` and `EntryMetaTagsBar` each add their own inner padding on top of it (see "Markdown Body Spacing (Mobile)" and "Meta Tags Bar (Mobile)" below), bringing the effective total inset to 24px. This is a scoped, deliberate override, not a violation of the general container rule.
 
 ### Grid
 - **Landing page**: centered hero; 2-column feature cards; 3-column format cards.
@@ -158,6 +159,7 @@ This section defines which components exist, what variants they support, and beh
 ### Icon Buttons
 - Use `.icon-btn` (square) or `.toggle-btn` (with active state). Tooltip on hover.
 - Toggle badge: small dot indicator on top-right corner.
+- Selection rule: a persistent-state icon action (has an on/off state the user needs to perceive, e.g. wrap toggle, source view toggle) uses `.toggle-btn`; a stateless one-shot action (e.g. copy) uses `.icon-btn`; any action with a text label uses `BaseButton`. Do not invent new button variants (e.g. a bespoke `.bottom-btn`) to sidestep this rule — see "Buttons" above ("No new variants without design review").
 
 ### Tags
 - Use `BaseTag` component. Clickable tags must navigate to `/explore?tags=<encoded>`. Non-clickable tags only on entry detail page.
@@ -217,10 +219,11 @@ This section defines which components exist, what variants they support, and beh
 
 ### Meta Tags Bar (Mobile)
 - On mobile detail page, the metadata/tags bar (`EntryMetaTagsBar`) is a normal in-flow element rendered as the first child of `.content-area`, scrolling together with the viewer content. Visibility is determined purely by scroll position in the document flow — no independent show/hide toggle bound to scroll direction.
+- Content wraps naturally (`flex-wrap: wrap`) rather than forcing a single line with horizontal scroll — the bar grows taller instead of clipping or scrolling horizontally when username + timestamp + read count + visibility badge + tags exceed the viewport width. Padding: `var(--space-4) var(--space-4)` (16px/16px).
 
 ### Markdown Body Spacing (Mobile)
 - Desktop: `.markdown-body` uses `padding: var(--space-5)` (24px), centered with `max-width: 900px`.
-- Mobile (≤640px): `.markdown-body` has no additional margin/padding of its own — horizontal inset comes solely from `.content-area`'s mobile padding (`var(--space-2)`, 8px), avoiding the triple-layer stacking (content-area + margin + padding) that previously produced ~40px of total inset per side.
+- Mobile (≤640px): `.markdown-body` has `margin: 0; padding: var(--space-4)` (16px). This stacks with `.content-area`'s mobile horizontal padding (`var(--space-2)`, 8px) for a total inset of 24px per side, deliberately restored after the zero-padding version produced a cramped, edge-to-edge reading experience. Using padding only (no margin) avoids the triple-layer stacking (content-area + margin + padding, ~40px) that a margin-based approach would reintroduce, since `.content-area` is not a flex container and adjacent block-level margins would collapse unpredictably.
 
 ### HTML Viewer Security
 - Sandboxed iframe: `sandbox="allow-scripts allow-forms"` — **no `allow-same-origin`**. Opaque origin cannot access main page credentials.
@@ -264,7 +267,7 @@ This section defines which components exist, what variants they support, and beh
 - Navigation: hide secondary links on mobile, keep brand + theme toggle + primary CTA.
 - Touch targets: minimum 44px.
 - Hover-only action buttons must be visible on touch devices.
-- Detail page: file tree → dropdown selector on mobile; TOC → right drawer on mobile; primary actions → fixed bottom bar on mobile (`position: fixed; bottom: 0`, `padding-bottom: env(safe-area-inset-bottom, 0px)` for safe-area compatibility; `.content-area` reserves matching bottom clearance via `--mobile-bar-height`).
+- Detail page: file tree → dropdown selector on mobile; TOC → right drawer on mobile; primary actions → fixed bottom bar on mobile (`position: fixed; bottom: 0`, `padding: var(--space-1) var(--space-3)` with `padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px))` — additive rather than replacing the base padding, so padding-top and padding-bottom stay symmetric (4px/4px) on devices without a safe area, and gain the safe-area inset on top of the 4px base where one exists; `.content-area` reserves matching bottom clearance via `--mobile-bar-height`).
 - Sticky headers on mobile: translucent background + backdrop blur.
 - Overflow menus: dropdown on desktop, bottom sheet on mobile.
 - Settings: horizontal tabs on desktop, stacked sections on mobile.

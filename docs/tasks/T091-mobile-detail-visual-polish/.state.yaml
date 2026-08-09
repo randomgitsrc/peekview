@@ -1,9 +1,9 @@
-phase: P4
+phase: P5
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10T00:00:00Z
-updated: 2026-08-10T16:00:00Z
+updated: 2026-08-10T19:00:00Z
 retries:
   P1:
     - round: 1
@@ -36,3 +36,9 @@ history:
   - {phase: P3, action: dispatched, ts: "2026-08-10T16:00:00Z", note: "test-designer完成两项任务：手术式修改t090 spec的BDD-7(class 'primary'->'active')/BDD-8(缩减比例->对称性+24px定值断言)；新建t091 spec覆盖13条BDD全部用data-testid选择器(2处有理由例外：desktop Copy按钮用role选择器/HtmlViewer根节点用非改动class)"}
   - {phase: P3, action: main_verify_red, ts: "2026-08-10T17:00:00Z", note: "orchestrator独立验证：canonical check-tdd-red.sh因120s内部超时只能推断红灯(非确证)，遂亲自跑E2E_SPEC=e2e/t09 make debug-test(耗时约不到2分钟)，结果22 failed/28 passed，与subagent自报完全一致；grep确认0处A类错误(SyntaxError/TypeError/import失败均为0)，全部22处失败为Playwright expect()断言不符，真红灯确认"}
   - {phase: P3, action: gate_pass, ts: "2026-08-10T17:05:00Z", note: "check-gate.sh P3 exit 2通过，phase P3->P4"}
+  - {phase: P4, action: dispatched, ts: "2026-08-10T17:30:00Z", note: "implementer完成4文件改动(EntryMetaTagsBar/MarkdownViewer/EntryDetailMobileBar/DESIGN.md)，自查vue-tsc通过+E2E 46 passed/4 failed"}
+  - {phase: P4, action: design_gap_found, ts: "2026-08-10T18:00:00Z", note: "implementer正确遵守约束未擅自改测试，标记[DESIGN_GAP:]报告：剩余4处失败(t090 BDD-8+t091 BDD-3各×2 browser)是P3测试代码CSS盒模型缺陷——markdown-body自身boundingBox().x不受自身padding影响，测量目标选错不是实现问题。orchestrator独立核实(直接读测试代码)确认诊断正确"}
+  - {phase: P4, action: test_fix_dispatched, ts: "2026-08-10T18:10:00Z", note: "派发test-designer角色定向修复2处断言测量目标(改测第一个子元素而非markdown-body自身)，未改动阈值/常量/其他测试。修复过程额外发现t090长内容entry触发content-area纵向滚动条挤占右侧10px布局宽度，改用content-area.clientWidth而非硬编码390视口宽度计算rightInset"}
+  - {phase: P4, action: main_verify_fix, ts: "2026-08-10T18:30:00Z", note: "orchestrator独立验证：git diff逐行核对两处spec文件确认只改测量目标未改阈值，亲自重跑E2E_SPEC=e2e/t09 make debug-test得50 passed/0 failed(与subagent自报一致)，亲自跑vue-tsc --noEmit通过、make lint通过，亲自查sqlite确认subagent声称清理的临时校验entry确已删除"}
+  - {phase: P4, action: review_1, ts: "2026-08-10T19:00:00Z", note: "C8映射(domain=frontend)派design-review：6项逐条核对(padding数值/DESIGN.md 5处逐字比对/aria写法与source-toggle逐字符对齐/9个data-testid保留/测试修正越权检查/不改什么核查)全部符合，重点核查的测试修正未越权(未删断言未调松阈值)，approved"}
+  - {phase: P4, action: gate_pass, ts: "2026-08-10T19:05:00Z", note: "check-gate.sh P4 exit 0通过(暂存区含代码文件)，phase P4->P5"}

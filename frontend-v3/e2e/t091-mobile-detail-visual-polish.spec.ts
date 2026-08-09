@@ -102,7 +102,11 @@ test.describe('T091 Mobile Detail Visual Polish', () => {
       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
 
-      const mdBox = await md.boundingBox()
+      // .markdown-body's own boundingBox().x sits at content-area's padding
+      // edge regardless of .markdown-body's own padding (CSS box model);
+      // measure the first child instead. See P3-test-cases.md P4 note.
+      const firstChild = md.locator('> *').first()
+      const mdBox = await firstChild.boundingBox()
       expect(mdBox).not.toBeNull()
       // Total left inset = .content-area's 8px + .markdown-body's 16px = 24px.
       expect(mdBox!.x).toBeGreaterThanOrEqual(MARKDOWN_TOTAL_INSET_PX - 2)

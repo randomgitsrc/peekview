@@ -85,3 +85,33 @@ test_code_dir: frontend-v3/e2e
 - `t090-mobile-detail-ux-polish.spec.ts`：BDD-7/BDD-8 两处手术式修改按 P2-design.md 第 4 节方案落地，其余测试未动
 - `t091-mobile-detail-visual-polish.spec.ts`：新建，13 条 BDD 1:1 覆盖，全部用 `data-testid`（2 处有理由的例外见第 2 节）
 - 自跑 `E2E_SPEC=e2e/t09 make debug-test`：22 failed / 28 passed，22 处失败全部为 B 类（真红灯），0 处 A 类
+
+## 6. P4 阶段测试修正记录
+
+implementer 完成 EntryMetaTagsBar.vue/MarkdownViewer.vue/EntryDetailMobileBar.vue/DESIGN.md 实现后自查 46 passed / 4 failed，4 处失败集中在 2 条测试（chromium + Mobile Chrome 各一份）：
+- `t090-mobile-detail-ux-polish.spec.ts::test_bdd_8_markdown_mobile_inset_symmetric_24px`
+- `t091-mobile-detail-visual-polish.spec.ts::test_bdd_3_markdown_body_16px_padding_24px_total_inset`
+
+两条测试各自的 `padding` 断言（`getComputedStyle(markdownBody).padding === '16px'`）均通过，证明实现正确；恒定失败的是 `mdBox!.x` 数值判断，实测稳定为 `8`，与期望 `>=22` 不符。
+
+### 根因
+
+`getBoundingClientRect()`/`boundingBox()` 返回元素自身 border-box 的位置，该位置由**父元素的 padding + 自身的 margin** 决定，不受元素自身 padding 影响——padding 只把子内容向内推，不移动元素自己的框。`.markdown-body` 自身的 `boundingBox().x` 永远等于 `.content-area` 的 padding（8px），无论 `.markdown-body` 自己的 padding 设成多少。应测量 `.markdown-body` **第一个直接子元素**的 `boundingBox().x`，因为子元素的位置才真实反映父元素的 padding。
+
+### 实测确认（CDP，debug backend :8888，390×844 viewport）
+
+用 `t090-long-markdown-check`（60 段长文本，触发 `.content-area` 的 `overflow-y:auto` 纵向滚动）和 `markdown-test?firstFileId=18`（`rich-markdown.md`，625 行，同样触发滚动）两个临时 entry 实测（测完已通过 `DELETE /api/v1/entries/{slug}` 清理，未使用 CLI）：
+
+- 子元素（`<div v-html>` 包裹的渲染 HTML，两个 entry 均无 fenced code block，因此整份 markdown 是单个 HTML block，子元素撑满 `.markdown-body` 内容区宽度）：`x=24, width=332`，与 `.markdown-body` 自身 `padding=16px + .content-area padding=8px = 24px` 完全吻合
+- 但 `.content-area` 因内容超高触发滚动条，`clientWidth`（380）比 `offsetWidth`（390）少 10px——真实（非 overlay）滚动条只吃右侧空间，导致若仍用 `viewportWidth(390) - (mdBox.x + mdBox.width)` 公式算 `rightInset`，会得到 `34` 而非 `24`（与 `leftInset=24` 相差 10px，超出对称性 `<=2` 容差）。用短内容（无滚动）entry 对照实测：无滚动条时 `leftInset=rightInset=24`，完全对称，证实差异纯粹来自滚动条挤占，不是 CSS 缺陷
+- `t091` 的 `test_bdd_3` 只断言 `mdBox!.x`（左侧 inset），不涉及右侧对称性，因此单纯换成子元素测量即可，无需额外处理
+- `t090` 的 `test_bdd_8` 断言了左右对称性，因此改用 `.content-area` 的 `clientWidth`（已扣除滚动条）而非硬编码 `viewportWidth=390` 计算 `rightInset` 的"可用区域"右边界：`availableRight = caBox.x + caClientWidth`。用该公式重算，子元素与自身两种测量口径下 leftInset/rightInset 均为 `(24,24)`/`(8,8)`，完全对称；且该公式在无滚动条场景下自然等价于原公式（`clientWidth === offsetWidth`），不影响其他场景
+
+### 改动
+
+- `frontend-v3/e2e/t090-mobile-detail-ux-polish.spec.ts` L311-317 区域：`mdBox` 改为测量 `.markdown-body` 第一个子元素；新增 `contentArea`/`caClientWidth`/`availableRight` 三个变量，`rightInset` 公式的 `viewportWidth` 替换为 `availableRight`。常量定义（`MARKDOWN_MOBILE_TARGET_INSET_PX`）、两个 `expect` 阈值、其余测试均未改动
+- `frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts` L99-105 区域：`mdBox` 改为测量 `.markdown-body` 第一个子元素。`padding` 断言（L102-103）未动，常量/阈值/其余测试均未改动
+
+### 自跑结果
+
+`E2E_SPEC=e2e/t09 make debug-test`：**50 passed（0 failed）**，此前失败的 4 处（t090 BDD-8、t091 BDD-3，各 chromium + Mobile Chrome）全部转绿，其余 46 passed 保持不变。`npx vue-tsc --noEmit` 无报错。
