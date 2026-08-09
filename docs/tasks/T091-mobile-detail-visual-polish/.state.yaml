@@ -1,4 +1,4 @@
-phase: P5
+phase: P4
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
@@ -16,6 +16,10 @@ retries:
     adjustment: P1最后一次retry（MAX=3）：BDD-2的40px阈值经reviewer独立核算发现公式反推基线~34px与实测17px基线对不上，orchestrator亲自用CDP
       live-patch方式实测真实数值（89px），交给analyst基于真实数据重新定阈值
   P5:
+  - attempt: 1
+    reason: P6验收发现真实缺陷：EntryMetaTagsBar.vue的scoped flex-wrap规则与frontend-v3/src/styles/layout.css:466-478的全局.meta-tags-bar遗留规则(overflow-x:auto;white-space:nowrap)冲突，导致content-area可滚动时(真实使用场景，如markdown文件实际激活/csv/tsv/xml/plantuml等)meta-tags-bar高度坍缩到33px、标签被裁切丢失。orchestrator已用CDP独立复测确认(scrollHeight=18488>clientHeight=788时metaBarOffsetHeight=33，且overflowX/whiteSpace仍是auto/nowrap未被scoped规则覆盖)。BDD-2/BDD-9两条FAIL，11/13
+      PASS。P5的50/50全绿是因为E2E测试BDD-1/2导航markdown-test时未加?firstFileId=参数，落在默认的architecture.svg文件(非markdown、内容短、content-area不可滚动)，从未触发该bug路径——已核实E2E代码确认此覆盖盲区
+  P4:
   - attempt: 1
     reason: P6验收发现真实缺陷：EntryMetaTagsBar.vue的scoped flex-wrap规则与frontend-v3/src/styles/layout.css:466-478的全局.meta-tags-bar遗留规则(overflow-x:auto;white-space:nowrap)冲突，导致content-area可滚动时(真实使用场景，如markdown文件实际激活/csv/tsv/xml/plantuml等)meta-tags-bar高度坍缩到33px、标签被裁切丢失。orchestrator已用CDP独立复测确认(scrollHeight=18488>clientHeight=788时metaBarOffsetHeight=33，且overflowX/whiteSpace仍是auto/nowrap未被scoped规则覆盖)。BDD-2/BDD-9两条FAIL，11/13
       PASS。P5的50/50全绿是因为E2E测试BDD-1/2导航markdown-test时未加?firstFileId=参数，落在默认的architecture.svg文件(非markdown、内容短、content-area不可滚动)，从未触发该bug路径——已核实E2E代码确认此覆盖盲区
