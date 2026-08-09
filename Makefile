@@ -457,8 +457,8 @@ publish:
 		echo ""; \
 		exit 1; \
 	fi; \
-	# 注意：以下仅适用于 publish 的 twine upload（用 \r 覆盖同一行做进度条）。
-	# sed 删 ANSI 码并将 \r 转 \n，让进度数字可见。不适用于其他命令。
+	# 注意：以下仅适用于 publish 的 twine upload（用 \r 覆盖同一行做进度条）。 \
+	# sed 删 ANSI 码并将 \r 转 \n，让进度数字可见。不适用于其他命令。 \
 	cd backend && pipx run twine upload dist/* \
 		-u __token__ -p "$$TOKEN" --non-interactive 2>&1 \
 		| sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r/\n/g'
