@@ -1,9 +1,9 @@
-phase: P2
+phase: P4
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10T00:00:00Z
-updated: 2026-08-10T00:00:00Z
+updated: 2026-08-10T16:00:00Z
 retries:
   P1:
     - round: 1
@@ -33,3 +33,6 @@ history:
   - {phase: P2, action: revised_1, ts: "2026-08-10T13:00:00Z", note: "architect第1轮修订3处：Wrap补aria-label/aria-pressed(对齐source-toggle)+Copy显式声明不带tooltip+E2E_SPEC技术债显式承认"}
   - {phase: P2, action: review_2, ts: "2026-08-10T14:00:00Z", note: "plan-design-review第2轮approved：3处缺口核实真实落笔(写法与source-toggle既有模式逐字符对应非表面应付)"}
   - {phase: P2, action: gate_pass, ts: "2026-08-10T15:00:00Z", note: "check-gate.sh P2 exit 2通过，无WARNING，phase P2->P3"}
+  - {phase: P3, action: dispatched, ts: "2026-08-10T16:00:00Z", note: "test-designer完成两项任务：手术式修改t090 spec的BDD-7(class 'primary'->'active')/BDD-8(缩减比例->对称性+24px定值断言)；新建t091 spec覆盖13条BDD全部用data-testid选择器(2处有理由例外：desktop Copy按钮用role选择器/HtmlViewer根节点用非改动class)"}
+  - {phase: P3, action: main_verify_red, ts: "2026-08-10T17:00:00Z", note: "orchestrator独立验证：canonical check-tdd-red.sh因120s内部超时只能推断红灯(非确证)，遂亲自跑E2E_SPEC=e2e/t09 make debug-test(耗时约不到2分钟)，结果22 failed/28 passed，与subagent自报完全一致；grep确认0处A类错误(SyntaxError/TypeError/import失败均为0)，全部22处失败为Playwright expect()断言不符，真红灯确认"}
+  - {phase: P3, action: gate_pass, ts: "2026-08-10T17:05:00Z", note: "check-gate.sh P3 exit 2通过，phase P3->P4"}

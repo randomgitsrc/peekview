@@ -3,10 +3,11 @@ import { test, expect } from '@playwright/test'
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 const EVIDENCE_DIR = 'docs/tasks/T090-mobile-detail-ux-polish/evidences'
 
-// Baseline (pre-fix) mobile markdown left+right total inset, per P1-requirements BDD-8:
-// content-area(8px) + markdown-body margin(16px) + markdown-body padding(16px) = 40px
-const MARKDOWN_MOBILE_BASELINE_INSET_PX = 40
-const MARKDOWN_REDUCTION_TARGET_RATIO = 0.75
+// T091 target: mobile markdown single-side inset, per T091 P1-requirements BDD-8/
+// P2-design.md §4. content-area(8px horizontal padding) + markdown-body
+// padding(16px, var(--space-4)) = 24px. Supersedes the T090-era baseline/ratio
+// constants (T090 targeted shrinking this inset toward 0; T091 restores it).
+const MARKDOWN_MOBILE_TARGET_INSET_PX = 24
 
 const LONG_MARKDOWN = Array.from(
   { length: 60 },
@@ -291,18 +292,18 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       await expect(wrapBtn).toBeVisible()
 
       const classBefore = (await wrapBtn.getAttribute('class')) || ''
-      expect(classBefore).not.toContain('primary')
+      expect(classBefore).not.toContain('active')
 
       await wrapBtn.click()
       await page.waitForTimeout(200)
 
       const classAfter = (await wrapBtn.getAttribute('class')) || ''
-      expect(classAfter).toContain('primary')
+      expect(classAfter).toContain('active')
 
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile_390x844_bdd7.png` })
     })
 
-    test('test_bdd_8_markdown_mobile_margin_reduced_75_percent', async ({ page }) => {
+    test('test_bdd_8_markdown_mobile_inset_symmetric_24px', async ({ page }) => {
       await page.goto(`${BASE_URL}/t090-long-markdown`)
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(1000)
@@ -314,13 +315,15 @@ test.describe('T090 Mobile Detail UX Polish', () => {
       const viewportWidth = 390
       const leftInset = mdBox!.x
       const rightInset = viewportWidth - (mdBox!.x + mdBox!.width)
-      // Layout is left/right symmetric: verify that premise, then use the
-      // single-sided leftInset (matching the single-sided baseline constant)
-      // rather than summing both sides. See P1-requirements.md BDD-8 [BASELINE_CHANGE].
+      // T091 restores mobile .markdown-body padding (0 -> var(--space-4)=16px),
+      // stacking with .content-area's 8px horizontal padding for a total 24px
+      // inset per side. This is the opposite direction from T090's "smaller is
+      // better" reduction-ratio framing, so the assertion is rewritten (not just
+      // re-thresholded) to check left/right symmetry plus an exact 24px target.
+      // See P2-design.md §4 / P1-requirements.md BDD-8.
       expect(Math.abs(leftInset - rightInset)).toBeLessThanOrEqual(2)
-
-      const reductionRatio = (MARKDOWN_MOBILE_BASELINE_INSET_PX - leftInset) / MARKDOWN_MOBILE_BASELINE_INSET_PX
-      expect(reductionRatio).toBeGreaterThanOrEqual(MARKDOWN_REDUCTION_TARGET_RATIO)
+      expect(leftInset).toBeGreaterThanOrEqual(MARKDOWN_MOBILE_TARGET_INSET_PX - 2)
+      expect(leftInset).toBeLessThanOrEqual(MARKDOWN_MOBILE_TARGET_INSET_PX + 2)
 
       await page.screenshot({ path: `${EVIDENCE_DIR}/mobile_390x844_bdd8.png` })
     })
