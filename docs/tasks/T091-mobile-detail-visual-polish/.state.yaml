@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
@@ -27,3 +27,9 @@ history:
   - {phase: P1, action: revised_2, ts: "2026-08-10T07:00:00Z", note: "analyst第2轮修订（P1最后一次retry）：BDD-2阈值改为71px(89px实测×0.8)，专门锚定markdown-test entry，写明数据来源"}
   - {phase: P1, action: review_3, ts: "2026-08-10T08:00:00Z", note: "requirements-review第3轮（最终轮）approved：71px阈值来源从理论公式换成CDP实测数据后逻辑链自洽，entry锚定明确，其余12条BDD核对未变，视觉断言占比8/13≈61.5%不变"}
   - {phase: P1, action: gate_pass, ts: "2026-08-10T09:00:00Z", note: "check-gate.sh P1 exit 2通过，2个WARNING(SUGGEST不阻塞，均采纳)，phase P1->P2"}
+  - {phase: P2, action: dispatch_failed, ts: "2026-08-10T10:00:00Z", note: "architect subagent触发月度API额度上限提前终止，未落盘任何文件(P2-progress.md/P2-design.md均不存在)。orchestrator亲自用CDP完成minimal_validation：html-csp-test确认.html-viewer高度623px无遮挡；product-screenshots/image-gallery在当前debug环境无真实二进制图片文件不可用；额外发现svg-standalone实际走ImageViewer路径(isImage对image/svg+xml返回true)，height:623px无遮挡，可作为BDD-10的实际测试对象。数据直接喂给重新派发，减少subagent重复劳动"}
+  - {phase: P2, action: redispatched, ts: "2026-08-10T11:00:00Z", note: "重新派发architect(带预采集数据)，产出P2-design.md：candidate_count=1(follows_existing_pattern充分论证)，5处DESIGN.md精确修订，前瞻发现T090遗留E2E会被本次改动直接证伪(BDD-7 class断言/BDD-8缩减比例方向相反)，gate_commands.P3用E2E_SPEC=e2e/t09子串匹配同时覆盖新旧spec吸取T090教训"}
+  - {phase: P2, action: review_1, ts: "2026-08-10T12:00:00Z", note: "plan-design-review needs-revision：5项重点检查全部核实通过，但发现Wrap按钮图标化后缺失aria-label/aria-pressed(真实可访问性回归)+新.icon-btn的tooltip去留未落笔+E2E_SPEC脆弱性未显式承认为技术债，3处均为补丁式文档缺口不涉及重新选型"}
+  - {phase: P2, action: revised_1, ts: "2026-08-10T13:00:00Z", note: "architect第1轮修订3处：Wrap补aria-label/aria-pressed(对齐source-toggle)+Copy显式声明不带tooltip+E2E_SPEC技术债显式承认"}
+  - {phase: P2, action: review_2, ts: "2026-08-10T14:00:00Z", note: "plan-design-review第2轮approved：3处缺口核实真实落笔(写法与source-toggle既有模式逐字符对应非表面应付)"}
+  - {phase: P2, action: gate_pass, ts: "2026-08-10T15:00:00Z", note: "check-gate.sh P2 exit 2通过，无WARNING，phase P2->P3"}
