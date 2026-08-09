@@ -5,6 +5,7 @@ type: review
 parent: P4-implementation.md
 agent: design-review
 status: approved
+revised: P4 重试 #1（P6 视觉验收退回后的定向修复复核，20260809）
 ---
 
 # P4-review — T091 移动端详情页视觉打磨（design-review）
@@ -70,6 +71,66 @@ status: approved
 - `git diff --stat` 对 `EntryDetailHeader.vue`/`EntryDetailContent.vue`/`ImageViewer.vue`/`HtmlViewer.vue`/`useEntryDetailComputed.ts`/`EntryDetail.vue` 无任何输出（空结果），确认均未被触碰。
 - `EntryDetailMobileBar.vue` 的 `defineProps<{...}>()` 块（`canWrap`/`canCopy`/`wrapEnabled`/`isRichRenderable`/`isMultiFile`/`isMarkdown` 等）在 diff 中未出现变更，prop 定义与计算逻辑未变，本次改动仅限模板结构（按钮内部）与 CSS。
 
-## 总结
+## 总结（首次实现，approved，已归档保留供追溯）
 
 6 项核对全部符合 P2-design.md 已定方案，测试修正未越权。approved。
+
+---
+
+## P4 重试 #1 复核（P6 视觉验收退回后的定向修复）
+
+### 复核背景
+
+P6 verifier 用真实场景（`.content-area` 可滚动）复测发现 BDD-2/BDD-9 FAIL：`EntryMetaTagsBar.vue` 的 scoped `.meta-tags-bar` 规则未显式声明 `overflow-x`/`white-space`，被 `frontend-v3/src/styles/layout.css:466-478` 的遗留全局同名规则级联覆盖（`overflow-x: auto` 隐含把 `overflow-y` 提升为 `auto`），导致高度坍缩到 33px。orchestrator 已用 CDP 独立复测确认 33px→89px 修复生效。implementer 本轮改动：`frontend-v3/src/components/EntryMetaTagsBar.vue` 的 `.meta-tags-bar` 规则新增 `overflow-x: visible; white-space: normal;` 两条声明。
+
+### 1. 改动本身的正确性
+
+**符合。** `git diff frontend-v3/src/components/EntryMetaTagsBar.vue` 实测结果：
+
+```diff
+- .meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-4) var(--space-4); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); flex-wrap: wrap; }
++ .meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-4) var(--space-4); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); flex-wrap: wrap; overflow-x: visible; white-space: normal; }
+```
+
+整个 diff 只有这一行、只新增了 `overflow-x: visible; white-space: normal;` 两条声明，前面已有的 `display`/`align-items`/`gap`/`padding`/`background`/`border-bottom`/`font-size`/`color`/`flex-wrap` 九条声明字符级未变。选择器（`.meta-tags-bar`）本身未变，未新增/删除其他规则块。与 P4-implementation.md "P4 重试 #1"一节声明的改动完全一致。
+
+### 2. 越权改动核查
+
+**未越权，符合约束。**
+
+`git diff --stat`（工作区未暂存改动）实测只有 3 个文件：
+
+```
+backend/peekview/static/index.html                  |  2 +-
+docs/tasks/.../P4-implementation.md                  | 45 +++++++++++++++++
+frontend-v3/src/components/EntryMetaTagsBar.vue      |  2 +-
+```
+
+- `EntryMetaTagsBar.vue`：本轮目标文件，见上节。
+- `P4-implementation.md`：文档追加说明（"P4 重试 #1"一节），非代码。
+- `backend/peekview/static/index.html`：仅 `<script>` 引用的构建产物文件名哈希变化（`index-BFOmZ8bq.js` → `index-DEjEcz5o.js`），是 `make build-frontend` 重新打包的预期副作用，不是人工改动，不构成越权。
+- `git diff` 对 `MarkdownViewer.vue`/`EntryDetailMobileBar.vue`/`DESIGN.md`/`frontend-v3/src/styles/layout.css` 均无输出（空结果），确认上一轮已 approved 的 3 个文件与 `layout.css` 全局规则本身均未被触碰。`layout.css:466-478` 读取核对，内容与 dispatch-context 引用的原文逐字一致，未被修改。
+- 未发现测试文件（`frontend-v3/e2e/t09*.spec.ts`）改动，符合"本轮不涉及测试设计变更"的约束。
+
+### 3. 改动理由的技术合理性
+
+**站得住脚，无引入新副作用。**
+
+- **`overflow-x: visible` 覆盖 `overflow-x: auto`**：CSS 规范中，若 `overflow-x`/`overflow-y` 任一为非 `visible` 值，另一个原本为 `visible` 的会被浏览器提升为 `auto`（用于让滚动容器行为一致）。全局规则显式设了 `overflow-x: auto`，而两处规则均未显式设置 `overflow-y`（默认 `visible`），于是 `overflow-y` 被隐式提升为 `auto`，改变了该 flex 容器在内容溢出时的高度计算行为，实测表现为坍缩到 33px。scoped 规则显式声明 `overflow-x: visible` 后，`overflow-x`/`overflow-y` 均为 `visible`，不再触发提升，恢复容器随内容自然撑高的行为——与 89px 实测结果吻合，解释成立。
+- **CSS specificity 保证覆盖生效**：Vue `<style scoped>` 编译后选择器变为 `.meta-tags-bar[data-v-xxxxxxxx]`（属性选择器叠加，specificity 从 (0,1,0) 提升到 (0,2,0)），高于 `layout.css` 里普通类选择器 `.meta-tags-bar`（(0,1,0)），因此无论源码顺序如何，scoped 规则的声明必然覆盖全局规则的同名属性，不依赖"后声明覆盖先声明"的层叠顺序运气。
+- **`white-space: normal` 覆盖 `white-space: nowrap`**：全局规则的 `nowrap` 会强制该 flex 容器内的文本节点不换行，与 `flex-wrap: wrap`（控制 flex item 是否换行到下一行）是两个独立机制——`nowrap` 不直接阻止 flex-wrap 生效，但会影响容器内长文本内容（如 `owner-link`/标签文字过长时）不能在词内换行，二者共同作用可能导致视觉上的"文字被截断观感"。显式设为 `normal` 恢复默认文本换行行为，与 BDD-1"内容超长时自然换行"的预期一致。
+- **子元素副作用核查**：`white-space` 是可继承属性。检查 `.meta-tags-bar` 的子元素样式定义——`owner-link`（本文件 L36）、`meta-dot`（L37）、`status-tag`（L38-40）均未显式声明 `white-space`，`BaseTag.vue`（`meta-tag`/标签芯片的实现）的 `.base-tag`/`a.base-tag` 规则同样未声明 `white-space`。因此这些子元素会继承父容器新的计算值 `normal`，行为从"强制不换行"变为"默认换行"——由于这些子元素内容都是短文本（用户名、时间、单个标签词），实际视觉上不会产生可见差异，但语义上更符合预期，未发现会导致意外换行/布局错乱的副作用。
+- **未越权改动全局规则**：`layout.css` 里的 `.meta-tags-bar` 规则原样保留，符合"最小改动、只在 scoped 规则里覆盖，不动全局规则本身（可能仍被其他非 scoped 场景依赖）"的既定约束。
+
+### 4. P4-implementation.md 追加内容真实性核查
+
+**真实反映改动，非凭空数字。**
+
+- "P4 重试 #1"一节（L68-111）里贴出的 diff 代码块与 `git diff` 实际输出逐字符一致（见本文件第 1 节核对）。
+- 文档给出的 11 个 entry 的 offsetHeight 对比表：6 个此前受影响的 entry（`markdown-test?firstFileId=18`/`xml-maven-pom`/`python-entry-service`/`csv-employees`/`tsv-server-metrics`/`plantuml-arch`）"修复前 33px → 修复后 89px"，与 `.retreat-history.md` 归档的 P6 原始 FAIL 数据（33px、`overflowX: auto`、`whiteSpace: nowrap`）及 dispatch-context 引用的 orchestrator 独立复测数据（同为 33px→89px）两处独立来源交叉一致，非该文档单方面自报的孤证。5 个此前未受影响的 entry（`markdown-test` 默认文件/`json-api-config`/`yaml-docker-compose`/`svg-standalone`/`mermaid-charts`）标注"89px 未受影响"，与改动本身只新增覆盖声明、不影响不触发级联冲突路径的场景这一技术逻辑相符，无回归风险的表述站得住脚。
+- xml-maven-pom Search 框重叠现象核查结论（"同一根因的视觉表现之一，非独立 bug，随修复消失，无需 DESIGN_GAP"）有明确核查动作描述（重新截图 + vision-engine 独立视觉分析），且与本节第 3 点的技术解释（33px 坍缩必然导致第二行标签被推出可视区域、进而与下方 Search 输入框产生视觉重叠）逻辑自洽，未见强行"应该也修好了"的未经查证断言。
+- 自查结果（vue-tsc 通过、build-frontend 成功）与本次复核环境观察一致（`backend/peekview/static/index.html` 的构建产物哈希已更新，证明确实执行过 build）。
+
+### 总结
+
+改动精确（1 处 CSS 规则新增 2 条声明，无越权改动）、技术解释成立（CSS specificity + overflow 隐式提升 + white-space 继承链均核实无误、无新增副作用）、文档记录真实可信（与两处独立数据源交叉验证一致）。**approved。**

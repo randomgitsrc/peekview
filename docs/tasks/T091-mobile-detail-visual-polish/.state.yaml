@@ -1,9 +1,9 @@
-phase: P4
+phase: P5
 task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10 00:00:00+00:00
-updated: 2026-08-10 20:05:00+00:00
+updated: 2026-08-10 21:00:00+00:00
 retries:
   P1:
   - round: 1
@@ -154,3 +154,34 @@ history:
   ts: '2026-08-10T20:10:00Z'
   note: pre-commit hook拦截：phase已bump到P6但暂存区含fail-list.txt(非.md文件，P5合法产出)触发P6分支'不应直接改代码'拦截。拆成两次commit：先以phase=P5提交P5-test-results等产出，再单独提交phase
     bump到P6(仅.state.yaml)
+- phase: P6
+  action: dispatched
+  ts: '2026-08-10T21:00:00Z'
+  note: verifier执行13条BDD真实视觉验收，复用P5测试跑出的现成截图(去重3组md5重复)，自跑DOM测量，派发vision-analyst分析，结果11
+    PASS/2 FAIL(BDD-2/BDD-9)。发现真实缺陷：EntryMetaTagsBar.vue的flex-wrap规则与layout.css:466-478遗留全局.meta-tags-bar规则(overflow-x:auto;white-space:nowrap)冲突，content-area可滚动时(真实使用场景)meta-tags-bar坍缩到33px标签丢失。subagent在最后格式化阶段触发月度额度限制中断，但核心发现已完整落盘
+- phase: P6
+  action: main_verify_finding
+  ts: '2026-08-10T21:10:00Z'
+  note: orchestrator独立CDP复测markdown-test(?firstFileId=18)和xml-maven-pom两个entry，数值(scrollHeight18488/993>clientHeight788，metaBarOffsetHeight=33，overflowX=auto，whiteSpace=nowrap)与verifier报告完全吻合，确认真实非误报；同时核实E2E测试BDD-1/2导航markdown-test时未加firstFileId落在默认svg文件，从未触发此路径，解释了为何P5
+    50/50全绿漏掉此缺陷
+- phase: P6
+  action: retreat
+  ts: '2026-08-10T21:15:00Z'
+  note: 用agate-retreat-to.sh规范回退P6->P5->P4(2步，各自独立commit+归档，未绕过gate)，P6产出(P6-acceptance.md+P6-evidence/)归档至.archived/20260809-175444-P6/，失败详情写入.retreat-history.md
+- phase: P4
+  action: retry1_dispatched
+  ts: '2026-08-10T21:20:00Z'
+  note: 派发定向修复implementer：EntryMetaTagsBar.vue scoped规则新增overflow-x:visible;white-space:normal;覆盖layout.css遗留全局规则。未改layout.css本身、未改其他3处已approved文件、未改测试
+- phase: P4
+  action: retry1_main_verify
+  ts: '2026-08-10T21:40:00Z'
+  note: orchestrator独立CDP复测markdown-test(?firstFileId=18)和xml-maven-pom，metaBarOffsetHeight均33px->89px，overflowX=visible，whiteSpace=normal，与subagent自报完全一致；亲自跑vue-tsc
+    --noEmit通过、make lint通过；git diff确认改动精确为1行2条CSS声明，无越权
+- phase: P4
+  action: retry1_review
+  ts: '2026-08-10T21:50:00Z'
+  note: C8映射design-review复核：改动精确性/越权检查/技术合理性/实测数据交叉核实4项全部通过，approved
+- phase: P4
+  action: retry1_gate_pass
+  ts: '2026-08-10T21:55:00Z'
+  note: check-gate.sh P4 exit 0通过，phase P4->P5(重新走P5验证)

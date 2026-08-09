@@ -64,3 +64,48 @@ implementation_dir: frontend-v3/src/components
 ## 其余 46 passed 覆盖范围
 
 包括 EntryMetaTagsBar 的 padding/flex-wrap（BDD-1/2）、EntryDetailMobileBar 的底部栏对称 padding（BDD-4）、Copy 按钮纯图标化+44px 触控热区（BDD-5）、Wrap 按钮 toggle-btn+aria 属性（BDD-6/7）、桌面端无回归（BDD-12/13）、t090 遗留 BDD-7（Wrap active class 断言，已通过）等，两个 viewport project（chromium + Mobile Chrome）均绿。
+
+## P4 重试 #1（修复 P6 退回的 meta-tags-bar 全局 CSS 冲突）
+
+**退回原因摘要**：P6 verifier 发现 `.content-area` 可滚动的真实场景下（如打开长 markdown 文件），`EntryMetaTagsBar.vue` 的 scoped `.meta-tags-bar` 规则未显式声明 `overflow-x`/`white-space`，被 `frontend-v3/src/styles/layout.css:466-478` 的遗留全局同名规则（`overflow-x: auto; white-space: nowrap`）级联覆盖，导致 meta-tags-bar 高度坍缩到 33px、第二行起的标签被裁切不可见（BDD-2、BDD-9 FAIL）。详见 `.retreat-history.md`。
+
+### 改动
+
+`frontend-v3/src/components/EntryMetaTagsBar.vue` 第 35 行（`<style scoped>` 内 `.meta-tags-bar` 规则），新增两条声明：
+
+```diff
+- .meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-4) var(--space-4); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); flex-wrap: wrap; }
++ .meta-tags-bar { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-4) var(--space-4); background: var(--c-surface); border-bottom: 1px solid var(--c-border); font-size: var(--font-xs); color: var(--c-text-secondary); flex-wrap: wrap; overflow-x: visible; white-space: normal; }
+```
+
+- `overflow-x: visible`：覆盖 layout.css 全局规则的 `overflow-x: auto`，消除其隐含把 `overflow-y` 提升为 `auto` 导致的高度坍缩
+- `white-space: normal`：覆盖全局规则的 `white-space: nowrap`，一并核实后确认加上更稳妥（虽然 flex-wrap 主要由 flex 容器自身决定，但保留 nowrap 会影响子文本节点的换行语义，一并显式覆盖更清晰、无副作用）
+- 未改动 `frontend-v3/src/styles/layout.css` 的全局规则本身（按约束）
+- 未改动 `MarkdownViewer.vue`/`EntryDetailMobileBar.vue`/`DESIGN.md`（上一轮已 approved，本轮不涉及）
+
+### 验证：CDP 实测 offsetHeight（修复前 vs 修复后，11 个 entry，390×844 mobile viewport）
+
+| entry | content-area 可滚动 | 修复前 offsetHeight | 修复后 offsetHeight | overflowX | clippedTags |
+|---|---|---|---|---|---|
+| markdown-test?firstFileId=18 | 是 | 33px | **89px** | visible | 0 |
+| xml-maven-pom | 是 | 33px | **89px** | visible | 0 |
+| python-entry-service | 是 | 33px | **89px** | visible | 0 |
+| csv-employees | 是 | 33px | **89px** | visible | 0 |
+| tsv-server-metrics | 是 | 33px | **89px** | visible | 0 |
+| plantuml-arch | 是 | 33px | **89px** | visible | 0 |
+| markdown-test（默认 svg 文件） | 否 | 89px（未受影响） | 89px | visible | 0 |
+| json-api-config | 否 | 89px（未受影响） | 89px | visible | 0 |
+| yaml-docker-compose | 否 | 89px（未受影响） | 89px | visible | 0 |
+| svg-standalone | 否 | 89px（未受影响） | 89px | visible | 0 |
+| mermaid-charts | 否 | 89px（未受影响） | 89px | visible | 0 |
+
+修复前数值来自 `.retreat-history.md` 归档的 P6 复测数据；修复后数值为本轮用 CDP（`chromium.connectOverCDP`，390×844 移动模拟）在 `make build-frontend` 部署到 :8888 后逐一实测，全部 11 个 entry（6 个此前受影响 + 5 个此前正常）均为 89px，`overflowX: visible`，无标签被裁切，无回归。
+
+### xml-maven-pom Search 框重叠现象核查结论
+
+修复后对 `xml-maven-pom` 重新截图（390×844 mobile viewport）并用 vision-engine 独立视觉分析核实：meta-tags-bar 两行（`@carol · 16h ago · 39 reads · Public  xml  maven` / `配置  TreeView`）与下方 "Search nodes..." 输入框之间留白正常，8 个标签全部完整可见，**无重叠、无压住、无裁切**。确认 P6 报告中"标签被 Search 框压住"是同一个根因（meta-tags-bar 高度坍缩到 33px）的视觉表现之一，**不是独立的第二个 bug**，随本次修复一并消失，无需 `[DESIGN_GAP]` 标记。
+
+### 自查结果
+
+- `cd frontend-v3 && npx vue-tsc --noEmit`：通过，无输出
+- `make build-frontend`：成功，静态文件已复制到 `backend/peekview/static/`
