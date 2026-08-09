@@ -14,6 +14,8 @@ parent: T090 发布后用户视觉走查发现的问题，会话内讨论定型
 
 T090（移动端详情页 UX 打磨，v0.18.1 已发布）上线后，用户实机走查发现视觉观感差——"机械性改需求，没有在审美/呼吸感受上做有意义的事"。orchestrator 用 Playwright CDP 截图 + 实测 DOM 数值复核，确认了 4 处具体问题，并与用户逐条讨论定型了修复方案（含两个真实实现 bug，不只是审美偏好）。本任务把这轮已确认的方案落地。
 
+**范围扩展（用户明确要求，P1 派发前已定型，非事后 [SCOPE+]）**：`content-area`/`meta-tags-bar`/底部操作栏这套布局是详情页**全部 9 种 viewer 共用的公共骨架**（Markdown/CodeViewer/TableView(CSV+TSV)/TreeView(JSON+YAML+XML)/ImageViewer/HtmlViewer/SvgRenderer/MermaidRenderer/PlantUmlRenderer）。T090 当初 P6 只截图验证过 markdown + code 两种 viewer（对应 BDD-1/BDD-2 的"跨 viewer 范围收窄声明"），其余 7 种 viewer 在新布局下从未被真正截图看过。本任务的 P6 视觉验收范围必须扩大到**全部 9 种 viewer**，不能只验 markdown。
+
 **这不是重新设计，是把上一轮会话里已经拍板的具体数值/方案原样实现**——P1/P2 不需要重新探索候选方案，只需要把下面"已确认的实现规格"转成规范的 BDD/设计文档，重点精力放在 P4 实现和 **P6 真实截图验收**（T090 的教训是 BDD 数值达标但没人真正看过效果，这次必须补上视觉验收这一环，不能只验数字）。
 
 ## 已确认的实现规格（会话内逐条讨论 + 用户确认，非待定）
@@ -75,6 +77,13 @@ padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));  /* 相
 - **`.icon-btn`/`.toggle-btn` 全项目有多处独立实现，未真正复用同一份 CSS**：`EntryDetailMobileBar.vue`（本次要新增本地 `.icon-btn`）、`EntryDetailHeader.vue`、`OverflowMenu.vue` 各自 scoped 定义了相似但不完全一致的版本（不同的 min-height 约束）。本任务只保证 `EntryDetailMobileBar.vue` 内部新增的 `.icon-btn` 自己是 44×44 达标的，不做跨组件统一（那是更大范围的重构，超出本任务范围，不属于 T091）
 - **Wrap 按钮图标语义需要视觉确认**：`WrapText` 图标是否能让用户看懂"这是切换代码换行"，P6 视觉验收时需要结合 tooltip 一起判断，不能假设图标本身够直观
 - **content-area 的 8px 与 DESIGN.md 通用容器规则（L113"16px mobile"）仍有冲突**：本次不改 content-area 本身（用户明确保留 8px），这条冲突依然存在，只是通过 markdown-body 补 16px padding 后总留白达到 24px、观感上不再局促，但 DESIGN.md L113 和 content-area 实际值之间的字面冲突未解决，P1/P2 判断是否需要在 DESIGN.md 里加一句"detail page content-area 是刻意的例外覆盖"来消除这个字面矛盾
+- **9 种 viewer 覆盖范围扩展的具体风险**：`ImageViewer`/`HtmlViewer` 是 DESIGN.md L273 明确记载的滚动架构例外（`height:100%; overflow:hidden`，内部滚动隔离，不像其他 7 种 viewer 那样融入 `.content-area` 的正常文档流）——meta-tags-bar 嵌入内容流、随内容滚动划走这套 T090 机制，在这两种 viewer 下的实际视觉表现（尤其 meta-bar 是否还能正常先看到再滚走，还是被 `overflow:hidden` 的 viewer 内部区域直接遮挡/割裂）此前完全没验证过，需要 P4/P6 重点关注，不能假设和其他 7 种 viewer 表现一致。本次要求覆盖的具体测试 entry（均已在 `scripts/seed-data/` 现成可用，`make debug-quick` 自动灌入，不需要新增数据）：
+  - Markdown → `markdown-test`；Code → `python-entry-service`
+  - CSV → `csv-employees`；TSV → `tsv-server-metrics`
+  - JSON → `json-api-config`；YAML → `yaml-docker-compose`；XML → `xml-maven-pom`
+  - Image → `image-gallery` 或 `product-screenshots`（**滚动架构例外，重点验证**）
+  - HTML → `html-csp-test`（**滚动架构例外，重点验证**）
+  - SVG → `svg-standalone`；Mermaid → `mermaid-charts`；PlantUML → `plantuml-arch`
 
 ## executor_env
 
@@ -91,11 +100,11 @@ prod_isolation: "严禁触碰 :8080 生产服务与 ~/.peekview/"
 
 ## 裁剪倾向
 
-- P1：BDD 需要覆盖 4 个问题点各自的可视觉验证条件（不能只写数值），且要明确"meta-bar 换行不截断""底部栏按钮风格一致性""padding 对称性"这类之前 T090 漏掉的观感类验收标准
-- P2：`follows_existing_pattern`（Copy 对齐桌面端 `.icon-btn` 已有模式，Wrap 对齐 `source-toggle` 已有的 `.toggle-btn` 模式），候选方案基本已在本次会话内定型，P2 architect 主要工作是转成规范设计文档 + 声明 `files_to_read`/`gate_commands`，不需要重新探索候选
+- P1：BDD 需要覆盖 4 个问题点各自的可视觉验证条件（不能只写数值），且要明确"meta-bar 换行不截断""底部栏按钮风格一致性""padding 对称性"这类之前 T090 漏掉的观感类验收标准；**新增要求**：至少 1 条 BDD 显式要求"9 种 viewer 在移动端下 meta-bar/底部栏/正文边距渲染表现一致"，覆盖上方 known_risks 列出的全部 9 个测试 entry，其中 Image/HTML 两个滚动架构例外需要各自独立的 BDD（不能和其余 7 种合并成一条笼统断言）
+- P2：`follows_existing_pattern`（Copy 对齐桌面端 `.icon-btn` 已有模式，Wrap 对齐 `source-toggle` 已有的 `.toggle-btn` 模式），候选方案基本已在本次会话内定型，P2 architect 主要工作是转成规范设计文档 + 声明 `files_to_read`/`gate_commands`，不需要重新探索候选。P2 需要评估 meta-tags-bar 嵌入内容流的方案对 ImageViewer/HtmlViewer 这两个滚动架构例外是否需要特殊处理（如是否需要在这两种 viewer 场景下调整 meta-bar 挂载位置或表现）
 - P3：本任务风险点在于"图标按钮 active 态切换 + 无回归"，建议不裁剪，走 E2E 覆盖 Wrap 切换态和 Copy 点击行为（可能可以复用/微调 T090 遗留的 `t090-mobile-detail-ux-polish.spec.ts` 里已有的 BDD-6/BDD-7 相关用例，不需要整个重写）
-- P6：**不可裁剪**，且必须是本任务质量把关的核心——真实截图 + vision-engine 分析，明确验证"看起来舒服"这类主观但必要的验收项，不能只做 DOM 测量
-- 风险：low-medium（4 个文件 + DESIGN.md 3 处修订，纯前端 CSS/图标替换，无 schema/权限/多端影响，但涉及 DESIGN.md 变更且是 T090 的直接后续修正，不建议因为"简单"而裁掉 P6）
+- P6：**不可裁剪**，且必须是本任务质量把关的核心——真实截图 + vision-engine 分析，明确验证"看起来舒服"这类主观但必要的验收项，不能只做 DOM 测量。**验收范围覆盖全部 9 种 viewer**（不是只测 markdown），每种至少 1 张移动端截图，Image/HTML 两种额外确认 meta-bar 在滚动架构例外场景下的实际表现
+- 风险：medium（代码改动本身仍是 4 个文件 + DESIGN.md 3 处修订、纯前端 CSS/图标替换，无 schema/权限/多端影响；但验收范围扩到全部 9 种 viewer + 2 个滚动架构例外场景，P6 工作量和不确定性明显高于最初的"只改 4 处"评估，不建议因为"代码改动小"而低估整体 risk_level 或裁掉 P6）
 
 ## 排期
 
