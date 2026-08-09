@@ -1,7 +1,7 @@
-phase: P8
+phase: DONE
 task_id: T090
 task_name: mobile-detail-ux-polish
-status: in_progress
+status: done
 created: 2026-08-08T00:00:00Z
 updated: 2026-08-09T00:00:00Z
 retries:
@@ -59,3 +59,6 @@ history:
   - {phase: P7, action: gate_pass, ts: "2026-08-10T03:00:00Z", note: "check-gate.sh P7 exit 0通过，BLOCKER=0 DEVIATION-CRITICAL=0 DESIGN_GAP未配对=0，phase P7->P8"}
   - {phase: P8, action: dispatched, ts: "2026-08-10T04:00:00Z", note: "releaser产出P8-release.md：bump_type=patch(0.18.0->0.18.1)，仅peekview包(mcp_server不动)，CHANGELOG已移动Unreleased 3条到[0.18.1]段落(工作区未commit)，lint/typecheck重跑通过，临时资源清单(debug backend :8888 + 121条t090*测试entry，均debug库隔离)"}
   - {phase: P8, action: main_verify, ts: "2026-08-10T05:00:00Z", note: "主Agent亲自执行4项发布验证：①lint/typecheck重跑通过 ②P5 gate重跑(vitest 92/92 1215/1215 + E2E 12/12全绿) ③git log v0.18.0..HEAD对照CHANGELOG无遗漏(唯一额外commit 781f2726是T090前的release工具fix，非用户可见不需CHANGELOG) ④version文件路径核实(VERSIONS.json+backend/pyproject.toml+backend/peekview/__init__.py+frontend-v3/package.json+README.md+backend/README.md，与packages:[frontend-v3]范围一致)"}
+  - {phase: P8, action: bump_version, ts: "2026-08-10T06:00:00Z", note: "make bump-version NEW_VERSION=0.18.1完成：commit 852afd1b chore(release):bump to v0.18.1 + tag v0.18.1已创建。VERSIONS.json确认peekview=0.18.1/mcp_server=0.10.0不变。CHANGELOG [0.18.1]内容正确(Makefile通用提示文案误导性建议再编辑，核实后确认内容已对不需改)"}
+  - {phase: READY, action: cleanup, ts: "2026-08-10T07:00:00Z", note: "READY收尾检查全部完成：make debug-stop已执行，:8888不可达(000)，/tmp/peekview-debug/不存在，git工作区干净，生产:8080只读探测未写入任何数据([PROD_NOT_TOUCHED])，开发环境无污染(本任务全程无pip/npm全局安装)"}
+  - {phase: DONE, action: complete, ts: "2026-08-10T08:00:00Z", note: "T090完成。任务链：P0插播立项(优先于T089)->P1(3轮review迭代,12BDD)->P2(1轮review迭代,6候选方案)->P3(TDD红灯12/12)->P4(实现+3处DESIGN_GAP定向修复)->P5(全量测试0 failed)->P6(12/12 BDD验收,CDP独立验证)->P7(一致性BLOCKER=0)->P8(patch bump 0.18.0->0.18.1)。T089保持P0 pending，让位结束，可继续"}
