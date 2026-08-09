@@ -3,7 +3,7 @@ task_id: T091
 task_name: mobile-detail-visual-polish
 status: in_progress
 created: 2026-08-10 00:00:00+00:00
-updated: 2026-08-10 22:45:00+00:00
+updated: 2026-08-10 23:15:00+00:00
 retries:
   P1:
   - round: 1
@@ -216,3 +216,15 @@ history:
   action: retry1_gate_pass
   ts: '2026-08-10T22:45:00Z'
   note: check-gate.sh P6 exit 2通过(FAIL=0/TOTAL=13)，phase P6->P7
+- phase: P7
+  action: dispatched
+  ts: '2026-08-10T23:00:00Z'
+  note: consistency-reviewer转抄P4的DESIGN_GAP并配对DESIGN_GAP_REVIEWED，逐条核实闭环(直接读取修复后源码确认测量目标已改)；确认无SCOPE+(P0-brief已声明9viewer扩展是立项时定型非事后增补)；跨文件一致性五项(BDD↔PASS内容对应/改动文件清单吻合/packages范围/未决项清零/P6退回重做完整性)均附源文件节名与实测证据核实通过
+- phase: P7
+  action: gate_warning_fix
+  ts: '2026-08-10T23:10:00Z'
+  note: check-gate.sh P7首次跑出WARNING(DESIGN_GAP计数为0)，诊断为格式问题——DESIGN_GAP/DESIGN_GAP_REVIEWED两处标记被反引号/加粗包裹不符合gate行首方括号正则，内容本身完整正确。派发纯格式修正(不改内容)，修正后grep确认两处计数均为1，gate重跑无WARNING
+- phase: P7
+  action: gate_pass
+  ts: '2026-08-10T23:15:00Z'
+  note: check-gate.sh P7 exit 0通过，无BLOCKER/DEVIATION-CRITICAL，DESIGN_GAP已配对，phase P7->P8
