@@ -1,8 +1,29 @@
-phase: P0
+phase: P1
 task_id: T091
 task_name: mobile-detail-visual-polish
-status: pending
+status: in_progress
 created: 2026-08-10T00:00:00Z
 updated: 2026-08-10T00:00:00Z
+retries:
+  P1:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "4处定向修订：BDD-1重新归类为DOM断言/BDD-2补DOM辅助阈值/BDD-10-11补显式vision-engine声明+判定标准具体化/BDD-9补全10个entry"
+    - round: 2
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "P1最后一次retry（MAX=3）：BDD-2的40px阈值经reviewer独立核算发现公式反推基线~34px与实测17px基线对不上，orchestrator亲自用CDP live-patch方式实测真实数值（89px），交给analyst基于真实数据重新定阈值"
+retry_count:
+  P1: 2
 history:
   - {phase: P0, action: created, ts: "2026-08-10T00:00:00Z", note: "T090发布后用户实机走查发现视觉观感差(meta-bar挤压/正文边距太紧/底部栏padding不对称bug/Copy-Wrap按钮风格不统一违反DESIGN.md)。orchestrator用Playwright CDP截图+DOM实测复核，逐条与用户讨论定型修复方案(含2个真实实现bug：底部栏padding-bottom用env()替换而非叠加导致上下不对称；Copy/Wrap按钮绕过DESIGN.md规定的BaseButton/.icon-btn/.toggle-btn体系自建.bottom-btn样式)。用户已确认：Copy改纯图标.icon-btn(对齐桌面端)，Wrap改图标toggle-btn(对齐source-toggle，用WrapText图标)。risk_level倾向low-medium，P6视觉验收不可裁(本任务存在理由就是补上T090缺失的真实视觉验收)"}
+  - {phase: P0, action: scope_expand, ts: "2026-08-10T01:00:00Z", note: "用户要求举一反三，确认范围扩到详情页全部9种viewer（不含Landing/Explore/Settings/Admin全应用审计，那个留独立后续task），并入T091一起做。更新P0-brief加入9个测试entry映射+ImageViewer/HtmlViewer滚动架构例外风险点，risk_level上调medium"}
+  - {phase: P1, action: dispatched, ts: "2026-08-10T02:00:00Z", note: "analyst产出13条BDD，覆盖4处修复+9viewer(7常规合并BDD-9+Image/Html各自独立BDD-10/11)+跨端不回归，自评视觉断言占比69%"}
+  - {phase: P1, action: review_1, ts: "2026-08-10T03:00:00Z", note: "requirements-review needs-revision：BDD-1被误计入视觉断言分子导致占比虚高(真实46%~61.5%)/BDD-2是唯一无DOM兜底的纯主观判定/BDD-10-11判定标准不够具体+未显式声明vision-engine/BDD-9的3个entry只在脚注不在Given"}
+  - {phase: P1, action: revised_1, ts: "2026-08-10T04:00:00Z", note: "analyst第1轮修订4处，新占比自报61.5%(8/13)"}
+  - {phase: P1, action: review_2, ts: "2026-08-10T05:00:00Z", note: "requirements-review第2轮：4/5项独立核实confirmed，占比8/13重新核算一致；但BDD-2的40px阈值理论公式反推基线~34px与P0-brief实测基线17px对不上2倍，怀疑测量口径问题，needs-revision"}
+  - {phase: P1, action: main_investigate, ts: "2026-08-10T06:00:00Z", note: "orchestrator亲自用CDP诊断：最高子元素是.base-tag(26px)非.status-tag(17px)，理论单行公式从根上不适用(实际会换行成多行)；用page.addStyleTag实时注入T091目标CSS(padding16/16+flex-wrap+去横滚)直接测出真实值89px，交给analyst基于实测数据定阈值，不再用理论推算"}
+  - {phase: P1, action: revised_2, ts: "2026-08-10T07:00:00Z", note: "analyst第2轮修订（P1最后一次retry）：BDD-2阈值改为71px(89px实测×0.8)，专门锚定markdown-test entry，写明数据来源"}
+  - {phase: P1, action: review_3, ts: "2026-08-10T08:00:00Z", note: "requirements-review第3轮（最终轮）approved：71px阈值来源从理论公式换成CDP实测数据后逻辑链自洽，entry锚定明确，其余12条BDD核对未变，视觉断言占比8/13≈61.5%不变"}
+  - {phase: P1, action: gate_pass, ts: "2026-08-10T09:00:00Z", note: "check-gate.sh P1 exit 2通过，2个WARNING(SUGGEST不阻塞，均采纳)，phase P1->P2"}
