@@ -3,6 +3,7 @@
 > PeekView 项目任务管理主文件
 > **核心原则**：所有任务必须走 [agate](https://github.com/randomgitsrc/agate) 流程（P0-P8），每个阶段有文件产出
 > **位置**：`docs/tasks/` 目录下每个任务一个子目录
+> **任务编号**：`TPV{编号}`（项目代号 PV = PeekView，agate v0.40.0 起强制 `^T[A-Z]{2}\d+$` 格式）。已完成任务保留旧编号 `Txxx` 不变（历史记录）
 
 ---
 
