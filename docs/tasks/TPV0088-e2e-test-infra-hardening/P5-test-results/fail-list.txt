@@ -1,0 +1,15 @@
+# TPV0088 P5 — failed 测试清单（make test-quick 实测，预存失败）
+
+> 以下失败仅在 `make test-quick` 的 `-n auto`（16 workers xdist）下出现（轮 5 实测）：
+> 模块级 fixture 子进程 server（:18888）并发下未及时就绪 → CLI 连接被拒。
+> 串行全量（无 xdist）1068 passed / 0 failed。backend/ 本任务零改动 → 预存失败，非本任务引入。
+
+FAILED tests/test_cli_remote.py::TestCLIRemoteList::test_list_entries - assert... (Connection refused 127.0.0.1:18888)
+FAILED tests/test_cli_remote.py::TestCLIRemoteList::test_list_with_query - assert... (Connection refused 127.0.0.1:18888)
+FAILED tests/test_cli_remote.py::TestCLIRemoteList::test_list_with_tag_filter
+FAILED tests/test_cli_remote.py::TestCLIRemoteList::test_list_json_output - assert... (Connection refused 127.0.0.1:18888)
+ERROR tests/test_cli_remote.py::TestCLIRemoteGet::test_get_entry - assert 1 == 0 (server 未就绪)
+ERROR tests/test_cli_remote.py::TestCLIRemoteGet::test_get_entry_json - assert 1 == 0 (server 未就绪)
+ERROR tests/test_cli_remote.py::TestCLIRemoteDelete::test_delete_entry - assert 1 == 0 (server 未就绪)
+
+EXIT_CODE: 2

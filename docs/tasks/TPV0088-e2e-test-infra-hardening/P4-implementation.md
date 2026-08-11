@@ -2,65 +2,56 @@
 phase: P4
 task_id: TPV0088-e2e-test-infra-hardening
 type: implementation
-parent: P2-design.md
-trace_id: TPV0088-P4-20260812
+parent: P5-test-results/e2e.md
+trace_id: TPV0088-P4-retry1-20260812
 status: draft
 created: 2026-08-12
 agent: implementer
 ---
 
-# P4 — 实现说明：viewer.spec.ts 修复（子任务 A）
+# P4 实现（重试轮 1）— viewer.spec.ts E2E 失败修复
 
-`implementation_dir: frontend-v3/e2e/`
+## 背景
 
-## 改动文件
+P5 判定 18 failed + 1 flaky（19 用例 × 2 项目）均为确定性测试代码 bug，非环境问题。本轮按
+`P5-test-results/e2e.md` 逐用例根因修复 `frontend-v3/e2e/viewer.spec.ts`。
 
-- `frontend-v3/e2e/viewer.spec.ts`（唯一代码改动，19 用例全部保留）
+## 诊断确认（对照当前 DOM 核实）
 
-## 逐条落实修复清单
+- **markdown-test 文件序**：`GET /api/v1/entries/markdown-test` → `files[0]=architecture.svg(id=17)`、`files[1]=rich-markdown.md(id=18)`。`loadEntry`（`entryDetail.ts:52`）默认取 `files[0]`，故 markdown 渲染/TOC 永不触发。
+- **EntryDetailView.vue:203** 支持 `?firstFileId=` query，可绕过默认文件选择（t091 已验证该机制）。
+- **`.toc-nav`/`.file-sidebar`/`.detail-header` 均为桌面专属**：`EntryDetailContent.vue:4/65`（isFileTreeOpen/isTocOpen）、`EntryDetailHeader.vue:13`（`v-if="isDesktop"`）。移动端文件树在 drawer 内（默认关闭），`.file-item` 不在 DOM。
+- **TC-022 抽屉关闭**：`drawer z-index 201 > overlay 200`，`drawer-left` 宽 280px；375px 视口下 overlay 中心 x≈187 落在 drawer 内被 `.file-tree` 拦截。Escape 仅关闭 zen mode（`useZenMode.ts:14`），不关抽屉 → 用 `position` 点击 overlay 右缘（x=360 > 280）。
+- **TC-050**：`EntryCard.vue:2` `.entry-card` 是 div，仅 `.card-title` anchor（:22）有 `navigateToEntry`。
+- **TC-010 heading race**：`.markdown-body` 挂载先于异步渲染 headings（首轮 `waitForSelector('.markdown-body')` 即通过，但 count=0）→ 改等 `.markdown-body h1`。
 
-### 路由（BDD-2，17 处 hash → history）
-- 全部 `page.goto('/#/entry/{slug}')` → `page.goto('/{slug}')`。运行时创建 slug 保留（`/e2e-test-code`），TC-031 保留 `goto('/')`，TC-050 改 `goto('/explore')`。
+## 修复清单落地（对应 dispatch 7 项）
 
-### slug 映射（BDD-4，IMPL-D1~D4）
-| 用例 | 原 → 新 |
-|------|---------|
-| TC-004/005/030/042 | `lu4prg` → `python-entry-service`（entry_service.py 含 `def`，多文件 public/alice）|
-| TC-010/011/012/020/021/022/023/040 | `ngajri` → `markdown-test`（rich-markdown.md 含 h1-h3 + 2 文件）|
-| TC-013 | `ngajri` → `mermaid-charts`（flowchart.md 含 mermaid 块）|
-| TC-041 | `lu4prg` → `json-api-config`（单内容文件 config.json，isMultiFile=false）|
+| # | 用例 | 改动 |
+|---|------|------|
+| 1 | TC-005 | `.file-item .file-name` 严格模式违规（2 元素）→ `filter({ hasText: 'entry_service.py' })` + `toHaveText`；并强制桌面视口（移动端文件树在 drawer 内不在 DOM） |
+| 2 | TC-010/011/012/020/023 | 新增 `openMarkdownFile(page)` helper：通过 API 查 `rich-markdown.md` 的 id → `?firstFileId=` 导航。TC-011/012/020 强制桌面视口（`.toc-nav`/`.toc-sidebar` 桌面专属）；TC-023 用 firstFileId 让 `mobile-bar-toc-btn` 渲染 |
+| 3 | TC-022 | `.drawer-overlay` 中心点击被 drawer 内 file-tree 拦截 → `click({ position: { x: 360, y: 400 } })`（375px 视口、drawer 宽 280px，x>280 落在 overlay 上） |
+| 4 | TC-030 | Mobile 无 `.detail-header` → 强制桌面视口 |
+| 5 | TC-040 | Mobile `.file-item` 在 drawer 内默认关闭不在 DOM → 强制桌面视口 |
+| 6 | TC-050 | `.entry-card` div 无导航 → 改点 `.entry-card .card-title`；并强制桌面视口（`.detail-header` 断言桌面专属） |
+| 7 | TC-002 | `waitForShiki` 首轮 5s 超时（flaky）→ 15s |
 
-### 死选择器替换（BDD-3，IMPL-S1~S12）
-- **S1**（TC-005）：删 `.code-header .filename`/`.lang`/`Wrap` 断言；新增 `.file-item .file-name` 含 `entry_service.py`（文件名渲染在文件树，TreeNodeItem.vue:23）
-- **S2**（TC-021）：`.mobile-actions` → `[data-testid="mobile-bottom-bar"]`
-- **S3**（TC-022）：`.mobile-actions .menu-btn` → `[data-testid="mobile-bar-filetree-btn"]`；`.drawer-left`/`.drawer-overlay` 保留
-- **S4**（TC-023）：`.toc-btn` → `[data-testid="mobile-bar-toc-btn"]`；`.drawer-right` 保留
-- **S5**（TC-030/031）：`.list-header/.detail-header .btn-icon` → TC-030 `.detail-header .theme-toggle`；TC-031 `.theme-toggle`（landing 页）
-- **S6**（TC-004/005）：`button:has-text("Copy")` → `[aria-label="Copy"]`（桌面 header，EntryDetailHeader.vue:36）
-- **S7**（TC-003）：桌面无 Wrap → 移动端视口 375×812 + `[data-testid="mobile-bar-wrap-btn"]`，断言 `.code-body` `wrap-enabled` class 切换（CodeViewer.vue:16）
-- **S8**（TC-042）：`a[download]`（动态建 a 即移除，DOM 不存在）→ 点 `[data-testid="overflow-menu-trigger"]` → `getByText('Download', { exact: true })`（精确匹配，避免命中 `Download as Pack`）→ `page.waitForEvent('download')` → `suggestedFilename()` 含 `entry_service.py`
-- **S9**（TC-050）：`goto('/')` → `goto('/explore')`（landing 不渲染 `.entry-card`，EntryListView grid 渲染）
-- **S10**（TC-050）：`toHaveURL(/\/entry\//)` → `toHaveURL(/\/[^/]+$/)`（history 模式 URL 是 `/{slug}`）
-- **S11**（TC-012）：删 `toHaveURL(/.*${href}$/)`（TocNav `@click.prevent` 不改 URL）→ 点 toc-item 后 `expect.poll(content-area scrollTop).toBeGreaterThan(0)`（`[data-testid="content-area"]` 是滚动容器，:227 `overflow-y:auto`）；不依赖 `.toc-item.active`（无 scroll-spy）
-- **S12**（TC-013）：`if (mermaidExists)` 条件式断言 → 无条件断言 `.diagram-viewer svg` 可见（MermaidRenderer 渲染于 `.diagram-svg-container`，无 `.mermaid` 类）
+## 自查结果
 
-## 自主决策（上报）
+- `E2E_SPEC=e2e/viewer.spec.ts make debug-test`（debug backend :8888）：
+  - 第一轮：**36 passed + 2 flaky**（TC-010 双项目，heading 渲染 race）
+  - 第二轮（修复 TC-010/011 wait 目标后）：**38 passed，0 failed，0 flaky**（19 用例 × 2 项目全绿）
+- `npx vue-tsc --noEmit` exit 0（e2e 不在 tsconfig 覆盖范围，作为参考）
+- `git diff --stat`：仅改动 `frontend-v3/e2e/viewer.spec.ts`（另有 P4-progress.md 进度记录）
+- 未删用例、未清空断言，所有断言保持原有强度（仅修正选择器与等待目标）
 
-[DESIGN_GAP: TC-012 将点击目标从 P2/P3 默认的 `.toc-item a` first() 改为 last()——rich-markdown.md 首个 toc 项是文档顶部 h1，click first() 后 scrollTop 可能恒 0 导致断言不稳；last() 在折叠线以下，scrollTop>0 确定性成立。P3 清单仅写"点 .toc-item a"，未限定 first/last]
+## 备注
 
-[DESIGN_GAP: TC-050 在 `toHaveURL(/\/([^/]+)$/)` 之外追加 `.detail-header` 可见断言——该正则同时匹配 `/explore`，单独使用在导航尚未发生时即可通过（假绿）；detail-header 可见才证明真实进入 detail 页。P2 S10 未覆盖此弱化点]
+- 文件中新增的注释遵循既有文件风格（原文件每用例均有中文注释），用于解释"为何强制视口/为何 firstFileId"，防止后续回归。
+- `backend/zip-*.zip` 三个文件的 git 变更来自后端 pytest 的既有测试产物，非本轮改动。
 
-## 自查结果（≠P5 gate）
+## 产出
 
-- `npx tsc --noEmit --skipLibCheck --target ES2020 --module esnext --moduleResolution bundler e2e/viewer.spec.ts` → **exit 0**（语法/类型通过）
-- grep 确认无残留：`/#/entry/`、`lu4prg`、`ngajri`、`.code-header`、`.mobile-actions`、`.menu-btn`、`.toc-btn`、`.list-header`、`.btn-icon`、`has-text`（grep-exit=1 无匹配）
-- `grep -c "test("` = **19**，未删任何用例
-- **E2E 实跑（`E2E_SPEC=e2e/viewer.spec.ts make debug-test`）需 debug backend :8888 运行，本阶段未启动服务，留给 P5/P6 实跑**
-
-## 环境隔离
-
-[PROD_NOT_TOUCHED] 未启动任何服务、未触碰生产 :8080 / `~/.peekview/`，仅修改测试文件。
-
-## 未改动文件
-
-- Makefile / scripts/e2e-safety-check.sh 的改动来自子任务 B（implementer-b），本子任务未触碰。
+- 代码改动：`frontend-v3/e2e/viewer.spec.ts`
+- 本文档：`docs/tasks/TPV0088-e2e-test-infra-hardening/P4-implementation.md`

@@ -4,12 +4,21 @@ import { test, expect } from '@playwright/test'
 async function waitForShiki(page) {
   await page.waitForFunction(() => {
     return document.querySelector('.code-body pre') !== null
-  }, { timeout: 5000 })
+  }, { timeout: 15000 })
 }
 
 // Helper: Get colored tokens
 async function getColoredTokens(page) {
   return await page.locator('.code-body span[style*="color"]').count()
+}
+
+// Helper: Navigate to markdown-test with the markdown file as active file
+// (files[0] is architecture.svg; markdown rendering/TOC only apply to rich-markdown.md)
+async function openMarkdownFile(page) {
+  const res = await page.request.get('/api/v1/entries/markdown-test')
+  const entry = await res.json()
+  const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+  await page.goto(`/markdown-test?firstFileId=${md.id}`)
 }
 
 // ========================================
@@ -85,11 +94,13 @@ test.describe('Code Viewer', () => {
   })
 
   test('TC-005: File tree shows filename and copy button', async ({ page }) => {
+    // File tree sidebar is desktop-only; force desktop viewport so it renders in both projects
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/python-entry-service')
     await waitForShiki(page)
 
-    // Active file name rendered in file tree
-    await expect(page.locator('.file-item .file-name')).toContainText('entry_service.py')
+    // Active file name rendered in file tree (python-entry-service has 2 files)
+    await expect(page.locator('.file-item .file-name').filter({ hasText: 'entry_service.py' })).toHaveText('entry_service.py')
 
     // Copy button visible
     await expect(page.locator('[aria-label="Copy"]')).toBeVisible()
@@ -102,11 +113,11 @@ test.describe('Code Viewer', () => {
 
 test.describe('Markdown Viewer', () => {
   test('TC-010: Markdown basic rendering', async ({ page }) => {
-    // Navigate to markdown entry
-    await page.goto('/markdown-test')
+    // Navigate to markdown entry with the markdown file active
+    await openMarkdownFile(page)
 
-    // Wait for content
-    await page.waitForSelector('.markdown-body', { timeout: 5000 })
+    // Wait for content (headings render async after .markdown-body mounts)
+    await page.waitForSelector('.markdown-body h1', { timeout: 10000 })
 
     // Check headings rendered
     const headings = await page.locator('.markdown-body h1, .markdown-body h2, .markdown-body h3').count()
@@ -116,8 +127,10 @@ test.describe('Markdown Viewer', () => {
   })
 
   test('TC-011: TOC sidebar displayed', async ({ page }) => {
-    await page.goto('/markdown-test')
-    await page.waitForSelector('.markdown-body', { timeout: 5000 })
+    // .toc-nav sidebar is desktop-only; force desktop viewport so it renders in both projects
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await openMarkdownFile(page)
+    await page.waitForSelector('.toc-nav .toc-item', { timeout: 10000 })
 
     // Check TOC exists on desktop
     const tocItems = await page.locator('.toc-nav .toc-item').count()
@@ -125,7 +138,8 @@ test.describe('Markdown Viewer', () => {
   })
 
   test('TC-012: TOC navigation works', async ({ page }) => {
-    await page.goto('/markdown-test')
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await openMarkdownFile(page)
     await page.waitForSelector('.toc-nav', { timeout: 5000 })
 
     // Click last TOC item (guaranteed to be below the fold)
@@ -154,7 +168,7 @@ test.describe('Markdown Viewer', () => {
 test.describe('Responsive Layout', () => {
   test('TC-020: Desktop 3-column layout', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto('/markdown-test')
+    await openMarkdownFile(page)
 
     // Check file sidebar visible on desktop
     await expect(page.locator('.file-sidebar')).toBeVisible()
@@ -189,14 +203,16 @@ test.describe('Responsive Layout', () => {
     // Drawer should appear
     await expect(page.locator('.drawer-left')).toBeVisible()
 
-    // Click overlay to close
-    await page.locator('.drawer-overlay').click()
+    // Click overlay outside the drawer (280px wide) to close
+    await page.locator('.drawer-overlay').click({ position: { x: 360, y: 400 } })
     await expect(page.locator('.drawer-left')).not.toBeVisible()
   })
 
   test('TC-023: Mobile TOC drawer', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto('/markdown-test')
+    // Default active file is architecture.svg (non-markdown), so the TOC button only
+    // renders after selecting the markdown file via ?firstFileId=
+    await openMarkdownFile(page)
 
     // Click TOC button in mobile bottom bar
     await page.locator('[data-testid="mobile-bar-toc-btn"]').click()
@@ -212,6 +228,8 @@ test.describe('Responsive Layout', () => {
 
 test.describe('Theme Switching', () => {
   test('TC-030: Dark/light theme toggle', async ({ page }) => {
+    // .detail-header (with theme-toggle) is desktop-only; force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/python-entry-service')
     await waitForShiki(page)
 
@@ -259,6 +277,8 @@ test.describe('Theme Switching', () => {
 
 test.describe('File Operations', () => {
   test('TC-040: File selection', async ({ page }) => {
+    // File tree is in the mobile drawer (closed by default); force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/markdown-test')
 
     // Click second file in tree
@@ -302,6 +322,8 @@ test.describe('File Operations', () => {
 
 test.describe('Entry List', () => {
   test('TC-050: Entry list displays correctly', async ({ page }) => {
+    // .detail-header is desktop-only; force desktop viewport so navigation assertion works
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/explore')
 
     // Wait for entries to load
@@ -311,8 +333,8 @@ test.describe('Entry List', () => {
     const entries = await page.locator('.entry-card').count()
     expect(entries).toBeGreaterThan(0)
 
-    // Click first entry
-    await page.locator('.entry-card').first().click()
+    // Click first entry's title link (the .entry-card div itself has no navigation)
+    await page.locator('.entry-card .card-title').first().click()
 
     // Should navigate to detail page (history mode URL: /{slug})
     await expect(page.locator('.detail-header')).toBeVisible()

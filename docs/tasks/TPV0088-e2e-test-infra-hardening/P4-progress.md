@@ -63,3 +63,18 @@
 - `grep -c "test("` = 19（用例数不变，未删用例）
 - 未改 Makefile/e2e-safety-check.sh（git status 中这两处改动来自子任务 B，非本子任务）
 - E2E 实跑需 debug backend :8888 → 留给 P5/P6
+## P4 retry1 进度（implementer 追加）
+- 已读 dispatch-context / P5 e2e.md / viewer.spec.ts / 相关 Vue 组件
+- 根因确认：与 P5 判定一致。关键发现：
+  - markdown-test files: architecture.svg(id=17), rich-markdown.md(id=18)，files[0]=svg
+  - python-entry-service files: entry_service.py, requirements.txt（2 元素）
+  - EntryDetailView.vue:203 支持 ?firstFileId= query（t091 已验证模式，MARKDOWN_FILE_ID=18）
+  - EntryDetailContent.vue:245-248：drawer z-index 201 > overlay 200，drawer-left 宽 280px，overlay 中心点击(x≈187)落在 drawer 内被拦截
+  - EntryDetailHeader.vue:13 isDesktop 才渲染 .detail-header；mobile-sticky-header 无 theme-toggle
+  - EntryCard.vue:22 仅 .card-title anchor 有 navigateToEntry
+  - waitForShiki 超时 5000ms 首轮不足
+- 第一轮修复完成（TC-005 filter、openMarkdownFile helper + ?firstFileId=、TC-011/012 桌面视口、TC-022 position 点击、TC-023 openMarkdownFile、TC-030/040/050 桌面视口、TC-050 点 .card-title、waitForShiki 15s）
+- 第一轮 E2E：36 passed + 2 flaky（TC-010 双项目 flaky，heading 渲染 race）→ 已改 waitForSelector('.markdown-body h1') 与 '.toc-nav .toc-item'
+- 第二轮修复（TC-010 waitForSelector '.markdown-body h1' + TC-011 '.toc-nav .toc-item'）后重跑：38 passed，0 failed，0 flaky
+- vue-tsc exit 0
+- 完成 P4-implementation.md

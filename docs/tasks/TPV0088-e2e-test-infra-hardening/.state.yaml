@@ -11,3 +11,4 @@ history:
   - {phase: P2, action: complete, ts: "2026-08-12T00:00:00Z", note: "P2-design.md 单候选方案（子任务 A 修复 19 用例 spec + 子任务 B Check 6 mtime 校验）。plan-design-review 首轮 needs-revision（S11 断言双重不可成立 + 函数次序矛盾 + S8 歧义 + 行号漂移），architect 修订后 approved。GATE P2 exit 2 通过"}
   - {phase: P3, action: complete, ts: "2026-08-12T00:00:00Z", note: "P3-test-cases.md：子任务 B Check 6 测试 7 用例（5 红 1 绿 B 类红灯）+ 子任务 A 19 用例修复清单。check-tdd-red.sh exit 0 真红灯确认"}
   - {phase: P4, action: complete, ts: "2026-08-12T00:00:00Z", note: "并行派发 2 个 implementer：子任务 A 修 viewer.spec.ts 19 用例（路由/slug/死选择器/数据依赖，tsc 通过无残留）；子任务 B 加 Check 6 + --test-mtime（--test-mtime 两态通过）+ Makefile env 传递。design-review approved。GATE P4 exit 0"}
+  - {phase: P5, action: complete, ts: "2026-08-12T00:00:00Z", note: "P5 首轮：后端 pytest + typecheck 全绿，E2E 18 failed + 1 flaky（17/19 用例含失败，P5 verifier 逐例对照 DOM 核实为测试代码 bug 非环境问题）→ 回 P4 重试轮修复 7 项 → E2E 复跑 38/38 全过（BDD-1 达成）。--test-mtime 两态通过。known-failures 登记 test_cli_remote xdist 预存失败"}
