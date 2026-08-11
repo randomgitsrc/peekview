@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: TPV0089
 task_name: unicode-filename-link-fix
 status: in_progress
@@ -12,3 +12,4 @@ history:
   - {phase: P3, action: complete, ts: "2026-08-11T00:00:00Z", note: "P3-test-cases.md 13 单元用例（BDD-1~9 + 守卫补充）+ 6 E2E 用例（BDD-10~13 双 viewport）+ seed-data/unicode-filenames/ fixture（中文/日文/重音/空格/英文 + 附件）。check-tdd-red.sh exit 0 真红灯确认（6 failed = BDD-1~5/7 decode 用例，45 passed = 既有+回归保护）。seed-debug.py BINARY_OVERRIDES 新增 unicode-filenames（PNG 二进制上传支持，必要改动）"}
   - {phase: P4, action: complete, ts: "2026-08-11T00:00:00Z", note: "path-map.ts 实现方案 A（matchRef 抽取 + resolvePath raw 优先 + decode-once 兜底 + 守卫重跑），normalizeRef/buildPathMap 零改动。P3 红灯 6 条转绿，51/51 全绿。design-review approved。GATE P4 exit 0"}
   - {phase: P5, action: complete, ts: "2026-08-11T00:00:00Z", note: "verifier 执行：前端单测 1228/0 + typecheck 通过 + E2E BDD-10/12/13 通过 + BDD-11 断言修正后 12/12 全绿（SPA store 导航 URL 不变，改为内容区显示断言 + P1 BASELINE_CHANGE）+ 后端 pytest 1061/4（xdist 预存失败登记 known-failures.md）。build-frontend 重建后验证"}
+  - {phase: P6, action: complete, ts: "2026-08-12T00:00:00Z", note: "P6 验收 13/13 PASS（单元 51/51 + E2E 12/12 + CDP 精确断言 + vision blocker_count=0）。GATE P6 exit 2 + evidence exit 0 + provenance exit 0 全通过。BDD-11 按 BASELINE_CHANGE 以内容区显示为验收标准（SPA 架构）"}
