@@ -10,3 +10,4 @@ history:
   - {phase: P1, action: complete, ts: "2026-08-12T00:00:00Z", note: "P1-requirements.md 9 BDD（子任务 A 用例修复 + 子任务 B mtime 校验）。requirements-review 首轮 needs-revision（P0 审计 20 用例实际 19 → 全量修正），analyst 修订后复核 approved。GATE P1 exit 2 通过"}
   - {phase: P2, action: complete, ts: "2026-08-12T00:00:00Z", note: "P2-design.md 单候选方案（子任务 A 修复 19 用例 spec + 子任务 B Check 6 mtime 校验）。plan-design-review 首轮 needs-revision（S11 断言双重不可成立 + 函数次序矛盾 + S8 歧义 + 行号漂移），architect 修订后 approved。GATE P2 exit 2 通过"}
   - {phase: P3, action: complete, ts: "2026-08-12T00:00:00Z", note: "P3-test-cases.md：子任务 B Check 6 测试 7 用例（5 红 1 绿 B 类红灯）+ 子任务 A 19 用例修复清单。check-tdd-red.sh exit 0 真红灯确认"}
+  - {phase: P4, action: complete, ts: "2026-08-12T00:00:00Z", note: "并行派发 2 个 implementer：子任务 A 修 viewer.spec.ts 19 用例（路由/slug/死选择器/数据依赖，tsc 通过无残留）；子任务 B 加 Check 6 + --test-mtime（--test-mtime 两态通过）+ Makefile env 传递。design-review approved。GATE P4 exit 0"}

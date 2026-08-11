@@ -30,7 +30,7 @@ test.describe('Code Viewer', () => {
       }
     })
 
-    await page.goto('/#/entry/e2e-test-code')
+    await page.goto('/e2e-test-code')
     await waitForShiki(page)
 
     // Check for colored tokens (Shiki generates spans with color styles)
@@ -42,7 +42,7 @@ test.describe('Code Viewer', () => {
   })
 
   test('TC-002: Line numbers displayed', async ({ page }) => {
-    await page.goto('/#/entry/e2e-test-code')
+    await page.goto('/e2e-test-code')
     await waitForShiki(page)
 
     // Shiki's output should have line structure
@@ -51,47 +51,48 @@ test.describe('Code Viewer', () => {
   })
 
   test('TC-003: Wrap mode toggle', async ({ page }) => {
-    await page.goto('/#/entry/e2e-test-code')
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/e2e-test-code')
     await waitForShiki(page)
 
     // Initial state - no wrap
     await expect(page.locator('.code-body')).not.toHaveClass(/wrap-enabled/)
 
-    // Click Wrap button
-    await page.click('button:has-text("Wrap")')
+    // Click wrap button in mobile bottom bar
+    await page.locator('[data-testid="mobile-bar-wrap-btn"]').click()
 
     // Check wrap enabled
     await expect(page.locator('.code-body')).toHaveClass(/wrap-enabled/)
 
     // Click again to toggle off
-    await page.click('button:has-text("Wrap")')
+    await page.locator('[data-testid="mobile-bar-wrap-btn"]').click()
     await expect(page.locator('.code-body')).not.toHaveClass(/wrap-enabled/)
   })
 
   test('TC-004: Copy button copies code', async ({ page, context }) => {
-    await page.goto(`/#/entry/lu4prg`)
+    await page.goto('/python-entry-service')
     await waitForShiki(page)
 
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
 
     // Click Copy
-    await page.click('button:has-text("Copy")')
+    await page.locator('[aria-label="Copy"]').click()
 
     // Verify clipboard has content
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText())
     expect(clipboardText).toContain('def')
   })
 
-  test('TC-005: Code block header displays correctly', async ({ page }) => {
-    await page.goto(`/#/entry/lu4prg`)
+  test('TC-005: File tree shows filename and copy button', async ({ page }) => {
+    await page.goto('/python-entry-service')
     await waitForShiki(page)
 
-    // Check header elements
-    await expect(page.locator('.code-header .filename')).toContainText('test.py')
-    await expect(page.locator('.code-header .lang')).toContainText('PYTHON')
-    await expect(page.locator('.code-header button:has-text("Copy")')).toBeVisible()
-    await expect(page.locator('.code-header button:has-text("Wrap")')).toBeVisible()
+    // Active file name rendered in file tree
+    await expect(page.locator('.file-item .file-name')).toContainText('entry_service.py')
+
+    // Copy button visible
+    await expect(page.locator('[aria-label="Copy"]')).toBeVisible()
   })
 })
 
@@ -102,7 +103,7 @@ test.describe('Code Viewer', () => {
 test.describe('Markdown Viewer', () => {
   test('TC-010: Markdown basic rendering', async ({ page }) => {
     // Navigate to markdown entry
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
     // Wait for content
     await page.waitForSelector('.markdown-body', { timeout: 5000 })
@@ -115,7 +116,7 @@ test.describe('Markdown Viewer', () => {
   })
 
   test('TC-011: TOC sidebar displayed', async ({ page }) => {
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
     await page.waitForSelector('.markdown-body', { timeout: 5000 })
 
     // Check TOC exists on desktop
@@ -124,28 +125,25 @@ test.describe('Markdown Viewer', () => {
   })
 
   test('TC-012: TOC navigation works', async ({ page }) => {
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
     await page.waitForSelector('.toc-nav', { timeout: 5000 })
 
-    // Click first TOC item
-    const firstTocLink = page.locator('.toc-nav .toc-item a').first()
-    const href = await firstTocLink.getAttribute('href')
-    await firstTocLink.click()
+    // Click last TOC item (guaranteed to be below the fold)
+    const lastTocLink = page.locator('.toc-nav .toc-item a').last()
+    await lastTocLink.click()
 
-    // Verify URL has hash
-    await expect(page).toHaveURL(new RegExp(`.*${href}$`))
+    // Content area should scroll to the heading
+    await expect.poll(() =>
+      page.locator('[data-testid="content-area"]').evaluate((el: HTMLElement) => el.scrollTop)
+    ).toBeGreaterThan(0)
   })
 
   test('TC-013: Mermaid diagram rendering', async ({ page }) => {
-    // This test requires an entry with mermaid diagram
-    await page.goto(`/#/entry/ngajri`)
-    await page.waitForTimeout(3000)
+    // Navigate to mermaid entry
+    await page.goto('/mermaid-charts')
 
-    // Check for mermaid container or SVG
-    const mermaidExists = await page.locator('.mermaid, .language-mermaid').count() > 0
-    if (mermaidExists) {
-      await expect(page.locator('.mermaid')).toBeVisible({ timeout: 5000 })
-    }
+    // Mermaid diagram container should render an SVG
+    await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
   })
 })
 
@@ -156,7 +154,7 @@ test.describe('Markdown Viewer', () => {
 test.describe('Responsive Layout', () => {
   test('TC-020: Desktop 3-column layout', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
     // Check file sidebar visible on desktop
     await expect(page.locator('.file-sidebar')).toBeVisible()
@@ -169,39 +167,39 @@ test.describe('Responsive Layout', () => {
 
   test('TC-021: Mobile single column layout', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
     // Sidebars should be hidden on mobile
     await expect(page.locator('.file-sidebar')).not.toBeVisible()
     await expect(page.locator('.toc-sidebar')).not.toBeVisible()
 
-    // Mobile actions should be visible
-    await expect(page.locator('.mobile-actions')).toBeVisible()
+    // Mobile bottom bar should be visible
+    await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
 
     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
   })
 
   test('TC-022: Mobile file drawer', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
-    // Click menu button
-    await page.click('.mobile-actions .menu-btn')
+    // Click file tree button in mobile bottom bar
+    await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
 
     // Drawer should appear
     await expect(page.locator('.drawer-left')).toBeVisible()
 
     // Click overlay to close
-    await page.click('.drawer-overlay')
+    await page.locator('.drawer-overlay').click()
     await expect(page.locator('.drawer-left')).not.toBeVisible()
   })
 
   test('TC-023: Mobile TOC drawer', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
-    // Click TOC button in header
-    await page.click('.toc-btn')
+    // Click TOC button in mobile bottom bar
+    await page.locator('[data-testid="mobile-bar-toc-btn"]').click()
 
     // TOC drawer should appear
     await expect(page.locator('.drawer-right')).toBeVisible()
@@ -214,7 +212,7 @@ test.describe('Responsive Layout', () => {
 
 test.describe('Theme Switching', () => {
   test('TC-030: Dark/light theme toggle', async ({ page }) => {
-    await page.goto(`/#/entry/lu4prg`)
+    await page.goto('/python-entry-service')
     await waitForShiki(page)
 
     // Get initial theme
@@ -222,8 +220,8 @@ test.describe('Theme Switching', () => {
       document.documentElement.getAttribute('data-theme')
     )
 
-    // Click theme toggle
-    await page.click('.list-header .btn-icon, .detail-header .btn-icon')
+    // Click theme toggle in detail header
+    await page.locator('.detail-header .theme-toggle').click()
 
     // Check theme changed
     const newTheme = await page.evaluate(() =>
@@ -236,10 +234,10 @@ test.describe('Theme Switching', () => {
   })
 
   test('TC-031: Theme persistence after reload', async ({ page }) => {
-    await page.goto(`/`)
+    await page.goto('/')
 
-    // Toggle theme
-    await page.click('.list-header .btn-icon')
+    // Toggle theme on landing
+    await page.locator('.theme-toggle').click()
     const themeBeforeReload = await page.evaluate(() =>
       document.documentElement.getAttribute('data-theme')
     )
@@ -261,7 +259,7 @@ test.describe('Theme Switching', () => {
 
 test.describe('File Operations', () => {
   test('TC-040: File selection', async ({ page }) => {
-    await page.goto(`/#/entry/ngajri`)
+    await page.goto('/markdown-test')
 
     // Click second file in tree
     const files = page.locator('.file-item')
@@ -273,7 +271,7 @@ test.describe('File Operations', () => {
 
   test('TC-041: Single file hides file tree', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto(`/#/entry/lu4prg`)
+    await page.goto('/json-api-config')
 
     // Single file entry should not show file sidebar
     const fileSidebar = page.locator('.file-sidebar')
@@ -281,13 +279,20 @@ test.describe('File Operations', () => {
     expect(count).toBe(0)
   })
 
-  test('TC-042: Download button exists', async ({ page }) => {
-    await page.goto(`/#/entry/lu4prg`)
+  test('TC-042: Download button downloads file', async ({ page }) => {
+    await page.goto('/python-entry-service')
     await waitForShiki(page)
 
-    // Check download link exists
-    const downloadLink = page.locator('a[download]')
-    await expect(downloadLink).toBeVisible()
+    // Open overflow menu
+    await page.locator('[data-testid="overflow-menu-trigger"]').click()
+
+    // Trigger real download
+    const downloadPromise = page.waitForEvent('download')
+    await page.getByText('Download', { exact: true }).click()
+    const download = await downloadPromise
+
+    // Verify downloaded filename
+    expect(download.suggestedFilename()).toContain('entry_service.py')
   })
 })
 
@@ -297,7 +302,7 @@ test.describe('File Operations', () => {
 
 test.describe('Entry List', () => {
   test('TC-050: Entry list displays correctly', async ({ page }) => {
-    await page.goto(`/`)
+    await page.goto('/explore')
 
     // Wait for entries to load
     await page.waitForSelector('.entry-card', { timeout: 10000 })
@@ -307,9 +312,10 @@ test.describe('Entry List', () => {
     expect(entries).toBeGreaterThan(0)
 
     // Click first entry
-    await page.click('.entry-card')
+    await page.locator('.entry-card').first().click()
 
-    // Should navigate to detail page
-    await expect(page).toHaveURL(/\/entry\//)
+    // Should navigate to detail page (history mode URL: /{slug})
+    await expect(page.locator('.detail-header')).toBeVisible()
+    await expect(page).toHaveURL(/\/[^/]+$/)
   })
 })

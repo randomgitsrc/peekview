@@ -7,6 +7,33 @@ set -e
 PROD_DB="/home/kity/.peekview/peekview.db"
 DEBUG_DB="/tmp/peekview-debug/peekview.db"
 
+# Check 6 函数定义（置于 Check 1 之前——bash 须先定义后调用）
+check_static_freshness() {
+    local src_dir="${PV_SRC_DIR:-frontend-v3/src}"
+    local static_index="${PV_STATIC_INDEX:-backend/peekview/static/index.html}"
+    if [ ! -f "$static_index" ]; then
+        echo "✗ FATAL: $static_index 不存在"
+        echo "   请先运行: make build-frontend"
+        return 1
+    fi
+    local stale
+    stale=$(find "$src_dir" -type f -newer "$static_index" 2>/dev/null)
+    if [ -n "$stale" ]; then
+        echo "✗ FATAL: frontend 源码比 static 产物新，E2E 将基于过期产物运行"
+        echo "   过期文件（前 5 个）:"
+        echo "$stale" | head -5
+        echo "   请先运行: make build-frontend"
+        return 1
+    fi
+    echo "✓ 静态产物新鲜 (src 未比 static/index.html 新)"
+}
+
+# --test-mtime 自检模式（P3 TDD 用；紧跟函数定义之后、Check 1 之前，绕过 E2E_GUARD 等既有检查）
+if [ "${1:-}" = "--test-mtime" ]; then
+    check_static_freshness
+    exit $?
+fi
+
 echo "=== E2E 测试前置安全检查 ==="
 
 # Check 1: 必须通过 make debug-test 运行
@@ -92,6 +119,10 @@ if [ "$E2E_COUNT" -gt 0 ]; then
     echo "⚠  WARNING: 生产数据库已有 $E2E_COUNT 条测试数据!"
     echo "   上次测试可能污染了生产环境"
 fi
+
+# Check 6: 静态产物新鲜度
+echo "→ Check 6: 验证静态产物新鲜度..."
+check_static_freshness || exit 1
 
 echo ""
 echo "=== ✓ 安全检查通过，可以运行 E2E 测试 ==="
