@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-08-12
+
+### 修复
+
+- 修复 Markdown 正文中引用的本地图片/附件在文件名含非 ASCII 字符（中文/日文/带重音拉丁字符/空格等）时解析失败的问题：markdown-it 对引用做 percent-encode 后无法匹配未编码的 pathMap key，导致链接 404/图片加载失败。`resolvePath` 改为 raw 优先匹配 + 单次 decode 兜底（畸形转义 try/catch 降级为 null），ASCII 文件名行为零回归 (TPV0089)
+
 ## [0.18.2] - 2026-08-09
 
 ### 修复
