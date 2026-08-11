@@ -74,10 +74,7 @@ export function buildPathMap(files: PathMapFile[], _slug?: string): PathMap {
   return map
 }
 
-export function resolvePath(ref: string, pathMap: PathMap): number | null {
-  const normalized = normalizeRef(ref)
-  if (!normalized) return null
-
+function matchRef(normalized: string, pathMap: PathMap): number | null {
   if (pathMap.has(normalized)) return pathMap.get(normalized)!.fileId
 
   const basename = normalized.split('/').pop()
@@ -86,4 +83,26 @@ export function resolvePath(ref: string, pathMap: PathMap): number | null {
   }
 
   return null
+}
+
+export function resolvePath(ref: string, pathMap: PathMap): number | null {
+  const normalized = normalizeRef(ref)
+  if (!normalized) return null
+
+  const raw = matchRef(normalized, pathMap)
+  if (raw !== null) return raw
+
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(normalized)
+  } catch {
+    return null
+  }
+
+  if (decoded === normalized) return null
+
+  const reNormalized = normalizeRef(decoded)
+  if (!reNormalized) return null
+
+  return matchRef(reNormalized, pathMap)
 }
