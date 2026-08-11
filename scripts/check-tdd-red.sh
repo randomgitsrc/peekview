@@ -1,1 +1,0 @@
-/home/kity/.agate/scripts/check-tdd-red.sh
