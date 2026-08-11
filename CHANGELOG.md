@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.18.4] - 2026-08-12
+
+### 修复
+
+- E2E 测试修复：`frontend-v3/e2e/viewer.spec.ts` 19 用例全部修复通过——路由格式 `/#/entry/{slug}` 改为 history 模式 `/{slug}`，失效 seed slug `lu4prg`/`ngajri` 重映射到现存 entry（python-entry-service / markdown-test / mermaid-charts / json-api-config），12 处死选择器/过时断言替换为现存 DOM 节点（此前全部用例预期失败）(TPV0088)
+- `make debug-test` 前置检查（e2e-safety-check.sh）新增 static 产物新鲜度校验：`frontend-v3/src/` 最新 mtime 晚于 `backend/peekview/static/index.html` 时拦截并提示 `make build-frontend`，防止前端改动未重建 static 时 E2E/验收基于过期产物假通过 (TPV0088)
+
 ## [0.18.3] - 2026-08-12
 
 ### 修复
