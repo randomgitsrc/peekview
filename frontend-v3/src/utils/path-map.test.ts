@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildPathMap, normalizeRef, resolvePath } from './path-map'
-import type { PathMap } from './path-map'
+import type { PathMap, PathMapEntry } from './path-map'
 
 describe('buildPathMap', () => {
   it('TC-BPM-01: single file with path → exact path match (priority=1)', () => {
@@ -212,5 +212,75 @@ describe('resolvePath', () => {
 
   it('TC-RP-10: no basename fallback when basename also not in map', () => {
     expect(resolvePath('some/deep/path/missing.png', pathMap)).toBeNull()
+  })
+})
+
+describe('resolvePath unicode filenames (TPV0089 BDD-1~9)', () => {
+  const unicodeMap: PathMap = new Map([
+    ['images/中文图片.png', { fileId: 100, priority: 1 }],
+    ['中文图片.png', { fileId: 101, priority: 2 }],
+    ['images/概要図.png', { fileId: 102, priority: 1 }],
+    ['images/café.png', { fileId: 103, priority: 1 }],
+    ['images/report final.png', { fileId: 104, priority: 1 }],
+    ['images/100%done.png', { fileId: 105, priority: 1 }],
+    ['a%20b.png', { fileId: 106, priority: 1 }],
+    ['images/arch.png', { fileId: 3, priority: 1 }],
+  ])
+
+  it('TC-UNI-01 (BDD-1): 中文文件名 path 引用解码后命中', () => {
+    expect(resolvePath('images/%E4%B8%AD%E6%96%87%E5%9B%BE%E7%89%87.png', unicodeMap)).toBe(100)
+  })
+
+  it('TC-UNI-02 (BDD-2): 中文文件名 basename 引用解码后命中', () => {
+    expect(resolvePath('%E4%B8%AD%E6%96%87%E5%9B%BE%E7%89%87.png', unicodeMap)).toBe(101)
+  })
+
+  it('TC-UNI-03 (BDD-3): 日文文件名 path 引用解码后命中', () => {
+    expect(resolvePath('images/%E6%A6%82%E8%A6%81%E5%9B%B3.png', unicodeMap)).toBe(102)
+  })
+
+  it('TC-UNI-04 (BDD-4): 带重音拉丁字符文件名解码后命中', () => {
+    expect(resolvePath('images/caf%C3%A9.png', unicodeMap)).toBe(103)
+  })
+
+  it('TC-UNI-05 (BDD-5): 含空格文件名解码后命中', () => {
+    expect(resolvePath('images/report%20final.png', unicodeMap)).toBe(104)
+  })
+
+  it('TC-UNI-06 (BDD-6): 畸形转义序列（孤立 %）不抛异常且命中', () => {
+    expect(() => resolvePath('images/100%done.png', unicodeMap)).not.toThrow()
+    expect(resolvePath('images/100%done.png', unicodeMap)).toBe(105)
+  })
+
+  it('TC-UNI-07 (BDD-6): 畸形转义序列未命中时返回 null 且不抛异常', () => {
+    expect(() => resolvePath('images/100%done.png', new Map())).not.toThrow()
+    expect(resolvePath('images/100%done.png', new Map())).toBeNull()
+  })
+
+  it('TC-UNI-08 (BDD-7): 字面 % 文件名 decode 恰好一次（a%2520b → a%20b）', () => {
+    expect(resolvePath('a%2520b.png', unicodeMap)).toBe(106)
+  })
+
+  it('TC-UNI-09 (BDD-8): 字面 % 文件名 raw 直接命中（不经 decode）', () => {
+    expect(resolvePath('a%20b.png', unicodeMap)).toBe(106)
+  })
+
+  it('TC-UNI-10 (BDD-9): 英文文件名不回归', () => {
+    expect(resolvePath('images/arch.png', unicodeMap)).toBe(3)
+  })
+
+  it('TC-UNI-11: decode 后重跑守卫——编码形式锚点 %23anchor 仍返回 null', () => {
+    const emptyMap: PathMap = new Map<string, PathMapEntry>([])
+    expect(resolvePath('%23intro', emptyMap)).toBeNull()
+  })
+
+  it('TC-UNI-12: decode 后重跑守卫——编码形式外部 URL 仍返回 null', () => {
+    const emptyMap: PathMap = new Map<string, PathMapEntry>([])
+    expect(resolvePath('https%3A%2F%2Fcdn.example.com%2Fx.png', emptyMap)).toBeNull()
+  })
+
+  it('TC-UNI-13: decode 后重跑守卫——编码形式 data URI 仍返回 null', () => {
+    const emptyMap: PathMap = new Map<string, PathMapEntry>([])
+    expect(resolvePath('data%3Aimage%2Fpng%3Bbase64%2CAAA', emptyMap)).toBeNull()
   })
 })

@@ -1,0 +1,11 @@
+{
+  "summary": "非 ASCII 文件名本地资源引用（TPV0089 E2E fixture）",
+  "tags": [
+    "unicode",
+    "文件名",
+    "图片",
+    "回归"
+  ],
+  "is_public": true,
+  "owner": "alice"
+}

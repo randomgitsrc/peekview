@@ -10,7 +10,7 @@ agent: analyst
 # ── v2.0 机器字段 ──
 P1_simplified: true
 risk_level: medium
-phases: [P1, P2, P3, P4, P5, P6, P8]
+phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 packages: [peekview]
 domains: [frontend]
 follows_existing_pattern: [frontend-v3/src/utils/path-map.ts]
@@ -153,8 +153,7 @@ scope_resolved:
 - **P3 不可裁**：`path-map.test.ts` 与后端测试均无任何非 ASCII 用例，不满足"现成覆盖"裁剪条件，必须走真红灯。
 - **P5 保留**：前端 `vue-tsc --noEmit` + 单测全绿。
 - **P6 不可裁**：行为修复，BDD-10/11/12/13 需浏览器实跑 + 截图（`capability_requirements` 已确认能力可用）。
-- **P7 裁剪**：单源文件改动（逻辑改动仅 `frontend-v3/src/utils/path-map.ts`；`path-map.test.ts` 与新增 seed-data fixture 是单点修复的推论产物，P6 实跑 fixture 时天然校验一致性），无跨端/跨包/跨文件一致性需求（domains 仅 frontend，packages 仅 peekview）。
-- **跳过风险:**（P7）已检查耦合点——pathMap key 语义（decode 不得改写 key 与 DB 文件名一致性）、useMarkdown 4 处调用点（单点修复自动覆盖）、markdown-it encode 行为（mdurl.encode → decodeURIComponent 单次还原成立）；三者均已通过 P1 隐含需求分析与 BDD-7 钉死，P2/P4 若触碰任一点将被 P3 红灯或 P6 实跑捕获。剩余风险低，可裁。
+- **P7 保留**（原计划裁剪，P3 后撤销）：实际改动面超出单源文件——path-map.ts 逻辑 + path-map.test.ts + e2e/unicode-filename-link.spec.ts + scripts/seed-data/unicode-filenames/（8 文件）+ scripts/seed-debug.py（BINARY_OVERRIDES）。P7 一致性检查有实际价值：fixture 与 E2E 用例的映射、seed-debug.py 支持改动与 fixture 文件名一致性、P2 design 与 P3 实现偏差。多文件改动必须走 P7。
 - **P8 保留**：用户可见 bug 修复，随 peekview 发布；需按 AGENTS.md 铁律 8 及时更新 CHANGELOG。
 
 ## 6. 能力需求声明
