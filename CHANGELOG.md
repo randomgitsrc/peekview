@@ -16,6 +16,8 @@
 
 ## [0.18.3] - 2026-08-12
 
+> ⚠️ 本版本未实际发布到 PyPI（bump-version 后未执行 make publish，直接继续开发 TPV0088），已被 v0.18.4 覆盖取代。若需要这些改动，请安装 v0.18.4 或更新版本。
+
 ### 修复
 
 - 修复 Markdown 正文中引用的本地图片/附件在文件名含非 ASCII 字符（中文/日文/带重音拉丁字符/空格等）时解析失败的问题：markdown-it 对引用做 percent-encode 后无法匹配未编码的 pathMap key，导致链接 404/图片加载失败。`resolvePath` 改为 raw 优先匹配 + 单次 decode 兜底（畸形转义 try/catch 降级为 null），ASCII 文件名行为零回归 (TPV0089)
