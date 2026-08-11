@@ -1,8 +1,8 @@
 ---
 phase: P0
-task_id: T089
+task_id: TPV0089
 task_name: unicode-filename-link-fix
-trace_id: T089
+trace_id: TPV0089
 created: 2026-08-07
 status: pending
 parent: 用户报告（会话内发现，附生产数据复现参考）

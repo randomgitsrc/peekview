@@ -1,9 +1,9 @@
 ---
 phase: P0
-task_id: T077
+task_id: TPV0077
 task_name: timeline-mvp
 type: brief
-trace_id: T077-P0-20260728
+trace_id: TPV0077-P0-20260728
 created: 2026-07-28
 status: draft
 parent: 跨 Agent 信息同步需求 + 时间线方案论证

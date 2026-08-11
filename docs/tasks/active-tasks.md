@@ -10,10 +10,10 @@
 
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
-| T071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
+| TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
-| T077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
+| TPV0077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
 | T078 | read-tracking-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-03 |
 | T079 | interaction-consistency | ✅已完成 | DONE | 🟠 | 无 | 2026-07-30 | 2026-07-31 |
 | T080 | admin-user-management | ✅已完成 | DONE | 🟡 | 无 | 2026-07-30 | 2026-08-06 |
@@ -23,10 +23,10 @@
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
 | T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
-| T088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
-| T089 | unicode-filename-link-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-10 |
+| TPV0088 | e2e-test-infra-hardening | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-07 | 2026-08-07 |
+| TPV0089 | unicode-filename-link-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-07 | 2026-08-10 |
 
-### T071: Docker 部署（合并原 T071+T072）
+### TPV0071: Docker 部署（合并原 T071+T072）
 
 PeekView 后端镜像 + MCP Server 镜像 + docker-compose 模板 + CI 自动推送。合并理由：共用 CI workflow / ghcr.io 通道 / VERSIONS.json 同步逻辑，compose 模板跨依赖。roadmap #34/#36/#37 统一在此 task 交付。
 
@@ -46,7 +46,7 @@ TableView（CSV/TSV，TanStack Table headless，复用 Pagination.vue）+ TreeVi
 
 Card `<a>` 拆分：card-body 变 div，title/username/tag 各自独立 `<a>`，修复右键复制链接混乱。Tags 可点击跳转 `/?tags=xxx` 过滤页。EntryListRow 同步修复。
 
-### T077: 时间线 MVP
+### TPV0077: 时间线 MVP
 
 entry 新增 project_slug 字段 + timelines 表。MCP publish_files 自动推断 project（git remote → cwd → null）+ listEntries 支持 project 过滤。Agent 通过 `listEntries(project=xxx)` 读取项目演进脉络，等价 git log。前端无改动（Phase 1）。
 

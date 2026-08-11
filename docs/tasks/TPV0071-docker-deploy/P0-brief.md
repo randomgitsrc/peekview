@@ -1,9 +1,9 @@
 ---
 phase: P0
-task_id: T071
+task_id: TPV0071
 task_name: docker-deploy
 type: brief
-trace_id: T071-P0-20260728
+trace_id: TPV0071-P0-20260728
 created: 2026-07-24
 updated: 2026-07-28
 status: draft

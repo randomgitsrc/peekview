@@ -1,8 +1,8 @@
 ---
 phase: P0
-task_id: T088
+task_id: TPV0088
 task_name: e2e-test-infra-hardening
-trace_id: T088
+trace_id: TPV0088
 created: 2026-08-07
 status: pending
 parent: T087（复盘发现）
