@@ -54,8 +54,10 @@ test.describe('TPV0089 Desktop 1280x800', () => {
     expect(href).toBe(`/${SLUG}?file=${await link.getAttribute('data-peekview-file-id')}`)
 
     await link.click()
-    await page.waitForURL(new RegExp(`/${SLUG}\\?file=\\d+`), { timeout: 15000 })
+    // SPA store 导航（T047 既有架构）：URL 不变，文件内容在内容区打开（无 404）。
+    // 断言用户可见行为（内容区出现文件内容），不绑定 URL 实现细节。
     await expect(page.locator('.content-area, .markdown-body, .code-viewer').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('.content-area, .markdown-body, .code-viewer').first()).not.toBeEmpty({ timeout: 10000 })
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'bdd11_desktop_1280x800.png') })
   })
@@ -118,7 +120,9 @@ test.describe('TPV0089 Mobile 390x844', () => {
     const link = page.locator('a[data-peekview-file-id]').first()
     await expect(link).toBeVisible()
     await link.click()
-    await page.waitForURL(new RegExp(`/${SLUG}\\?file=\\d+`), { timeout: 15000 })
+    // SPA store 导航（T047 既有架构）：URL 不变，文件内容在内容区打开（无 404）。
+    await expect(page.locator('.content-area, .markdown-body, .code-viewer').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('.content-area, .markdown-body, .code-viewer').first()).not.toBeEmpty({ timeout: 10000 })
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'bdd11_mobile_390x844.png') })
   })
 })

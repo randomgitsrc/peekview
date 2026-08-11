@@ -1,0 +1,10 @@
+# TPV0089 P5 fail-list
+# 前端单测（make test-frontend）: 无失败
+# E2E 本任务 spec（E2E_SPEC=e2e/unicode-filename-link.spec.ts make debug-test）4 个失败，均为 BDD-11 URL 断言与既有 SPA 导航架构冲突（见 e2e.md 根因分析，非 TPV0089 引入回归）
+FAILED e2e/unicode-filename-link.spec.ts:47 test_bdd_11_chinese_link_click_opens_attachment (chromium)
+FAILED e2e/unicode-filename-link.spec.ts:47 test_bdd_11_chinese_link_click_opens_attachment (Mobile Chrome)
+FAILED e2e/unicode-filename-link.spec.ts:115 test_bdd_11_mobile_chinese_link_click (chromium)
+FAILED e2e/unicode-filename-link.spec.ts:115 test_bdd_11_mobile_chinese_link_click (Mobile Chrome)
+# 后端 pytest 预存失败（与 TPV0089 无关，frontend-only 任务）：test_cli_remote.py 仅在 -n auto(16 workers) 下失败，-n 2 及单独运行全绿（见 backend.md）
+# 全量 E2E 环境性失败（localhost/127.0.0.1 断言不匹配 + CDP 资源竞争），与 TPV0089 无关（见 e2e.md）
+EXIT_CODE: 1

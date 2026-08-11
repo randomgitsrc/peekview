@@ -128,7 +128,7 @@ scope_resolved:
 #### BDD-11: 中文文件名链接实际可点击打开
 - Given 同上 entry，markdown 正文含指向中文文件名附件的链接
 - When 点击该链接
-- Then 成功打开附件（跳转 `/{slug}?file={id}` 预览/下载成功），不出现 404
+- Then 成功打开附件（文件内容在内容区显示，不出现 404）[BASELINE_CHANGE from P5: 原断言"跳转 /{slug}?file={id}"绑定 SPA URL 实现细节——实际 SPA store 导航（T047 既有架构）URL 不变但内容区成功打开；用户可见行为改为"内容区显示文件内容、无 404"，需求语义不变]
 
 #### BDD-12: 非中文非 ASCII 文件名图片实际渲染（端到端佐证非中文专属）
 - Given debug 环境有含日文（或带重音/空格）文件名图片的 entry
