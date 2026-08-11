@@ -13,3 +13,4 @@ history:
   - {phase: P4, action: complete, ts: "2026-08-12T00:00:00Z", note: "并行派发 2 个 implementer：子任务 A 修 viewer.spec.ts 19 用例（路由/slug/死选择器/数据依赖，tsc 通过无残留）；子任务 B 加 Check 6 + --test-mtime（--test-mtime 两态通过）+ Makefile env 传递。design-review approved。GATE P4 exit 0"}
   - {phase: P5, action: complete, ts: "2026-08-12T00:00:00Z", note: "P5 首轮：后端 pytest + typecheck 全绿，E2E 18 failed + 1 flaky（17/19 用例含失败，P5 verifier 逐例对照 DOM 核实为测试代码 bug 非环境问题）→ 回 P4 重试轮修复 7 项 → E2E 复跑 38/38 全过（BDD-1 达成）。--test-mtime 两态通过。known-failures 登记 test_cli_remote xdist 预存失败"}
   - {phase: P6, action: complete, ts: "2026-08-12T00:00:00Z", note: "P6 验收 9/9 PASS（E2E 38/38 实跑 + grep 判定 + mtime 三态）。GATE P6 exit 2 + evidence exit 0 + provenance exit 0 全通过"}
+  - {phase: P7, action: complete, ts: "2026-08-12T00:00:00Z", note: "P7-consistency.md approved：BLOCKER=0，9 BDD↔9 PASS 匹配，2 DESIGN_GAP 全配对 REVIEWED（retry1 重写 P4-implementation.md 时丢失的标记已在 P7 补转录），跨文件一致性确认。GATE P7 exit 0"}
