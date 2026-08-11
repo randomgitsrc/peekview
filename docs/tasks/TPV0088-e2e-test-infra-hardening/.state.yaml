@@ -1,8 +1,10 @@
 phase: P0
 task_id: TPV0088
 task_name: e2e-test-infra-hardening
-status: pending
+status: in_progress
 created: 2026-08-07T00:00:00Z
-updated: 2026-08-07T00:00:00Z
+updated: 2026-08-12T00:00:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-07T00:00:00Z", note: "P0-brief written (4 fields + audit), T087 复盘发现的两项测试基础设施缺口: viewer.spec.ts 路由/slug 过时(选择器核实未过时) + debug-test 加 static mtime 校验, risk low-medium"}
+  - {phase: P0, action: start, ts: "2026-08-12T00:00:00Z", note: "用户指示自主顺序执行 TPV0089→TPV0088。TPV0089 已完成（v0.18.3）。本任务启动：E2E 测试基础设施加固（viewer.spec.ts 修复 + debug-test static mtime 校验）"}
+  - {phase: P1, action: complete, ts: "2026-08-12T00:00:00Z", note: "P1-requirements.md 9 BDD（子任务 A 用例修复 + 子任务 B mtime 校验）。requirements-review 首轮 needs-revision（P0 审计 20 用例实际 19 → 全量修正），analyst 修订后复核 approved。GATE P1 exit 2 通过"}
