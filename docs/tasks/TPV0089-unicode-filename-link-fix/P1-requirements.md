@@ -18,7 +18,7 @@ coupling_checklist: [path-map-key-semantics: checked, useMarkdown-call-sites: ch
 requires_minimal_validation: true
 capability_requirements:
   - need: browser-e2e
-    why: P6 验收需要浏览器实跑，验证图片实际渲染、链接实际可点击（BDD-9/10/11/12）
+    why: P6 验收需要浏览器实跑，验证图片实际渲染、链接实际可点击（BDD-10/11/12/13）
     available:
       - "playwright-cdp skill（CDP 连接 Windows Chrome :18800，已确认可用）"
       - "make debug-test（项目既有 Playwright E2E 框架）"
@@ -29,6 +29,9 @@ capability_requirements:
     available:
       - "vision-engine skill（已确认可用）"
     status: available
+# ── v2.0 SCOPE+ 解决状态 ──
+scope_resolved:
+  - "BDD-7 前提勘误 + 新增 BDD-8（字面 % 文件名 raw 直接命中）——SCOPE+ from P2 已回写 P1 基线，13 BDD"
 ---
 
 # P1 需求基线 — TPV0089 非 ASCII 文件名本地资源链接解析修复
@@ -101,32 +104,38 @@ capability_requirements:
 
 #### BDD-7: 字面 `%` 文件名 decode 链路正确（decode 恰好一次）
 - Given pathMap 含 key `a%20b.png`（文件名含字面 `%`，非空格编码）
-- When resolvePath 传入 markdown-it encode 后的引用 `a%2520b.png`（原 `%` 被编为 `%25`）
+- When resolvePath 传入 `a%2520b.png`（模拟"已被双重编码"的引用；单测场景，验证 decode 恰好一次语义）
 - Then 返回 `a%20b.png` 对应的 fileId（解码恰好一次还原，不得二次 decode 改写 key 语义）
+- [SCOPE+ from P2] 前提勘误：真实 markdown-it（mdurl keepEscaped=true）对源码 `a%20b.png` **原样保留合法转义**，不编成 `a%2520b.png`；本条保留为单元测试验证「decode 恰好一次」语义，真实链路由 BDD-8 覆盖
 
-#### BDD-8: 英文文件名不回归
+#### BDD-8: 字面 `%` 文件名 raw 直接命中（[SCOPE+ from P2]）
+- Given pathMap 含 key `a%20b.png`（文件名含字面 `%`）
+- When resolvePath 传入 `a%20b.png`（真实 markdown-it 输出，原样保留合法转义）
+- Then 直接命中返回 `a%20b.png` 对应的 fileId（raw 优先匹配，不经 decode）
+
+#### BDD-9: 英文文件名不回归
 - Given pathMap 含 key `images/arch.png` 且映射到 fileId=3
 - When resolvePath 传入 `images/arch.png`
 - Then 返回 3（与修复前行为一致）
 
 ### 端到端真实页面（P6 Playwright CDP 实跑，debug :8888）
 
-#### BDD-9: 中文文件名图片实际渲染
+#### BDD-10: 中文文件名图片实际渲染
 - Given debug 环境有 entry，含中文文件名图片资源，markdown 正文以相对路径引用
 - When 打开该 entry 页面并等待渲染完成
 - Then 图片在页面中实际可见（截图确认无裂图），资源请求成功（非 404），src 指向后端文件内容端点而非原始相对路径
 
-#### BDD-10: 中文文件名链接实际可点击打开
+#### BDD-11: 中文文件名链接实际可点击打开
 - Given 同上 entry，markdown 正文含指向中文文件名附件的链接
 - When 点击该链接
 - Then 成功打开附件（跳转 `/{slug}?file={id}` 预览/下载成功），不出现 404
 
-#### BDD-11: 非中文非 ASCII 文件名图片实际渲染（端到端佐证非中文专属）
+#### BDD-12: 非中文非 ASCII 文件名图片实际渲染（端到端佐证非中文专属）
 - Given debug 环境有含日文（或带重音/空格）文件名图片的 entry
 - When 打开该 entry 页面
 - Then 图片实际渲染可见，资源请求成功（非 404）
 
-#### BDD-12: 英文文件名页面不回归（E2E 冒烟）
+#### BDD-13: 英文文件名页面不回归（E2E 冒烟）
 - Given debug 环境有含英文文件名图片与链接的 entry
 - When 打开页面并点击链接
 - Then 图片渲染、链接点击行为与修复前一致（无回归）
@@ -143,7 +152,7 @@ capability_requirements:
 - **P2 不可裁**：存在两个候选修复位置（消费侧 decode vs 构建侧 encode），P0 要求 P2 明确选型理由并排除另一个（尤其构建侧 encode 会改写 key 语义）。
 - **P3 不可裁**：`path-map.test.ts` 与后端测试均无任何非 ASCII 用例，不满足"现成覆盖"裁剪条件，必须走真红灯。
 - **P5 保留**：前端 `vue-tsc --noEmit` + 单测全绿。
-- **P6 不可裁**：行为修复，BDD-9/10/11/12 需浏览器实跑 + 截图（`capability_requirements` 已确认能力可用）。
+- **P6 不可裁**：行为修复，BDD-10/11/12/13 需浏览器实跑 + 截图（`capability_requirements` 已确认能力可用）。
 - **P7 裁剪**：单源文件改动（逻辑改动仅 `frontend-v3/src/utils/path-map.ts`；`path-map.test.ts` 与新增 seed-data fixture 是单点修复的推论产物，P6 实跑 fixture 时天然校验一致性），无跨端/跨包/跨文件一致性需求（domains 仅 frontend，packages 仅 peekview）。
 - **跳过风险:**（P7）已检查耦合点——pathMap key 语义（decode 不得改写 key 与 DB 文件名一致性）、useMarkdown 4 处调用点（单点修复自动覆盖）、markdown-it encode 行为（mdurl.encode → decodeURIComponent 单次还原成立）；三者均已通过 P1 隐含需求分析与 BDD-7 钉死，P2/P4 若触碰任一点将被 P3 红灯或 P6 实跑捕获。剩余风险低，可裁。
 - **P8 保留**：用户可见 bug 修复，随 peekview 发布；需按 AGENTS.md 铁律 8 及时更新 CHANGELOG。

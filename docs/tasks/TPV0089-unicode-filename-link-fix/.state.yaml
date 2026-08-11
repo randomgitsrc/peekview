@@ -1,4 +1,4 @@
-phase: P1
+phase: P2
 task_id: TPV0089
 task_name: unicode-filename-link-fix
 status: in_progress
@@ -8,3 +8,4 @@ history:
   - {phase: P0, action: created, ts: "2026-08-07T00:00:00Z", note: "用户报告非 ASCII 文件名本地资源链接解析失败（附生产数据复现参考）。派发只读 Explore agent 定位根因：frontend-v3/src/utils/path-map.ts 的 resolvePath/normalizeRef 未 decode markdown-it 已 percent-encode 的 href/src，与 pathMap 未编码的 Unicode key 不匹配。改动面单文件，零现成测试覆盖，不满足 hotfix 裁剪条件，用户选择新建独立小型 task。risk_level=low-medium"}
   - {phase: P0, action: start, ts: "2026-08-11T00:00:00Z", note: "用户指示自主顺序执行 TPV0089→TPV0088（agate 全流程）。环境自检：pytest 9.1.1 / vitest 1.6.1 / playwright 1.60.0 / CDP Chrome :18800 可用；debug :8888 已启动（make debug-quick 完成）"}
   - {phase: P1, action: complete, ts: "2026-08-11T00:00:00Z", note: "P1-requirements.md 产出 11 BDD，requirements-review 首次 needs-revision（R1 BDD-7 补映射值 / R2 新增字面 % 文件名 BDD 钉死 decode 恰好一次），analyst 修订后复核 approved（BDD-1~12，12 条）。GATE P1 exit 2 通过"}
+  - {phase: P2, action: complete, ts: "2026-08-11T00:00:00Z", note: "P2-design.md 候选方案 A（消费侧 decode raw 优先+decode-once 兜底）vs 方案 B（构建侧 encode，致命缺陷破坏 raw HTML 路径）选 A。minimal_validation 实证 mdurl/markdown-it 真实行为，发现 BDD-7 前提勘误（keepEscaped=true 不编字面 %）→ SCOPE+ 增补 BDD-8（字面 % raw 命中），P1 基线增至 13 BDD。plan-design-review 三轮：needs-revision x2（R1 伪代码 fileId=0 真值陷阱→修时误删 hit 赋值→回修）→ approved。GATE P2 exit 2 通过"}
