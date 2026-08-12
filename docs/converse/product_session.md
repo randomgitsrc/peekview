@@ -18,8 +18,8 @@
 当用户明确要完成一个非平凡任务时，启动 [agate](https://github.com/randomgitsrc/agate) 流程：
 
 1. 读取 `~/.agate/WORKFLOW.md` 和 `~/.agate/dispatch-protocol.md`
-2. 读取 `docs/tasks/active-tasks.md`，确定任务编号
-3. 创建 `docs/tasks/T{xxx}-{name}/`
+2. 读取 `agate-workspace/tasks/active-tasks.md`，确定任务编号
+3. 创建 `agate-workspace/tasks/T{xxx}-{name}/`
 4. **主 Agent 亲自写 `P0-brief.md`**：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向
 5. 派发 P1 analyst subagent（基于 P0-brief 做需求质疑、BDD 验收条件、裁剪判定）
 6. 按 dispatch-protocol 派发 subagent 执行各阶段
@@ -38,7 +38,7 @@
 - `CLAUDE.md` — 项目约定、架构、DI 模式、安全规则、完整配置
 - `INDEX.md` — 功能实现进度、文档清单
 - `README.md` — 产品定义、技术栈、配置
-- `docs/tasks/active-tasks.md` — 当前任务看板（Txxx/状态/阶段/依赖）
+- `agate-workspace/tasks/active-tasks.md` — 当前任务看板（Txxx/状态/阶段/依赖）
 
 如有 agate 流程规范变动，也应及时读取 `~/.agate/` 下相关文件。
 

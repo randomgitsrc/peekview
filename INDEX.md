@@ -12,7 +12,7 @@ PeekView 是一个轻量级内容发布服务。AI Agent 通过 API/CLI/MCP 发�
 |------|------|
 | 了解项目 | `README.md` |
 | 开始开发 | `CLAUDE.md`（Claude Code）/ `AGENTS.md`（OpenCode/其他 Agent） |
-| 当前任务 | `docs/tasks/active-tasks.md` |
+| 当前任务 | `agate-workspace/tasks/active-tasks.md` |
 | 部署运行 | `docs/guides/DEPLOYMENT.md` |
 | 本地调试 | `docs/guides/DEBUGGING.md` |
 | Agent 部署 | `docs/guides/agent-deployment-guide.md` |

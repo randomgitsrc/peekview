@@ -167,7 +167,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 
 ## 走 agate 工作流（非平凡任务）
 
-**开始前必读 `docs/tasks/active-tasks.md`**，无进行中任务再启动新任务。
+**开始前必读 `agate-workspace/tasks/active-tasks.md`**，无进行中任务再启动新任务。
 
 **任务编号**：进行中/新任务用 `TPV{编号}`（如 `TPV0090`，项目代号 PV，agate v0.40.0 起强制 `^T[A-Z]{2}\d+$`）；已完成任务保留旧编号 `Txxx` 不变（历史记录）。
 
@@ -200,7 +200,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 - 完整配置和规范：`CLAUDE.md`
 - 前端设计系统：`DESIGN.md`
 - 开发流程：`~/.agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agate)）
-- 预存失败登记模板：`~/.agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `docs/tasks/{TPVxxxx}/known-failures.md`）
+- 预存失败登记模板：`~/.agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `agate-workspace/tasks/{TPVxxxx}/known-failures.md`）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
 - 改善清单：`docs/roadmap/improvement-backlog.md`

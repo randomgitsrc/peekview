@@ -2,7 +2,7 @@
 
 > PeekView 项目任务管理主文件
 > **核心原则**：所有任务必须走 [agate](https://github.com/randomgitsrc/agate) 流程（P0-P8），每个阶段有文件产出
-> **位置**：`docs/tasks/` 目录下每个任务一个子目录
+> **位置**：`agate-workspace/tasks/` 目录下每个任务一个子目录
 > **任务编号**：`TPV{编号}`（项目代号 PV = PeekView，agate v0.40.0 起强制 `^T[A-Z]{2}\d+$` 格式）。已完成任务保留旧编号 `Txxx` 不变（历史记录）
 
 ---
@@ -207,7 +207,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 ## 任务创建流程
 
 1. 读取本文件，找最大序号 N，新编号 = N+1
-2. `mkdir -p docs/tasks/T{xxx}-{task-name}`
+2. `mkdir -p agate-workspace/tasks/T{xxx}-{task-name}`
 3. 写 `P0-brief.md`（含 frontmatter: phase/task_id/task_name/trace_id/created/status/parent）
 4. 写 `.state.yaml`（phase/status/created/updated/history）
 5. 在本文件"活跃任务"表添加一行

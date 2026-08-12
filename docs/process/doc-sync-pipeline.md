@@ -44,7 +44,7 @@ pyproject.toml (权威)
   ├── README.md                    (badge)
   ├── CLAUDE.md                    (Current Version)
   ├── INDEX.md                     (当前版本)
-  ├── docs/tasks/active-tasks.md (发布状态)
+  ├── agate-workspace/tasks/active-tasks.md (发布状态)
   ├── backend/README.md            (health 示例)
   └── CHANGELOG.md                 (版本记录)
 ```

@@ -65,7 +65,7 @@ cat CLAUDE.md
 cat docs/process/workflow.md
 
 # 3. 活跃任务看板
-cat docs/tasks/active-tasks.md
+cat agate-workspace/tasks/active-tasks.md
 
 # 4. 实现计划（如有待规划任务）
 cat docs/plans/impl-plan.md
@@ -368,7 +368,7 @@ git push origin main
 
 ```bash
 # 查看活跃任务
-cat docs/tasks/active-tasks.md
+cat agate-workspace/tasks/active-tasks.md
 
 # 查看检查点状态
 ls docs/process/checkpoints/

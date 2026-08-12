@@ -48,7 +48,7 @@
 - `CLAUDE.md` — 项目约定、架构、命令、完整配置
 - `INDEX.md` — 实现进度 & 文档清单
 - `README.md` — 用户面向文档
-- `docs/tasks/active-tasks.md` — 当前任务看板
+- `agate-workspace/tasks/active-tasks.md` — 当前任务看板
 
 ## 铁律
 
