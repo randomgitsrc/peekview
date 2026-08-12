@@ -1,0 +1,8 @@
+phase: P0
+task_id: TPV0091
+task_name: unicode-download-header-fix
+status: pending
+created: 2026-08-12T00:00:00Z
+updated: 2026-08-12T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "TPV0089 验收补验发现（用户质疑截图盲区 → Playwright CDP 实跑暴露）：点击文件树里的中文图片.png/概要図.png 显示'图片加载失败'（500），café.png 正常。根因：后端 download_file 的 Content-Disposition header 直接放中文文件名（HTTP header 须 latin-1 编码 → UnicodeEncodeError），前端 getFileAsBase64/downloadFile 走该端点。非 TPV0089 引入，但修复内联路径后暴露。risk=medium，P3/P6/P7 不可裁"}
