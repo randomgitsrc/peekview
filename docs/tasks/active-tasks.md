@@ -12,6 +12,7 @@
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
+| TPV0090 | cli-remote-xdist-fix | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | TPV0077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
@@ -214,6 +215,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-12 | 立项 TPV0090 | cli-remote-xdist-fix：known-failures.md 两次登记的同源预存失败（TPV0089/TPV0088）——test_cli_remote.py 在 make test-quick（-n auto 16 workers）下 4~7 failed + 3 errors（模块级 fixture 起的 :18888 server 未在 15s 就绪窗口内启动），单跑 17/17 全绿、CI 串行不受影响。用户确认立项（hotfix 条件"现成覆盖"不成立 + 方案选型有分歧 + 机制交叉）。方案候选：A 等待加长 / B 检测子进程死亡 / C 串行分组 |
 | 2026-08-12 | 完成 TPV0088 | e2e-test-infra-hardening → v0.18.4（viewer.spec.ts 19 用例修复：路由 hash→history + slug 重映射 + 12 死选择器替换；e2e-safety-check.sh 加 Check 6 static mtime 校验。9 BDD 全 PASS（E2E 38/38 + mtime 三态）；P5 首轮 E2E 18 failed → 回 P4 重试修复 7 项；完整 agate P0-P8）|
 | 2026-08-12 | 完成 TPV0089 | unicode-filename-link-fix → v0.18.3（path-map.ts resolvePath 加 raw 优先 + decode-once 兜底；非 ASCII 文件名图片/链接解析修复。13 BDD 全 PASS（单元 51/51 + E2E 12/12 + vision blocker 0）；P5 发现 BDD-11 断言绑定 SPA URL 实现细节 → BASELINE_CHANGE 改为内容区显示断言；P3 后 P7 从裁剪改保留（改动面扩展超 5 文件）；完整 agate P0-P8）|
 | 2026-08-09 | 完成 T091 | mobile-detail-visual-polish → v0.18.2（meta-tags-bar padding16/16+换行不横滚/markdown-body移动端16px padding/底部栏padding对称性bug修复/Copy改icon-btn+Wrap改toggle-btn图标化；13 BDD 全PASS。过程含1次真实P6→P5→P4回退：P6视觉验收发现EntryMetaTagsBar.vue的flex-wrap与layout.css:466-478遗留全局规则冲突，content-area可滚动时meta-tags-bar坍缩到33px标签丢失——P5的50/50全绿因E2E测试BDD-1/2未加firstFileId落在默认svg文件从未触发；用agate-retreat-to.sh规范回退+定向修复(仅1行CSS)+重新走完整P5→P6独立验证，13/13 PASS）|

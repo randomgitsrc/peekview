@@ -1,0 +1,8 @@
+phase: P0
+task_id: TPV0090
+task_name: cli-remote-xdist-fix
+status: pending
+created: 2026-08-12T00:00:00Z
+updated: 2026-08-12T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "known-failures.md 两次登记的同源预存失败：test_cli_remote.py 在 make test-quick（-n auto 16 workers）下 4~7 failed + 3 errors（server 未在 15s 就绪窗口内启动），单跑 17/17 全绿、CI 串行不受影响。用户确认立项（hotfix 条件'现成覆盖'不成立 + 方案选型有分歧 + 机制交叉）。risk=low，P3 不可跳（零现成覆盖），P6 需本地实测 -n auto 全绿"}
