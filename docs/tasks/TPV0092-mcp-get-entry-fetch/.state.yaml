@@ -1,0 +1,8 @@
+phase: P0
+task_id: TPV0092
+task_name: mcp-get-entry-fetch
+status: pending
+created: 2026-08-12T00:00:00Z
+updated: 2026-08-12T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "用户产品讨论：消除 agent 读 PeekView 链接的摩擦。get_entry 接受任意 PeekView URL（页面/raw/分享链接/slug）→ 跨 host 读取 → 净化后结构化 JSON。后端 raw 端点补 ?share=（私有分享一次读）与 ?purify=（base64 剥离）。SSRF 防护=协议白名单+响应结构校验。仅立项，暂不实施。risk=medium，P3/P6/P7 不可裁"}
