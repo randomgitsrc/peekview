@@ -15,6 +15,7 @@
 | TPV0090 | cli-remote-xdist-fix | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0091 | unicode-download-header-fix | ⬜ 待开始 | P0 | 🟠 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0092 | mcp-get-entry-fetch | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
+| TPV0093 | star-lifecycle | ⬜ 待开始 | P0 | 🟢 | 无 | 2026-08-12 | 2026-08-12 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | TPV0077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
@@ -217,6 +218,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-12 | 立项 TPV0093 | star-lifecycle（🟢 长期）：基于 docs/specs/peekview-star-function-20260812.md（V2.0）。星标豁免删除 + 热度计数 + 墓碑 + 作者后台豁免提示。四决策点定稿：A archived 星标用户可读非星标不可见 / B 独立 EntryTombstone 表 / C Explore 加 [Starred] tab + 独立管理页 / D 存量起倒计时从上线条日起算。risk=high |
 | 2026-08-12 | 立项 TPV0092 | mcp-get-entry-fetch（仅立项不实施）：消除 agent 读 PeekView 链接的摩擦——get_entry 接受任意 PeekView URL（页面/raw/分享链接/slug）跨 host 读取 + 净化后结构化 JSON；后端 raw 补 ?share=（私有分享一次读）与 ?purify=（base64 剥离）；SSRF 防护=协议白名单+响应结构校验；publish_files 加 raw_url。设计经多轮讨论定稿 |
 | 2026-08-12 | 立项 TPV0091 | unicode-download-header-fix：TPV0089 验收补验发现（用户质疑截图盲区 → Playwright CDP 实跑暴露）——点击文件树里的中文图片.png/概要図.png 显示"图片加载失败"（500），café.png 正常。根因：后端 download_file 的 Content-Disposition header 直接放中文文件名（HTTP header 须 latin-1 编码 → UnicodeEncodeError），前端 getFileAsBase64/downloadFile 走该端点。非 TPV0089 引入，但修复内联路径后暴露。risk=medium |
 | 2026-08-12 | 立项 TPV0090 | cli-remote-xdist-fix：known-failures.md 两次登记的同源预存失败（TPV0089/TPV0088）——test_cli_remote.py 在 make test-quick（-n auto 16 workers）下 4~7 failed + 3 errors（模块级 fixture 起的 :18888 server 未在 15s 就绪窗口内启动），单跑 17/17 全绿、CI 串行不受影响。用户确认立项（hotfix 条件"现成覆盖"不成立 + 方案选型有分歧 + 机制交叉）。方案候选：A 等待加长 / B 检测子进程死亡 / C 串行分组 |
