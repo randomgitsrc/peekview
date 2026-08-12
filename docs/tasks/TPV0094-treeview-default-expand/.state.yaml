@@ -1,0 +1,8 @@
+phase: P0
+task_id: TPV0094
+task_name: treeview-default-expand
+status: pending
+created: 2026-08-12T00:00:00Z
+updated: 2026-08-12T00:00:00Z
+history:
+  - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "用户体验反馈：TreeView 默认只展开根节点，想看内容要点开。用户倾向默认全展开，性能受限再按需。方案：全展开 + 节点数阈值降级（红线实测确定）。纯前端单文件，零依赖零冲突，可与 TPV0090 并行。risk=low"}
