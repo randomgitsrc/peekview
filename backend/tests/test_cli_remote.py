@@ -577,3 +577,153 @@ class TestCLIRemoteModeSwitching:
 
         # Should fail because no local database, but should not show remote mode
         assert "→ Remote mode:" not in result.stdout
+
+
+class _FakeProc:
+    """Fake subprocess.Popen-compatible object for fixture-level tests.
+
+    Records every method call into ``calls`` so tests can assert the
+    terminate/wait/kill sequence enforced by the fixture's teardown.
+    """
+
+    def __init__(self, poll_result=None, returncode=0, stderr=b"", wait_raises_once=False):
+        self._poll_result = poll_result
+        self.returncode = returncode
+        self._stderr = stderr
+        self._wait_raises_once = wait_raises_once
+        self._wait_count = 0
+        self.calls = []
+
+    def poll(self):
+        self.calls.append("poll")
+        return self._poll_result
+
+    def communicate(self, timeout=None):
+        self.calls.append(f"communicate:{timeout}")
+        return (b"", self._stderr)
+
+    def terminate(self):
+        self.calls.append("terminate")
+
+    def kill(self):
+        self.calls.append("kill")
+
+    def wait(self, timeout=None):
+        self.calls.append(f"wait:{timeout}")
+        self._wait_count += 1
+        if self._wait_raises_once and self._wait_count == 1:
+            raise subprocess.TimeoutExpired("fake-server", timeout)
+        return 0
+
+
+def _popen_capture(fake, monkeypatch, *, health_ok=False, fast_dead=False):
+    """Monkeypatch Popen/requests.get/time.sleep so the fixture logic runs in isolation.
+
+    Returns a dict with the Popen call arguments (``args``/``kwargs``) for assertions.
+    """
+    captured = {}
+
+    def _popen(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return fake
+
+    monkeypatch.setattr(subprocess, "Popen", _popen)
+
+    if health_ok:
+        class _Resp:
+            status_code = 200
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: _Resp())
+    else:
+        def _conn_error(*a, **k):
+            raise requests.ConnectionError("no server listening")
+
+        monkeypatch.setattr(requests, "get", _conn_error)
+
+    if fast_dead:
+        monkeypatch.setattr(time, "sleep", lambda *a, **k: None)
+
+    return captured
+
+
+class TestCLIRemoteFixture:
+    """Fixture-level tests for the ``server_url`` module fixture (BDD-4 / I6).
+
+    The fixture is invoked via ``server_url.__wrapped__`` to bypass pytest's
+    ban on calling fixtures directly (pytest 9 raises on direct fixture calls).
+    ``subprocess.Popen`` is monkeypatched so no real server process is spawned.
+    """
+
+    def test_b4a_death_raises_with_rc(self, tmp_path_factory, monkeypatch):
+        """BDD-4: server dies at startup -> fixture raises RuntimeError containing rc, fast."""
+        fake = _FakeProc(poll_result=3, returncode=3)
+        _popen_capture(fake, monkeypatch, fast_dead=True)
+        gen = server_url.__wrapped__(tmp_path_factory)
+        start = time.monotonic()
+        with pytest.raises(RuntimeError, match="rc=3"):
+            next(gen)
+        assert time.monotonic() - start < 5.0
+
+    def test_b4d_death_message_includes_stderr(self, tmp_path_factory, monkeypatch):
+        """BDD-4: death error message includes a stderr summary for diagnosis."""
+        fake = _FakeProc(
+            poll_result=1,
+            returncode=1,
+            stderr=b"Error binding socket: address already in use",
+        )
+        _popen_capture(fake, monkeypatch, fast_dead=True)
+        gen = server_url.__wrapped__(tmp_path_factory)
+        with pytest.raises(RuntimeError) as exc_info:
+            next(gen)
+        message = str(exc_info.value)
+        assert "rc=1" in message
+        assert "address already in use" in message
+
+    def test_b4b_normal_start_yields_url(self, tmp_path_factory, monkeypatch):
+        """BDD-3 guard: healthy server -> fixture yields a URL consistent with its env port."""
+        fake = _FakeProc(poll_result=None, returncode=0)
+        captured = _popen_capture(fake, monkeypatch, health_ok=True)
+        gen = server_url.__wrapped__(tmp_path_factory)
+        url = next(gen)
+        env_port = captured["kwargs"]["env"]["PEEKVIEW_SERVER__PORT"]
+        assert url == f"http://127.0.0.1:{env_port}"
+        args = captured["args"][0]
+        assert args[args.index("--port") + 1] == env_port
+        next(gen, None)
+
+    def test_b4c_teardown_normal_terminate_then_wait(self, tmp_path_factory, monkeypatch):
+        """I6: normal teardown calls terminate then wait with a timeout."""
+        fake = _FakeProc(poll_result=None, returncode=0)
+        _popen_capture(fake, monkeypatch, health_ok=True)
+        gen = server_url.__wrapped__(tmp_path_factory)
+        next(gen)
+        next(gen, None)  # exhaust the generator so the post-yield teardown runs
+        assert "terminate" in fake.calls
+        assert "wait:5" in fake.calls
+
+    def test_b4c_teardown_timeout_kills(self, tmp_path_factory, monkeypatch):
+        """I6: wait timeout -> kill() fallback, no exception escapes teardown."""
+        fake = _FakeProc(poll_result=None, returncode=0, wait_raises_once=True)
+        _popen_capture(fake, monkeypatch, health_ok=True)
+        gen = server_url.__wrapped__(tmp_path_factory)
+        next(gen)
+        teardown_ok = False
+        teardown_err = None
+        try:
+            next(gen, None)
+            teardown_ok = True
+        except Exception as exc:
+            teardown_err = exc
+        assert teardown_ok, f"teardown must not raise, got: {teardown_err!r}"
+        assert "kill" in fake.calls
+        assert "terminate" in fake.calls
+
+    def test_server_port_pure(self):
+        """BDD-1/3 support: _server_port maps worker env to a unique port (P2-design §9)."""
+        port_fn = globals().get("_server_port")
+        assert port_fn is not None, "P4 需实现 _server_port(worker_env) 纯函数"
+        assert port_fn(None) == 18888
+        assert port_fn("gw0") == 18888
+        assert port_fn("gw7") == 18895
+        assert port_fn("gw15") == 18903

@@ -1,0 +1,26 @@
+# P3 progress — test-designer
+
+- [x] 读 dispatch-context（派发指引）：fixture 级测试 5 项（TC-B4a/b/c、TC-port、TC-diagnostics），真实运行 BDD-1/2/3 走 P6 实测
+- [x] 读角色定义 test-designer.md：BDD→测试 1:1，当前必须红灯，分阶段落盘
+- [x] 读 P2-design.md：候选 1（worker 动态端口 + poll 死亡检测 + teardown 强化），`_server_port(worker_env) -> int` 纯函数，§9 P3 测试设计要点
+- [x] 读 P1-requirements.md：4 条 BDD；BDD-4 = 死亡快速失败含诊断；I6 = teardown 回收
+- [x] 读 P2-review.md：approved；观察① 需补 import os；观察② 预存行为不阻断
+- [x] 读 backend/tests/test_cli_remote.py：fixture :19-59（无 poll 检测、teardown 无 kill 兜底），17 用例
+- [x] 读 backend/tests/conftest.py：全局 autouse 隔离（PEEKVIEW_STORAGE__* → tmp）
+- [x] 读 P0-brief.md：风险 low，P3 不可跳，严禁触碰 :8080/~/.peekview/
+- [x] 读 check-tdd-red.sh + pytest.sh formatter：errors>0 = A 类（exit 1），failed>0 = B 类（exit 0）→ 测试必须产生断言失败而非异常/import 错误
+- [ ] 写 P3-test-cases.md
+- [ ] 写测试代码（追加到 test_cli_remote.py）
+- [ ] 跑 pytest 确认红灯（B 类断言失败）
+- [x] 写 P3-test-cases.md（6 用例，test_code_dir: backend/tests/test_cli_remote.py，BDD 1:1 映射：BDD-1/2/3 走 P6 实测、BDD-4+I6 走 fixture 级测试）
+- [x] 写测试代码：追加 _FakeProc + _popen_capture + TestCLIRemoteFixture 到 test_cli_remote.py 尾部（+150 行）
+  - 关键发现：pytest 9.1.1 禁止直接调用 fixture（`Fixture "demo" called directly`）→ 改用 `server_url.__wrapped__` 绕过（已实测可行）
+  - 关键发现：`gen.close()` 不在 yield 后执行 teardown 代码（GeneratorExit 在 yield 处抛出）→ teardown 断言用 `next(gen, None)` 耗尽生成器
+  - A 类规避：TC-B4c2 用 try/except 包裹 teardown 调用转断言失败；TC-port 用 `globals().get("_server_port")` 避免改造前 NameError（NameError=ERROR=A 类）
+- [x] 跑 pytest 确认红灯：`test_cli_remote.py` 全文件 = 19 passed, 4 failed, 0 errors（exit=1）
+  - 红 4 条：b4a（rc match 失败）、b4d（stderr 缺失）、b4c2（teardown kill 缺失）、port（_server_port 不存在）
+  - 绿 2 条：b4b（正常启动回归护栏）、b4c1（teardown 正常路径护栏）
+  - 17 个既有 CLI 用例串行全过（无回归）；无残留 server 进程
+- [x] check-tdd-red.sh 判定逻辑验证：pytest.sh formatter → failed=4, errors=0, import_errors=[], syntax_errors=[] → classic red-light（B 类，exit 0）
+- [x] ruff check tests/test_cli_remote.py 通过
+- [x] 环境隔离：只写测试代码，未改 fixture/业务代码；未触碰 :8080 与 ~/.peekview/

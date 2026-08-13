@@ -1,4 +1,4 @@
-phase: P2
+phase: P3
 task_id: TPV0090
 task_name: cli-remote-xdist-fix
 status: in_progress
@@ -9,3 +9,4 @@ history:
   - {phase: P1, action: started, ts: "2026-08-13T00:10:00Z", note: "主 Agent 复现确认：单跑 17/17 全绿；-n auto 下 4 failed（test_list_* 系列，随轮次漂移）。根因核实：fixture scope=module 在 xdist 下每个 worker 各跑一份 → 16 worker 抢同一 :18888 端口 + 等待循环不检测子进程死亡不打印 stderr。CI 串行（无 -n auto）确认不受影响"}
   - {phase: P1, action: completed, ts: "2026-08-13T00:40:00Z", note: "analyst 产出 P1-requirements.md（4 BDD：-n auto 连续 3 次全绿 / make test-quick 全绿 / 单跑不回归 / server 死亡快速失败含诊断；8 隐含需求 I1-I8 含 I4 保留进程级集成测试意图）。requirements-review approved（BDD 全部可二值判定、实测复核 -n auto 4 failed 为 Connection refused 而非 Server failed to start——佐证根因是端口竞争，确定性问题强制方案 C 类；3 项非阻塞观察转 P2/P3）。GATE P1 EXIT 2 通过。SUGGEST 采纳：P2 优先论证 B+C 组合"}
   - {phase: P2, action: completed, ts: "2026-08-13T01:20:00Z", note: "architect 产出 P2-design.md（3 候选 → 选候选 1：worker 动态端口 18888+worker_index + poll 死亡检测 + teardown 强化）。minimal_validation 4 项：①xdist_group 默认 dist=load 不 honor（否决 C1）②PYTEST_XDIST_WORKER gw0-15 端口全唯一 ③poll 检测 0.1s 快速失败 ④无 -n 无副作用。SCOPE+：packages 收敛为 [test_cli_remote.py]（Makefile 零改动）已回写 P1 SCOPE_RESOLVED。review approved（无 BLOCKER，2 条非阻塞观察：P4 补 import os / ReadTimeout 加固可选）。GATE P2 EXIT 2 通过"}
+  - {phase: P3, action: completed, ts: "2026-08-13T01:50:00Z", note: "test-designer 产出 P3-test-cases.md（6 用例：TC-B4a/d 死亡诊断、B4b 正常启动、B4c1/c2 teardown、TC-port 纯函数）+ test_cli_remote.py 追加 150 行（17 既有用例零改动）。红灯确认：主 Agent 复跑 19 passed/4 failed（B 类真红灯，poll 检测未实现）。关键设计：pytest 9.1.1 禁直接调 fixture → server_url.__wrapped__；gen.close() 不执行 teardown → next(gen,None)；A 类规避 globals().get。check-tdd-red EXIT 0。GATE P3 EXIT 2"}
