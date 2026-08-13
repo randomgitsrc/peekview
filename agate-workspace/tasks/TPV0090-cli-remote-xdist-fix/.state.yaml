@@ -1,4 +1,4 @@
-phase: P4
+phase: P5
 task_id: TPV0090
 task_name: cli-remote-xdist-fix
 status: in_progress
@@ -11,3 +11,4 @@ history:
   - {phase: P2, action: completed, ts: "2026-08-13T01:20:00Z", note: "architect 产出 P2-design.md（3 候选 → 选候选 1：worker 动态端口 18888+worker_index + poll 死亡检测 + teardown 强化）。minimal_validation 4 项：①xdist_group 默认 dist=load 不 honor（否决 C1）②PYTEST_XDIST_WORKER gw0-15 端口全唯一 ③poll 检测 0.1s 快速失败 ④无 -n 无副作用。SCOPE+：packages 收敛为 [test_cli_remote.py]（Makefile 零改动）已回写 P1 SCOPE_RESOLVED。review approved（无 BLOCKER，2 条非阻塞观察：P4 补 import os / ReadTimeout 加固可选）。GATE P2 EXIT 2 通过"}
   - {phase: P3, action: completed, ts: "2026-08-13T01:50:00Z", note: "test-designer 产出 P3-test-cases.md（6 用例：TC-B4a/d 死亡诊断、B4b 正常启动、B4c1/c2 teardown、TC-port 纯函数）+ test_cli_remote.py 追加 150 行（17 既有用例零改动）。红灯确认：主 Agent 复跑 19 passed/4 failed（B 类真红灯，poll 检测未实现）。关键设计：pytest 9.1.1 禁直接调 fixture → server_url.__wrapped__；gen.close() 不执行 teardown → next(gen,None)；A 类规避 globals().get。check-tdd-red EXIT 0。GATE P3 EXIT 2"}
   - {phase: P4, action: completed, ts: "2026-08-13T02:20:00Z", note: "implementer 实现：test_cli_remote.py fixture 改造（_server_port 纯函数 + 动态端口 + poll 死亡检测 + teardown 强化 + import os）。主 Agent 验：串行 23/23 passed、并发 -n auto 23/23 passed（修复生效，之前 4~9 failed 全绿）、ruff 通过。review approved（无 BLOCKER，2 条 INFORMATIONAL：out 变量未用 / fixture 测试继承 integration mark）。GATE P4 EXIT 0"}
+  - {phase: P5, action: completed, ts: "2026-08-13T02:50:00Z", note: "verifier 执行 gate_commands.P5：P5_cli_remote -n auto 连续 4 次 23/23 全绿（BDD-1）；P5_serial 单跑 23/23（BDD-3）；P5 全量 1078 passed/0 failed/3 skipped（BDD-2）——之前 test_cli_remote 预存失败已消除，known-failures 债还清；ruff 通过；残留进程 pgrep 为空（I6）。生产库 mtime 未变。N5 签名校验计数 2。GATE P5 EXIT 2（WARNING 确认 3 命令全执行）"}
