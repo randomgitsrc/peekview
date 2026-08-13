@@ -15,6 +15,8 @@
 
 ## [0.18.5] - 2026-08-13
 
+> ⚠️ 本版本未实际发布到 PyPI（bump-version 后未执行 make publish，直接继续开发 TPV0090），已被 v0.18.6 覆盖取代。若需要这些改动，请安装 v0.18.6 或更新版本。
+
 ### 修复
 
 - 修复文件名含非 ASCII 字符（中文/日文）时下载返回 500 的问题：`Content-Disposition` 改用 RFC 5987 `filename*=UTF-8''` 编码 + ASCII fallback，ASCII 文件名 header 字节级不变（零回归）；同时图片预览改走 `/content` 端点（语义为读取而非下载，修复图片 500），预览与 download header 解耦 (TPV0091)
