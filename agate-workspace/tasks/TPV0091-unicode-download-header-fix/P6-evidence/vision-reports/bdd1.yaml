@@ -1,0 +1,23 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    total_checks: 3
+  bdd_results:
+    - id: BDD-1
+      status: pass
+      checks:
+        - description: "预览区域图片正常显示（中文图片.png 红色 32x32 测试图居中渲染）"
+          result: pass
+        - description: "无破图图标/加载失败文案/占位异常"
+          result: pass
+        - description: "整体布局正常，顶栏/侧栏/预览区无错位"
+          result: pass
+  anomalies: []
+  vision_source: vision-engine comprehensive analysis
+  vision_text: |
+    ### 图像整体描述
+    这是一个 PeekView 文件预览界面，两栏式布局（顶部导航栏、左侧文件列表、右侧主预览区）。
+    文件列表 8 项，「中文图片.png」为当前选中态（浅蓝高亮）。主预览区中央显示一个红色正方形
+    32x32 测试图。无任何破图图标或加载失败错误文案。三个验证项（图片显示/异常检查/布局）全部通过。
+    **blocker_count: 0**

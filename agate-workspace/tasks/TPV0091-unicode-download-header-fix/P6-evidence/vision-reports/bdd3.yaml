@@ -1,0 +1,22 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    total_checks: 3
+  bdd_results:
+    - id: BDD-3
+      status: pass
+      checks:
+        - description: "预览区域图片正常显示（café.png/report final.png/arch.png 依次点击后均正常，当前 arch.png 紫色测试图渲染）"
+          result: pass
+        - description: "无破图图标/加载失败文案（循环断言三张 error_count=0）"
+          result: pass
+        - description: "整体布局正常，文件树 arch.png 选中态正确"
+          result: pass
+  anomalies: []
+  vision_source: vision-engine comprehensive analysis
+  vision_text: |
+    PeekView 文件预览界面。café.png/report final.png/arch.png 依次点击验证无回归，当前
+    arch.png 紫色正方形 32x32 测试图在预览区中央正常渲染，文件树 arch.png 高亮选中。
+    无破图/加载失败/布局错位。
+    Summary: status=PASSED, blocker_count=0

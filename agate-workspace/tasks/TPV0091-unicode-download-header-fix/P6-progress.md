@@ -1,0 +1,21 @@
+# P6 Progress — TPV0091-unicode-download-header-fix
+
+- [x] 读取 P6-dispatch-context-verifier.md（8 条 BDD、验收方式、产出规格、环境约束）
+- [x] 读取 verifier.md 角色定义（P6 验收模式：逐条实跑、PASS 带证据、UI 需截图+vision）
+- [x] 读取 P1-requirements.md §3 BDD + §8 验证线索、P2-design.md（ui_affected: true）、P5-test-results/
+- [x] 读取 e2e/tpv0091-unicode-preview-download.spec.ts（参考流程）
+- [x] 环境自检：:8080 生产 = 000（未运行，不触碰）；:8888 debug = 200；seed unicode-filenames 8 文件 id 36-43 齐
+- [x] BDD-4/5/6 curl 实测 → bdd4-5-6-curl.log：
+  - BDD-4：41/42/43 download 全 200，响应体与 /content IDENTICAL
+  - BDD-5：header 含 filename*=UTF-8''，unquote 往返 == 原名（python 验证 3/3 PASS）
+  - BDD-6：36/38/39/40/37 全 200，Content-Disposition 有效（café 走 filename* 分支正确）
+- [x] BDD-7：test_security.py 全量 → 38 passed, 1 skipped, PYTEST_EXIT=0（TestFilenameSanitization 注入净化用例在）
+- [x] BDD-1/2/3/5/8 Playwright CDP 实跑 → p6-ui.log：
+  - BDD-1/2/3 图片预览：image-content visible、error_count=0、naturalWidth=32、opacity=1（seed 图确认为合法 32x32 PNG）
+  - BDD-5：suggestedFilename=中文图片.png == 原名
+  - BDD-8：.markdown-body img 5 个，src 全部走 /content，naturalWidth>0
+- [x] 截图 4 张互不相同（md5 去重确认），均 >1KB（36-97KB）
+- [x] vision 分析 4 张：blocker_count 全 0（bdd1/bdd2/bdd3/bdd8.yaml）；BDD-8 确认 5 图内联渲染
+- [x] 写 P6-acceptance.md + 证据引用核对
+- [x] 自检：证据非空 + 每条 PASS 有引用 + 总结行格式
+- [x] 返回主 Agent：路径 + 摘要

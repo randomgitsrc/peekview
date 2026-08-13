@@ -1,4 +1,4 @@
-phase: P5
+phase: P6
 task_id: TPV0091
 task_name: unicode-download-header-fix
 status: in_progress
@@ -12,3 +12,4 @@ history:
   - {phase: P3, action: completed, ts: "2026-08-13T01:10:00Z", note: "test-designer 产出 P3-test-cases.md（11 用例覆盖 8/8 BDD）+ 后端 test_api.py TestFileDownload 追加 3 方法（4 参数化）+ e2e tpv0091-unicode-preview-download.spec.ts 新建。check-tdd-red EXIT 0 真红灯确认（主 Agent 复跑：中文/日文 UnicodeEncodeError + café filename* 断言 3 处 B 类失败）。GATE P3 EXIT 2 通过。env-baseline 无 formatter 跳过"}
   - {phase: P4, action: completed, ts: "2026-08-13T01:30:00Z", note: "implementer 实现：files.py 加 _build_content_disposition helper（ASCII 分支字节级不变/非 ASCII RFC5987）+ download_file 使用之 + 删 safe_name 防 F841 + import quote；client.ts getFileAsBase64 URL → /content。主 Agent 验：TestFileDownload+test_security 全绿（1 skip 既有）、ruff 通过（python3 -m ruff）、typecheck 通过。专家组并行评审：backend review approved + frontend design-review approved → review-lead 汇总 P4-review.md approved（无 BLOCKER）。GATE P4 EXIT 0"}
   - {phase: P5, action: completed, ts: "2026-08-13T02:10:00Z", note: "verifier 执行 gate_commands.P5：后端全量 1071 passed/1 failed（test_cli_remote 预存失败，TPV0090 已知，已登 known-failures.md）/3 skipped；ruff 通过；typecheck 通过；E2E 首轮 4 failed+2 flaky → 主 Agent 处置后重跑 12/12 PASS（处置：debug 重启加载新代码解决 stale backend + spec 修 drawer 分支 + page.evaluate 触发下载 + expect.poll 加固 BDD-8）。生产库 mtime 未变（隔离正常）。N5 签名校验 unit.md 计数>0。GATE P5 EXIT 2"}
+  - {phase: P6, action: completed, ts: "2026-08-13T02:40:00Z", note: "verifier 实跑 8 条 BDD 验收：8/8 PASS 0 FAIL。BDD-4/5/6/7 后端 download 端点实跑（41/42/43 → 200 + 响应体与 /content IDENTICAL；filename*=UTF-8'' unquote 往返==原名；suggestedFilename==中文图片.png；test_security 38 passed/1 skip）；BDD-1/2/3/8 UI 点击+截图 4 张（36-97KB，md5 互异）+ vision 4 个 yaml 全 blocker_count=0。主 Agent 亲自跑 4 个 gate：check-p6-format（--fix 后无输出）/check-gate P6（FAIL=0 TOTAL=8）/check-p6-evidence（证据非空）/check-p6-provenance（通过）。生产库未触碰。PROD_NOT_TOUCHED"}
