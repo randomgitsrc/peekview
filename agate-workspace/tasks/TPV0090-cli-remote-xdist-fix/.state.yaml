@@ -1,8 +1,10 @@
-phase: P0
+phase: P1
 task_id: TPV0090
 task_name: cli-remote-xdist-fix
-status: pending
+status: in_progress
 created: 2026-08-12T00:00:00Z
-updated: 2026-08-12T00:00:00Z
+updated: 2026-08-13T00:10:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "known-failures.md 两次登记的同源预存失败：test_cli_remote.py 在 make test-quick（-n auto 16 workers）下 4~7 failed + 3 errors（server 未在 15s 就绪窗口内启动），单跑 17/17 全绿、CI 串行不受影响。用户确认立项（hotfix 条件'现成覆盖'不成立 + 方案选型有分歧 + 机制交叉）。risk=low，P3 不可跳（零现成覆盖），P6 需本地实测 -n auto 全绿"}
+  - {phase: P1, action: started, ts: "2026-08-13T00:10:00Z", note: "主 Agent 复现确认：单跑 17/17 全绿；-n auto 下 4 failed（test_list_* 系列，随轮次漂移）。根因核实：fixture scope=module 在 xdist 下每个 worker 各跑一份 → 16 worker 抢同一 :18888 端口 + 等待循环不检测子进程死亡不打印 stderr。CI 串行（无 -n auto）确认不受影响"}
+  - {phase: P1, action: completed, ts: "2026-08-13T00:40:00Z", note: "analyst 产出 P1-requirements.md（4 BDD：-n auto 连续 3 次全绿 / make test-quick 全绿 / 单跑不回归 / server 死亡快速失败含诊断；8 隐含需求 I1-I8 含 I4 保留进程级集成测试意图）。requirements-review approved（BDD 全部可二值判定、实测复核 -n auto 4 failed 为 Connection refused 而非 Server failed to start——佐证根因是端口竞争，确定性问题强制方案 C 类；3 项非阻塞观察转 P2/P3）。GATE P1 EXIT 2 通过。SUGGEST 采纳：P2 优先论证 B+C 组合"}
