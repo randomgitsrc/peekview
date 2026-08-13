@@ -154,7 +154,7 @@ async getFileAsBase64(slug: string, fileId: number): Promise<string> {
 gate_commands:
   P3: "cd backend && .venv/bin/python -m pytest tests/test_api.py tests/test_security.py -q --tb=short"
   P5: "make test-quick && make lint && make typecheck"
-  P5_e2e: "E2E_SPEC=e2e/t091-unicode-preview-download.spec.ts make debug-test"
+  P5_e2e: "E2E_SPEC=e2e/tpv0091-unicode-preview-download.spec.ts make debug-test"
 ```
 
 说明：
