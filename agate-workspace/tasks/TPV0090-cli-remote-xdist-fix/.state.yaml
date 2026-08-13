@@ -1,4 +1,4 @@
-phase: P8
+phase: READY
 task_id: TPV0090
 task_name: cli-remote-xdist-fix
 status: in_progress
@@ -14,3 +14,4 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-13T02:50:00Z", note: "verifier 执行 gate_commands.P5：P5_cli_remote -n auto 连续 4 次 23/23 全绿（BDD-1）；P5_serial 单跑 23/23（BDD-3）；P5 全量 1078 passed/0 failed/3 skipped（BDD-2）——之前 test_cli_remote 预存失败已消除，known-failures 债还清；ruff 通过；残留进程 pgrep 为空（I6）。生产库 mtime 未变。N5 签名校验计数 2。GATE P5 EXIT 2（WARNING 确认 3 命令全执行）"}
   - {phase: P6, action: completed, ts: "2026-08-13T03:10:00Z", note: "verifier 实跑 4 条 BDD 验收：4/4 PASS 0 FAIL。BDD-1 -n auto 连续 5 次 0 failed；BDD-2 全量 1078 passed/0 failed；BDD-3 单跑 23 passed 无回归（17 既有全过）；BDD-4 死亡检测 TC-B4a/B4d 2 passed（rc=3 + stderr 摘要 address already in use，<5s）。4 个证据 log 含实跑输出。主 Agent 亲跑 4 gate：format/check-gate/evidence/provenance 全通过。生产库 mtime 未变。PROD_NOT_TOUCHED"}
   - {phase: P7, action: completed, ts: "2026-08-13T03:30:00Z", note: "consistency-reviewer 跨文件一致性审查：BLOCKER=0、DEVIATION-CRITICAL=0、deviation=0、DESIGN_GAP=0（P4 无声明）、SCOPE+ 闭环（packages 收敛双路径一致 + git 实证 Makefile 零改动）。跨文件一致性全通过（P1 BDD 4↔P6 PASS 4 逐条锚点对应；P4 实现↔P2 候选 1 规格逐行吻合；P3 用例↔P6 验收一一对应）。GATE P7 EXIT 0"}
+  - {phase: P8, action: completed, ts: "2026-08-13T04:00:00Z", note: "releaser 产出 P8-release.md（bump_type=patch 0.18.5→0.18.6，MCP 0.10.0 不动；debt_check=none；CHANGELOG Unreleased 补 TPV0090 条目）。主 Agent 执行：make bump-version NEW_VERSION=0.18.6（自动 commit 6ba2450a + tag v0.18.6）；重跑 P5 gate（1078 passed/0 failed/3 skipped——零失败）；ruff 通过；GATE P8 EXIT 2 + 4 项手工验证完成。清理：zip fixtures 还原。生产库未触碰。PROD_NOT_TOUCHED"}

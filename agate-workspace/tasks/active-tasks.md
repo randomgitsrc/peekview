@@ -12,7 +12,7 @@
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
-| TPV0090 | cli-remote-xdist-fix | 🔄 进行中 | P1 | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
+| TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0092 | mcp-get-entry-fetch | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0093 | star-lifecycle | ⬜ 待开始 | P0 | 🟢 | 无 | 2026-08-12 | 2026-08-12 |
@@ -98,6 +98,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| TPV0090 | cli-remote-xdist-fix | v0.18.6 | 🟡 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | v0.18.5 | 🟠 | 2026-08-13 |
 | TPV0088 | e2e-test-infra-hardening | v0.18.4 | 🟡 | 2026-08-12 |
 | TPV0089 | unicode-filename-link-fix | v0.18.3 | 🟠 | 2026-08-12 |
@@ -220,6 +221,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-13 | 完成 TPV0090 | cli-remote-xdist-fix → v0.18.6（test_cli_remote.py xdist 并发修复：worker 动态端口 18888+worker_index 消除 16 worker 端口竞争 + poll 死亡检测 + teardown 强化；4/4 BDD PASS（-n auto 连续 5 次全绿 + 全量 1078 passed 0 failed——known-failures 预存失败债还清）；完整 agate P0-P8）|
 | 2026-08-13 | 完成 TPV0091 | unicode-download-header-fix → v0.18.5（中文/日文文件名下载与图片预览 500 修复：Content-Disposition 改 RFC 5987 filename*=UTF-8'' + ASCII fallback，ASCII header 字节级不变零回归；图片预览改走 /content 端点语义为读取；8/8 BDD PASS（后端 1071+1 预存 + E2E 12/12 + vision 全零 blocker）；完整 agate P0-P8）|
 | 2026-08-12 | 立项 TPV0094 | treeview-default-expand（🟡）：TreeView 默认全展开 + 节点数阈值降级（红线实测确定）。纯前端单文件（TreeView.vue），零依赖零冲突，可与 TPV0090 并行。risk=low |
 | 2026-08-12 | 立项 TPV0093 | star-lifecycle（🟢 长期）：基于 docs/specs/peekview-star-function-20260812.md（V2.0）。星标豁免删除 + 热度计数 + 墓碑 + 作者后台豁免提示。四决策点定稿：A archived 星标用户可读非星标不可见 / B 独立 EntryTombstone 表 / C Explore 加 [Starred] tab + 独立管理页 / D 存量起倒计时从上线条日起算。risk=high |
