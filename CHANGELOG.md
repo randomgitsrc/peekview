@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.18.6] - 2026-08-13
+
+### 修复
+
+- 修复 `make test-quick`（pytest `-n auto` xdist 并发）下 `test_cli_remote.py` 端口竞争导致的间歇性失败：`server_url` fixture 改为按 worker 动态分配端口（`PYTEST_XDIST_WORKER` gwN → 18888+N，单跑/CI 回退 18888 零分叉），消除 16 worker 抢同一端口的问题；等待循环增加 `proc.poll()` 死亡检测（server 启动失败 ≤1s 快速报错，含 rc + stderr 诊断）；teardown 强化为 `terminate → wait(5) → kill()` 兜底，测试后无残留进程 (TPV0090)
+
 ## [0.18.5] - 2026-08-13
 
 ### 修复
