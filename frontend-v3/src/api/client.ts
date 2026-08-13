@@ -159,7 +159,7 @@ class PeekAPI {
 
   async getFileAsBase64(slug: string, fileId: number): Promise<string> {
     const response = await this.client.get(
-      `/entries/${slug}/files/${fileId}`,
+      `/entries/${slug}/files/${fileId}/content`,
       { responseType: 'arraybuffer' }
     )
     const bytes = new Uint8Array(response.data)

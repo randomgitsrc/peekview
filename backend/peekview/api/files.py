@@ -6,6 +6,7 @@ import asyncio
 import logging
 import mimetypes
 import re
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
@@ -68,6 +69,15 @@ def _sanitize_filename(filename: str) -> str:
     if len(sanitized) > 200:
         sanitized = sanitized[:200]
     return sanitized
+
+
+def _build_content_disposition(filename: str) -> str:
+    safe = _sanitize_filename(filename)
+    if safe.isascii():
+        return f'attachment; filename="{safe}"'
+    fallback = "".join(c if ord(c) < 128 else "_" for c in safe)
+    encoded = quote(safe, safe="")
+    return f'attachment; filename="{fallback}"; filename*=UTF-8\'\'{encoded}'
 
 
 def _language_to_content_type(language: str | None) -> str:
@@ -183,7 +193,6 @@ async def download_file(
         raise NotFoundError(f"File not found: {file_id}")
 
     content = service.read_file_content(entry_id, file_record.filename, file_record.path)
-    safe_name = _sanitize_filename(file_record.filename)
 
     entry_record = service.get_entry_record(entry_id)
     channel = _detect_channel(request, slug=slug)
@@ -204,7 +213,7 @@ async def download_file(
     return Response(
         content=content,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        headers={"Content-Disposition": _build_content_disposition(file_record.filename)},
     )
 
 
