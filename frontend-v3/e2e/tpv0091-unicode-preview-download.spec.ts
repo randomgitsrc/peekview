@@ -14,7 +14,7 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 const SLUG = 'unicode-filenames'
 const SPEC_DIR = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(SPEC_DIR, '..', '..')
-const EVIDENCE_DIR = path.join(REPO_ROOT, 'docs/tasks/TPV0091-unicode-download-header-fix/evidences')
+const EVIDENCE_DIR = path.join(REPO_ROOT, 'agate-workspace/tasks/TPV0091-unicode-download-header-fix/P6-evidence/screenshots')
 
 const CHINESE_IMAGE = '中文图片.png'
 const JAPANESE_IMAGE = '概要図.png'

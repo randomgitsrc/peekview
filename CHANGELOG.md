@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.18.5] - 2026-08-13
+
+### 修复
+
+- 修复文件名含非 ASCII 字符（中文/日文）时下载返回 500 的问题：`Content-Disposition` 改用 RFC 5987 `filename*=UTF-8''` 编码 + ASCII fallback，ASCII 文件名 header 字节级不变（零回归）；同时图片预览改走 `/content` 端点（语义为读取而非下载，修复图片 500），预览与 download header 解耦 (TPV0091)
+
 ## [0.18.4] - 2026-08-12
 
 ### 修复
