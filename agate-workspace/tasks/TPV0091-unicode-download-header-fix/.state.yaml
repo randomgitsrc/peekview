@@ -1,4 +1,4 @@
-phase: P8
+phase: READY
 task_id: TPV0091
 task_name: unicode-download-header-fix
 status: in_progress
@@ -14,3 +14,4 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-13T02:10:00Z", note: "verifier 执行 gate_commands.P5：后端全量 1071 passed/1 failed（test_cli_remote 预存失败，TPV0090 已知，已登 known-failures.md）/3 skipped；ruff 通过；typecheck 通过；E2E 首轮 4 failed+2 flaky → 主 Agent 处置后重跑 12/12 PASS（处置：debug 重启加载新代码解决 stale backend + spec 修 drawer 分支 + page.evaluate 触发下载 + expect.poll 加固 BDD-8）。生产库 mtime 未变（隔离正常）。N5 签名校验 unit.md 计数>0。GATE P5 EXIT 2"}
   - {phase: P6, action: completed, ts: "2026-08-13T02:40:00Z", note: "verifier 实跑 8 条 BDD 验收：8/8 PASS 0 FAIL。BDD-4/5/6/7 后端 download 端点实跑（41/42/43 → 200 + 响应体与 /content IDENTICAL；filename*=UTF-8'' unquote 往返==原名；suggestedFilename==中文图片.png；test_security 38 passed/1 skip）；BDD-1/2/3/8 UI 点击+截图 4 张（36-97KB，md5 互异）+ vision 4 个 yaml 全 blocker_count=0。主 Agent 亲自跑 4 个 gate：check-p6-format（--fix 后无输出）/check-gate P6（FAIL=0 TOTAL=8）/check-p6-evidence（证据非空）/check-p6-provenance（通过）。生产库未触碰。PROD_NOT_TOUCHED"}
   - {phase: P7, action: completed, ts: "2026-08-13T03:00:00Z", note: "consistency-reviewer 跨文件一致性审查：BLOCKER=0、DEVIATION-CRITICAL=0、deviation_count=1（P2 gate 命令 e2e 名旧前缀 t091-，已在 P3/P4/P5 链路闭环，P8 前顺手修订 P2-design.md:157）；DESIGN_GAP=0（P4 明确无声明）；SCOPE+=0；跨文件一致性全通过（P2§packages↔P1↔P4 改动面一致、P1 BDD 8↔P6 PASS 8 逐条对应、P4§impl-path 与 P2 §2.1/§2.2 逐行吻合、P3 用例与 P6 验收一一映射）；4 项耦合点核对通过。GATE P7 EXIT 0"}
+  - {phase: P8, action: completed, ts: "2026-08-13T03:30:00Z", note: "releaser 产出 P8-release.md（bump_type=patch 0.18.4→0.18.5，MCP 0.10.0 不动；debt_check=none；CHANGELOG Unreleased 补 TPV0091 条目）。主 Agent 执行：make bump-version NEW_VERSION=0.18.5（自动 commit 145036a1 + tag v0.18.5）；重跑 P5 gate（后端 1071 passed+1 预存 test_cli_remote/typecheck✓/ruff✓）+ E2E 冒烟 12/12；GATE P8 EXIT 2 + 4 项手工验证通过（发布检查/重跑 P5/git log 对照/version 文件）。清理：zip fixtures 还原、docs/tasks 旧路径残留删除、spec EVIDENCE_DIR 修到 P6-evidence/screenshots。生产库未触碰。PROD_NOT_TOUCHED"}
