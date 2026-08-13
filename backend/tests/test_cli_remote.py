@@ -4,6 +4,7 @@ These tests start a local server and test CLI commands in remote mode.
 """
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -16,47 +17,55 @@ import requests
 pytestmark = pytest.mark.integration
 
 
+def _server_port(worker_env):
+    """Map a pytest-xdist worker env (``gwN``) to a unique port; ``None`` -> base port."""
+    return 18888 + int(worker_env[2:]) if worker_env else 18888  # gw0..gw15 -> 18888..18903
+
+
 @pytest.fixture(scope="module")
 def server_url(tmp_path_factory):
     """Start a local server for testing and return its URL."""
-    # Create temp data directory
     data_dir = tmp_path_factory.mktemp("peekview_data")
     db_path = data_dir / "test.db"
-
-    # Start server in background
+    worker = os.environ.get("PYTEST_XDIST_WORKER")
+    port = _server_port(worker)
     env = {
         **dict(subprocess.os.environ),
         "PEEKVIEW_STORAGE__DATA_DIR": str(data_dir),
         "PEEKVIEW_STORAGE__DB_PATH": str(db_path),
-        "PEEKVIEW_SERVER__PORT": "18888",  # Use non-standard port to avoid conflicts
+        "PEEKVIEW_SERVER__PORT": str(port),
     }
-
     proc = subprocess.Popen(
-        [sys.executable, "-m", "peekview", "serve", "--port", "18888"],
+        [sys.executable, "-m", "peekview", "serve", "--port", str(port)],
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-
-    url = "http://127.0.0.1:18888"
-
-    # Wait for server to start
+    url = f"http://127.0.0.1:{port}"
+    # 死亡检测（B）：每轮先 poll()，死亡立即 terminate+raise，报错含 stderr 摘要
     for _ in range(30):
+        if proc.poll() is not None:
+            out, err = proc.communicate(timeout=2)
+            raise RuntimeError(
+                f"Server failed to start (rc={proc.returncode}); stderr: {err.decode()[-500:]!r}"
+            )
         try:
             resp = requests.get(f"{url}/health", timeout=1)
             if resp.status_code == 200:
                 break
         except requests.ConnectionError:
-            time.sleep(0.5)
+            time.sleep(0.25)
     else:
         proc.terminate()
         raise RuntimeError("Server failed to start")
-
     yield url
-
-    # Cleanup
+    # teardown 强化（I6）：terminate -> wait(5) -> 超时 kill()
     proc.terminate()
-    proc.wait(timeout=5)
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=5)
 
 
 class TestCLIRemoteCreate:
