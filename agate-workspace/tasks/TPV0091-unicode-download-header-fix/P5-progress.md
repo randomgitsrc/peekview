@@ -1,0 +1,23 @@
+# P5 Progress — TPV0091-unicode-download-header-fix
+
+- [x] 读取 P5-dispatch-context-verifier.md（gate_commands.P5 = make test-quick && make lint && make typecheck；P5_e2e = E2E_SPEC=e2e/tpv0091-unicode-preview-download.spec.ts make debug-test；注意 P2 写 t091- 旧名，实际用 tpv0091-）
+- [x] 读取 verifier.md 角色定义（P5 技术验证模式：全量套件、如实记录、UI 必须实跑）
+- [x] 读取 P2-design.md（gate_commands 固化 + minimal_validation 6 项确认）
+- [x] 读取 P3-test-cases.md（TC-B1/B2/B3/B4 pytest + TC-F1/F2/F3/F5/F8 e2e 预期）
+- [x] 读取 e2e/tpv0091-unicode-preview-download.spec.ts（5 desktop + 1 mobile 用例）
+- [x] 读取 .state.yaml（P4 已完成，GATE P4 EXIT 0）
+- [x] 基线记录：生产库 `~/.peekview/peekview.db` mtime=1786540641 size=2093056；debug :8888 `/api/v1/entries/unicode-filenames/raw` → 200（seed 存在，E2E 前置满足）
+- [x] 后端全量 pytest：1071 passed, 1 failed (test_cli_remote.py::TestCLIRemoteList::test_list_with_tag_filter), 3 skipped；PYTEST_EXIT=1
+  - 失败判定：预存失败（git 确认 test_cli_remote.py 未被 TPV0091 commit 触碰；integration 测试需 :18888 远程 backend，未运行 → Connection refused）。dispatch-context 明示 TPV0090 待办已知预存失败，非本任务引入
+- [x] lint：make lint exit=2（ruff 未找到命令，预知问题）；fallback `cd backend && python3 -m ruff check peekview/ tests/` → All checks passed, RUFF_EXIT=0
+- [x] typecheck：make typecheck → vue-tsc passed, TYPECHECK_EXIT=0
+- [x] E2E：6 passed, 2 flaky, 4 failed；E2E_EXIT=2（见下方逐项判定）
+  - 前置：首次被 e2e-safety-check 拦截（frontend 源码比 static 新，P4 改了 client.ts）→ 执行 `make build-frontend`（exit 0）后重跑
+  - BDD-5 download 失败（chromium+Mobile Chrome）= **环境问题**：debug :8888 后端进程启动于 07:57:51，早于 P4 commit 08:42:49，uvicorn 无 --reload → 运行旧代码。curl 证据：files/41 下载 500；files/38 仍旧格式 header（无 filename*）。代码本身经 pytest 新增用例证明正确
+  - BDD-1 mobile 失败（chromium+Mobile Chrome）= **spec 设计缺陷**：移动端文件树在 drawer（mobile-bar-filetree-btn）非桌面侧栏 .file-tree。CDP 探针实测移动端正确路径产品正常（image visible + naturalWidth=32 + image-error=0），非产品回归
+  - BDD-8 flaky（两项目）：naturalWidth 首次 0，重试通过（图片解码时序）
+  - debug :8888 未停、未重启（遵循派发约束）
+- [x] 对比测试前后生产库状态：`~/.peekview/peekview.db` mtime 基线 1786540641 → 现在 1786540641（**一致，未触碰**）[PROD_NOT_TOUCHED]
+- [x] 产出 P5-test-results/unit.md + e2e.md + fail-list.txt（已写）
+- [x] 预存失败登记 known-failures.md（test_cli_remote.py，1 条）
+- [x] 返回主 Agent：路径 + 摘要

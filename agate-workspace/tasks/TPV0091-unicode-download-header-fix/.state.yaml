@@ -1,4 +1,4 @@
-phase: P4
+phase: P5
 task_id: TPV0091
 task_name: unicode-download-header-fix
 status: in_progress
@@ -11,3 +11,4 @@ history:
   - {phase: P2, action: completed, ts: "2026-08-13T00:50:00Z", note: "architect 产出 P2-design.md（3 候选 A/B/C → 选 C=A+B：后端 RFC 5987 Content-Disposition + 前端预览走 /content）。minimal_validation 6 项全 confirmed。plan-design-review approved（交互状态 8/AI Slop 9/移动端 7/可访问性 7/组件完整性 9，无 BLOCKER，3 条非阻塞观察转 P3/P4：①P4 删 safe_name 防 ruff F841 ②P3 补 café.png 下载断言 ③e2e spec 命名确认）。GATE P2 EXIT 2 通过"}
   - {phase: P3, action: completed, ts: "2026-08-13T01:10:00Z", note: "test-designer 产出 P3-test-cases.md（11 用例覆盖 8/8 BDD）+ 后端 test_api.py TestFileDownload 追加 3 方法（4 参数化）+ e2e tpv0091-unicode-preview-download.spec.ts 新建。check-tdd-red EXIT 0 真红灯确认（主 Agent 复跑：中文/日文 UnicodeEncodeError + café filename* 断言 3 处 B 类失败）。GATE P3 EXIT 2 通过。env-baseline 无 formatter 跳过"}
   - {phase: P4, action: completed, ts: "2026-08-13T01:30:00Z", note: "implementer 实现：files.py 加 _build_content_disposition helper（ASCII 分支字节级不变/非 ASCII RFC5987）+ download_file 使用之 + 删 safe_name 防 F841 + import quote；client.ts getFileAsBase64 URL → /content。主 Agent 验：TestFileDownload+test_security 全绿（1 skip 既有）、ruff 通过（python3 -m ruff）、typecheck 通过。专家组并行评审：backend review approved + frontend design-review approved → review-lead 汇总 P4-review.md approved（无 BLOCKER）。GATE P4 EXIT 0"}
+  - {phase: P5, action: completed, ts: "2026-08-13T02:10:00Z", note: "verifier 执行 gate_commands.P5：后端全量 1071 passed/1 failed（test_cli_remote 预存失败，TPV0090 已知，已登 known-failures.md）/3 skipped；ruff 通过；typecheck 通过；E2E 首轮 4 failed+2 flaky → 主 Agent 处置后重跑 12/12 PASS（处置：debug 重启加载新代码解决 stale backend + spec 修 drawer 分支 + page.evaluate 触发下载 + expect.poll 加固 BDD-8）。生产库 mtime 未变（隔离正常）。N5 签名校验 unit.md 计数>0。GATE P5 EXIT 2"}

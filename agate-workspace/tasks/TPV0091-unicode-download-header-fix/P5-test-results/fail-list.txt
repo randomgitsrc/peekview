@@ -1,0 +1,11 @@
+# P5 failed 清单 — TPV0091-unicode-download-header-fix
+# 格式：pytest 用 `FAILED ` 前缀（与 pytest --tb=no 输出一致）；E2E 用 `[project] spec::test` 前缀
+
+# ── 后端 pytest（1 failed，预存失败，非本任务引入）──
+FAILED tests/test_cli_remote.py::TestCLIRemoteList::test_list_with_tag_filter
+
+# ── E2E（4 failed，其中 2 类根因：环境 stale backend ×2 + spec 移动端设计缺陷 ×2）──
+[chromium] e2e/tpv0091-unicode-preview-download.spec.ts::test_bdd_5_unicode_download_suggested_filename
+[Mobile Chrome] e2e/tpv0091-unicode-preview-download.spec.ts::test_bdd_5_unicode_download_suggested_filename
+[chromium] e2e/tpv0091-unicode-preview-download.spec.ts::test_bdd_1_mobile_chinese_image_preview_renders
+[Mobile Chrome] e2e/tpv0091-unicode-preview-download.spec.ts::test_bdd_1_mobile_chinese_image_preview_renders

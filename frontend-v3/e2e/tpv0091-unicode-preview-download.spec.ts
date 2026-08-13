@@ -37,13 +37,18 @@ async function resolveFileId(request: APIRequestContext, filename: string): Prom
 
 async function openFileTreeAndClick(page: Page, filename: string) {
   await page.goto(`${BASE_URL}/${SLUG}`)
-  // mobile 下文件树默认收起，先点 toggle 展开（desktop 下自动展开，此按钮幂等）
-  const toggle = page.getByRole('button', { name: 'Toggle file tree' })
-  if (await toggle.isVisible()) {
-    await toggle.click()
+  const viewport = page.viewportSize()
+  const isDesktop = viewport && viewport.width >= 1024
+  if (isDesktop) {
+    // desktop：文件树是侧栏 .file-tree（等待可见后点击）
+    await expect(page.locator('.file-tree')).toBeVisible({ timeout: 15000 })
+    await page.locator('.file-tree .file-name', { hasText: filename }).click()
+    return
   }
-  await expect(page.locator('.file-tree')).toBeVisible({ timeout: 15000 })
-  await page.locator('.file-tree .file-name', { hasText: filename }).click()
+  // mobile（≤1023px）：文件树在 drawer，先点 mobile-bar-filetree-btn 打开 drawer 再点击
+  await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+  await expect(page.locator('.drawer .file-tree')).toBeVisible({ timeout: 15000 })
+  await page.locator('.drawer .file-tree .file-name', { hasText: filename }).click()
 }
 
 async function assertImageLoaded(page: Page, filename: string) {
@@ -86,9 +91,16 @@ test.describe('TPV0091 Desktop 1280x800', () => {
   // ---------- BDD-5: 下载保存名 = 原始中文文件名（浏览器解析 RFC 6266 filename*） ----------
   test('test_bdd_5_unicode_download_suggested_filename', async ({ page, request }) => {
     const fileId = await resolveFileId(request, CHINESE_IMAGE)
+    // page.goto 到 attachment 响应会抛 "Download is starting"——用临时 <a> 点击触发下载
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.goto(`${BASE_URL}/api/v1/entries/${SLUG}/files/${fileId}`),
+      page.evaluate((url) => {
+        const a = document.createElement('a')
+        a.href = url
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      }, `${BASE_URL}/api/v1/entries/${SLUG}/files/${fileId}`),
     ])
     expect(download.suggestedFilename()).toBe(CHINESE_IMAGE)
   })
@@ -103,8 +115,10 @@ test.describe('TPV0091 Desktop 1280x800', () => {
     for (let i = 0; i < 5; i++) {
       const src = await imgs.nth(i).getAttribute('src')
       expect(src).toMatch(/\/api\/v1\/entries\/unicode-filenames\/files\/\d+\/content/)
-      const naturalWidth = await imgs.nth(i).evaluate((el: HTMLImageElement) => el.naturalWidth)
-      expect(naturalWidth).toBeGreaterThan(0)
+      // 图片解码有时序，naturalWidth 首次可能为 0——用 expect.poll 重试（P5 实测 flaky）
+      await expect
+        .poll(() => imgs.nth(i).evaluate((el: HTMLImageElement) => el.naturalWidth), { timeout: 10000 })
+        .toBeGreaterThan(0)
     }
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'desktop_1280x800_bdd8.png') })
