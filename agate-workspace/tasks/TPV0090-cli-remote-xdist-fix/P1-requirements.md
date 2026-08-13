@@ -11,6 +11,7 @@ agent: analyst
 risk_level: low             # 纯测试基础设施，无业务代码/schema/权限改动
 phases: [P1, P2, P3, P4, P5, P6, P7, P8]   # 默认全走；P3 不可跳（零现成覆盖）；P6 需本地实测
 packages: [backend/tests/test_cli_remote.py, Makefile]   # 方案 C 可能改 Makefile；ci.yml 串行不受影响（见正文约束）
+# [SCOPE_RESOLVED] P2 选型候选 1（worker 动态端口）后 Makefile 零改动，packages 收敛为 [backend/tests/test_cli_remote.py]（P2-design.md §0 不改什么 + §2 SCOPE+ 记录）；P1 基线 BDD 不变
 domains: [backend]          # 仅后端测试基础设施域
 # follows_existing_pattern: 修现有 fixture，但方案 A/B/C 选型需 P2 明确对比，不建议单候选直接跳过
 ---
