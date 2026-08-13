@@ -1,4 +1,4 @@
-phase: P2
+phase: P3
 task_id: TPV0091
 task_name: unicode-download-header-fix
 status: in_progress
@@ -9,3 +9,4 @@ history:
   - {phase: P1, action: started, ts: "2026-08-13T00:05:00Z", note: "环境自检 5 项全 PASS（工具链/debug :8888 seed 23 entries/CDP Chrome 151）。Bug 复现确认：files/41（中文图片）500、43（日文）500、42（中文附件）500、38（café）200。后端日志捕获 Starlette init_headers latin-1 UnicodeEncodeError"}
   - {phase: P1, action: completed, ts: "2026-08-13T00:30:00Z", note: "analyst 产出 P1-requirements.md（8 BDD）+ 重要查证修正（api.downloadFile 死代码、useEntryDetailComputed downloadFile 是 blob 下载不走 API、后端修复单独即可修复预览）。requirements-review approved（8/8 可二值判定、五维度覆盖、2 条非阻塞观察）。GATE P1 EXIT 2 通过。SUGGEST 3 项主 Agent 采纳：①二进制下载空文件预存问题不入本任务范围 ②api.downloadFile 死代码 P2 顺带决定 ③预览改 /content 则 read tracking 口径变化 P2 知晓"}
   - {phase: P2, action: completed, ts: "2026-08-13T00:50:00Z", note: "architect 产出 P2-design.md（3 候选 A/B/C → 选 C=A+B：后端 RFC 5987 Content-Disposition + 前端预览走 /content）。minimal_validation 6 项全 confirmed。plan-design-review approved（交互状态 8/AI Slop 9/移动端 7/可访问性 7/组件完整性 9，无 BLOCKER，3 条非阻塞观察转 P3/P4：①P4 删 safe_name 防 ruff F841 ②P3 补 café.png 下载断言 ③e2e spec 命名确认）。GATE P2 EXIT 2 通过"}
+  - {phase: P3, action: completed, ts: "2026-08-13T01:10:00Z", note: "test-designer 产出 P3-test-cases.md（11 用例覆盖 8/8 BDD）+ 后端 test_api.py TestFileDownload 追加 3 方法（4 参数化）+ e2e tpv0091-unicode-preview-download.spec.ts 新建。check-tdd-red EXIT 0 真红灯确认（主 Agent 复跑：中文/日文 UnicodeEncodeError + café filename* 断言 3 处 B 类失败）。GATE P3 EXIT 2 通过。env-baseline 无 formatter 跳过"}

@@ -1,13 +1,27 @@
 """Tests for FastAPI endpoints."""
 
+import base64
+import re
 import shutil
 import tempfile
 from pathlib import Path
+from urllib.parse import unquote
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from peekview.main import create_app
+
+
+def _minimal_png() -> bytes:
+    return (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
+        b"\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+
+
+_FILENAME_STAR_RE = re.compile(r"filename\*=UTF-8''([^;]+)")
 
 
 @pytest.fixture(scope="function")
@@ -194,6 +208,81 @@ class TestFileDownload:
         resp = await client.get(f"/api/v1/entries/{actual_slug}/files/{file_id}")
         assert resp.status_code == 200
         assert "Content-Disposition" in resp.headers
+
+    @staticmethod
+    async def _create_image_entry(client, filename: str) -> tuple[str, int]:
+        """Create an anonymous entry with a single binary image file."""
+        create_resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": f"unicode image test: {filename}",
+                "files": [
+                    {
+                        "filename": filename,
+                        "content_base64": base64.b64encode(_minimal_png()).decode("ascii"),
+                    }
+                ],
+            },
+        )
+        assert create_resp.status_code == 201
+        data = create_resp.json()
+        return data["slug"], data["files"][0]["id"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("filename", ["中文图片.png", "概要図.png"])
+    async def test_bdd_4_5_unicode_filename_download(self, client, filename):
+        """BDD-4/5: 非 latin-1 文件名下载返回 200、响应体与 /content 一致、
+        Content-Disposition 含 RFC 5987 filename* 且解码等于原名。"""
+        actual_slug, file_id = await self._create_image_entry(client, filename)
+
+        resp = await client.get(f"/api/v1/entries/{actual_slug}/files/{file_id}")
+        assert resp.status_code == 200
+
+        disposition = resp.headers.get("content-disposition", "")
+        match = _FILENAME_STAR_RE.search(disposition)
+        assert match is not None, disposition
+        assert unquote(match.group(1)) == filename
+
+        content_resp = await client.get(
+            f"/api/v1/entries/{actual_slug}/files/{file_id}/content"
+        )
+        assert content_resp.status_code == 200
+        assert resp.content == content_resp.content
+
+    @pytest.mark.asyncio
+    async def test_bdd_6_latin1_filename_download_header_valid(self, client):
+        """BDD-6: latin-1 名 café.png 下载 200 + RFC 5987 filename*（防 latin-1 名误回归）。"""
+        filename = "café.png"
+        actual_slug, file_id = await self._create_image_entry(client, filename)
+
+        resp = await client.get(f"/api/v1/entries/{actual_slug}/files/{file_id}")
+        assert resp.status_code == 200
+
+        disposition = resp.headers.get("content-disposition", "")
+        match = _FILENAME_STAR_RE.search(disposition)
+        assert match is not None, disposition
+        assert unquote(match.group(1)) == filename
+
+    @pytest.mark.asyncio
+    async def test_bdd_6_ascii_filename_header_format_unchanged(self, client):
+        """BDD-6: ASCII/空格文件名保持现有 Content-Disposition 格式（字节级零回归）。"""
+        slug = "ascii-download-test"
+        create_resp = await client.post(
+            "/api/v1/entries",
+            json={
+                "summary": "ASCII download test",
+                "slug": slug,
+                "files": [{"filename": "report final.txt", "content": "x=1"}],
+            },
+        )
+        assert create_resp.status_code == 201
+        data = create_resp.json()
+        actual_slug = data["slug"]
+        file_id = data["files"][0]["id"]
+
+        resp = await client.get(f"/api/v1/entries/{actual_slug}/files/{file_id}")
+        assert resp.status_code == 200
+        assert resp.headers["content-disposition"] == 'attachment; filename="report final.txt"'
 
 
 class TestApiKeyAuth:
