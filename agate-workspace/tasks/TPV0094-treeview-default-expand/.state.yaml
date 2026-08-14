@@ -1,9 +1,9 @@
-phase: READY
+phase: DONE
 task_id: TPV0094
 task_name: treeview-default-expand
-status: in_progress
+status: completed
 created: 2026-08-12T00:00:00Z
-updated: 2026-08-15T01:40:00Z
+updated: 2026-08-15T01:50:00Z
 recovery_note: "2026-08-14 18:30 用户终止了挂掉的 analyst subagent（P1 派发后数小时无响应）。P1-dispatch-context-analyst.md 内容完整可直接复用；P1-requirements.md 未产出。新会话恢复动作 = 直接重新派发 analyst（无需重写 dispatch-context）。"
 history:
   - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "用户体验反馈：TreeView 默认只展开根节点，想看内容要点开。用户倾向默认全展开，性能受限再按需。方案：全展开 + 节点数阈值降级（红线实测确定）。纯前端单文件，零依赖零冲突，可与 TPV0090 并行。risk=low"}
@@ -19,3 +19,4 @@ history:
   - {phase: P6, action: completed, ts: "2026-08-15T01:00:00Z", note: "verifier P6 验收：8/8 BDD PASS（Playwright CDP 实跑 + vision-reports blocker_count=0）；BDD-8 红线实测 100→45.8ms/500→141.9/1000→206.5/2000→297.2(✓≤500ms)/5000→787.7(✗超预算)——阈值保持 DEFAULT_EXPAND_THRESHOLD=2000 无需回 P4；P6 gate 三件套全过（check-gate exit2 / evidence exit0 / provenance exit0）"}
   - {phase: P7, action: completed, ts: "2026-08-15T01:20:00Z", note: "consistency-reviewer：BLOCKER=0/DEVIATION=1（非核心：P2 声明的 frontend-v3/scripts/measure-treeview-perf.ts 未落地，P6 用 P6-evidence/scripts/p6-redline-bench.ts 完成红线实测，附 SUGGEST 采纳——P8 不补正式脚本）/DESIGN_GAP=0；P1 8 BDD↔P6 8 PASS 逐条内容匹配；P7 gate exit 0"}
   - {phase: P8, action: completed, ts: "2026-08-15T01:40:00Z", note: "releaser 产出 P8-release.md（bump_type=minor / debt_check=none / 版本 0.18.6→0.19.0 / MCP 不 bump）；主 Agent 执行 bump-version + CHANGELOG + tag"}
+  - {phase: READY, action: completed, ts: "2026-08-15T01:50:00Z", note: "bump v0.19.0（commit d7251ca1 + tag v0.19.0）；P5 gate 重跑 1232/1232 全绿（bump 后 2 次 flaky——DiagramBlock/t069-auth-guard 与 TPV0094 无关，复跑全绿）；README 收尾：debug backend 停止 + /tmp/peekview-debug/ 清理 + 临时脚本清理 + 工作区干净；无 PROD_TOUCHED"}
