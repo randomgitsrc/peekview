@@ -14,7 +14,7 @@
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
-| TPV0092 | mcp-get-entry-fetch | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
+| TPV0092 | mcp-get-entry-fetch | 🔄 进行中 | P1 | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
 | TPV0093 | star-lifecycle | ⬜ 待开始 | P0 | 🟢 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0094 | treeview-default-expand | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
