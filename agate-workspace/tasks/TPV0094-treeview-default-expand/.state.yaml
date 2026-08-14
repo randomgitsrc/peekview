@@ -1,9 +1,9 @@
-phase: P3
+phase: P4
 task_id: TPV0094
 task_name: treeview-default-expand
 status: in_progress
 created: 2026-08-12T00:00:00Z
-updated: 2026-08-14T23:00:00Z
+updated: 2026-08-14T23:20:00Z
 recovery_note: "2026-08-14 18:30 用户终止了挂掉的 analyst subagent（P1 派发后数小时无响应）。P1-dispatch-context-analyst.md 内容完整可直接复用；P1-requirements.md 未产出。新会话恢复动作 = 直接重新派发 analyst（无需重写 dispatch-context）。"
 history:
   - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "用户体验反馈：TreeView 默认只展开根节点，想看内容要点开。用户倾向默认全展开，性能受限再按需。方案：全展开 + 节点数阈值降级（红线实测确定）。纯前端单文件，零依赖零冲突，可与 TPV0090 并行。risk=low"}
@@ -12,3 +12,4 @@ history:
   - {phase: P1, action: completed, ts: "2026-08-14T22:20:00Z", note: "重派 analyst 产出 P1-requirements.md（8 BDD，frontend 单域，[NO_NEED_CONFIRM]）；requirements-review approved；P1 gate exit 2；commit 1a098693"}
   - {phase: P2, action: completed, ts: "2026-08-14T22:40:00Z", note: "architect 产出 P2-design.md（候选 A 全展开+阈值降级 / 候选 B 默认展开下传否决；minimal_validation 红线实测协议 confirmed）；plan-design-review 首轮 needs-revision（F2 大平层树语义虚假+性能保护失效/F1 shouldCollapse 未定义/F3 协议括注矛盾）→ architect rev1 修订全部落实 → 复审 approved；P2 gate exit 2；commit a053874f"}
   - {phase: P3, action: completed, ts: "2026-08-14T23:00:00Z", note: "test-designer 产出 P3-test-cases.md（8 BDD 1:1 映射）+ 更新 TreeView.spec.ts/e2e spec（11 新增+4 更新）；check-tdd-red exit 0 真红灯（6 failed 全 B 类：初始态反转断言 + banner 未实现 + 全展开计数）；commit 7d99a928"}
+  - {phase: P4, action: completed, ts: "2026-08-14T23:20:00Z", note: "implementer 实现 TreeView.vue（DEFAULT_EXPAND_THRESHOLD 导出 2000 + totalNodeCount/hasBranchNode/shouldCollapse + resetExpansion 二分路径 + 折叠 banner data-testid=tree-collapse-banner）；6 红灯转绿（17/17）+ typecheck passed；design-review approved（无 BLOCKER，2 条非阻塞观察）；P4 gate exit 0；commit 7f82180e"}

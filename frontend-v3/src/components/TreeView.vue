@@ -18,6 +18,16 @@
         <span aria-live="polite" class="search-match-count">{{ matchCountText }}</span>
       </div>
 
+      <div
+        v-if="shouldCollapse"
+        data-testid="tree-collapse-banner"
+        class="tree-collapse-banner"
+        role="status"
+      >
+        <AlertTriangleIcon :size="16" />
+        <span>内容较大，已折叠部分</span>
+      </div>
+
       <div v-if="treeData.length === 0" class="no-data">
         <span>{{ emptyMessage }}</span>
       </div>
@@ -35,9 +45,14 @@
   </div>
 </template>
 
+<script lang="ts">
+export const DEFAULT_EXPAND_THRESHOLD = 2000
+</script>
+
 <script setup lang="ts">
 import { computed, provide, ref, watch } from 'vue'
 import { load } from 'js-yaml'
+import { AlertTriangle as AlertTriangleIcon } from 'lucide-vue-next'
 import DataTreeNode from '@/components/DataTreeNode.vue'
 import TruncationBanner from '@/components/TruncationBanner.vue'
 import { jsonToTreeData, xmlToTreeData } from '@/composables/useTreeData'
@@ -63,6 +78,28 @@ const treeData = ref<TreeDataNode[]>([])
 const emptyMessage = ref('无数据')
 const searchQuery = ref('')
 const expandedPaths = ref<Set<string>>(new Set())
+
+const totalNodeCount = computed(() => {
+  let count = 0
+  const walk = (nodes: TreeDataNode[]) => {
+    for (const node of nodes) {
+      count++
+      if (node.children?.length) walk(node.children)
+    }
+  }
+  walk(treeData.value)
+  return count
+})
+
+const hasBranchNode = computed(() => {
+  const has = (nodes: TreeDataNode[]): boolean =>
+    nodes.some((node) => (node.children?.length ?? 0) > 0 || has(node.children ?? []))
+  return has(treeData.value)
+})
+
+const shouldCollapse = computed(
+  () => totalNodeCount.value > DEFAULT_EXPAND_THRESHOLD && hasBranchNode.value,
+)
 
 function togglePath(path: string) {
   const next = new Set(expandedPaths.value)
@@ -125,11 +162,19 @@ function emptyMessageFor(root: unknown): string {
 }
 
 function resetExpansion() {
-  if (treeData.value.length === 1 && treeData.value[0].children?.length) {
-    expandedPaths.value = new Set([treeData.value[0].path])
-  } else {
-    expandedPaths.value = new Set()
+  const paths = new Set<string>()
+  if (totalNodeCount.value <= DEFAULT_EXPAND_THRESHOLD) {
+    const collect = (nodes: TreeDataNode[]) => {
+      for (const node of nodes) {
+        if (node.children?.length) {
+          paths.add(node.path)
+          collect(node.children)
+        }
+      }
+    }
+    collect(treeData.value)
   }
+  expandedPaths.value = paths
 }
 
 watch(
@@ -203,6 +248,19 @@ const matchCountText = computed(() => {
   font-size: var(--font-xs);
   color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.tree-collapse-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+  font-size: var(--font-sm);
 }
 
 .tree-list {
