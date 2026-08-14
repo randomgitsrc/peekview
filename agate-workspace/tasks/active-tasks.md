@@ -16,7 +16,7 @@
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0092 | mcp-get-entry-fetch | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0093 | star-lifecycle | ⬜ 待开始 | P0 | 🟢 | 无 | 2026-08-12 | 2026-08-12 |
-| TPV0094 | treeview-default-expand | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-08-12 | 2026-08-12 |
+| TPV0094 | treeview-default-expand | 🔄 进行中 | P1 | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | TPV0077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
