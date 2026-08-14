@@ -75,6 +75,8 @@ FEATURES.md
 packages/mcp-server/dist/
 packages/mcp-server/node_modules/
 packages/mcp-server/coverage/
+# 例外：src/lib/ 是 MCP 源码（非 Python lib/ 构建产物），解除上方 lib/ 规则的误伤
+!packages/mcp-server/src/lib/
 
 # Opencode / Claude Code (local config, not for repo)
 .opencode/

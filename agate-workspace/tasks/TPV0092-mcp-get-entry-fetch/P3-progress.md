@@ -43,3 +43,26 @@
   - ⚠️ 调试中发现：测试文件顶部 `import * as http` 会破坏 msw 拦截（全部请求 5s 超时）→ 移除该静态导入，BDD-26 改用 msw never-resolving handler（已实证 msw 尊重 AbortController → AbortError）
 - 全部红灯为 B 类（模块未实现/方法不存在/断言与未实现行为矛盾），无"断言与测试数据矛盾"类测试代码 bug 残留
 - 状态标记：[PROD_NOT_TOUCHED]（仅临时 HOME/tmp_path/msw mock，未触碰 :8080 与 ~/.peekview/）
+
+## 2026-08-15 P3 修复轮 retry1（test-designer，P4 上报 2 处）
+- 已读：P3-dispatch-context-test-designer-retry1.md、P4-implementation.md（[DESIGN_GAP] 体积断言 + [SCOPE_GAP] 旧契约）
+- **R1 修复**（backend/tests/test_raw_share_purify.py）：
+  - 迷你共用样例 MARKDOWN_WITH_IMAGE 不动（DEBT0004 契约锚点保持双端一致）
+  - 原 L153 `len(resp.text) < len(MARKDOWN_WITH_IMAGE)*2` 元数据(~375 字符)恒大于 126 不可满足 → 改为 content 字段级 `len(content) < len(MARKDOWN_WITH_IMAGE)`（占位符 35 字符 < 63，恒成立）
+  - 新增 `test_raw_purify_large_payload_shrinks_whole_response`：本文件局部 LARGE_BASE64_PAYLOAD（~84KB，`MARKDOWN_WITH_IMAGE` 串 x3000），比较净化前后**整响应**体积 `len(purified.text) < len(unpurified.text)`（大载荷下语义成立）——保留"响应体积显著减小"断言语义，不弱化
+- **R2 修复**（packages/mcp-server/tests/integration/mcp-integration.test.ts）：
+  - L180 `{ slug }` → `{ ref: slug }`（裸 slug 语义保持，BDD-4 兼容路径）
+  - L186 `{ slug: 'non-existent-entry-12345' }` → `{ ref: 'non-existent-entry-12345' }`
+  - grep 全文件确认仅这两处 get_entry 调用点，其余（create/delete/list）契约未变
+- **自查**：`make test-quick` 后端 1091 passed + 3 skipped（`test_raw_share_purify.py` 7/7 绿；`test_admin_backup.py::test_backup_debug_mode_isolation` 首轮 1 failed 为 flaky——隔离重跑绿，非本次改动引入）；`make test-mcp-unit` MCP 全绿
+- 状态标记：[PROD_NOT_TOUCHED]（仅 tmp_path/pytest/vitest 隔离环境，未触碰 :8080 与 ~/.peekview/）
+
+## 修复轮 retry2（2026-08-15）— e2e 旧契约残留（P4-review I-2）
+
+- **修复点**（`packages/mcp-server/tests/e2e/mcp-e2e.test.ts`）：
+  - L171 `handler({slug:'zufvwz'})` → `handler({ref:'zufvwz'})`
+  - L271 `handler({slug:'nonexistent-entry-e2e-test'})` → `handler({ref:'nonexistent-entry-e2e-test'})`
+  - grep 确认全文件 get_entry 仅此 2 处；其余 create/delete/list 契约未变
+- **e2e 目录其他文件**：`publish-files-local-mode.test.ts` 的 `handler({summary, slug, paths})` 是 publish_files 契约（slug 仍合法），无旧 get_entry 契约残留
+- **自查**：`make test-mcp-unit` 17 files / 268 passed 全绿，无语法错误（e2e itIfReady 无后端 skip）
+- 状态标记：[PROD_NOT_TOUCHED]

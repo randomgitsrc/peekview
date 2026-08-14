@@ -537,6 +537,7 @@ Namespace: use X-Peekview-Namespace header when Agent runs in a container with p
         text += formatSkipped(skipped);
       }
       text += `Link: ${config.publicUrl}/${entry.slug}`;
+      text += `\nRaw URL: ${config.publicUrl}/api/v1/entries/${entry.slug}/raw`;
       if (entry.expires_at) {
         const expiresDate = new Date(entry.expires_at);
         text += `\nExpires: ${expiresDate.toISOString().slice(0, 10)}`;

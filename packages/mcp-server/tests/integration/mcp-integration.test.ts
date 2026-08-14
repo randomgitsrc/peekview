@@ -177,14 +177,14 @@ describe('Integration: MCP Server + PeekView Backend', () => {
       }, testContext);
       createdSlugs.push(slug);
 
-      const result = await tools.get_entry.handler({ slug }, testContext);
+      const result = await tools.get_entry.handler({ ref: slug }, testContext);
       expect(result.content[0].text).toContain('Test Entry for Get Tool');
       expect(result.content[0].text).toContain('main.py');
     });
 
     itIfReady('should handle non-existent entry', async () => {
       const result = await tools.get_entry.handler({
-        slug: 'non-existent-entry-12345',
+        ref: 'non-existent-entry-12345',
       }, testContext);
       expect(result.isError).toBe(true);
     });

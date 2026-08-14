@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import re
 
-import pytest
-
 from peekview.services.purify import purify_content
 
 # ── 净化共用样例（与 MCP purify.test.ts 逐字一致，DEBT0004 契约锚点）──

@@ -52,6 +52,27 @@ export interface ListEntriesResponse {
   per_page: number;
 }
 
+export interface RawFileItem {
+  id: number;
+  filename: string;
+  path: string | null;
+  language: string | null;
+  is_binary: boolean;
+  size: number;
+  content: string | null;
+  content_encoding: string | null;
+  file_url: string | null;
+}
+
+export interface EntryRawResponse {
+  slug: string;
+  summary: string;
+  tags: string[];
+  created_at: string;
+  files: RawFileItem[];
+  raw_url: string;
+}
+
 export interface SessionContext {
   userToken: string;
   userId: number;

@@ -349,43 +349,87 @@ async def render_html_file(
     )
 
 
-async def resolve_entry_raw(request: Request, slug: str) -> Response:
+async def resolve_entry_raw(
+    request: Request, slug: str, share: str | None = None, purify: bool = False
+) -> Response:
     import json as _json
 
     service = request.app.state.entry_service
     storage = service.storage
     current_user = get_current_user(request)
 
-    global_key_auth = _is_global_api_key_auth(request, current_user)
     entry_owner_id: int | None = None
-    if global_key_auth:
-        entry_record = service.get_entry_by_slug(slug)
-        if not entry_record:
-            raise NotFoundError(f"Entry not found: {slug}")
-        entry_id = entry_record.id
-        entry_slug = entry_record.slug
-        entry_summary = entry_record.summary
-        entry_tags = entry_record.tags or []
-        entry_created_at = entry_record.created_at
-        entry_owner_id = entry_record.owner_id
-    else:
+    if share:
+        from sqlmodel import Session, select
+
+        from peekview.models import Entry
+        from peekview.services.share_service import ShareService
+
+        share_service: ShareService = request.app.state.share_service
         current_user_id = current_user.id if current_user else None
         is_admin = current_user.is_admin if current_user else False
-        try:
-            entry_resp = service.get_entry(slug, current_user_id=current_user_id, is_admin=is_admin)
-        except NotFoundError:
-            from peekview.api.entries import _check_share_cookie
 
-            cookie_result = _check_share_cookie(request, slug, service)
-            if cookie_result is None:
-                raise
-            entry_resp = cookie_result
+        with Session(request.app.state.engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+
+            if entry.is_public or (
+                current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
+            ):
+                entry_resp = service.get_entry(
+                    slug,
+                    current_user_id=current_user_id,
+                    is_admin=is_admin,
+                    include_read_stats=(
+                        current_user_id is not None
+                        and (is_admin or entry.owner_id == current_user_id)
+                    ),
+                )
+            else:
+                result = service.get_entry_with_share(slug, share, share_service)
+                if result is None:
+                    raise NotFoundError(f"Entry not found: {slug}")
+                entry_resp, _entry_share = result
+
         entry_id = entry_resp.id
         entry_slug = entry_resp.slug
         entry_summary = entry_resp.summary
         entry_tags = entry_resp.tags
         entry_created_at = entry_resp.created_at
         entry_owner_id = entry_resp.owner_id
+    else:
+        global_key_auth = _is_global_api_key_auth(request, current_user)
+        if global_key_auth:
+            entry_record = service.get_entry_by_slug(slug)
+            if not entry_record:
+                raise NotFoundError(f"Entry not found: {slug}")
+            entry_id = entry_record.id
+            entry_slug = entry_record.slug
+            entry_summary = entry_record.summary
+            entry_tags = entry_record.tags or []
+            entry_created_at = entry_record.created_at
+            entry_owner_id = entry_record.owner_id
+        else:
+            current_user_id = current_user.id if current_user else None
+            is_admin = current_user.is_admin if current_user else False
+            try:
+                entry_resp = service.get_entry(
+                    slug, current_user_id=current_user_id, is_admin=is_admin
+                )
+            except NotFoundError:
+                from peekview.api.entries import _check_share_cookie
+
+                cookie_result = _check_share_cookie(request, slug, service)
+                if cookie_result is None:
+                    raise
+                entry_resp = cookie_result
+            entry_id = entry_resp.id
+            entry_slug = entry_resp.slug
+            entry_summary = entry_resp.summary
+            entry_tags = entry_resp.tags
+            entry_created_at = entry_resp.created_at
+            entry_owner_id = entry_resp.owner_id
 
     base = str(request.base_url).rstrip("/")
     raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
@@ -424,6 +468,13 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
                     file_url=None,
                 )
             )
+
+    if purify:
+        from peekview.services.purify import purify_content
+
+        for item in raw_files:
+            if not item.is_binary and item.content is not None:
+                item.content = purify_content(item.content)
 
     result = EntryRawResponse(
         slug=entry_slug,
@@ -466,6 +517,8 @@ async def resolve_entry_raw(request: Request, slug: str) -> Response:
 async def get_entry_raw(
     slug: str,
     request: Request,
+    share: str | None = Query(None, max_length=64),
+    purify: bool | None = Query(None),
     current_user: User | None = Depends(get_current_user),
 ):
-    return await resolve_entry_raw(request, slug)
+    return await resolve_entry_raw(request, slug, share=share, purify=bool(purify))

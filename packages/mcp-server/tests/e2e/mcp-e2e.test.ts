@@ -168,7 +168,7 @@ describe('E2E: Streamable HTTP Server + PeekView Backend', () => {
     itIfReady('should call get_entry with real backend', async () => {
       const getEntry = tools.find(t => t.name === 'get_entry');
 
-      const result = await getEntry!.handler({ slug: 'zufvwz' }, {
+      const result = await getEntry!.handler({ ref: 'zufvwz' }, {
         userToken: PEEKVIEW_API_KEY,
         userId: userInfo!.id,
         username: userInfo!.username,
@@ -268,7 +268,7 @@ describe('E2E: Streamable HTTP Server + PeekView Backend', () => {
     itIfReady('should return error for non-existent entry', async () => {
       const getEntry = tools.find(t => t.name === 'get_entry');
 
-      const result = await getEntry!.handler({ slug: 'nonexistent-entry-e2e-test' }, {
+      const result = await getEntry!.handler({ ref: 'nonexistent-entry-e2e-test' }, {
         userToken: PEEKVIEW_API_KEY,
         userId: userInfo!.id,
         username: userInfo!.username,

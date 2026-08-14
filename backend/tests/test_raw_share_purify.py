@@ -25,6 +25,9 @@ from peekview.main import create_app
 
 MARKDOWN_WITH_IMAGE = "![alt text](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=)"
 
+LARGE_BASE64_PAYLOAD = "iVBORw0KGgoAAAANSUhEUgAAAAE=" * 3000
+LARGE_MARKDOWN_WITH_IMAGE = f"![alt text](data:image/png;base64,{LARGE_BASE64_PAYLOAD})"
+
 
 @pytest.fixture
 async def client_and_app():
@@ -116,7 +119,7 @@ async def test_raw_share_private_entry_returns_raw_response_structure(client_and
 
         assert resp.status_code == 200
         data = resp.json()
-        assert set(["slug", "summary", "files", "raw_url"]).issubset(data.keys())
+        assert {"slug", "summary", "files", "raw_url"}.issubset(data.keys())
         assert "raw" in data["raw_url"]
     finally:
         await anon.aclose()
@@ -150,7 +153,22 @@ async def test_raw_purify_strips_base64_image(client_and_app):
         f"purified content must contain placeholder, got: {content!r}"
     )
     assert "iVBORw0KGgoAAAANSUhEUgAAAAE=" not in content
-    assert len(resp.text) < len(MARKDOWN_WITH_IMAGE) * 2, "response size should shrink"
+    assert len(content) < len(MARKDOWN_WITH_IMAGE), "purified content should be shorter than raw markdown"
+
+
+# 体积断言：整响应缩小只有在大 base64 载荷下才成立（元数据 ~375 字符会淹没迷你样例），
+# 用本文件局部大 fixture 比较净化前后整响应体积（不触碰共用迷你样例常量）
+async def test_raw_purify_large_payload_shrinks_whole_response(client_and_app):
+    client, _ = client_and_app
+    slug = await _create_entry(client, None, LARGE_MARKDOWN_WITH_IMAGE, slug="purify-large")
+
+    unpurified = await client.get(f"/api/v1/entries/{slug}/raw")
+    purified = await client.get(f"/api/v1/entries/{slug}/raw?purify=true")
+
+    assert unpurified.status_code == 200
+    assert purified.status_code == 200
+    assert len(purified.text) < len(unpurified.text), "purified whole response should shrink"
+    assert "iVBORw0KGgoAAAANSUhEUgAAAAE=" not in purified.text
 
 
 # BDD-24: 无 query 缺省行为向后兼容（回归守卫）
