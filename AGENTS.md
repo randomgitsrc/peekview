@@ -178,7 +178,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 **阶段链 P0-P8（默认全走，裁剪须有理由）**：
 - **P0** 主 Agent 亲自写 `P0-brief.md`：任务简报 + 环境约束 + 已知风险 + 裁剪倾向
 - **P1** 需求基线：质疑需求、识别隐含依赖、BDD 验收条件（Given/When/Then）。评审不可裁（agent≠main）
-- **P2** 方案设计：**不可裁剪**。`design_trivial`/`follows_existing_pattern` 可简化（1 候选方案），不可省略
+- **P2** 方案设计：**不可裁剪**。`design_trivial`/`follows_existing_pattern` 可简化（1 候选方案），不可省略。**agate v0.45.0 起 backend 域任务 P2 强制派发 plan-eng-review 评审**（C8 映射对齐，此前 backend+low 无触发角色但 gate 硬性要求 P2-review.md——TPV0090 复盘 M1，官方已修复）；frontend 域仍派 plan-design-review
 - **P3** TDD 测试：默认保留，仅 risk=low 且满足以下之一时才跳：①配置类任务无可测试行为 ②≤3 行且有现成覆盖。medium/high risk 必须走 TDD 红灯
 - **P4** 代码实现
 - **P5** 技术验证：pytest 全绿 + 测试环境隔离正常。建议跑全量测试套件；预存失败登记到 `known-failures.md`（WARNING 级，不阻断推进）
