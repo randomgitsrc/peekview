@@ -25,6 +25,34 @@ const BIG_JSON = 'x'.repeat(2 * 1024 * 1024 + 100)
 const BIG_YAML = 'x'.repeat(2 * 1024 * 1024 + 100)
 const BIG_XML = 'x'.repeat(2 * 1024 * 1024 + 100)
 
+// TPV0094 fixture：镜像 jsonToTreeData 计数语义（根容器不计数）
+function countNodeValue(value: unknown): number {
+  if (value === null || typeof value !== 'object') return 1
+  const entries = Array.isArray(value) ? value : Object.values(value)
+  return 1 + entries.reduce((sum, v) => sum + countNodeValue(v), 0)
+}
+function totalRenderedNodes(content: string): number {
+  const data = JSON.parse(content)
+  if (data === null || typeof data !== 'object') return 1
+  const entries = Array.isArray(data) ? data : Object.values(data)
+  return entries.reduce((sum, v) => sum + countNodeValue(v), 0)
+}
+// 根 data → 20 子树 × 500 叶子 = 10021 节点（BDD-3/4 分支结构，单次点击渲染受控）
+function buildLargeBranchJson(): string {
+  const root: Record<string, unknown> = { data: {} }
+  const subs = root.data as Record<string, Record<string, number>>
+  for (let s = 0; s < 20; s++) {
+    const sub: Record<string, number> = {}
+    for (let i = 0; i < 500; i++) sub[`leaf_${s}_${i}`] = i
+    subs[`sub_${s}`] = sub
+  }
+  return JSON.stringify(root)
+}
+const LARGE_JSON = buildLargeBranchJson()
+const LARGE_TOTAL = totalRenderedNodes(LARGE_JSON)
+const SMALL_JSON = JSON_CONTENT
+const SMALL_TOTAL = totalRenderedNodes(SMALL_JSON)
+
 async function createEntry(request: APIRequestContext, slug: string, summary: string, files: { filename: string; content: string }[]) {
   await request.post(`${BASE_URL}/api/v1/entries`, {
     data: { summary, slug, is_public: true, files },
@@ -57,6 +85,11 @@ test.beforeAll(async ({ request }) => {
   await createEntry(request, 't075-csv-huge', 'T075 huge CSV', [{ filename: 'huge.csv', content: CSV_HUGE }])
   await createEntry(request, 't075-csv-wide', 'T075 wide CSV', [{ filename: 'wide.csv', content: CSV_WIDE }])
   await createEntry(request, 't075-csv-empty', 'T075 empty CSV', [{ filename: 'empty.csv', content: '' }])
+  await createEntry(request, 't094-large', 'T094 large JSON', [{ filename: 'large.json', content: LARGE_JSON }])
+  await createEntry(request, 't094-multi', 'T094 multi small+large', [
+    { filename: 'large.json', content: LARGE_JSON },
+    { filename: 'small.json', content: SMALL_JSON },
+  ])
 })
 
 async function gotoEntry(page: Page, slug: string) {
@@ -206,9 +239,8 @@ test.describe('T075 Desktop 1280x800', () => {
   test('test_bdd_27_expand_node', async ({ page }) => {
     await gotoEntry(page, 't075-json')
     await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    // TPV0094 默认展开语义：小 JSON（≤阈值）初始即全展开，无需点击
     const metaNode = page.locator('.tree-node').filter({ hasText: 'meta' }).first()
-    await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
-    await metaNode.locator('.expand-toggle').click()
     await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
     await expect(metaNode).toContainText('level')
   })
@@ -216,9 +248,9 @@ test.describe('T075 Desktop 1280x800', () => {
   test('test_bdd_28_collapse_node', async ({ page }) => {
     await gotoEntry(page, 't075-json')
     await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    // TPV0094：小 JSON 初始全展开，点击一次折叠 → 子节点隐藏
     const metaNode = page.locator('.tree-node').filter({ hasText: 'meta' }).first()
-    await metaNode.locator('.expand-toggle').click()
-    await expect(metaNode).toContainText('level')
+    await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
     await metaNode.locator('.expand-toggle').click()
     await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
     await expect(metaNode).not.toContainText('level')
@@ -431,6 +463,97 @@ test.describe('T075 Desktop 1280x800', () => {
 
     await themeBtn.click()
     await expect(page.locator('.table-view')).toBeVisible()
+  })
+})
+
+// ============================================================
+// TPV0094 默认展开（桌面端 1280×800）
+// ============================================================
+test.describe('TPV0094 默认展开', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('test_bdd_1_small_json_default_expanded', async ({ page }) => {
+    await gotoEntry(page, 't075-json')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('.tree-node').count()).toBe(SMALL_TOTAL)
+    expect(await page.locator('.expand-toggle[aria-expanded="false"]').count()).toBe(0)
+  })
+
+  test('test_bdd_2_small_yaml_xml_default_expanded', async ({ page }) => {
+    await gotoEntry(page, 't075-yaml')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('.expand-toggle[aria-expanded="false"]').count()).toBe(0)
+    await expect(page.locator('.tree-node').filter({ hasText: 'level' }).first()).toBeVisible()
+
+    await gotoEntry(page, 't075-xml')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('.expand-toggle[aria-expanded="false"]').count()).toBe(0)
+    await expect(page.locator('.tree-node').filter({ hasText: 'more' }).first()).toBeVisible()
+  })
+
+  test('test_bdd_3_large_json_collapsed_banner', async ({ page }) => {
+    await gotoEntry(page, 't094-large')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-testid="tree-collapse-banner"]')).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('.tree-node').count()).toBeLessThan(LARGE_TOTAL)
+    await expect(page.locator('.truncation-banner')).toHaveCount(0)
+  })
+
+  test('test_bdd_4_large_manual_expand', async ({ page }) => {
+    await gotoEntry(page, 't094-large')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-testid="tree-collapse-banner"]')).toBeVisible({ timeout: 10000 })
+
+    const dataNode = page.locator('.tree-node').filter({ hasText: 'data' }).first()
+    await expect(dataNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
+    await dataNode.locator('.expand-toggle').click()
+    await expect(dataNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.locator('.tree-node').filter({ hasText: 'sub_0' }).first()).toBeVisible()
+
+    const sub0 = page.locator('.tree-node').filter({ hasText: 'sub_0' }).first()
+    await expect(sub0.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
+    await sub0.locator('.expand-toggle').click()
+    await expect(sub0.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.locator('.tree-node').filter({ hasText: 'leaf_0_499' }).first()).toBeVisible()
+  })
+
+  test('test_bdd_5_switch_file_resets_expansion', async ({ page }) => {
+    await gotoEntry(page, 't094-multi')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-testid="tree-collapse-banner"]')).toBeVisible({ timeout: 10000 })
+
+    await page.locator('.file-item').filter({ hasText: 'small.json' }).click()
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('.tree-node').count()).toBe(SMALL_TOTAL)
+    expect(await page.locator('.expand-toggle[aria-expanded="false"]').count()).toBe(0)
+    await expect(page.locator('[data-testid="tree-collapse-banner"]')).toHaveCount(0)
+  })
+
+  test('test_bdd_6_toggle_reversible', async ({ page }) => {
+    await gotoEntry(page, 't075-json')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
+    const metaNode = page.locator('.tree-node').filter({ hasText: 'meta' }).first()
+    await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(metaNode).toContainText('level')
+
+    await metaNode.locator('.expand-toggle').click()
+    await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
+    await expect(metaNode).not.toContainText('level')
+
+    await metaNode.locator('.expand-toggle').click()
+    await expect(metaNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect(metaNode).toContainText('level')
+  })
+
+  test('test_bdd_7_search_count_in_collapsed', async ({ page }) => {
+    await gotoEntry(page, 't094-large')
+    await expect(page.locator('.tree-view')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-testid="tree-collapse-banner"]')).toBeVisible({ timeout: 10000 })
+
+    const search = page.locator('input[aria-label="Search tree nodes"]')
+    await expect(search).toBeVisible()
+    await search.fill('leaf_19_499')
+    await expect(page.locator('[aria-live="polite"]')).toContainText(/\d+/)
   })
 })
 
