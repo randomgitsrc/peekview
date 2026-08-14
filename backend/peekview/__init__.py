@@ -1,3 +1,3 @@
 """PeekView - A lightweight code & document formatting display service."""
 
-__version__ = "0.18.6"
+__version__ = "0.19.0"
