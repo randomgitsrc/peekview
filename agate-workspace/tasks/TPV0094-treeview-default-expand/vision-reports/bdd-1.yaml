@@ -1,0 +1,13 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd1-small-json-expanded.png
+  bdd_results:
+    bdd-1: pass
+    verified:
+      - "9 个 tree-node 行（name/alice, age/30, admin/true, notes/null, tags[], tags.a, tags.b, meta{}, meta.level）"
+      - "2 个含子节点行（tags array, meta object）chevron 均为向下展开态（已旋转90度）"
+      - "无折叠/截断提示 banner"
+  anomalies: []
+  conclusion: "小 JSON 默认全部展开，符合 BDD-1 预期"

@@ -1,9 +1,9 @@
-phase: P5
+phase: P6
 task_id: TPV0094
 task_name: treeview-default-expand
 status: in_progress
 created: 2026-08-12T00:00:00Z
-updated: 2026-08-15T00:40:00Z
+updated: 2026-08-15T01:00:00Z
 recovery_note: "2026-08-14 18:30 用户终止了挂掉的 analyst subagent（P1 派发后数小时无响应）。P1-dispatch-context-analyst.md 内容完整可直接复用；P1-requirements.md 未产出。新会话恢复动作 = 直接重新派发 analyst（无需重写 dispatch-context）。"
 history:
   - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "用户体验反馈：TreeView 默认只展开根节点，想看内容要点开。用户倾向默认全展开，性能受限再按需。方案：全展开 + 节点数阈值降级（红线实测确定）。纯前端单文件，零依赖零冲突，可与 TPV0090 并行。risk=low"}
@@ -16,3 +16,4 @@ history:
   - {phase: P5, action: started, ts: "2026-08-15T00:10:00Z", note: "verifier 首轮：前端单测/typecheck/后端全绿（failed=0，首轮 2 例 pre-existing flaky 复跑全绿）；E2E 4 failed + 1 flaky（93 passed）——BDD-4/7 locator strict-mode 违规 + BDD-5 count() 时序竞态，均为 E2E spec 测试代码 bug，产品行为经 CDP 实跑验证正确"}
   - {phase: P4, action: retry, ts: "2026-08-15T00:25:00Z", note: "P5→P4 修复轮：implementer retry1 修 e2e/structured-data-viewer.spec.ts 3 处（BDD-4 :scope 限定 toggle / BDD-7 .search-match-count / BDD-5 toHaveCount 自动等待）；主 Agent 重跑 E2E 98/98 全绿"}
   - {phase: P5, action: completed, ts: "2026-08-15T00:40:00Z", note: "P5 最终：前端 1232 passed + typecheck + 后端 1078 passed 全绿；E2E 98/98 全绿（修复后重跑确认）；P5 gate exit 2"}
+  - {phase: P6, action: completed, ts: "2026-08-15T01:00:00Z", note: "verifier P6 验收：8/8 BDD PASS（Playwright CDP 实跑 + vision-reports blocker_count=0）；BDD-8 红线实测 100→45.8ms/500→141.9/1000→206.5/2000→297.2(✓≤500ms)/5000→787.7(✗超预算)——阈值保持 DEFAULT_EXPAND_THRESHOLD=2000 无需回 P4；P6 gate 三件套全过（check-gate exit2 / evidence exit0 / provenance exit0）"}

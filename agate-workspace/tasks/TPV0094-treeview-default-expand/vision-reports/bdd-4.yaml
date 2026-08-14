@@ -1,0 +1,13 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd4-manual-expand.png
+  bdd_results:
+    bdd-4: pass
+    verified:
+      - "根节点 data 的 chevron 旋转向下（展开态）"
+      - "sub_0 子树展开，下方直观展示连续 leaf_0_X 键值对（value 与序号对应 + number 类型标签）"
+      - "逐层手动展开层级嵌套结构清晰：data > sub_0 > leaf_0_N"
+  anomalies: []
+  conclusion: "大文件折叠态下手动展开生效（根→sub_0→leaf），符合 BDD-4 预期"

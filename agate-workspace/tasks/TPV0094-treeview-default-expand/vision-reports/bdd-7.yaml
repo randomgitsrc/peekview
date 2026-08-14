@@ -1,0 +1,13 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd7-search-collapsed.png
+  bdd_results:
+    bdd-7: pass
+    verified:
+      - "黄色警告横条可见，文本确为『内容较大，已折叠部分』（折叠态前提确认）"
+      - "搜索框已输入 leaf_3_250"
+      - "搜索框右侧展示非零匹配结果『1 match』"
+  anomalies: []
+  conclusion: "折叠态下搜索计数非零（遍历不依赖展开态），符合 BDD-7 预期"

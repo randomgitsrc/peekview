@@ -1,0 +1,13 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd3-large-collapsed-banner.png
+  bdd_results:
+    bdd-3: pass
+    verified:
+      - "黄色警告 banner 可见，文案精确为『内容较大，已折叠部分』"
+      - "TreeView 仅显示根节点 data 一行（折叠态，chevron 向右），类型 object"
+      - "根节点下方无任何子树/叶子行渲染"
+  anomalies: []
+  conclusion: "超红线大 JSON 默认折叠并显示提示，符合 BDD-3 预期"

@@ -1,0 +1,14 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd5-after-switch-small.png
+  bdd_results:
+    bdd-5: pass
+    verified:
+      - "左侧文件列表 small.json 呈浅蓝色高亮选中状态"
+      - "清点 9 个节点（name/age/admin/notes/tags/tags.a/tags.b/meta/meta.level）全部渲染"
+      - "tags 与 meta 节点左侧均显示向下展开态箭头，子项完全展开"
+      - "主视图无黄色折叠 banner"
+  anomalies: []
+  conclusion: "多文件 entry 切到小 JSON 后按自身大小全展开、不继承大文件折叠态，符合 BDD-5 预期"

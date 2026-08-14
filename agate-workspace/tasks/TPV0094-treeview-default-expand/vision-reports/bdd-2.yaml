@@ -1,0 +1,12 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd2-yaml-expanded.png, P6-evidence/screenshots/bdd2-xml-expanded.png
+  bdd_results:
+    bdd-2: pass
+    verified:
+      - "YAML：全部 9 个节点行，tags/meta 含子节点行 chevron 均为向下展开态，无折叠提示"
+      - "XML：全部 7 个节点行（root 与嵌套 item），含子节点行 chevron 展开态，无折叠提示"
+  anomalies: []
+  conclusion: "小 YAML 与小 XML 均默认全展开，符合 BDD-2 预期"

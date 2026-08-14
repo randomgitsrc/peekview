@@ -1,0 +1,63 @@
+{
+  "budget_ms": 500,
+  "wait_timeout_ms": 10000,
+  "scales": {
+    "100": {
+      "scale": 100,
+      "initialNodes": 1,
+      "renderMs": 45.8,
+      "timedOut": false,
+      "whiteScreen": false,
+      "withinBudget": true
+    },
+    "500": {
+      "scale": 500,
+      "initialNodes": 1,
+      "renderMs": 141.9,
+      "timedOut": false,
+      "whiteScreen": false,
+      "withinBudget": true
+    },
+    "1000": {
+      "scale": 1000,
+      "initialNodes": 1,
+      "renderMs": 206.5,
+      "timedOut": false,
+      "whiteScreen": false,
+      "withinBudget": true
+    },
+    "2000": {
+      "scale": 2000,
+      "initialNodes": 1,
+      "renderMs": 297.2,
+      "timedOut": false,
+      "whiteScreen": false,
+      "withinBudget": true
+    },
+    "5000": {
+      "scale": 5000,
+      "initialNodes": 1,
+      "renderMs": 787.7,
+      "timedOut": false,
+      "whiteScreen": false,
+      "withinBudget": false
+    }
+  },
+  "decision": {
+    "okScales": [
+      100,
+      500,
+      1000,
+      2000
+    ],
+    "budgetBroken": [
+      5000
+    ],
+    "maxOk": 2000,
+    "selected": 2000,
+    "current": 2000,
+    "keepCurrent": true,
+    "note": "2000 满足预算且 5000 超预算 → 阈值保持 2000，BDD-8 PASS"
+  },
+  "measured_at": "2026-08-14T16:46:14.717Z"
+}

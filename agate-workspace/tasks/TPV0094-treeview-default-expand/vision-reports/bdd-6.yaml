@@ -1,0 +1,13 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    model: vision-engine (comprehensive)
+    screenshot: P6-evidence/screenshots/bdd6-toggle-reversible.png
+  bdd_results:
+    bdd-6: pass
+    verified:
+      - "tags 行最左侧显示向下箭头 chevron（展开态）"
+      - "tags 节点下方缩进展示两个子节点：索引 0 值 a（string）、索引 1 值 b（string）"
+      - "整行呈浅灰色背景高亮（hover/active 反馈）"
+  anomalies: []
+  conclusion: "toggle 可逆（截图捕获展开态），配合断言日志三态验证，符合 BDD-6 预期"
