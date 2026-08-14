@@ -505,15 +505,17 @@ test.describe('TPV0094 默认展开', () => {
     await expect(page.locator('[data-testid="tree-collapse-banner"]')).toBeVisible({ timeout: 10000 })
 
     const dataNode = page.locator('.tree-node').filter({ hasText: 'data' }).first()
-    await expect(dataNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
-    await dataNode.locator('.expand-toggle').click()
-    await expect(dataNode.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    const dataToggle = dataNode.locator(':scope > .tree-node-row > .expand-toggle')
+    await expect(dataToggle).toHaveAttribute('aria-expanded', 'false')
+    await dataToggle.click()
+    await expect(dataToggle).toHaveAttribute('aria-expanded', 'true')
     await expect(page.locator('.tree-node').filter({ hasText: 'sub_0' }).first()).toBeVisible()
 
-    const sub0 = page.locator('.tree-node').filter({ hasText: 'sub_0' }).first()
-    await expect(sub0.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'false')
-    await sub0.locator('.expand-toggle').click()
-    await expect(sub0.locator('.expand-toggle')).toHaveAttribute('aria-expanded', 'true')
+    const sub0 = dataNode.locator(':scope > .tree-children > .tree-node').filter({ hasText: 'sub_0' }).first()
+    const sub0Toggle = sub0.locator(':scope > .tree-node-row > .expand-toggle')
+    await expect(sub0Toggle).toHaveAttribute('aria-expanded', 'false')
+    await sub0Toggle.click()
+    await expect(sub0Toggle).toHaveAttribute('aria-expanded', 'true')
     await expect(page.locator('.tree-node').filter({ hasText: 'leaf_0_499' }).first()).toBeVisible()
   })
 
@@ -524,7 +526,7 @@ test.describe('TPV0094 默认展开', () => {
 
     await page.locator('.file-item').filter({ hasText: 'small.json' }).click()
     await expect(page.locator('.tree-view')).toBeVisible({ timeout: 10000 })
-    expect(await page.locator('.tree-node').count()).toBe(SMALL_TOTAL)
+    await expect(page.locator('.tree-node')).toHaveCount(SMALL_TOTAL)
     expect(await page.locator('.expand-toggle[aria-expanded="false"]').count()).toBe(0)
     await expect(page.locator('[data-testid="tree-collapse-banner"]')).toHaveCount(0)
   })
@@ -553,7 +555,7 @@ test.describe('TPV0094 默认展开', () => {
     const search = page.locator('input[aria-label="Search tree nodes"]')
     await expect(search).toBeVisible()
     await search.fill('leaf_19_499')
-    await expect(page.locator('[aria-live="polite"]')).toContainText(/\d+/)
+    await expect(page.locator('.search-match-count')).toContainText(/\d+/)
   })
 })
 

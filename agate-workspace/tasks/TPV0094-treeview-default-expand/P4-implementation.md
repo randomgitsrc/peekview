@@ -57,3 +57,44 @@ implementation_dir: frontend-v3/src/components/
 ## 标注
 
 无 [DESIGN_GAP] / [SCOPE+] / [SCOPE_GAP] / [CLARIFY]。
+
+---
+phase: P4
+task_id: TPV0094-treeview-default-expand
+type: implementation
+parent: P5-test-results/e2e.md
+trace_id: TPV0094-P4-retry1-20260814
+status: draft
+created: 2026-08-14
+agent: implementer
+---
+
+# P4 重试轮修复记录 — E2E spec 3 处测试代码修复（P5 回退）
+
+## 回退诊断
+
+P5 首轮 E2E `E2E_SPEC=e2e/structured-data-viewer.spec.ts make debug-test` → **4 failed + 1 flaky | 93 passed**。P5 verifier 已用 CDP 逐例实跑核实产品行为全部正确（`evidences/p5-bdd4-manual-expand.png` + t=0/50/.../450ms 采样），3 处失败均为 **E2E spec 测试代码 bug**，与 `frontend-v3/e2e/structured-data-viewer.spec.ts` 当前代码 + `DataTreeNode.vue` DOM 结构核对后根因成立。
+
+`DataTreeNode.vue` toggle DOM：`.tree-node > .tree-node-row > button.expand-toggle`，子节点是嵌套的 `.tree-node`（`ul.tree-children > DataTreeNode`）——递归结构是 3 处 bug 的共同背景。
+
+## 改动文件（唯一改动）
+
+`frontend-v3/e2e/structured-data-viewer.spec.ts` —— 仅 3 处测试代码修复，未改产品代码、未改单测、未弱化断言、未删用例、未改预期值：
+
+1. **BDD-4 `test_bdd_4_large_manual_expand`（L508-516）— :scope 限定 toggle**
+   - 原错误：`strict mode violation: locator('.expand-toggle') resolved to 21 elements`——`dataNode/sub0.locator('.expand-toggle')` 未限定 `:scope`，递归匹配到该节点子树内全部 21 个 toggle
+   - 修复：`dataNode/sub0` 的 toggle 提取为 `const dataToggle/sub0Toggle = X.locator(':scope > .tree-node-row > .expand-toggle')`，只命中该节点行的 toggle（aria-expanded/click 断言不变）
+   - 选 `:scope` 而非 `getByRole('button', { name: 'Expand node' })`：button 的 aria-label 随展开态在 'Expand node'/'Collapse node' 间切换，getByRole 名称定位不稳；`:scope > .tree-node-row > .expand-toggle` 结构稳定
+
+2. **BDD-7 `test_bdd_7_search_count_in_collapsed`（L558）— 精确化 aria-live 选择器**
+   - 原错误：`strict mode violation: locator('[aria-live="polite"]') resolved to 2 elements`——页面上 `.sr-only`（entry-detail 容器）与 `.search-match-count` 都有 `aria-live="polite"`
+   - 修复：选择器精确化为 `.search-match-count`（与 BDD-30 已用的 L274 写法一致）
+
+3. **BDD-5 `test_bdd_5_switch_file_resets_expansion`（L529）— 时序竞态 → 自动等待**
+   - 原错误：`expect(await page.locator('.tree-node').count()).toBe(SMALL_TOTAL)` 收到 0——切文件后 `.tree-view` 容器先可见但 `.tree-node` 未渲染完成，`count()` 立即读
+   - 修复：改为 `await expect(page.locator('.tree-node')).toHaveCount(SMALL_TOTAL)`（Playwright 自动轮询等待），后续 `expand-toggle[aria-expanded="false"]` 计数与 banner 断言不变
+
+## 自查
+
+- `make debug-quick && E2E_SPEC=e2e/structured-data-viewer.spec.ts make debug-test`（timeout 300000，CDP :18800）—— 结果记录于 progress
+- `[PROD_NOT_TOUCHED]`：全程 debug :8888 隔离，未触碰 :8080 生产服务与 ~/.peekview/
