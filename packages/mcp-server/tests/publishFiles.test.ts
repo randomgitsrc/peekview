@@ -450,6 +450,21 @@ describe('publish_files', () => {
     await tool.handler({ summary: 'T', paths: [file], is_public: true }, ctx);
     expect(capturedBody?.is_public).toBe(true);
   });
+
+  it('BDD-20 返回结果含 Raw URL（publicUrl 同源）', async () => {
+    const file = path.join(tmpDir, 'main.py');
+    await fs.writeFile(file, 'print("hello")');
+    mockCreateEntry();
+
+    const tool = publishFilesTool(client, makeConfig('local', [tmpDir]));
+    const result = await tool.handler({ summary: 'Test', paths: [file] }, ctx);
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain(
+      'Raw URL: http://localhost:8080/api/v1/entries/pub-test/raw'
+    );
+    expect(result.content[0].text).toContain('Link: http://localhost:8080/pub-test');
+  });
 });
 
 // ─── T001: translatePath + expandHome (AC1-AC8) ──────────────────────────────

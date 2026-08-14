@@ -100,31 +100,31 @@ describe('Tools', () => {
   });
 
   describe('get_entry', () => {
-    it('should get entry details', async () => {
+    it('should get entry details from ref (new contract)', async () => {
       mockServer.use(
-        http.get('http://localhost:8080/api/v1/entries/test', () => {
+        http.get('http://localhost:8080/api/v1/entries/test/raw', () => {
           return HttpResponse.json({
-            id: 1,
             slug: 'test',
             summary: 'Test Entry',
             tags: ['tag1', 'tag2'],
             files: [
-              { id: 1, filename: 'file1.txt', path: null, language: 'text', size: 100 },
-              { id: 2, filename: 'file2.py', path: 'src', language: 'python', size: 200 },
+              { id: 1, filename: 'file1.txt', path: null, language: 'text', is_binary: false, size: 11, content: 'hello world', content_encoding: 'utf-8', file_url: null },
+              { id: 2, filename: 'file2.py', path: 'src', language: 'python', is_binary: false, size: 2, content: 'py', content_encoding: 'utf-8', file_url: null },
             ],
             created_at: '2026-01-01T00:00:00Z',
-            expires_at: null,
-            is_public: true,
+            raw_url: 'http://localhost:8080/api/v1/entries/test/raw',
           });
         })
       );
 
       const tool = getEntryTool(client);
-      const result = await tool.handler({ slug: 'test' }, testContext);
+      const result = await tool.handler({ ref: 'test' }, testContext);
 
-      expect(result.content[0].text).toContain('Test Entry');
-      expect(result.content[0].text).toContain('Files (2):');
-      expect(result.content[0].text).toContain('tag1');
+      expect(result.isError).toBeFalsy();
+      const parsed = JSON.parse(result.content[0].text) as { summary: string; files: Array<{ content: string }> };
+      expect(parsed.summary).toBe('Test Entry');
+      expect(parsed.files).toHaveLength(2);
+      expect(parsed.files[0].content).toBe('hello world');
     });
   });
 
