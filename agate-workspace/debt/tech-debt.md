@@ -99,3 +99,24 @@ created_at: 2026-08-12
 ```
 
 > 注意：示例条目占位（如 `023b28b`）仅为示意，真实条目应填实际 retreat 提交哈希；`{agate_root}` 等占位符会在 CHECK 1 中被 sanitize。
+
+## DEBT0004
+
+```yaml
+id: DEBT0004
+category: technical
+title: 净化正则双实现（后端 purify.py + MCP purify.ts 兜底）可能漂移
+status: open
+priority: low
+evidence:
+  - path: agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P2-design.md
+  - note: 净化主实现单点在后端 ?purify=，MCP 兜底仅老后端（不支持 ?purify=）触发；两套正则跨语言（Python/TS）需保持一致
+impact: 老后端场景下净化行为可能偏离后端主实现；正则修复需双端同步
+recommendation: 净化逻辑以 P3 正则测试为契约锚点，双端共用同一组测试用例；待后端版本统一支持 ?purify= 后评估移除 MCP 兜底
+closure_criteria:
+  - P3 双端净化测试共用同一数据样例
+  - 后端所有支持 ?purify= 后 MCP 兜底路径被标记 deprecated 或移除
+source: review
+created_at: 2026-08-15
+task_id: TPV0092-mcp-get-entry-fetch
+```

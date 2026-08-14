@@ -1,0 +1,39 @@
+# P2-progress (architect)
+
+- [read] dispatch-context: 任务不可 design_trivial，候选方案≥2，frontmatter 四字段必填，gate_commands 引用 Makefile target，需 minimal_validation（跨 host HTTP + 302 + ?share=）
+- [read] architect 角色文件: 数据流优先、影响域分析、多方案权衡、gate_commands 在 P2 固化
+- [read] P1-requirements: 26 BDD，risk=medium，packages=[backend, packages/mcp-server]，domains=[backend, mcp, security]，ui_affected=false，capability_requirements 含 p6-second-instance/purify-regex-tests/ssrf-validation-tests/share-creation
+- [read] P1-requirements: 核心设计点 — 跨 host 匿名 fetch（凭据隔离）、parseEntryRef 形态解析、后端 raw 补 ?share=/?purify=、净化正则、返回策略阈值（200KB/32KB/file=）、publish_files 加 raw_url
+- [read] P1-review: approved。非阻断附注 2 项待 P2 必答：短链接+share 组合（main.py:528 302 不带 query → parseEntryRef 直连 API）、raw_url publicUrl vs base_url 一致性
+- [read] P0-brief: env_constraints（debug :8888 + 跨 host :8889 + shares API 创建分享）、known_risks（SSRF/私有 token 在 URL/净化正则/向后兼容/零测试覆盖）
+- [read] getEntry.ts: 现 schema 仅 slug，调用 client.getEntry（get_entry 端点，EntryResponse 不含 content），返回文本列表
+- [read] client.ts: request() 恒带 Authorization: Bearer {userToken} + 30s AbortController；跨 host 复用会泄漏配置实例凭据 → 需独立匿名 fetch 路径
+- [read] publishFiles.ts: 返回文本含 `Link: {publicUrl}/{slug}`（L539）；config.publicUrl 存在；createEntry 走 client（带 Bearer，仅配置实例）
+- [read] types.ts: EntryResponse 无 content（files 仅元数据）；无 EntryRawResponse 类型（MCP 侧需新增）
+- [read] files.py: raw 端点 get_entry_raw(slug) 无 query 参数；resolve_entry_raw 走 get_entry + _check_share_cookie（cookie 路径）；raw_url 自引用用 request.base_url（L390-391）
+- [read] files.py: EntryRawResponse 结构 = slug/summary/tags/created_at/files/raw_url；RawFileItem 文本 content + 二进制 content=None+file_url
+- [read] entries.py: get_entry 的 ?share= 处理（L196-263）：公开/owner/admin 直通；否则 get_entry_with_share(slug, share, share_service) → None 则 404。可复用此逻辑到 raw 端点
+- [read] models.py: EntryRawResponse(slug/summary/tags/created_at/files/raw_url)、RawFileItem(id/filename/path/language/is_binary/size/content/content_encoding/file_url)
+- [read] main.py:526-528: raw 短链接 302 不带 query（RedirectResponse 只拼路径），?share= 会被丢弃 → parseEntryRef 必须"解析 slug+share 直连 API"不经 302（P1-review 附注确认）
+- [read] entry_service.get_entry_with_share: share 验证入口（public 返回 None，需走 entries.py 的 public/owner 直通分支）；verify_share_token 在 share_service.py:188
+- [read] main.py api_key 中间件: raw 短链接路径 skip auth（:327），目标路由自行鉴权
+- [validate] make debug-seed 已灌入 :8888 测试数据（23 entries，仅写 /tmp/peekview-debug/）
+- [validate] :8888 在线，seed 成功
+- [validate:minimal] raw 长链接结构确认：EntryRawResponse keys = created_at/files/raw_url/slug/summary/tags；files[0] = content/content_encoding/file_url/filename/id/is_binary/language/path/size → 响应校验字段 slug+summary+files 存在即判定
+- [validate:minimal] 短链接 302 确认丢弃 query：/yaml-docker-compose/raw?share=X → 302 location 无 ?share= → parseEntryRef 必须解析 slug+share 直连 API（P1-review 附注1 成立）
+- [validate:minimal] raw ?share= 当前 404（私有+有效 share token 仍 404，get_entry 端点 200）→ 后端补 ?share= 必要性确认
+- [validate:minimal] raw ?purify= 当前被忽略（FastAPI 未声明参数忽略）→ 补参数
+- [validate:minimal] 私有 raw 无 token → 404；页面 /{slug} → 200 HTML（MCP 须解析 slug 直连 raw，不可 parse HTML）
+- [validate:minimal] 分享 token 经 share_url 获得（share_url 含 host + ?share=token）；注意 seed share_url host 是生产域名 → P6 测试陷阱：get_entry 的 host 应取自用户传入 URL，不信任 share_url host
+- [validate:minimal] 二进制文件确认：unicode-filenames entry 的 png → content=null + file_url（BDD-13 raw 层已满足）
+- [read] config/merge.ts: publicUrl 从 PEEKVIEW_PUBLIC_URL / file peekview.public_url，无则报错；strip 尾斜杠
+- [read] config/merge.ts: peekviewUrl（内部 API）+ publicUrl（对外链接）分离 → publish_files raw_url 用 publicUrl；get_entry 读取用用户 URL host
+- [read] server.ts 工具注册、utils.ts translateError、tools.test.ts 测试模式（msw mock）、config/merge.ts（peekviewUrl vs publicUrl）
+- [read] Makefile: test-quick（pytest venv）/ test-mcp-unit（vitest）/ debug-test-mcp（集成+E2E 对 :8888）/ typecheck
+- [design] 候选方案 1（选定）：MCP 端 parseEntryRef+匿名直读 raw，后端补 ?share=/?purify=，MCP 本地净化兜底
+- [design] 候选方案 2（备选）：后端代理 fetch（config 实例代读外部 URL）——被否：新增后端端点+SSRF 面+egress 依赖，违背 P0/P1 既定方向
+- [design] 关键决策：raw_url 用 publicUrl（publish_files）vs base_url（后端自引用）分拆有意；URL 形态读取一律匿名（host 以用户传入 URL 为准）
+- [done] P2-design.md 产出（276 行）：frontmatter 四字段齐全，候选方案 2，gate_commands 引用 Makefile target，minimal_validation confirmed（curl :8888 验证）
+- [done] 自检：candidate_count=2 / packages / domains / ui_affected=false / gate_commands / files_to_read / env_constraints / minimal_validation 全部落盘
+- [done] P1-review 非阻断附注已答：①短链接 share 组合 → parseEntryRef 直连 API 不经 302（已验证 302 丢 query）②raw_url publicUrl vs base_url 分拆有意
+- [done] [PROD_NOT_TOUCHED]：仅访问 :8888 /tmp/peekview-debug/（make debug-seed 灌入测试数据），未触碰 :8080/~/.peekview/
