@@ -1,0 +1,22 @@
+# P5-progress — TPV0092 verifier
+
+- 已读 P5-dispatch-context-verifier.md（gate_commands.P5 = make test-quick && make test-mcp-unit；P5_typecheck = make typecheck && make lint）
+- 已读 verifier.md 模式一（P5 技术验证）
+- 已读 P2-design.md §5（gate_commands 唯一真相源）
+- 已读 P0-brief.md / P4-implementation.md（P4 自报：后端 1091 passed，MCP 268 passed，typecheck 过，ruff clean；eslint 预存未安装）
+- P5-test-results/ 不存在，需新建
+- 执行 P5 gate `make test-quick`：exit 2 — **1 failed / 1090 passed / 3 skipped**
+  - failed = `tests/test_admin_backup.py::TestBdd10BasicRestore::test_restore_into_empty_target`（.tmp 重命名竞态）
+  - 隔离重跑 `pytest tests/test_admin_backup.py::TestBdd10BasicRestore::test_restore_into_empty_target` → exit 0 PASS
+  - P3-progress.md:57 已记录 backup 测试 flaky（`test_backup_debug_mode_isolation` 首轮 failed 隔离重跑绿）
+  - git 查证：test_admin_backup.py 未被 TPV0092 触碰（最近 commit 3e18f711 ruff format / 87536524 lint 修复，均非本任务）
+  - 判定：**预存 flaky**（backup CLI .tmp 重命名时序竞态），与本次改动无关
+- 执行 P5 gate `make test-mcp-unit`：exit 0 — MCP 268 单测全绿 ✓
+- 执行 P5_typecheck `make typecheck`：exit 0 ✓
+- 执行 P5_typecheck `make lint`：exit 2 — 环境问题（ruff 不在 PATH）
+  - 按 dispatch-context 指示用 `~/.local/bin/ruff check peekview/ tests/`（backend/）→ **All checks passed** exit 0
+  - MCP eslint 未安装（P4 已记录预存环境缺口，非本次引入；`make lint` 本身只跑后端 ruff）
+- 第 2 轮全量 `make test-quick` 重跑：exit 0 — **1091 passed, 3 skipped**（flaky 确认，预存失败排除）
+- 产出 `P5-test-results/unit.md` + `P5-test-results/fail-list.txt`
+- 可选 debug-test-mcp：未跑（P2 列为 P6 gate 命令，留 P6）
+- 结论：failed=0（有效），MCP 268 全绿，后端全量重跑全绿，typecheck/ruff 通过

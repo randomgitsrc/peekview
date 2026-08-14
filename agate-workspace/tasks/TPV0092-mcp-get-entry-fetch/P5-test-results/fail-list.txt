@@ -1,0 +1,9 @@
+# P5 失败清单 — TPV0092（第 1 轮 make test-quick 报告，均已复验为 flaky）
+
+FAILED tests/test_admin_backup.py::TestBdd10BasicRestore::test_restore_into_empty_target
+
+# 复验结论（预存 flaky，非本任务引入）：
+# - 隔离重跑该用例 → PASS（exit 0）
+# - 全量第 2 轮 make test-quick → 1091 passed, 0 failed（exit 0）
+# - 该测试文件未被 TPV0092 P4 commit（f1b9f8f1）触碰
+# - 根因：backup CLI .tmp 原子重命名时序竞态（tar 未生成即 rename），与 TPV0092 改动（files.py raw 参数 / purify.py / MCP）无关
