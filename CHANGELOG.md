@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-08-15
+
+### 新增
+
+- 后端 raw 端点支持 `?share=` 与 `?purify=` 可选参数：分享链接一次访问即可读取私有 entry 的 raw 内容（复用 get_entry 端点的 share 验证逻辑，无效 token 返回 404 不泄露存在性）；`?purify=true` 将文本内容中的 base64 图片替换为 `[image: 名称 (N KB, base64)]` 占位符（保留 alt text），响应体积显著减小。缺省参数行为与改动前一致，向后兼容 (TPV0092)
+- 新增 `services/purify.py` 净化纯函数（data:image 变体覆盖：Markdown/HTML/大小写/空白）(TPV0092)
+
 ## [0.19.0] - 2026-08-15
 
 ### 新增
