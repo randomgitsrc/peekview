@@ -630,6 +630,23 @@ debug-restart:
 	@echo "→ 等待服务稳定..."
 	@sleep 2
 
+# 额外调试实例（多实例跨 host 测试，如 P6 验收 :8889 模拟外部 PeekView）
+# 用法: make debug-extra PORT=8889   /   make debug-extra-stop PORT=8889
+# 数据隔离: /tmp/peekview-debug-{PORT}/，pid/log 也按 PORT 区分，与主 debug(:8888) 互不干扰
+debug-extra:
+	@if [ -z "$(PORT)" ]; then echo "✗ 用法: make debug-extra PORT=8889"; exit 1; fi
+	@if [ "$(PORT)" = "8888" ]; then echo "✗ 主 debug 用 make debug-start；extra 实例请用其他端口"; exit 1; fi
+	@PORT=$(PORT) bash scripts/dev-server.sh start
+
+debug-extra-stop:
+	@if [ -z "$(PORT)" ]; then echo "✗ 用法: make debug-extra-stop PORT=8889"; exit 1; fi
+	@PORT=$(PORT) bash scripts/dev-server.sh stop
+	@rm -rf /tmp/peekview-debug-$(PORT) 2>/dev/null || true
+
+debug-extra-status:
+	@if [ -z "$(PORT)" ]; then echo "✗ 用法: make debug-extra-status PORT=8889"; exit 1; fi
+	@PORT=$(PORT) bash scripts/dev-server.sh status
+
 debug-test:
 	@echo "=== E2E 测试安全启动 ==="
 	@echo "→ Step 1: 运行前置安全检查..."

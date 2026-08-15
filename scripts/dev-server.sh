@@ -9,10 +9,17 @@
 
 set -e
 
-PORT=8888
-DATA_DIR="/tmp/peekview-debug"
-PID_FILE="/tmp/peekview-debug.pid"
-LOG_FILE="/tmp/peekview-debug.log"
+PORT="${PORT:-8888}"
+if [ "$PORT" = "8888" ]; then
+    DATA_DIR="${DATA_DIR:-/tmp/peekview-debug}"
+    PID_FILE="/tmp/peekview-debug.pid"
+    LOG_FILE="/tmp/peekview-debug.log"
+else
+    # 额外实例（多实例跨 host 测试）：独立数据目录/pid/log，避免与主 debug 冲突
+    DATA_DIR="${DATA_DIR:-/tmp/peekview-debug-${PORT}}"
+    PID_FILE="/tmp/peekview-debug-${PORT}.pid"
+    LOG_FILE="/tmp/peekview-debug-${PORT}.log"
+fi
 DB_PATH="$DATA_DIR/peekview.db"
 
 check_port() {
