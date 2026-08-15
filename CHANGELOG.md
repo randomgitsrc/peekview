@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [mcp-v0.11.0] - 2026-08-15
+
+### 新增
+
+- `get_entry` 工具扩展：接受任意 PeekView 链接形态（页面链接 / raw 长链接 / raw 短链接 / `?share=` 分享链接 / 裸 slug）→ 解析 host + slug → 直接读取 → 返回净化后的结构化 JSON（含文件内容）。跨 host 匿名读取公开 entry（不携带配置实例凭据，防凭据泄漏）；私有 entry 仅分享链接可读（无 token 404）；SSRF 防护 = 协议白名单（https 任意 / http 仅 localhost）+ 响应结构校验（非 PeekView 响应拒绝且不泄露响应体）+ fetch 超时 30s + 响应体 20MB 上限 (TPV0092)
+- 内容净化：文本内 base64 图片替换为 `[image: 名称 (N KB, base64)]` 占位符（保留 alt text），避免大 base64 串污染 agent 上下文；二进制文件保持 content=null (TPV0092)
+- 返回策略：单文件全量（>200KB 附软警告）；多文件总量 ≤32KB 全量、>32KB 返回清单+片段并提示 `file=` 取单个；新增可选 `file` 参数取单个文件全量 (TPV0092)
+- `publish_files` 返回附带 `Raw URL: {publicUrl}/api/v1/entries/{slug}/raw`，agent 可直接用 get_entry 读取 (TPV0092)
+
 ## [0.20.0] - 2026-08-15
 
 ### 新增
