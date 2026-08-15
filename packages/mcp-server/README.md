@@ -13,6 +13,8 @@ MCP Server 根据部署拓扑提供不同工具集：
 | `remote`（默认） | Agent → MCP Server → PeekView | `create_entry`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 不能读取 Agent 本地文件，只发布 Agent 生成内容 |
 | `local` | Agent + MCP Server → PeekView | `publish_files`, `get_entry`, `list_entries`, `delete_entry` | MCP Server 与文件同机，直接读取本地文件/目录 |
 
+`get_entry` 两种模式都可用，且支持读取任意 PeekView 链接（见下方「Agent 读路径」）。
+
 local 模式不暴露 `create_entry`。如果 Agent 生成内容需要发布，请先用 Agent 的 write_file 能力落盘（建议写到 cwd 或系统临时目录），再调用 `publish_files`。
 
 **local 模式路径规则（v0.7.1+）：**
@@ -23,12 +25,16 @@ local 模式不暴露 `create_entry`。如果 Agent 生成内容需要发布，�
 
 ### Agent 读路径
 
-MCP 工具聚焦于「写」（发布/创建/删除）。Agent 如需「读」已有条目的原始内容，直接调用 PeekView REST API：
+`get_entry` 从"只认配置实例 slug"升级为**接受任意 PeekView 链接直接读取**（v0.11.0+）：
 
-- `GET /api/v1/entries/{slug}/raw` — 返回结构化 JSON（文本文件含 `content` 字段；二进制文件 `content=null` + `file_url`）
-- 公开条目免认证；私有条目需 API key（`Authorization: Bearer pv_xxx`）
+- 链接形态：页面链接 `https://host/{slug}` · raw 长链接 `.../api/v1/entries/{slug}/raw` · raw 短链接 `https://host/{slug}/raw` · 分享链接 `...?share={token}` · 裸 slug（配置实例）
+- **跨 host**：不限于配置实例——任何可达的 PeekView host 都能读（公开 entry 匿名读取；私有 entry 仅分享链接可读，无 token 返回明确错误）
+- **SSRF 防护**：协议白名单（https 任意 / http 仅 localhost）+ 响应结构校验（非 PeekView 响应拒绝且不泄露响应体）+ 30s 超时 + 20MB 响应体上限；跨 host 请求**不携带配置实例凭据**（防泄漏）
+- **净化**：文本内 base64 图片自动替换为 `[image: 名称 (N KB, base64)]` 占位符（保留 alt text），二进制文件 `content=null`
+- **返回策略**：单文件全量（>200KB 附软警告）；多文件总量 ≤32KB 全量、>32KB 清单+片段并提示 `file=` 取单个；可选 `file` 参数取单个文件全量
+- `publish_files` 返回附带 `Raw URL: {public_url}/api/v1/entries/{slug}/raw`，agent 可直接用 `get_entry` 回读
 
-适用于 Agent 跨会话恢复上下文、读取之前发布的代码/文档场景。
+适用于 Agent 跨会话恢复上下文、读取用户分享的链接（可能来自**非本 MCP 配置实例**）场景——拿到链接就能读，不再要求"先配置好实例再手动找 slug"。
 
 ## 何时用 MCP vs CLI
 

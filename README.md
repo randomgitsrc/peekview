@@ -33,7 +33,10 @@ peekview-mcp serve
 
 ## Agent 读
 
-`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON——文本文件含 `content` 字段，二进制文件 `content=null` + `file_url`。公开条目免认证，私有条目需 API key。
+两种读法，消除"拿到链接却读不到"的摩擦：
+
+1. **MCP `get_entry`（推荐）**：接受任意 PeekView 链接——页面链接、`/raw` 链接、`?share=` 分享链接、裸 slug，跨 host 直接读取（不限于配置实例），返回净化后的结构化 JSON（base64 图片自动替换为占位符）。公开 entry 免认证；私有 entry 仅分享链接可读。见 [packages/mcp-server/README.md](packages/mcp-server/README.md)
+2. **REST API**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON——文本文件含 `content` 字段，二进制文件 `content=null` + `file_url`。可选参数 `?share={token}`（一次访问读私有分享，无需 cookie）、`?purify=true`（base64 图片替换为占位符）。公开条目免认证，私有条目需 API key。
 
 ## MCP 接入
 

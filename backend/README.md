@@ -142,6 +142,7 @@ GET /health → { "status": "ok", "version": "0.20.0" }  # version auto-synced f
 | GET | `/api/v1/entries/{slug}/files/{file_id}` | Get file info | - |
 | GET | `/api/v1/entries/{slug}/files/{file_id}/content` | Get file content | - |
 | GET | `/api/v1/entries/{slug}/download` | Download entry as ZIP pack | - |
+| GET | `/api/v1/entries/{slug}/raw` | **Get entry raw content as structured JSON**（text files include `content`；binary files `content=null` + `file_url`；optional `?share={token}` for one-shot private share read, `?purify=true` to replace base64 images with placeholders） | Optional* |
 
 \* Private entries require authentication. Entry creation may require auth if `allow_anonymous_create=false`.
 
@@ -169,9 +170,27 @@ GET /health → { "status": "ok", "version": "0.20.0" }  # version auto-synced f
 | DELETE | `/api/v1/apikeys/{key_id}` | Revoke API key | JWT (owner/admin) |
 | DELETE | `/api/v1/apikeys/expired` | Cleanup expired keys | JWT |
 
-**API Key format**: `pv_` prefix + 24-char token, HMAC-SHA256 hashed for storage.
+**API Key format**: `pv_` prefix + 32-char token (secrets.token_urlsafe(24)), HMAC-SHA256 hashed for storage.
 **Max active keys**: 10 per user.
 **Expiration options**: Never, 7d, 30d, 90d.
+
+### Share API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/v1/entries/{slug}/shares` | Create share link for private entry (returns `share_url` with `?share={token}`) | Owner/Admin |
+| GET | `/api/v1/entries/{slug}/shares` | List entry shares | Owner/Admin |
+| POST | `/api/v1/entries/{slug}/shares/revoke` | Revoke share | Owner/Admin |
+
+Share token grants read-only access to a private entry without login; invalid/revoked token returns 404 (no existence leak). Works with `GET /api/v1/entries/{slug}/raw?share={token}` for one-shot raw reads.
+
+### Admin API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/v1/admin/users` | List all users | Admin |
+| PATCH | `/api/v1/admin/users/{user_id}` | Enable/disable, promote/demote user | Admin |
+| GET | `/api/v1/admin/stats` | Global read/usage stats | Admin |
 
 ### Authentication Methods
 
@@ -201,7 +220,7 @@ GET /health → { "status": "ok", "version": "0.20.0" }  # version auto-synced f
 - 🔑 **API Key Management** — User-level pv_ keys with expiration
 - 🔒 **Security** — Path traversal protection, allowlist, XSS filtering, iframe sandbox
 - 👤 **Entry Visibility** — Public/private with owner controls
-- 🤖 **MCP Server** — AI Agent integration via SSE transport ([@peekview/mcp-server](https://www.npmjs.com/package/@peekview/mcp-server))
+- 🤖 **MCP Server** — AI Agent integration via Streamable HTTP transport ([@peekview/mcp-server](https://www.npmjs.com/package/@peekview/mcp-server))
 
 ## Tech Stack
 
