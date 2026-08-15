@@ -1,23 +1,33 @@
 # PeekView
 
-> Agent 写，人看，Agent 也能读。
+> Agent writes. Humans read. Agents can read too.
 
-Agent 发布产出，你拿到一个链接。浏览器打开就是渲染好的页面，其他 Agent 通过 `/raw` 读取原始内容。
+PeekView turns agent output into shareable pages: an agent publishes files, humans open a link to a beautifully rendered page, and other agents read the raw content through the API or MCP.
 
 [![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Vue 3](https://img.shields.io/badge/vue-3.4+-green.svg)](https://vuejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 快速开始
+**English** · [中文](README.zh-CN.md)
+
+---
+
+## What is PeekView
+
+- **Agent writes** — publish files (code, docs, diagrams, HTML) from the CLI, MCP, or API
+- **Humans read** — every entry gets a link that renders as a rich, readable page
+- **Agents read too** — the same link can be read back as structured JSON by another agent, no login needed for public entries
+
+## Quick Start
 
 ```bash
 pipx install peekview
 peekview serve                          # http://localhost:8080
-peekview create file.py -s "我的代码"   # → http://localhost:8080/wo-de-dai-ma
+peekview create file.py -s "My code"    # → http://localhost:8080/my-code
 ```
 
-Agent 接入（可选）：
+Connect an agent (optional):
 
 ```bash
 npm install -g @peekview/mcp-server
@@ -25,55 +35,24 @@ peekview-mcp config set peekview.url http://localhost:8080
 peekview-mcp serve
 ```
 
-## 渲染能力
+## Why PeekView
 
-代码（Shiki 100+ 语言，行号定位）· Markdown（GFM，自动目录）· Mermaid / PlantUML 图表 · HTML（沙箱 iframe，Three.js / Canvas / WebGL）· 图片 · 多文件（文件树 + ZIP 下载）· 全文搜索
+**For humans** — rich rendering out of the box:
 
-暗色 / 亮色主题 · 移动端适配 · 私有条目 · API Key 管理
+- Code (Shiki, 100+ languages, line numbers) · Markdown (GFM, auto TOC) · Mermaid / PlantUML diagrams · HTML (sandboxed iframe, Three.js / Canvas / WebGL) · Images · Multi-file entries (file tree + ZIP download) · Full-text search
+- Dark / light themes · Mobile-friendly · Private entries · API key management
 
-## Agent 读
+**For agents** — zero-friction read-back:
 
-两种读法，消除"拿到链接却读不到"的摩擦：
+- `get_entry` (MCP) accepts any PeekView link — page URL, `/raw` link, `?share=` link, or bare slug — across hosts, returning purified structured JSON
+- `GET /api/v1/entries/{slug}/raw` returns structured JSON; public entries need no auth
 
-1. **MCP `get_entry`（推荐）**：接受任意 PeekView 链接——页面链接、`/raw` 链接、`?share=` 分享链接、裸 slug，跨 host 直接读取（不限于配置实例），返回净化后的结构化 JSON（base64 图片自动替换为占位符）。公开 entry 免认证；私有 entry 仅分享链接可读。见 [packages/mcp-server/README.md](packages/mcp-server/README.md)
-2. **REST API**：`GET /api/v1/entries/{slug}/raw` 返回结构化 JSON——文本文件含 `content` 字段，二进制文件 `content=null` + `file_url`。可选参数 `?share={token}`（一次访问读私有分享，无需 cookie）、`?purify=true`（base64 图片替换为占位符）。公开条目免认证，私有条目需 API key。
+## Agent Integration
 
-## MCP 接入
+- **Read**: pass a PeekView link to `get_entry` and get clean content back — see [MCP Server README](packages/mcp-server/README.md)
+- **Write**: `publish_files` (MCP local) / `create_entry` (MCP remote) / `peekview create` (CLI)
+- **MCP clients**: Claude Code, OpenCode, Cursor, and any MCP-compatible tool
 
-**Claude Code：**
-```bash
-claude mcp add peekview \
-  --transport http http://localhost:33333/mcp \
-  --header "Authorization: Bearer pv_your_api_key"
-```
-
-**OpenCode：**
-```json
-// opencode.json
-{
-  "mcpServers": {
-    "peekview": {
-      "url": "http://localhost:33333/mcp",
-      "headers": { "Authorization": "Bearer pv_your_api_key" }
-    }
-  }
-}
-```
-
-**Cursor：**
-```json
-// .cursor/mcp.json
-{
-  "mcpServers": {
-    "peekview": {
-      "url": "http://localhost:33333/mcp",
-      "headers": { "Authorization": "Bearer pv_your_api_key" }
-    }
-  }
-}
-```
-
-**其他 MCP 客户端：**
 ```json
 {
   "peekview": {
@@ -83,38 +62,15 @@ claude mcp add peekview \
 }
 ```
 
-工具列表、Local/Remote 双模式、安全模型：[packages/mcp-server/README.md](packages/mcp-server/README.md)
+## Documentation
 
-### Docker 场景
-
-Docker 容器内运行 MCP Server 时，默认 cwd 为 `/`，需配置 `MCP_ALLOWED_PATHS` 或设置 `working_dir`。详见 [MCP Server Docker 指引](packages/mcp-server/README.md#docker-场景指引)。
-
-## CLI 速查
-
-```bash
-peekview create <文件...> -s "摘要"   # 创建条目
-peekview get <slug>                    # 查看条目
-peekview list [-q "搜索"] [-t 标签]    # 列出/搜索
-peekview delete <slug>                 # 删除条目
-peekview serve                         # 启动服务
-```
-
-## 配置
-
-环境变量，前缀 `PEEKVIEW_`，`__` 分隔嵌套：
-
-| 变量 | 默认 | 说明 |
-|------|------|------|
-| `SERVER__PORT` | `8080` | 端口 |
-| `SERVER__API_KEY` | `""` | 全局 API Key（空=免认证） |
-| `STORAGE__DATA_DIR` | `~/.peekview/data` | 文件存储 |
-| `AUTH__ALLOW_REGISTRATION` | `true` | 允许注册 |
-
-完整配置（33 项）：`~/.peekview/config.yaml` · `peekview --help` · [CLAUDE.md](CLAUDE.md)
-
-## 文档
-
-[部署指南](docs/guides/DEPLOYMENT.md) · [MCP Server](packages/mcp-server/README.md) · [调试指南](docs/guides/DEBUGGING.md) · [更新日志](CHANGELOG.md)
+| Topic | Where |
+|-------|-------|
+| Backend API & CLI reference | [backend/README.md](backend/README.md) |
+| MCP Server (tools, config, deployment) | [packages/mcp-server/README.md](packages/mcp-server/README.md) |
+| Deployment guide | [docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md) |
+| Debugging workflow | [docs/process/debug-workflow.md](docs/process/debug-workflow.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
 ## License
 

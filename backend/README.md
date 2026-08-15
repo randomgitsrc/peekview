@@ -1,103 +1,102 @@
-# PeekView — Backend API Documentation
+# PeekView — Backend
 
-> A lightweight code & document formatting display service.
+> A lightweight code & document sharing service. Publish files, get a beautiful page, read them back as JSON.
 
-## Quick Start
+## Features
 
-### Install
+- **Publish & share** — turn files (code, docs, diagrams, HTML) into shareable entries with rendered pages
+- **Rich rendering** — Shiki code highlighting (100+ languages), GitHub-flavored Markdown with TOC, Mermaid / PlantUML diagrams, sandboxed HTML iframes (Three.js / Canvas / WebGL), images, multi-file entries with file tree & ZIP download
+- **Full-text search** — SQLite FTS5, including CJK support
+- **Agent-friendly read-back** — `GET /api/v1/entries/{slug}/raw` returns structured JSON; `?share={token}` reads private shares in one request; `?purify=true` strips base64 images
+- **Authentication** — JWT register/login, user-level `pv_` API keys (expiry support), optional global API key
+- **Security** — path traversal protection, storage allowlist, XSS filtering, sandboxed iframes, private entries hidden via 404 (no slug enumeration)
+- **Admin** — user enable/disable, promote/demote, global read stats
+
+## Install & Quick Start
 
 ```bash
 pip install peekview
+peekview serve                          # local: http://localhost:8080
+peekview serve --host 0.0.0.0 --port 8080   # production
 ```
 
-### Start Server
+Create your first entry:
 
 ```bash
-peekview serve                          # Local development
-peekview serve --host 0.0.0.0 --port 8080  # Production
+peekview create file.txt -s "My document"
+peekview create src/*.py -s "Project" -t python -t cli   # multi-file + tags
+echo "code" | peekview create -s "From stdin" --from-stdin
+peekview create file.py -s "Private" --visibility private
 ```
 
-## CLI Commands
+## CLI Reference
 
-### Entry Management
+### Entry management
 
 ```bash
-peekview create file.txt -s "My document"                    # Create from file
-peekview create src/*.py -s "Project" -t python -t cli       # Multi-file + tags
-echo "code" | peekview create -s "From stdin" --from-stdin   # From pipe
-peekview create file.py -s "Private" --visibility private     # Private entry
-
-peekview get my-entry                 # Show details
-peekview list                         # List entries
-peekview list -q "python"             # FTS5 search
-peekview list -t python -t cli        # Tag filter
-peekview delete my-entry              # Delete (with confirmation)
+peekview create <file...> -s "Summary" [-t tag] [--visibility public|private]
+peekview get <slug>                     # show details
+peekview list [-q "search"] [-t tag]    # list / FTS5 search / tag filter
+peekview delete <slug>                  # delete (with confirmation)
 ```
 
-### User Management
+### User management
 
 ```bash
-peekview user create <username>       # Create user (prompts for password)
-peekview user list                    # List users
-peekview user promote <username>      # Promote to admin
-peekview user demote <username>       # Demote from admin
+peekview user create <username>         # create user (prompts for password)
+peekview user list
+peekview user promote <username>        # promote to admin
+peekview user demote <username>
+peekview user disable <username> / enable <username>
 ```
 
-### Remote Authentication
+### API keys
 
 ```bash
-peekview login --remote-url <url> --username <user>  # Login to remote server
+peekview apikey create "CI Bot"         # → pv_xxxxxxxx...
+peekview apikey create "Temp" --expires 30d
+peekview apikey list
+peekview apikey revoke <key_id>
+peekview apikey cleanup                 # remove expired keys
 ```
 
-### API Key Management
+### Service management
 
 ```bash
-peekview apikey create "CI Bot"       # Create API key
-peekview apikey create "Temp" --expires 30d  # With expiration
-peekview apikey list                  # List keys
-peekview apikey revoke <key_id>       # Revoke key
-peekview apikey cleanup               # Remove expired keys
-```
-
-### Service Management
-
-```bash
-peekview service install --base-url https://example.com  # Systemd/launchd
+peekview service install --base-url https://example.com   # systemd / launchd
 peekview service install --user
 peekview service status / start / stop / uninstall
 ```
 
 ## Configuration
 
-### Environment Variables
+Configure via environment variables (prefix `PEEKVIEW_`, `__` for nesting) or `~/.peekview/config.yaml`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | Server bind address (`127.0.0.1` for local-only) |
-| `PEEKVIEW_SERVER__PORT` | `8080` | Server port |
+| `PEEKVIEW_SERVER__HOST` | `0.0.0.0` | Bind address (`127.0.0.1` for local-only) |
+| `PEEKVIEW_SERVER__PORT` | `8080` | Port |
 | `PEEKVIEW_SERVER__BASE_URL` | `""` | External URL (for reverse proxy) |
-| `PEEKVIEW_SERVER__API_KEY` | `""` | Global API key for service-level auth |
-| `PEEKVIEW_SERVER__CORS_ORIGINS` | `http://localhost:5173` | CORS allowed origins |
+| `PEEKVIEW_SERVER__API_KEY` | `""` | Global API key (empty = no auth) |
+| `PEEKVIEW_SERVER__CORS_ORIGINS` | `http://localhost:5173` | Allowed CORS origins |
 | `PEEKVIEW_STORAGE__DATA_DIR` | `~/.peekview/data` | File storage directory |
 | `PEEKVIEW_STORAGE__DB_PATH` | `~/.peekview/peekview.db` | SQLite database path |
 | `PEEKVIEW_STORAGE__ALLOWED_PATHS` | `[]` | Allowlist for local_path reads |
 | `PEEKVIEW_AUTH__SECRET_KEY` | `""` | JWT signing key (empty = auto-generate) |
-| `PEEKVIEW_AUTH__TOKEN_EXPIRE_DAYS` | `7` | JWT token validity in days |
-| `PEEKVIEW_AUTH__ALLOW_REGISTRATION` | `true` | Allow new user registration |
-| `PEEKVIEW_AUTH__ALLOW_ANONYMOUS_CREATE` | `true` | Allow anonymous entry creation |
-| `PEEKVIEW_LIMITS__MAX_FILE_SIZE` | `10485760` | Max single file size (10MB) |
+| `PEEKVIEW_AUTH__TOKEN_EXPIRE_DAYS` | `7` | JWT validity in days |
+| `PEEKVIEW_AUTH__ALLOW_REGISTRATION` | `true` | Allow registration |
+| `PEEKVIEW_AUTH__ALLOW_ANONYMOUS_CREATE` | `true` | Allow anonymous creation |
+| `PEEKVIEW_LIMITS__MAX_FILE_SIZE` | `10485760` | Max single file size (10 MB) |
 | `PEEKVIEW_LIMITS__MAX_ENTRY_FILES` | `50` | Max files per entry |
 | `PEEKVIEW_LIMITS__MAX_PER_PAGE` | `50` | Max items per page |
 | `PEEKVIEW_CLEANUP__CHECK_ON_START` | `true` | Check expired entries on startup |
 | `PEEKVIEW_CLEANUP__INTERVAL_SECONDS` | `3600` | Cleanup interval (0 = disabled) |
-| `PEEKVIEW_LOGGING__LEVEL` | `INFO` | Log level (DEBUG/INFO/WARNING/ERROR) |
-| `PEEKVIEW_REMOTE__URL` | `""` | Remote server URL for CLI remote mode |
+| `PEEKVIEW_LOGGING__LEVEL` | `INFO` | Log level |
+| `PEEKVIEW_REMOTE__URL` | `""` | Remote server URL (CLI remote mode) |
 | `PEEKVIEW_REMOTE__API_KEY` | `""` | API key for remote server |
-| `PEEKVIEW_REMOTE__TOKEN` | `""` | JWT token for remote user auth |
+| `PEEKVIEW_REMOTE__TOKEN` | `""` | JWT token for remote user |
 
-### Config File
-
-`~/.peekview/config.yaml`:
+Config file example (`~/.peekview/config.yaml`):
 
 ```yaml
 server:
@@ -122,126 +121,89 @@ remote:
   token: ""
 ```
 
-## API Endpoints
+## API Reference
 
-### Health Check
+### Health
 
 ```
-GET /health → { "status": "ok", "version": "0.20.0" }  # version auto-synced from __init__.py
+GET /health → { "status": "ok", "version": "0.20.0" }
 ```
 
-### Entry API
+### Entries
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/v1/entries` | List entries (pagination, search, tag filter, owner filter) | Optional |
+| GET | `/api/v1/entries` | List entries (pagination, search, tag, owner filter) | Optional |
 | POST | `/api/v1/entries` | Create entry | Optional* |
 | GET | `/api/v1/entries/{slug}` | Get entry details | Optional* |
-| PATCH | `/api/v1/entries/{slug}` | Update entry (including visibility toggle) | Owner/Admin |
+| PATCH | `/api/v1/entries/{slug}` | Update entry (including visibility) | Owner/Admin |
 | DELETE | `/api/v1/entries/{slug}` | Delete entry | Owner/Admin |
 | GET | `/api/v1/entries/{slug}/files/{file_id}` | Get file info | - |
 | GET | `/api/v1/entries/{slug}/files/{file_id}/content` | Get file content | - |
-| GET | `/api/v1/entries/{slug}/download` | Download entry as ZIP pack | - |
-| GET | `/api/v1/entries/{slug}/raw` | **Get entry raw content as structured JSON**（text files include `content`；binary files `content=null` + `file_url`；optional `?share={token}` for one-shot private share read, `?purify=true` to replace base64 images with placeholders） | Optional* |
+| GET | `/api/v1/entries/{slug}/download` | Download entry as ZIP | - |
+| GET | `/api/v1/entries/{slug}/raw` | Raw structured JSON: text files include `content`, binary files `content=null` + `file_url`. Query params: `?share={token}` (one-shot private share read), `?purify=true` (replace base64 images with placeholders) | Optional* |
 
-\* Private entries require authentication. Entry creation may require auth if `allow_anonymous_create=false`.
+\* Private entries require auth. Creation may require auth if `allow_anonymous_create=false`.
 
-**Query Parameters for GET /api/v1/entries:**
-- `page`, `per_page` — Pagination
-- `q` — FTS5 full-text search
-- `tag` — Tag filter (repeatable)
-- `owner` — Owner filter (`owner=me` for current user's entries)
+List query params: `page`, `per_page`, `q` (FTS5), `tag` (repeatable), `owner=me`.
 
-### Auth API
+### Shares
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/v1/entries/{slug}/shares` | Create share link (returns `share_url` with `?share={token}`) | Owner/Admin |
+| GET | `/api/v1/entries/{slug}/shares` | List shares | Owner/Admin |
+| POST | `/api/v1/entries/{slug}/shares/revoke` | Revoke share | Owner/Admin |
+
+Share tokens grant read-only access to private entries without login. Invalid/revoked tokens return 404 (no existence leak). Works with `GET /api/v1/entries/{slug}/raw?share={token}` for one-shot raw reads.
+
+### Auth
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register user (first user always allowed, auto-admin) |
+| POST | `/api/v1/auth/register` | Register user (first user auto-admin) |
 | POST | `/api/v1/auth/login` | Login, returns JWT |
-| POST | `/api/v1/auth/logout` | Logout (client-side token clear) |
-| GET | `/api/v1/auth/me` | Get current user info (requires JWT) |
+| POST | `/api/v1/auth/logout` | Logout |
+| GET | `/api/v1/auth/me` | Current user info (requires JWT) |
 
-### API Key Management
+### API keys
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | POST | `/api/v1/apikeys` | Create API key | JWT |
-| GET | `/api/v1/apikeys` | List user's API keys | JWT |
-| DELETE | `/api/v1/apikeys/{key_id}` | Revoke API key | JWT (owner/admin) |
+| GET | `/api/v1/apikeys` | List user's keys | JWT |
+| DELETE | `/api/v1/apikeys/{key_id}` | Revoke key | JWT (owner/admin) |
 | DELETE | `/api/v1/apikeys/expired` | Cleanup expired keys | JWT |
 
-**API Key format**: `pv_` prefix + 32-char token (secrets.token_urlsafe(24)), HMAC-SHA256 hashed for storage.
-**Max active keys**: 10 per user.
-**Expiration options**: Never, 7d, 30d, 90d.
+**Key format**: `pv_` prefix + 32-char token (`secrets.token_urlsafe(24)`), HMAC-SHA256 hashed. Max 10 keys per user. Expiration: never / 7d / 30d / 90d.
 
-### Share API
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/entries/{slug}/shares` | Create share link for private entry (returns `share_url` with `?share={token}`) | Owner/Admin |
-| GET | `/api/v1/entries/{slug}/shares` | List entry shares | Owner/Admin |
-| POST | `/api/v1/entries/{slug}/shares/revoke` | Revoke share | Owner/Admin |
-
-Share token grants read-only access to a private entry without login; invalid/revoked token returns 404 (no existence leak). Works with `GET /api/v1/entries/{slug}/raw?share={token}` for one-shot raw reads.
-
-### Admin API
+### Admin
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/v1/admin/users` | List all users | Admin |
-| PATCH | `/api/v1/admin/users/{user_id}` | Enable/disable, promote/demote user | Admin |
+| PATCH | `/api/v1/admin/users/{user_id}` | Enable/disable, promote/demote | Admin |
 | GET | `/api/v1/admin/stats` | Global read/usage stats | Admin |
 
-### Authentication Methods
+### Authentication & visibility
 
-1. **JWT** — `Authorization: Bearer <jwt>` for user-level auth
-2. **User-level API Key** — `X-API-Key: pv_...` or `Authorization: Bearer pv_...` (bound to user, JWT-equivalent permissions)
-3. **Global API Key** — `X-API-Key: <PEEKVIEW_SERVER__API_KEY>` or `Authorization: Bearer <key>` (service-level, creates ownerless entries)
-
-### Visibility Rules
-
-- Anonymous users see only `is_public=true` entries
-- Authenticated users see all public entries + own private entries
-- Direct access to private entry returns 404 (unless owner/admin)
-- Only owner or admin can toggle visibility or delete an entry
-- If `allow_anonymous_create=false`, anonymous entry creation returns 401
-
-## Features
-
-- 🎨 **Code Highlighting** — Shiki with 100+ languages
-- 📝 **Markdown Rendering** — GitHub-flavored Markdown with TOC
-- 🔍 **Full-Text Search** — SQLite FTS5
-- 📂 **Multi-file Support** — File tree per entry (hierarchical paths)
-- 🖼️ **HTML Rendering** — iframe sandbox with CSS/JS/image injection
-- 🖼️ **Image Viewer** — PNG/JPG/GIF/WebP/SVG support
-- 📦 **Pack Download** — ZIP download for multi-file entries
-- 🌐 **REST API** — Full CRUD with multiple auth methods
-- 🔐 **User Authentication** — JWT register/login/logout
-- 🔑 **API Key Management** — User-level pv_ keys with expiration
-- 🔒 **Security** — Path traversal protection, allowlist, XSS filtering, iframe sandbox
-- 👤 **Entry Visibility** — Public/private with owner controls
-- 🤖 **MCP Server** — AI Agent integration via Streamable HTTP transport ([@peekview/mcp-server](https://www.npmjs.com/package/@peekview/mcp-server))
-
-## Tech Stack
-
-- **Backend**: FastAPI + SQLModel + SQLite (FTS5)
-- **Frontend**: Vue 3 + Vite + Shiki + TypeScript
-- **CLI**: Click + Rich
+- **JWT** — `Authorization: Bearer <jwt>`
+- **User API key** — `X-API-Key: pv_...` (bound to user)
+- **Global API key** — `X-API-Key: <PEEKVIEW_SERVER__API_KEY>` (service-level, ownerless entries)
+- Anonymous users see only public entries; authenticated users also see their own private entries; private entries return 404 to non-owners (no slug enumeration)
 
 ## Development
 
 ```bash
 git clone https://github.com/randomgitsrc/peekview.git
 cd peekview
-make dev         # Create venv + install editable (isolated)
-cd backend && .venv/bin/python -m pytest tests/  # Run tests
-make debug-start # Start dev server (port 8888)
+make dev                                # create venv + editable install (isolated)
+cd backend && .venv/bin/python -m pytest tests/
+make debug-start                        # dev server on :8888 (isolated data)
 ```
 
-## Docker 场景
-
-MCP Server 在 Docker 容器内运行时，默认 cwd 为 `/`，需配置 `MCP_ALLOWED_PATHS` 或设置 `working_dir`。详见 [MCP Server Docker 指引](../packages/mcp-server/README.md#docker-场景指引)。
+Multi-instance testing: `make debug-extra PORT=8889` (port + data isolation) — see [debug workflow](docs/process/debug-workflow.md).
 
 ## License
 
-MIT License
+MIT
