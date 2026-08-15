@@ -14,7 +14,7 @@
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
-| TPV0092 | mcp-get-entry-fetch | 🔄 进行中 | P1 | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
+| TPV0092 | mcp-get-entry-fetch | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
 | TPV0093 | star-lifecycle | ⬜ 待开始 | P0 | 🟢 | 无 | 2026-08-12 | 2026-08-12 |
 | TPV0094 | treeview-default-expand | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
@@ -100,6 +100,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 |------|----------|----------|--------|----------|
 | TPV0090 | cli-remote-xdist-fix | v0.18.6 | 🟡 | 2026-08-13 |
 | TPV0094 | treeview-default-expand | v0.19.0 | 🟡 | 2026-08-15 |
+| TPV0092 | mcp-get-entry-fetch | v0.20.0 + mcp-v0.11.0 | 🟡 | 2026-08-15 |
 | TPV0091 | unicode-download-header-fix | v0.18.5 | 🟠 | 2026-08-13 |
 | TPV0088 | e2e-test-infra-hardening | v0.18.4 | 🟡 | 2026-08-12 |
 | TPV0089 | unicode-filename-link-fix | v0.18.3 | 🟠 | 2026-08-12 |
@@ -222,6 +223,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-08-15 | 完成 TPV0092 | mcp-get-entry-fetch → v0.20.0 + mcp-v0.11.0（get_entry 接受任意 PeekView URL（页面/raw/分享/裸 slug）→ 跨 host 匿名读取 → 净化后结构化 JSON；publish_files 加 raw_url；后端 raw 补 ?share=/?purify=；SSRF 防护=协议白名单+响应结构校验+20MB 上限+超时；26/26 BDD PASS（:8889 跨 host 实测）；基础设施：make debug-extra 多实例 target + dev-server.sh PORT 参数化 + .gitignore lib/ 误伤修复；DEBT0004/0005 登记）|
 | 2026-08-15 | 完成 TPV0094 | treeview-default-expand → v0.19.0（TreeView 默认全展开：节点 ≤2000 全展开 / 超阈值折叠+提示 banner；红线实测 5 量级确定阈值 2000——297ms 达标/5000 超预算；8/8 BDD PASS + E2E 98/98 + 单测 1232 + 后端 1078 全绿；P5→P4 retry1 修复 3 处 E2E spec locator；完整 agate P0-P8，P7 记录 1 条非核心 DEVIATION（perf 脚本位置））|
 | 2026-08-13 | 完成 TPV0090 | cli-remote-xdist-fix → v0.18.6（test_cli_remote.py xdist 并发修复：worker 动态端口 18888+worker_index 消除 16 worker 端口竞争 + poll 死亡检测 + teardown 强化；4/4 BDD PASS（-n auto 连续 5 次全绿 + 全量 1078 passed 0 failed——known-failures 预存失败债还清）；完整 agate P0-P8）|
 | 2026-08-13 | 完成 TPV0091 | unicode-download-header-fix → v0.18.5（中文/日文文件名下载与图片预览 500 修复：Content-Disposition 改 RFC 5987 filename*=UTF-8'' + ASCII fallback，ASCII header 字节级不变零回归；图片预览改走 /content 端点语义为读取；8/8 BDD PASS（后端 1071+1 预存 + E2E 12/12 + vision 全零 blocker）；完整 agate P0-P8）|
