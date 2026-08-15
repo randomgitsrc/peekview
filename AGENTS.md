@@ -114,6 +114,17 @@ make debug-verify-isolation   # 验证数据隔离（依赖 :8080 在线）
 
 改了前端后必须 `make build-frontend` 重建 static（或用 `make debug-quick` 一步到位）。
 
+**多实例（跨 host 测试，TPV0092 引入）**：
+```
+make debug-extra PORT=8889          # 启动额外实例（:8889，数据独立 /tmp/peekview-debug-8889/）
+make debug-seed PORT=8889           # 给指定实例灌测试数据（默认 :8888）
+make debug-extra-status PORT=8889   # 查实例状态
+make debug-extra-stop PORT=8889     # 停止 + 清理该实例数据（⚠️ PORT=8888 会被拒绝——主 debug 用 debug-stop）
+```
+- **端口 + 数据双隔离**：`PORT` → `DATA_DIR=/tmp/peekview-debug-${PORT}` → `DB_PATH=.../peekview.db` 三级独立，各实例 DB/data 零共享；`PEEKVIEW_STORAGE__DATA_DIR`/`DB_PATH`/`PORT` 三个 env 按实例独立传递
+- **后台长驻服务一律走 make → scripts/dev-server.sh**（`debug-extra` 等），**禁止在 bash 工具里裸启动 uvicorn/setsid/nohup/Popen**——后台进程继承工具 fd 会导致 shell 卡死（TPV0092 P6 教训）。dev-server.sh 的 `&` + PID 文件 + 健康检查等待是正确 detach 方式
+- 静态文件（`backend/peekview/static/`）所有实例共享（构建产物非数据，合理）；生产隔离检查（`.peekview` 路径拦截 + `PEEKVIEW_DEBUG_MODE=1`）对 extra 实例同样生效
+
 测试数据：`make debug-seed` 从 `scripts/seed-data/` 目录加载（每子目录一个 entry，含 meta.json + 内容文件），用户 alice/bob/carol（密码 testpass123）。新增/修改数据只需编辑 seed-data/ 下的文件，不改 Python 代码。
 
 ## 发布流程

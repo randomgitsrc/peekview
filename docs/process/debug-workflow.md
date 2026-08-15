@@ -365,6 +365,9 @@ ps aux | grep peekview
 | `make debug-test` | 运行 E2E 测试 |
 | `make debug-test-remote` | **运行 Remote CLI 集成测试 (v0.1.25+)** |
 | `make debug-status` | 检查调试服务状态 |
+| `make debug-extra PORT=8889` | **启动额外实例（多实例跨 host 测试，数据独立 /tmp/peekview-debug-8889/，TPV0092+）** |
+| `make debug-seed PORT=8889` | **给指定实例灌测试数据（默认 :8888）** |
+| `make debug-extra-stop PORT=8889` | **停止 + 清理该实例（PORT=8888 被拒绝，主 debug 用 debug-stop）** |
 | `make pre-publish` | 预发布检查 |
 | `make publish` | 发布到 PyPI |
 
@@ -380,3 +383,5 @@ ps aux | grep peekview
 6. **E2E 测试必须设置 BASE_URL** - 否则 Playwright 会连接默认的 Vite 开发服务器 (v0.1.25 教训)
 7. **pipx upgrade 后必须重启服务** - 升级包不重启 = 仍运行旧版本 (v0.1.28 教训)
 8. **E2E 后必须检查生产数据** - 确保 e2e- 测试数据未写入生产库 (v0.1.28 教训)
+9. **后台长驻服务禁止在 bash 工具里裸启动** - uvicorn/setsid/nohup/Popen 直起会让 shell 卡死（后台进程继承工具 fd）；一律走 `make debug-extra` → dev-server.sh（`&` + PID 文件 + 健康检查正确 detach）(TPV0092 教训)
+10. **多实例 = 端口 + 数据双隔离** - `PORT` → `DATA_DIR=/tmp/peekview-debug-${PORT}` → `DB_PATH` 三级独立，env 按实例传递；静态文件共享是构建产物非数据 (TPV0092)
