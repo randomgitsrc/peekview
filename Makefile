@@ -576,7 +576,9 @@ debug-seed:
 	@echo "=== 灌入测试数据 (~30s) ==="
 	@set -o pipefail; \
 	mkdir -p $(LOG_DIR); \
-	python3 scripts/seed-debug.py 2>&1 | tee $(LOG_DIR)/debug-seed.log | tail -10 \
+	BASE_URL="http://127.0.0.1:$(if $(PORT),$(PORT),8888)"; \
+	if [ "$(PORT)" = "8888" ]; then echo "  ⚠ PORT=8888 与主 debug 相同，直接用 debug-seed 即可"; fi; \
+	python3 scripts/seed-debug.py $$BASE_URL 2>&1 | tee $(LOG_DIR)/debug-seed.log | tail -10 \
 		|| { echo "✗ seed 失败, last 30 lines:"; tail -30 $(LOG_DIR)/debug-seed.log; exit 1; }
 	@echo "✓ 测试数据已灌入 (alice/bob/carol/dave, dave disabled)"
 
@@ -640,6 +642,7 @@ debug-extra:
 
 debug-extra-stop:
 	@if [ -z "$(PORT)" ]; then echo "✗ 用法: make debug-extra-stop PORT=8889"; exit 1; fi
+	@if [ "$(PORT)" = "8888" ]; then echo "✗ 主 debug 用 make debug-stop；extra 实例请用其他端口"; exit 1; fi
 	@PORT=$(PORT) bash scripts/dev-server.sh stop
 	@rm -rf /tmp/peekview-debug-$(PORT) 2>/dev/null || true
 
