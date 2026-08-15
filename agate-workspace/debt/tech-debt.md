@@ -120,3 +120,23 @@ source: review
 created_at: 2026-08-15
 task_id: TPV0092-mcp-get-entry-fetch
 ```
+
+## DEBT0005
+
+```yaml
+id: DEBT0005
+category: technical
+title: 前端移动端 FileTree e2e 3 例失败（预存，非 TPV0092 引入）
+status: open
+priority: medium
+evidence:
+  - path: agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P6-evidence/debug-test-mcp.log
+  - note: e2e/mcp-server.spec.ts Mobile Chrome 项目 3 例失败（FileTree 渲染），Desktop 全过；CDP 实跑复现；spec 自 v0.7.0 未改
+impact: Mobile Chrome 下 MCP FileTree 相关 e2e 持续失败，掩盖移动端 FileTree 渲染与断言不符
+recommendation: 前端任务跟进：核对移动端 .file-tree 渲染行为与 e2e 断言（viewer 布局/抽屉）
+closure_criteria:
+  - Mobile Chrome FileTree 3 例 e2e 转绿
+source: review
+created_at: 2026-08-15
+task_id: TPV0092-mcp-get-entry-fetch
+```

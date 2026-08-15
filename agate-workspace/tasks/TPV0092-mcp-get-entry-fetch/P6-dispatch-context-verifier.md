@@ -1,0 +1,307 @@
+---
+phase: P6
+task_id: TPV0092-mcp-get-entry-fetch
+type: acceptance
+parent: P5-verification.md
+trace_id: TPV0092-P6-20260815
+status: draft
+---
+
+# P6 派发上下文 — verifier（验收模式）
+
+<!-- AGATE_CARD_START -->
+## 当前阶段卡片：P6
+
+路径：phase-cards/P6-acceptance.md
+---
+# P6 — 验收
+
+> 当前状态：[首次 / 重试 #N / 裁剪跳阶]
+> 裁剪跳阶 → P6 不可裁剪。no_behavior_change 可简化（快速验收），不可省略。
+> `change_type: refactor` 的任务（P1 frontmatter 声明）P6 **换用回归验收口径**（换口径 ≠ 裁 P6，P6 仍不可裁剪）——见下方「refactor 任务：回归验收口径」。
+
+## 如果是首次进入本阶段
+
+1. 派发 verifier subagent → 产出 P6-acceptance.md + P6-evidence/
+   1.1 写 P6-dispatch-context-verifier.md（派发指引：目标/约束/上游关联/输入文件 + 客观查证信息）
+2. UI 任务：派 vision-analyst → 产出 vision-reports/
+3. 主 Agent 逐条核实 BDD 对照结果
+4. **功能验证和 gate 格式都必须满足**（T046 教训：先做功能验证，不要只凑格式）
+5. **运行 `bash $AGATE_ROOT/scripts/check-p6-format.sh --fix "$TASK_DIR/P6-acceptance.md"`** 归一化 PASS/FAIL 大小写和行首空白（verifier 产出后、gate 前，① 自动格式化）
+6. 预跑 check-gate.sh P6 + check-p6-evidence.sh + check-p6-provenance.sh
+7. git add {AGATE_WORKSPACE}/tasks/{Txxx}/（含 .state.yaml + 产出文件，若 .gitignore 忽略需 git add -f）
+   ⚠️ 此时 .state.yaml 的 phase 保持 P6，不要提前写 P7——phase = 本 commit 的产出阶段
+8. git commit -m "wf({Txxx}-P6): {摘要}"（phase=P6，P6 产出含 P6-acceptance.md + P6-evidence/）
+9. P6 commit 完成后进入 P7：**phase 推进 P7 随 P7 产出 commit 一起**（P7-consistency.md 就绪后），不是单独 phase commit
+
+## 如果是重试
+
+确认上一轮失败原因（BDD 不覆盖 / 证据不足 / gate 格式拦截）
+→ 读 agate/rules/state-transitions.md 确认 retry 上限（P6 MAX=2）
+
+## 核心原则 ⚠️
+
+**功能验证和 gate 格式都必须满足。** T046 教训：花 2 小时凑 PASS 格式，没花 5 分钟检查 API 响应头。不接受只满足格式不验证功能，也不接受只验证功能不满足格式。gate 是必要条件（格式不对 → commit 不了），不是充分条件（格式对了 ≠ 功能正确）。
+
+**验收报告记录的是验收时的事实，不是修复后的状态。** P6-acceptance.md 的 PASS/FAIL 声明必须基于 evidence 文件的实际输出。如果验收时 BDD 为 FAIL，写 FAIL——修复后重新验收时再改 PASS。不能在同一个 P6 acceptance 里写"修复后 PASS"。
+
+## 前置条件
+
+- [ ] P1-requirements.md BDD 验收条件完整（含 SCOPE+ 增补）
+- [ ] P1 声明的 capability_requirements 中 ability 为 available
+
+## 派发
+
+- **角色**：verifier（`{agate_root}/assets/execution-roles/verifier.md`）
+- **UI 任务追加**：vision-analyst（`{agate_root}/assets/execution-roles/vision-analyst.md`）
+- **输入**：P1-requirements.md + P5-test-results/
+- **输出**：P6-acceptance.md + P6-evidence/
+
+## 产出规格
+
+### P6-acceptance.md
+
+- BDD 逐条对照，每条只允许 PASS 或 FAIL（不允许"调整/跳过/覆盖"）
+- 所有 PASS 必须有文件引用：`- PASS Bxx: 描述 (p6-bxx.png)` 或响应日志/断言文件
+- UI 任务：操作类 BDD 截图必须互不相同（md5 去重），查询类 BDD 可不截图但须有断言记录文件
+- UI 任务：每条 UI 类 PASS 含 vision 引用：`(vision: vision-reports/bxx.yaml)`
+
+`pass:`/`fail:`/`ui_affected:` 汇总写在文件头 **frontmatter**（`---` 分隔块），不写正文。
+**可直接复制的完整样例**：
+```yaml
+---
+phase: P6
+task_id: TAG0001           # 替换为实际任务编号
+type: acceptance
+parent: P5-verification.md
+trace_id: T001-P6-20260101 # {task_id}-P6-{YYYYMMDD}
+status: draft
+created: 2026-01-01
+agent: verifier
+# ── v2.0 机器汇总 ──
+pass: 28                          # int ≥0
+fail: 0                           # int ≥0
+ui_affected: false                # bool（与 P2 声明一致）
+---
+```
+
+**PASS 行最小格式规范**：
+
+```
+- PASS BDD-NN: {描述} ({证据路径})
+```
+
+证据路径格式：
+- 截图：`(screenshots/{filename}.png)`
+- vision：`(vision: vision-reports/{filename}.yaml)`
+- 其他：`(result.json)` / `(assert.log)` / `(P6-evidence/{filename})` / ...
+- 多文件引用（逗号分隔）：`(file1.json, file2.log)` / `(screenshots/a.png, screenshots/b.png)`
+
+描述文本可自由添加，不影响解析（provenance 脚本用精确正则提取路径）。
+
+**总结行格式**：行首 `- PASS`/`- FAIL` 只用于 BDD 条目，不得用于总结行。总结行用其他格式（如 `**Summary**: 34/34 PASS, 0 FAIL`）。check-p6-format.sh `--fix` 会自动修正违规总结行。
+
+### P6-acceptance.md（refactor 任务：回归验收口径）
+
+> 适用：P1 frontmatter 声明 `change_type: refactor` 的任务（P2-design.md §3.2）。功能任务（缺省）走上方既有口径，不受本节影响。
+
+refactor 任务无新增功能行为可验收，P6 验收口径 = **行为不变声明 + 全量回归全绿 + 关键路径 BDD 逐条**，固定为三段式：
+
+1. **行为不变声明节**：verifier 自声明"本次重构仅改变内部实现，不改外部行为；判定依据 = 全量回归全绿 + 关键路径 BDD 逐条 PASS；**禁止为凑验收数量新增功能性质 BDD**（禁止伪造功能 BDD）"。
+2. **全量回归全绿节**：以"全量回归全绿"为一条关键路径 BDD 的 PASS 行——`- PASS BDD-NN: 全量回归全绿（重构后完整测试套件 0 失败）(P6-evidence/regression.log)`，其中 regression.log 为全量回归套件实跑输出，尾行 `EXIT_CODE: 0`（check-p6-provenance.sh 审计 5 核对）。
+3. **关键路径验收节**：其余关键路径行为不变断言 BDD 逐条 PASS/FAIL（每条带证据引用）。
+
+frontmatter 额外声明 `regression_pass: true`（bool，可选字段）：
+```yaml
+# ── v2.0 机器汇总 ──
+pass: N
+fail: 0
+ui_affected: false
+regression_pass: true      # refactor 口径：全量回归全绿声明（change_type=refactor 时 gate 必校验）
+```
+
+约束：
+- **回归双证是硬校验**：`regression_pass: true` + `P6-evidence/regression.log` 存在是 check-gate.sh P6 对 refactor 任务的强制要求，任一缺失 → gate exit 1（BDD-4）。回归检查独立于关键路径 FAIL 判定，关键路径 PASS 不能豁免。
+- **regression.log 必须被一条 PASS 行引用**（满足 check-p6-provenance.sh 审计 1c 证据引用 + 审计 5 EXIT_CODE 核对）。
+- **禁止新增非 BDD 编号 PASS 行**：check-p6-format.sh 只认 `- PASS|FAIL BDD-N` 行，回归结果不能单列 `- PASS REGRESSION: ...`——"全量回归全绿"作为一条关键路径 BDD 的 PASS 行呈现，多文件证据用逗号分隔。
+- **BDD 编号机制不豁免**：refactor 任务 P1 仍须 ≥1 条"关键路径行为不变断言" BDD，P6 逐条 PASS/FAIL 对照（check-p6-provenance.sh 审计 3 的 PASS+FAIL ≥ P1 BDD 数 对 refactor 不豁免）。
+- **no_behavior_change 不豁免回归双证**：refactor 口径只看 change_type，即使任务声明了 no_behavior_change，回归双证仍强制（BDD-6）。
+- **禁止伪造功能 BDD**：禁止为凑验收数量新增功能性质 BDD——refactor 任务的 BDD 都是关键路径行为不变断言。
+
+### P6-evidence/
+
+- 必须非空，每个文件含实质内容（截图 >1KB，断言文件含实际输出）
+- 不接受 1 行文本文件充数（T046 教训：15 个 1 行 txt 文件凑 provenance 数量）
+- 元素级截图建议使用父级元素 + padding，避免过小截图（≤1KB 虽不阻断但会触发 WARNING）
+- 操作类 BDD 截图必须互不相同（md5 完全重复会被 hook 硬阻断，无例外）。
+  若某个行为差异类 BDD 天然会产出视觉相同的页面（如两个不同查询都命中同一个空状态），
+  优先改用非截图证据（断言日志 / response.json）而非截图，或截图时带上能体现差异的元素
+  （如带时间戳的调试面板、高亮差异区域），确保截图本身逐字节不同。
+  查询类 BDD 本来就可以不截图，这类场景应优先归为查询类而非勉强用截图。
+
+### vision-helper 结论绑定 ⚠️
+
+- `ui_affected: true` 时至少一条 PASS 基于 vision-helper 报告
+- vision-helper 报 `blocker_count > 0`：不能仅用程序化指标（naturalWidth>0, complete=true, HTTP 200）反驳
+- 必须追查根因（curl -I 检查响应头 / DevTools Network / API 日志），追查结果写入 P6-acceptance.md
+
+## gate 规则
+
+```bash
+check-p6-format.sh --fix $TASK_DIR/P6-acceptance.md  # ① 自动格式化（verifier 产出后、gate 前）
+check-gate.sh P6 $TASK_DIR      # FAIL=0 / 总数>0
+check-p6-evidence.sh $TASK_DIR  # 证据目录非空 / UI截图>1KB / md5去重
+check-p6-provenance.sh $TASK_DIR # 证据-结论对应 / dispatch-context审计 / BDD对照
+```
+
+- FAIL > 0 → gate exit 1 → 回 P4
+
+格式问题 → 运行 check-p6-format.sh --fix 归一化 → 再验 gate → … → 通过（⑩迭代循环，格式迭代和 gate 重试共享 retry 预算）
+
+**⚠️ FAIL > 0 时，主 Agent 不能直接改项目源码让它变绿**：P6 是 self-authored gate（判定对象是 verifier 自己写的 P6-acceptance.md），验收阶段本身不应该有代码变更——`pre-commit-gate.sh` 会硬拦截 phase=P6 时暂存的非证据文件（不在 `P6-evidence/` 下的文件）。正确流程：诊断问题出在哪个上游阶段 → 退回该阶段（`agate/rules/state-transitions.md` 回退规则，退回前须先跑 `agate-archive-stale-outputs.sh` 归档当前 P6 产出，或用 `agate-retreat-to.sh` 自动化多步回退）→ 重新派发对应角色 subagent 修复 → 重新走到 P6 时，旧的 P6-acceptance.md/P6-evidence/ 已被归档清空，verifier 必须重新产出真实证据，不存在"挑几条改改、其余沿用旧结论"的空间。**回退落地后必须建 DEBT 条目**（`source: retreat`，`evidence` 引用 retreat 提交哈希，模板 `assets/templates/tech-debt-template.md`——TAG0001 强制，见 `agate/rules/state-transitions.md` 回退规则节）。
+
+## 按包拆分并行（条件触发，受限模式）
+
+> 仅当 P2 packages > 1 且包间无依赖时适用。单包任务跳过本节。
+
+P6 采用**证据并行、验收文件不并行**模式：
+
+1. 各包 verifier 并行跑 BDD 验证，证据写入 P6-evidence/{pkg}/，同时写 P6-evidence/{pkg}/results.md（PASS/FAIL 行 + 证据引用，不进 gate）
+2. 所有 verifier 返回后，派一个汇总 verifier 逐包读取 results.md，转抄整合进唯一的 P6-acceptance.md
+3. 汇总 verifier 确认各包 BDD 编号合集 = P1 全部 BDD 编号，无重复/遗漏，**必须在 P6-acceptance.md 中记录交叉核对结果**
+
+基础设施隔离同 P5（端口/数据库/截图目录独立）。
+
+## 推进条件（全部满足才写 phase: P7）
+
+- [ ] 所有 BDD PASS（FAIL=0）
+- [ ] P6-evidence/ 目录非空 + 证据文件被引用
+- [ ] UI 任务：vision-helper blocker_count=0；blocker>0 时须在 P6-acceptance.md 写明追查命令 + 输出 + 根因结论（仅写"已追查"不合规）
+- [ ] provenance 审计通过
+
+## 常见错误（T046 实证）
+
+1. **用 DOM 属性替代视觉验证**：img.src 被重写 = 图片显示正常。不对——还有 Content-Type、CORS、CSP 等 100 种原因导致图片不渲染。**vision-helper 说破了就是破了**
+2. **凑 PASS 数量**：deferred BDD 标 PASS、用 1 行文本文件充证据 → provenance 审计能通过但功能不对
+3. **只验证中间指标不验证用户结果**：naturalWidth>0, complete=true, API 返回 200 → 结论"功能正常"。用户看到的：破图。**问自己：用户看到了什么**
+4. **收到视觉否定先反驳**：vision-helper 报异常 → 先 curl -I 查响应头 → 再决定是 vision 误报还是真问题。T046：三次视觉否定被三次程序化指标反驳，15 分钟浪费
+5. **验收失败自己动手改代码**：这和上面几条本质是同一类问题（判定证据和判定对象由同一人在同一时间点生产），只是这次改的是真代码而非假 markdown，反而更难被察觉。正确动作是退回重新派发，见上方 FAIL > 0 的处理说明
+
+gate 不过 ≠ 你失败了。红灯指向工作/设计的问题，不指向你。正确动作是诊断→退回/重试/PAUSED，不是修改产出让它变绿。
+
+## 下游影响
+
+- P7 一致性检查依赖 P6 的 BDD 对照结果
+- 验收结果是判定任务成败的最终依据——P8 发布只是机械步骤
+
+## 自查≠gate
+写完验证脚本后应自跑确认脚本可执行（自查），但自查通过 ≠ P6 gate 通过。
+P6 gate 由主 Agent 亲自跑 gate 脚本（check-gate.sh P6 + check-p6-evidence.sh + check-p6-provenance.sh），验证的是 verifier subagent 的产出。结果以主 Agent 跑的 gate 脚本为准。
+不要在返回中声称"验收已通过"或"全部 BDD PASS"——只返回路径 + 摘要。
+
+> 完成 → 读 phase-cards/P7-consistency.md
+<!-- AGATE_CARD_END -->
+
+## 目标
+
+按 P6 模式逐条实跑 P1 的 26 条 BDD（Given/When/Then），产出 `P6-acceptance.md`（每条 PASS/FAIL 二值 + 证据引用）+ `P6-evidence/`（证据目录）。**自查≠gate**。
+
+## 环境准备（⚠️ 已由主 Agent 完成，禁止 subagent 启动/停止任何服务）
+
+> **重要**：以下环境已全部就绪。你**不得**执行任何启动/停止/重启服务的命令（make debug-* / uvicorn / setsid / nohup / Popen）——上一轮 subagent 因启动 :8889 卡死被终止。所有服务已在运行，你只做只读验收 + 写脚本/证据。
+
+1. **:8888 在线**（新代码，重启加载 purify/share 实现）：
+   - seed 数据（t075-json/yaml/xml/unicode-filenames 等 23 entries）
+   - 私有 entry `t094-p6-private`（alice 所有，is_public=false）
+   - 分享 token：`DZvZ8Gu_Td5D4Fut`（share_url=https://peek.gsis.top/t094-p6-private?share=DZvZ8Gu_Td5D4Fut）
+   - base64 entry `t094-p6-base64`（公开，含 data:image markdown）——raw ?purify=true 已验证生效
+   - alice token 存于 /tmp/pv8888-token.txt（登录用）
+2. **API key**：`pv_QLpdLuMqffSan5nYMqhDOhA8D9851mGR`（alice，供 MCP 集成测试 PEEKVIEW_API_KEY）
+3. **:8889 在线**（第二实例，独立数据 /tmp/peekview-debug-8889/）：
+   - 公开 entry `ext-public`（hello.txt）
+   - 私有 entry `ext-private-2`（carol8889 所有，is_public=false）
+   - 注册用户 carol8889 / testpass123
+4. **CDP :18800 在线**（如需浏览器）
+5. **非 PeekView mock**：验收脚本内起本地 http 服务器（Node http 或 python http.server 均可——**脚本内临时起，脚本结束自动关**，不占用固定端口即可；如脚本内起，用 0 端口随机分配并在脚本内自行管理生命周期，避免残留）
+
+## 环境数据清单（验收脚本直接引用）
+
+| 数据 | 值 |
+|------|-----|
+| :8888 URL | http://127.0.0.1:8888 |
+| :8889 URL | http://127.0.0.1:8889 |
+| 公开 entry | t075-json（9 节点）/ ext-public / t094-p6-base64 |
+| 私有 entry | t094-p6-private（:8888）/ ext-private-2（:8889）|
+| share token | DZvZ8Gu_Td5D4Fut |
+| API key | pv_QLpdLuMqffSan5nYMqhDOhA8D9851mGR |
+
+## BDD 验收方式（26 条）
+
+大部分 BDD 已由 P3 单测/集成测试覆盖逻辑正确性，P6 用**真实后端 + 真实 MCP client** 实跑（不再 mock）验证端到端：
+
+| BDD 组 | 验收方式 |
+|--------|---------|
+| BDD-1/2/3/4/5 URL 形态解析 | 真实 MCP client 调 getEntry（:8888），传入各形态引用，断言返回结构化 JSON + 内容 |
+| BDD-6/7/8 跨 host | :8889 第二实例：公开 entry 可读 / 私有无 token 拒绝 / mock 服务器断言无 Authorization 头 |
+| BDD-9/10/11 SSRF | 本地 mock 非 PeekView 响应 → 拒绝不泄体；ftp:// 等协议 → 请求前拒绝；http 非 localhost → 拒绝 |
+| BDD-12/13/14 净化 | 发布 base64 entry → getEntry 返回占位符保 alt；二进制 entry → content=null；普通文本原样 |
+| BDD-15~19 返回策略 | 单文件全量 / >200KB warning / 多文件 32KB 阈值 / file= 取单个（真实 entry 构造） |
+| BDD-20 publish_files raw_url | publishFiles 调真实 :8888 → 返回含 Raw URL |
+| BDD-21/22 raw ?share= | :8888 raw 端点直接 curl：有效 share 200 / 无效 404 |
+| BDD-23/24 raw ?purify= | :8888 raw ?purify=true 净化 / 无 query 向后兼容 |
+| BDD-25 token 不打印 | 错误消息不含 token 明文（无效 share 场景） |
+| BDD-26 fetch 超时 | 本地挂起服务器 → 超时错误 |
+
+**实现方式建议**：写一个 Node 验收脚本（P6-evidence/scripts/verify-tpv0092.ts 或 .mjs）：
+- 用真实 PeekViewClient（import packages/mcp-server/src/client.ts）或直接 fetch 后端
+- 逐条 BDD 断言，输出 PASS/FAIL + 证据（日志/JSON）
+- 或拆分：HTTP 层（curl/python 脚本验证后端 BDD-21~24）+ MCP 层（Node 脚本验证 MCP BDD-1~20,25,26）
+
+## 约束
+
+1. **验收环境**：:8888（隔离）+ :8889（第二实例隔离）+ Chrome CDP :18800（如需）；严禁触碰 :8080/~/.peekview/
+2. **P6 阶段不引入源码变更**：验收脚本放 P6-evidence/scripts/ 或 /tmp，不放 packages/mcp-server/src/
+3. **P6-evidence/ 证据要求**：每条 PASS 引用的文件必须存在；断言日志含实际输出（非空）
+4. **PASS 行格式**：`- PASS BDD-NN: {描述} ({证据路径})`（行首，PASS 后空格）
+5. **总结行**：`**Summary**: 26/26 PASS, 0 FAIL`
+6. **make debug-test-mcp**（P2 gate_commands.P6）：需 PEEKVIEW_API_KEY——从 :8888 创建后 export 再跑；集成测试/E2E 结果记录
+7. 产出写 `agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P6-acceptance.md` + `P6-evidence/`
+8. 每读完一个输入文件/完成关键步骤，追加 `P6-progress.md`
+
+## 输入文件
+
+1. `agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P1-requirements.md`（26 条 BDD——验收依据）
+2. `agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P2-design.md`（§5 gate_commands + env_constraints）
+3. `agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P3-test-cases.md`（测试映射 + fixture）
+4. `agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P5-test-results/`（技术验证结果，可复用）
+5. `packages/mcp-server/src/client.ts` + `src/tools/getEntry.ts`（真实 client 用法）
+6. `AGENTS.md`（铁律：MCP 测试用临时 HOME/debug backend；不碰 :8080）
+
+## 验证手段
+
+- 真实 debug 后端 HTTP + 真实 MCP client 调用（非 mock）
+- 断言日志落 P6-evidence/
+
+## 产出规格
+
+P6-acceptance.md frontmatter：
+```yaml
+---
+phase: P6
+task_id: TPV0092-mcp-get-entry-fetch
+type: acceptance
+parent: P5-verification.md
+trace_id: TPV0092-P6-20260815
+status: draft
+created: 2026-08-15
+agent: verifier
+# ── v2.0 机器汇总 ──
+pass: 26
+fail: 0
+ui_affected: false
+---
+```
+
+## 返回
+
+路径 + 一句话摘要（BDD 验收 X/26 通过 + debug-test-mcp 结果）。
