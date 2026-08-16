@@ -1,0 +1,1 @@
+{"bdd":"BDD-2","name":"重复星标不重复计数","status":"PASS","detail":"star_count 保持 1, already_starred=True","star_count":"1","already_starred":"True"}

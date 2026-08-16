@@ -1,0 +1,1 @@
+{"bdd":"BDD-4","name":"匿名禁星标(401)","status":"PASS","detail":"anonymous POST→401, star_count 保持 0","http":"401","star_count":"0"}

@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-18-starred-tab.png
+  summary:
+    blocker_count: 0
+    text: |
+      This is a screenshot of a web application user interface named **PeekView**, featuring a grid dashboard of generated preview builds or UI components.  ---  ### 1. Top Header Bar * **Left:**   * **Logo & Title:** A blue circular icon with a white letter **"P"**, followed by the text **`PeekView`**. * **Right:** 
+  bdd_results:
+    - id: bdd-18-starred-tab
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

@@ -1,0 +1,1 @@
+{"bdd":"BDD-27","name":"存量 archived 上线日起算倒计时","status":"PASS","detail":"pytest exit=0; col=1 orphan_archived=0 user_version=2","pytest_exit":"0","column":"1","orphan_archived":"0","user_version":"2"}

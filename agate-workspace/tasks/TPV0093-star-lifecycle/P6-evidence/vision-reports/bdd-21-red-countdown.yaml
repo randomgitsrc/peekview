@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-21-red-countdown.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image displays a clean, modern web user interface, likely a dashboard or management page for an application called "PeekView". The interface is in Chinese.  **Header** At the very top is a white navigation bar. - **Top-left:** A logo consisting of a blue square with a white "P" inside, followed by the bold text "PeekView". - **Top-right:** A square button with a rounded border containing a crescent moon icon, indicating a dark mode toggle.  **Main Content Area** 
+  bdd_results:
+    - id: bdd-21-red-countdown
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

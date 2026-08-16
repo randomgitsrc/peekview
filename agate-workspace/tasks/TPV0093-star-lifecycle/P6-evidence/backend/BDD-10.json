@@ -1,0 +1,1 @@
+{"bdd":"BDD-10","name":"最后星标取消剩余≤0下周期删除","status":"PASS","detail":"pytest test_star_lifecycle.py -k bdd_10 exit=0 (freezegun)","pytest_exit":"0","log":"pytest-lifecycle.log"}

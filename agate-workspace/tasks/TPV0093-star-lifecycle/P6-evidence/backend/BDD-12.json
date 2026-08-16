@@ -1,0 +1,1 @@
+{"bdd":"BDD-12","name":"作者删除生成墓碑且星标用户可见","status":"PASS","detail":"tombstone rows=1 reason=author_deleted; bob /stars 含墓碑卡片","tombstones":"1","in_star_list":"True"}

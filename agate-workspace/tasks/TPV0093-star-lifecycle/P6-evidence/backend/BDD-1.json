@@ -1,0 +1,1 @@
+{"bdd":"BDD-1","name":"星标公开内容计数+1","status":"PASS","detail":"star_count 0→1, is_starred=True","pre":"0","post":"1","is_starred":"True"}

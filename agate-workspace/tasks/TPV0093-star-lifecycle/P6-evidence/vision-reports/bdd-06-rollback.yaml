@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-06-rollback.png
+  summary:
+    blocker_count: 0
+    text: |
+      ### Overall Overview The image shows a user interface of a web application called **PeekView**, which appears to be a document, paste, or code sharing platform. The interface consists of a top navigation header, an information/metadata bar, and a central white card displaying content against a light grey background.  ---  ### Top Navigation Bar Located at the top on a white background:  
+  bdd_results:
+    - id: bdd-06-rollback
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

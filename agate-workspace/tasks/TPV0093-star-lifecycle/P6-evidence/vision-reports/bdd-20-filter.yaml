@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-20-filter.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image is a screenshot of a web application user interface titled **PeekView**, displaying a management page for starred/favorited items ("我的星标").   ---  ### **1. Top Navigation Bar** * **Left side:**    * A blue rounded square logo with a white capital letter **P**.   * Brand name text: **PeekView** (bold black text). 
+  bdd_results:
+    - id: bdd-20-filter
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

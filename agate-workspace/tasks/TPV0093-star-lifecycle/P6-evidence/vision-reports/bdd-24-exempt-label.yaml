@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-24-exempt-label.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image displays a screenshot of a web application interface called "PeekView". It appears to be a dashboard for managing files or UI components, featuring a clean, modern design with a light grey background and white cards.  **Header Section** *   **Top Left:** A logo consisting of a blue square with a white "P" inside, followed by the bold text "PeekView". *   **Top Right:** A user profile section showing a blue circle with the letter "A", the name "alice", and a blue badge labeled "ADMIN". Next to this is a button with a moon icon, likely for toggling dark mode.  **Navigation and Toolbar** *   **Tabs:** Below the header, there is a row of tabs: "All", "Mine", "Archived", and "Starred". The tabs "Mine" and "Archived" are both styled with blue text and a blue underline, indicating they are currently selected or active filters. "All" and "Starred" are grey. 
+  bdd_results:
+    - id: bdd-24-exempt-label
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

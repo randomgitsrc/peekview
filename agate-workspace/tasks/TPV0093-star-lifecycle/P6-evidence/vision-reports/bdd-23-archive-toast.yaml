@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-23-archive-toast.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image is a screenshot of a web application interface, specifically a page view for a text entry on a platform called "PeekView". The layout is clean and functional, resembling a pastebin or a note-sharing service.  Here is a breakdown of the visual elements from top to bottom:  **1. Header and Navigation Bar** *   **Top Left:** A logo consisting of a blue square with a white "P" inside, followed by the bold text "PeekView". Next to it is the page title: "P6 UI p6ui-1786888317208-toast". *   **Top Center (Toast Notification):** A light green rectangular box floats at the top center. It contains the text "该内容已归档，星标后可长期保存" (This content has been archived, star it to keep it long-term) followed by a close "x" icon. *   **Top Right (Toolbar):** A row of icons and user info: 
+  bdd_results:
+    - id: bdd-23-archive-toast
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

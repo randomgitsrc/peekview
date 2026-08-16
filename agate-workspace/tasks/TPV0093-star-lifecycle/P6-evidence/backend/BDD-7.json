@@ -1,0 +1,1 @@
+{"bdd":"BDD-7","name":"归档期星标豁免清理","status":"PASS","detail":"pytest test_star_lifecycle.py -k bdd_7 exit=0 (freezegun)","pytest_exit":"0","log":"pytest-lifecycle.log"}

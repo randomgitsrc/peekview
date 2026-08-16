@@ -1,0 +1,1 @@
+{"bdd":"BDD-9","name":"取消星标恢复剩余倒计时","status":"PASS","detail":"pytest test_star_lifecycle.py -k bdd_9 exit=0 (freezegun)","pytest_exit":"0","log":"pytest-lifecycle.log"}

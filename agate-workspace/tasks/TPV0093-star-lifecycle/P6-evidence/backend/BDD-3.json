@@ -1,0 +1,1 @@
+{"bdd":"BDD-3","name":"取消星标计数-1","status":"PASS","detail":"star_count 1→0, is_starred=False","pre":"1","post":"0","is_starred":"False"}

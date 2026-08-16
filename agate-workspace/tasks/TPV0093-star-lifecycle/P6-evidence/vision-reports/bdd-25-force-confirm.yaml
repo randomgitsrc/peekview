@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-25-force-confirm.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image displays a web application interface, specifically a dashboard for a service called "PeekView." It appears to be a file sharing or pastebin management screen, showing a grid of items (likely shared files or "pastes") with various statuses. The interface uses a clean, light theme with blue accents.  **Header Section** *   **Top Left:** A logo consisting of a blue square with a white "P" inside, followed by the text "PeekView" in bold black. *   **Top Right:** A user profile area showing a blue circle avatar with "A", the name "alice", and a blue badge labeled "ADMIN". Next to it is a circular icon with a moon symbol (likely a dark mode toggle).  **Navigation and Filter Bar** *   Below the header is a row of tabs: "All", "Mine", "Archived", "Starred". 
+  bdd_results:
+    - id: bdd-25-force-confirm
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

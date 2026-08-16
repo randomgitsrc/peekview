@@ -1,0 +1,1 @@
+{"bdd":"BDD-11","name":"作者删除强制覆盖豁免","status":"PASS","detail":"author delete→200, detail=404, raw=404 均 404","delete":"200","detail":"404","raw":"404"}

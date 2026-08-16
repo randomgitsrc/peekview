@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-14-tombstone-card.png
+  summary:
+    blocker_count: 0
+    text: |
+      This is a screenshot of a web application user interface for a service called **PeekView**. The page displays a user's starred or bookmarked items list titled **“我的星标”** (My Starred Items).  ---  ### 1. Top Header Navigation Bar * **Left:** A blue circular logo featuring a white letter **"P"**, followed by the bold brand text **PeekView**. * **Right:** A square icon button with rounded corners containing a moon icon (dark mode toggle switch). * **Background:** Clean white bar spanning the width of the screen. 
+  bdd_results:
+    - id: bdd-14-tombstone-card
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

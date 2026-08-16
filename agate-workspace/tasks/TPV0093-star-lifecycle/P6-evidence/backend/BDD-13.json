@@ -1,0 +1,1 @@
+{"bdd":"BDD-13","name":"墓碑保留至最后引用移除","status":"PASS","detail":"tombstone 1→1(1 ref left)→0","before":"1","mid":"1","after":"0"}

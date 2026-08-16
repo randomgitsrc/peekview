@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-26-force-tombstone.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image displays a user interface for a web application called "PeekView," specifically showing a management page for starred or bookmarked items. The interface is in Chinese. The overall design is clean, with a white and light grey color scheme, using blue for active states and links, and red for destructive actions.  Here is a breakdown of the visual elements from top to bottom:  **Header Bar** *   **Top Left:** A logo consisting of a blue square with a white "P" inside, followed by the bold text "PeekView". *   **Top Right:** A square button with a rounded border containing a moon/sun icon, likely a dark mode toggle.  
+  bdd_results:
+    - id: bdd-26-force-tombstone
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"

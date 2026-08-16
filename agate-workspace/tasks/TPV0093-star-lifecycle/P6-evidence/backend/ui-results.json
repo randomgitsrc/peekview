@@ -1,0 +1,79 @@
+[
+  {
+    "id": "BDD-6",
+    "name": "乐观更新失败回滚",
+    "status": "PASS",
+    "detail": "请求失败后 count 1→1, aria-pressed true→true（回滚）",
+    "screenshot": "bdd-06-rollback-1786888317208.png"
+  },
+  {
+    "id": "BDD-19",
+    "name": "匿名不显示 Starred tab",
+    "status": "PASS",
+    "detail": "匿名 tab-starred count=0",
+    "screenshot": "bdd-19-anon-no-tab-1786888317208.png"
+  },
+  {
+    "id": "BDD-18",
+    "name": "登录可见 Starred tab 且列表仅含星标",
+    "status": "PASS",
+    "detail": "owner-tab count=4 (expect 4), 星标列表卡片=18",
+    "screenshot": "bdd-18-starred-tab-1786888317208.png"
+  },
+  {
+    "id": "BDD-14",
+    "name": "墓碑卡片展示失效原因且可移除",
+    "status": "PASS",
+    "detail": "reason-detail=true, remove=true, 无正文入口=true",
+    "screenshot": "bdd-14-tombstone-card-1786888317208.png"
+  },
+  {
+    "id": "BDD-20",
+    "name": "管理页分类筛选",
+    "status": "PASS",
+    "detail": "all=present, active=present, expiring=present, expired=present, expired tab 墓碑=1, all 勾选条数=19",
+    "screenshot": "bdd-20-filter-1786888317208.png"
+  },
+  {
+    "id": "BDD-21",
+    "name": "红色倒计时标签",
+    "status": "PASS",
+    "detail": "text=\"剩余 3 天· 豁免中\", color=rgb(207, 34, 46), redOk=true",
+    "screenshot": "bdd-21-red-countdown-1786888317208.png"
+  },
+  {
+    "id": "BDD-22",
+    "name": "批量移除",
+    "status": "PASS",
+    "detail": "勾选 1 条, batch-enabled=true, 移除后墓碑=0",
+    "screenshot": "bdd-22-batch-remove-1786888317208.png"
+  },
+  {
+    "id": "BDD-23",
+    "name": "归档期星标即时 Toast",
+    "status": "PASS",
+    "detail": "toast: \"该内容已归档，星标后可长期保存\" (before=0)",
+    "screenshot": "bdd-23-archive-toast-1786888317208.png"
+  },
+  {
+    "id": "BDD-24",
+    "name": "作者 Archived 显示豁免标签",
+    "status": "PASS",
+    "detail": "text=\"因被 1 位用户星标，已暂停自动删除\"",
+    "screenshot": "bdd-24-exempt-label-1786888317208.png"
+  },
+  {
+    "id": "BDD-25",
+    "name": "强制删除二次确认",
+    "status": "PASS",
+    "detail": "confirm=\"此内容已被 1 位用户星标，确认删除后这些收藏将变为\"作者已删除\"。确认删除取消…\", 确认前 entry 仍存在=true",
+    "screenshot": "bdd-25-force-confirm-1786888317208.png"
+  },
+  {
+    "id": "BDD-26",
+    "name": "强制删除后星标用户见作者已删除墓碑",
+    "status": "PASS",
+    "detail": "entry 404=true, bob 墓碑=2, watermark=\"作者已删除\"",
+    "screenshot": "bdd-26-force-tombstone-1786888317208.png"
+  }
+]

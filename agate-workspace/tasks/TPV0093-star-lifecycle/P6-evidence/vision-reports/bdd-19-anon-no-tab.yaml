@@ -1,0 +1,10 @@
+vision_analysis:
+  image: bdd-19-anon-no-tab.png
+  summary:
+    blocker_count: 0
+    text: |
+      This image is a screenshot of a web application user interface named **PeekView**. The interface features a modern, clean, light-mode dashboard displaying a grid layout of document or project cards.  ---  ### 1. Top Header Bar Located at the very top, spanning horizontally across the page: *   **Left Side:**      *   A blue rounded square logo containing a white letter "**P**". 
+  bdd_results:
+    - id: bdd-19-anon-no-tab
+      result: pass
+      note: "vision 分析无阻断性视觉问题（DOM 自动化断言已 PASS，vision 为辅助证据）"
