@@ -1,18 +1,24 @@
 import { ref } from 'vue'
 
+export interface ToastAction {
+  label: string
+  to: string
+}
+
 export interface ToastMessage {
   id: number
   message: string
   variant: 'success' | 'warning' | 'error'
   createdAt: number
+  action?: ToastAction
 }
 
 const messages = ref<ToastMessage[]>([])
 let nextId = 0
 
-function show(message: string, variant: ToastMessage['variant'] = 'success'): void {
+function show(message: string, variant: ToastMessage['variant'] = 'success', action?: ToastAction): void {
   const id = nextId++
-  const toast: ToastMessage = { id, message, variant, createdAt: Date.now() }
+  const toast: ToastMessage = { id, message, variant, createdAt: Date.now(), action }
   messages.value.push(toast)
 
   // Auto-dismiss after 3 seconds

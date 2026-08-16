@@ -133,6 +133,7 @@ async def list_entries(
     tags: str | None = Query(None),
     status: str | None = Query(None),
     owner: str | None = Query(None, description="Filter: 'me' for own entries"),
+    starred: bool = Query(False, description="List the current user's starred entries"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: User | None = Depends(get_current_user),
@@ -144,6 +145,8 @@ async def list_entries(
         raise ParameterValidationError(
             f"Invalid status value: {status}. Must be one of: {', '.join(sorted(valid_status_values))}"
         )
+    if starred and current_user is None:
+        raise AuthenticationError("Authentication required to list starred entries")
     tag_list = tags.split(",") if tags else None
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
@@ -156,6 +159,7 @@ async def list_entries(
         current_user_id=current_user_id,
         is_admin=is_admin,
         owner=owner,
+        starred=starred,
     )
 
     channel = _detect_channel(request)
@@ -414,6 +418,50 @@ async def delete_entry(
             is_admin=is_admin,
         )
     return {"ok": True}
+
+
+@router.post("/{slug}/star")
+@limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
+async def star_entry(
+    slug: str,
+    request: Request,
+    current_user: User = Depends(require_auth),
+):
+    """Star an entry. Requires readability (BLOCKER-2): unreadable entries
+    (private non-owner, archived non-star, unknown slug) return 404 and the
+    star is refused — preventing self-authorization and slug probing.
+    """
+    service = request.app.state.entry_service
+    star_service = request.app.state.star_service
+    entry = service.get_entry(
+        slug, current_user_id=current_user.id, is_admin=current_user.is_admin
+    )
+    return star_service.star(entry.id, current_user.id)
+
+
+@router.delete("/{slug}/star")
+@limiter.shared_limit(entries_rate_limit, scope="entries_write", override_defaults=False)
+async def unstar_entry(
+    slug: str,
+    request: Request,
+    current_user: User = Depends(require_auth),
+):
+    """Unstar an entry.
+
+    F2：已有星标（活或墓碑绑定）→ 直接 unstar（N9：转私有/archived 后取消星标
+    仍 200，无读权限门槛）；无星标 → 回退 get_entry 可读性校验，不可读 → 404，
+    消除 DELETE /star 的 slug 存在性 oracle（未知/不可读 slug 不再 200）。
+    """
+    service = request.app.state.entry_service
+    star_service = request.app.state.star_service
+    entry = service.get_entry_by_slug(slug)
+    if not entry:
+        raise NotFoundError(f"Entry not found: {slug}")
+    if not star_service.has_star(entry.id, current_user.id):
+        service.get_entry(
+            slug, current_user_id=current_user.id, is_admin=current_user.is_admin
+        )
+    return star_service.unstar(entry.id, current_user.id)
 
 
 @router.get("/{slug}/download")

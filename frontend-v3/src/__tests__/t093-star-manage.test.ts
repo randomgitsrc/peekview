@@ -13,60 +13,68 @@
  *   tombstone-card / tombstone-remove / tombstone-reason / star-checkbox /
  *   stars-batch-remove / stars-loading / stars-error / stars-empty-{...}。
  * 测试补充 testid：star-countdown（红色倒计时标签，文本"剩余X天"）。
+ *
+ * r4（TPV0093-P4-r4）：mock 形状与 /api/v1/stars 真实后端契约对齐——
+ *   真实 client（api.listStars/api.removeStars）跑 transform，mock 只替换
+ *   axios.get/delete（raw snake_case + entry_id + 嵌套 tombstone），
+ *   整条 raw → transform → store → 渲染链路被覆盖（C1 集成用例）。
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { api } from '@/api/client'
-import type { User } from '@/types'
 
-vi.mock('@/api/client', () => ({
-  api: {
-    listStars: vi.fn(),
-    removeStars: vi.fn(),
-    logout: vi.fn(),
-    login: vi.fn(),
-    register: vi.fn(),
-    getMe: vi.fn(),
-    listEntries: vi.fn(),
-    deleteEntry: vi.fn(),
-    toggleEntryVisibility: vi.fn(),
-    getEntry: vi.fn(),
-    getFileContent: vi.fn(),
-  },
-}))
-
-const mockListStars = api.listStars as ReturnType<typeof vi.fn>
-const mockRemoveStars = api.removeStars as ReturnType<typeof vi.fn>
-
-const USER: User = { id: 1, username: 'alice', displayName: null, isActive: true, isAdmin: false, createdAt: '' }
+type AxiosClient = { get: unknown; delete: unknown }
+const rawClient = (api as unknown as { client: AxiosClient }).client
+const originalGet = rawClient.get
+const originalDelete = rawClient.delete
 
 function makeStarItem(overrides: Record<string, unknown> = {}) {
   return {
     type: 'entry',
-    id: 1,
+    entry_id: 1,
     slug: 'starred-1',
     summary: 'Starred entry 1',
     status: 'active',
-    starCount: 3,
-    isStarred: true,
+    is_public: true,
+    owner_id: 1,
+    username: 'alice',
+    starred_at: '2026-08-01T00:00:00Z',
+    star_count: 3,
+    is_starred: true,
+    expires_at: null,
+    archived_at: null,
     countdown: null,
+    tombstone: null,
     ...overrides,
   }
 }
 
 function makeTombstoneItem(overrides: Record<string, unknown> = {}) {
+  const { tombstone: tombstoneOverrides, ...rest } = overrides as {
+    tombstone?: Record<string, unknown>
+    [k: string]: unknown
+  }
   return {
     type: 'tombstone',
-    id: 101,
+    entry_id: 101,
     slug: 'deleted-entry',
-    title: 'Deleted entry',
-    deletedBy: 'alice',
-    deletedAt: '2026-08-01T00:00:00Z',
-    reason: 'author_deleted',
-    ...overrides,
+    summary: 'Deleted entry',
+    starred_at: '2026-08-01T00:00:00Z',
+    tombstone: {
+      id: 101,
+      entry_id: 101,
+      slug: 'deleted-entry',
+      title: 'Deleted entry',
+      cover: null,
+      deleted_by: 'alice',
+      deleted_at: '2026-08-01T00:00:00Z',
+      reason: 'author_deleted',
+      ...(tombstoneOverrides ?? {}),
+    },
+    ...rest,
   }
 }
 
@@ -84,7 +92,9 @@ async function mountManage(items: unknown[], filter?: string) {
   await router.push(filter ? `/stars?filter=${filter}` : '/stars')
   await router.isReady()
 
-  mockListStars.mockResolvedValue({ items, total: items.length })
+  const client = (api as unknown as { client: AxiosClient }).client
+  client.get = vi.fn().mockResolvedValue({ data: { items, total: items.length } })
+  client.delete = vi.fn().mockResolvedValue({ data: { removed: items.length } })
 
   const StarManageView = (await import('@/views/StarManageView.vue')).default
   const wrapper = mount(StarManageView, {
@@ -94,13 +104,32 @@ async function mountManage(items: unknown[], filter?: string) {
         ThemeToggle: true,
         AuthButton: true,
         UserMenu: true,
-        ConfirmDialog: true,
       },
     },
   })
   await flushPromises()
   return { wrapper, router }
 }
+
+function clickDialogConfirm(): void {
+  const btn = document.body.querySelector<HTMLElement>('.confirm__btn--destructive')
+  if (!btn) throw new Error('ConfirmDialog confirm button not found in document.body')
+  btn.click()
+}
+
+function lastRemoveEntryIds(): number[] {
+  const client = (api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client
+  const config = client.delete.mock.calls[0][1] as { data: { entry_ids: number[] } }
+  return config.data.entry_ids
+}
+
+afterEach(() => {
+  const client = (api as unknown as { client: AxiosClient }).client
+  client.get = originalGet
+  client.delete = originalDelete
+  vi.restoreAllMocks()
+  document.body.innerHTML = ''
+})
 
 describe('StarManageView — BDD-14: 墓碑卡片展示失效原因且可移除', () => {
   beforeEach(() => {
@@ -130,16 +159,18 @@ describe('StarManageView — BDD-14: 墓碑卡片展示失效原因且可移除'
     expect(wrapper.text()).toMatch(/作者已删除|author_deleted|已失效/)
   })
 
-  it('TC-BDD14-04: 点击墓碑移除按钮 → api.removeStars 包含该墓碑 id', async () => {
-    mockRemoveStars.mockResolvedValue({ removed: 1 })
-    const { wrapper } = await mountManage([makeTombstoneItem({ id: 101 })])
+  it('TC-BDD14-04: 点击墓碑移除按钮 → 二次确认后 api.removeStars 传递 entry_id（来自墓碑嵌套契约）', async () => {
+    const { wrapper } = await mountManage([makeTombstoneItem({ entry_id: 101 })])
 
     await wrapper.find('[data-testid="tombstone-remove"]').trigger('click')
     await flushPromises()
+    expect((api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client.delete).not.toHaveBeenCalled()
 
-    expect(mockRemoveStars).toHaveBeenCalled()
-    const arg = mockRemoveStars.mock.calls[0][0]
-    expect(Array.isArray(arg) ? arg : arg.entryIds).toContain(101)
+    clickDialogConfirm()
+    await flushPromises()
+
+    expect((api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client.delete).toHaveBeenCalled()
+    expect(lastRemoveEntryIds()).toContain(101)
   })
 })
 
@@ -159,8 +190,8 @@ describe('StarManageView — BDD-20: 星标管理页分类筛选', () => {
 
   it('TC-BDD20-02: 点击"即将失效"tab → 仅显示 expiring 分类条目（含"剩余"标签）', async () => {
     const { wrapper } = await mountManage([
-      makeStarItem({ id: 1, summary: 'Healthy', countdown: null }),
-      makeStarItem({ id: 2, summary: 'Expiring soon', countdown: { status: 'running', remainingDays: 3 } }),
+      makeStarItem({ entry_id: 1, summary: 'Healthy', countdown: null }),
+      makeStarItem({ entry_id: 2, summary: 'Expiring soon', countdown: { status: 'running', remaining_days: 3, archive_delete_at: null } }),
     ])
 
     await wrapper.find('[data-testid="stars-tab-expiring"]').trigger('click')
@@ -172,8 +203,8 @@ describe('StarManageView — BDD-20: 星标管理页分类筛选', () => {
 
   it('TC-BDD20-03: 点击"已失效或已删除"tab → 墓碑卡片可见', async () => {
     const { wrapper } = await mountManage([
-      makeStarItem({ id: 1, summary: 'Live' }),
-      makeTombstoneItem({ id: 101, title: 'Gone' }),
+      makeStarItem({ entry_id: 1, summary: 'Live' }),
+      makeTombstoneItem({ entry_id: 101, tombstone: { title: 'Gone' } }),
     ])
 
     await wrapper.find('[data-testid="stars-tab-expired"]').trigger('click')
@@ -189,6 +220,34 @@ describe('StarManageView — BDD-20: 星标管理页分类筛选', () => {
     const empty = wrapper.find('[data-testid="stars-empty-expired"]')
     expect(empty.exists()).toBe(true)
   })
+
+  it('TC-BDD20-05: status=expired 且 remainingDays<7 的条目不落入"即将失效"分类（守卫）', async () => {
+    const { wrapper } = await mountManage([
+      makeStarItem({ entry_id: 1, summary: 'Dead', countdown: { status: 'expired', remaining_days: 2, archive_delete_at: null } }),
+    ])
+
+    await wrapper.find('[data-testid="stars-tab-expiring"]').trigger('click')
+    await flushPromises()
+
+    const empty = wrapper.find('[data-testid="stars-empty-expiring"]')
+    expect(empty.exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Dead')
+    expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
+  })
+
+  it('TC-BDD20-06: paused 且 remainingDays=0 的条目不落入"即将失效"分类（0 < 下界）', async () => {
+    const { wrapper } = await mountManage([
+      makeStarItem({ entry_id: 1, summary: 'Exempt', countdown: { status: 'paused', remaining_days: 0, archive_delete_at: null } }),
+    ])
+
+    await wrapper.find('[data-testid="stars-tab-expiring"]').trigger('click')
+    await flushPromises()
+
+    const empty = wrapper.find('[data-testid="stars-empty-expiring"]')
+    expect(empty.exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Exempt')
+    expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
+  })
 })
 
 describe('StarManageView — BDD-21: 即将失效条目显示红色倒计时标签', () => {
@@ -198,7 +257,7 @@ describe('StarManageView — BDD-21: 即将失效条目显示红色倒计时标�
 
   it('TC-BDD21-01: remainingDays < 7 显示"剩余X天"倒计时标签', async () => {
     const { wrapper } = await mountManage([
-      makeStarItem({ countdown: { status: 'running', remainingDays: 3 } }),
+      makeStarItem({ countdown: { status: 'running', remaining_days: 3, archive_delete_at: null } }),
     ])
 
     const countdown = wrapper.find('[data-testid="star-countdown"]')
@@ -208,7 +267,7 @@ describe('StarManageView — BDD-21: 即将失效条目显示红色倒计时标�
 
   it('TC-BDD21-02: 剩余 >= 7 天不显示红色倒计时标签', async () => {
     const { wrapper } = await mountManage([
-      makeStarItem({ countdown: { status: 'running', remainingDays: 30 } }),
+      makeStarItem({ countdown: { status: 'running', remaining_days: 30, archive_delete_at: null } }),
     ])
 
     expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
@@ -219,6 +278,14 @@ describe('StarManageView — BDD-21: 即将失效条目显示红色倒计时标�
 
     expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
   })
+
+  it('TC-BDD21-04: status=expired 的条目不渲染"剩余X天"倒计时标签（失效条目无剩余天数语义）', async () => {
+    const { wrapper } = await mountManage([
+      makeStarItem({ countdown: { status: 'expired', remaining_days: 0, archive_delete_at: null } }),
+    ])
+
+    expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
+  })
 })
 
 describe('StarManageView — BDD-22: 批量取消星标/批量移除墓碑', () => {
@@ -226,12 +293,11 @@ describe('StarManageView — BDD-22: 批量取消星标/批量移除墓碑', () 
     vi.clearAllMocks()
   })
 
-  it('TC-BDD22-01: 勾选多个条目后批量移除按钮可用并调用 api.removeStars', async () => {
-    mockRemoveStars.mockResolvedValue({ removed: 2 })
+  it('TC-BDD22-01: 勾选多个条目后批量移除按钮可用，二次确认后调用 api.removeStars（entry_id 传递）', async () => {
     const { wrapper } = await mountManage([
-      makeStarItem({ id: 1 }),
-      makeTombstoneItem({ id: 101 }),
-      makeStarItem({ id: 2, slug: 'keep' }),
+      makeStarItem({ entry_id: 1 }),
+      makeTombstoneItem({ entry_id: 101 }),
+      makeStarItem({ entry_id: 2, slug: 'keep' }),
     ])
 
     const checkboxes = wrapper.findAll('[data-testid="star-checkbox"]')
@@ -243,22 +309,28 @@ describe('StarManageView — BDD-22: 批量取消星标/批量移除墓碑', () 
 
     await batchBtn.trigger('click')
     await flushPromises()
+    expect((api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client.delete).not.toHaveBeenCalled()
 
-    expect(mockRemoveStars).toHaveBeenCalled()
+    clickDialogConfirm()
+    await flushPromises()
+
+    expect((api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client.delete).toHaveBeenCalled()
+    const ids = lastRemoveEntryIds()
+    expect(ids).toContain(1)
+    expect(ids).toContain(101)
   })
 
   it('TC-BDD22-02: 无勾选时批量移除按钮 disabled', async () => {
-    const { wrapper } = await mountManage([makeStarItem({ id: 1 })])
+    const { wrapper } = await mountManage([makeStarItem({ entry_id: 1 })])
 
     const batchBtn = wrapper.find('[data-testid="stars-batch-remove"]')
     expect(batchBtn.attributes('disabled')).toBeDefined()
   })
 
   it('TC-BDD22-03: 批量移除成功后条目从列表消失（含墓碑被清理）', async () => {
-    mockRemoveStars.mockResolvedValue({ removed: 2 })
     const { wrapper } = await mountManage([
-      makeStarItem({ id: 1, summary: 'Will be removed' }),
-      makeTombstoneItem({ id: 101, title: 'Tombstone removed' }),
+      makeStarItem({ entry_id: 1, summary: 'Will be removed' }),
+      makeTombstoneItem({ entry_id: 101, tombstone: { title: 'Tombstone removed' } }),
     ])
 
     const checkboxes = wrapper.findAll('[data-testid="star-checkbox"]')
@@ -266,8 +338,10 @@ describe('StarManageView — BDD-22: 批量取消星标/批量移除墓碑', () 
     await checkboxes[1].setValue(true)
     await wrapper.find('[data-testid="stars-batch-remove"]').trigger('click')
     await flushPromises()
+    clickDialogConfirm()
+    await flushPromises()
 
-    expect(mockRemoveStars).toHaveBeenCalled()
+    expect((api as unknown as { client: { delete: ReturnType<typeof vi.fn> } }).client.delete).toHaveBeenCalled()
   })
 })
 
@@ -277,7 +351,7 @@ describe('StarManageView — BDD-26: 强制删除后星标用户看到"作者已
   })
 
   it('TC-BDD26-01: 墓碑卡片标记"作者已删除"状态（reason=author_deleted 水印）', async () => {
-    const { wrapper } = await mountManage([makeTombstoneItem({ reason: 'author_deleted' })])
+    const { wrapper } = await mountManage([makeTombstoneItem({ tombstone: { reason: 'author_deleted' } })])
 
     expect(wrapper.text()).toMatch(/作者已删除|author_deleted/)
     expect(wrapper.find('[data-testid="tombstone-card"]').exists()).toBe(true)

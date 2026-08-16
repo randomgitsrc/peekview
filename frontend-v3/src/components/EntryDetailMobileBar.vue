@@ -25,6 +25,14 @@
       <CodeIcon v-if="!sourceViewMode" :size="16" />
       <EyeIcon v-else :size="16" />
     </button>
+    <StarToggle
+      v-if="currentEntry"
+      :entry="currentEntry"
+      :auth-state="authState"
+      testid="mobile-star-toggle"
+      @open-login="$emit('open-login')"
+      @changed="$emit('star-changed', $event)"
+    />
     <div class="flex-spacer"></div>
     <template v-if="!isBinary">
       <button v-if="canWrap"
@@ -47,7 +55,8 @@
 import { inject } from 'vue'
 import OverflowMenu from '@/components/OverflowMenu.vue'
 import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
-import type { Entry, TocHeading } from '@/types'
+import StarToggle from '@/components/StarToggle.vue'
+import type { Entry, TocHeading, AuthState } from '@/types'
 import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import {
   Folder as FolderIcon,
@@ -72,6 +81,7 @@ defineProps<{
   currentEntry: Entry | null
   sourceViewMode: boolean
   isRichRenderable: boolean
+  authState: AuthState
 }>()
 
 defineEmits<{
@@ -80,6 +90,8 @@ defineEmits<{
   'toggle-source-view': []
   'toggle-wrap': []
   'copy-content': []
+  'open-login': []
+  'star-changed': [data: { starCount: number; isStarred: boolean }]
 }>()
 
 const zenMode = inject(ZenModeKey)!

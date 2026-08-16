@@ -96,6 +96,10 @@ class EntryBase(SQLModel):
     )
     expires_at: datetime | None = Field(default=None)
     archived_at: datetime | None = Field(default=None)
+    archive_delete_at: datetime | None = Field(
+        default=None,
+        description="Absolute deadline for permanent deletion of archived entries (paused while starred)",
+    )
 
 
 class UserBase(SQLModel):
@@ -282,6 +286,68 @@ class EntryRead(SQLModel, table=True):
     reader_fingerprint: str = Field(default="", max_length=50)
     read_at: datetime = Field(default_factory=now_utc)
     updated_at: datetime = Field(default_factory=now_utc)
+
+
+class EntryStar(SQLModel, table=True):
+    """Star model — a user bookmark on an entry.
+
+    entry_id is a plain integer (NO FK) so stars survive entry deletion (D3).
+    user_id FK CASCADE — deleting the user removes their stars automatically.
+    tombstone_id is a plain integer (NO FK) binding this star to a tombstone
+    when the entry is deleted while starred.
+    The partial unique index (entry_id, user_id) WHERE tombstone_id IS NULL
+    prevents duplicate live stars while allowing tombstone-bound rows to coexist.
+    """
+
+    __tablename__ = "entry_stars"
+    __table_args__ = (
+        Index("idx_entry_stars_entry_id", "entry_id"),
+        Index("idx_entry_stars_user_id", "user_id"),
+        Index("idx_entry_stars_tombstone_id", "tombstone_id"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    entry_id: int = Field(..., description="Plain integer, no FK (survives entry deletion)")
+    user_id: int = Field(
+        ...,
+        foreign_key="users.id",
+        ondelete="CASCADE",
+        index=True,
+    )
+    tombstone_id: int | None = Field(default=None)
+    created_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+    )
+
+    def __repr__(self) -> str:
+        return f"<EntryStar(id={self.id}, entry_id={self.entry_id}, user_id={self.user_id})>"
+
+
+class EntryTombstone(SQLModel, table=True):
+    """Tombstone model — lightweight placeholder after an entry is permanently deleted.
+
+    Snapshots the entry slug/title so starred users see what was removed.
+    deleted_by is a username TEXT snapshot (no FK) — stays readable after the
+    deleting user is gone.
+    """
+
+    __tablename__ = "entry_tombstones"
+
+    id: int | None = Field(default=None, primary_key=True)
+    entry_id: int | None = Field(default=None, description="Snapshot reference, not used for lookup")
+    slug: str = Field(..., max_length=64)
+    title: str = Field(..., max_length=500)
+    cover: str | None = Field(default=None, max_length=500)
+    deleted_by: str = Field(..., max_length=32)
+    deleted_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+    )
+    reason: str = Field(default="author_deleted", max_length=32)
+
+    def __repr__(self) -> str:
+        return f"<EntryTombstone(id={self.id}, slug={self.slug!r}, reason={self.reason!r})>"
 
 
 class EntryReadStats(SQLModel, table=True):
@@ -485,6 +551,72 @@ class EntryShareContext(SQLModel):
     shared_by: str | None = None
 
 
+class CountdownInfo(SQLModel):
+    """Archive-deletion countdown info for archived entries."""
+
+    status: str = "running"  # paused | running | expired
+    remaining_days: float = 0.0
+    archive_delete_at: datetime | None = None
+
+
+class StarResponse(SQLModel):
+    """Response for POST/DELETE /{slug}/star."""
+
+    star_count: int = 0
+    is_starred: bool = False
+    already_starred: bool = False
+    created: bool = False
+    created_at: datetime | None = None
+
+
+class TombstoneResponse(SQLModel):
+    """Tombstone card for star list / manage page."""
+
+    id: int
+    entry_id: int | None = None
+    slug: str
+    title: str
+    cover: str | None = None
+    deleted_by: str
+    deleted_at: datetime
+    reason: str = "author_deleted"
+
+
+class StarItem(SQLModel):
+    """Single item in GET /api/v1/stars (live entry or tombstone card)."""
+
+    type: str  # "entry" | "tombstone"
+    entry_id: int
+    slug: str | None = None
+    summary: str | None = None
+    status: str | None = None
+    is_public: bool | None = None
+    owner_id: int | None = None
+    username: str | None = None
+    starred_at: datetime | None = None
+    star_count: int = 0
+    is_starred: bool = False
+    expires_at: datetime | None = None
+    archived_at: datetime | None = None
+    countdown: CountdownInfo | None = None
+    tombstone: TombstoneResponse | None = None
+
+
+class StarListResponse(SQLModel):
+    """Paginated list of current user's stars."""
+
+    items: list[StarItem]
+    total: int
+    page: int
+    per_page: int
+
+
+class StarBatchRemoveRequest(SQLModel):
+    """Body for DELETE /api/v1/stars (batch unstar)."""
+
+    entry_ids: list[int] = Field(..., min_length=1, max_length=500)
+
+
 class EntryResponse(SQLModel):
     """Schema for entry response (single entry)."""
 
@@ -504,6 +636,9 @@ class EntryResponse(SQLModel):
     share_context: EntryShareContext | None = None
     revoked_shares: int | None = None
     read_stats: ReadStatsResponse | None = None
+    star_count: int = 0
+    is_starred: bool = False
+    countdown: CountdownInfo | None = None
 
 
 class EntryListItem(SQLModel):
@@ -522,6 +657,9 @@ class EntryListItem(SQLModel):
     archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    star_count: int = 0
+    is_starred: bool = False
+    countdown: CountdownInfo | None = None
 
 
 class RawFileItem(SQLModel):

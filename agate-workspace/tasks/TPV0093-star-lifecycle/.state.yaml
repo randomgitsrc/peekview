@@ -1,4 +1,4 @@
-phase: P3
+phase: P4
 task_id: TPV0093
 task_name: star-lifecycle
 status: in_progress
@@ -10,3 +10,6 @@ history:
   - {phase: P0, action: transition, ts: "2026-08-16T00:00:00Z", note: "P0 → P1：推进条件全满足，agate v0.49.0 下启动"}
   - {phase: P1, action: completed, ts: "2026-08-16T00:00:00Z", note: "P1 完成：P1-requirements.md（28 BDD，risk=high，domains=[backend,frontend,security]，packages=[backend/peekview,frontend-v3]，phases 全走）+ P1-review.md approved（REV-1..4 闭合：share 独立授权通道+BDD-28 / expired 保留型枚举 / deleted_by username 快照 / download/render/短链同源继承）；7 项 SUGGEST 主 Agent 全部采纳；check-gate P1 exit 2；commit 9 文件 1224 行"}
   - {phase: P2, action: completed, ts: "2026-08-16T00:00:00Z", note: "P2 完成：P2-design.md（4 组真替代候选 A-F / 绝对到期点 archive_delete_at / tombstone_id 事务绑定 / get_entry 单点权限 / 数据幂等 backfill 不复用 user_version / dispatch_plan static-batch backend+frontend parallel_limit=2）+ 双评审（eng-review r1 rejected 3 BLOCKER→r2 needs-revision BLOCKER-4→r3 approved；design-review needs-revision 6 项→approved）+ 组长汇总 P2-review.md approved；minimal_validation confirmed（sqlite 内存模拟 rowid 复用/FK 拦截/部分唯一索引/deadline 算术）；[SCOPE+] backup/restore 裁定为已知限制 → DEBT0006 登记；check-gate P2 exit 2"}
+  - {phase: P3, action: completed, ts: "2026-08-16T00:00:00Z", note: "P3 完成：TDD 测试设计双包并行——backend 27 用例（test_star_api/visibility/lifecycle/migration）+ frontend 40 用例（t093-* 6 文件）+ E2E star.spec.ts；check-tdd-red exit 0 真红灯（23+21 B 类失败全为未实现）；check-gate P3 exit 2；commit"}
+  - {phase: P4, action: completed, ts: "2026-08-16T00:00:00Z", note: "P4 完成：双包并行实现（backend r1 23 测试绿→r2 评审修复 1125 passed + 7 回归；frontend r1 50/52→r2 二次确认 1284→r3 5 项评审 1287→r4 C1 契约 1288）；三评审多轮：review（BLOCKER-1 时区 TypeError + CRITICAL-2 并发孤儿星标 + 6 INFO → r2 approved）、design-review（5 项 → r3 C1 跨层契约 → r4 approved）、cso（F1-F4 + F5-F8 → r2 approved）；组长汇总 P4-review.md approved；主 Agent 验证 make test-quick 1125 passed + vue-tsc 绿；DESIGN_GAP ×4 已确认/打回处理；check-gate P4 exit 0"}
+

@@ -15,6 +15,9 @@ export interface EntryListItemResponse {
   archived_at: string | null
   created_at: string
   updated_at: string
+  star_count?: number
+  is_starred?: boolean
+  countdown?: CountdownResponse | null
 }
  
 // For get entry endpoint - full response with files
@@ -45,6 +48,15 @@ export interface EntryResponse {
   } | null
   revoked_shares?: number | null
   read_stats?: ReadStatsResponse | null
+  star_count?: number
+  is_starred?: boolean
+  countdown?: CountdownResponse | null
+}
+
+export interface CountdownResponse {
+  status: string
+  remaining_days: number
+  archive_delete_at: string | null
 }
 
 export interface FileResponse {
@@ -137,4 +149,59 @@ export interface ShareCreateResponse extends ShareResponse {
 export interface ShareListApiResponse {
   shares: ShareResponse[]
   total: number
+}
+
+// Star API response types
+export interface StarApiResponse {
+  star_count: number
+  is_starred: boolean
+  already_starred?: boolean
+  created_at?: string | null
+}
+
+export interface StarListItemResponse {
+  type: 'entry'
+  entry_id: number
+  slug: string
+  summary: string | null
+  status: string
+  is_public: boolean
+  owner_id: number | null
+  username: string | null
+  starred_at: string
+  star_count: number
+  is_starred: boolean
+  expires_at: string | null
+  archived_at: string | null
+  countdown: CountdownResponse | null
+  tombstone: null
+}
+
+export interface TombstoneNestedResponse {
+  id: number
+  entry_id: number | null
+  slug: string
+  title: string
+  cover: string | null
+  deleted_by: string
+  deleted_at: string
+  reason: 'author_deleted' | 'expired'
+}
+
+export interface TombstoneItemResponse {
+  type: 'tombstone'
+  entry_id: number
+  slug: string
+  summary: string | null
+  starred_at: string
+  tombstone: TombstoneNestedResponse
+}
+
+export interface StarListApiResponse {
+  items: (StarListItemResponse | TombstoneItemResponse)[]
+  total: number
+}
+
+export interface RemoveStarsResponse {
+  removed: number
 }

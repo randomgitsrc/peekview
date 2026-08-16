@@ -32,6 +32,13 @@
           <EyeIcon v-else :size="16" />
           <span class="tooltip">{{ sourceViewMode ? 'Render' : 'Source' }}</span>
         </button>
+        <StarToggle
+          v-if="currentEntry"
+          :entry="currentEntry"
+          :auth-state="(authState as AuthState)"
+          @open-login="$emit('open-login')"
+          @changed="$emit('star-changed', $event)"
+        />
         <span class="action-sep"></span>
         <button v-if="canCopy" class="icon-btn" @click="$emit('copy-content')" aria-label="Copy">
           <CopyIcon :size="16" /><span class="tooltip">Copy</span>
@@ -80,7 +87,8 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import AuthButton from '@/components/AuthButton.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import BaseTag from '@/components/BaseTag.vue'
-import type { Entry, TocHeading } from '@/types'
+import StarToggle from '@/components/StarToggle.vue'
+import type { Entry, TocHeading, AuthState } from '@/types'
 import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import {
   Folder as FolderIcon,
@@ -123,6 +131,7 @@ const emit = defineEmits<{
   'copy-content': []
   'toggle-share-dialog': [value: boolean]
   'open-login': []
+  'star-changed': [data: { starCount: number; isStarred: boolean }]
 }>()
 
 const zenMode = inject(ZenModeKey)!

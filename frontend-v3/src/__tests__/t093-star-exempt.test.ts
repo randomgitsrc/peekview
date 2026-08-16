@@ -169,7 +169,7 @@ describe('EntryCard — BDD-25: 作者强制删除需二次确认（明示星标
 
     const emitted = wrapper.emitted('delete')
     expect(emitted).toBeTruthy()
-    expect(emitted![0][0].slug).toBe('archived-starred')
+    expect((emitted![0][0] as { slug: string }).slug).toBe('archived-starred')
   })
 
   it('TC-BDD25-05: 无星标（starCount=0）不渲染强制删除按钮（常规删除路径不变）', () => {

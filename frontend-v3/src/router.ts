@@ -24,6 +24,11 @@ const routes: RouteRecordRaw[] = [
     redirect: { path: '/settings', query: { tab: 'apikeys' } },
   },
   {
+    path: '/stars',
+    name: 'stars',
+    component: () => import('./views/StarManageView.vue'),
+  },
+  {
     path: '/users/:username',
     name: 'user-entries',
     component: () => import('./views/EntryListView.vue'),
@@ -86,6 +91,9 @@ router.beforeEach(async (to) => {
     if (authStore.authState === 'authenticated') return '/explore'
   }
   if (to.path === '/settings') {
+    if (authStore.authState !== 'authenticated') return '/'
+  }
+  if (to.path === '/stars') {
     if (authStore.authState !== 'authenticated') return '/'
   }
 })

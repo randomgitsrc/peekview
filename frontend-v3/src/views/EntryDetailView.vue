@@ -28,6 +28,7 @@
       @copy-content="copyContent"
       @toggle-share-dialog="shareDialogOpen = $event"
       @open-login="showLogin = true"
+      @star-changed="handleStarChanged"
     />
 
     <EntryDetailBanners
@@ -90,11 +91,14 @@
       :current-entry="currentEntry"
       :source-view-mode="sourceViewMode"
       :is-rich-renderable="isRichRenderable"
+      :auth-state="authState"
       @toggle-file-drawer="showFileDrawer = !showFileDrawer"
       @toggle-toc-drawer="showTocDrawer = !showTocDrawer"
       @toggle-source-view="sourceViewMode = !sourceViewMode"
       @toggle-wrap="entryDetailStore.toggleWrap()"
       @copy-content="copyContent"
+      @open-login="showLogin = true"
+      @star-changed="handleStarChanged"
     />
 
     <EntryDetailDialogs
@@ -197,6 +201,10 @@ const showShareButton = computed(() => {
 const isExpiredButActive = computed(() => currentEntry.value ? isExpired(currentEntry.value) : false)
 const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
+
+function handleStarChanged(data: { starCount: number; isStarred: boolean }): void {
+  entryDetailStore.syncStar(data)
+}
 
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined

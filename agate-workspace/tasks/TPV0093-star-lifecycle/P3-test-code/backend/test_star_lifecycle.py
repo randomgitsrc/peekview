@@ -290,7 +290,9 @@ class TestAuthorDeleteWithTombstone:
                 owner_id=owner.id,
             )
             user_a = session.exec(select(User).where(User.username == "life-star-a")).first()
-            _insert_star(session, _entry_id(session, "bdd11-author-delete"), user_a.id)
+            # 捕获 entry_id 于删除前（BDD-11 物理删除后无法再按 slug 查 entry）
+            entry_id = _entry_id(session, "bdd11-author-delete")
+            _insert_star(session, entry_id, user_a.id)
 
         resp = await lifecycle_client.delete(
             "/api/v1/entries/bdd11-author-delete",
@@ -314,9 +316,9 @@ class TestAuthorDeleteWithTombstone:
             assert tombstones[0].reason == "author_deleted"
             assert tombstones[0].slug == "bdd11-author-delete"
             assert tombstones[0].title == "Tombstone source"
-            # 星标行绑定墓碑
+            # 星标行绑定墓碑（复用删除前捕获的 entry_id）
             stars = session.exec(
-                select(EntryStar).where(EntryStar.entry_id == _entry_id(session, "bdd11-author-delete"))
+                select(EntryStar).where(EntryStar.entry_id == entry_id)
             ).all()
             assert len(stars) == 1
             assert stars[0].tombstone_id == tombstones[0].id
@@ -358,7 +360,7 @@ class TestTombstoneRemovedWithLastStar:
 
         with Session(engine) as session:
             assert _tombstone_count(session) == 1
-            entry_id = _entry_id(session, "bdd13-tombstone")
+            # entry_id 已在删除前捕获（第 349 行），删除后无法按 slug 查 entry
 
         # A 移除星标 → 墓碑仍在（B 仍引用）
         rm_a = await lifecycle_client.request(

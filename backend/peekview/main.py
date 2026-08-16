@@ -213,13 +213,17 @@ def create_app(
 
     preload_jieba()
 
-    from peekview.database import backfill_fts_content
+    from peekview.database import backfill_archive_delete_at, backfill_fts_content
 
     backfill_fts_content(engine, storage)
+    backfill_archive_delete_at(engine, config.cleanup.archive_retention_days)
 
     share_service = ShareService(engine=engine, config=config)
     read_tracking_service = ReadTrackingService(engine=engine)
     read_tracking_service.backfill_stats()
+    from peekview.services.star_service import StarService
+
+    star_service = StarService(engine=engine)
     entry_service = EntryService(
         engine=engine, storage=storage, config=config,
         read_tracking_service=read_tracking_service,
@@ -229,11 +233,13 @@ def create_app(
     admin_service = AdminService(
         engine=engine, storage=storage, config=config,
         entry_service=entry_service,
+        star_service=star_service,
     )
     app.state.entry_service = entry_service
     app.state.apikey_service = apikey_service
     app.state.admin_service = admin_service
     app.state.share_service = share_service
+    app.state.star_service = star_service
     app.state.read_tracking_service = read_tracking_service
 
     # Setup CORS - use config or default
@@ -420,6 +426,7 @@ def create_app(
     from peekview.api.entries import router as entries_router
     from peekview.api.files import router as files_router
     from peekview.api.shares import router as shares_router
+    from peekview.api.stars import router as stars_router
 
     app.include_router(auth_router)
     app.include_router(apikeys_router)
@@ -429,6 +436,7 @@ def create_app(
     app.include_router(captcha_router)
     app.include_router(admin_router)
     app.include_router(shares_router)
+    app.include_router(stars_router)
 
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (

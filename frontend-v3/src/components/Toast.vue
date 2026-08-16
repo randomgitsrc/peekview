@@ -9,6 +9,12 @@
         :aria-live="toast.variant === 'error' ? 'assertive' : 'polite'"
       >
         <span class="toast__message">{{ toast.message }}</span>
+        <a
+          v-if="toast.action"
+          :href="toast.action.to"
+          class="toast__action"
+          data-testid="star-toast-action"
+        >{{ toast.action.label }}</a>
         <button class="toast__close" @click="remove(toast.id)" aria-label="Dismiss">&times;</button>
       </div>
     </TransitionGroup>
@@ -80,6 +86,19 @@ const { messages, remove } = useToast()
 
 .toast__close:hover {
   opacity: 1;
+}
+
+.toast__action {
+  flex-shrink: 0;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.toast__action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .toast-enter-active { transition: all 0.3s ease; }

@@ -99,7 +99,7 @@ describe('StarToggle — BDD-2: 同一用户重复星标不重复计数', () => 
   })
 
   it('TC-BDD2-01: already_starred=true 时计数不变且 Toast 提示"已于 X 月 X 日星标"', async () => {
-    const entry = makeEntry({ starCount: 3, isStarred: true })
+    const entry = makeEntry({ starCount: 3, isStarred: false })
     mockStar.mockResolvedValue({ star_count: 3, is_starred: true, already_starred: true, created_at: '2026-08-01T00:00:00Z' })
 
     const wrapper = mount(StarToggle, {
@@ -115,7 +115,7 @@ describe('StarToggle — BDD-2: 同一用户重复星标不重复计数', () => 
   })
 
   it('TC-BDD2-02: 重复星标 Toast 含日期（2026 年 8 月）', async () => {
-    const entry = makeEntry({ starCount: 3, isStarred: true })
+    const entry = makeEntry({ starCount: 3, isStarred: false })
     mockStar.mockResolvedValue({ star_count: 3, is_starred: true, already_starred: true, created_at: '2026-08-01T00:00:00Z' })
 
     const wrapper = mount(StarToggle, {
@@ -129,6 +129,23 @@ describe('StarToggle — BDD-2: 同一用户重复星标不重复计数', () => 
     const starToast = toast.find(t => /星标/.test(t.message))
     expect(starToast).toBeTruthy()
     expect(starToast!.message).toMatch(/8 月/)
+  })
+
+  it('TC-BDD2-03: 重复星标 Toast action 跳转 /explore?starred=1（Starred tab 激活入口，绕过 "/" 重定向）', async () => {
+    const entry = makeEntry({ starCount: 3, isStarred: false })
+    mockStar.mockResolvedValue({ star_count: 3, is_starred: true, already_starred: true, created_at: '2026-08-01T00:00:00Z' })
+
+    const wrapper = mount(StarToggle, {
+      props: { entry, authState: 'authenticated' },
+    })
+
+    await wrapper.find('[data-testid="star-toggle"]').trigger('click')
+    await flushPromises()
+
+    const toast = useToast().messages.value
+    const starToast = toast.find(t => /星标/.test(t.message))
+    expect(starToast).toBeTruthy()
+    expect(starToast!.action).toEqual({ label: '查看星标', to: '/explore?starred=1' })
   })
 })
 

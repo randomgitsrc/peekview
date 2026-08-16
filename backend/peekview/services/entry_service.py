@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import func, text
+from sqlalchemy import exists, func, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -29,7 +29,9 @@ from peekview.models import (
     EntryListItem,
     EntryListResponse,
     EntryResponse,
+    EntryStar,
     EntryStatus,
+    EntryTombstone,
     File,
     FileResponse,
     User,
@@ -40,6 +42,7 @@ from peekview.services.file_service import (
     scan_directory,
     validate_local_path,
 )
+from peekview.services.star_service import build_countdown, count_live_stars, find_live_star
 from peekview.storage import StorageManager
 
 logger = logging.getLogger(__name__)
@@ -337,15 +340,27 @@ class EntryService:
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
-            # Visibility check: private entries only visible to owner or admin
-            if not entry.is_public and not is_admin and entry.owner_id != current_user_id:
-                raise NotFoundError(f"Entry not found: {slug}")
-
-            # Archived access control: non-owner non-admin cannot view archived
             if entry.status == EntryStatus.ARCHIVED:
-                if current_user_id is None and not is_admin:
+                # 决策 A：archived 可见性仅由「状态 + 星标」组成，与 is_public 解耦
+                # （星标用户可读 archived 全文；短路 is_public 前置检查，BLOCKER-1）。
+                # BLOCKER-4：显式匿名守卫——ownerless archived（owner_id IS NULL）下
+                # 匿名请求必须 404（防 slug 枚举）。
+                if not is_admin and current_user_id is None:
                     raise NotFoundError(f"Entry not found: {slug}")
-                if not is_admin and entry.owner_id != current_user_id:
+                if (
+                    not is_admin
+                    and entry.owner_id != current_user_id
+                    and not find_live_star(session, entry.id, current_user_id)
+                ):
+                    raise NotFoundError(f"Entry not found: {slug}")
+            else:
+                # 非 archived：is_public 可见性模型。N8：收紧 ownerless + 私有 active
+                # + 匿名（None == None 短路）的既有可读漏洞。
+                if (
+                    not entry.is_public
+                    and not is_admin
+                    and (current_user_id is None or entry.owner_id != current_user_id)
+                ):
                     raise NotFoundError(f"Entry not found: {slug}")
 
             files = session.exec(select(File).where(File.entry_id == entry.id)).all()
@@ -353,8 +368,18 @@ class EntryService:
             # Resolve username for owner
             username = self._resolve_username(session, entry.owner_id)
 
+            is_starred = (
+                find_live_star(session, entry.id, current_user_id) is not None
+                if current_user_id is not None
+                else False
+            )
             return self._build_response(
-                entry, list(files), username, include_read_stats=include_read_stats
+                entry,
+                list(files),
+                username,
+                include_read_stats=include_read_stats,
+                star_count=count_live_stars(session, entry.id),
+                is_starred=is_starred,
             )
 
     def list_entries(
@@ -367,6 +392,7 @@ class EntryService:
         current_user_id: int | None = None,
         is_admin: bool = False,
         owner: str | None = None,
+        starred: bool = False,
     ) -> EntryListResponse:
         """List entries with search, filter, pagination, and visibility.
 
@@ -375,6 +401,8 @@ class EntryService:
         Admin users see all entries.
         owner="me" filters to only entries owned by current_user_id.
         owner=<username> filters to entries owned by that user (case-insensitive).
+        starred=True lists the current user's starred entries (active + archived,
+        visibility is_public OR own OR archived — consistent with the read path).
         """
         per_page = min(per_page, self.config.limits.max_per_page)
         page = max(page, 1)
@@ -386,7 +414,8 @@ class EntryService:
             count_query = select(func.count()).select_from(Entry)
 
             # Status filter (default: show active, hide archived; owner sees own archived)
-            if status:
+            # INFO-4: starred=True 与 status 互斥——starred 时忽略 status（与 owner 同处理）
+            if status and not starred:
                 query = query.where(Entry.status == status)
                 count_query = count_query.where(Entry.status == status)
                 if status == EntryStatus.ARCHIVED.value:
@@ -402,7 +431,7 @@ class EntryService:
                             page=page,
                             per_page=per_page,
                         )
-            else:
+            elif not starred:
                 query = query.where(Entry.status != EntryStatus.ARCHIVED)
                 count_query = count_query.where(Entry.status != EntryStatus.ARCHIVED)
 
@@ -411,7 +440,9 @@ class EntryService:
             owner_found = None
             owner_user_id = None
 
-            if owner is not None:
+            # Starred filter is mutually exclusive with owner/status (frontend
+            # Starred tab semantics) — skip owner resolution entirely.
+            if owner is not None and not starred:
                 if owner == "me":
                     if current_user_id is None:
                         return EntryListResponse(
@@ -446,7 +477,36 @@ class EntryService:
                 count_query = count_query.where(Entry.owner_id == owner_user_id)
 
             # === Phase 3: Apply visibility filter (existing logic, unchanged) ===
-            if is_admin:
+            if starred:
+                # Starred list requires login; visibility = public OR own OR archived
+                # (decision A read criterion), scoped to the user's live stars.
+                if current_user_id is None:
+                    return EntryListResponse(
+                        items=[],
+                        total=0,
+                        page=page,
+                        per_page=per_page,
+                        owner_found=owner_found,
+                    )
+                starred_cond = (
+                    Entry.is_public.is_(True)
+                    | (Entry.owner_id == current_user_id)
+                    | (Entry.status == EntryStatus.ARCHIVED)
+                )
+                query = query.where(starred_cond)
+                count_query = count_query.where(starred_cond)
+                live_star = exists(
+                    select(1)
+                    .select_from(EntryStar)
+                    .where(
+                        EntryStar.entry_id == Entry.id,
+                        EntryStar.user_id == current_user_id,
+                        EntryStar.tombstone_id.is_(None),
+                    )
+                )
+                query = query.where(live_star)
+                count_query = count_query.where(live_star)
+            elif is_admin:
                 pass
             elif current_user_id is None:
                 query = query.where(Entry.is_public.is_(True))
@@ -506,6 +566,31 @@ class EntryService:
                 users = session.exec(select(User).where(User.id.in_(set(owner_ids)))).all()
                 username_map = {u.id: u.username for u in users}
 
+            # INFO-2/F8: batch star_count + is_starred for the current page
+            # (replaces per-row count_live_stars/find_live_star → 3 queries/row)
+            entry_ids = [e.id for e in entries]
+            star_count_map: dict[int, int] = {}
+            starred_ids: set[int] = set()
+            if entry_ids:
+                star_rows = session.exec(
+                    select(EntryStar.entry_id, func.count())
+                    .where(
+                        EntryStar.entry_id.in_(entry_ids),
+                        EntryStar.tombstone_id.is_(None),
+                    )
+                    .group_by(EntryStar.entry_id)
+                ).all()
+                star_count_map = dict(star_rows)
+                if current_user_id is not None:
+                    starred_rows = session.exec(
+                        select(EntryStar.entry_id).where(
+                            EntryStar.entry_id.in_(entry_ids),
+                            EntryStar.user_id == current_user_id,
+                            EntryStar.tombstone_id.is_(None),
+                        )
+                    ).all()
+                    starred_ids = {rid for (rid,) in starred_rows}
+
             items = []
             for e in entries:
                 # Get file count
@@ -513,6 +598,7 @@ class EntryService:
                     select(func.count()).select_from(File).where(File.entry_id == e.id)
                 ).one()
                 username = username_map.get(e.owner_id) if e.owner_id else None
+                is_starred = e.id in starred_ids if current_user_id is not None else False
                 items.append(
                     EntryListItem(
                         id=e.id,
@@ -528,6 +614,9 @@ class EntryService:
                         archived_at=e.archived_at,
                         created_at=e.created_at,
                         updated_at=e.updated_at,
+                        star_count=star_count_map.get(e.id, 0),
+                        is_starred=is_starred,
+                        countdown=build_countdown(e, is_starred=is_starred),
                     )
                 )
 
@@ -588,6 +677,7 @@ class EntryService:
                 if entry.status == EntryStatus.ARCHIVED:
                     entry.status = EntryStatus.ACTIVE
                     entry.archived_at = None
+                    entry.archive_delete_at = None  # N2: reactivation clears countdown
                     if delta is not None:
                         entry.expires_at = datetime.now(timezone.utc) + delta
                     else:
@@ -603,6 +693,8 @@ class EntryService:
                 entry.summary = summary.strip()
             if status is not None:
                 entry.status = status
+                if entry.status == EntryStatus.ACTIVE:
+                    entry.archive_delete_at = None  # N2: status-param reactivation
             if tags is not None:
                 entry.tags = tags
             if is_public is not None:
@@ -755,8 +847,9 @@ class EntryService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             entry_id = entry.id
-            session.delete(entry)
-            session.commit()
+            actor = session.get(User, current_user_id)
+            deleted_by = actor.username if actor else "unknown"
+            self._delete_with_tombstone(session, entry, deleted_by)
 
         self._cleanup_reads(entry_id)
         self.storage.delete_entry_files(entry_id)
@@ -773,11 +866,49 @@ class EntryService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             entry_id = entry.id
-            session.delete(entry)
-            session.commit()
+            # API-key/cleanup path has no user → snapshot the owner's username
+            # (D8: deleted_by = author identity).
+            deleted_by = self._resolve_username(session, entry.owner_id) or "unknown"
+            self._delete_with_tombstone(session, entry, deleted_by)
 
         self._cleanup_reads(entry_id)
         self.storage.delete_entry_files(entry_id)
+
+    def _delete_with_tombstone(self, session: Session, entry: Entry, deleted_by: str) -> None:
+        """Delete an entry inside the given session (same transaction).
+
+        If the entry has ≥1 live star, create an EntryTombstone (reason
+        author_deleted) and bind all live stars to it via tombstone_id before
+        deleting the entry row. EntryStar has no relationship to Entry (plain
+        integer entry_id) so stars survive the deletion; tombstones stay until
+        the last referencing star is removed.
+        """
+        entry_id = entry.id
+        live_stars = session.exec(
+            select(EntryStar).where(
+                EntryStar.entry_id == entry_id,
+                EntryStar.tombstone_id.is_(None),
+            )
+        ).all()
+
+        if live_stars:
+            tombstone = EntryTombstone(
+                entry_id=entry_id,
+                slug=entry.slug,
+                title=entry.summary,
+                cover=None,
+                deleted_by=deleted_by,
+                deleted_at=datetime.now(timezone.utc),
+                reason="author_deleted",
+            )
+            session.add(tombstone)
+            session.flush()  # obtain tombstone.id for binding
+            for star in live_stars:
+                star.tombstone_id = tombstone.id
+                session.add(star)
+
+        session.delete(entry)
+        session.commit()
 
     def _cleanup_reads(self, entry_id: int) -> None:
         from peekview.models import EntryRead
@@ -967,6 +1098,8 @@ class EntryService:
         files: list[File],
         username: str | None = None,
         include_read_stats: bool = False,
+        star_count: int = 0,
+        is_starred: bool = False,
     ) -> EntryResponse:
         """Build EntryResponse from Entry + File records."""
         file_responses = []
@@ -1007,6 +1140,9 @@ class EntryService:
             created_at=entry.created_at,
             updated_at=entry.updated_at,
             read_stats=read_stats,
+            star_count=star_count,
+            is_starred=is_starred,
+            countdown=build_countdown(entry, is_starred=is_starred),
         )
 
     def _get_share_service(self):

@@ -6,6 +6,7 @@ Handles SQLite setup with WAL mode, FTS5 for search, and triggers.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -77,6 +78,50 @@ def _run_migrations(engine: Engine) -> None:
             )
             conn.commit()
             logger.info("Migration: added idempotency_key column to entries")
+
+        if "archive_delete_at" not in columns:
+            conn.execute(
+                text("ALTER TABLE entries ADD COLUMN archive_delete_at DATETIME DEFAULT NULL")
+            )
+            conn.commit()
+            logger.info("Migration: added archive_delete_at column to entries")
+
+        # entry_stars / entry_tombstones tables (IF NOT EXISTS fallback for old DBs;
+        # new DBs are covered by create_all). entry_stars.entry_id is a plain integer
+        # (no FK) so stars survive entry deletion; user_id CASCADE removes stars on
+        # account deletion; tombstone_id is a plain integer binding (no FK).
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS entry_stars (
+                id INTEGER PRIMARY KEY,
+                entry_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                tombstone_id INTEGER,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_entry_stars_entry_id ON entry_stars(entry_id)
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_entry_stars_user_id ON entry_stars(user_id)
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_entry_stars_tombstone_id ON entry_stars(tombstone_id)
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS entry_tombstones (
+                id INTEGER PRIMARY KEY,
+                entry_id INTEGER,
+                slug TEXT NOT NULL,
+                title TEXT NOT NULL,
+                cover TEXT,
+                deleted_by TEXT NOT NULL,
+                deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                reason TEXT NOT NULL DEFAULT 'author_deleted'
+            )
+        """))
+        conn.commit()
+        logger.info("Migration: ensured entry_stars / entry_tombstones tables")
 
         # Check existing columns in users table
         user_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
@@ -291,6 +336,19 @@ def _setup_indexes(engine: Engine) -> None:
             )
             conn.commit()
             logger.info("Setup: added unique index on entries.idempotency_key")
+
+        # Partial unique index: at most one live (non-tombstone-bound) star per
+        # (entry_id, user_id). Duplicate concurrent stars hit IntegrityError and
+        # are handled idempotently by StarService; tombstone-bound rows coexist.
+        if "ux_live_star" not in indexes:
+            conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX ux_live_star ON entry_stars(entry_id, user_id) "
+                    "WHERE tombstone_id IS NULL"
+                )
+            )
+            conn.commit()
+            logger.info("Setup: added partial unique index ux_live_star on entry_stars")
 
 
 def setup_fts5(engine: Engine) -> None:
@@ -564,6 +622,40 @@ def backfill_fts_content(engine: Engine, storage: StorageManager) -> None:
 
         session.commit()
         logger.info(f"Backfilled FTS content for {len(entries)} entries (version {FTS_VERSION})")
+
+
+def backfill_archive_delete_at(engine: Engine, retention_days: int) -> None:
+    """Backfill archive_delete_at for legacy archived entries (idempotent).
+
+    Legacy archived entries (created before the star-lifecycle feature) get their
+    deletion deadline set from the launch date (first run), so they are not
+    deleted retroactively. Data-idempotent: re-running only touches rows where
+    archive_delete_at IS NULL, and never touches PRAGMA user_version (FTS owns it).
+    """
+    if retention_days <= 0:
+        return
+
+    from sqlalchemy import update as sa_update
+
+    from peekview.models import Entry, EntryStatus
+
+    launch_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    deadline = launch_naive + timedelta(days=retention_days)
+
+    with Session(engine) as session:
+        result = session.exec(
+            sa_update(Entry)
+            .where(Entry.status == EntryStatus.ARCHIVED, Entry.archive_delete_at.is_(None))
+            .values(archive_delete_at=deadline)
+        )
+        updated = result.rowcount or 0
+        session.commit()
+
+    if updated:
+        logger.info(
+            f"Backfilled archive_delete_at for {updated} legacy archived entries "
+            f"(deadline {deadline})"
+        )
 
 
 # Event listeners for debugging (optional)

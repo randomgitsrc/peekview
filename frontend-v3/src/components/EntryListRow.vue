@@ -41,9 +41,48 @@
       </div>
     </div>
     <div class="entry-right">
+      <template v-if="isExempt">
+        <div class="star-exempt-block">
+          <span class="star-exempt-label" data-testid="star-exempt-label">
+            因被 {{ entry.starCount }} 位用户星标，已暂停自动删除
+            <button
+              type="button"
+              class="star-exempt-help"
+              data-testid="star-exempt-help"
+              aria-label="星标豁免说明"
+              @click.stop="showExemptHelp = !showExemptHelp"
+            ><HelpCircle :size="12" /></button>
+          </span>
+          <p v-if="showExemptHelp" class="star-exempt-help-text">被星标的内容不会被自动删除，仅作者可强制删除。</p>
+          <button
+            type="button"
+            class="force-delete"
+            data-testid="force-delete"
+            @click.stop="showForceConfirm = true"
+          >立即删除（强制）</button>
+          <div v-if="showForceConfirm" class="force-delete-confirm" data-testid="force-delete-confirm" role="alertdialog" aria-labelledby="force-delete-confirm-desc">
+            <p id="force-delete-confirm-desc" class="force-delete-confirm-text">此内容已被 {{ entry.starCount }} 位用户星标，确认删除后这些收藏将变为"作者已删除"。</p>
+            <div class="force-delete-confirm-actions">
+              <button
+                type="button"
+                class="confirm__btn confirm__btn--destructive"
+                data-testid="confirm-force-delete"
+                @click.stop="confirmForceDelete"
+              >确认删除</button>
+              <button
+                type="button"
+                class="confirm__btn confirm__btn--cancel"
+                @click.stop="showForceConfirm = false"
+              >取消</button>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template v-else>
         <BaseBadge v-if="isExpiredButActive" status="expired" />
         <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
         <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
+      </template>
       <div v-if="isOwner" class="entry-actions" @click.stop.prevent>
         <button
           type="button"
@@ -70,8 +109,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
+import { HelpCircle } from 'lucide-vue-next'
 import type { Entry } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -87,7 +127,7 @@ const props = withDefaults(defineProps<{
   currentUsername: null,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   toggleVisibility: [entry: Entry]
   delete: [entry: Entry]
 }>()
@@ -123,6 +163,18 @@ const createdAtRef = toRef(() => props.entry.createdAt)
 const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
 
 const isExpiredButActive = computed(() => isExpired(props.entry))
+
+const showExemptHelp = ref(false)
+const showForceConfirm = ref(false)
+
+const isExempt = computed(() =>
+  props.isOwner && props.entry.status === 'archived' && (props.entry.starCount ?? 0) > 0
+)
+
+function confirmForceDelete(): void {
+  showForceConfirm.value = false
+  emit('delete', props.entry)
+}
 </script>
 
 <style scoped>
@@ -251,6 +303,122 @@ const isExpiredButActive = computed(() => isExpired(props.entry))
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.star-exempt-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+.star-exempt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-xs);
+  color: var(--c-success);
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.star-exempt-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: var(--c-surface-lower);
+  color: var(--c-text-secondary);
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.star-exempt-help:hover {
+  background: var(--c-border);
+  color: var(--c-text);
+}
+
+.star-exempt-help:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
+}
+
+.star-exempt-help-text {
+  margin: 0;
+  font-size: var(--font-xs);
+  color: var(--c-text-secondary);
+  line-height: 1.5;
+}
+
+.force-delete {
+  padding: 3px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-error);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.force-delete:hover {
+  background: var(--c-error-surface);
+  border-color: var(--c-error);
+}
+
+.force-delete:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
+}
+
+.force-delete-confirm {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-surface-lower);
+  max-width: 320px;
+}
+
+.force-delete-confirm-text {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--c-text-secondary);
+  line-height: 1.5;
+}
+
+.force-delete-confirm-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.confirm__btn {
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.confirm__btn--destructive {
+  background: var(--c-error);
+  color: var(--text-on-accent);
+  border-color: var(--c-error);
+}
+
+.confirm__btn--cancel:hover {
+  background: var(--c-surface-lower);
+}
+
+.confirm__btn:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .entry-actions {

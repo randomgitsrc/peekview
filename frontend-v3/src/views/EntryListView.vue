@@ -20,19 +20,25 @@
           <div v-if="showTabs" class="owner-tabs">
             <button
               class="owner-tab"
-              :class="{ active: currentOwner === null && currentStatus === null }"
+              :class="{ active: currentOwner === null && currentStatus === null && !currentStarred }"
               @click="setFilter(null, null)"
             >All</button>
             <button
               class="owner-tab"
-              :class="{ active: currentOwner === 'me' }"
+              :class="{ active: currentOwner === 'me' && !currentStarred }"
               @click="setFilter('me', null)"
             >Mine</button>
             <button
               class="owner-tab"
-              :class="{ active: currentStatus === 'archived' }"
+              :class="{ active: currentStatus === 'archived' && !currentStarred }"
               @click="setFilter(null, 'archived')"
             >Archived</button>
+            <button
+              class="owner-tab"
+              :class="{ active: currentStarred }"
+              data-testid="tab-starred"
+              @click="setFilter(null, null, true)"
+            >Starred</button>
           </div>
 
           <div v-if="showChip || currentTags.length" class="filter-chip-bar">
@@ -260,6 +266,7 @@ const props = defineProps<{
 
 const currentOwner = ref<string | null>(null)
 const currentStatus = ref<string | null>(null)
+const currentStarred = ref(false)
 const currentTags = ref<string[]>([])
 const authChangeAnnouncement = ref('')
 
@@ -279,8 +286,11 @@ const effectiveOwner = computed(() => props.owner || currentOwner.value || undef
 
 const effectiveStatus = computed(() => currentStatus.value || undefined)
 
+const effectiveStarred = computed(() => (currentStarred.value ? true : undefined))
+
 const emptyStateHeading = computed(() => {
   if (ownerFound.value === true && props.owner) return `No entries from @${props.owner}`
+  if (currentStarred.value) return '暂无星标内容'
   if (currentStatus.value === 'archived') return '暂无已归档条目'
   return 'No entries found'
 })
@@ -313,14 +323,14 @@ function flushSearch() {
   const q = searchQuery.value.trim()
   updateURL({ q: q || undefined, page: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: q || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: q || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 function clearSearch() {
   searchQuery.value = ''
   updateURL({ q: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 const debouncedSearch = useDebounce(flushSearch, 300)
@@ -337,27 +347,30 @@ watch(() => searchQuery.value, () => {
   debouncedSearch()
 })
 
-function setFilter(owner: string | null, status: string | null) {
-  currentOwner.value = owner
-  currentStatus.value = status
+function setFilter(owner: string | null, status: string | null, starred = false) {
+  currentOwner.value = starred ? null : owner
+  currentStatus.value = starred ? null : status
+  currentStarred.value = starred
+  if (starred) currentTags.value = []
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: owner || undefined, status: status || undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
-  updateURL({ owner: owner || undefined, status: status || undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: starred || undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: starred ? '1' : undefined, page: undefined })
 }
 
 function clearOwnerFilter() {
   currentOwner.value = null
   currentStatus.value = null
+  currentStarred.value = false
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
-  updateURL({ owner: undefined, status: undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ owner: undefined, status: undefined, starred: undefined, page: undefined })
 }
 
 function removeTag(tag: string) {
   currentTags.value = currentTags.value.filter(t => t !== tag)
   currentPage.value = 1
   updateURL({ tags: currentTags.value.length ? currentTags.value.join(',') : undefined, page: undefined })
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 const showLogin = ref(false)
@@ -415,16 +428,17 @@ watch(viewMode, (mode) => {
 })
 
 watch(currentPage, (newPage) => {
-  updateURL({ page: newPage > 1 ? String(newPage) : undefined })
-  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ page: newPage > 1 ? String(newPage) : undefined, starred: effectiveStarred.value ? '1' : undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 })
 
 watch(() => props.owner, (newOwner) => {
   if (newOwner) {
     currentOwner.value = null
     currentStatus.value = null
+    currentStarred.value = false
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+    loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   }
 })
 
@@ -434,16 +448,22 @@ watch(authState, (newState, oldState) => {
     if (!props.owner) {
       const urlParams = new URLSearchParams(window.location.search)
       const ownerParam = urlParams.get('owner')
-      if (ownerParam === 'me' && currentOwner.value !== 'me') {
+      const starredParam = urlParams.get('starred')
+      if (starredParam === '1') {
+        currentStarred.value = true
+        currentOwner.value = null
+        currentStatus.value = null
+      } else if (ownerParam === 'me' && currentOwner.value !== 'me') {
         currentOwner.value = 'me'
         currentStatus.value = null
       }
     }
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   } else if (newState === 'anonymous' && oldState === 'authenticated') {
     authChangeAnnouncement.value = 'Signed out. List refreshed.'
-    if (currentStatus.value === 'archived') {
+    if (currentStarred.value || currentStatus.value === 'archived') {
+      currentStarred.value = false
       currentStatus.value = null
       nextTick(() => {
         const allTab = document.querySelector<HTMLButtonElement>('.owner-tab')
@@ -451,22 +471,29 @@ watch(authState, (newState, oldState) => {
       })
     }
     currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined }, { clearOnError: false })
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined }, { clearOnError: false })
   }
 })
 
 function restoreFromURL() {
   const urlParams = new URLSearchParams(window.location.search)
-  const ownerParam = urlParams.get('owner')
-  if (ownerParam && ownerParam !== 'me') {
-    currentOwner.value = ownerParam
-  } else if (ownerParam === 'me' && authState.value === 'authenticated') {
-    currentOwner.value = 'me'
-  }
+  const starredParam = urlParams.get('starred')
+  currentStarred.value = starredParam === '1' && authState.value === 'authenticated'
+  if (currentStarred.value) {
+    currentOwner.value = null
+    currentStatus.value = null
+  } else {
+    const ownerParam = urlParams.get('owner')
+    if (ownerParam && ownerParam !== 'me') {
+      currentOwner.value = ownerParam
+    } else if (ownerParam === 'me' && authState.value === 'authenticated') {
+      currentOwner.value = 'me'
+    }
 
-  const statusParam = urlParams.get('status')
-  if (statusParam) {
-    currentStatus.value = statusParam
+    const statusParam = urlParams.get('status')
+    if (statusParam) {
+      currentStatus.value = statusParam
+    }
   }
 
   const restored = parseRestoreQuery(window.location.search.slice(1))
@@ -480,7 +507,7 @@ onMounted(() => {
     currentOwner.value = null
   }
   restoreFromURL()
-  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 })
 
 onBeforeRouteUpdate((to) => {
@@ -490,17 +517,24 @@ onBeforeRouteUpdate((to) => {
   const newQ = (to.query.q as string) || ''
   const newOwner = (to.query.owner as string) || null
   const newStatus = (to.query.status as string) || null
+  const newStarred = (to.query.starred as string) || null
   const newPage = parseInt(to.query.page as string) || 1
   const newTagsParam = (to.query.tags as string) || ''
   const newTags = newTagsParam ? newTagsParam.split(',').filter(Boolean) : []
 
   searchQuery.value = newQ
-  currentOwner.value = newOwner
-  currentStatus.value = newStatus
+  currentStarred.value = newStarred === '1' && authState.value === 'authenticated'
+  if (currentStarred.value) {
+    currentOwner.value = null
+    currentStatus.value = null
+  } else {
+    currentOwner.value = newOwner
+    currentStatus.value = newStatus
+  }
   currentPage.value = Math.max(1, newPage)
   currentTags.value = newTags
 
-  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: newOwner || undefined, status: newStatus || undefined, q: newQ || undefined, tags: newTags.length ? newTags : undefined })
+  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: currentStarred.value || undefined, q: newQ || undefined, tags: newTags.length ? newTags : undefined })
 })
 </script>
 

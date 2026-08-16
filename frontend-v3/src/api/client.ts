@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios'
-import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult } from '@/types'
-import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse } from './types'
+import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult, StarItem, StarListParams, StarListResponse, CountdownInfo } from '@/types'
+import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse, StarApiResponse, StarListItemResponse, StarListApiResponse, TombstoneItemResponse, CountdownResponse, RemoveStarsResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -40,6 +40,15 @@ class PeekAPI {
     }
   }
 
+  private transformCountdown(countdown?: CountdownResponse | null): CountdownInfo | null {
+    if (!countdown) return null
+    return {
+      status: countdown.status as CountdownInfo['status'],
+      remainingDays: countdown.remaining_days,
+      archiveDeleteAt: countdown.archive_delete_at,
+    }
+  }
+
   private transformListItem(entry: EntryListItemResponse): Entry {
     return {
       id: entry.id,
@@ -55,6 +64,9 @@ class PeekAPI {
       expiresAt: entry.expires_at,
       archivedAt: entry.archived_at ?? null,
       createdAt: entry.created_at,
+      starCount: entry.star_count ?? 0,
+      isStarred: entry.is_starred ?? false,
+      countdown: this.transformCountdown(entry.countdown),
     }
   }
 
@@ -88,6 +100,9 @@ class PeekAPI {
             lastReadAt: entry.read_stats.last_read_at,
           }
         : null,
+      starCount: entry.star_count ?? 0,
+      isStarred: entry.is_starred ?? false,
+      countdown: this.transformCountdown(entry.countdown),
     }
   }
 
@@ -113,6 +128,7 @@ class PeekAPI {
         tags: params?.tags?.join(','),
         status: params?.status,
         owner: params?.owner,
+        starred: params?.starred,
         page: params?.page,
         per_page: params?.perPage,
       },
@@ -172,6 +188,78 @@ class PeekAPI {
 
   downloadFile(slug: string, fileId: number): string {
     return `${API_BASE}/entries/${slug}/files/${fileId}`
+  }
+
+  // --- Star API --- //
+
+  star = async (slug: string): Promise<StarApiResponse> => {
+    const response = await this.client.post<StarApiResponse>(`/entries/${slug}/star`)
+    return response.data
+  }
+
+  async unstar(slug: string): Promise<{ star_count: number; is_starred: boolean }> {
+    const response = await this.client.delete<{ star_count: number; is_starred: boolean }>(`/entries/${slug}/star`)
+    return response.data
+  }
+
+  private transformTombstone(item: TombstoneItemResponse): StarItem {
+    const t = item.tombstone
+    return {
+      type: 'tombstone',
+      id: item.entry_id,
+      slug: item.slug,
+      title: t.title,
+      deletedBy: t.deleted_by,
+      deletedAt: t.deleted_at,
+      reason: t.reason,
+    }
+  }
+
+  private transformStarEntry(item: StarListItemResponse): StarItem {
+    return {
+      type: 'entry',
+      id: item.entry_id,
+      slug: item.slug,
+      summary: item.summary ?? '',
+      tags: [],
+      status: item.status as 'active' | 'archived',
+      files: [],
+      fileCount: 0,
+      isPublic: item.is_public ?? true,
+      ownerId: item.owner_id ?? null,
+      username: item.username,
+      expiresAt: item.expires_at,
+      archivedAt: item.archived_at ?? null,
+      createdAt: item.starred_at,
+      starCount: item.star_count ?? 0,
+      isStarred: item.is_starred ?? false,
+      countdown: this.transformCountdown(item.countdown),
+    }
+  }
+
+  async listStars(params?: StarListParams): Promise<StarListResponse> {
+    const response = await this.client.get<StarListApiResponse>('/stars', {
+      params: {
+        filter: params?.filter,
+        page: params?.page,
+        per_page: params?.perPage,
+      },
+    })
+    return {
+      items: response.data.items.map(i =>
+        i.type === 'tombstone'
+          ? this.transformTombstone(i)
+          : this.transformStarEntry(i)
+      ),
+      total: response.data.total,
+    }
+  }
+
+  async removeStars(entryIds: number[]): Promise<RemoveStarsResponse> {
+    const response = await this.client.delete<RemoveStarsResponse>('/stars', {
+      data: { entry_ids: entryIds },
+    })
+    return response.data
   }
 
   // --- Auth API --- //

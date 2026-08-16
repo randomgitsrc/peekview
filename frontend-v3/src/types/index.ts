@@ -27,6 +27,15 @@ export interface Entry {
   } | null
   revokedShares?: number | null
   readStats?: ReadStats | null
+  starCount?: number
+  isStarred?: boolean
+  countdown?: CountdownInfo | null
+}
+
+export interface CountdownInfo {
+  status: 'paused' | 'running' | 'expired'
+  remainingDays: number
+  archiveDeleteAt: string | null
 }
 
 export interface File {
@@ -53,6 +62,7 @@ export interface ListEntriesParams {
   tags?: string[]
   status?: string
   owner?: string
+  starred?: boolean
   page?: number
   perPage?: number
 }
@@ -171,4 +181,28 @@ export interface ShareCreateResult {
   maxViews: number | null
   viewCount: number
   createdAt: string
+}
+
+// Star types
+export type StarItem =
+  | (Entry & { type: 'entry' })
+  | {
+      type: 'tombstone'
+      id: number
+      slug: string
+      title: string
+      deletedBy: string
+      deletedAt: string
+      reason: 'author_deleted' | 'expired'
+    }
+
+export interface StarListParams {
+  filter?: string
+  page?: number
+  perPage?: number
+}
+
+export interface StarListResponse {
+  items: StarItem[]
+  total: number
 }

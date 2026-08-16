@@ -104,6 +104,12 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
     }
   }
 
+  function syncStar(data: { starCount: number; isStarred: boolean }): void {
+    if (currentEntry.value) {
+      currentEntry.value = { ...currentEntry.value, starCount: data.starCount, isStarred: data.isStarred }
+    }
+  }
+
   function clearIfSlug(slug: string): void {
     if (currentEntry.value?.slug === slug) {
       clearEntry()
@@ -127,6 +133,7 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
     toggleWrap,
     clearEntry,
     syncVisibility,
+    syncStar,
     clearIfSlug,
   }
 })

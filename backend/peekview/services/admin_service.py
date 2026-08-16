@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from packaging.version import Version
-from sqlalchemy import case, func, text
+from sqlalchemy import case, exists, func, text
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import update as sa_update
 from sqlmodel import Session, select
@@ -37,6 +37,7 @@ from peekview.models import (
     EntryRead,
     EntryReadStats,
     EntryShare,
+    EntryStar,
     EntryStats,
     File,
     ReadsStats,
@@ -66,6 +67,13 @@ def _get_dir_size(path: Path) -> int:
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _naive_utc(dt: datetime) -> datetime:
+    """Normalize a datetime to naive UTC (matching DB storage convention)."""
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 def _sha256_file(path: Path) -> str:
@@ -120,16 +128,31 @@ def _read_captcha_secret_for_backup(config: PeekConfig) -> bytes | None:
 
 
 class AdminService:
-    def __init__(self, engine, storage: StorageManager, config: PeekConfig, entry_service=None):
+    def __init__(
+        self,
+        engine,
+        storage: StorageManager,
+        config: PeekConfig,
+        entry_service=None,
+        star_service=None,
+    ):
         self.engine = engine
         self.storage = storage
         self.config = config
         self._entry_service = entry_service
+        self._star_service = star_service
 
     def _get_entry_service(self):
         if self._entry_service is not None:
             return self._entry_service
         return EntryService(self.engine, self.storage, self.config)
+
+    def _get_star_service(self):
+        if self._star_service is not None:
+            return self._star_service
+        from peekview.services.star_service import StarService
+
+        return StarService(self.engine)
 
     def get_stats(self) -> AdminStatsResponse:
         now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -255,6 +278,8 @@ class AdminService:
                 e.status = "archived"
                 e.archived_at = now_naive
                 e.expires_at = None
+                if retention_days > 0:
+                    e.archive_delete_at = now_naive + timedelta(days=retention_days)
                 session.add(e)
                 archived_slugs.append(e.slug)
             session.commit()
@@ -264,21 +289,56 @@ class AdminService:
             to_delete = []
 
             if retention_days > 0:
-                cutoff = now_naive - timedelta(days=retention_days)
-                old_archived = session.exec(
+                # 删除判定：status=archived AND 无活星标（豁免）AND deadline 到点
+                # （archive_delete_at <= now；NULL 兜底走 archived_at 旧判定）
+                candidates = session.exec(
                     select(Entry).where(
                         Entry.status == "archived",
-                        Entry.archived_at.isnot(None),
-                        Entry.archived_at <= cutoff,
+                        ~exists(
+                            select(1)
+                            .select_from(EntryStar)
+                            .where(
+                                EntryStar.entry_id == Entry.id,
+                                EntryStar.tombstone_id.is_(None),
+                            )
+                        ),
                     )
                 ).all()
 
-                for e in old_archived:
-                    size_bytes = self.storage.get_entry_size(e.id)
-                    to_delete.append((e.slug, e.id, size_bytes))
+                for e in candidates:
+                    deadline_met = False
+                    if e.archive_delete_at is not None:
+                        deadline_met = _naive_utc(e.archive_delete_at) <= now_naive
+                    elif e.archived_at is not None:
+                        cutoff = now_naive - timedelta(days=retention_days)
+                        deadline_met = _naive_utc(e.archived_at) <= cutoff
+                    if deadline_met:
+                        size_bytes = self.storage.get_entry_size(e.id)
+                        to_delete.append((e.slug, e.id, size_bytes))
+
+                # 孤儿墓碑清扫（无星标引用的墓碑；正常路径在 unstar 时清理，这里兜底）
+                session.exec(
+                    text(
+                        "DELETE FROM entry_tombstones WHERE id NOT IN "
+                        "(SELECT DISTINCT tombstone_id FROM entry_stars "
+                        " WHERE tombstone_id IS NOT NULL)"
+                    )
+                )
+                # CRITICAL-2 Fix B：孤儿星标清扫——删除↔星标并发竞态残留的活星标
+                # （entry 已物理删除但未绑定墓碑；墓碑绑定行天然不受影响）
+                session.exec(
+                    text(
+                        "DELETE FROM entry_stars WHERE tombstone_id IS NULL "
+                        "AND entry_id NOT IN (SELECT id FROM entries)"
+                    )
+                )
+                session.commit()
 
         entry_service = self._get_entry_service()
 
+        # F6：候选 SELECT（无活星标）与删除之间存在 TOCTOU 窗口——窗口内新插入的星标
+        # 不会丢失：delete_entry_by_api_key → _delete_with_tombstone 在同一事务内重读活
+        # 星标并为其创建墓碑并绑定（数据以墓碑卡片保留，不静默丢失）。
         for slug, _entry_id, size_bytes in to_delete:
             try:
                 entry_service.delete_entry_by_api_key(slug)
@@ -471,6 +531,12 @@ class AdminService:
             if user:
                 session.delete(user)
             session.commit()
+
+        # N1: user row deleted + committed → their stars were CASCADE-deleted →
+        # sweep tombstones left orphaned (no star references remain).
+        star_service = self._get_star_service()
+        if star_service is not None:
+            star_service.cleanup_orphan_tombstones()
 
     def reset_password(self, user_id: int, new_password: str) -> str:
         with Session(self.engine) as session:
