@@ -589,7 +589,7 @@ class EntryService:
                             EntryStar.tombstone_id.is_(None),
                         )
                     ).all()
-                    starred_ids = {rid for (rid,) in starred_rows}
+                    starred_ids = set(starred_rows)
 
             items = []
             for e in entries:

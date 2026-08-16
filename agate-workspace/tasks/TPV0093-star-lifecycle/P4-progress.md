@@ -189,3 +189,24 @@
   - login()（star.spec.ts:36-48）：`signInBtn.count()` 在 authState=loading 时返回 0 → btn 取 loginBtn（也 count 0）→ `isVisible()` false → 跳过登录
   - 页面停留匿名态 → tab-starred 不渲染 → BDD-18 waitForSelector 超时；BDD-1/6 flaky 同源（authState 解析快慢）
 - 修复方案：login() 在 count 前先 `waitFor({state:'visible', timeout:10000})` 等待登录按钮出现（union selector: Sign in/Login），确保 authState 解析完成；其余逻辑不变
+## [P4-r2] BUG-1 backend implementer 进度
+- 读取 dispatch-context + implementer role + P0-brief ✅
+- 复现根因 ✅：repro 脚本 GET /api/v1/entries（带 Bearer token）→ `TypeError: cannot unpack non-iterable int object` at entry_service.py:592（单列 select 返回 ScalarResult<int>，`for (rid,) in starred_rows` 解包 int 崩溃）
+- 确认 `starred=true` 与默认列表都走此路径（current_user_id 非 None 时）
+- 确认修复方案：`starred_ids = set(starred_rows)`（单列 exec 直接是标量集合）
+- 修复落盘 ✅：entry_service.py:592 `starred_ids = set(starred_rows)`（grep 已确认）
+- 复验 ✅：repro 脚本默认列表 + starred=true 均 200
+- 补测试 ✅：test_star_review_fixes.py 新增 TestListEntriesIsStarred 两用例（默认列表 is_starred 正确 + starred=true 仅返回星标项）
+- 全量回归 ✅：make test-quick → 1127 passed, 3 skipped, 0 failed（零回归）
+- lint ✅：python3 -m ruff check → All checks passed
+- P4-retreat-fix-r2.md 已写（根因+修复+自跑签名）；[PROD_NOT_TOUCHED]
+
+## [P4-r2] BUG-2 frontend implementer 进度
+- 读取 dispatch-context-retreat-r2 + implementer role + P0-brief ✅
+- 根因确认 ✅（读码）：StarManageView.vue:100 直接渲染 `剩余 {{ item.countdown!.remainingDays }} 天`，remainingDays 为后端浮点（如 2.9998754817708333）未取整；P1 §4.2 BDD-21 要求整数格式（`/剩余\s*\d+\s*天/`）
+- 全量排查 remainingDays 显示点 ✅：仅 StarManageView.vue:100 一处显示倒计时标签；EntryCard/EntryListRow 的"星标豁免说明"仅 aria-label 帮助（无剩余天数文本，BDD-24 断言不含 `剩余 X 天`）；expires.ts/useRelativeTime 属其他语境（entry expires_in，非星标 countdown）——单点修复即可
+- 决定修复方案：模板渲染处 `Math.ceil(remaining_days)`（ceil 与派发指引一致，不足 1 天显示"剩余 1 天"）；isExpiring 过滤用原始浮点值不动（避免改分类语义）
+- 修复落盘 ✅：StarManageView.vue:100 模板 `剩余 {{ ceilDays(item.countdown!.remainingDays) }} 天` + script 新增 `ceilDays`（Math.ceil）
+- 测试适配 ✅：t093-star-manage.test.ts 新增 TC-BDD21-05（浮点 2.999875… → 剩余3天，断言不含 2.999）+ TC-BDD21-06（0.3 → 剩余1天）
+- 自跑 ✅：定向 21 passed；make test-frontend 98 files/1290 passed/0 failed；make typecheck ✓
+- P4-retreat-fix-r2.md frontend 部分已追加；[PROD_NOT_TOUCHED]

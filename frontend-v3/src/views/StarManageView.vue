@@ -97,7 +97,7 @@
             <template v-else>
               <div class="star-entry-card">
                 <router-link class="entry-title" :to="'/' + item.slug">{{ item.summary }}</router-link>
-                <span v-if="isExpiring(item)" class="star-countdown" data-testid="star-countdown">剩余 {{ item.countdown!.remainingDays }} 天<span v-if="item.countdown!.status === 'paused'" class="star-countdown-exempt">· 豁免中</span></span>
+                <span v-if="isExpiring(item)" class="star-countdown" data-testid="star-countdown">剩余 {{ ceilDays(item.countdown!.remainingDays) }} 天<span v-if="item.countdown!.status === 'paused'" class="star-countdown-exempt">· 豁免中</span></span>
               </div>
             </template>
           </li>
@@ -183,6 +183,10 @@ function isExpiring(item: StarItem): boolean {
 
 function isExpiredEntry(item: StarItem): boolean {
   return item.type === 'entry' && item.countdown?.status === 'expired'
+}
+
+function ceilDays(days: number): number {
+  return Math.ceil(days)
 }
 
 const filteredItems = computed<StarItem[]>(() => {

@@ -288,6 +288,73 @@ class TestDeleteStarOracle:
 
 
 # ============================================================
+# BUG-1: list_entries 单列 select 解包崩溃（ScalarResult<int>
+# 被 (rid,) 解包 → TypeError 500）——登录用户列表默认 + starred=true
+# ============================================================
+
+
+class TestListEntriesIsStarred:
+    @pytest.mark.asyncio
+    async def test_bug1_default_list_login_user_200_is_starred_correct(self, fix_client):
+        token = await _register_user(fix_client, "fix-user-b1-list")
+        engine = fix_client._app.state.engine
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.username == "fix-user-b1-list")).first()
+            _create_entry_direct(
+                fix_client._app,
+                session,
+                slug="b1-list-starred",
+                owner_id=user.id,
+            )
+            _create_entry_direct(
+                fix_client._app,
+                session,
+                slug="b1-list-unstarred",
+                owner_id=user.id,
+            )
+            _insert_star(session, _entry_id(session, "b1-list-starred"), user.id)
+
+        resp = await fix_client.get(
+            "/api/v1/entries",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        items = {i["slug"]: i for i in resp.json()["items"]}
+        assert items["b1-list-starred"]["is_starred"] is True
+        assert items["b1-list-starred"]["star_count"] == 1
+        assert items["b1-list-unstarred"]["is_starred"] is False
+
+    @pytest.mark.asyncio
+    async def test_bug1_starred_true_list_200_only_starred(self, fix_client):
+        token = await _register_user(fix_client, "fix-user-b1-star")
+        engine = fix_client._app.state.engine
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.username == "fix-user-b1-star")).first()
+            _create_entry_direct(
+                fix_client._app,
+                session,
+                slug="b1-star-only",
+                owner_id=user.id,
+            )
+            _create_entry_direct(
+                fix_client._app,
+                session,
+                slug="b1-star-not",
+                owner_id=user.id,
+            )
+            _insert_star(session, _entry_id(session, "b1-star-only"), user.id)
+
+        resp = await fix_client.get(
+            "/api/v1/entries?starred=true",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert [i["slug"] for i in body["items"]] == ["b1-star-only"]
+        assert body["items"][0]["is_starred"] is True
+
+
+# ============================================================
 # F3: DELETE /api/v1/stars 批量 body 上限（min 1 / max 500）
 # ============================================================
 

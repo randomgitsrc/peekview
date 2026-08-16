@@ -286,6 +286,27 @@ describe('StarManageView — BDD-21: 即将失效条目显示红色倒计时标�
 
     expect(wrapper.find('[data-testid="star-countdown"]').exists()).toBe(false)
   })
+
+  it('TC-BDD21-05: remaining_days 为浮点（如 2.999875…）时取整显示"剩余3天"而非小数（BUG-2 回归）', async () => {
+    const { wrapper } = await mountManage([
+      makeStarItem({ countdown: { status: 'running', remaining_days: 2.9998754817708333, archive_delete_at: null } }),
+    ])
+
+    const countdown = wrapper.find('[data-testid="star-countdown"]')
+    expect(countdown.exists()).toBe(true)
+    expect(countdown.text()).toMatch(/剩余\s*3\s*天/)
+    expect(countdown.text()).not.toMatch(/2\.999/)
+  })
+
+  it('TC-BDD21-06: remaining_days 不足 1 天（浮点 0.3）取整显示"剩余1天"', async () => {
+    const { wrapper } = await mountManage([
+      makeStarItem({ countdown: { status: 'running', remaining_days: 0.3, archive_delete_at: null } }),
+    ])
+
+    const countdown = wrapper.find('[data-testid="star-countdown"]')
+    expect(countdown.exists()).toBe(true)
+    expect(countdown.text()).toMatch(/剩余\s*1\s*天/)
+  })
 })
 
 describe('StarManageView — BDD-22: 批量取消星标/批量移除墓碑', () => {
