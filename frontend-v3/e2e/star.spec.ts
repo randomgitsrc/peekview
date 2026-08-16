@@ -31,20 +31,21 @@ test.beforeEach(async ({ context }) => {
 
 async function login(page: Page) {
   await page.goto(`${BASE_URL}/explore`)
-  await page.locator('.explore-actions').waitFor({ state: 'visible', timeout: 10000 }).catch(() => {})
+  // 等待登录按钮出现（authState 解析为 anonymous 后才渲染）。
+  // 不吞超时错误——登录失败应让测试失败，而非静默跳过导致后续误判。
+  const authBtn = page
+    .locator('.explore-actions button:has-text("Sign in"), .explore-actions button:has-text("Login")')
+    .first()
+  await authBtn.waitFor({ state: 'visible', timeout: 15000 })
 
-  const signInBtn = page.locator('.explore-actions button:has-text("Sign in")')
-  const loginBtn = page.locator('.explore-actions button:has-text("Login")')
-  const btn = (await signInBtn.count()) > 0 ? signInBtn : loginBtn
-
-  if (await btn.isVisible().catch(() => false)) {
-    await btn.click()
-    await page.locator('.login-dialog').waitFor({ state: 'visible' })
-    await page.locator('#login-username').fill('alice')
-    await page.locator('#login-password').fill('testpass123')
-    await page.locator('.login__submit').click()
-    await page.waitForURL('**/explore', { timeout: 10000 })
-  }
+  await authBtn.click()
+  await page.locator('.login-dialog').waitFor({ state: 'visible', timeout: 10000 })
+  await page.locator('#login-username').fill('alice')
+  await page.locator('#login-password').fill('testpass123')
+  await page.locator('.login__submit').click()
+  await page.waitForURL('**/explore', { timeout: 15000 })
+  // 确认登录成功：Sign in 按钮消失（UserMenu 接管）——不静默
+  await expect(page.locator('.explore-actions button:has-text("Sign in")')).toHaveCount(0, { timeout: 10000 })
 }
 
 async function openFirstEntry(page: Page) {

@@ -180,3 +180,12 @@
 - 2 minor：toast 测试 4 处 `/explore?starred=1` 全同步 ✓；桌面 44px 保持（主 Agent 已接受）✓
 - 新问题：无 BLOCKER/CRITICAL；2 条信息性观察（active tab 客户端公式对 paused+0 理论差异但为死代码；reason='expired' 分支后端当前仅发 author_deleted，前端有默认兜底）
 - 结论：approved
+
+## P4 回退修复（implementer-retreat, 2026-08-16）
+
+- 已读：dispatch-context-retreat + implementer.md + P0-brief + star.spec.ts + EntryListView.vue
+- 根因验证（读码确认，与主 Agent 诊断一致）：
+  - EntryListView.vue:9 `<AuthButton v-if="authState === 'anonymous'">` → Sign in 按钮仅在 authState 解析为 anonymous 后渲染
+  - login()（star.spec.ts:36-48）：`signInBtn.count()` 在 authState=loading 时返回 0 → btn 取 loginBtn（也 count 0）→ `isVisible()` false → 跳过登录
+  - 页面停留匿名态 → tab-starred 不渲染 → BDD-18 waitForSelector 超时；BDD-1/6 flaky 同源（authState 解析快慢）
+- 修复方案：login() 在 count 前先 `waitFor({state:'visible', timeout:10000})` 等待登录按钮出现（union selector: Sign in/Login），确保 authState 解析完成；其余逻辑不变

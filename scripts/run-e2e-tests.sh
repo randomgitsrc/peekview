@@ -86,13 +86,30 @@ else
     echo "ℹ  CDP Chrome 不可用，使用本地 Chromium"
 fi
 
-npx playwright test "$spec" --reporter=line || {
+# Timeout 保护：CDP 模式下 Playwright 可能挂起（连接异常/测试卡死），
+# 用 GNU timeout 强制上限（默认 600s，可用 E2E_TIMEOUT 覆盖）。
+# 超时退出码 124 → 明确报错，避免无限等待（TPV0093 P5 教训：subagent 卡死无感知）。
+E2E_TIMEOUT="${E2E_TIMEOUT:-600}"
+echo "→ E2E 超时上限: ${E2E_TIMEOUT}s（可用 E2E_TIMEOUT 覆盖）"
+
+timeout "$E2E_TIMEOUT" npx playwright test "$spec" --reporter=line
+PLAYWRIGHT_EXIT=$?
+
+if [ "$PLAYWRIGHT_EXIT" -eq 124 ]; then
+    echo ""
+    echo "✗ E2E 测试超时（${E2E_TIMEOUT}s），已强制终止"
+    echo "   可能原因: CDP 连接挂起 / 测试卡死 / 单 spec 超预算"
+    echo "   查看截图: /tmp/e2e-results/"
+    exit 124
+fi
+
+if [ "$PLAYWRIGHT_EXIT" -ne 0 ]; then
     echo ""
     echo "✗ E2E 测试失败"
     echo "   查看截图: /tmp/e2e-results/"
     echo "   查看报告: npx playwright show-report"
-    exit 1
-}
+    exit "$PLAYWRIGHT_EXIT"
+fi
 
 echo ""
 echo "=== ✓ 所有 E2E 测试通过 ==="
