@@ -1,8 +1,10 @@
-phase: P0
+phase: P1
 task_id: TPV0093
 task_name: star-lifecycle
-status: pending
+status: in_progress
 created: 2026-08-12T00:00:00Z
-updated: 2026-08-12T00:00:00Z
+updated: 2026-08-16T00:00:00Z
 history:
   - {phase: P0, action: created, ts: "2026-08-12T00:00:00Z", note: "基于 docs/specs/peekview-star-function-20260812.md（V2.0 需求文档）立项。四决策点已与用户定稿：A archived 星标用户可读非星标不可见（权限扩展）/ B 独立 EntryTombstone 表 / C Explore 加 [Starred] tab + 独立管理页 / D 存量起倒计时从上线条日起算。risk=high（schema 变更+权限改动+生命周期重构），P3/P6/P7 不可裁"}
+  - {phase: P0, action: env_check, ts: "2026-08-16T00:00:00Z", note: "P0 门槛全部通过：P0-brief 四字段齐全（task/known_risks/executor_env/env_constraints）+ 环境自检（make debug-quick :8888 正常响应 / pytest 9.1.1 / Playwright 1.61.1 / Node v24.15.0 / 需求文档 docs/specs/peekview-star-function-20260812.md 存在）+ active-tasks.md 任务行已存在"}
+  - {phase: P0, action: transition, ts: "2026-08-16T00:00:00Z", note: "P0 → P1：推进条件全满足，agate v0.49.0 下启动"}
