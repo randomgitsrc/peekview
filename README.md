@@ -4,7 +4,7 @@
 
 PeekView turns agent output into shareable pages: an agent publishes files, humans open a link to a beautifully rendered page, and other agents read the raw content through the API or MCP.
 
-[![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
+[![Version](https://img.shields.io/badge/version-0.21.0-blue.svg)](https://github.com/randomgitsrc/peekview/releases)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Vue 3](https://img.shields.io/badge/vue-3.4+-green.svg)](https://vuejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
