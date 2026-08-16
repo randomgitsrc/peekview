@@ -140,3 +140,24 @@ source: review
 created_at: 2026-08-15
 task_id: TPV0092-mcp-get-entry-fetch
 ```
+
+## DEBT0006
+
+```yaml
+id: DEBT0006
+category: technical
+title: backup/restore merge 模式不导入 entry_stars/entry_tombstones 新表，恢复旧备份丢失星标/墓碑
+status: open
+priority: medium
+evidence:
+  - path: agate-workspace/tasks/TPV0093-star-lifecycle/P2-design.md
+  - note: _restore_merge（backend/peekview/services/admin_service.py:816-1073）只处理 entries/files/shares/reads/apikeys；[SCOPE+] 已裁定为已知限制；replace 模式整体换库不受影响
+impact: merge-restore 恢复功能上线前备份后星标与墓碑数据静默丢失；未来备份恢复相关变更更危险
+recommendation: 后续任务增补 _restore_merge 两表导入 + RestorePreview 计数扩展，并在 P1 基线补恢复星标/墓碑的验收用例
+closure_criteria:
+  - _restore_merge 导入 entry_stars/entry_tombstones
+  - RestorePreview 含两表计数
+  - 补恢复星标/墓碑的验收用例
+source: review
+created_at: 2026-08-16
+```

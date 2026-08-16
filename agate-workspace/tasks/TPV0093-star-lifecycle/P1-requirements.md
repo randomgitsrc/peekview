@@ -12,6 +12,8 @@ risk_level: high
 phases: [P1, P2, P3, P4, P5, P6, P7, P8]
 packages: [backend/peekview, frontend-v3]
 domains: [backend, frontend, security]
+scope_resolved:
+  - "backup/restore merge 不导入 entry_stars/entry_tombstones——P2 [SCOPE+] 发现，主 Agent 裁定为已知限制（备份 dump 格式本身不含新表，merge 恢复旧备份丢失星标/墓碑为数据格式限制），登记 DEBT0006 追踪，不扩大本任务实现范围"
 ---
 
 # P1 需求基线 — 星标功能与内容生命周期管理（TPV0093）
@@ -306,3 +308,4 @@ capability_requirements:
 - 墓碑的封面图渲染（S8 适配为 summary 卡片）。
 - MCP 星标工具（星标是人类行为，不暴露给 Agent）。
 - 内容热度除星标外的其他维度（仅计数，不做推荐/排序加权）。
+- **[SCOPE+ from P2] backup/restore merge 不导入 entry_stars/entry_tombstones**——P2 设计阶段发现 `_restore_merge` 现有代码只处理 entries/files/shares/reads/apikeys；裁定为已知限制（备份 dump 格式本身不含新表，merge 恢复旧备份丢失星标/墓碑为数据格式限制，replace 模式整体换库不受影响）；已登记 DEBT0006 追踪，不扩大本任务实现范围。
