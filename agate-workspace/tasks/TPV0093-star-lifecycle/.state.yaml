@@ -1,4 +1,4 @@
-phase: P6
+phase: P7
 task_id: TPV0093
 task_name: star-lifecycle
 status: in_progress
@@ -15,4 +15,5 @@ history:
   - {phase: P5, action: completed, ts: "2026-08-16T00:00:00Z", note: "P5 完成：gate_commands.P5 三条全执行——backend make test-quick 1125 passed / frontend make test-frontend+typecheck 1288 passed / E2E E2E_SPEC=star.spec.ts make debug-test 10 passed（chromium+Mobile Chrome）。过程：verifier subagent 两次卡死（用户中止）→ 根因 ①login() helper 竞态（authState loading 时跳过登录，catch 吞超时）②run-e2e-tests.sh 无 timeout（CDP 挂起无限等）→ 用户授权基础设施修复（主 Agent 直接处理）：run-e2e-tests.sh 加 timeout 600 包裹（E2E_TIMEOUT 可覆盖，exit 124 明确报错）+ star.spec.ts login() 彻底修复（不吞错误 + 登录后确认 Sign in 消失）；主 Agent 亲跑 E2E 10 passed 8.5s 全绿；check-gate P5 exit 2；P5-test-results/unit.md 签名 4 + e2e.md 签名 2 + fail-list 空"}
   - {phase: P5, action: retreat_fix, ts: "2026-08-16T22:00:00Z", note: "P6 验收首轮发现 2 实现 bug 回退 P4 修复（P4-retreat-fix-r2.md）：BUG-1 list_entries 单列 select 解包崩溃（starred_ids = set(starred_rows)）+ 补列表测试（1127 passed）；BUG-2 remaining_days 浮点数未取整（StarManageView Math.ceil，显示剩余 3 天）；基础设施脚本修正（P6-scripts：BDD-28 share 归档前创建 / BDD-13 批量端点 / BDD-22 勾选全部 / BDD-25 owner token / clearCookies）"}
   - {phase: P6, action: completed, ts: "2026-08-16T22:00:00Z", note: "P6 完成：28/28 BDD PASS 0 FAIL——backend 17（verify-backend.sh：星标计数/豁免删除/墓碑/权限三端点/share 通道/迁移 backfill）+ UI 11（verify-ui.ts Playwright CDP：乐观回滚/墓碑卡片/Starred tab/管理页分类/红色倒计时取整/批量移除/Toast/豁免标签/强制删除二次确认/墓碑）；vision-reports 11 个 blocker=0；check-p6-format/gate/evidence/provenance 全过；P6-evidence 证据完整（backend BDD-NN.json + screenshots + vision-reports + logs）；过程含 2 轮脚本逻辑修正（非实现）"}
+  - {phase: P7, action: completed, ts: "2026-08-16T22:10:00Z", note: "P7 完成：P7-consistency.md——BLOCKER=0 DEVIATION=1(非关键：DG-2 测试适配超出批准例外，主 Agent 复核接受) DEVIATION_CRITICAL=0 DESIGN_GAP 4/4 REVIEWED 配对；SCOPE+ 闭环（backup/restore→DEBT0006）；跨文件一致性：P2 packages/方案 ↔ P4 实现路径吻合（archive_delete_at/tombstone_id/get_entry 短路/backfill 幂等/star 授权）↔ P6 28/28 PASS 匹配；check-gate P7 exit 0"}
 
