@@ -1,4 +1,4 @@
-phase: P7
+phase: READY
 task_id: TPV0093
 task_name: star-lifecycle
 status: in_progress
@@ -16,4 +16,5 @@ history:
   - {phase: P5, action: retreat_fix, ts: "2026-08-16T22:00:00Z", note: "P6 验收首轮发现 2 实现 bug 回退 P4 修复（P4-retreat-fix-r2.md）：BUG-1 list_entries 单列 select 解包崩溃（starred_ids = set(starred_rows)）+ 补列表测试（1127 passed）；BUG-2 remaining_days 浮点数未取整（StarManageView Math.ceil，显示剩余 3 天）；基础设施脚本修正（P6-scripts：BDD-28 share 归档前创建 / BDD-13 批量端点 / BDD-22 勾选全部 / BDD-25 owner token / clearCookies）"}
   - {phase: P6, action: completed, ts: "2026-08-16T22:00:00Z", note: "P6 完成：28/28 BDD PASS 0 FAIL——backend 17（verify-backend.sh：星标计数/豁免删除/墓碑/权限三端点/share 通道/迁移 backfill）+ UI 11（verify-ui.ts Playwright CDP：乐观回滚/墓碑卡片/Starred tab/管理页分类/红色倒计时取整/批量移除/Toast/豁免标签/强制删除二次确认/墓碑）；vision-reports 11 个 blocker=0；check-p6-format/gate/evidence/provenance 全过；P6-evidence 证据完整（backend BDD-NN.json + screenshots + vision-reports + logs）；过程含 2 轮脚本逻辑修正（非实现）"}
   - {phase: P7, action: completed, ts: "2026-08-16T22:10:00Z", note: "P7 完成：P7-consistency.md——BLOCKER=0 DEVIATION=1(非关键：DG-2 测试适配超出批准例外，主 Agent 复核接受) DEVIATION_CRITICAL=0 DESIGN_GAP 4/4 REVIEWED 配对；SCOPE+ 闭环（backup/restore→DEBT0006）；跨文件一致性：P2 packages/方案 ↔ P4 实现路径吻合（archive_delete_at/tombstone_id/get_entry 短路/backfill 幂等/star 授权）↔ P6 28/28 PASS 匹配；check-gate P7 exit 0"}
+  - {phase: P8, action: completed, ts: "2026-08-16T22:20:00Z", note: "P8 完成：P8-release.md（bump_type=minor，0.20.0→0.21.0，MCP 不 bump，debt_check=reviewed/DEBT0006）+ CHANGELOG 0.21.0 条目（星标/豁免/墓碑/权限扩展/Starred tab/管理页/作者豁免/新 API/迁移 + 2 修复）；主 Agent 执行：make bump-version NEW_VERSION=0.21.0（VERSIONS.json 同步）+ CHANGELOG amend + commit f1fcf7a7 + tag v0.21.0 + 重跑 P5 gate 1127 passed + pre-publish-quick 通过（1 次 xdist 并发偶发 test_admin_backup 单跑通过非回归）；check-gate P8 exit 2；READY 收尾检查（debug 停止/临时数据清理/生产无残留）"}
 
