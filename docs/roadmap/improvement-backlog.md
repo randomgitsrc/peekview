@@ -29,7 +29,7 @@
 | 25 | UI/UX 重构（OverflowMenu + SharePanel） | 体验 | 🟠 近期 | ✅ v0.9.0(T058) |
 | 26 | Markdown 扩展补全（KaTeX + Task List + Footnote + Sub/Sup） | 体验/功能 | 🟠 近期 | ✅ v0.9.3(T059) |
 | 27 | 归档条目可见性策略修正 + 登录退出内容刷新 | 体验 | 🟠 近期 | ✅ v0.9.4(T060) |
-| 28 | T032 探针数据回顾：entry_reads 数据分析，判断 Agent 读取行为 | 产品/探针 | 🔴 立即 | ⬜ roadmap（2026-07-28 结论：跨 Agent 读取信号极弱，3 个月后复查） |
+| 28 | T032 探针数据回顾：entry_reads 数据分析，判断 Agent 读取行为 | 产品/探针 | 🔴 立即 | ✅ 复查（2026-08-28：MCP 匿名外部读取 5 条，私有经 share 读取 1 次，信号已出现→不降级；重活层仍冻结） |
 | 29 | Entry 引用关系字段（references/referenced_by）+ 轻量语义标签（topic/kind） | 产品/Agent | 🟠 近期 | ⬜ roadmap（依赖 T061 结论） |
 | 30 | P0-brief task_category 字段（🔧/🎯/🌱）+ 排期规则流程化 | 流程 | 🟠 近期 | ❌ 取消(T063) |
 | 31 | P8 自检清单加 `make dev`（防止 venv 依赖未同步导致测试虚设） | 流程/纠错 | 🔴 立即 | ✅ 已改 |
