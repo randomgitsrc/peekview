@@ -23,7 +23,7 @@ PeekView 是一个轻量级内容发布服务。AI Agent 通过 API/CLI/MCP 发�
 
 | 文件 | 说明 |
 |------|------|
-| `~/.agate/WORKFLOW.md` | 当前主流程（P0-P8 子 Agent 编排，[agate](https://github.com/randomgitsrc/agate)） |
+| `~/.agate/WORKFLOW.md` | 当前主流程（P0-P8 子 Agent 编排，[agate](https://github.com/randomgitsrc/agateon)） |
 | `docs/process/gstack-review-guide.md` | 评审角色手册（/review /cso 等） |
 | `docs/process/release.md` | 发布流程 |
 | `docs/process/debug-workflow.md` | 调试工作流 |

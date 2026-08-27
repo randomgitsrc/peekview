@@ -6,7 +6,7 @@
 ## agate_root / project_root
 
 ```
-agate_root: /home/kity/oclab/agate/agate
+agate_root: /home/kity/oclab/agateon/agate
 project_root: /home/kity/oclab/peekview
 ```
 
