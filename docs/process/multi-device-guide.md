@@ -68,7 +68,7 @@ cat docs/process/workflow.md
 cat agate-workspace/tasks/active-tasks.md
 
 # 4. 实现计划（如有待规划任务）
-cat docs/plans/impl-plan.md
+cat agate-workspace/archived/plans/impl-plan.md
 ```
 
 ### 第三步：确认检查点状态

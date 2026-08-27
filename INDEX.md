@@ -31,15 +31,6 @@ PeekView 是一个轻量级内容发布服务。AI Agent 通过 API/CLI/MCP 发�
 
 ---
 
-## 活跃计划
-
-| 文件 | 说明 |
-|------|------|
-| `docs/plans/mcp-path-namespace-mapping.md` | MCP 路径命名空间映射（目标 v0.9.0） |
-| `docs/plans/gole-cli-config-alignment.md` | CLI 配置体验对齐 + Captcha 配置支持 |
-
----
-
 ## 架构参考
 
 | 文件 | 说明 |

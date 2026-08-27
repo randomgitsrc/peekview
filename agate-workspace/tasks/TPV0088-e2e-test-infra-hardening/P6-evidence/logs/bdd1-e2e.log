@@ -1,0 +1,76 @@
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+✓ 调试服务使用独立数据库 (lsof)
+ℹ  生产数据库条目数: 52
+→ Check 6: 验证静态产物新鲜度...
+✓ 静态产物新鲜 (src 未比 static/index.html 新)
+
+=== ✓ 安全检查通过，可以运行 E2E 测试 ===
+
+→ 非交互模式，自动继续...
+
+→ Step 2: 启动 E2E 测试 (带数据隔离保护)...
+=== PeekView E2E 测试 ===
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+→ 检查服务状态...
+✓ 服务运行中: http://127.0.0.1:8888
+✓ Service using debug database: /tmp/peekview-debug/peekview.db
+
+→ 运行 E2E 测试 (e2e/viewer.spec.ts)...
+✓ 使用 CDP Chrome: http://127.0.0.1:18800
+
+Running 38 tests using 8 workers
+
+[1A[2K[1/38] [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works
+[1A[2K[2/38] [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed
+[1A[2K[3/38] [chromium] › e2e/viewer.spec.ts:29:3 › Code Viewer › TC-001: Python code syntax highlighting
+[1A[2K[4/38] [chromium] › e2e/viewer.spec.ts:62:3 › Code Viewer › TC-003: Wrap mode toggle
+[1A[2K[5/38] [chromium] › e2e/viewer.spec.ts:96:3 › Code Viewer › TC-005: File tree shows filename and copy button
+[1A[2K[6/38] [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering
+[1A[2K[7/38] [chromium] › e2e/viewer.spec.ts:53:3 › Code Viewer › TC-002: Line numbers displayed
+[1A[2K[8/38] [chromium] › e2e/viewer.spec.ts:81:3 › Code Viewer › TC-004: Copy button copies code
+[1A[2K[9/38] [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering
+[1A[2K[10/38] [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout
+[1A[2K[11/38] [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+[1A[2K[12/38] [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer
+[1A[2K[13/38] [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer
+[1A[2K[14/38] [chromium] › e2e/viewer.spec.ts:230:3 › Theme Switching › TC-030: Dark/light theme toggle
+[1A[2K[15/38] [chromium] › e2e/viewer.spec.ts:254:3 › Theme Switching › TC-031: Theme persistence after reload
+[1A[2K[16/38] [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection
+[1A[2K[17/38] [chromium] › e2e/viewer.spec.ts:292:3 › File Operations › TC-041: Single file hides file tree
+[1A[2K[18/38] [chromium] › e2e/viewer.spec.ts:302:3 › File Operations › TC-042: Download button downloads file
+[1A[2K[19/38] [chromium] › e2e/viewer.spec.ts:324:3 › Entry List › TC-050: Entry list displays correctly
+[1A[2K[20/38] [Mobile Chrome] › e2e/viewer.spec.ts:29:3 › Code Viewer › TC-001: Python code syntax highlighting
+[1A[2K[21/38] [Mobile Chrome] › e2e/viewer.spec.ts:62:3 › Code Viewer › TC-003: Wrap mode toggle
+[1A[2K[22/38] [Mobile Chrome] › e2e/viewer.spec.ts:53:3 › Code Viewer › TC-002: Line numbers displayed
+[1A[2K[23/38] [Mobile Chrome] › e2e/viewer.spec.ts:81:3 › Code Viewer › TC-004: Copy button copies code
+[1A[2K[24/38] [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering
+[1A[2K[25/38] [Mobile Chrome] › e2e/viewer.spec.ts:96:3 › Code Viewer › TC-005: File tree shows filename and copy button
+[1A[2K[26/38] [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed
+[1A[2K[27/38] [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works
+[1A[2K[28/38] [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering
+[1A[2K[29/38] [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout
+[1A[2K[30/38] [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+[1A[2K[31/38] [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer
+[1A[2K[32/38] [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer
+[1A[2K[33/38] [Mobile Chrome] › e2e/viewer.spec.ts:230:3 › Theme Switching › TC-030: Dark/light theme toggle
+[1A[2K[34/38] [Mobile Chrome] › e2e/viewer.spec.ts:254:3 › Theme Switching › TC-031: Theme persistence after reload
+[1A[2K[35/38] [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection
+[1A[2K[36/38] [Mobile Chrome] › e2e/viewer.spec.ts:292:3 › File Operations › TC-041: Single file hides file tree
+[1A[2K[37/38] [Mobile Chrome] › e2e/viewer.spec.ts:302:3 › File Operations › TC-042: Download button downloads file
+[1A[2K[38/38] [Mobile Chrome] › e2e/viewer.spec.ts:324:3 › Entry List › TC-050: Entry list displays correctly
+[1A[2K  38 passed (11.5s)
+
+=== ✓ 所有 E2E 测试通过 ===
+截图保存位置: /tmp/e2e-results/
+
+请访问 http://127.0.0.1:8888 进行人工验证
+确认无误后运行: make debug-stop
+
+测试截图:
+EXIT_CODE: 0

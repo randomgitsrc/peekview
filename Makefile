@@ -415,22 +415,17 @@ pre-publish: clean build dev check-version check-changelog test verify-wheel
 
 # Full publish pipeline (uses build-fast to save time after pre-publish)
 publish:
-	@echo "→ Step 1/4: 检查是否有未提交的静态文件..."
-	@if [ -n "$$(git status --porcelain backend/peekview/static/ 2>/dev/null)" ]; then \
+	@echo "→ Step 1/4: 检查静态文件是否已构建..."
+	@if [ ! -f "backend/peekview/static/index.html" ]; then \
 		echo ""; \
-		echo "✗ 错误: 发现未提交的静态文件"; \
-		echo ""; \
-		echo "可能原因:"; \
-		echo "  - bump-version 后没有提交 CHANGELOG"; \
-		echo "  - 手动修改了静态文件"; \
+		echo "✗ 错误: 静态文件未构建 (backend/peekview/static/index.html 不存在)"; \
 		echo ""; \
 		echo "解决方案:"; \
-		echo "  1. 如果是修改 CHANGELOG 后: git add -A && git commit --amend --no-edit"; \
-		echo "  2. 如果是意外修改: git checkout backend/peekview/static/"; \
+		echo "  1. 运行 make build 构建前端并复制到 static/"; \
 		echo ""; \
 		exit 1; \
 	fi
-	@echo "  ✓ 静态文件已提交"
+	@echo "  ✓ 静态文件已构建"
 	@echo "→ Step 2/4: 检查 wheel 是否存在..."
 	@if [ ! -f "backend/dist/peekview-*.whl" ]; then \
 		echo "→ No wheel found, building..."; \

@@ -1,0 +1,21 @@
+BDD-5 证据：TC-041 单文件断言数据支撑
+=====================================
+1) TC-041 断言（frontend-v3/e2e/viewer.spec.ts:292-300）:
+   test('TC-041: Single file hides file tree', async ({ page }) => {
+     await page.setViewportSize({ width: 1280, height: 800 })
+     await page.goto('/json-api-config')
+     const fileSidebar = page.locator('.file-sidebar')
+     const count = await fileSidebar.count()
+     expect(count).toBe(0)
+   })
+
+2) seed 数据支撑：json-api-config 单内容文件
+   scripts/seed-data/json-api-config/ 内容: config.json + meta.json
+   （meta.json 是元数据非内容文件 → 内容文件仅 1 个 ⇒ isMultiFile=false ⇒ file-sidebar 不渲染）
+   meta.json: { "summary": "API 服务配置（JSON 树视图）", "is_public": true, "owner": "bob" }
+
+3) E2E 实跑结果（bdd1-e2e.log / bdd7-fresh-pass.log）：
+   [17/38] [chromium] TC-041: Single file hides file tree  → PASS
+   [36/38] [Mobile Chrome] TC-041: Single file hides file tree → PASS
+   38 passed (11.5s) / 38 passed (11.3s)
+EXIT_CODE: 0

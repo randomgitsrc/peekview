@@ -1,0 +1,14 @@
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+✓ 调试服务使用独立数据库 (lsof)
+ℹ  生产数据库条目数: 52
+→ Check 6: 验证静态产物新鲜度...
+✗ FATAL: frontend 源码比 static 产物新，E2E 将基于过期产物运行
+   过期文件（前 5 个）:
+/home/kity/oclab/peekview/frontend-v3/src/components/ThemeToggle.vue
+   请先运行: make build-frontend
+make: *** [Makefile:636：debug-test] 错误 1

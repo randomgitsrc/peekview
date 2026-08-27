@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+### 仓库整理（内部，无用户可见行为变化）
+
+- 解除误跟踪的构建产物：`frontend-v3/node_modules/`（8779 文件）、`backend/peekview/static/`（167 文件）、`frontend-v3/dist/`、`backend/zip-*-test.zip`、`docs/.agate-env-baseline-cache/`（git rm --cached，磁盘保留）
+- 清理磁盘垃圾：562 个 `backend/peekview-backup-*.tar.gz`、`backend/dist/` wheel、`packages/mcp-server/dist/`、ruff/pytest 缓存、`frontend-v3/docs/tasks/`（57 个临时截图）、`FEATURES.json/md`、gate 临时文件、空目录
+- 归档过时文档：`docs/plans/*`（7 个已实现计划）→ `agate-workspace/archived/plans/`；`docs/superpowers/`、`docs/experiments/` → `agate-workspace/archived/`；`docs/process/workflow-v4/` → `docs/process/archived/`；顶层 `cdp-smoke-test.ts`/`e2e-diagram-test.ts` → `scripts/archived/`
+- 修复悬空引用：INDEX.md 移除 2 个已归档 plan 引用；subagent-dispatch-guide/multi-device-guide 更新归档路径
+- `.gitignore`：补 `docs/.agate-env-baseline-cache/` + P6 证据日志豁免
+- `make publish` Step 1 静态守卫改为磁盘存在性检查（原 git status 检查在 static 解除跟踪后失效）
+
 ## [0.21.0] - 2026-08-16
 
 ## [mcp-v0.11.0] - 2026-08-15

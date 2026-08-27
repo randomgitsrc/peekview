@@ -1,0 +1,20 @@
+=== BDD-2: /#/entry/ 残留检查 ===
+PASS: 无 /#/entry/ 残留
+=== BDD-3: 死选择器检查 ===
+PASS: 无 \.code-header
+PASS: 无 \.mobile-actions
+PASS: 无 \.toc-btn
+PASS: 无 \.list-header
+PASS: 无 \.btn-icon
+=== BDD-4: slug 残留检查 ===
+PASS: 无 lu4prg/ngajri 残留
+=== BDD-4: 新 slug 映射抽查 ===
+python-entry-service 出现次数:
+5
+markdown-test 出现次数:
+6
+mermaid-charts 出现次数:
+1
+json-api-config 出现次数:
+1
+EXIT_CODE: 0

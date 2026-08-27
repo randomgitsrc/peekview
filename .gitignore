@@ -85,6 +85,8 @@ packages/mcp-server/coverage/
 # Debug / Temp
 /tmp/
 *.log
+# 例外：agate 任务 P6 证据日志（任务记录入库惯例，保留跟踪）
+!agate-workspace/tasks/**/P6-evidence/logs/*
 .DS_Store
 .gate-result.json
 .gate-history.jsonl
@@ -92,3 +94,5 @@ peekview-backup-*.tar.gz
 zip-*-test.zip
 .worktrees/
 frontend-v3/docs/
+# agate env baseline 缓存（运行时生成）
+docs/.agate-env-baseline-cache/

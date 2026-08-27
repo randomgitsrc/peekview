@@ -1,0 +1,8 @@
+=== BDD-3 活选择器使用抽查（规范要求存在的） ===
+\.file-sidebar: 3
+\.toc-sidebar: 2
+mobile-bottom-bar: 1
+\.theme-toggle: 2
+\.file-item: 2
+data-testid: 7
+EXIT_CODE: 0
