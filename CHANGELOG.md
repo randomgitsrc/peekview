@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### 测试修复（无用户可见行为变化）
+
+- 修复 mcp-server.spec.ts 移动端 FileTree 3 例 e2e 失败（DEBT0005）：测试原无条件断言 `.file-tree`，但移动端文件树渲染在 Files 抽屉内（默认关闭）；改为移动端先点 Files 按钮打开抽屉再断言。mcp-server.spec.ts 14 passed（含 Mobile Chrome）
+- 登记预存失败 DEBT0007：debug-server.spec.ts theme toggle / owner tabs / API keys 3 例 auth 相关失败（CDP 模式登录态问题，与代码改动无关）
+
 ### 仓库整理（内部，无用户可见行为变化）
 
 - 解除误跟踪的构建产物：`frontend-v3/node_modules/`（8779 文件）、`backend/peekview/static/`（167 文件）、`frontend-v3/dist/`、`backend/zip-*-test.zip`、`docs/.agate-env-baseline-cache/`（git rm --cached，磁盘保留）

@@ -19,7 +19,7 @@
 | 7 | `MAX_SHARES` 查询用 `text()` SQL 与同文件 ORM 风格不一致 + `entry.id` type safety | 代码风格 | 🔵 长期 | ✅ v0.6.3(T054) |
 | 8 | `entry_shares` 表无独立 migration，靠 `create_all()` | 运维 | 🔵 长期 | ✅ v0.6.3(T054) |
 | 9 | share cookie 用 `entry_id` 命名，外部可枚举推断 entry 总量 | 信息泄露（低危） | 🔵 长期 | ✅ v0.4.0(T033) |
-| 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔴 立即 | ⬜ 直接写 README（非 task） |
+| 10 | SQLite 并发写边界文档化（含 share `view_count` 串行化瓶颈） | 架构/文档 | 🔴 立即 | ✅ docs/architecture/sqlite-concurrency.md（2026-07-21 f6d6730d，自托管运行预期 + 升级路径） |
 | 10b | entry 生命周期管理：过期→归档+可续命+可配置保留期 | 产品/架构 | 🟠 近期 | ✅ v0.5.4(T048) |
 | 15b | 图表源码自动清洗 + 移动端 header 滚动收缩 | 体验 | 🟠 近期 | ✅ v0.5.5(T049) |
 | 21 | Agent /raw 端点自动发现（Content Negotiation + HTML 自描述） | 产品/Agent | 🔴 立即 | ✅ T053 |

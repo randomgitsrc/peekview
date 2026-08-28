@@ -143,6 +143,11 @@ test.describe('MCP: Entry Creation', () => {
     await page.goto(`/${slug}`)
 
     // Verify FileTree renders
+    // Mobile hides the file tree behind the Files drawer; open it first.
+    const viewport = page.viewportSize()
+    if (viewport && viewport.width < 768) {
+      await page.click('[data-testid="mobile-bar-filetree-btn"]')
+    }
     await expect(page.locator('.file-tree')).toHaveCount(1)
 
     // Verify directory structure
@@ -235,12 +240,20 @@ test.describe('MCP: FileTree Interaction', () => {
     await page.goto(`/${slug}`)
 
     // Wait for FileTree
-    await expect(page.locator('.file-tree')).toHaveCount(1)
-
     const viewport = page.viewportSize()
     if (viewport && viewport.width < 768) {
-      // Mobile layout hides the file tree behind the Files control; detailed
-      // mobile behavior is covered by debug-server.spec.ts.
+      // Mobile layout hides the file tree behind the Files drawer; open it first.
+      await page.click('[data-testid="mobile-bar-filetree-btn"]')
+    }
+    await expect(page.locator('.file-tree')).toHaveCount(1)
+
+    if (viewport && viewport.width < 768) {
+      // Mobile drawer closes on file select; reopen before each switch
+      await page.click('.file-tree .file-item:has-text("file2.txt")')
+      await expect(page.locator('body')).toContainText('Content of file 2')
+
+      await page.click('[data-testid="mobile-bar-filetree-btn"]')
+      await page.click('.file-tree .file-item:has-text("file1.txt")')
       await expect(page.locator('body')).toContainText('Content of file 1')
     } else {
       // Click on file2
@@ -278,6 +291,11 @@ test.describe('MCP: FileTree Interaction', () => {
     await page.goto(`/${slug}`)
 
     // Wait for FileTree
+    // Mobile hides the file tree behind the Files drawer; open it first.
+    const viewport = page.viewportSize()
+    if (viewport && viewport.width < 768) {
+      await page.click('[data-testid="mobile-bar-filetree-btn"]')
+    }
     await expect(page.locator('.file-tree')).toHaveCount(1)
 
     // Verify src directory exists

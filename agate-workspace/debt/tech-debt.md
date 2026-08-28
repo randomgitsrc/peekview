@@ -127,11 +127,12 @@ task_id: TPV0092-mcp-get-entry-fetch
 id: DEBT0005
 category: technical
 title: 前端移动端 FileTree e2e 3 例失败（预存，非 TPV0092 引入）
-status: open
+status: closed
 priority: medium
 evidence:
   - path: agate-workspace/tasks/TPV0092-mcp-get-entry-fetch/P6-evidence/debug-test-mcp.log
   - note: e2e/mcp-server.spec.ts Mobile Chrome 项目 3 例失败（FileTree 渲染），Desktop 全过；CDP 实跑复现；spec 自 v0.7.0 未改
+  - note: 2026-08-28 关闭——根因是测试断言未按移动端 Files 抽屉行为编写（spec L146/L238/L280 无条件断言 .file-tree，移动端渲染在抽屉内默认关闭）；hotfix 改为移动端先点 [data-testid=mobile-bar-filetree-btn] 打开抽屉再断言。mcp-server.spec.ts 14 passed（含 Mobile Chrome 3 例）
 impact: Mobile Chrome 下 MCP FileTree 相关 e2e 持续失败，掩盖移动端 FileTree 渲染与断言不符
 recommendation: 前端任务跟进：核对移动端 .file-tree 渲染行为与 e2e 断言（viewer 布局/抽屉）
 closure_criteria:
@@ -160,4 +161,22 @@ closure_criteria:
   - 补恢复星标/墓碑的验收用例
 source: review
 created_at: 2026-08-16
+
+## DEBT0007
+
+```yaml
+id: DEBT0007
+category: technical
+title: debug-server.spec.ts 3 例 auth 相关预存失败（theme toggle / owner tabs / API keys page）
+status: open
+priority: medium
+evidence:
+  - note: 2026-08-28 全量 e2e（CDP :18800 + debug :8888）复现。theme-toggle-works 等待 .btn-icon[title*=Switch to] 超时；owner-tabs-visible-when-authenticated 断言 .owner-tab.last() 为 Starred 而非 Mine；apikey-page-loads 等待 .apikey-page 超时。原始代码（stash mcp spec 后）同样失败，与 DEBT0005 hotfix 无关
+impact: auth 相关 e2e 在 CDP 模式下持续失败，掩盖登录态/用户菜单/API keys 页面真实回归
+recommendation: 排查 CDP 模式下登录 cookie 初始化/隔离（theme/owner-tab/apikey 页面均依赖已登录态）；参考 f6524e69 cookie isolation fix 方向
+closure_criteria:
+  - debug-server.spec.ts theme toggle / owner tabs / API keys 3 例在 CDP 模式转绿
+source: review
+created_at: 2026-08-28
+```
 ```
