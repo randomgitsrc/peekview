@@ -20,6 +20,7 @@
 - 修复悬空引用：INDEX.md 移除 2 个已归档 plan 引用；subagent-dispatch-guide/multi-device-guide 更新归档路径
 - `.gitignore`：补 `docs/.agate-env-baseline-cache/` + P6 证据日志豁免
 - `make publish` Step 1 静态守卫改为磁盘存在性检查（原 git status 检查在 static 解除跟踪后失效）
+- 新增 repomap 代码地图机制：`.gitignore` 忽略 `REPOMAP.md`（临时产物，现场生成）、新增 `.repomapignore`（排除 `agate-workspace/`）、`AGENTS.md` 记录 repomap 约定（指针到 repomap-lite skill）
 
 ## [0.21.0] - 2026-08-16
 

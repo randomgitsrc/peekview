@@ -85,6 +85,11 @@ packages/mcp-server/coverage/
 # Debug / Temp
 /tmp/
 *.log
+
+# Repo map (regenerable via repomap-lite, not committed)
+REPOMAP.md
+# agate 审查留痕（过程痕迹，不入版本控制）
+docs/reviews/.agate-*-trace-*.md
 # 例外：agate 任务 P6 证据日志（任务记录入库惯例，保留跟踪）
 !agate-workspace/tasks/**/P6-evidence/logs/*
 .DS_Store

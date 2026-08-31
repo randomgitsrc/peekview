@@ -87,6 +87,12 @@ NODE_PATH=/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules npx tsx script
 # Vision 分析：vision-engine skill（skill 工具加载后按 SKILL.md 使用）
 ```
 
+## 代码地图（REPOMAP.md）
+
+- `REPOMAP.md` 是 repomap-lite skill（零依赖正则版）生成的符号索引（顶层函数/类/嵌套），**不提交**（已加入 .gitignore），需要时现场生成，不要手动维护
+- 排除范围由 `.repomapignore` 控制（**已提交**，当前排除 `agate-workspace/`）；调整后需重跑全量生成
+- 用法：加载 `repomap-lite` skill，按 SKILL.md 执行（`python3 .../repomap_lite.py -o REPOMAP.md`，单文件增量用 `--update-file`）
+
 ## 调试流程
 
 **开发迭代（看效果，~20s）**：
