@@ -75,4 +75,4 @@ history:
     首轮 12/14（2 failed = spec fixture 缺陷：teams-page 同 test bob→alice 二次 login 缺登出）→
     主 Agent 修 spec（clearCookies+goto）→ 重跑 14/14。known-failures 补登 #3（backup .tmp flaky）。P5
     gate exit 0'
-p5_pass_commit: HEAD
+p5_pass_commit: 74578a71c012f66293d9bd43d035066587637c52
