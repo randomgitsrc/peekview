@@ -11,3 +11,6 @@
 {"cmd":"check-gate.py P5","event":"gate_run","exit":2,"phase":"P5","prev_hash":"774daee35e4f12faa7ca941d9198e981be12fd9d9405f130aefeedea1338dff8","runner":"pre-commit","ts":"2026-09-02T20:04:57.820961Z"}
 {"event":"state_transition","from":"P4","phase":"P5","prev_hash":"97666680549302e23f2e2ce70df9e1caf5f59e610878fa5f1777db4320674678","to":"P5","ts":"2026-09-02T20:04:57.821081Z"}
 {"cmd":"check-gate.py P5","event":"gate_run","exit":2,"phase":"P5","prev_hash":"3a8f773d01802a562bb15339ab63e37d4a8a8503f3c7776b371a9c4fafa32ccb","runner":"pre-commit","ts":"2026-09-02T20:05:05.840380Z"}
+{"cmd":"check-gate.py P6","event":"gate_run","exit":2,"phase":"P6","prev_hash":"52afdc1b8a0968dd5ec2a63e84b016ed9844d684bdcfb4587e8d157abb8fa0d2","runner":"pre-commit","ts":"2026-09-02T21:17:38.918187Z"}
+{"event":"state_transition","from":"P5","phase":"P6","prev_hash":"e6cad265a81a1aeed6aca468ff7107c12c40f5682ecd3f99b765b54c94bfd3bd","to":"P6","ts":"2026-09-02T21:17:38.918323Z"}
+{"criteria_passed":44,"criteria_total":44,"event":"judge_verdict","partial":false,"phase":"P6.5","prev_hash":"9a3fbf9e65f5a81dde82815f22f548339fae0b751bdad9915046941af674683b","ts":"2026-09-02T21:23:00.574440Z","verdict":"passed","verdict_hash":"9972477e3837e7d87960cdf7cd6ad49935ad9ec89d882a3f1576afc04cf797ef"}
