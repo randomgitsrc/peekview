@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-03
+
+### 新增（team-visibility，TPV0095）
+
+- **后端**：teams/team_members 数据模型 + 幂等迁移（entries.team_id FK ON DELETE SET NULL + 索引）；「团队内可见」档位——team_id 非空强制 is_public=false；权限收敛 `can_read_entry()`（is_public OR owner/admin OR team 成员/owner，owner 视为团队可见范围成员）替换 7 处分散读路径检查；`/api/v1/teams` CRUD + 成员添加/移除/退出 + CLI `peekview teams` / `create|list --team --user`；share 三接口 403→404 防枚举；starred 列表含团队 entry；修复全局 API key `get_entry_by_api_key` 缺失（/download 路径）；空文件 entry download 改空 zip 200
+- **CLI**：本地 create/list 的 team 场景归属 `--user`，`--team + --visibility public` fail fast
+- **前端**：explore 顶栏 5-tab（新增 Teams）+ team chips（`?team=`）+ team entry badge（team 变体）+ 单一「团队不可用」态；`/teams` 管理页（owned 管理 / joined 退出，UserMenu + explore 双入口）；卡片 toggle 隐藏团队内容 + store 守卫；detail 状态标签三态（team ≠ Private）；移动端 tab 可横向滚动（≥44px 触达）+ a11y tablist/aria-selected/live region
+- **MCP**：新增只读工具 `list_teams`（owned/joined 两分区）；`create_entry` / `publish_files` schema 加可选 `team_id` + description 引导块（omitting team_id → default PUBLIC 硬提示）；`get_entry` 输出加 `team: {slug,name}|null`
+
+### 修复（TPV0095 连带）
+
+- share 三接口（create/list/revoke）非 owner 403 → 404（防存在性枚举）
+- 空文件 entry download 从 NO_FILES 404 改为空 zip 200（对齐 7 读路径权限矩阵）
+- `_is_global_api_key_auth` 收紧为请求时配置精确比对 + 裸 Authorization 兼容
+
 ### 测试修复（无用户可见行为变化）
 
 - 修复 mcp-server.spec.ts 移动端 FileTree 3 例 e2e 失败（DEBT0005）：测试原无条件断言 `.file-tree`，但移动端文件树渲染在 Files 抽屉内（默认关闭）；改为移动端先点 Files 按钮打开抽屉再断言。mcp-server.spec.ts 14 passed（含 Mobile Chrome）
