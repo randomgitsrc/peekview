@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## [mcp-v0.12.0] - 2026-09-03
+
+### 新增（TPV0095）
+
+- 新工具 `list_teams`：无参只读，返回 owned/joined 两分区（slug/name/member_count）
+- `create_entry` / `publish_files` 新增可选 `team_id` 参数：发布到指定团队（服务端强制 is_public=false，省略时默认 public——description 含引导提示）
+- `get_entry` 输出新增 `team: {slug,name} | null`：团队内 entry 附团队信息（成员/owner/全局 key 可见）
+
 ## [0.22.0] - 2026-09-03
 
 ### 新增（team-visibility，TPV0095）
