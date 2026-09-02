@@ -1,0 +1,54 @@
+# P2-progress — TPV0095 team-visibility（architect）
+
+## 2026-09-02 会话
+- [x] 读 P2-dispatch-context-architect.md（强制指令：约束 1-12、上游关联、输入文件、产出规格）
+- [x] 读 execution-roles/architect.md（角色定义：影响域分析、候选≥2、四字段、UI 设计节、minimal_validation、files_to_read）
+- [x] 读 P0-brief.md（后端/前端/MCP 改动清单 + env_constraints + known_risks）
+- [ ] 读 P1-requirements.md（43 BDD 基线）
+- [ ] 读 design-note v4
+- [ ] 代码勘察（迁移顺序/权限 7 处/前端状态/CLI/MCP）
+- [ ] 影响面梳理 + 候选方案
+- [ ] 写 P2-design.md
+- [ ] check-frontmatter 自检
+- [x] 读 P1-requirements.md（43 BDD；分组映射：BDD-1~6 后端权限 / 7-8 teams API / 9-10 防枚举 / 11-13 share / 14-15 star / 16-20 生命周期+迁移 / 21-22 校验 / 23-24 竞态 / 25-26 兼容性能 / 27-30 API / 31-34 CLI / 35-37 MCP / 38-43 前端 UI）
+- [x] 读 design-notes/team-visibility.md v4（9 决策 A-I/A1-A14 已定稿；§4 数据模型 / §5 后端 / §6 CLI / §7 MCP / §8 前端 / §12 风险 / §13 测试清单）
+- [x] 代码勘察 backend：database.py（init_db = create_all :302 → _run_migrations :306 → _setup_indexes :309 → FTS；_run_migrations :40-215 现有 ALTER 模式；check_schema :229 PRAGMA table_info vs metadata 列比对）
+- [x] models.py（表模型 User:118/ApiKey:154/Entry:186/EntryShare:239/EntryRead:266/EntryStar:291/EntryTombstone:327；请求模型 EntryCreate:466/EntryUpdate:503/CreateEntryRequest:705；响应 EntryResponse:620/EntryListItem:644/StarItem:585；索引 :439-447）
+- [x] entry_service.py：create_entry :124-324（匿名强制 public :200-201）；get_entry :326-383（archived 分支 :343-355 星标语义；非 archived :357-364）；list_entries :385-629（Phase3 可见性 :479-518；starred_cond :491-497）；update_entry :631-799（was_private 撤销 share :705-709）；get_entry_with_share :1155-1197；_build_response :1095-1146；无 get_entry_by_api_key 方法（存量 bug 确认）
+- [x] api/entries.py（_check_share_cookie :37-67；create :70-126；list :129-180；get :183-312 share 分支 :200-267；reads :315-336；update :339-390；delete :393-420；star/unstar :423-464；download :467-537 全局 key 调不存在 get_entry_by_api_key :478）
+- [x] api/files.py（_resolve_entry :130-176 经 get_entry + share cookie；resolve_entry_raw :352-513 share 分支 :377-393；download_file/get_file_content/render 均经 _resolve_entry）
+- [x] share_service.py（create_share :38-116 非 owner/admin → ForbiddenError :51-52；list_shares :118-155 403 :129-130；revoke_shares :157-186 403 :169-170；revoke_all_for_entry :267-287）
+- [x] star_service.py（_build_star_item :337-389 可见性条件 :366-371 is_public OR own OR archived——B2 缺口确认；list_starred :242-295）
+- [x] 后端 API/注册/CLI/client 勘察：main.py（services 注册 :200-243；无 team service）；api/shares.py（3 路由薄封装）；api/stars.py（list_my_stars 走 star_service.list_starred）；_shared.py _is_global_api_key_auth（:90-109 无 pv_ 前缀的 X-API-Key / Bearer 即全局 key）；exceptions.py（ValidationError=400/ParameterValidationError=422/ForbiddenError=403/NotFoundError=404）
+- [x] cli.py（2593 行）：create :215-353（本地 backend.create_entry 无 current_user_id → owner_id=None，匿名条目！allow_local 语义在 delete_entry_by_api_key）；list :424-546（backend.list_entries 无 owner）；user 子命令无 create 归属 identity 传参。⚠️ CLI 本地模式 create/list 现状经 EntryService 但**不传 current_user_id/owner**——本地模式下"我"概念弱。peekview teams 的"当前用户"解析需查证（user list 都是 admin 命令）。
+- [x] client.py PeekClient：create_entry payload :148-156（无 team_id，需透传）；list_entries/get_entry/delete/update 全套；无 teams 方法（需加 list_teams + create_entry 透传 team_id）
+- [x] 前端勘察：EntryListView.vue（4 tab owner-tabs :20-42；state currentOwner/currentStatus/currentStarred/currentTags :267-270；loadEntries ~9 调用点；setFilter :350-358；watch(authState) :445-476；restoreFromURL :478-503；onBeforeRouteUpdate :513-538；updateURL :304-320）；entryList.ts store（loadEntries :19-43 透传 params；toggleVisibility :45-73 无守卫 → 需加 teamId 守卫）；types/index.ts Entry/ListEntriesParams :9-33,60-68（需 teamId/team 字段）；api/client.ts transformListItem/transformEntry :52-107（需 team_id/team transform）+ listEntries :124-144；BaseBadge.vue status union 7 值 :6-8（需 team 变体 + label 参数化）；FilterChip.vue dismiss aria-label 硬编码 :4；UserMenu.vue（仅 Settings+Logout :10-11，需 Teams 入口）；router.ts（无 /teams :6-53，需加路由+守卫 :85-99）
+- [x] DESIGN.md Tabs :200-201（"Horizontal row on desktop, stacked vertical sections on mobile"——需修订为 5-tab 可横滚）；EntryCard.vue toggle :3-11 + badge :96-98；EntryListRow.vue toggle :88-95 + badge :82-84；EntryDetailHeader/MetaTagsBar status-tag is_public 文案 :68/7
+- [x] MCP：tools/publishFiles.ts schema :124-133（is_public optional，需 team_id）；createEntry.ts schema :7-19；getEntry 无 team 输出；tools/index.ts 工具注册 :16-33；client.ts createEntry :152-157（payload 需 team_id）；types.ts 无 Team 类型
+- [x] 版本：VERSIONS.json peekview 0.21.0 / mcp_server 0.11.0；Makefile test-quick（pytest -n auto --tb=short）:163 / test-frontend :173 / lint :185 / typecheck :193 / test-mcp-unit :702 / debug-test :648
+- [x] 前端补充勘察：api/types.ts EntryResponse/EntryListItemResponse snake_case（team_id/team 需加）；auth.ts isOwner 判定 = owner 或 admin（:19-26）；EmptyState 组件（icon/heading/cta）；StarManageView /stars（无 UserMenu 入口——/teams 的反面教材，已确认）；EntryListRow（badge :82-84 owner 才显示 private；toggle 按钮 :88-95）；SettingsView 桌面 tab / mobile-stacked 模式（/teams 页参照）
+- [x] CLI 身份机制最终结论：本地模式 create/list/get/delete 无 owner 概念（create 不传 current_user_id → owner_id=NULL 匿名条目；delete 以 is_api_key_auth=True+allow_local 全权）；唯一"当前用户"语境在 apikey/user 子命令（要求显式 --user <username>，本地 resolve）；peekview teams / create --team / list --team 在**本地模式**需显式 --user（与 apikey 先例一致，否则 owner 语义无解）——本任务 CLI 侧必须为本地模式新增 --user 选项；远程模式透传（PeekClient 已具身份）
+- [x] admin_service restore：_restore_merge 逐表 _table_exists 检查（新 backup 含 teams 表时会拷贝 users/entries 等——teams/team_members 不在 merge 拷贝清单，**replace 模式**整体复制 DB 天然含新表；merge 模式会丢 team 关联——作为 [SCOPE+] 检查项记录，但 restore 表模型现状 entries.team_id 也未 merge）
+- [x] test_cli_remote.py：远程 CLI 服务器无 auth（allow_anonymous_create=true）→ 全匿名创建；teams 本地 --user 需 auth 语境
+- [x] DESIGN.md/playwright：E2E 双 project Desktop Chrome / Mobile Chrome(Pixel 5)（P3 桌面 1280x800/移动 390x844 约定：项目用 Pixel 5 ≈ 393x851 + 自定义 viewport 可在 spec 内覆盖）
+- [x] minimal_validation #1（SQLite 迁移顺序 + SET NULL 语义）：tmp DB 模拟旧库 → 顺序建 teams/team_members → ALTER entries ADD team_id FK SET NULL → DELETE team → entry.team_id=NULL、foreign_key_check/integrity_check 全过 → confirmed（与 database.py init_db create_all 先建新表顺序一致，BDD-16/17 前提成立）
+- [x] 前端形态/测试规范核对：E2E 双 project（Desktop Chrome / Mobile Chrome Pixel5），E2E_SPEC 可单 spec；无既有 role=tablist 先例（TableView aria-selected 仅分页 select）；前端**无 create-entry 表单 UI**（创建走 CLI/MCP/API）→ design-note §8.7 表单三选一实为编辑表单（复用 PATCH updateEntry），BDD-38~43 UI 面收敛于 explore /teams/badge/toggle/不可用态/移动端
+- [x] 参考 TPV0092 P2-design.md 结构与 gate/UI 校验口径（check-gate.py §2.15 UI 设计节 = 布局型需 布局/交互/视觉 三锚点 + P1 ui_render_shape 一致性）
+- [x] 写 P2-design.md（影响面梳理 / 候选 A vs B（收敛落点+前端状态+teams 域）/ 数据模型迁移 / 后端 / MCP / 前端含 UI 设计节 / gate_commands / files_to_read / env_constraints / minimal_validation(confirmed) / dispatch_plan static-batch 3 批 / 完成标志 / [SCOPE+]×4）
+- [x] check-frontmatter.py 自检 exit 0
+- [x] 产出：[PROD_NOT_TOUCHED]（仅只读代码 + tmp sqlite 最小验证）
+
+## 2026-09-02 rev1（architect 定向修订，按 P2-review-eng.md R1-R4/N1-N4 + P2-review-design.md N1-N3）
+- [x] R1（eng）：§0.1 C cli.py 行 + §3.4 锁定——本地 `_get_backend`(:78)/`_resolve_user_local`(:2079) `init_db` 改 `run_migrations=True`（方案 1，幂等与 serve 同语义）；同步 §7 files_to_read + §11 完成标志 CLI 直建库含索引断言（P3 测试缺口）
+- [x] R2（eng）：§0.1 B entry_service create/update 行 + §3.1 D2 锁 `ParameterValidationError`（exceptions.py 实读 422）；同步 §7 exceptions 注解 + §11 完成标志 #4
+- [x] N1（eng）：§2 补 FK ondelete 显式声明行（Team.owner_id/TeamMember.team_id+user_id/Entry.team_id）
+- [x] N2（eng）：§0.1 B 新增 team_membership.py 行 + entry_service/star_service 行改为指向 §3.2 独立薄模块；§1 候选 A 正文待改
+- [x] N3（eng）：§2 line「见 §4.4 核对」修正（§4.4 不存在）
+- [x] N4（eng）：§0.1 B 补 files.py resolve_entry_raw + models.EntryRawResponse 可选 team 行（[SCOPE+] 采纳）
+- [x] N1（design）：UI 设计节交互 checklist 原两条「需人工复核」改为「§5.5/§5.8 输入态规格已设计」+ P6 复核落为「输入态逐态 Playwright 断言 + 截图」（teams-page.spec.ts 承载）；§5.7 表格含 teams-empty/team-empty 断言目标
+- [x] N2（design）：新增 §5.7 集中 data-testid 清单表（5 tab/team-chip-{slug}/team-unavailable+clear/teams-empty/team-empty/badge-team/visibility-toggle 统一命名/teams-owned/teams-joined/team-create-form/team-name-input/team-member-username-input/team-error/teams-status-live/user-menu-teams-item/teams-manage-link）；§5.3 补「仅隐藏 visibility toggle、delete 保留」边界；新增 §5.8 detail 三态实现载体二选一写死（BaseBadge status union+team 变体）；§5.5 补新建表单组件级输入/输出（name 校验/成功 slug 展示/失败态/live region）+ stores/team.ts myTeams 动作清单（加载时机/登出清零/增删改同步/成员快照过期语义 = BDD-23 无缓存窗口一致）
+- [x] N3（design）：§5.2 补三态文案归属表（teams 聚合空→「暂无团队内容」teams-empty / team chip 空→「该团队暂无内容」team-empty / slug∉myTeams→「团队不可用」team-unavailable+清除 CTA 且不调接口）+ 一句「非 owner 列表项不显示可见性 badge（含 team badge），EntryCard/EntryListRow 一致」声明
+- [x] 非阻塞建议（design）：§5.1 补高亮范围声明一句（现状语义+team 扩展，不重构 archived/starred 与 All 激活关系）；§5.2 补「不可用态判定依赖 myTeams 已加载（匿名/加载中不误判）」；§5.6 键盘导航锁定 tablist+方向键一种（弃 aria-pressed 最低限度）；不可用态可显示 team slug 名（表内注明可选）
+- [x] R3（eng）：§6 gate_commands 拆键——P3/P3_frontend/P3_mcp、P5/P5_frontend/P5_mcp/P5_typecheck/P5_lint、P5_e2e_a/P5_e2e_b、P6/P6_frontend/P6_mcp、P6_e2e_a/P6_e2e_b，每键补 _timeout_seconds（frontend 180/mcp 120/typecheck 180/lint 120/e2e 300/主键 240），无 && 链；P6_e2e_b 覆盖 teams-page.spec（BDD-42）；§6 E2E spec 说明同步
+- [x] R4（eng）：§3.4 锁定本地 create/list/teams `--user` 本地必填，示例补 `--user alice` 与 BDD-31~33 一致；参照对象修正 = apikey create cli.py:1920（非 user_cmd group，user_cmd 无 --user）；§0.3 R10 同步
+- [x] trace_id 更新 TPV0095-P2-rev1-20260902；check-frontmatter exit 0；[PROD_NOT_TOUCHED]（全程只读代码 + 改 task 目录内 P2-design.md/P2-progress.md）
