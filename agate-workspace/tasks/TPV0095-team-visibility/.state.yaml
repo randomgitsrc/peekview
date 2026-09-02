@@ -1,9 +1,9 @@
-phase: P4
+phase: P5
 task_id: TPV0095
 task_name: team-visibility
 status: in_progress
 created: 2026-09-02 00:00:00+00:00
-updated: '2026-09-03T03:30:00Z'
+updated: '2026-09-03T04:00:00Z'
 judge:
   enabled: true
 history:
@@ -67,3 +67,12 @@ history:
     owner 语义传播残留）→ retry2 修复 → 终审 approved（方案 A 10 表面全绿）；design-review 首轮 needs-revision（F1
     testid 冲突 + F2 登出未 reset）→ 修复 + F3 e2e 锚点对齐 → approved；cso approved（无 CRITICAL/HIGH，LOW×2/INFO×3
     backlog）。组长汇总 P4-review.md approved。check-gate P4 exit 0
+- phase: P5
+  action: completed
+  ts: '2026-09-03T04:00:00Z'
+  note: 'verifier 跑 gate_commands.P5 七键：backend 1164 passed（1 预存 EROFS）+ frontend
+    1338 passed + mcp 277 passed（1 预存 EROFS）+ typecheck/lint 全绿 + E2E_a 12/12。E2E_b
+    首轮 12/14（2 failed = spec fixture 缺陷：teams-page 同 test bob→alice 二次 login 缺登出）→
+    主 Agent 修 spec（clearCookies+goto）→ 重跑 14/14。known-failures 补登 #3（backup .tmp flaky）。P5
+    gate exit 0'
+p5_pass_commit: HEAD

@@ -200,7 +200,7 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
 })
 
 test.describe('TPV0095 teams-page — 成员退出（BDD-42）', () => {
-  test('BDD-42: 成员退出需确认，确认后从「我加入的」消失；owner 不显示退出按钮', async ({ page, request }) => {
+  test('BDD-42: 成员退出需确认，确认后从「我加入的」消失；owner 不显示退出按钮', async ({ page, context, request }) => {
     // 需要 bob 加入一个 alice 的 team——P5/P6 后端就绪后由 API fixture 建立
     await registerUserIfNeeded(request, 'bob')
     await login(page, 'bob')
@@ -217,7 +217,9 @@ test.describe('TPV0095 teams-page — 成员退出（BDD-42）', () => {
       await expect(joined).not.toContainText(/Shared B|shared-b/, { timeout: 8000 })
     }
 
-    // owner 视角无退出按钮
+    // owner 视角无退出按钮（先切账号：清 cookies 登出 bob）
+    await context.clearCookies()
+    await page.goto(`${BASE_URL}/explore`)
     await login(page)
     await page.goto(`${BASE_URL}/teams`)
     await page.waitForSelector('[data-testid="teams-owned"]', { timeout: 10000 })

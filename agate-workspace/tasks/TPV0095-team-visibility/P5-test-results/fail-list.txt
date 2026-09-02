@@ -1,0 +1,13 @@
+# P5 失败清单 — TPV0095（verifier 实测 + 主 Agent 修复后更新）
+
+## 最终有效失败（全量重跑 + E2E_b spec 修复后）
+
+```
+FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key   # 预存：沙箱 ~/.peekview 只读 EROFS（known-failures #1）
+```
+
+- E2E_b 2 failed（teams-page.spec.ts fixture 缺陷：bob 登录后二次 login 无登出）→ 已修（clearCookies + goto）→ 重跑 14/14 passed
+- backend test_admin_backup .tmp 竞态 flaky（首轮 1 次，重跑全绿，一振）→ 补登 known-failures #3
+- MCP publishFiles EROFS /var/tmp（沙箱）→ 预存环境性（P3 起已知）
+
+EXIT_CODE: 0
