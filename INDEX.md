@@ -36,6 +36,7 @@ PeekView 是一个轻量级内容发布服务。AI Agent 通过 API/CLI/MCP 发�
 | 文件 | 说明 |
 |------|------|
 | `docs/architecture/` | 架构边界文档（sqlite-concurrency：并发写边界与升级路径） |
+| `docs/design-notes/` | 功能设计说明（team-visibility：团队内可见机制设计） |
 | `docs/notes/` | 踩坑经验总结（frontend/backend/mcp） |
 | `docs/decisions/` | 架构决策记录（ADR） |
 | `docs/strategy/` | 产品定位与方向 |

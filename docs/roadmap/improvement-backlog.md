@@ -54,6 +54,7 @@
 | 45 | 地图/GeoJSON 查看器 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 46 | 后端 `is_public` 默认值可配置化（`PEEKVIEW_DEFAULTS__IS_PUBLIC` 环境变量） | 配置 | 🟢 长期 | ❌ 删除（需求弱，调用时传参即可覆盖） |
 | 47 | 详情页侧边栏可拖拽调整宽度（file tree + TOC，最大宽度约束） | 体验 | 🟡 中期 | 🔄 T081 |
+| 48 | Team 可见性机制（团队内成员可见，不 public；design-note 已评审通过） | 产品/权限 | 🟠 近期 | 🔄 TPV0095（P0 立项，依据 docs/design-notes/team-visibility.md） |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
 | 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
@@ -267,6 +268,18 @@
 **来源**：2026-06-29 定位评审
 
 **决策**：❌ **不做**。Artifact 是"活进程的窗口"，PeekView 是"发布记录"。追"活"是去 Artifact 主场正面打，没胜算。
+
+---
+
+### 🟠 48. Team 可见性机制
+
+**来源**：2026-09-02 多 Agent 协作场景讨论 + 探针信号（跨 Agent 读取正在发生，只能靠 share 临时分享）
+
+**问题**：「一组人长期可见」档位不存在——public 太宽、private 太窄、share 太碎。多 Agent 协作（同一项目组多个 Agent 分工、跨机互通）需要介于两者之间的可见性层。
+
+**方案**：`docs/design-notes/team-visibility.md`（v4 终版，经 plan-eng + plan-design 双独立评审 PASS）。核心：扁平 team（owner 直接添加成员，不做邀请流）+ entry 单值 `team_id` + 三选一可见性（public/team/private）+ `can_read_entry()` 权限收敛 + 防枚举统一 404 + explore Teams tab/chips/badge + CLI `peekview teams`/`--team` + MCP `list_teams` 只读工具。
+
+**状态**：🔄 TPV0095（2026-09-02 立项，P0 进行中）
 
 ---
 
