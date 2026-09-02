@@ -54,7 +54,7 @@
 | 45 | 地图/GeoJSON 查看器 | 产品 | 🔵 长期 | ⏸️ 数据触发 |
 | 46 | 后端 `is_public` 默认值可配置化（`PEEKVIEW_DEFAULTS__IS_PUBLIC` 环境变量） | 配置 | 🟢 长期 | ❌ 删除（需求弱，调用时传参即可覆盖） |
 | 47 | 详情页侧边栏可拖拽调整宽度（file tree + TOC，最大宽度约束） | 体验 | 🟡 中期 | 🔄 T081 |
-| 48 | Team 可见性机制（团队内成员可见，不 public；design-note 已评审通过） | 产品/权限 | 🟠 近期 | 🔄 TPV0095（P0 立项，依据 docs/design-notes/team-visibility.md） |
+| 48 | Team 可见性机制（团队内成员可见，不 public；design-note 已评审通过） | 产品/权限 | 🟠 近期 | ✅ done（TPV0095 → v0.22.0） |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
 | 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |

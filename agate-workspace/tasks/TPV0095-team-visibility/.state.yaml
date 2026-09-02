@@ -1,9 +1,9 @@
-phase: P7
+phase: P8
 task_id: TPV0095
 task_name: team-visibility
 status: in_progress
 created: 2026-09-02 00:00:00+00:00
-updated: '2026-09-03T05:20:00Z'
+updated: '2026-09-03T05:40:00Z'
 judge:
   enabled: true
 history:
@@ -90,4 +90,11 @@ history:
     配对 8/8（backend 3 + frontend 5 全 REVIEWED 已确认 0 打回）；SCOPE+ 闭环（3 SCOPE_RESOLVED
     + BDD-44 [BASELINE_CHANGE]）；P1 44 BDD ↔ P6 44 PASS ↔ judge 44 对齐；packages 与 bump
     范围核对。check-gate P7 exit 0
+- phase: P8
+  action: completed
+  ts: '2026-09-03T05:40:00Z'
+  note: releaser 产出 P8-release.md（bump minor 双包：peekview 0.21.0→0.22.0 + mcp 0.11.0→0.12.0；debt_check
+    reviewed；临时资源清单；Lessons Learned 3 条）。主 Agent 执行：make bump-version 0.22.0（commit
+    e5853138 + tag v0.22.0，amend CHANGELOG TPV0095 条目）+ make bump-mcp-version 0.12.0（commit
+    d3b26911 + tag mcp-v0.12.0，amend MCP CHANGELOG）
 p5_pass_commit: 74578a71c012f66293d9bd43d035066587637c52
