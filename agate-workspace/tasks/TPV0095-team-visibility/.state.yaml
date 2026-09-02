@@ -1,0 +1,11 @@
+phase: P0
+task_id: TPV0095
+task_name: team-visibility
+status: pending
+created: 2026-09-02T00:00:00Z
+updated: 2026-09-02T18:55:00Z
+judge:
+  enabled: true
+history:
+  - {phase: P0, action: created, ts: "2026-09-02T00:00:00Z", note: "docs/design-notes/team-visibility.md v4 终版（plan-eng + plan-design 双独立评审 PASS）→ backlog #48 → 立项 TPV0095。team 可见性机制：扁平 team + entry 单值 team_id + public/team/private 三选一 + can_read_entry() 权限收敛 + 防枚举 404 + explore Teams tab + CLI/MCP 补齐。risk=medium-high（schema 变更 + 权限收敛 + 三端）"}
+  - {phase: P0, action: prepared, ts: "2026-09-02T18:55:00Z", note: "主 Agent 补齐 P0-brief executor_env/env_constraints 字段 + 创建 .state.yaml（judge.enabled: true，created 2026-09-02 ≥ judge_required_since 2026-08-22）+ 环境自检（工具链/版本一致/git 干净 PASS；debug server 需启动）。P0-brief 时效性已核对无漂移（立项 commit 5525c319 当日，design-note v4 前提仍成立）"}

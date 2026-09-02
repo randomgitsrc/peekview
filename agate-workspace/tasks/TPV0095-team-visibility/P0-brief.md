@@ -78,6 +78,21 @@ parent: docs/design-notes/team-visibility.md（v4 终版，plan-eng + plan-desig
 - **前端状态矩阵**：四维互斥 + URL 恢复丢弃规则是纯状态管理复杂度，容易出"双 tab 高亮/残留维度"，P3 测试要覆盖
 - **MCP description 文案**：省略 team_id 默认公开的提示是安全线，不能省
 
+## executor_env
+
+platform: opencode
+has_task_tool: true
+has_local_runtime: true
+network: full
+
+## env_constraints
+
+debug_env: "make debug-quick（:8888 隔离 /tmp/peekview-debug/）；Playwright CDP（:18800 Chrome）；多实例 make debug-extra（跨 host 测试可选）"
+lint: "make lint（ruff 0.15.18，系统 python3）+ make typecheck（vue-tsc 5.9.3，CI 强制）"
+test: "make test-quick（pytest 9.1.1，venv）+ make test-frontend（vitest 1.6.1）+ make test-mcp-unit"
+版本: "peekview 0.21.0 / mcp 0.11.0（VERSIONS.json 唯一版本源）"
+严禁: "触碰生产 :8080 / ~/.peekview/ / pipx peekview；不用 npm run dev（代理 :8080 生产）"
+
 ## 裁剪倾向
 
 - **不可裁剪**：P2（方案设计，backend 域强制 plan-eng-review）、P6（验收，权限矩阵实跑 + UI Playwright）
