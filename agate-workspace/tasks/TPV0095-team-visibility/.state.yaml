@@ -1,11 +1,15 @@
-phase: P0
+phase: P1
 task_id: TPV0095
 task_name: team-visibility
-status: pending
+status: in_progress
 created: 2026-09-02T00:00:00Z
-updated: 2026-09-02T18:55:00Z
+updated: 2026-09-02T19:30:00Z
 judge:
   enabled: true
 history:
   - {phase: P0, action: created, ts: "2026-09-02T00:00:00Z", note: "docs/design-notes/team-visibility.md v4 终版（plan-eng + plan-design 双独立评审 PASS）→ backlog #48 → 立项 TPV0095。team 可见性机制：扁平 team + entry 单值 team_id + public/team/private 三选一 + can_read_entry() 权限收敛 + 防枚举 404 + explore Teams tab + CLI/MCP 补齐。risk=medium-high（schema 变更 + 权限收敛 + 三端）"}
   - {phase: P0, action: prepared, ts: "2026-09-02T18:55:00Z", note: "主 Agent 补齐 P0-brief executor_env/env_constraints 字段 + 创建 .state.yaml（judge.enabled: true，created 2026-09-02 ≥ judge_required_since 2026-08-22）+ 环境自检（工具链/版本一致/git 干净 PASS；debug server 需启动）。P0-brief 时效性已核对无漂移（立项 commit 5525c319 当日，design-note v4 前提仍成立）"}
+  - {phase: P1, action: started, ts: "2026-09-02T19:00:00Z", note: "派发 analyst 首轮产出 P1-requirements.md（35 BDD，同类扫描 27 命中全判定，[NO_NEED_CONFIRM]，1 SUGGEST 版本 bump）"}
+  - {phase: P1, action: review_needs_revision, ts: "2026-09-02T19:10:00Z", note: "requirements-review 首轮 needs-revision：F1 BDD-7 详情读权与 design-note §5.1 冲突（成员详情应 200）/ F2 BDD-20 单条双 G-W-T / F3 BDD-23 多场景 + update team 归属口径与 BDD-18 不一致 / F4 PeekClient 透传无验收锚 / F5 owner 失效 + EXPLAIN 无 BDD 锚；F6-F8 非阻塞建议"}
+  - {phase: P1, action: revised, ts: "2026-09-02T19:20:00Z", note: "analyst rev1 修订：35→43 BDD，F1-F8 全量落实（BDD-7/8 拆详情与管理操作、BDD-23/24 拆条、补 PeekClient 远程/owner 失效/EXPLAIN BDD、update 归属定成员口径），编号 1~43 连续重排全文同步"}
+  - {phase: P1, action: completed, ts: "2026-09-02T19:30:00Z", note: "requirements-review 复审 approved（43 BDD 连续无残留、F1-F8 落实、无新引入问题）。check-gate P1 exit 2（1 SUGGEST 版本 bump 建议待 P8 采纳）。风险/声明核对：risk=high/phases 全走/domains=[backend frontend mcp security]/ceremony=standard 与改动匹配"}
