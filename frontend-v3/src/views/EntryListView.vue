@@ -17,38 +17,48 @@
         <div class="toolbar-left">
           <BannerBar v-if="isBannerMode" :username="props.owner!" />
 
-          <div v-if="showTabs" class="owner-tabs">
+          <div v-if="showTabs" class="owner-tabs" role="tablist" aria-label="内容过滤" @keydown="onTablistKeydown">
             <button
+              v-for="tab in tabDefs"
+              :key="tab.key"
+              type="button"
+              role="tab"
               class="owner-tab"
-              :class="{ active: currentOwner === null && currentStatus === null && !currentStarred }"
-              @click="setFilter(null, null)"
-            >All</button>
-            <button
-              class="owner-tab"
-              :class="{ active: currentOwner === 'me' && !currentStarred }"
-              @click="setFilter('me', null)"
-            >Mine</button>
-            <button
-              class="owner-tab"
-              :class="{ active: currentStatus === 'archived' && !currentStarred }"
-              @click="setFilter(null, 'archived')"
-            >Archived</button>
-            <button
-              class="owner-tab"
-              :class="{ active: currentStarred }"
-              data-testid="tab-starred"
-              @click="setFilter(null, null, true)"
-            >Starred</button>
+              :data-testid="tab.testid"
+              :class="{ active: isTabActive(tab.key) }"
+              :aria-selected="isTabActive(tab.key) ? 'true' : 'false'"
+              @click="selectTab(tab.key)"
+            >{{ tab.label }}</button>
           </div>
 
-          <div v-if="showChip || currentTags.length" class="filter-chip-bar">
+          <div v-if="showChip || currentTags.length || (currentTeam && currentTeamInfo)" class="filter-chip-bar">
             <FilterChip v-if="showChip" :label="`@${currentOwner}`" @dismiss="clearOwnerFilter" />
+            <FilterChip
+              v-if="currentTeam && currentTeamInfo"
+              :label="currentTeamInfo.name"
+              :dismiss-label="`移除团队过滤：${currentTeamInfo.name}`"
+              :data-testid="`team-chip-${currentTeam}`"
+              @dismiss="clearTeamFilter"
+            />
             <FilterChip
               v-for="tag in currentTags"
               :key="tag"
               :label="tag"
               @dismiss="removeTag(tag)"
             />
+          </div>
+
+          <div v-if="teamsChipRowVisible" class="teams-chip-row">
+            <button
+              v-for="team in teamChips"
+              :key="team.slug"
+              type="button"
+              class="team-chip"
+              :data-testid="`teams-chip-${team.slug}`"
+              :class="{ active: currentTeam === team.slug }"
+              @click="selectTeamChip(team.slug)"
+            >{{ team.name }}</button>
+            <router-link class="teams-manage-link" data-testid="teams-manage-link" to="/teams">管理团队</router-link>
           </div>
         </div>
         <div class="toolbar-right">
@@ -121,15 +131,32 @@
         User <strong>@{{ props.owner }}</strong> not found
       </div>
 
+      <div v-else-if="teamUnavailable" class="team-unavailable" data-testid="team-unavailable" role="status">
+        <p class="team-unavailable-title">团队不可用</p>
+        <p class="team-unavailable-desc">你无权访问该团队，或该团队不存在。</p>
+        <button
+          type="button"
+          class="team-unavailable-clear"
+          data-testid="team-unavailable-clear"
+          @click="clearTeamFilter"
+        >清除过滤</button>
+      </div>
+
       <div v-else-if="error" class="error-state">
         <span>{{ error }}</span>
       </div>
 
-      <EmptyState
+      <div
         v-else-if="entries.length === 0"
-        icon="Search"
-        :heading="emptyStateHeading"
-      />
+        :data-testid="emptyTestId"
+        class="team-state-empty"
+      >
+        <EmptyState
+          icon="Search"
+          :heading="emptyStateHeading"
+          :description="emptyStateDescription"
+        />
+      </div>
 
       <template v-else>
         <div v-if="viewMode === 'grid'" class="entry-grid">
@@ -230,6 +257,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useEntryListStore } from '@/stores/entryList'
 import { useAuthStore } from '@/stores/auth'
+import { useTeamStore } from '@/stores/team'
 import { useToast } from '@/composables/useToast'
 import { storeToRefs } from 'pinia'
 import SearchInput from '@/components/SearchInput.vue'
@@ -246,7 +274,7 @@ import BannerBar from '@/components/BannerBar.vue'
 import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
 import { useDebounce } from '@/composables/useDebounce'
-import { mergeQuery, parseRestoreQuery } from '@/views/searchUrl.logic'
+import { mergeQuery } from '@/views/searchUrl.logic'
 import { loadViewMode, saveViewMode } from '@/composables/useViewMode'
 
 declare const __APP_VERSION__: string
@@ -254,20 +282,34 @@ const appVersion = ref(__APP_VERSION__)
 
 const entryStore = useEntryListStore()
 const authStore = useAuthStore()
+const teamStore = useTeamStore()
 const toast = useToast()
 const router = useRouter()
 const { entries, loading, error, total, perPage, ownerFound } = storeToRefs(entryStore)
 const { loadEntries } = entryStore
+const { owned: rawOwned, joined: rawJoined, teamsLoaded: rawTeamsLoaded } = storeToRefs(teamStore)
+const { loadMyTeams, isMemberOf: isTeamMember } = teamStore
 const { user, authState } = storeToRefs(authStore)
+
+// storeToRefs 在部分旧测试里被 mock 成空对象（无 team store 键）→ 容错访问
+const myOwned = computed(() => rawOwned?.value ?? [])
+const myJoined = computed(() => rawJoined?.value ?? [])
+const teamsLoaded = computed(() => rawTeamsLoaded?.value ?? false)
 
 const props = defineProps<{
   owner?: string
 }>()
 
+type ActiveView = 'all' | 'teams'
+type TabKey = 'all' | 'mine' | 'teams' | 'archived' | 'starred'
+
 const currentOwner = ref<string | null>(null)
 const currentStatus = ref<string | null>(null)
 const currentStarred = ref(false)
 const currentTags = ref<string[]>([])
+const currentTeam = ref<string | null>(null)
+const activeView = ref<ActiveView>('all')
+const unavailableTeam = ref<string | null>(null)
 const authChangeAnnouncement = ref('')
 
 const isBannerMode = computed(() =>
@@ -288,18 +330,101 @@ const effectiveStatus = computed(() => currentStatus.value || undefined)
 
 const effectiveStarred = computed(() => (currentStarred.value ? true : undefined))
 
+const effectiveTeam = computed(() => {
+  if (currentTeam.value) return currentTeam.value
+  if (activeView.value === 'teams') return 'me'
+  return undefined
+})
+
+const currentUserUsername = computed(() => user.value?.username ?? null)
+
+const tabDefs: { key: TabKey; label: string; testid: string }[] = [
+  { key: 'all', label: 'All', testid: 'tab-all' },
+  { key: 'mine', label: 'Mine', testid: 'tab-mine' },
+  { key: 'teams', label: 'Teams', testid: 'tab-teams' },
+  { key: 'archived', label: 'Archived', testid: 'tab-archived' },
+  { key: 'starred', label: 'Starred', testid: 'tab-starred' },
+]
+
+function isTabActive(key: TabKey): boolean {
+  if (key === 'all') {
+    return !currentOwner.value && !currentStatus.value && !currentStarred.value && !currentTeam.value && activeView.value !== 'teams'
+  }
+  if (key === 'mine') {
+    return currentOwner.value === 'me' && !currentStarred.value && !currentTeam.value && activeView.value !== 'teams'
+  }
+  if (key === 'teams') {
+    return activeView.value === 'teams'
+  }
+  if (key === 'archived') {
+    return currentStatus.value === 'archived' && !currentStarred.value && !currentTeam.value && activeView.value !== 'teams'
+  }
+  // starred
+  return !!currentStarred.value && activeView.value !== 'teams'
+}
+
+const teamChips = computed(() => {
+  if (activeView.value !== 'teams') return []
+  return [...myOwned.value, ...myJoined.value]
+})
+
+const teamsChipRowVisible = computed(() =>
+  showTabs.value && activeView.value === 'teams' && !props.owner
+)
+
+const currentTeamInfo = computed(() =>
+  [...myOwned.value, ...myJoined.value].find(t => t.slug === currentTeam.value) ?? null
+)
+
+const teamUnavailable = computed(() =>
+  authState.value === 'authenticated' && !!unavailableTeam.value
+)
+
+const teamEmptyVisible = computed(() =>
+  authState.value === 'authenticated'
+  && !!currentTeam.value
+  && !teamUnavailable.value
+  && !loading.value
+  && !error.value
+  && entries.value.length === 0
+)
+
+const teamsEmptyVisible = computed(() =>
+  authState.value === 'authenticated'
+  && activeView.value === 'teams'
+  && !currentTeam.value
+  && !loading.value
+  && !error.value
+  && myOwned.value.length === 0
+  && myJoined.value.length === 0
+  && entries.value.length === 0
+)
+
+const emptyTestId = computed(() => {
+  if (teamEmptyVisible.value) return 'team-empty'
+  if (teamsEmptyVisible.value) return 'teams-empty'
+  return undefined
+})
+
 const emptyStateHeading = computed(() => {
   if (ownerFound.value === true && props.owner) return `No entries from @${props.owner}`
+  if (teamEmptyVisible.value) return '该团队暂无内容'
+  if (teamsEmptyVisible.value) return '暂无团队内容'
   if (currentStarred.value) return '暂无星标内容'
   if (currentStatus.value === 'archived') return '暂无已归档条目'
   return 'No entries found'
 })
 
-const currentUserUsername = computed(() => user.value?.username ?? null)
+const emptyStateDescription = computed(() => {
+  if (teamEmptyVisible.value) return '该团队还没有发布任何内容。'
+  if (teamsEmptyVisible.value) return '你可以创建或加入团队，也可以从下方管理你的团队。'
+  return ''
+})
 
 const searchQuery = ref('')
 const viewMode = ref<'grid' | 'list'>(loadViewMode())
 let suppressRouteUpdate = false
+let teamRestorePending = false
 
 function updateURL(params: Record<string, string | undefined>): void {
   const currentQuery = window.location.search.slice(1)
@@ -323,14 +448,14 @@ function flushSearch() {
   const q = searchQuery.value.trim()
   updateURL({ q: q || undefined, page: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: q || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: q || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 function clearSearch() {
   searchQuery.value = ''
   updateURL({ q: undefined })
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 const debouncedSearch = useDebounce(flushSearch, 300)
@@ -347,30 +472,120 @@ watch(() => searchQuery.value, () => {
   debouncedSearch()
 })
 
-function setFilter(owner: string | null, status: string | null, starred = false) {
-  currentOwner.value = starred ? null : owner
-  currentStatus.value = starred ? null : status
-  currentStarred.value = starred
-  if (starred) currentTags.value = []
+function loadNow() {
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: starred || undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
-  updateURL({ owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: starred ? '1' : undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+}
+
+function selectTab(key: TabKey) {
+  if (key === 'all') {
+    currentOwner.value = null
+    currentStatus.value = null
+    currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'all'
+    loadNow()
+    updateURL({ owner: undefined, status: undefined, starred: undefined, view: undefined, team: undefined, page: undefined })
+  } else if (key === 'mine') {
+    currentOwner.value = 'me'
+    currentStatus.value = null
+    currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'all'
+    loadNow()
+    updateURL({ owner: 'me', status: undefined, starred: undefined, view: undefined, team: undefined, page: undefined })
+  } else if (key === 'archived') {
+    currentOwner.value = null
+    currentStatus.value = 'archived'
+    currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'all'
+    loadNow()
+    updateURL({ owner: undefined, status: 'archived', starred: undefined, view: undefined, team: undefined, page: undefined })
+  } else if (key === 'starred') {
+    currentOwner.value = null
+    currentStatus.value = null
+    currentStarred.value = true
+    currentTeam.value = null
+    currentTags.value = []
+    activeView.value = 'all'
+    loadNow()
+    updateURL({ owner: undefined, status: undefined, starred: '1', view: undefined, team: undefined, page: undefined })
+  } else if (key === 'teams') {
+    currentOwner.value = null
+    currentStatus.value = null
+    currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'teams'
+    ensureMyTeamsLoaded()
+    loadNow()
+    updateURL({ owner: undefined, status: undefined, starred: undefined, view: 'teams', team: undefined, page: undefined })
+  }
+}
+
+function selectTeamChip(slug: string) {
+  currentTeam.value = slug
+  activeView.value = 'teams'
+  currentOwner.value = null
+  currentStatus.value = null
+  currentStarred.value = false
+  loadNow()
+  updateURL({ view: 'teams', team: slug, owner: undefined, status: undefined, starred: undefined, page: undefined })
+}
+
+function clearTeamFilter() {
+  currentTeam.value = null
+  activeView.value = 'teams'
+  unavailableTeam.value = null
+  currentPage.value = 1
+  loadEntries({ page: 1, perPage: perPage.value, team: 'me', owner: undefined, status: undefined, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ team: undefined, view: 'teams', owner: undefined, status: undefined, starred: undefined, page: undefined })
+}
+
+function ensureMyTeamsLoaded() {
+  if (authState.value === 'authenticated' && !teamsLoaded.value) {
+    loadMyTeams()
+  }
+}
+
+function onTablistKeydown(e: KeyboardEvent) {
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.owner-tab'))
+  const currentIndex = tabs.indexOf(document.activeElement as HTMLButtonElement)
+  if (e.key === 'ArrowRight' && currentIndex >= 0 && tabs[currentIndex + 1]) {
+    e.preventDefault()
+    tabs[currentIndex + 1].focus()
+    selectTab(tabDefs[currentIndex + 1].key)
+  } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+    e.preventDefault()
+    tabs[currentIndex - 1].focus()
+    selectTab(tabDefs[currentIndex - 1].key)
+  } else if (e.key === 'Home' && tabs.length) {
+    e.preventDefault()
+    tabs[0].focus()
+    selectTab(tabDefs[0].key)
+  } else if (e.key === 'End' && tabs.length) {
+    e.preventDefault()
+    tabs[tabs.length - 1].focus()
+    selectTab(tabDefs[tabs.length - 1].key)
+  }
 }
 
 function clearOwnerFilter() {
   currentOwner.value = null
   currentStatus.value = null
   currentStarred.value = false
+  currentTeam.value = null
+  activeView.value = 'all'
   currentPage.value = 1
-  loadEntries({ page: 1, perPage: perPage.value, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
-  updateURL({ owner: undefined, status: undefined, starred: undefined, page: undefined })
+  loadEntries({ page: 1, perPage: perPage.value, starred: undefined, team: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ owner: undefined, status: undefined, starred: undefined, view: undefined, team: undefined, page: undefined })
 }
 
 function removeTag(tag: string) {
   currentTags.value = currentTags.value.filter(t => t !== tag)
   currentPage.value = 1
   updateURL({ tags: currentTags.value.length ? currentTags.value.join(',') : undefined, page: undefined })
-  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 }
 
 const showLogin = ref(false)
@@ -379,6 +594,8 @@ function handleLogout() {
   if (currentStatus.value === 'archived') {
     currentStatus.value = null
   }
+  currentTeam.value = null
+  activeView.value = 'all'
   authStore.logout()
   toast.show('Logged out', 'success')
 }
@@ -428,8 +645,8 @@ watch(viewMode, (mode) => {
 })
 
 watch(currentPage, (newPage) => {
-  updateURL({ page: newPage > 1 ? String(newPage) : undefined, starred: effectiveStarred.value ? '1' : undefined })
-  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  updateURL({ page: newPage > 1 ? String(newPage) : undefined, starred: effectiveStarred.value ? '1' : undefined, team: currentTeam.value || undefined, view: activeView.value === 'teams' ? 'teams' : undefined })
+  loadEntries({ page: newPage, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
 })
 
 watch(() => props.owner, (newOwner) => {
@@ -437,104 +654,145 @@ watch(() => props.owner, (newOwner) => {
     currentOwner.value = null
     currentStatus.value = null
     currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'all'
     currentPage.value = 1
     loadEntries({ page: 1, perPage: perPage.value, owner: newOwner, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   }
 })
 
-watch(authState, (newState, oldState) => {
-  if (newState === 'authenticated' && oldState !== 'authenticated') {
-    authChangeAnnouncement.value = 'Signed in. List refreshed.'
-    if (!props.owner) {
-      const urlParams = new URLSearchParams(window.location.search)
-      const ownerParam = urlParams.get('owner')
-      const starredParam = urlParams.get('starred')
-      if (starredParam === '1') {
-        currentStarred.value = true
-        currentOwner.value = null
-        currentStatus.value = null
-      } else if (ownerParam === 'me' && currentOwner.value !== 'me') {
-        currentOwner.value = 'me'
-        currentStatus.value = null
-      }
-    }
-    currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
-  } else if (newState === 'anonymous' && oldState === 'authenticated') {
-    authChangeAnnouncement.value = 'Signed out. List refreshed.'
-    if (currentStarred.value || currentStatus.value === 'archived') {
-      currentStarred.value = false
-      currentStatus.value = null
-      nextTick(() => {
-        const allTab = document.querySelector<HTMLButtonElement>('.owner-tab')
-        allTab?.focus()
-      })
-    }
-    currentPage.value = 1
-    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined }, { clearOnError: false })
-  }
-})
-
-function restoreFromURL() {
+function applyUrlToState() {
   const urlParams = new URLSearchParams(window.location.search)
+  const authenticated = authState.value === 'authenticated'
+
+  searchQuery.value = (urlParams.get('q') ?? '')
+  const pageParam = urlParams.get('page')
+  currentPage.value = pageParam && parseInt(pageParam, 10) > 0 ? parseInt(pageParam, 10) : 1
+  const tagsParam = urlParams.get('tags')
+  currentTags.value = tagsParam ? tagsParam.split(',').filter(Boolean) : []
+
+  if (props.owner) {
+    currentOwner.value = null
+    currentStatus.value = null
+    currentStarred.value = false
+    currentTeam.value = null
+    activeView.value = 'all'
+    return
+  }
+
   const starredParam = urlParams.get('starred')
-  currentStarred.value = starredParam === '1' && authState.value === 'authenticated'
+  const ownerParam = urlParams.get('owner')
+  const statusParam = urlParams.get('status')
+  const viewParam = urlParams.get('view')
+  const teamParam = urlParams.get('team')
+
+  currentStarred.value = starredParam === '1' && authenticated
   if (currentStarred.value) {
     currentOwner.value = null
     currentStatus.value = null
-  } else {
-    const ownerParam = urlParams.get('owner')
-    if (ownerParam && ownerParam !== 'me') {
-      currentOwner.value = ownerParam
-    } else if (ownerParam === 'me' && authState.value === 'authenticated') {
-      currentOwner.value = 'me'
-    }
-
-    const statusParam = urlParams.get('status')
-    if (statusParam) {
-      currentStatus.value = statusParam
-    }
+    currentTeam.value = null
+    activeView.value = 'all'
+    return
   }
 
-  const restored = parseRestoreQuery(window.location.search.slice(1))
-  searchQuery.value = restored.q
-  currentPage.value = restored.page
-  currentTags.value = restored.tags ?? []
+  // owner/status/archived dims (mutually exclusive with team/view)
+  currentOwner.value = null
+  currentStatus.value = null
+  currentTeam.value = null
+  unavailableTeam.value = null
+  activeView.value = 'all'
+
+  if (ownerParam === 'me' && authenticated) {
+    currentOwner.value = 'me'
+  } else if (ownerParam && ownerParam !== 'me') {
+    currentOwner.value = ownerParam
+  }
+  if (statusParam) {
+    currentStatus.value = statusParam
+  }
+
+  if (authenticated && viewParam === 'teams') {
+    activeView.value = 'teams'
+  }
+
+  if (authenticated && teamParam) {
+    if (teamsLoaded.value) {
+      if (isTeamMember(teamParam)) {
+        currentTeam.value = teamParam
+        activeView.value = 'teams'
+      } else {
+        unavailableTeam.value = teamParam
+      }
+    } else {
+      teamRestorePending = true
+    }
+  }
 }
+
+watch(teamsLoaded, (loaded) => {
+  if (loaded && teamRestorePending) {
+    teamRestorePending = false
+    const teamParam = new URLSearchParams(window.location.search).get('team')
+    if (teamParam) {
+      if (isTeamMember(teamParam)) {
+        currentTeam.value = teamParam
+        activeView.value = 'teams'
+      } else {
+        unavailableTeam.value = teamParam
+      }
+    }
+  }
+})
+
+// 初始恢复在 setup 期同步执行（首帧即生效，URL team/view 决定不可用态/空态）
+applyUrlToState()
+if (authState.value === 'authenticated') ensureMyTeamsLoaded()
+
+watch(authState, (newState, oldState) => {
+  if (newState === 'authenticated' && oldState !== 'authenticated') {
+    authChangeAnnouncement.value = 'Signed in. List refreshed.'
+    applyUrlToState()
+    ensureMyTeamsLoaded()
+    if (!teamUnavailable.value) {
+      currentPage.value = 1
+      loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+    }
+  } else if (newState === 'anonymous' && oldState === 'authenticated') {
+    authChangeAnnouncement.value = 'Signed out. List refreshed.'
+    const wasFiltered = currentStarred.value || currentStatus.value === 'archived' || currentTeam.value
+    currentStarred.value = false
+    currentStatus.value = null
+    currentTeam.value = null
+    activeView.value = 'all'
+    unavailableTeam.value = null
+    if (wasFiltered) {
+      nextTick(() => {
+        document.querySelector<HTMLButtonElement>('.owner-tab[data-testid="tab-all"]')?.focus()
+      })
+    }
+    currentPage.value = 1
+    loadEntries({ page: 1, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: undefined, team: undefined, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined }, { clearOnError: false })
+  }
+})
 
 onMounted(() => {
   if (props.owner) {
     currentOwner.value = null
   }
-  restoreFromURL()
-  loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  if (!teamUnavailable.value) {
+    loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
+  }
 })
 
 onBeforeRouteUpdate((to) => {
   if (suppressRouteUpdate) return
   if (to.path !== '/explore' && !to.path.startsWith('/users/')) return
 
-  const newQ = (to.query.q as string) || ''
-  const newOwner = (to.query.owner as string) || null
-  const newStatus = (to.query.status as string) || null
-  const newStarred = (to.query.starred as string) || null
-  const newPage = parseInt(to.query.page as string) || 1
-  const newTagsParam = (to.query.tags as string) || ''
-  const newTags = newTagsParam ? newTagsParam.split(',').filter(Boolean) : []
-
-  searchQuery.value = newQ
-  currentStarred.value = newStarred === '1' && authState.value === 'authenticated'
-  if (currentStarred.value) {
-    currentOwner.value = null
-    currentStatus.value = null
-  } else {
-    currentOwner.value = newOwner
-    currentStatus.value = newStatus
+  window.history.replaceState({}, '', to.fullPath)
+  applyUrlToState()
+  if (!teamUnavailable.value) {
+    loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   }
-  currentPage.value = Math.max(1, newPage)
-  currentTags.value = newTags
-
-  loadEntries({ page: Math.max(1, newPage), perPage: perPage.value, owner: currentOwner.value || undefined, status: currentStatus.value || undefined, starred: currentStarred.value || undefined, q: newQ || undefined, tags: newTags.length ? newTags : undefined })
 })
 </script>
 
@@ -672,9 +930,111 @@ onBeforeRouteUpdate((to) => {
   gap: var(--space-1);
   border-bottom: 1px solid var(--c-border);
   padding-bottom: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.owner-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-chip-bar {
+}
+
+.teams-chip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.team-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text-secondary);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.team-chip:hover {
+  border-color: var(--c-accent);
+  color: var(--c-text);
+}
+
+.team-chip.active {
+  background: var(--c-accent-surface);
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+
+.teams-manage-link {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: none;
+  background: none;
+  color: var(--c-accent);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.teams-manage-link:hover {
+  background: var(--c-accent-surface);
+}
+
+.team-unavailable {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.team-unavailable-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--c-text);
+  margin: 0;
+}
+
+.team-unavailable-desc {
+  font-size: var(--font-sm);
+  color: var(--c-text-secondary);
+  margin: 0;
+}
+
+.team-unavailable-clear {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.team-unavailable-clear:hover {
+  background: var(--c-surface-lower);
+}
+
+.team-state-empty {
+  min-height: 200px;
 }
 
 .owner-tab {
@@ -688,6 +1048,11 @@ onBeforeRouteUpdate((to) => {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: all var(--transition-fast);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .owner-tab:hover { color: var(--c-text); }

@@ -205,6 +205,7 @@ def create_app(
     from peekview.services.entry_service import EntryService
     from peekview.services.read_tracking_service import ReadTrackingService
     from peekview.services.share_service import ShareService
+    from peekview.services.team_service import TeamService
     from peekview.storage import StorageManager
 
     storage = StorageManager(config=config)
@@ -224,6 +225,7 @@ def create_app(
     from peekview.services.star_service import StarService
 
     star_service = StarService(engine=engine)
+    team_service = TeamService(engine=engine)
     entry_service = EntryService(
         engine=engine, storage=storage, config=config,
         read_tracking_service=read_tracking_service,
@@ -240,6 +242,7 @@ def create_app(
     app.state.admin_service = admin_service
     app.state.share_service = share_service
     app.state.star_service = star_service
+    app.state.team_service = team_service
     app.state.read_tracking_service = read_tracking_service
 
     # Setup CORS - use config or default
@@ -427,6 +430,7 @@ def create_app(
     from peekview.api.files import router as files_router
     from peekview.api.shares import router as shares_router
     from peekview.api.stars import router as stars_router
+    from peekview.api.teams import router as teams_router
 
     app.include_router(auth_router)
     app.include_router(apikeys_router)
@@ -437,6 +441,7 @@ def create_app(
     app.include_router(admin_router)
     app.include_router(shares_router)
     app.include_router(stars_router)
+    app.include_router(teams_router)
 
     # --- Rate limit binding (dynamic, respects config values) ---
     from peekview.api.rate_limit import (

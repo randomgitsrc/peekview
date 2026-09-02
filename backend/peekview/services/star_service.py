@@ -26,9 +26,12 @@ from peekview.models import (
     StarItem,
     StarListResponse,
     StarResponse,
+    Team,
+    TeamRef,
     TombstoneResponse,
     User,
 )
+from peekview.services.team_membership import team_membership_exists, team_owner_exists
 
 logger = logging.getLogger(__name__)
 
@@ -362,13 +365,33 @@ class StarService:
         if entry is None:
             return None
 
-        # Visibility filter consistent with the read path: public / own / archived.
+        # Visibility filter consistent with the read path: public / own /
+        # archived / team-member / team-owner (方案 A: the team owner counts as
+        # a team-scope reader without a membership row, mirroring can_read).
+        is_team_member = (
+            team_membership_exists(session, user_id, entry.team_id)
+            if entry.team_id is not None
+            else False
+        )
+        is_team_owner = (
+            team_owner_exists(session, user_id, entry.team_id)
+            if entry.team_id is not None
+            else False
+        )
         if not (
             entry.is_public
             or entry.owner_id == user_id
             or entry.status == EntryStatus.ARCHIVED
+            or is_team_member
+            or is_team_owner
         ):
             return None
+
+        team = None
+        if entry.team_id is not None:
+            team_row = session.get(Team, entry.team_id)
+            if team_row is not None:
+                team = TeamRef(slug=team_row.slug, name=team_row.name)
 
         countdown = build_countdown(entry, is_starred=True)
         return StarItem(
@@ -380,6 +403,8 @@ class StarService:
             is_public=entry.is_public,
             owner_id=entry.owner_id,
             username=None,  # batch-resolved in list_starred (INFO-6)
+            team_id=entry.team_id,
+            team=team,
             starred_at=star.created_at,
             star_count=count_live_stars(session, entry.id),
             is_starred=True,

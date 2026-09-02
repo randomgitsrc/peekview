@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios'
-import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult, StarItem, StarListParams, StarListResponse, CountdownInfo } from '@/types'
-import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse, StarApiResponse, StarListItemResponse, StarListApiResponse, TombstoneItemResponse, CountdownResponse, RemoveStarsResponse } from './types'
+import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult, StarItem, StarListParams, StarListResponse, CountdownInfo, Team, TeamDetail, TeamListResponse, TeamMemberRef } from '@/types'
+import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse, StarApiResponse, StarListItemResponse, StarListApiResponse, TombstoneItemResponse, CountdownResponse, RemoveStarsResponse, TeamListApiResponse, TeamDetailResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -64,6 +64,8 @@ class PeekAPI {
       expiresAt: entry.expires_at,
       archivedAt: entry.archived_at ?? null,
       createdAt: entry.created_at,
+      teamId: entry.team_id ?? null,
+      team: entry.team ? { slug: entry.team.slug, name: entry.team.name } : null,
       starCount: entry.star_count ?? 0,
       isStarred: entry.is_starred ?? false,
       countdown: this.transformCountdown(entry.countdown),
@@ -85,6 +87,8 @@ class PeekAPI {
       archivedAt: entry.archived_at ?? null,
       createdAt: entry.created_at,
       updatedAt: entry.updated_at,
+      teamId: entry.team_id ?? null,
+      team: entry.team ? { slug: entry.team.slug, name: entry.team.name } : null,
       shareContext: entry.share_context
         ? {
             isShareAccess: entry.share_context.is_share_access,
@@ -129,6 +133,7 @@ class PeekAPI {
         status: params?.status,
         owner: params?.owner,
         starred: params?.starred,
+        team: params?.team,
         page: params?.page,
         per_page: params?.perPage,
       },
@@ -156,7 +161,7 @@ class PeekAPI {
     return this.transformEntry(response.data)
   }
 
-  async updateEntry(slug: string, data: { expires_in?: string; is_public?: boolean; summary?: string; tags?: string[] }): Promise<Entry> {
+  async updateEntry(slug: string, data: { expires_in?: string; is_public?: boolean; summary?: string; tags?: string[]; team_id?: string | null }): Promise<Entry> {
     const response = await this.client.patch<EntryResponse>(`/entries/${slug}`, data)
     return this.transformEntry(response.data)
   }
@@ -231,6 +236,8 @@ class PeekAPI {
       expiresAt: item.expires_at,
       archivedAt: item.archived_at ?? null,
       createdAt: item.starred_at,
+      teamId: item.team_id ?? null,
+      team: item.team ? { slug: item.team.slug, name: item.team.name } : null,
       starCount: item.star_count ?? 0,
       isStarred: item.is_starred ?? false,
       countdown: this.transformCountdown(item.countdown),
@@ -456,6 +463,70 @@ class PeekAPI {
 
   async deleteUser(id: number): Promise<void> {
     await this.client.delete(`/admin/users/${id}`)
+  }
+
+  // --- Team API --- //
+
+  private transformTeamSummary(team: import('./types').TeamSummaryResponse): Team {
+    return {
+      slug: team.slug,
+      name: team.name,
+      memberCount: team.member_count ?? 0,
+    }
+  }
+
+  private transformTeamDetail(team: TeamDetailResponse): TeamDetail {
+    return {
+      slug: team.slug,
+      name: team.name,
+      memberCount: team.member_count ?? 0,
+      ownerUsername: team.owner_username,
+      members: (team.members ?? []).map((m: { id: number; username: string }): TeamMemberRef => ({
+        id: m.id,
+        username: m.username,
+      })),
+    }
+  }
+
+  async listTeams(): Promise<TeamListResponse> {
+    const response = await this.client.get<TeamListApiResponse>('/teams')
+    return {
+      owned: response.data.owned.map(t => this.transformTeamSummary(t)),
+      joined: response.data.joined.map(t => this.transformTeamSummary(t)),
+    }
+  }
+
+  async getTeam(slug: string): Promise<TeamDetail> {
+    const response = await this.client.get<TeamDetailResponse>(`/teams/${slug}`)
+    return this.transformTeamDetail(response.data)
+  }
+
+  async createTeam(name: string): Promise<TeamDetail> {
+    const response = await this.client.post<TeamDetailResponse>('/teams', { name })
+    return this.transformTeamDetail(response.data)
+  }
+
+  async renameTeam(slug: string, name: string): Promise<TeamDetail> {
+    const response = await this.client.patch<TeamDetailResponse>(`/teams/${slug}`, { name })
+    return this.transformTeamDetail(response.data)
+  }
+
+  async deleteTeam(slug: string): Promise<void> {
+    await this.client.delete(`/teams/${slug}`)
+  }
+
+  async addMember(slug: string, username: string): Promise<TeamDetail> {
+    const response = await this.client.post<TeamDetailResponse>(`/teams/${slug}/members`, { username })
+    return this.transformTeamDetail(response.data)
+  }
+
+  async removeMember(slug: string, userId: number): Promise<TeamDetail> {
+    const response = await this.client.delete<TeamDetailResponse>(`/teams/${slug}/members/${userId}`)
+    return this.transformTeamDetail(response.data)
+  }
+
+  async leaveTeam(slug: string): Promise<void> {
+    await this.client.post(`/teams/${slug}/leave`)
   }
 }
 

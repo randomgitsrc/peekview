@@ -128,6 +128,7 @@ const schema = z.object({
   tags: z.array(z.string()).optional(),
   is_public: z.boolean().optional(),
   expires_in: z.string().optional(),
+  team_id: z.string().optional(),
   include_patterns: z.array(z.string()).optional(),
   exclude_patterns: z.array(z.string()).optional(),
 });
@@ -301,6 +302,12 @@ PATH RULES:
 VISIBILITY:
 - publish_files defaults to public (is_public=true). Set is_public=false to create a private entry.
 
+TEAM VISIBILITY:
+- To publish to a team (visible to team members only):
+  1. Call list_teams to see your teams
+  2. Pass team_id from the result, e.g. {"team_id": "proj-a"}
+- IMPORTANT: if you omit team_id, the entry follows is_public (default: PUBLIC!)
+
 Examples:
 - Single file:   { "summary": "Fix", "paths": ["/project/fix.py"] }
 - Generated doc: write_file("/tmp/intro.md") then { "summary": "Intro", "paths": ["/tmp/intro.md"] }
@@ -323,6 +330,7 @@ Namespace: use X-Peekview-Namespace header when Agent runs in a container with p
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
       is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
+      team_id: { type: 'string', description: 'Team slug to publish to (visible to team members only). Omit to follow is_public (default: PUBLIC!). Call list_teams to see your teams first.' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
       include_patterns: {
         type: 'array', items: { type: 'string' },
@@ -521,6 +529,7 @@ Namespace: use X-Peekview-Namespace header when Agent runs in a container with p
         tags: params.tags,
         is_public: params.is_public ?? true,
         expires_in: params.expires_in,
+        team_id: params.team_id,
       }, ctx.userToken);
 
       // 构造结果

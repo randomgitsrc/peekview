@@ -30,7 +30,6 @@ vi.mock('@/composables/useToast', () => ({
 
 import { api } from '@/api/client'
 // P3：模块不存在 → import 抛错 → 测试失败（红灯 B 类：被测未实现）
-// @ts-expect-error — P4 将新增 @/stores/team 模块
 const { useTeamStore } = await import('@/stores/team')
 
 function makeOwned(overrides: Partial<Team> = {}): Team {

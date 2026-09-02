@@ -90,20 +90,30 @@ def _looks_like_jwt(token: str) -> bool:
 def _is_global_api_key_auth(request: Request, current_user: User | None) -> bool:
     """Check if request is authenticated via global master API key (no user binding).
 
-    Only returns True for global master key — it bypasses ownership checks.
-    User-level API keys (pv_ prefix) have current_user set, treated like JWT.
+    Only returns True when the presented key equals the server-configured master
+    API key (read at request time from app.state.config so runtime changes and
+    CLI/debug setups are honored). The presented header wins over any cookie/JWT
+    identity (header > cookie per auth priority); presenting the master key IS the
+    credential, so a match grants global read regardless of a lingering cookie.
+    User-level API keys (pv_ prefix) are never global.
     """
-    if current_user is not None:
+    server_cfg = getattr(request.app.state.config, "server", None)
+    master_key = getattr(server_cfg, "api_key", "") or ""
+    if not master_key:
         return False
 
     x_key = request.headers.get("X-API-Key", "")
     if x_key and not x_key.startswith(API_KEY_PREFIX):
-        return True
+        return x_key == master_key
 
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         token = auth[7:]
         if not _looks_like_jwt(token) and not token.startswith(API_KEY_PREFIX):
-            return True
+            return token == master_key
+    # Backward-compatible bare Authorization header (non-JWT, non-pv_) — the
+    # value must equal the configured master key.
+    elif auth and not auth.startswith("Bearer "):
+        return auth == master_key
 
     return False

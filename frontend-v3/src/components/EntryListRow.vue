@@ -81,13 +81,21 @@
       <template v-else>
         <BaseBadge v-if="isExpiredButActive" status="expired" />
         <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
+        <BaseBadge
+          v-else-if="entry.teamId && isOwner"
+          status="team"
+          :label="`仅团队可见 · ${entry.team?.name ?? entry.team?.slug ?? ''}`"
+          data-testid="badge-team"
+        />
         <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
       </template>
       <div v-if="isOwner" class="entry-actions" @click.stop.prevent>
         <button
+          v-if="!entry.teamId"
           type="button"
           class="action-btn visibility-btn"
           data-action="toggle-visibility"
+          data-testid="visibility-toggle"
           :title="entry.isPublic ? 'Make private' : 'Make public'"
           @click="$emit('toggleVisibility', entry)"
         >

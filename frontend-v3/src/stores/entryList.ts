@@ -43,6 +43,11 @@ export const useEntryListStore = defineStore('entryList', () => {
   }
 
   async function toggleVisibility(entry: Entry): Promise<boolean> {
+    if (entry.teamId) {
+      const toast = useToast()
+      toast.show('此内容为团队可见，请在编辑中调整', 'warning')
+      return false
+    }
     const originalPublic = entry.isPublic
     const index = entries.value.findIndex(e => e.id === entry.id)
     const newPublic = !originalPublic

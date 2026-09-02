@@ -34,6 +34,8 @@ export interface RestoredQuery {
   status: string | null
   page: number
   tags: string[]
+  team?: string | null
+  view?: 'teams' | null
 }
 
 export function parseRestoreQuery(queryString: string): RestoredQuery {
@@ -44,6 +46,12 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
   const status = params.get('status') ?? null
   const tagsParam = params.get('tags')
   const tags = tagsParam ? tagsParam.split(',').filter(Boolean) : []
+  // team/view 用 undefined（而非 null）表达"URL 无此维度"：
+  // 既有 spec 的 toEqual 精确断言忽略 undefined 属性，team/view 新键不破坏旧对象全等；
+  // 新 spec（toHaveProperty / spread）仍能感知键存在。
+  const team = params.get('team') ?? undefined
+  const viewParam = params.get('view')
+  const view = viewParam === 'teams' ? 'teams' : undefined
 
   let page = 1
   const pageParam = params.get('page')
@@ -54,7 +62,7 @@ export function parseRestoreQuery(queryString: string): RestoredQuery {
     }
   }
 
-  return { q, owner, status, page, tags }
+  return { q, owner, status, page, tags, team, view }
 }
 
 export type SearchKeyAction = 'flush' | 'clear' | 'none'

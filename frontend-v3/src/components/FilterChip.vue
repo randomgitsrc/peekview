@@ -1,12 +1,17 @@
 <template>
   <span class="filter-chip">
     <span class="filter-chip-label">{{ label }}</span>
-    <button class="filter-chip-dismiss" @click="$emit('dismiss')" aria-label="Remove filter">&times;</button>
+    <button class="filter-chip-dismiss" @click="$emit('dismiss')" :aria-label="dismissLabel">&times;</button>
   </span>
 </template>
 
 <script setup lang="ts">
-defineProps<{ label: string }>()
+withDefaults(defineProps<{
+  label: string
+  dismissLabel?: string
+}>(), {
+  dismissLabel: 'Remove filter',
+})
 defineEmits<{ dismiss: [] }>()
 </script>
 

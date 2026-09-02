@@ -4,7 +4,12 @@
     <span class="meta-dot"></span><span>{{ relativeTime }}</span>
     <span class="meta-sep"></span>
     <template v-if="currentEntry?.readStats"><span>{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span><span class="meta-dot"></span></template>
-    <span :class="['status-tag', currentEntry?.isPublic ? 'public' : 'private']">{{ currentEntry?.isPublic ? 'Public' : 'Private' }}</span>
+    <template v-if="currentEntry?.teamId">
+      <span class="status-tag team">仅团队可见 · {{ currentEntry.team?.name || currentEntry.team?.slug }}</span>
+    </template>
+    <template v-else-if="currentEntry">
+      <span :class="['status-tag', currentEntry.isPublic ? 'public' : 'private']">{{ currentEntry.isPublic ? 'Public' : 'Private' }}</span>
+    </template>
     <BaseTag
       v-for="tag in currentEntry?.tags ?? []"
       :key="tag"
@@ -38,4 +43,5 @@ function navigateToTag(href: string) {
 .status-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--c-tag-bg); color: var(--c-text-tertiary); }
 .status-tag.public { background: var(--c-accent-surface); color: var(--c-accent); }
 .status-tag.private { background: var(--c-surface-lower); color: var(--c-text-secondary); }
+.status-tag.team { background: var(--c-badge-shared-bg); color: var(--c-warning); }
 </style>

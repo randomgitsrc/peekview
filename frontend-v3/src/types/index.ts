@@ -6,6 +6,32 @@ export interface ReadStats {
   lastReadAt: string | null
 }
 
+export interface TeamRef {
+  slug: string
+  name: string
+}
+
+export interface Team {
+  slug: string
+  name: string
+  memberCount: number
+}
+
+export interface TeamDetail extends Team {
+  ownerUsername: string
+  members: TeamMemberRef[]
+}
+
+export interface TeamMemberRef {
+  id: number
+  username: string
+}
+
+export interface TeamListResponse {
+  owned: Team[]
+  joined: Team[]
+}
+
 export interface Entry {
   id: number
   slug: string
@@ -21,6 +47,8 @@ export interface Entry {
   archivedAt: string | null
   createdAt: string
   updatedAt?: string
+  teamId?: number | null
+  team?: TeamRef | null
   shareContext?: {
     isShareAccess: boolean
     sharedBy: string | null
@@ -63,6 +91,7 @@ export interface ListEntriesParams {
   status?: string
   owner?: string
   starred?: boolean
+  team?: string
   page?: number
   perPage?: number
 }

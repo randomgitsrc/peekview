@@ -94,6 +94,10 @@ class EntryBase(SQLModel):
         default=None,
         sa_column=Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True),
     )
+    team_id: int | None = Field(
+        default=None,
+        sa_column=Column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True),
+    )
     expires_at: datetime | None = Field(default=None)
     archived_at: datetime | None = Field(default=None)
     archive_delete_at: datetime | None = Field(
@@ -149,6 +153,75 @@ class User(UserBase, table=True):
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username!r})>"
+
+
+class Team(SQLModel, table=True):
+    """Team model — a named group of users that can share private entries.
+
+    owner_id CASCADE: deleting the owner user removes their teams (BDD-20).
+    """
+
+    __tablename__ = "teams"
+    __table_args__ = (
+        Index("idx_teams_slug", "slug", unique=True),
+        Index("idx_teams_owner_id", "owner_id"),
+        Index("ux_teams_owner_name", "owner_id", "name", unique=True),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(..., min_length=1, max_length=64)
+    slug: str = Field(..., max_length=64)
+    owner_id: int = Field(
+        ...,
+        sa_column=Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    )
+    created_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+    )
+    updated_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={
+            "server_default": text("CURRENT_TIMESTAMP"),
+            "onupdate": text("CURRENT_TIMESTAMP"),
+        },
+    )
+
+    def __repr__(self) -> str:
+        return f"<Team(id={self.id}, slug={self.slug!r})>"
+
+
+class TeamMember(SQLModel, table=True):
+    """Team membership — composite PK (team_id, user_id).
+
+    Both FKs CASCADE so deleting a team or a user removes memberships.
+    """
+
+    __tablename__ = "team_members"
+    __table_args__ = (
+        Index("idx_team_members_user_id", "user_id"),
+        Index("idx_team_members_team_id", "team_id"),
+    )
+
+    team_id: int = Field(
+        ...,
+        foreign_key="teams.id",
+        ondelete="CASCADE",
+        primary_key=True,
+    )
+    user_id: int = Field(
+        ...,
+        foreign_key="users.id",
+        ondelete="CASCADE",
+        primary_key=True,
+    )
+    joined_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+    )
+
+    def __repr__(self) -> str:
+        return f"<TeamMember(team_id={self.team_id}, user_id={self.user_id})>"
 
 
 class ApiKey(SQLModel, table=True):
@@ -445,6 +518,7 @@ Index(
 Index("idx_entries_expires_at", Entry.expires_at)
 Index("idx_entries_created_at", Entry.created_at)
 Index("idx_entries_updated_at", Entry.updated_at)
+Index("idx_entries_team_id", Entry.team_id)
 
 
 # FTS5 setup for full-text search
@@ -475,6 +549,11 @@ class EntryCreate(SQLModel):
     expires_in: str | None = Field(
         default=None,
         description="Duration like '7d', '1h', '30m'. Default: server-configured (see /api/v1/config/limits). Use '0' for no expiration.",
+    )
+    team_id: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Team slug to publish to (team-visible). Overrides is_public to false.",
     )
 
 
@@ -507,6 +586,11 @@ class EntryUpdate(SQLModel):
     status: EntryStatus | None = Field(default=None)
     tags: list[str] | None = Field(default=None)
     is_public: bool | None = Field(default=None)
+    team_id: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Team slug to migrate to (None = remove team, private/public).",
+    )
     expires_in: str | None = Field(
         default=None,
         description="Duration like '7d', '1h', '0' for never. Reactivates archived entries.",
@@ -582,6 +666,13 @@ class TombstoneResponse(SQLModel):
     reason: str = "author_deleted"
 
 
+class TeamRef(SQLModel):
+    """Team identity embedded in entry responses ({slug, name})."""
+
+    slug: str
+    name: str
+
+
 class StarItem(SQLModel):
     """Single item in GET /api/v1/stars (live entry or tombstone card)."""
 
@@ -593,6 +684,8 @@ class StarItem(SQLModel):
     is_public: bool | None = None
     owner_id: int | None = None
     username: str | None = None
+    team_id: int | None = None
+    team: TeamRef | None = None
     starred_at: datetime | None = None
     star_count: int = 0
     is_starred: bool = False
@@ -629,6 +722,8 @@ class EntryResponse(SQLModel):
     is_public: bool
     owner_id: int | None
     username: str | None
+    team_id: int | None = None
+    team: TeamRef | None = None
     expires_at: datetime | None
     archived_at: datetime | None = None
     created_at: datetime
@@ -653,6 +748,8 @@ class EntryListItem(SQLModel):
     is_public: bool
     owner_id: int | None
     username: str | None
+    team_id: int | None = None
+    team: TeamRef | None = None
     expires_at: datetime | None
     archived_at: datetime | None = None
     created_at: datetime
@@ -685,6 +782,7 @@ class EntryRawResponse(SQLModel):
     created_at: datetime
     files: list[RawFileItem]
     raw_url: str
+    team: TeamRef | None = None
 
 
 class EntryListResponse(SQLModel):
@@ -709,6 +807,11 @@ class CreateEntryRequest(SQLModel):
     slug: str | None = Field(default=None, max_length=64)
     tags: list[str] = Field(default_factory=list)
     is_public: bool = Field(default=True)
+    team_id: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Team slug to publish to (team-visible). Forces is_public=false.",
+    )
     expires_in: str | None = Field(
         default=None,
         description="Duration like '7d', '1h', '30m'. Default: server-configured (see /api/v1/config/limits). Use '0' for no expiration.",
@@ -740,6 +843,59 @@ class CreateEntryResponse(SQLModel):
     expires_at: datetime | None
     created_at: datetime
     files: list[FileResponse]
+
+
+# Team schemas
+
+
+class TeamCreateRequest(SQLModel):
+    """Body for POST /api/v1/teams."""
+
+    name: str = Field(..., min_length=1, max_length=64)
+
+
+class TeamRenameRequest(SQLModel):
+    """Body for PATCH /api/v1/teams/{slug}."""
+
+    name: str = Field(..., min_length=1, max_length=64)
+
+
+class MemberAddRequest(SQLModel):
+    """Body for POST /api/v1/teams/{slug}/members."""
+
+    username: str = Field(..., min_length=1, max_length=64)
+
+
+class TeamSummary(SQLModel):
+    """Team in owned/joined partition lists."""
+
+    slug: str
+    name: str
+    member_count: int = 0
+
+
+class TeamMemberInfo(SQLModel):
+    """A team member in detail responses."""
+
+    id: int
+    username: str
+
+
+class TeamDetail(SQLModel):
+    """Full team response (detail view)."""
+
+    slug: str
+    name: str
+    member_count: int = 0
+    owner_username: str | None = None
+    members: list[TeamMemberInfo] = Field(default_factory=list)
+
+
+class TeamsListResponse(SQLModel):
+    """GET /api/v1/teams — owned + joined partitions."""
+
+    owned: list[TeamSummary] = Field(default_factory=list)
+    joined: list[TeamSummary] = Field(default_factory=list)
 
 
 # Auth schemas

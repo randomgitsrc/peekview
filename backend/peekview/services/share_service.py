@@ -12,7 +12,7 @@ from sqlalchemy import func, update
 from sqlmodel import Session, select
 
 from peekview.config import PeekConfig
-from peekview.exceptions import ForbiddenError, NotFoundError, ValidationError
+from peekview.exceptions import NotFoundError, ValidationError
 from peekview.models import (
     Entry,
     EntryShare,
@@ -49,7 +49,7 @@ class ShareService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             if not is_admin and entry.owner_id != current_user_id:
-                raise ForbiddenError("Only the entry owner can create share links")
+                raise NotFoundError(f"Entry not found: {slug}")
 
             if entry.is_public:
                 raise ValidationError("Public entries don't need share links")
@@ -127,7 +127,7 @@ class ShareService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             if not is_admin and entry.owner_id != current_user_id:
-                raise ForbiddenError("Only the entry owner can list share links")
+                raise NotFoundError(f"Entry not found: {slug}")
 
             shares = session.exec(
                 select(EntryShare)
@@ -167,7 +167,7 @@ class ShareService:
                 raise NotFoundError(f"Entry not found: {slug}")
 
             if not is_admin and entry.owner_id != current_user_id:
-                raise ForbiddenError("Only the entry owner can revoke share links")
+                raise NotFoundError(f"Entry not found: {slug}")
 
             now = datetime.now(timezone.utc)
             shares_to_revoke = session.exec(

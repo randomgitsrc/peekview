@@ -40,7 +40,6 @@ describe('TPV0095 EntryCard — team badge 与 toggle 守卫', () => {
   it('bdd39_team_entry_renders_team_badge_with_team_semantics', () => {
     const wrapper = mount(EntryCard, {
       props: {
-        // @ts-expect-error — P4 将 teamId/team 并入 Entry 类型；P3 期尚不存在
         entry: makeEntry({ teamId: 5, team: { slug: 'proj-a', name: 'Proj A' } }),
         isOwner: true,
       },
@@ -56,7 +55,6 @@ describe('TPV0095 EntryCard — team badge 与 toggle 守卫', () => {
   it('bdd39_team_entry_does_not_render_private_badge', () => {
     const wrapper = mount(EntryCard, {
       props: {
-        // @ts-expect-error — P4 将 teamId/team 并入 Entry 类型
         entry: makeEntry({ teamId: 5, team: { slug: 'proj-a', name: 'Proj A' } }),
         isOwner: true,
       },
@@ -72,7 +70,6 @@ describe('TPV0095 EntryCard — team badge 与 toggle 守卫', () => {
   it('bdd40_team_entry_hides_visibility_toggle_but_keeps_delete', () => {
     const wrapper = mount(EntryCard, {
       props: {
-        // @ts-expect-error — P4 将 teamId 并入 Entry 类型
         entry: makeEntry({ teamId: 5 }),
         isOwner: true,
       },

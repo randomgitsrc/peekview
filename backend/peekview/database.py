@@ -213,6 +213,55 @@ def _run_migrations(engine: Engine) -> None:
             conn.commit()
             logger.info("Migration: added source column to entry_reads")
 
+        # TPV0095 team visibility: teams / team_members fallback tables for old
+        # DBs (new DBs are covered by create_all since Team/TeamMember are in
+        # SQLModel.metadata), entries.team_id column, and the two lookup indexes.
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS teams (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                slug TEXT NOT NULL,
+                owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS team_members (
+                team_id INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (team_id, user_id)
+            )
+        """))
+        conn.execute(text("""
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_teams_owner_name ON teams(owner_id, name)
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_teams_owner_id ON teams(owner_id)
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_team_members_user_id ON team_members(user_id)
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON team_members(team_id)
+        """))
+        entry_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(entries)"))}
+        if "team_id" not in entry_columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE entries ADD COLUMN team_id INTEGER "
+                    "REFERENCES teams(id) ON DELETE SET NULL"
+                )
+            )
+            conn.commit()
+            logger.info("Migration: added team_id column to entries")
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_entries_team_id ON entries(team_id)
+        """))
+        conn.commit()
+        logger.info("Migration: ensured teams / team_members tables + team_id column")
+
 
 FTS_VERSION = 2  # v1 = original (unicode61, no jieba), v2 = jieba tokenized
 

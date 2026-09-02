@@ -86,12 +86,14 @@ describe('EntryListView Starred tab — BDD-18: 登录用户出现 4 tabs 且 St
     mockListEntries.mockResolvedValue({ items: [], total: 0, page: 1, perPage: 20, ownerFound: null })
   })
 
-  it('TC-BDD18-01: 登录用户 Explore 显示 4 个 owner tab（含 Starred）', async () => {
+  it('TC-BDD18-01: 登录用户 Explore 显示 5 个 owner tab（含 Starred 与 Teams）', async () => {
     const { wrapper } = await mountList(USER)
 
     const tabs = wrapper.findAll('.owner-tab')
-    expect(tabs.length).toBe(4)
+    // TPV0095 BDD-38：owner-tabs 由 4 tab 扩为 5 tab（All/Mine/Teams/Archived/Starred）
+    expect(tabs.length).toBe(5)
     expect(wrapper.find('[data-testid="tab-starred"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="tab-teams"]').exists()).toBe(true)
   })
 
   it('TC-BDD18-02: 点击 Starred tab → loadEntries 以 starred=true 重新加载列表', async () => {

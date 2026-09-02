@@ -42,7 +42,6 @@ function makeTeamEntry(): Entry {
     expiresAt: null,
     archivedAt: null,
     createdAt: '2026-01-01T00:00:00Z',
-    // @ts-expect-error — P4 将 teamId/team 并入 Entry 类型
     teamId: 5,
     team: { slug: 'proj-a', name: 'Proj A' },
   }
@@ -71,7 +70,6 @@ describe('TPV0095 entryList store — toggleVisibility teamId 守卫', () => {
     vi.mocked(api.toggleEntryVisibility).mockResolvedValue({ revokedShares: 0 } as never)
     const store = useEntryListStore()
     const entry = makeTeamEntry()
-    // @ts-expect-error — 移除 teamId 模拟非 team entry（P4 后类型收口）
     delete (entry as Partial<Entry>).teamId
     store.entries = [entry]
 

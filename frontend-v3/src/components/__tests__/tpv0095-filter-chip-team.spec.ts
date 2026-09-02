@@ -13,7 +13,6 @@ describe('TPV0095 FilterChip — dismiss aria-label 参数化（BDD-41）', () =
   })
 
   it('bdd41_parameterized_aria_label_for_team_chip', () => {
-    // @ts-expect-error — P4 将加 dismissLabel?: string prop
     const wrapper = mount(FilterChip, {
       props: { label: 'Proj A', dismissLabel: '移除团队过滤：Proj A' },
     })

@@ -103,8 +103,8 @@ test.describe('TPV0095 team-visibility — explore Teams tab/chips/badge（BDD-3
 
     await login(page)
     await page.goto(`${BASE_URL}/explore?view=teams`)
-    await page.waitForSelector('[data-testid="team-chip-proj-a"]', { timeout: 10000 }).catch(() => {})
-    const chip = page.locator('[data-testid="team-chip-proj-a"]')
+    await page.waitForSelector('[data-testid="teams-chip-proj-a"]', { timeout: 10000 }).catch(() => {})
+    const chip = page.locator('[data-testid="teams-chip-proj-a"]')
     if ((await chip.count()) > 0) {
       await chip.first().click()
       await page.waitForURL(/\/explore\?.*team=proj-a/, { timeout: 10000 })

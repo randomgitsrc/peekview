@@ -171,14 +171,14 @@ class TestCreateShare:
 
 class TestCreateSharePermission:
     async def test_b02_non_owner_cannot_create(self, client_and_app):
-        """B02: Non-owner gets 403."""
+        """B02: Non-owner gets 404 (anti-enumeration, TPV0095)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
         bob = await _register(client, "bob")
         await _create_private_entry(client, alice["access_token"], slug="alices-private")
 
         resp = await _create_share(client, bob["access_token"], "alices-private")
-        assert resp.status_code == 403
+        assert resp.status_code == 404
 
     async def test_b03_anonymous_cannot_create(self, client_and_app):
         """B03: Anonymous gets 401."""

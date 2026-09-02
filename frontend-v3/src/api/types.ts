@@ -15,6 +15,8 @@ export interface EntryListItemResponse {
   archived_at: string | null
   created_at: string
   updated_at: string
+  team_id?: number | null
+  team?: TeamRaw | null
   star_count?: number
   is_starred?: boolean
   countdown?: CountdownResponse | null
@@ -26,6 +28,11 @@ export interface ReadStatsResponse {
   unique_readers: number
   by_channel: Record<string, number>
   last_read_at: string | null
+}
+
+export interface TeamRaw {
+  slug: string
+  name: string
 }
 
 export interface EntryResponse {
@@ -42,6 +49,8 @@ export interface EntryResponse {
   archived_at: string | null
   created_at: string
   updated_at: string
+  team_id?: number | null
+  team?: TeamRaw | null
   share_context?: {
     is_share_access: boolean
     shared_by: string | null
@@ -173,6 +182,8 @@ export interface StarListItemResponse {
   is_starred: boolean
   expires_at: string | null
   archived_at: string | null
+  team_id?: number | null
+  team?: TeamRaw | null
   countdown: CountdownResponse | null
   tombstone: null
 }
@@ -204,4 +215,26 @@ export interface StarListApiResponse {
 
 export interface RemoveStarsResponse {
   removed: number
+}
+
+// Team API response types
+export interface TeamSummaryResponse {
+  slug: string
+  name: string
+  member_count: number
+}
+
+export interface TeamMemberResponse {
+  id: number
+  username: string
+}
+
+export interface TeamDetailResponse extends TeamSummaryResponse {
+  owner_username: string
+  members: TeamMemberResponse[]
+}
+
+export interface TeamListApiResponse {
+  owned: TeamSummaryResponse[]
+  joined: TeamSummaryResponse[]
 }

@@ -1,9 +1,9 @@
-phase: P3
+phase: P4
 task_id: TPV0095
 task_name: team-visibility
 status: in_progress
 created: 2026-09-02 00:00:00+00:00
-updated: '2026-09-02T21:50:00Z'
+updated: '2026-09-03T03:30:00Z'
 judge:
   enabled: true
 history:
@@ -58,3 +58,12 @@ history:
     33 条 + 5 补强 FK/索引/自愈）37 红 B 类 + BDD-25 基线绿；frontend 10 组件 spec + 2 e2e spec 覆盖
     BDD-38~44（24 fail B/13 pass）；mcp 10 用例 BDD-35~37 全红 B。合并 P3-test-cases.md（258
     行）。check-gate P3 exit 2；check-tdd-red exit 0 真红灯。MCP test:unit 清单登记 team-visibility.test.ts
+- phase: P4
+  action: completed
+  ts: '2026-09-03T03:30:00Z'
+  note: 三批 implementer 并行实现完成（backend 37红转绿+1164 passed/frontend 24红转绿+1334 passed/mcp
+    10红转绿+277 passed；2 预存失败登 known-failures）。C8 三评审：review-eng 首轮 rejected（BLOCKER-1
+    share cookie 越权读 + BLOCKER-2 owner 读成员发布不一致）→ 修复（方案 A 裁定 owner=团队读权成员）→ 复审 needs-revision（R1/R2
+    owner 语义传播残留）→ retry2 修复 → 终审 approved（方案 A 10 表面全绿）；design-review 首轮 needs-revision（F1
+    testid 冲突 + F2 登出未 reset）→ 修复 + F3 e2e 锚点对齐 → approved；cso approved（无 CRITICAL/HIGH，LOW×2/INFO×3
+    backlog）。组长汇总 P4-review.md approved。check-gate P4 exit 0

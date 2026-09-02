@@ -75,7 +75,7 @@ def _get_backend(
         )
 
     # Local mode
-    engine = init_db(config.db_path)
+    engine = init_db(config.db_path, run_migrations=True)
     check_schema(engine)
     storage = StorageManager(config=config)
     return EntryService(engine=engine, storage=storage, config=config)
@@ -228,10 +228,12 @@ Examples:
     "--visibility",
     "-v",
     type=click.Choice(["public", "private"]),
-    default="public",
-    help="Entry visibility",
+    default=None,
+    help="Entry visibility (default: public unless --team is used)",
 )
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
+@click.option("--team", default=None, help="Team slug to publish to (team-visible)")
+@click.option("--user", "-u", default=None, help="Username (required in local mode when --team is used)")
 def create(
     paths: tuple[str, ...],
     summary: str,
@@ -243,6 +245,8 @@ def create(
     remote_url: str | None,
     visibility: str,
     json_output: bool,
+    team: str | None,
+    user: str | None,
 ) -> None:
     """Create a new entry."""
     config = PeekConfig()
@@ -254,6 +258,32 @@ def create(
     # Show remote mode indicator (only in non-JSON mode)
     if is_remote and not json_output:
         click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+
+    if team and visibility == "public":
+        click.echo(
+            "Error: --team and --visibility public are mutually exclusive — "
+            "a team entry is always private to the team. Omit --visibility "
+            "(or run 'peekview teams' to see your teams).",
+            err=True,
+        )
+        sys.exit(1)
+    # --visibility omitted: default public unless --team is used (then the
+    # service forces team-private). Explicit --visibility private stays private.
+    effective_visibility = visibility or ("private" if team else "public")
+
+    # Local mode with --team requires an explicit owner user (team membership /
+    # ownership is resolved against that user).
+    local_user: User | None = None
+    if not is_remote:
+        if team and not user:
+            click.echo(
+                "Error: --user <username> is required in local mode when --team is used "
+                "(team ownership/membership is resolved per user)",
+                err=True,
+            )
+            sys.exit(1)
+        if user:
+            local_user = _resolve_user_local(config, user)
 
     # Set base_url from CLI if provided (for local mode URL generation)
     if base_url and not is_remote:
@@ -313,9 +343,19 @@ def create(
         # No paths provided - create empty entry
         pass
 
-    is_public = visibility == "public"
+    is_public = effective_visibility == "public"
 
     try:
+        create_kwargs: dict[str, Any] = {}
+        if is_remote:
+            create_kwargs["team_id"] = team
+        else:
+            create_kwargs["team_id"] = team
+            if team and local_user is not None:
+                # Team create requires owner attribution so membership/ownership
+                # checks apply; non-team local create keeps legacy owner_id=NULL
+                # behavior (P2 §3.4 — --user alone does not re-attribute).
+                create_kwargs["current_user_id"] = local_user.id
         create_result = backend.create_entry(
             summary=summary,
             slug=slug,
@@ -324,6 +364,7 @@ def create(
             dirs_data=dirs_data if dirs_data else None,
             expires_in=expires_in,
             is_public=is_public,
+            **create_kwargs,
         )
         result = create_result if _is_remote_mode(backend) else create_result[0]
 
@@ -431,6 +472,8 @@ def get(slug: str, remote_url: str | None, json_output: bool) -> None:
     "--remote-url", "-r", default=None, help="Remote server URL (e.g., https://example.com)"
 )
 @click.option("--json-output", "-j", is_flag=True, help="Output as JSON")
+@click.option("--team", default=None, help="Team slug to filter by")
+@click.option("--user", "-u", default=None, help="Username (required in local mode when --team is used)")
 def list_entries(
     query: str | None,
     tag: tuple[str, ...],
@@ -439,6 +482,8 @@ def list_entries(
     per_page: int,
     remote_url: str | None,
     json_output: bool,
+    team: str | None,
+    user: str | None,
 ) -> None:
     """List entries with optional filters.
 
@@ -447,6 +492,7 @@ def list_entries(
         peekview list -q "python"
         peekview list -t cli -t python
         peekview list --status active
+        peekview list --team proj-a --user alice
         peekview list --remote-url https://example.com
     """
     config = PeekConfig()
@@ -459,14 +505,27 @@ def list_entries(
     if is_remote and not json_output:
         click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
 
+    if team and not is_remote and not user:
+        click.echo(
+            "Error: --user <username> is required in local mode when --team is used",
+            err=True,
+        )
+        sys.exit(1)
+
     try:
         tag_list = list(tag) if tag else None
+        list_kwargs: dict[str, Any] = {}
+        if team is not None:
+            list_kwargs["team"] = team
+        if not is_remote and user:
+            list_kwargs["current_user_id"] = _resolve_user_local(config, user).id
         result = backend.list_entries(
             q=query,
             tags=tag_list,
             status=status,
             page=page,
             per_page=per_page,
+            **list_kwargs,
         )
 
         # Handle both local (EntryListResponse) and remote (dict) results
@@ -544,6 +603,82 @@ def list_entries(
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
+
+
+TEAMS_EXAMPLES = """
+Examples:
+
+  peekview teams --user alice                List alice's teams (owned + joined)
+  peekview teams --user alice --json         JSON: {owned: [...], joined: [...]}
+  peekview teams --remote-url https://...    Remote mode teams (configured identity)
+"""
+
+
+@cli.command(name="teams", epilog=TEAMS_EXAMPLES)
+@click.option("--remote-url", "-r", default=None, help="Remote server URL")
+@click.option("--user", "-u", default=None, help="Username (required in local mode)")
+@click.option("--json", "-j", "json_output", is_flag=True, help="Output as JSON")
+def teams_cmd(remote_url: str | None, user: str | None, json_output: bool) -> None:
+    """List owned + joined team partitions for the current user."""
+    from peekview.services.team_service import TeamService
+
+    config = PeekConfig()
+    backend = _get_backend(config, cli_remote_url=remote_url)
+
+    if _is_remote_mode(backend):
+        if not json_output:
+            click.echo(f"→ Remote mode: {remote_url or config.remote.url}")
+        result = backend.list_teams()
+        owned = result.get("owned", [])
+        joined = result.get("joined", [])
+    else:
+        if not user:
+            click.echo("Error: --user <username> is required in local mode", err=True)
+            sys.exit(1)
+        db_user = _resolve_user_local(config, user)
+        engine = init_db(config.db_path, run_migrations=True)
+        team_service = TeamService(engine=engine)
+        result = team_service.list_teams(db_user.id)
+        owned = result.owned
+        joined = result.joined
+
+    if json_output:
+        click.echo(
+            json.dumps(
+                {
+                    "owned": [
+                        {"slug": t.get("slug") if isinstance(t, dict) else t.slug,
+                         "name": t.get("name") if isinstance(t, dict) else t.name}
+                        for t in owned
+                    ],
+                    "joined": [
+                        {"slug": t.get("slug") if isinstance(t, dict) else t.slug,
+                         "name": t.get("name") if isinstance(t, dict) else t.name}
+                        for t in joined
+                    ],
+                },
+                indent=2,
+            )
+        )
+        return
+
+    click.echo("Owned:")
+    if owned:
+        for t in owned:
+            slug = t.get("slug") if isinstance(t, dict) else t.slug
+            name = t.get("name") if isinstance(t, dict) else t.name
+            click.echo(f"  {slug}  ({name})")
+    else:
+        click.echo("  (none)")
+    click.echo()
+    click.echo("Joined:")
+    if joined:
+        for t in joined:
+            slug = t.get("slug") if isinstance(t, dict) else t.slug
+            name = t.get("name") if isinstance(t, dict) else t.name
+            click.echo(f"  {slug}  ({name})")
+    else:
+        click.echo("  (none)")
 
 
 @cli.command()
@@ -2076,7 +2211,7 @@ def apikey_cleanup(remote_url: str | None, user: str | None) -> None:
 
 def _resolve_user_local(config: PeekConfig, username: str) -> "User":
     """Local mode: resolve username → User. Exits with error if not found."""
-    engine = init_db(config.db_path)
+    engine = init_db(config.db_path, run_migrations=True)
     check_schema(engine)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == username)).first()

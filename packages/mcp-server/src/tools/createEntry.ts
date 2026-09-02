@@ -16,6 +16,7 @@ const schema = z.object({
   is_public: z.boolean().optional(),
   expires_in: z.string().optional(),
   idempotency_key: z.string().optional(),
+  team_id: z.string().optional(),
 });
 
 export const createEntryTool = (client: PeekViewClient, publicUrl: string): ToolDefinition => ({
@@ -40,7 +41,13 @@ Examples:
 - With expiration: {"summary": "Temp report", "files": [...], "expires_in": "7d"}
 - No expiration: {"summary": "Permanent", "files": [...], "expires_in": "0"}
 
-Default: If expires_in is omitted, the server's default expiration applies. Check /api/v1/config/limits for current setting.`,
+Default: If expires_in is omitted, the server's default expiration applies. Check /api/v1/config/limits for current setting.
+
+TEAM VISIBILITY:
+- To publish to a team (visible to team members only):
+  1. Call list_teams to see your teams
+  2. Pass team_id from the result, e.g. {"team_id": "proj-a"}
+- IMPORTANT: if you omit team_id, the entry follows is_public (default: PUBLIC!)`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -67,6 +74,7 @@ Default: If expires_in is omitted, the server's default expiration applies. Chec
       slug: { type: 'string', description: 'Custom URL slug (auto-generated if not provided)' },
       tags: { type: 'array', items: { type: 'string' } },
       is_public: { type: 'boolean', description: 'Whether entry is public (default: true)' },
+      team_id: { type: 'string', description: 'Team slug to publish to (visible to team members only). Omit to follow is_public (default: PUBLIC!). Call list_teams to see your teams first.' },
       expires_in: { type: 'string', description: 'Expiration duration (e.g., "7d", "1h"). Default: configured on server. Use "0" for no expiration.' },
       idempotency_key: { type: 'string', description: 'Idempotency key for safe retries. Same key returns existing entry.' },
     },
@@ -96,6 +104,7 @@ Default: If expires_in is omitted, the server's default expiration applies. Chec
         is_public: params.is_public,
         expires_in: params.expires_in,
         idempotency_key: params.idempotency_key,
+        team_id: params.team_id,
       }, ctx.userToken);
 
       // Build response with optional suggestions

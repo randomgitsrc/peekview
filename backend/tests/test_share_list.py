@@ -124,7 +124,7 @@ class TestListShares:
             assert "share_url" not in share, "share_url must NOT be in list response"
 
     async def test_b21_non_owner_cannot_list(self, client_and_app):
-        """B21: Non-owner gets 403."""
+        """B21: Non-owner gets 404 (anti-enumeration, TPV0095)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
         bob = await _register(client, "bob")
@@ -135,7 +135,7 @@ class TestListShares:
             "/api/v1/entries/alice-private/shares",
             headers=_auth(bob["access_token"]),
         )
-        assert resp.status_code == 403
+        assert resp.status_code == 404
 
     async def test_b22_admin_can_list_any(self, client_and_app):
         """B22: Admin can list shares for any entry."""

@@ -128,7 +128,6 @@ describe('TPV0095 EntryDetailHeader — 状态标签三态（BDD-44）', () => {
     const wrapper = createWrapper(
       makeEntry({
         isPublic: false,
-        // @ts-expect-error — P4 将 teamId/team 并入 Entry 类型
         teamId: 5,
         team: { slug: 'proj-a', name: 'Proj A' },
       }),

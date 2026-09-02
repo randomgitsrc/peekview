@@ -35,6 +35,7 @@ interface GetEntryOutput {
   summary: string;
   tags: string[];
   files: OutputFile[];
+  team: { slug: string; name: string } | null;
   warning: string | null;
 }
 
@@ -57,6 +58,7 @@ function buildOutput(raw: EntryRawResponse, file?: string): GetEntryOutput {
     slug: raw.slug,
     summary: raw.summary,
     tags: raw.tags,
+    team: raw.team ?? null,
     warning: null as string | null,
   };
 

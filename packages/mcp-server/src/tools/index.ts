@@ -6,6 +6,7 @@ import { publishFilesTool } from './publishFiles.js';
 import { getEntryTool } from './getEntry.js';
 import { listEntriesTool } from './listEntries.js';
 import { deleteEntryTool } from './deleteEntry.js';
+import { listTeamsTool } from './listTeams.js';
 
 /**
  * 根据部署模式返回工具集（详见 docs/plans/mcp-dual-mode-final-v0.7.md）
@@ -17,6 +18,7 @@ export function createTools(client: PeekViewClient, config: ServerConfig): ToolD
     getEntryTool(client),
     listEntriesTool(client),
     deleteEntryTool(client),
+    listTeamsTool(client),
   ];
 
   if (config.mode === 'local') {
@@ -25,4 +27,4 @@ export function createTools(client: PeekViewClient, config: ServerConfig): ToolD
   return [createEntryTool(client, config.publicUrl), ...common];
 }
 
-export { createEntryTool, publishFilesTool, getEntryTool, listEntriesTool, deleteEntryTool };
+export { createEntryTool, publishFilesTool, getEntryTool, listEntriesTool, deleteEntryTool, listTeamsTool };

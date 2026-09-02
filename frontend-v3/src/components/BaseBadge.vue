@@ -4,16 +4,19 @@
 
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
-  status?: 'public' | 'private' | 'shared' | 'archived' | 'expired' | 'disabled' | 'admin'
+  status?: 'public' | 'private' | 'shared' | 'archived' | 'expired' | 'disabled' | 'admin' | 'team'
+  label?: string
 }>(), {
   status: 'public',
+  label: '',
 })
 
 const labelMap: Record<string, string> = {
   disabled: 'disabled',
   admin: 'admin',
+  team: '仅团队可见',
 }
-const label = labelMap[props.status] ?? props.status
+const label = props.label || labelMap[props.status] || props.status
 </script>
 
 <style scoped>
@@ -58,6 +61,11 @@ const label = labelMap[props.status] ?? props.status
 }
 
 .badge-admin {
+  background: var(--c-badge-shared-bg);
+  color: var(--c-warning);
+}
+
+.badge-team {
   background: var(--c-badge-shared-bg);
   color: var(--c-warning);
 }

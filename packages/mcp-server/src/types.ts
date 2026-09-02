@@ -24,6 +24,18 @@ export interface CreateEntryRequest {
   expires_in?: string;
   is_public?: boolean;
   idempotency_key?: string;
+  team_id?: string;
+}
+
+export interface Team {
+  slug: string;
+  name: string;
+  member_count: number;
+}
+
+export interface TeamListResponse {
+  owned: Team[];
+  joined: Team[];
 }
 
 export interface EntryFileResponse {
@@ -71,6 +83,7 @@ export interface EntryRawResponse {
   created_at: string;
   files: RawFileItem[];
   raw_url: string;
+  team?: { slug: string; name: string } | null;
 }
 
 export interface SessionContext {

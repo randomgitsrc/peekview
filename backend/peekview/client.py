@@ -143,6 +143,7 @@ class PeekClient:
         dirs_data: list[dict[str, str]] | None = None,
         expires_in: str | None = None,
         is_public: bool = True,
+        team_id: str | None = None,
     ) -> RemoteEntry:
         """POST /api/v1/entries — Create a new entry."""
         payload: dict[str, Any] = {
@@ -154,6 +155,9 @@ class PeekClient:
             "dirs": dirs_data or [],
             "expires_in": expires_in,
         }
+        if team_id is not None:
+            payload["team_id"] = team_id
+            payload["is_public"] = False
 
         resp = requests.post(
             f"{self.base_url}/api/v1/entries",
@@ -175,6 +179,7 @@ class PeekClient:
         status: str | None = None,
         page: int = 1,
         per_page: int = 20,
+        team: str | None = None,
     ) -> dict[str, Any]:
         """GET /api/v1/entries — List entries with pagination.
 
@@ -190,10 +195,26 @@ class PeekClient:
             params["tags"] = ",".join(tags)
         if status:
             params["status"] = status
+        if team is not None:
+            params["team"] = team
 
         resp = requests.get(
             f"{self.base_url}/api/v1/entries",
             params=params,
+            headers=self.headers,
+            timeout=self.timeout,
+            verify=self.verify,
+        )
+
+        if resp.status_code != 200:
+            self._handle_error(resp)
+
+        return resp.json()
+
+    def list_teams(self) -> dict[str, Any]:
+        """GET /api/v1/teams — Owned + joined team partitions."""
+        resp = requests.get(
+            f"{self.base_url}/api/v1/teams",
             headers=self.headers,
             timeout=self.timeout,
             verify=self.verify,

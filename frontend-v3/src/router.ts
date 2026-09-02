@@ -29,6 +29,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./views/StarManageView.vue'),
   },
   {
+    path: '/teams',
+    name: 'teams',
+    component: () => import('./views/TeamsView.vue'),
+  },
+  {
     path: '/users/:username',
     name: 'user-entries',
     component: () => import('./views/EntryListView.vue'),
@@ -94,6 +99,9 @@ router.beforeEach(async (to) => {
     if (authStore.authState !== 'authenticated') return '/'
   }
   if (to.path === '/stars') {
+    if (authStore.authState !== 'authenticated') return '/'
+  }
+  if (to.path === '/teams') {
     if (authStore.authState !== 'authenticated') return '/'
   }
 })

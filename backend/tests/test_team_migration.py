@@ -85,7 +85,7 @@ def _build_old_db(db_path: Path, seed_slugs=("old-entry",)) -> None:
     for slug in seed_slugs:
         conn.execute(
             "INSERT INTO entries (slug, summary, is_public, owner_id, status, tags) "
-            "VALUES (?, ?, 0, 1, 'active', '[]')",
+            "VALUES (?, ?, 0, 1, 'ACTIVE', '[]')",
             (slug, f"old data {slug}"),
         )
     conn.commit()
@@ -212,6 +212,7 @@ class TestFreshDbFkTeam:
         engine = init_db(db_path, run_migrations=True)
         from peekview.models import Team, TeamMember
 
+        team_id: int = 0
         with Session(engine) as session:
             alice = User(username="fk-alice", password_hash="x")
             bob = User(username="fk-bob", password_hash="x")
@@ -230,12 +231,13 @@ class TestFreshDbFkTeam:
                 None, session, slug="fk-entry",
                 is_public=False, owner_id=alice.id, team_id=team.id,
             )
+            team_id = team.id
             session.delete(team)
             session.commit()
 
             members_left = session.exec(
-                text("SELECT COUNT(*) FROM team_members WHERE team_id=:t"), {"t": team.id}
-            ).one()
+                text("SELECT COUNT(*) FROM team_members WHERE team_id=:t").bindparams(t=team_id)
+            ).scalar()
             assert members_left == 0, "team_members must CASCADE on team delete"
             row = session.exec(select(Entry).where(Entry.slug == "fk-entry")).first()
             assert row is not None and row.team_id is None, "entries.team_id must SET NULL"
@@ -255,6 +257,7 @@ class TestFreshDbFkUser:
         engine = init_db(db_path, run_migrations=True)
         from peekview.models import Team
 
+        team_id: int = 0
         with Session(engine) as session:
             alice = User(username="fk2-alice", password_hash="x")
             session.add(alice)
@@ -264,11 +267,12 @@ class TestFreshDbFkUser:
             session.add(team)
             session.commit()
             session.refresh(team)
+            team_id = team.id
             session.delete(alice)
             session.commit()
             teams_left = session.exec(
-                text("SELECT COUNT(*) FROM teams WHERE id=:t"), {"t": team.id}
-            ).one()
+                text("SELECT COUNT(*) FROM teams WHERE id=:t").bindparams(t=team_id)
+            ).scalar()
             assert teams_left == 0, "teams must CASCADE when owner user deleted"
             fk = list(session.exec(text("PRAGMA foreign_key_check")).all())
             assert fk == []
@@ -286,6 +290,8 @@ class TestBdd26Explain:
         engine = init_db(db_path, run_migrations=True)
         from peekview.models import Team, TeamMember
 
+        bob_id: int = 0
+        team_id: int = 0
         with Session(engine) as session:
             alice = User(username="exp-alice", password_hash="x")
             bob = User(username="exp-bob", password_hash="x")
@@ -299,6 +305,8 @@ class TestBdd26Explain:
             session.commit()
             session.refresh(team)
             session.add(TeamMember(team_id=team.id, user_id=bob.id))
+            bob_id = bob.id
+            team_id = team.id
             for i in range(30):
                 session.add(
                     Entry(
@@ -306,7 +314,7 @@ class TestBdd26Explain:
                         summary=f"entry {i}",
                         is_public=False,
                         owner_id=alice.id,
-                        team_id=team.id if i % 2 == 0 else None,
+                        team_id=team_id if i % 2 == 0 else None,
                     )
                 )
             session.commit()
@@ -320,7 +328,7 @@ class TestBdd26Explain:
 
         with engine.connect() as conn:
             plan = list(
-                conn.execute(text(f"EXPLAIN QUERY PLAN {member_list_q}"), {"me": bob.id})
+                conn.execute(text(f"EXPLAIN QUERY PLAN {member_list_q}"), {"me": bob_id})
             )
             plan_txt = "\n".join(str(r[3]) for r in plan)
             assert "SEARCH tm" in plan_txt, (
@@ -329,7 +337,7 @@ class TestBdd26Explain:
             )
 
             plan2 = list(
-                conn.execute(text(f"EXPLAIN QUERY PLAN {team_filter_q}"), {"tid": team.id})
+                conn.execute(text(f"EXPLAIN QUERY PLAN {team_filter_q}"), {"tid": team_id})
             )
             plan2_txt = "\n".join(str(r[3]) for r in plan2)
             assert "idx_entries_team_id" in plan2_txt, (

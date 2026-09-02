@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
+from sqlmodel import Session, select
 
 from peekview.api._shared import (
     _detect_channel,
@@ -19,7 +20,7 @@ from peekview.api._shared import (
 from peekview.auth import get_current_user
 from peekview.exceptions import NotFoundError
 from peekview.language import detect_language
-from peekview.models import EntryRawResponse, File, RawFileItem, User
+from peekview.models import Entry, EntryRawResponse, File, RawFileItem, Team, TeamRef, User
 from peekview.services.html_render_service import (
     SiblingFileData,
     inject_resources,
@@ -168,9 +169,13 @@ def _resolve_entry(request: Request, slug: str, current_user: User | None) -> in
         cookie_name = f"peekview_share_{slug}"
         cookie_value = request.cookies.get(cookie_name)
         if cookie_value:
+            from peekview.api.entries import _share_cookie_allowed_for_user
+
             share_service = request.app.state.share_service
             share = share_service.verify_share_cookie(entry.id, cookie_value)
-            if share:
+            # Anti-enumeration (BDD-2): deny team entries to logged-in
+            # non-privileged users through the cookie channel as well.
+            if share and _share_cookie_allowed_for_user(request, entry, current_user):
                 return entry.id
 
         raise NotFoundError(f"Entry not found: {slug}")
@@ -360,9 +365,6 @@ async def resolve_entry_raw(
 
     entry_owner_id: int | None = None
     if share:
-        from sqlmodel import Session, select
-
-        from peekview.models import Entry
         from peekview.services.share_service import ShareService
 
         share_service: ShareService = request.app.state.share_service
@@ -374,8 +376,29 @@ async def resolve_entry_raw(
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
+            from peekview.services.team_membership import (
+                team_membership_exists,
+                team_owner_exists,
+            )
+
+            is_team_member = (
+                team_membership_exists(session, current_user_id, entry.team_id)
+                if entry.team_id is not None and current_user_id is not None
+                else False
+            )
+            is_team_owner = (
+                team_owner_exists(session, current_user_id, entry.team_id)
+                if entry.team_id is not None and current_user_id is not None
+                else False
+            )
             if entry.is_public or (
-                current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
+                current_user_id is not None
+                and (
+                    is_admin
+                    or entry.owner_id == current_user_id
+                    or is_team_member
+                    or is_team_owner
+                )
             ):
                 entry_resp = service.get_entry(
                     slug,
@@ -386,11 +409,17 @@ async def resolve_entry_raw(
                         and (is_admin or entry.owner_id == current_user_id)
                     ),
                 )
+                entry_team_ref = entry_resp.team
             else:
+                # Anti-enumeration: a logged-in non-member probing a team entry
+                # via a share param must not receive content (BDD-2).
+                if entry.team_id is not None and current_user_id is not None:
+                    raise NotFoundError(f"Entry not found: {slug}")
                 result = service.get_entry_with_share(slug, share, share_service)
                 if result is None:
                     raise NotFoundError(f"Entry not found: {slug}")
                 entry_resp, _entry_share = result
+                entry_team_ref = None
 
         entry_id = entry_resp.id
         entry_slug = entry_resp.slug
@@ -410,6 +439,12 @@ async def resolve_entry_raw(
             entry_tags = entry_record.tags or []
             entry_created_at = entry_record.created_at
             entry_owner_id = entry_record.owner_id
+            entry_team_ref = None
+            if entry_record.team_id is not None:
+                with Session(request.app.state.engine) as session:
+                    team_row = session.get(Team, entry_record.team_id)
+                if team_row is not None:
+                    entry_team_ref = TeamRef(slug=team_row.slug, name=team_row.name)
         else:
             current_user_id = current_user.id if current_user else None
             is_admin = current_user.is_admin if current_user else False
@@ -420,7 +455,7 @@ async def resolve_entry_raw(
             except NotFoundError:
                 from peekview.api.entries import _check_share_cookie
 
-                cookie_result = _check_share_cookie(request, slug, service)
+                cookie_result = _check_share_cookie(request, slug, service, current_user)
                 if cookie_result is None:
                     raise
                 entry_resp = cookie_result
@@ -430,6 +465,8 @@ async def resolve_entry_raw(
             entry_tags = entry_resp.tags
             entry_created_at = entry_resp.created_at
             entry_owner_id = entry_resp.owner_id
+            # Cookie share access has team nulled in _check_share_cookie.
+            entry_team_ref = entry_resp.team
 
     base = str(request.base_url).rstrip("/")
     raw_url = f"{base}/api/v1/entries/{entry_slug}/raw"
@@ -483,6 +520,7 @@ async def resolve_entry_raw(
         created_at=entry_created_at,
         files=raw_files,
         raw_url=raw_url,
+        team=entry_team_ref,
     )
 
     serialized = _json.dumps(

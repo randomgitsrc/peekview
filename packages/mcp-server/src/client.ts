@@ -7,6 +7,7 @@ import type {
   EntryRawResponse,
   EntryResponse,
   ListEntriesResponse,
+  TeamListResponse,
 } from './types.js';
 
 interface ClientConfig {
@@ -183,6 +184,10 @@ export class PeekViewClient {
     await this.request<void>(`/api/v1/entries/${slug}`, {
       method: 'DELETE',
     }, userToken);
+  }
+
+  async listTeams(userToken: string): Promise<TeamListResponse> {
+    return this.request<TeamListResponse>('/api/v1/teams', undefined, userToken);
   }
 
   async ping(): Promise<boolean> {

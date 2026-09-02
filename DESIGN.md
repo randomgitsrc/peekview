@@ -198,7 +198,8 @@ This section defines which components exist, what variants they support, and beh
 - Interactive cards: hover border-color accent, lift, shadow increase, 250ms transition.
 
 ### Tabs
-- Horizontal row on desktop, stacked vertical sections on mobile.
+- Explore filter tabs: flat filter row (All / Mine / Teams / Archived / Starred), horizontally scrollable on narrow viewports (<768px, `overflow-x: auto`, no wrap/stacking), each tab's tap target ≥44px tall. Tab bar carries `role="tablist"` semantics with arrow-key navigation.
+- Other tabbed sections (e.g. Settings) may use stacked vertical sections on mobile as appropriate.
 
 ### Search
 - Search input with left-aligned icon, clear button when value present.
@@ -211,7 +212,7 @@ This section defines which components exist, what variants they support, and beh
 
 ### Navigation & Auth State
 - Anonymous: "Sign in" button. Primary variant on marketing pages, secondary on functional pages (desktop), ghost on functional pages (mobile).
-- Authenticated: avatar + username trigger → user menu (Settings, Logout). Admin badge pill when `is_admin`.
+- Authenticated: avatar + username trigger → user menu (Settings, Teams, Logout). Admin badge pill when `is_admin`.
 - Same menu content across all pages.
 
 ### Drawers (Mobile)

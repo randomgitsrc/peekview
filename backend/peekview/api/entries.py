@@ -34,7 +34,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
 
 
-def _check_share_cookie(request: Request, slug: str, service: EntryService):
+def _share_cookie_allowed_for_user(request: Request, entry: Entry, current_user: User | None) -> bool:
+    """Share-cookie gate: deny team entries to a logged-in non-privileged user.
+
+    A logged-in user who is not the owner, admin, or a team member never gets
+    team-entry content through a share cookie — shares serve anonymous external
+    visitors (same discrimination as the ?share= query branch, BDD-2). Anonymous
+    access and non-team private-entry shares are unaffected.
+    """
+    if current_user is None or entry.team_id is None:
+        return True
+    if entry.owner_id == current_user.id or current_user.is_admin:
+        return True
+    from peekview.services.team_membership import team_membership_exists
+
+    with Session(request.app.state.engine) as session:
+        return team_membership_exists(session, current_user.id, entry.team_id)
+
+
+def _check_share_cookie(
+    request: Request,
+    slug: str,
+    service: EntryService,
+    current_user: User | None = None,
+):
     from peekview.models import File
     from peekview.services.share_service import ShareService
 
@@ -57,9 +80,16 @@ def _check_share_cookie(request: Request, slug: str, service: EntryService):
         if not share:
             return None
 
+        # Anti-enumeration (BDD-2): see _share_cookie_allowed_for_user.
+        if not _share_cookie_allowed_for_user(request, entry, current_user):
+            return None
+
         files = session.exec(select(File).where(File.entry_id == entry.id)).all()
         username = service._resolve_username(session, entry.owner_id)
         response = service._build_response(entry, list(files), username)
+        # Share access never discloses team membership (shared contract).
+        response.team_id = None
+        response.team = None
         response.share_context = EntryShareContext(
             is_share_access=True,
             shared_by=service._resolve_username(session, share.created_by),
@@ -120,6 +150,7 @@ async def create_entry(
         is_public=is_public,
         current_user_id=current_user_id,
         idempotency_key=data.idempotency_key,
+        team_id=data.team_id,
     )
     if is_idempotent:
         return JSONResponse(status_code=200, content=result.model_dump(mode="json"))
@@ -134,6 +165,10 @@ async def list_entries(
     status: str | None = Query(None),
     owner: str | None = Query(None, description="Filter: 'me' for own entries"),
     starred: bool = Query(False, description="List the current user's starred entries"),
+    team: str | None = Query(
+        None,
+        description="Filter: 'me' for my team entries, or a team slug. Unknown/non-member teams return an empty list.",
+    ),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: User | None = Depends(get_current_user),
@@ -160,6 +195,7 @@ async def list_entries(
         is_admin=is_admin,
         owner=owner,
         starred=starred,
+        team=team,
     )
 
     channel = _detect_channel(request)
@@ -199,6 +235,7 @@ async def get_entry(
 
     if share:
         from peekview.services.share_service import ShareService
+        from peekview.services.team_membership import team_membership_exists, team_owner_exists
 
         share_service: ShareService = request.app.state.share_service
 
@@ -207,8 +244,28 @@ async def get_entry(
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
 
+            # Normal access takes priority: public entry, admin, owner, or a
+            # team member / team owner of a team entry (share param on a
+            # readable entry is ignored). The team owner counts as a team-scope
+            # reader even without a membership row (方案 A, mirrors can_read).
+            is_team_member = (
+                team_membership_exists(session, current_user_id, entry.team_id)
+                if entry.team_id is not None
+                else False
+            )
+            is_team_owner = (
+                team_owner_exists(session, current_user_id, entry.team_id)
+                if entry.team_id is not None
+                else False
+            )
             if entry.is_public or (
-                current_user_id is not None and (is_admin or entry.owner_id == current_user_id)
+                current_user_id is not None
+                and (
+                    is_admin
+                    or entry.owner_id == current_user_id
+                    or is_team_member
+                    or is_team_owner
+                )
             ):
                 resp = service.get_entry(
                     slug,
@@ -232,6 +289,12 @@ async def get_entry(
                     )
                 )
                 return resp
+
+            # Anti-enumeration (BDD-2): a logged-in user who is not the owner,
+            # admin, or a team member never gets team-entry content through a
+            # share token/cookie — shares are for anonymous external visitors.
+            if entry.team_id is not None and current_user_id is not None:
+                raise NotFoundError(f"Entry not found: {slug}")
 
         result = service.get_entry_with_share(slug, share, share_service)
         if result is None:
@@ -266,7 +329,7 @@ async def get_entry(
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
-    cookie_result = _check_share_cookie(request, slug, service)
+    cookie_result = _check_share_cookie(request, slug, service, current_user)
     if cookie_result is not None:
         with Session(request.app.state.engine) as session:
             entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
@@ -374,6 +437,9 @@ async def update_entry(
     current_user_id = current_user.id if current_user else None
     is_admin = current_user.is_admin if current_user else False
 
+    team_id = data.team_id
+    team_id_set = "team_id" in (data.model_fields_set or set())
+
     return service.update_entry(
         slug=slug,
         summary=data.summary,
@@ -387,6 +453,8 @@ async def update_entry(
         current_user_id=current_user_id,
         is_api_key_auth=global_key_auth,
         is_admin=is_admin,
+        team_id=team_id,
+        team_id_set=team_id_set,
     )
 
 
@@ -487,18 +555,14 @@ async def download_entry_files(
                 is_admin=is_admin,
             )
         except NotFoundError:
-            cookie_result = _check_share_cookie(request, slug, service)
+            cookie_result = _check_share_cookie(request, slug, service, current_user)
             if cookie_result is None:
                 raise
             entry = cookie_result
 
-    if not entry.files:
-        return JSONResponse(
-            status_code=404,
-            content={"error": {"code": "NO_FILES", "message": "Entry has no files to download"}},
-        )
-
-    # Create zip in memory
+    # Create zip in memory (empty zip when the entry has no files — a download
+    # of an accessible entry is always 200; clients decide how to handle an
+    # empty archive).
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         for file_record in entry.files:

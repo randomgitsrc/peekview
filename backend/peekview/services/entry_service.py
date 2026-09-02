@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import exists, func, text
+from sqlalchemy import exists, func, or_, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
@@ -19,6 +19,7 @@ from peekview.exceptions import (
     ConflictError,
     InvalidSlugError,
     NotFoundError,
+    ParameterValidationError,
     PayloadTooLargeError,
     ValidationError,
 )
@@ -34,6 +35,9 @@ from peekview.models import (
     EntryTombstone,
     File,
     FileResponse,
+    Team,
+    TeamMember,
+    TeamRef,
     User,
 )
 from peekview.services.file_service import (
@@ -43,12 +47,58 @@ from peekview.services.file_service import (
     validate_local_path,
 )
 from peekview.services.star_service import build_countdown, count_live_stars, find_live_star
+from peekview.services.team_membership import team_membership_exists, team_owner_exists
 from peekview.storage import StorageManager
 
 logger = logging.getLogger(__name__)
 
 # Slug format: lowercase alphanumeric, hyphens, underscores
 SLUG_PATTERN = re.compile(r"^[a-z0-9_-]+$")
+
+# Sentinel distinguishing "team_id not provided" from explicit None in update.
+_UNSET = object()
+
+
+def team_visible_expr(user_id: int):
+    """SQLAlchemy condition: entry is in a team the user belongs to or owns.
+
+    The team owner counts as a team-scope reader even when not a member row
+    (方案 A: BDD-1 extends to the member-publishes / owner-reads mirror), so
+    the visible set covers both team_members rows and teams the user owns.
+    """
+    return or_(
+        exists(
+            select(1)
+            .select_from(TeamMember)
+            .where(
+                TeamMember.user_id == user_id,
+                TeamMember.team_id == Entry.team_id,
+            )
+        ),
+        exists(
+            select(1)
+            .select_from(Team)
+            .where(
+                Team.id == Entry.team_id,
+                Team.owner_id == user_id,
+            )
+        ),
+    )
+
+
+def can_read_entry(entry, user_id, is_admin, is_team_member, is_team_owner=False) -> bool:
+    """Read decision for a non-archived entry.
+
+    is_team_member / is_team_owner must be resolved by the caller (only
+    queried when entry.team_id is non-null). Anonymous readers (user_id None)
+    never match owner_id — even when the entry is ownerless — so an ownerless
+    private entry stays 404 for anonymous (N8 anti-enumeration guard).
+    """
+    if entry.is_public or is_admin:
+        return True
+    if user_id is None:
+        return False
+    return entry.owner_id == user_id or is_team_member or is_team_owner
 
 
 class EntryService:
@@ -132,6 +182,7 @@ class EntryService:
         is_public: bool = True,
         current_user_id: int | None = None,
         idempotency_key: str | None = None,
+        team_id: str | None = None,
     ) -> tuple[CreateEntryResponse, bool]:
         """Create a new entry with files.
 
@@ -146,6 +197,7 @@ class EntryService:
             dirs_data: List of dir dicts with key: path.
             expires_in: Duration string like "7d".
             idempotency_key: Optional key for idempotent creation.
+            team_id: Team slug to publish to (team-visible). Forces is_public=false.
 
         Returns:
             Tuple of (CreateEntryResponse, is_idempotent).
@@ -200,6 +252,14 @@ class EntryService:
         if current_user_id is None:
             is_public = True
 
+        # Team visibility contract (D2): non-empty team_id must reference a team
+        # the current user can publish to (owner or member). Anonymous users
+        # never pass this — 422 with a unified message (no existence oracle).
+        entry_team_id: int | None = None
+        if team_id is not None and team_id.strip():
+            entry_team_id = self._resolve_team_for_user(team_id, current_user_id)
+            is_public = False
+
         # Create entry in DB + write files (transaction with rollback)
         entry = Entry(
             slug=slug,
@@ -207,6 +267,7 @@ class EntryService:
             tags=tags or [],
             is_public=is_public,
             owner_id=current_user_id,
+            team_id=entry_team_id,
             expires_at=expires_at,
             idempotency_key=idempotency_key,
         )
@@ -308,6 +369,7 @@ class EntryService:
                 is_public,
                 current_user_id,
                 idempotency_key,
+                team_id,
             )
 
         self._update_fts_content(entry_id)
@@ -354,19 +416,24 @@ class EntryService:
                 ):
                     raise NotFoundError(f"Entry not found: {slug}")
             else:
-                # 非 archived：is_public 可见性模型。N8：收紧 ownerless + 私有 active
-                # + 匿名（None == None 短路）的既有可读漏洞。
-                if (
-                    not entry.is_public
-                    and not is_admin
-                    and (current_user_id is None or entry.owner_id != current_user_id)
-                ):
-                    raise NotFoundError(f"Entry not found: {slug}")
+                # 非 archived：can_read 可见性模型（is_public OR admin OR owner OR
+                # team 成员 OR team owner——owner 视为团队可见范围成员，方案 A）。
+                # N8：收紧 ownerless + 私有 active + 匿名（None == None 短路）的既有可读漏洞。
+                if not is_admin:
+                    is_team_member = team_membership_exists(session, current_user_id, entry.team_id)
+                    is_team_owner = team_owner_exists(
+                        session, current_user_id, entry.team_id
+                    )
+                    if not can_read_entry(
+                        entry, current_user_id, False, is_team_member, is_team_owner
+                    ):
+                        raise NotFoundError(f"Entry not found: {slug}")
 
             files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
             # Resolve username for owner
             username = self._resolve_username(session, entry.owner_id)
+            team = self._resolve_team_ref(session, entry.team_id)
 
             is_starred = (
                 find_live_star(session, entry.id, current_user_id) is not None
@@ -380,6 +447,7 @@ class EntryService:
                 include_read_stats=include_read_stats,
                 star_count=count_live_stars(session, entry.id),
                 is_starred=is_starred,
+                team=team,
             )
 
     def list_entries(
@@ -393,16 +461,21 @@ class EntryService:
         is_admin: bool = False,
         owner: str | None = None,
         starred: bool = False,
+        team: str | None = None,
     ) -> EntryListResponse:
         """List entries with search, filter, pagination, and visibility.
 
         Anonymous users see only public entries.
-        Logged-in users see public entries + their own private entries.
+        Logged-in users see public entries + their own private entries + team
+        entries of teams they belong to.
         Admin users see all entries.
         owner="me" filters to only entries owned by current_user_id.
         owner=<username> filters to entries owned by that user (case-insensitive).
+        team="me" aggregates the current user's team-visible entries only.
+        team=<slug> filters to that team (zero-signal for unknown/non-member).
         starred=True lists the current user's starred entries (active + archived,
-        visibility is_public OR own OR archived — consistent with the read path).
+        visibility is_public OR own OR archived OR team member — consistent with
+        the read path).
         """
         per_page = min(per_page, self.config.limits.max_per_page)
         page = max(page, 1)
@@ -476,10 +549,48 @@ class EntryService:
                 query = query.where(Entry.owner_id == owner_user_id)
                 count_query = count_query.where(Entry.owner_id == owner_user_id)
 
-            # === Phase 3: Apply visibility filter (existing logic, unchanged) ===
+            # === Phase 2.5: Team filter ===
+            # team="me" = entries of teams the current user belongs to (aggregate,
+            # no is_public/own terms — strictly team scope). team={slug} = explicit
+            # filter; unknown/non-member/anon → 200 + empty items (zero signal).
+            team_user_id = current_user_id
+            if team is not None:
+                if current_user_id is None:
+                    return EntryListResponse(
+                        items=[],
+                        total=0,
+                        page=page,
+                        per_page=per_page,
+                        owner_found=owner_found,
+                    )
+                if team == "me":
+                    team_cond = team_visible_expr(current_user_id)
+                    query = query.where(team_cond)
+                    count_query = count_query.where(team_cond)
+                else:
+                    team_row = session.exec(
+                        select(Team).where(Team.slug == team)
+                    ).first()
+                    if team_row is None or not (
+                        is_admin
+                        or team_row.owner_id == current_user_id
+                        or team_membership_exists(session, current_user_id, team_row.id)
+                    ):
+                        return EntryListResponse(
+                            items=[],
+                            total=0,
+                            page=page,
+                            per_page=per_page,
+                            owner_found=owner_found,
+                        )
+                    query = query.where(Entry.team_id == team_row.id)
+                    count_query = count_query.where(Entry.team_id == team_row.id)
+
+            # === Phase 3: Apply visibility filter ===
             if starred:
-                # Starred list requires login; visibility = public OR own OR archived
-                # (decision A read criterion), scoped to the user's live stars.
+                # Starred list requires login; visibility = public OR own OR
+                # archived OR team-member (decision A read criterion extended by
+                # team visibility, BDD-14), scoped to the user's live stars.
                 if current_user_id is None:
                     return EntryListResponse(
                         items=[],
@@ -492,6 +603,7 @@ class EntryService:
                     Entry.is_public.is_(True)
                     | (Entry.owner_id == current_user_id)
                     | (Entry.status == EntryStatus.ARCHIVED)
+                    | team_visible_expr(current_user_id)
                 )
                 query = query.where(starred_cond)
                 count_query = count_query.where(starred_cond)
@@ -508,14 +620,20 @@ class EntryService:
                 count_query = count_query.where(live_star)
             elif is_admin:
                 pass
+            elif team_user_id is not None and team is not None:
+                # team filter already applied above; visibility in team scope
+                # is inherently restricted to member-visible entries (the filter
+                # itself enforces it) — no extra is_public term needed.
+                pass
             elif current_user_id is None:
                 query = query.where(Entry.is_public.is_(True))
                 count_query = count_query.where(Entry.is_public.is_(True))
             else:
-                query = query.where(Entry.is_public.is_(True) | (Entry.owner_id == current_user_id))
-                count_query = count_query.where(
-                    Entry.is_public.is_(True) | (Entry.owner_id == current_user_id)
-                )
+                team_or_own = Entry.is_public.is_(True) | (
+                    Entry.owner_id == current_user_id
+                ) | team_visible_expr(current_user_id)
+                query = query.where(team_or_own)
+                count_query = count_query.where(team_or_own)
 
             # Tags filter — use json_each for exact match (fixes non-ASCII tag filtering)
             if tags:
@@ -591,6 +709,13 @@ class EntryService:
                     ).all()
                     starred_ids = set(starred_rows)
 
+            # Batch resolve team refs for the current page
+            page_team_ids = {e.team_id for e in entries if e.team_id is not None}
+            team_map: dict[int, TeamRef] = {}
+            if page_team_ids:
+                team_rows = session.exec(select(Team).where(Team.id.in_(page_team_ids))).all()
+                team_map = {t.id: TeamRef(slug=t.slug, name=t.name) for t in team_rows}
+
             items = []
             for e in entries:
                 # Get file count
@@ -610,6 +735,8 @@ class EntryService:
                         is_public=e.is_public,
                         owner_id=e.owner_id,
                         username=username,
+                        team_id=e.team_id,
+                        team=team_map.get(e.team_id),
                         expires_at=e.expires_at,
                         archived_at=e.archived_at,
                         created_at=e.created_at,
@@ -642,12 +769,17 @@ class EntryService:
         current_user_id: int | None = None,
         is_admin: bool = False,
         is_api_key_auth: bool = False,
+        team_id: str | None = None,
+        team_id_set: bool = False,
     ) -> EntryResponse:
         """Update an entry.
 
         Only the owner or admin can update an entry. Non-owners get 404 (not 403).
         When files are removed via remove_file_ids, their disk files are also deleted.
         Global API key auth bypasses ownership checks.
+
+        team_id: target team slug when provided (validated: user must be owner or
+        member). team_id_set=True with team_id=None clears team ownership.
         """
         with Session(self.engine) as session:
             entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
@@ -670,6 +802,20 @@ class EntryService:
             entry_id = entry.id
 
             was_private = not entry.is_public
+            was_team = entry.team_id is not None
+
+            # Team visibility semantics (D2/D3/D4)
+            # team_id_set distinguishes "no team field" from "clear team".
+            if team_id_set:
+                if team_id is not None and team_id.strip():
+                    resolved_team_id = self._resolve_team_for_user(team_id, current_user_id)
+                    entry.team_id = resolved_team_id
+                    # D1/D3: non-null team forces is_public=false on write
+                    entry.is_public = False
+                else:
+                    entry.team_id = None
+                entry.updated_at = datetime.now(timezone.utc)
+                session.add(entry)
 
             # Handle expires_in (reactivate archived or update active expiry)
             if expires_in is not None:
@@ -698,13 +844,23 @@ class EntryService:
             if tags is not None:
                 entry.tags = tags
             if is_public is not None:
-                entry.is_public = is_public
+                if is_public:
+                    # D3 invariant: a team entry cannot become public while the
+                    # team is still attached. Only an explicit team clear
+                    # (team_id=None, handled above) permits public conversion.
+                    if entry.team_id is None:
+                        entry.is_public = True
+                    else:
+                        entry.is_public = False
+                else:
+                    entry.is_public = False
             entry.updated_at = datetime.now(timezone.utc)
             session.add(entry)
 
-            # Private→public: auto-revoke all active shares
+            # Team→public or private→public: auto-revoke all active shares (D4).
+            # was_team/was_private captured before any mutation above.
             revoked_shares = None
-            if is_public is True and was_private:
+            if entry.is_public and (was_private or was_team):
                 share_service = self._get_share_service()
                 revoked_shares = share_service.revoke_all_for_entry(entry_id, session=session)
 
@@ -793,7 +949,8 @@ class EntryService:
             # Get all remaining files
             files = session.exec(select(File).where(File.entry_id == entry.id)).all()
 
-            response = self._build_response(entry, list(files))
+            team = self._resolve_team_ref(session, entry.team_id)
+            response = self._build_response(entry, list(files), team=team)
             if revoked_shares is not None:
                 response.revoked_shares = revoked_shares
             return response
@@ -958,6 +1115,7 @@ class EntryService:
         is_public: bool = True,
         current_user_id: int | None = None,
         idempotency_key: str | None = None,
+        team_id: str | None = None,
     ) -> tuple[CreateEntryResponse, bool]:
         """Retry entry creation with slug-N suffix on IntegrityError (TOCTOU protection)."""
         for n in range(2, 100):
@@ -973,6 +1131,7 @@ class EntryService:
                     is_public=is_public,
                     current_user_id=current_user_id,
                     idempotency_key=idempotency_key,
+                    team_id=team_id,
                 )
             except IntegrityError:
                 continue
@@ -1092,6 +1251,33 @@ class EntryService:
         user = session.exec(select(User).where(User.id == owner_id)).first()
         return user.username if user else None
 
+    def _resolve_team_ref(self, session: Session, team_id: int | None) -> TeamRef | None:
+        """Resolve a team id to its {slug, name} ref (None for no team)."""
+        if team_id is None:
+            return None
+        team = session.get(Team, team_id)
+        if team is None:
+            return None
+        return TeamRef(slug=team.slug, name=team.name)
+
+    def _resolve_team_for_user(self, team_slug: str, current_user_id: int | None) -> int:
+        """Resolve a team slug to its row id for a create/update request.
+
+        The user must be the team owner or a member; otherwise (or when the
+        team does not exist, or the caller is anonymous) a unified 422
+        ParameterValidationError is raised — no existence/membership oracle.
+        """
+        if current_user_id is None:
+            raise ParameterValidationError("Team not found or not accessible")
+        with Session(self.engine) as session:
+            team = session.exec(select(Team).where(Team.slug == team_slug)).first()
+            if team is None or not (
+                team.owner_id == current_user_id
+                or team_membership_exists(session, current_user_id, team.id)
+            ):
+                raise ParameterValidationError("Team not found or not accessible")
+            return team.id
+
     def _build_response(
         self,
         entry: Entry,
@@ -1100,6 +1286,7 @@ class EntryService:
         include_read_stats: bool = False,
         star_count: int = 0,
         is_starred: bool = False,
+        team: TeamRef | None = None,
     ) -> EntryResponse:
         """Build EntryResponse from Entry + File records."""
         file_responses = []
@@ -1135,6 +1322,8 @@ class EntryService:
             is_public=entry.is_public,
             owner_id=entry.owner_id,
             username=username,
+            team_id=entry.team_id,
+            team=team,
             expires_at=entry.expires_at,
             archived_at=entry.archived_at,
             created_at=entry.created_at,
@@ -1190,6 +1379,9 @@ class EntryService:
             response = self._build_response(entry, list(files), username)
             from peekview.models import EntryShareContext
 
+            # Share access never discloses team membership (shared contract).
+            response.team_id = None
+            response.team = None
             response.share_context = EntryShareContext(
                 is_share_access=True,
                 shared_by=shared_by,
@@ -1216,6 +1408,20 @@ class EntryService:
         """Query an entry record by slug."""
         with Session(self.engine) as session:
             return session.exec(select(Entry).where(Entry.slug == slug)).first()
+
+    def get_entry_by_api_key(self, slug: str) -> Entry:
+        """Fetch an entry row for the global master key (reads everything).
+
+        The global key bypasses visibility checks (same semantics as raw/file
+        global-key branches). Raises NotFoundError when the slug is unknown.
+        """
+        with Session(self.engine) as session:
+            entry = session.exec(select(Entry).where(Entry.slug == slug)).first()
+            if not entry:
+                raise NotFoundError(f"Entry not found: {slug}")
+            # Refresh file relationship for the caller (download iterates files).
+            entry.files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            return entry
 
     def get_entry_files(self, entry_id: int) -> list[File]:
         """Query all files for an entry."""

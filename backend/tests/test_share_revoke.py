@@ -104,7 +104,7 @@ class TestRevokeShares:
             assert share_3.revoked_at is not None, "Share 3 must be revoked"
 
     async def test_b24_non_owner_cannot_revoke(self, client_and_app):
-        """B24: Non-owner gets 403."""
+        """B24: Non-owner gets 404 (anti-enumeration, TPV0095)."""
         client, _ = client_and_app
         alice = await _register(client, "alice")
         bob = await _register(client, "bob")
@@ -116,7 +116,7 @@ class TestRevokeShares:
             json={"share_ids": [share["id"]]},
             headers=_auth(bob["access_token"]),
         )
-        assert resp.status_code == 403
+        assert resp.status_code == 404
 
     async def test_b25_nonexistent_share_id_ignored(self, client_and_app):
         """B25: Revoking non-existent share ids is ignored."""

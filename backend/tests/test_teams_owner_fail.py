@@ -146,7 +146,7 @@ class TestBdd20:
             assert rows == [], "entries must cascade-delete with owner"
             teams_left = session.exec(
                 text("SELECT COUNT(*) FROM teams WHERE slug='proj-20'")
-            ).one()
+            ).scalar()
             assert teams_left == 0, "teams must cascade-delete with owner user"
             fk = list(session.exec(text("PRAGMA foreign_key_check")).all())
             assert fk == [], f"foreign_key_check must pass, got {fk}"

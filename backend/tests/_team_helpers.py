@@ -55,6 +55,7 @@ def make_team(app, session, slug, name, owner_id, member_ids=()):
         session.add(TeamMember(team_id=team.id, user_id=uid, joined_at=now_utc()))
     session.commit()
     session.refresh(team)
+    session.expunge(team)
     return team
 
 
@@ -93,6 +94,7 @@ def make_entry_direct(
     session.add(entry)
     session.commit()
     session.refresh(entry)
+    session.expunge(entry)
     return entry
 
 

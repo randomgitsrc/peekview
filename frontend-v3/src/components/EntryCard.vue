@@ -2,16 +2,26 @@
   <div class="entry-card" :class="{ 'entry-card--own': isOwner, 'entry-card--archived': entry.status === 'archived' }">
     <div v-if="isOwner" class="card-actions" @click.stop.prevent>
       <button
+        v-if="!entry.teamId"
         type="button"
         class="card-action-btn"
+        data-testid="visibility-toggle"
         :title="entry.isPublic ? 'Make private' : 'Make public'"
         @click="$emit('toggleVisibility', entry)"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path v-if="entry.isPublic" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle v-if="entry.isPublic" cx="12" cy="12" r="3"/><path v-if="!entry.isPublic" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line v-if="!entry.isPublic" x1="1" y1="1" x2="23" y2="23"/></svg>
       </button>
+      <span
+        v-else
+        class="card-action-btn card-action-btn--team-hint"
+        :title="'此内容为团队可见，请在编辑中调整'"
+        data-testid="team-visibility-hint"
+        aria-hidden="true"
+      ></span>
       <button
         type="button"
         class="card-action-btn card-action-btn--danger"
+        data-action="delete"
         title="Delete"
         @click="$emit('delete', entry)"
       >
@@ -95,6 +105,12 @@
         <template v-else>
           <BaseBadge v-if="isExpiredButActive" status="expired" />
           <BaseBadge v-else-if="entry.status === 'archived'" status="archived" />
+          <BaseBadge
+            v-else-if="entry.teamId"
+            status="team"
+            :label="`仅团队可见 · ${entry.team?.name ?? entry.team?.slug ?? ''}`"
+            data-testid="badge-team"
+          />
           <BaseBadge v-else :status="entry.isPublic ? 'public' : 'private'" />
         </template>
       </div>
@@ -231,6 +247,14 @@ function confirmForceDelete(): void {
   background: var(--c-error-surface);
   border-color: var(--c-error);
   color: var(--c-error);
+}
+
+.card-action-btn--team-hint {
+  border: none;
+  background: none;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
 }
 
 .card-body {

@@ -9,13 +9,11 @@ import BaseBadge from '@/components/BaseBadge.vue'
 
 describe('TPV0095 BaseBadge — team 变体', () => {
   it('bdd39_renders_team_status_badge', () => {
-    // @ts-expect-error — P4 将 'team' 并入 status union；P3 期该值尚非法（红灯信号）
     const wrapper = mount(BaseBadge, { props: { status: 'team' } })
     expect(wrapper.find('.base-badge').classes()).toContain('badge-team')
   })
 
   it('bdd39_label_can_be_parameterized_with_team_copy', () => {
-    // @ts-expect-error — P4 将加 label?: string prop
     const wrapper = mount(BaseBadge, {
       props: { status: 'team', label: '仅团队可见 · Proj A' },
     })
@@ -23,7 +21,6 @@ describe('TPV0095 BaseBadge — team 变体', () => {
   })
 
   it('bdd39_team_badge_not_rendered_with_public_class', () => {
-    // @ts-expect-error — P4 将 'team' 并入 status union
     const wrapper = mount(BaseBadge, { props: { status: 'team' } })
     const el = wrapper.find('.base-badge')
     expect(el.classes()).not.toContain('badge-public')
@@ -37,7 +34,6 @@ describe('TPV0095 BaseBadge — team 变体', () => {
 
   it('bdd44_detail_badge_slot_contains_team_word_and_name', () => {
     // 详情三态标签按 P2 §5.8 复用 BaseBadge team 变体——载体渲染文案须含团队语义
-    // @ts-expect-error — P4 将 'team' 并入 status union
     const wrapper = mount(BaseBadge, {
       props: { status: 'team', label: '仅团队可见 · 团队A' },
     })
