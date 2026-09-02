@@ -18,3 +18,7 @@
 - NEXT: architect rev1 已落实全部 R/N 修订 → P2 复审并行已派发（eng=8e3917f4 / design=e28bd803）→ 等复审 approved → 组长汇总 P2-review.md → gate P2 → commit P2
 
 - NEXT: P2 gate exit 2 通过（双评审 approved + 组长 approved）→ commit P2 → 进入 P3（capture-env-baseline → 派 test-designer → check-tdd-red 红灯 → commit）
+
+- NEXT: P3 三批 test-designer 已派发（backend=待派/frontend/mcp）→ 等三批红灯测试产出 → 主 Agent 合并 P3-test-cases.md → check-tdd-red.py 验红灯 → commit P3
+
+- NEXT: P3 三批红灯测试齐（backend 37红/mcp 10红/frontend 24fail B 类）+ check-tdd-red exit 0 → commit P3 → 进入 P4（3 批 implementer 并行 + C8 评审 review/design-review/cso）
