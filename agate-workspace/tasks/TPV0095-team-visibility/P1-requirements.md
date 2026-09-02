@@ -352,6 +352,12 @@ design-note v4 已经过双独立评审、9 个决策点（A-I / A1-A14）全部
 - When 渲染 5 个过滤 tab
 - Then tab 栏可横向滚动（overflow-x，无换行堆叠），每个 tab 触达高度 ≥44px，末尾无内容截断异常；键盘可用（tablist 语义或 aria-pressed + 焦点可达）
 
+#### BDD-44: 布局结构：detail 页状态标签对 team entry 显示 team 语义而非 Private
+- Given 成员（或 owner）打开自己 team entry 的详情页（EntryDetailHeader / EntryMetaTagsBar）
+- When 检查详情头部的可见性状态标签渲染
+- Then 该标签显示 team 语义文案（含"团队"/team 名称，不显示误导性的 "Private"）；private entry 仍显示 "Private"，public entry 仍显示 "Public"（三态可区分）
+- [SCOPE+ from P2] P2 architect 发现：detail 头按 is_public 渲染 Public/Private 文案，team entry（is_public=false）会误显 "Private"。主 Agent 采纳增补（可见性档位新增后展示层语义必须三态正确），改动点 = EntryDetailHeader.vue + EntryMetaTagsBar.vue + BaseBadge 复用（[BASELINE_CHANGE: SCOPE+ 主 Agent 批准 2026-09-02]）
+
 ## 4. 裁剪说明
 
 - `phases: [P1, P2, P3, P4, P5, P6, P7, P8]` — **全走无裁剪**。理由（P0-brief 裁剪倾向 + 风险判定）：
@@ -469,3 +475,6 @@ capability_requirements:
 - P6 验收：BDD 逐条实跑 + 权限矩阵表（actor × 7 路径）逐格记录；UI 用 Playwright 截图 + vision-engine 分析（证据链含截图文件）。BDD-19/20（owner 失效）与 BDD-26（EXPLAIN）为 P3 §13#5/#10 的直接验收锚，P6 依锚实跑。
 - P7 一致性检查：packages 覆盖 backend/peekview + frontend-v3 + packages/mcp-server + cli.py 所在包 + Makefile/VERSIONS.json（bump 双路径），跨文件交叉核对 team_id 字段贯通（models ↔ service ↔ api ↔ client.ts ↔ types ↔ MCP schema ↔ PeekClient）。
 - P1 基线保护：本文件为需求基线，后续阶段修改须经主 Agent 批准并标注 `[BASELINE_CHANGE]`。
+- [SCOPE_RESOLVED: MCP get_entry 的 team 字段需后端 /raw 响应补 team（P2 SCOPE+2，已采纳为 P2 实现约束：files.py resolve_entry_raw + models.EntryRawResponse 加可选 team 字段，仅 owner/成员/全局 key 附 team，share 访问者不附）]
+- [SCOPE_RESOLVED: CLI 本地 create/list owner 语义（P2 SCOPE+4）——--user 仅本任务 team 场景启用，非 team 本地 create 行为保持现状（owner_id=NULL），记录不扩]
+- [SCOPE_RESOLVED: restore merge 不拷 teams（P2 SCOPE+3）——超出验收路径不采纳；记入 backlog 后续任务处理]
