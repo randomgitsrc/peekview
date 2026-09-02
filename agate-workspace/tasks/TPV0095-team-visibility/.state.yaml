@@ -1,9 +1,9 @@
-phase: P8
+phase: READY
 task_id: TPV0095
 task_name: team-visibility
-status: in_progress
+status: completed
 created: 2026-09-02 00:00:00+00:00
-updated: '2026-09-03T05:40:00Z'
+updated: '2026-09-03T06:00:00Z'
 judge:
   enabled: true
 history:
@@ -97,4 +97,11 @@ history:
     reviewed；临时资源清单；Lessons Learned 3 条）。主 Agent 执行：make bump-version 0.22.0（commit
     e5853138 + tag v0.22.0，amend CHANGELOG TPV0095 条目）+ make bump-mcp-version 0.12.0（commit
     d3b26911 + tag mcp-v0.12.0，amend MCP CHANGELOG）
+- phase: READY
+  action: completed
+  ts: '2026-09-03T06:00:00Z'
+  note: 'bump 完成：peekview v0.22.0（e5853138 + tag v0.22.0）+ mcp v0.12.0（d3b26911 +
+    tag mcp-v0.12.0）；CHANGELOG 双节填 TPV0095 条目；版本同步全绿；P5 gate 重跑（audit7 reuse_blocked→backend
+    1163+1预存+1登记flaky / frontend 1338 / mcp 277+1预存）；backlog #48 done；READY 收尾：debug
+    server 停止 + /tmp/peekview-debug 清理 + 端口释放 + 工作区干净。PROD_NOT_TOUCHED'
 p5_pass_commit: 74578a71c012f66293d9bd43d035066587637c52

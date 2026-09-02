@@ -17,7 +17,6 @@
 | TPV0092 | mcp-get-entry-fetch | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
 | TPV0093 | star-lifecycle | ✅已完成 | DONE | 🟢 | 无 | 2026-08-12 | 2026-08-16 |
 | TPV0094 | treeview-default-expand | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-15 |
-| TPV0095 | team-visibility | 🔄 进行中 | P7 | 🟠 | 无 | 2026-09-02 | 2026-09-03 |
 | T075 | structured-data-viewer | ✅已完成 | DONE | 🟠 | 无 | 2026-07-28 | 2026-08-01 |
 | T085 | render-regression-fix | ✅已完成 | DONE | 🟠 | T075✅ | 2026-08-01 | 2026-08-02 |
 | TPV0077 | timeline-mvp | ⬜ 待开始 | P0 | 🟡 | 无 | 2026-07-28 | 2026-07-28 |
@@ -99,6 +98,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| TPV0095 | team-visibility | v0.22.0 + mcp-v0.12.0 | 🟠 | 2026-09-03 |
 | TPV0090 | cli-remote-xdist-fix | v0.18.6 | 🟡 | 2026-08-13 |
 | TPV0094 | treeview-default-expand | v0.19.0 | 🟡 | 2026-08-15 |
 | TPV0092 | mcp-get-entry-fetch | v0.20.0 + mcp-v0.11.0 | 🟡 | 2026-08-15 |
