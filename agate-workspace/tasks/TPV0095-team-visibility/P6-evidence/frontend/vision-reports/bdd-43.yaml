@@ -1,0 +1,27 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd43-mobile-tablist.png", "screenshots/tpv0095-bdd43-mobile-tabs.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "mobile-390"
+      file: "screenshots/bdd43-mobile-tablist.png"
+      size: "390x844"
+      page:
+        title: "PeekView explore mobile"
+        loading_state: "loaded"
+      components:
+        - type: "tablist"
+          label: "5 tab（All/Mine/Teams/Archived/Starred）单行不换行堆叠，可横向滚动"
+          state: "scrollable"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-43: 移动端 5-tab 单行可横向滚动（overflow-x），tab 触达高 ≥44px，aria-selected 存在"
+      result: "pass"
+      evidence: "截图 5 tab 单行排列无换行堆叠；CDP 断言 overflow-x=auto、heights [44,44,44,44,44]、aria-selected 全存在"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

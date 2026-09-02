@@ -43,3 +43,5 @@
 - NEXT: F1/F2 修复完成（15b99cbc：teams-chip testid 独立 + auth logout 内建 teamStore.reset，110 files 1338 passed）→ design-review 复审已请求（e0e323b6）→ 等 approved → 派 cso → 组长汇总 → gate P4 → commit
 
 - NEXT: review-eng approved + design-review approved（F1/F2/F3 三轮闭环）→ cso 已重派（28a09026，复用其上次 progress）→ 等 cso approved → 组长汇总 P4-review.md → gate P4 → commit P4
+
+- NEXT: P6 验收 44/44 PASS（gate 三件套：check-gate exit 0 + evidence exit 0 + provenance exit 2 仅 WARNING）→ commit P6 → P6.5 judge 复核（judge.enabled=true）→ P7

@@ -1,0 +1,49 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd44-team-desktop.png", "screenshots/bdd44-private-desktop.png", "screenshots/bdd44-public-desktop.png", "screenshots/bdd44-team-mobile.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "team-desktop"
+      file: "screenshots/bdd44-team-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView entry detail (team)"
+        loading_state: "loaded"
+      components:
+        - type: "status-tag"
+          label: "仅团队可见 · Proj A（橙黄底标签，非 Private）"
+          state: "normal"
+      anomalies: []
+    - id: "private-desktop"
+      file: "screenshots/bdd44-private-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView entry detail (private)"
+        loading_state: "loaded"
+      components:
+        - type: "status-tag"
+          label: "Private"
+          state: "normal"
+      anomalies: []
+    - id: "public-desktop"
+      file: "screenshots/bdd44-public-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView entry detail (public)"
+        loading_state: "loaded"
+      components:
+        - type: "status-tag"
+          label: "Public"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-44: detail 状态标签三态可区分——team entry 显团队语义文案（含团队名，不显示 Private）；private 仍 Private；public 仍 Public"
+      result: "pass"
+      evidence: "三张截图分别显示 仅团队可见 · Proj A / Private / Public，三态文案互异、team 态不含误导性 Private"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

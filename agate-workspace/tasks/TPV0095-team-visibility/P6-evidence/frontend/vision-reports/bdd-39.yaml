@@ -1,0 +1,41 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd39-team-badge-grid-desktop.png", "screenshots/bdd39-team-badge-list-desktop.png", "screenshots/tpv0095-bdd39-team-badge.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "desktop-grid"
+      file: "screenshots/bdd39-team-badge-grid-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore team filter"
+        loading_state: "loaded"
+      components:
+        - type: "badge"
+          label: "「仅团队可见 · {teamName}」可见性标签（含团队语义）"
+          state: "normal"
+        - type: "card"
+          label: "无 Private/private 字样叠加"
+          state: "normal"
+      anomalies: []
+    - id: "desktop-list"
+      file: "screenshots/bdd39-team-badge-list-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore team filter (list)"
+        loading_state: "loaded"
+      components:
+        - type: "badge"
+          label: "行视图右侧「仅团队可见 · {teamName}」标签"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-39: team entry 卡片/行显示团队语义 badge「仅团队可见 · {teamName}」，不叠加 private badge"
+      result: "pass"
+      evidence: "grid 与 list 两视图截图均见「仅团队可见 · …」标签；无 Private/private 字样叠加"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

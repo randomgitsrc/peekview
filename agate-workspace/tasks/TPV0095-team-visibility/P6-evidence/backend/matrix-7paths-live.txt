@@ -1,0 +1,28 @@
+# BDD-2/5 live 7-path matrix probe — debug :8888 (entry my4foi, team proj-a, file 55)
+# actor: alice=owner, bob=member(proj-a), carol=non-member
+
+alice | (get) | 200
+alice | /raw | 200
+alice | /download | 200
+alice | /files/{id}/content | 200
+alice | /files/{id}/render | 200
+bob | (get) | 200
+bob | /raw | 200
+bob | /download | 200
+bob | /files/{id}/content | 200
+bob | /files/{id}/render | 200
+carol | (get) | 404
+carol | /raw | 404
+carol | /download | 404
+carol | /files/{id}/content | 404
+carol | /files/{id}/render | 404
+
+# list All view contains team entry?
+alice | All-view contains(my4foi,y5yyna) | True True
+bob | All-view contains(my4foi,y5yyna) | True True
+carol | All-view contains(my4foi,y5yyna) | False False
+
+# share-read path (owner-made valid share token on my4foi, token=7xKhVk27dZd_kNzG)
+anon   | share-read (?share=) | 200
+bob    | share-read (?share=) | 200
+carol  | share-read (?share=) | 404   (logged nonmember: no bypass, zero signal)

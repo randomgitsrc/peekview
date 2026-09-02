@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "model_used": "alibailian/qwen3.8-max",
+  "provider": "alibailian",
+  "result": "## 整体\n\n这是一张 Web 应用界面截图，应用名为 **PeekView**，浅色（灰白）主题，内容是一个 explore/列表页：顶部导航栏 → 标签页 + 筛选区 → 右侧搜索/视图切换 → 下方卡片网格。右侧边缘可见一条细滚动条，底部一行卡片被视口截断。\n\n## 分部分描述\n\n**顶栏（白色横条）**\n- 左侧：蓝色圆角方形 logo 内白色 \"P\"，旁边粗体黑字 \"PeekView\"。\n- 右侧：一个白色圆角容器内含蓝色圆形头像 \"A\"、文字 \"alice\"、蓝底白字小徽章 \"ADMIN\"；其右边是一个独立的圆形按钮，内为月亮图标（主题切换）。\n\n**标签行与已选筛选**\n- 标签：\"All\"、\"Mine\"、\"Teams\"、\"Archived\"、\"Starred\"。其中 \"Teams\" 为蓝色文字且下方有蓝色下划线 → 当前激活标签。\n- 标签右侧有一个浅蓝色筛选 chip：\"PV6-1788381228019 ×\"（带关闭 ×），表示已应用的筛选。\n\n**筛选 chip 云（多行圆角小片）**\n- 依次为：Proj A、Alpha-1788378927974、Alpha-1788378928171、Del-1788378932975、Del-1788378934307、Alpha-1788378957464、Alpha-1788378958725、Del-1788378963150、Del-1788378965161、Alpha-1788378988895、Del-1788378992363、Alpha-1788379428786、Alpha-1788379429414、Del-1788379434493、Del-1788379435124、Alpha-1788380511357、Alpha-1788380511554、Del-1788380517277、Del-1788380517478、Alpha-1788381037704、Alpha-1788381038329、Del-1788381043257、Del-1788381043882、PV6-1788381122828、PV6-1788381152249、**PV6-1788381228019**（蓝边蓝字，选中态）、T-1788378930956、T-1788378932521、T-1788378960740、T-1788378962375、T-1788378991234、T-1788379431961、T-1788379433510、T-1788380514491、T-1788380516222、T-1788381040785、T-1788381042337。\n- 云末尾是蓝色链接文字 \"管理团队\"。\n\n**搜索与视图切换（chip 云右侧）**\n- 搜索框：放大镜图标 + 占位文字 \"Search titles, tags & conte\"（显示被截断）。\n- 两个视图按钮：网格图标（蓝色，激活）与列表图标（灰色）。\n\n**卡片网格（4 列，3 行可见，第 3 行底部被截断）**\n每张卡片结构相同：标题（黑粗体）→ 元信息行（蓝色 @用户名 • 灰色 \"8h ago • 1 file\"）→ 一枚米色/浅棕底、棕色字的 badge，格式均为 \"仅团队可见 · …\"。逐卡内容：\n\n1. \"x\"｜@bob • 8h ago • 1 file｜仅团队可见 · BobT-1788381228819\n2. \"pv6 visual 1788381228019\"｜@alice • 8h ago • 1 file｜仅团队可见 · PV6-1788381228019\n3. \"pv6 visual 1788381152249\"｜@alice • 8h ago • 1 file｜仅团队可见 · PV6-1788381152249\n4. \"x\"｜@bob • 8h ago • 1 file｜仅团队可见 · BobT-1788381122828\n5. \"pv6 visual 1788381122828\"｜@alice • 8h ago • 1 file｜仅团队可见 · PV6-1788381122828\n6. \"team toggle 1788380668365\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n7. \"team toggle 1788380668162\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n8. \"team badge 1788380666979\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n9. \"team badge 1788380666462\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n10. \"team chip 1788380665195\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n11. \"team chip 1788380664993\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n12. \"team bdd38 1788380662755\"｜@alice • 8h ago • 1 file｜仅团队可见 · Proj A\n\n## 验证结论（用户补充要求）\n\n**1) badge 文字为「仅团队可见 · …」且无 private/Private badge —— found**\n依据：全部 12 张可见卡片底部都恰好一枚米色 badge，文字均以「仅团队可见」开头、后接 \"·\" 与团队/项目标识（如 Proj A、PV6-…、BobT-…）。整页任何卡片上均未见 \"private\" / \"Private\" 字样或相应徽章。\n\n**2) 卡片操作按钮区存在可见性切换按钮 —— not-found**\n依据：每张卡片内部仅包含标题、元信息行、badge 三部分，没有任何操作按钮区——没有眼睛图标、开关、或「公开/私有」类文字按钮；卡片上不存在可见性切换控件。页面中唯一的切换类控件是搜索框右侧的网格/列表视图切换按钮，位于页面工具区而非卡片内，与可见性无关。",
+  "attempts": [
+    {
+      "model": "google/gemini-flash-latest",
+      "status": "quota_exceeded:requests:86400s"
+    },
+    {
+      "model": "alibailian/qwen3.8-max",
+      "status": "success",
+      "latency_ms": 109643,
+      "tokens_in": 1737,
+      "tokens_out": 6008
+    }
+  ],
+  "usage": {
+    "input_tokens": 1737,
+    "output_tokens": 6008,
+    "total_tokens": 7745
+  },
+  "role": "comprehensive",
+  "output_schema": "text",
+  "image": "/home/kity/oclab/peekview/agate-workspace/tasks/TPV0095-team-visibility/P6-evidence/frontend/screenshots/bdd39-team-badge-grid-desktop.png"
+}

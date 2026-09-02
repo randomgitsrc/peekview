@@ -1,0 +1,30 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd38-teams-tab-desktop.png", "screenshots/bdd38-teams-view-url-desktop.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "desktop-teams-active"
+      file: "screenshots/bdd38-teams-tab-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore"
+        loading_state: "loaded"
+      components:
+        - type: "tablist"
+          label: "All / Mine / Teams / Archived / Starred 5 个 tab"
+          state: "teams active, all inactive"
+        - type: "filter-chip"
+          label: "团队筛选 chip 行可见"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-38: explore 顶栏 5 个互斥 tab，仅 Teams 激活高亮且 All 不高亮；URL 反映 ?view=teams"
+      result: "pass"
+      evidence: "截图可见 5 tab 顺序 All/Mine/Teams/Archived/Starred；Teams 蓝色下划线激活、All 未高亮；view=teams URL 截图中 tab 行保留激活态"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

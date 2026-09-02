@@ -1,0 +1,27 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd41-team-unavailable-desktop.png", "screenshots/tpv0095-bdd41-team-unavailable.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "desktop"
+      file: "screenshots/bdd41-team-unavailable-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore ?team=unavailable"
+        loading_state: "loaded"
+      components:
+        - type: "unavailable-state"
+          label: "「团队不可用 / 你无权访问该团队，或该团队不存在。」+「清除过滤」按钮"
+          state: "visible"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-41: ?team= 不存在/无权限 → 统一「团队不可用」态 + 清除过滤 CTA"
+      result: "pass"
+      evidence: "截图显示团队不可用标题 + 无权限描述 + 清除过滤按钮；DOM/URL 断言清除后 team 参数消失"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

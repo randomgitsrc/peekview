@@ -1,9 +1,9 @@
-phase: P5
+phase: P6
 task_id: TPV0095
 task_name: team-visibility
 status: in_progress
 created: 2026-09-02 00:00:00+00:00
-updated: '2026-09-03T04:00:00Z'
+updated: '2026-09-03T04:50:00Z'
 judge:
   enabled: true
 history:
@@ -75,4 +75,12 @@ history:
     首轮 12/14（2 failed = spec fixture 缺陷：teams-page 同 test bob→alice 二次 login 缺登出）→
     主 Agent 修 spec（clearCookies+goto）→ 重跑 14/14。known-failures 补登 #3（backup .tmp flaky）。P5
     gate exit 0'
+- phase: P6
+  action: completed
+  ts: '2026-09-03T04:50:00Z'
+  note: P6 验收：V1（backend/CLI/MCP BDD-1~37 全 PASS：pytest 38/38 + MCP 10/10 + BDD-34
+    远程实测 + 7 路径矩阵）+ V2（frontend UI BDD-38~44 全 PASS：E2E 26/26 + CDP 断言 + vision 7
+    份 blocker_count=0 + manual-review 3 份）→ 汇总 verifier 整合 P6-acceptance.md（44/44
+    PASS，交叉核对无重复遗漏）。gate 三件套：check-gate P6 exit 0 + check-p6-evidence exit 0 + provenance
+    exit 2（仅上游 WARNING 不阻断）
 p5_pass_commit: 74578a71c012f66293d9bd43d035066587637c52

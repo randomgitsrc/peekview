@@ -1,0 +1,30 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd39-team-badge-list-desktop.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "desktop-list"
+      file: "screenshots/bdd39-team-badge-list-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore team entries (list)"
+        loading_state: "loaded"
+      components:
+        - type: "row-actions"
+          label: "行操作区无可见性切换按钮（无 Make private/public/Public toggle）"
+          state: "absent"
+        - type: "badge"
+          label: "仅团队可见 标签"
+          state: "normal"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-40: team entry 卡片隐藏可见性 toggle 按钮（tooltip 团队可见提示）；store 层守卫"
+      result: "pass"
+      evidence: "截图操作区无可见性切换按钮（DOM 断言 visibility-toggle count=0 佐证，见 CDP 日志）；仅显示团队语义标签"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"

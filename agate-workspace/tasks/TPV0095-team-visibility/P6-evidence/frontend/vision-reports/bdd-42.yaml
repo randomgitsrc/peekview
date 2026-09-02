@@ -1,0 +1,63 @@
+vision_analysis:
+  screenshots: ["screenshots/bdd42-teams-owned-desktop.png", "screenshots/bdd42-user-menu-teams.png", "screenshots/bdd42-member-error-1-desktop.png", "screenshots/bdd42-leave-confirm-desktop.png", "screenshots/bdd42-after-leave-desktop.png", "screenshots/tpv0095-bdd42-create-team.png", "screenshots/tpv0095-bdd42-delete-confirm.png"]
+  purpose: "acceptance"
+  reference: null
+  analyzed_at: "2026-09-03T04:45:00"
+  viewports:
+    - id: "teams-page-owned"
+      file: "screenshots/bdd42-teams-owned-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView /teams（alice owner）"
+        loading_state: "loaded"
+      components:
+        - type: "section"
+          label: "我拥有的分区：多张团队卡（Proj A 等）+ 新建团队表单（团队名称输入 + 创建按钮）"
+          state: "normal"
+        - type: "section"
+          label: "无退出团队按钮（owned 卡只有删除/重命名）"
+          state: "absent"
+      anomalies: []
+    - id: "user-menu"
+      file: "screenshots/bdd42-user-menu-teams.png"
+      size: "1280x800"
+      page:
+        title: "PeekView explore user menu"
+        loading_state: "loaded"
+      components:
+        - type: "menu-item"
+          label: "Teams（位于 Settings 上方）+ Settings + Logout"
+          state: "visible"
+      anomalies: []
+    - id: "member-error"
+      file: "screenshots/bdd42-member-error-1-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView /teams add-member error"
+        loading_state: "loaded"
+      components:
+        - type: "error"
+          label: "添加成员失败提示：User not found: no-such-user-xyz-999"
+          state: "visible"
+      anomalies: []
+    - id: "leave-dialog"
+      file: "screenshots/bdd42-leave-confirm-desktop.png"
+      size: "1280x800"
+      page:
+        title: "PeekView /teams leave confirm"
+        loading_state: "loaded"
+      components:
+        - type: "alertdialog"
+          label: "退出团队「Proj A」退出后将无法查看该团队的团队内内容。确认退出？Cancel 确认"
+          state: "visible"
+      anomalies: []
+  bdd_results:
+    - condition: "BDD-42: /teams 双入口（UserMenu + Teams tab 管理链接）；owner 新建/删除/成员添加错误提示；成员退出需确认；owner 无退出按钮"
+      result: "pass"
+      evidence: "截图：UserMenu Teams 项可见；owned 分区展示新建团队与删除/重命名按钮、无退出按钮；添加成员失败明确错误文案；退出确认 alertdialog 文案含后果提示；确认后 joined 消失"
+  summary:
+    blocker_count: 0
+    warning_count: 0
+    bdd_pass: 1
+    bdd_fail: 0
+    overall_status: "pass"
