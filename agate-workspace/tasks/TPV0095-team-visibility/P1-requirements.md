@@ -285,17 +285,17 @@ design-note v4 已经过双独立评审、9 个决策点（A-I / A1-A14）全部
 
 #### BDD-31: `peekview teams` 输出 owned + joined 两分区
 - Given 本地模式当前用户 Alice 拥有 team proj-a 并加入 team shared-b
-- When 执行 `peekview teams`（与 `--json`）
+- When 执行 `peekview teams --user alice`（与 `--json`）[BASELINE_CHANGE: 本地 teams 命令 --user 必填（P2 R4 批准 2026-09-02，与 apikey create 先例一致）]
 - Then 文本输出含 owned/joined 分区；`--json` 输出 `{owned: [{slug,name}], joined: [...]}` 结构正确
 
 #### BDD-32: `peekview create --team` 发布到指定 team，与 `--visibility public` 互斥报错
-- Given 本地模式当前用户是 team proj-a 成员
-- When 执行 `peekview create -s 报告 --team proj-a file.md`；另执行 `peekview create -s x --team proj-a --visibility public file.md`
+- Given 本地模式当前用户（Alice，经 `--user alice` 归属）是 team proj-a 成员
+- When 执行 `peekview create -s 报告 --team proj-a --user alice file.md`；另执行 `peekview create -s x --team proj-a --visibility public --user alice file.md` [BASELINE_CHANGE: 本地 create --team 需 --user 归属（P2 R4 批准 2026-09-02）；team create 本地 owner 判定落到 resolve 出的 User]
 - Then 前者创建成功且 entry 为 team 可见（is_public=false）；后者在发出请求前报错退出（fail fast，提示冲突），exit code 非 0
 
 #### BDD-33: `peekview list --team` 只列该 team 的 entry
-- Given team proj-a 有 2 个 entry、其他 team 有 1 个 entry
-- When 执行 `peekview list --team proj-a`
+- Given team proj-a 有 2 个 entry、其他 team 有 1 个 entry（本地库，Alice 为成员）
+- When 执行 `peekview list --team proj-a --user alice` [BASELINE_CHANGE: 本地 list --team 需 --user 归属（P2 R4 批准 2026-09-02）]
 - Then 只返回 proj-a 的 2 个 entry（CLI 保持显式过滤，不做隐式聚合；不传 --team 的默认 list 行为不变）
 
 #### BDD-34: CLI 远程模式经 PeekClient 透传 team_id（验收锚）
