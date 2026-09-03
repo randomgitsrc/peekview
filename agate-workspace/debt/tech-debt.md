@@ -147,20 +147,25 @@ task_id: TPV0092-mcp-get-entry-fetch
 ```yaml
 id: DEBT0006
 category: technical
-title: backup/restore merge 模式不导入 entry_stars/entry_tombstones 新表，恢复旧备份丢失星标/墓碑
+title: backup/restore merge 模式不导入新表/新字段（entry_stars/entry_tombstones/teams/team_members/entries.team_id），恢复旧备份丢失星标/墓碑/团队归属
 status: open
 priority: medium
 evidence:
   - path: agate-workspace/tasks/TPV0093-star-lifecycle/P2-design.md
-  - note: _restore_merge（backend/peekview/services/admin_service.py:816-1073）只处理 entries/files/shares/reads/apikeys；[SCOPE+] 已裁定为已知限制；replace 模式整体换库不受影响
-impact: merge-restore 恢复功能上线前备份后星标与墓碑数据静默丢失；未来备份恢复相关变更更危险
-recommendation: 后续任务增补 _restore_merge 两表导入 + RestorePreview 计数扩展，并在 P1 基线补恢复星标/墓碑的验收用例
+  - note: _restore_merge（backend/peekview/services/admin_service.py:816-1073）只处理 users/entries/files/shares/reads/stats/apikeys；[SCOPE+] 已裁定为已知限制；replace 模式整体换库不受影响
+  - path: docs/design-notes/260903-DEBT0006-restore-merge-scope-drift.md
+  - note: 2026-09-03 核实缺口已扩大——entry_stars/entry_tombstones 仍缺失；teams/team_members（TPV0095 新增）完全不在覆盖列表；entries 重建逐字段构造未带 team_id（表恢复但字段被静默清空，比整表缺失更难发现）
+impact: merge-restore 恢复功能上线前备份后星标/墓碑/团队归属数据静默丢失；其中 entries.team_id 丢失会使 team-visible 内容退化为"私有且无归属"（访问控制语义错位，性质接近权限问题，非纯数据完整性）；未来备份恢复相关变更更危险
+recommendation: 一次性任务增补 _restore_merge 四表（entry_stars/entry_tombstones/teams/team_members）导入 + entries 重建补 team_id（依赖顺序：team 先于引用 entry 导入，旧 ID 走映射转换）+ RestorePreview 计数扩展，并在 P1 基线补恢复星标/墓碑/团队归属（含可见性语义不变）的验收用例
 closure_criteria:
-  - _restore_merge 导入 entry_stars/entry_tombstones
-  - RestorePreview 含两表计数
-  - 补恢复星标/墓碑的验收用例
+  - _restore_merge 导入 entry_stars/entry_tombstones/teams/team_members
+  - entries 重建带 team_id，且 team 先于 entry 导入、旧 ID 映射转换
+  - RestorePreview 含四表计数
+  - 补恢复星标/墓碑/团队归属（含可见性语义不变）的验收用例
 source: review
 created_at: 2026-08-16
+updated_at: 2026-09-03
+```
 
 ## DEBT0007
 
