@@ -62,11 +62,11 @@ describe('UserMenu — Teams 入口（BDD-42）', () => {
     vi.restoreAllMocks()
   })
 
-  it('bdd42_user_menu_contains_teams_item', () => {
+  it('bdd42_user_menu_contains_teams_item', async () => {
     const wrapper = mount(UserMenu, {
       global: { stubs: { 'router-link': routerLinkStub } },
     })
-    wrapper.find('.user-menu-trigger').trigger('click')
+    await wrapper.find('.user-menu-trigger').trigger('click')
     expect(wrapper.find('[data-testid="user-menu-teams-item"]').exists()).toBe(true)
   })
 

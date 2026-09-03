@@ -5,14 +5,9 @@
       <span class="user-name">{{ userName }}</span>
       <span v-if="isAdmin" class="admin-badge">admin</span>
     </button>
-    <button
-      v-show="showUserMenu"
-      class="menu-item-teams"
-      data-testid="user-menu-teams-item"
-      @click="navigateToTeams"
-    >Teams</button>
     <Transition name="dropdown">
       <div v-if="showUserMenu" class="user-dropdown">
+        <button class="dropdown-item" data-testid="user-menu-teams-item" @click="navigateToTeams">Teams</button>
         <button class="dropdown-item" data-testid="user-menu-settings-item" @click="navigateToSettings">Settings</button>
         <button class="dropdown-item" @click="handleLogout">Logout</button>
       </div>
@@ -128,32 +123,13 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
   letter-spacing: 0.5px;
 }
 
-.menu-item-teams {
+.user-dropdown {
   position: absolute;
   top: calc(100% + var(--space-1));
   right: 0;
-  display: block;
-  width: 100%;
-  min-width: 120px;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-surface);
-  color: var(--c-text-secondary);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  text-align: left;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: var(--shadow-md);
-  z-index: 100;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-1) + 36px);
-  right: 0;
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  border-radius: var(--radius-md);
   padding: var(--space-1);
   min-width: 120px;
   box-shadow: var(--shadow-md);
@@ -173,28 +149,12 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
   border-radius: var(--radius-sm);
 }
 
-.menu-item-teams {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  background: none;
-  color: var(--c-text-secondary);
-  cursor: pointer;
-  font-size: var(--font-sm);
-  text-align: left;
-  border-radius: var(--radius-sm);
-}
-
 .dropdown-item:hover {
   background: var(--c-surface-lower);
   color: var(--c-text);
 }
 
-.menu-item-teams:hover {
-  background: var(--c-surface-lower);
-  color: var(--c-text);
-}.dropdown-enter-active {
+.dropdown-enter-active {
   transition: opacity 0.15s ease;
 }
 

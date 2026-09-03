@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 修复
+
+- 用户菜单 Teams 项样式/结构修正：Teams 按钮移入 `.user-dropdown` 容器（`dropdown-item` 统一样式），移除 dropdown 外的独立浮层样式与 36px 定位偏移
+
 ## [mcp-v0.12.0] - 2026-09-03
 
 ### 新增（TPV0095）
