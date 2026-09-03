@@ -5,13 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.23.0] - 2026-09-03
 
 ### 新增
 
 - Landing 页新增「团队协作」区块（TPV0095）：team-scoped 可见性、owner 管理成员、MCP listTeams 支持 agent 团队路由——此前首页完全未提及团队能力，最大卖点遗漏
 - Landing features 卡补亮点：MCP 完整工具集（create/list/delete/publish/team-aware 而非「one tool」）、全文搜索（FTS5）、归档可恢复（active→archived→cleanup 而非直接删）、star 收藏
-
 - `make debug-seed` 现在也灌入团队（TPV0095）种子数据：`frontend-team`（alice 建 + bob 成员）+ `backend-solo`（carol 建）——人工体验 Teams 管理页时直接有 owned/joined 两种视角的样本，无需手动建团队；幂等（重复 seed 不重复建），slug 避开 E2E 固定 fixture（`proj-a`）
 - 团队 seed 延伸：`markdown-test`/`mermaid-charts` 归 `frontend-team`、`csv-employees` 归 `backend-solo`——explore Teams tab 点团队标签有内容，不再 No entries found；seed 对已存在 entry 幂等 PATCH 对齐 `team_id`（服务端执行 create 幂等命中时不会应用新增 team 字段，需 reconcile）
 

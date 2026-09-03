@@ -184,4 +184,42 @@ closure_criteria:
 source: review
 created_at: 2026-08-28
 ```
+
+## DEBT0008
+
+```yaml
+id: DEBT0008
+category: technical
+title: agate BDD 只有正向路径，无「测试副作用/环境还原」gate——E2E 创建团队无清理导致残留污染 debug DB
+status: open
+priority: high
+evidence:
+  - note: TPV0095 交付后用户质疑 bob 能添加 dave（与 owner-only 权限模型矛盾）。后端实测验证权限逻辑正确（bob POST /api/v1/teams/frontend-team/members → 404）；真凶是 teams-page.spec.ts 无 afterEach 清理，多次跑 E2E 在 debug DB 残留 18 个 Alpha-*/Del-*/T-* 团队，bob 因残留成为自有团队的 owner，才"能添加 dave"。P6 验收 44 BDD 全 PASS 时无污染（残留是验收之后连续跑 E2E 累积的）——"测试是否弄脏环境"不在任何 gate 覆盖内
+impact: 残留数据污染后的行为与权限模型矛盾（用户视角像权限 bug）；后续任何"清理"或"统计"类功能会在脏数据上验证；测试与原始环境难再区分
+recommendation: agate 协议在 P6/CI 增加"测试后环境还原"检查（E2E 运行后 DB 条目数/团队数快照比对，或要求 spec 自带 fixture 清理钩子）；本仓至少把 E2E fixture 清理（afterEach 删除队列）固化为团队类 spec 模板
+closure_criteria:
+  - teams-page.spec.ts（及后续创建型 E2E）均带 afterEach 清理队列（已落地）
+  - agate 侧有 post-test env 残留检查机制或协议规范
+source: retrospective
+created_at: 2026-09-03
+```
+
+## DEBT0009
+
+```yaml
+id: DEBT0009
+category: process
+title: P1 排除「seed 带 team」却无替代验收——BDD 只验 P3 fixture，人工体验路径（make debug-seed + Teams tab）存在真空带
+status: open
+priority: medium
+evidence:
+  - note: TPV0095 P1-requirements.md 记录"样例 seed 数据不纳入本次改动（team fixture 由 P3 自建）"——条目本身合规（样例 seed 确非生产路径），但 44 条 BDD 全用 P3 自建 fixture 验收，无一条验证"make debug-seed 后 explore Teams tab 应有内容"，导致用户 seed 后打开 Teams tab 看到 No entries found。P1 对"人工体验路径"无替代验收要求
+impact: 自动化验收全绿 ≠ 用户按文档体验正确；凡涉及 debug-seed/演示数据的功能，"seed 后页面应有内容"成隐性验收项，靠用户肉眼发现
+recommendation: P1 模板加"人工体验验收"节：凡改动涉及用户可见页面且 seed/演示数据影响其内容，强制补 1 条"Given seed 数据 When 打开 X 页 Then 有内容"的 BDD（或用 fixture 等价物）；本仓将 seed team + team entry（已落地 32e952da）设为 debug-seed 标配
+closure_criteria:
+  - debug-seed 含 team + team entry（已落地）
+  - P1 dispatch-context 模板含"人工体验路径"验收要求
+source: retrospective
+created_at: 2026-09-03
+```
 ```
