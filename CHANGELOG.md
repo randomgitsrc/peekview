@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-03
+
 ### 新增
 
 - Landing 页新增「团队协作」区块（TPV0095）：team-scoped 可见性、owner 管理成员、MCP listTeams 支持 agent 团队路由——此前首页完全未提及团队能力，最大卖点遗漏
