@@ -11,6 +11,8 @@
 
 - 用户菜单 Teams 项样式/结构修正：Teams 按钮移入 `.user-dropdown` 容器（`dropdown-item` 统一样式），移除 dropdown 外的独立浮层样式与 36px 定位偏移
 - `make lint` / `make lint-fix` 改走 venv（`.venv/bin/ruff`）+ guard-venv 依赖：此前依赖 PATH 中的 ruff，非交互 shell 会报 `ruff: 未找到命令`；现与 test-quick 等其他 target 的 venv 惯例统一，任何环境可跑
+- E2E/测试链路端口统一支持 `PORT` 覆盖：`make debug-test`、`make debug-test-mcp`、`scripts/run-e2e-tests.sh` 从 `PORT`（默认 8888）取目标端口，与 `make debug-seed` 一致——多实例（`PORT=8889`）启动后可直接对相应实例跑 E2E 与 MCP 测试，不再硬编码 :8888
+- Playwright 默认 baseURL 从 `:5173` 改为 `:8888` 并移除 vite 自启 webServer：`:5173`（vite dev）会把 `/api` 代理到生产 :8080，绕过 `make debug-test` 直接跑 `npx playwright test` 时有误打生产风险；现在默认指向 debug backend，未起服务时快速失败而非静默转生产
 
 ## [mcp-v0.12.0] - 2026-09-03
 

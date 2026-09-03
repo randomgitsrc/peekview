@@ -18,7 +18,7 @@ if [ -z "$E2E_GUARD_ENABLED" ]; then
     exit 1
 fi
 
-PORT=8888
+PORT="${PORT:-8888}"
 BASE_URL="http://127.0.0.1:$PORT"
 PRODUCTION_PORT=8080
 

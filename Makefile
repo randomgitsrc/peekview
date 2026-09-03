@@ -654,12 +654,12 @@ debug-test:
 	  bash scripts/e2e-safety-check.sh || exit 1
 	@echo ""
 	@echo "→ Step 2: 启动 E2E 测试 (带数据隔离保护)..."
-	@E2E_GUARD_ENABLED=1 NONINTERACTIVE=1 bash scripts/run-e2e-tests.sh
+	@E2E_GUARD_ENABLED=1 NONINTERACTIVE=1 PORT=$(if $(PORT),$(PORT),8888) bash scripts/run-e2e-tests.sh
 
 debug-test-mcp:
 	@echo "=== MCP Server 集成测试 ==="
 	@echo "→ 检查 PeekView 后端是否运行..."
-	@if ! curl -s http://127.0.0.1:8888/health > /dev/null 2>&1; then \
+	@if ! curl -s http://127.0.0.1:$(if $(PORT),$(PORT),8888)/health > /dev/null 2>&1; then \
 		echo "✗ 错误: PeekView 调试服务未运行"; \
 		echo "   请先运行: make debug-start"; \
 		exit 1; \
@@ -675,10 +675,10 @@ debug-test-mcp:
 		echo "  ⚠ PEEKVIEW_API_KEY 未设置，部分测试可能失败"; \
 		echo "  建议: export PEEKVIEW_API_KEY=your_api_key"; \
 	fi
-	cd packages/mcp-server && PEEKVIEW_URL=http://127.0.0.1:8888 PEEKVIEW_API_KEY=$$PEEKVIEW_API_KEY npm run test:integration || echo "  ⚠ 集成测试失败（可能需要 API Key）"
+	cd packages/mcp-server && PEEKVIEW_URL=http://127.0.0.1:$(if $(PORT),$(PORT),8888) PEEKVIEW_API_KEY=$$PEEKVIEW_API_KEY npm run test:integration || echo "  ⚠ 集成测试失败（可能需要 API Key）"
 	@echo ""
 	@echo "→ 运行 MCP Server E2E 测试..."
-	cd frontend-v3 && E2E_GUARD_ENABLED=1 BASE_URL=http://127.0.0.1:8888 npx playwright test e2e/mcp-server.spec.ts --reporter=line
+	cd frontend-v3 && E2E_GUARD_ENABLED=1 BASE_URL=http://127.0.0.1:$(if $(PORT),$(PORT),8888) npx playwright test e2e/mcp-server.spec.ts --reporter=line
 	@echo ""
 	@echo "✓ MCP 测试流程完成"
 
