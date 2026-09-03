@@ -10,6 +10,7 @@
 ### 新增
 
 - `make debug-seed` 现在也灌入团队（TPV0095）种子数据：`frontend-team`（alice 建 + bob 成员）+ `backend-solo`（carol 建）——人工体验 Teams 管理页时直接有 owned/joined 两种视角的样本，无需手动建团队；幂等（重复 seed 不重复建），slug 避开 E2E 固定 fixture（`proj-a`）
+- 团队 seed 延伸：`markdown-test`/`mermaid-charts` 归 `frontend-team`、`csv-employees` 归 `backend-solo`——explore Teams tab 点团队标签有内容，不再 No entries found；seed 对已存在 entry 幂等 PATCH 对齐 `team_id`（服务端执行 create 幂等命中时不会应用新增 team 字段，需 reconcile）
 
 ### 修复
 

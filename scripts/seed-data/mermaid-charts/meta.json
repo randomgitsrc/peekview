@@ -6,5 +6,6 @@
     "文档"
   ],
   "is_public": true,
-  "owner": "alice"
+  "owner": "alice",
+  "team_id": "frontend-team"
 }

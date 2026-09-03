@@ -7,5 +7,6 @@
     "TableView"
   ],
   "is_public": true,
-  "owner": "carol"
+  "owner": "carol",
+  "team_id": "backend-solo"
 }

@@ -115,6 +115,9 @@ def create_entry(token: str, slug: str, meta: dict, files: list[dict]) -> dict |
         "files": files,
         "idempotency_key": f"seed-{meta['summary']}",
     }
+    team_id = meta.get("team_id")
+    if team_id:
+        payload["team_id"] = team_id
     r = requests.post(
         f"{BASE}/api/v1/entries",
         headers={"Authorization": f"Bearer {token}"},
@@ -125,6 +128,29 @@ def create_entry(token: str, slug: str, meta: dict, files: list[dict]) -> dict |
         return None
     r.raise_for_status()
     return r.json()
+
+
+def sync_team(owner_token: str, slug: str, team_slug: str) -> None:
+    """Ensure an existing seed entry is assigned to the given team (idempotent PATCH)."""
+    try:
+        detail = requests.get(
+            f"{BASE}/api/v1/entries/{slug}",
+            headers={"Authorization": f"Bearer {owner_token}"},
+        ).json()
+        team_ref = detail.get("team") or {}
+        if team_ref.get("slug") == team_slug:
+            return
+        r = requests.patch(
+            f"{BASE}/api/v1/entries/{slug}",
+            headers={"Authorization": f"Bearer {owner_token}"},
+            json={"team_id": team_slug},
+        )
+        if r.ok:
+            print(f"      ~ sync team {slug} → {team_slug}")
+        else:
+            print(f"  WARN sync team {slug}: {r.status_code} {r.text[:80]}")
+    except Exception as e:
+        print(f"  WARN sync team {slug}: {e}")
 
 
 def main():
@@ -160,9 +186,15 @@ def main():
 
         try:
             result = create_entry(token, slug, meta, files)
+            team_slug = meta.get("team_id")
             if result is None:
                 print(f"  SKIP {slug}: idempotency conflict (409)")
                 continue
+            # Ensure team assignment: create may hit server-side idempotency
+            # (returns existing entry as 200 without applying new team_id),
+            # so always reconcile via PATCH when meta declares a team.
+            if team_slug:
+                sync_team(token, slug, team_slug)
             file_count = len(files)
             print(f"  OK   {slug}: {meta['summary'][:40]} ({file_count} files)")
 
