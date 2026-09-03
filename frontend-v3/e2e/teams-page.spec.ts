@@ -93,6 +93,15 @@ test.describe('TPV0095 teams-page — 双入口（BDD-42）', () => {
     await page.locator('.user-menu-trigger').click()
     const item = page.locator('[data-testid="user-menu-teams-item"]')
     await expect(item).toBeVisible()
+    // 视觉契约：dropdown 宽度 ≥ trigger 宽度（用户菜单随用户名/徽标变长不失调）
+    const widths = await page.evaluate(() => {
+      const t = document.querySelector('.user-menu-trigger')!.getBoundingClientRect().width
+      const d = document.querySelector('.user-dropdown')!.getBoundingClientRect().width
+      return { trigger: t, dropdown: d }
+    })
+    expect(widths.dropdown).toBeGreaterThanOrEqual(widths.trigger)
+    await page.waitForTimeout(300) // 等 dropdown 过渡完成
+    await page.screenshot({ path: 'test-results/user-menu-width.png' })
     await item.click()
     await page.waitForURL('**/teams', { timeout: 10000 })
   })

@@ -73,6 +73,7 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
 <style scoped>
 .user-menu-wrapper {
   position: relative;
+  display: inline-flex;
 }
 
 .user-menu-trigger {
@@ -131,7 +132,7 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
   border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-md);
   padding: var(--space-1);
-  min-width: 120px;
+  min-width: max(140px, 100%);
   box-shadow: var(--shadow-md);
   z-index: 100;
 }

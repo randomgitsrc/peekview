@@ -23,6 +23,7 @@
 - `teams-page.spec.ts` E2E fixture 清理：新增 `test.afterEach` 收集清理队列（创建即注册，无条件删除），消除每次跑 E2E 往 debug DB 泄漏 `Alpha-*`/`T-*`/`Del-*` 团队（此前删除测试只断言确认框出现从不真删）；删除测试补齐"点确认 → 卡片消失"的 BDD-42 闭环断言
 - Teams 管理页布局重构为「行列表 + 展开管理面板」：每个团队一行（名称/#slug/成员数 + 管理/重命名/删除），点「管理」才展开成员面板（默认收起、互斥展开、懒加载详情）——此前 N 个团队 = N 张含完整成员管理的大卡片垂直堆叠，占屏且扫视困难；行样式保留 shadow/hover 提升的卡片语言；E2E 同步适配 `.team-row` 选择器 + 成员测试先点「管理」展开
 - `make debug-seed` 团队 seed 幂等升级：已存在团队也校验成员完备性（`ensure_members` 补齐缺失成员），E2E「成员退出」测试消耗掉 bob 的 frontend-team 成员关系后，重跑 seed 可恢复
+- 用户菜单（UserMenu）触发器与下拉面板宽度对齐：`.user-menu-wrapper` 改 `inline-flex` 收缩到触发器宽，`.user-dropdown` 改 `min-width: max(140px, 100%)`——此前 dropdown 固定 `min-width: 120px`，用户名带 admin 徽标变长时触发器（可达 ~190px）显著宽于下拉面板、右缘错位不协调；现 dropdown 始终 ≥ 触发器等宽右对齐；teams-page.spec 补「dropdown 宽度 ≥ trigger 宽度」契约断言防回归
 
 ## [mcp-v0.12.0] - 2026-09-03
 
