@@ -9,11 +9,16 @@
 
 ### 新增
 
+- Landing 页新增「团队协作」区块（TPV0095）：team-scoped 可见性、owner 管理成员、MCP listTeams 支持 agent 团队路由——此前首页完全未提及团队能力，最大卖点遗漏
+- Landing features 卡补亮点：MCP 完整工具集（create/list/delete/publish/team-aware 而非「one tool」）、全文搜索（FTS5）、归档可恢复（active→archived→cleanup 而非直接删）、star 收藏
+
 - `make debug-seed` 现在也灌入团队（TPV0095）种子数据：`frontend-team`（alice 建 + bob 成员）+ `backend-solo`（carol 建）——人工体验 Teams 管理页时直接有 owned/joined 两种视角的样本，无需手动建团队；幂等（重复 seed 不重复建），slug 避开 E2E 固定 fixture（`proj-a`）
 - 团队 seed 延伸：`markdown-test`/`mermaid-charts` 归 `frontend-team`、`csv-employees` 归 `backend-solo`——explore Teams tab 点团队标签有内容，不再 No entries found；seed 对已存在 entry 幂等 PATCH 对齐 `team_id`（服务端执行 create 幂等命中时不会应用新增 team 字段，需 reconcile）
 
 ### 修复
 
+- Landing 首页文案核查修正：删除 hero/access 重复的「readable by humans and agents alike」（仅保留 features 卡与 flow 收尾各一处）；preview 窗与代码示例中的虚构域名 `peekview.dev` 全部改为中立的 `your-host/…` 形式；access 卡「milliseconds」调整为仅针对 CLI/API 场景（web 手动操作不承诺毫秒级）；CTA「ready in one command」改为「install with one command, run your own instance」；footer `© 2026` 改动态年份（`currentYear`）
+- Landing 响应式改进：`fmt-grid`/`teams-grid` 860px→2 列、600px→1 列（原直接 3 列→1 列无中间过渡）；移动端 nav 保留 GitHub 链接、仅隐藏 PyPI/npm/Changelog（原全部隐藏）
 - 用户菜单 Teams 项样式/结构修正：Teams 按钮移入 `.user-dropdown` 容器（`dropdown-item` 统一样式），移除 dropdown 外的独立浮层样式与 36px 定位偏移
 - `make lint` / `make lint-fix` 改走 venv（`.venv/bin/ruff`）+ guard-venv 依赖：此前依赖 PATH 中的 ruff，非交互 shell 会报 `ruff: 未找到命令`；现与 test-quick 等其他 target 的 venv 惯例统一，任何环境可跑
 - E2E/测试链路端口统一支持 `PORT` 覆盖：`make debug-test`、`make debug-test-mcp`、`scripts/run-e2e-tests.sh` 从 `PORT`（默认 8888）取目标端口，与 `make debug-seed` 一致——多实例（`PORT=8889`）启动后可直接对相应实例跑 E2E 与 MCP 测试，不再硬编码 :8888

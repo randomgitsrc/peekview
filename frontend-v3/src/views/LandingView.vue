@@ -11,9 +11,9 @@
         </router-link>
         <div class="nav-links">
           <a href="https://github.com/randomgitsrc/peekview" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://pypi.org/project/peekview/" target="_blank" rel="noopener">PyPI</a>
-          <a href="https://www.npmjs.com/package/@peekview/mcp-server" target="_blank" rel="noopener">npm</a>
-          <a href="https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
+          <a href="https://pypi.org/project/peekview/" target="_blank" rel="noopener" class="hide-narrow">PyPI</a>
+          <a href="https://www.npmjs.com/package/@peekview/mcp-server" target="_blank" rel="noopener" class="hide-narrow">npm</a>
+          <a href="https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="hide-narrow">Changelog</a>
         </div>
         <div class="nav-cta">
           <AuthButton v-if="authState === 'anonymous'" page-type="marketing" @sign-in="showLogin = true" />
@@ -26,7 +26,7 @@
       <section class="hero">
         <span class="eyebrow"><span class="dot"></span>Code · Docs · Data · HTML</span>
         <h1>Agent writes. You read. Agents read too.</h1>
-        <p class="sub">Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link — readable by humans and agents alike.</p>
+        <p class="sub">Your agents generate code, docs and data around the clock. PeekView renders every artifact into a fast, beautiful view you can share with one link.</p>
         <div class="hero-cta">
           <router-link to="/explore" class="btn btn-primary">Browse public</router-link>
           <span class="cmd"><span><span class="pr">$</span> pipx install peekview</span>
@@ -41,7 +41,7 @@
           <div class="window">
             <div class="titlebar">
               <span class="dots"><i style="background:#ff5f57"/><i style="background:#febc2e"/><i style="background:#28c840"/></span>
-              <span class="urlbar">peekview.dev/p/agent-runbook</span>
+              <span class="urlbar">your-host/agent-runbook</span>
             </div>
             <div class="viewer">
               <div class="filetree">
@@ -72,13 +72,13 @@
         <div class="sec-head">
           <span class="eyebrow"><span class="dot"></span>One viewer · Two ways to publish</span>
           <h2>Get agent output published.</h2>
-          <p>Your agents do the producing. PeekView gives their output two entry points — push it from a terminal or straight from the agent — and every link lands in the same viewer, read by humans and agents alike.</p>
+          <p>Your agents do the producing. PeekView gives their output two entry points — push it from a terminal or straight from the agent — and every link lands in the same viewer.</p>
         </div>
         <div class="door-grid">
           <div class="door">
             <span class="tag"><span class="dot"></span>peekview · CLI &amp; app</span>
             <h3>From your terminal</h3>
-            <p>You, your scripts and your CI install the CLI or open the web app, drop in code, docs or data, and get a shareable link back in milliseconds.</p>
+            <p>You, your scripts and your CI install the CLI or open the web app, drop in code, docs or data, and get a shareable link back — from API and CLI paths in milliseconds.</p>
             <span class="cmd"><span><span class="pr">$</span> pipx install peekview</span>
               <span class="copy" title="Copy" @click="copyCmd('pipx install peekview')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></span>
             </span>
@@ -124,17 +124,17 @@
           <div class="feat">
             <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg></span>
             <h3>Publish from anywhere</h3>
-            <p>One <code>peekview create</code>, REST call or MCP tool and your artifact is live in milliseconds — straight from the script, pipeline or agent that made it.</p>
+            <p>One <code>peekview create</code>, REST call or MCP tool and your artifact is live in milliseconds — the MCP server ships a full toolset (create, list, delete, publish, team-aware) for Claude, Cursor or any client.</p>
           </div>
           <div class="feat">
             <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></span>
             <h3>Read by humans and agents</h3>
-            <p>Every view is clean for people and structured for machines — fetch the same URL back as rendered HTML, Markdown or JSON. One artifact, two audiences.</p>
+            <p>Every view is clean for people and structured for machines — fetch the same URL back as rendered HTML, Markdown or JSON. Full-text search finds it again in seconds. One artifact, two audiences.</p>
           </div>
           <div class="feat">
             <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
             <h3>Shareable by link</h3>
-            <p>Public or private, with optional expiry and <code>pv_</code> access keys. One URL your teammates — and other agents — can open and read.</p>
+            <p>Public or private, with optional expiry, <code>pv_</code> access keys and star-to-keep — archived entries stay recoverable, not deleted. One URL your teammates — and other agents — can open and read.</p>
           </div>
         </div>
 
@@ -145,10 +145,24 @@
         </div>
       </section>
 
+      <!-- TEAMS -->
+      <section class="teams">
+        <div class="sec-head">
+          <span class="eyebrow"><span class="dot"></span>Shared with your crew</span>
+          <h2>Team output, one place.</h2>
+          <p>Published artifacts can live inside a team — visible to its members, hidden from everyone else. Owners add members, members read and exit; the same viewer, scoped per team.</p>
+        </div>
+        <div class="teams-grid">
+          <div class="team-bit"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><h3>Team-scoped visibility</h3><p>Entries with a team stay private to that crew — no global leakage, no public by accident.</p></div>
+          <div class="team-bit"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg></span><h3>Owner-managed membership</h3><p>Team owners invite and remove members; admins never take over team scope.</p></div>
+          <div class="team-bit"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><h3>Agent-ready in teams</h3><p>MCP listTeams + team-scoped publish let agents route output to the right crew automatically.</p></div>
+        </div>
+      </section>
+
       <!-- CTA BAND -->
       <section class="cta-band">
         <h2>Give agent output a place to live.</h2>
-        <p>Self-hosted, open source, ready in one command.</p>
+        <p>Self-hosted, open source — install with one command, run your own instance.</p>
         <div class="hero-cta">
           <router-link to="/explore" class="btn btn-primary">Browse public</router-link>
           <a href="https://github.com/randomgitsrc/peekview" target="_blank" rel="noopener" class="btn btn-ghost">Read the docs</a>
@@ -168,7 +182,7 @@
           <a href="https://www.npmjs.com/package/@peekview/mcp-server" target="_blank" rel="noopener">npm</a>
           <a href="https://github.com/randomgitsrc/peekview/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
         </div>
-        <div class="meta"><span class="v">v{{ appVersion }}</span><span>·</span><span>© 2026 PeekView</span></div>
+        <div class="meta"><span class="v">v{{ appVersion }}</span><span>·</span><span>© {{ currentYear }} PeekView</span></div>
       </div>
     </footer>
 
@@ -200,6 +214,7 @@ const SEO_DESC = 'Your agents generate code, docs and data around the clock. Pee
 
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
+const currentYear = new Date().getFullYear()
 
 function injectMeta() {
   document.title = SEO_TITLE
@@ -226,10 +241,10 @@ const codeFmt = '<div style="font-family:var(--font-mono);font-size:12px;line-he
   '<div style="display:flex;gap:10px;margin-bottom:1px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">3</span><span><span class="kw">const</span> browser = <span class="kw">await</span> chromium.<span class="fn">connectOverCDP</span>();</span></div>' +
   '<div style="display:flex;gap:10px;margin-bottom:1px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">4</span><span><span class="kw">const</span> page = <span class="kw">await</span> browser.<span class="fn">newPage</span>();</span></div>' +
   '<div style="display:flex;gap:10px;margin-bottom:1px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">5</span><span>&nbsp;<span class="cm">// Navigate and screenshot</span></span></div>' +
-  '<div style="display:flex;gap:10px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">6</span><span><span class="kw">await</span> page.<span class="fn">goto</span>(<span class="st">\'https://peekview.dev\'</span>);</span></div></div>'
+  '<div style="display:flex;gap:10px"><span style="color:var(--c-text-tertiary);width:16px;text-align:right;user-select:none;flex:none">6</span><span><span class="kw">await</span> page.<span class="fn">goto</span>(<span class="st">\'/agent-runbook\'</span>);</span></div></div>'
 const mdFmt = `<div style="font-size:13px;line-height:1.65;color:var(--c-text-secondary)"><div style="color:var(--c-text);font-size:16px;font-weight:700;margin-bottom:10px">Agent Runbook</div><div style="margin-bottom:6px">Every <b style="color:var(--c-text)">plan → act → observe</b> cycle is logged.</div><div style="margin-bottom:3px">• Rendered in real time</div><div>• Shareable by URL</div></div>`
 const diagramFmt = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:var(--font-mono);font-size:12px"><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent-secondary);font-weight:500">Plan</span><span style="color:var(--c-text-tertiary);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.3);color:var(--c-accent-secondary);font-weight:500">Act</span><span style="color:var(--c-text-tertiary);font-size:10px">↓</span><span style="padding:7px 14px;border-radius:8px;background:rgba(119,166,255,.15);border:1px solid rgba(119,166,255,.4);color:#76a6ff;font-weight:600">Ship ✓</span></div>`
-const htmlFmt = `<div style="display:flex;flex-direction:column;gap:10px;justify-content:center"><div style="height:32px;border-radius:8px;border:1px solid var(--c-border-strong);background:var(--c-surface);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--c-text-tertiary)">peekview.dev/p/agent-runbook</div><div style="display:flex;gap:8px"><span style="padding:6px 14px;border-radius:7px;background:var(--c-accent);color:var(--text-on-accent);font-size:12px;font-weight:600">Open</span><span style="padding:6px 14px;border-radius:7px;border:1px solid var(--c-border-strong);color:var(--c-text-secondary);font-size:12px">Copy link</span></div></div>`
+const htmlFmt = `<div style="display:flex;flex-direction:column;gap:10px;justify-content:center"><div style="height:32px;border-radius:8px;border:1px solid var(--c-border-strong);background:var(--c-surface);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--c-text-tertiary)">your-host/agent-runbook</div><div style="display:flex;gap:8px"><span style="padding:6px 14px;border-radius:7px;background:var(--c-accent);color:var(--text-on-accent);font-size:12px;font-weight:600">Open</span><span style="padding:6px 14px;border-radius:7px;border:1px solid var(--c-border-strong);color:var(--c-text-secondary);font-size:12px">Copy link</span></div></div>`
 const svgFmt = '<div style="display:flex;align-items:center;justify-content:center;gap:20px">' +
   '<svg width="130" height="78" viewBox="0 0 260 156">' +
   '<rect x="10" y="45" width="60" height="30" rx="6" fill="rgba(77,141,255,.12)" stroke="rgba(77,141,255,.35)" stroke-width="1.5"/>' +
@@ -370,6 +385,13 @@ h1 { margin:0;font-size:76px;line-height:1.02;font-weight:700;letter-spacing:-.0
 .feat h3 { margin:0 0 9px;font-size:18px;font-weight:650;letter-spacing:-.01em }
 .feat p { margin:0;font-size:14.5px;line-height:1.62;color:var(--c-text-secondary) }
 .feat code { font-family:var(--font-mono);font-size:.92em;color:var(--c-accent-secondary) }
+.teams { margin-top:72px }
+.teams-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px }
+.team-bit { padding:28px;border-radius:14px;border:1px solid var(--c-border);background:linear-gradient(180deg,var(--c-surface) 0%,var(--c-surface-lower) 100%);transition:border-color .2s,transform .2s }
+.team-bit:hover { border-color:var(--c-border-strong);transform:translateY(-3px) }
+.team-bit .ico { display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;background:rgba(77,141,255,.12);border:1px solid rgba(77,141,255,.25);color:var(--c-accent-secondary);margin-bottom:20px }
+.team-bit h3 { margin:0 0 9px;font-size:18px;font-weight:650;letter-spacing:-.01em }
+.team-bit p { margin:0;font-size:14.5px;line-height:1.62;color:var(--c-text-secondary) }
 .flow { display:flex;align-items:stretch;gap:0;margin-top:64px;border:1px solid var(--c-border);border-radius:14px;overflow:hidden }
 .flow .step { flex:1;padding:26px 28px }
 .flow .step+.step { border-left:1px solid var(--c-border) }
@@ -392,7 +414,7 @@ footer { border-top:1px solid var(--c-border);padding:40px 0 }
 
 @media (max-width:860px) {
   h1 { font-size:48px }
-  .nav-links { display:none }
+  .hide-narrow { display:none }
   .nav-cta { gap:6px }
   .btn-sm { height:34px;padding:0 10px;font-size:13px }
   @media (max-width:380px) {
@@ -407,6 +429,12 @@ footer { border-top:1px solid var(--c-border);padding:40px 0 }
   .flow .step+.step { border-left:none;border-top:1px solid var(--c-border) }
   .sub { font-size:17px }
   .cta-band h2 { font-size:34px }
+  .fmt-grid { grid-template-columns:1fr 1fr }
+  .teams-grid { grid-template-columns:1fr 1fr }
+}
+
+@media (max-width:600px) {
   .fmt-grid { grid-template-columns:1fr }
+  .teams-grid { grid-template-columns:1fr }
 }
 </style>
