@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- `make debug-seed` 现在也灌入团队（TPV0095）种子数据：`frontend-team`（alice 建 + bob 成员）+ `backend-solo`（carol 建）——人工体验 Teams 管理页时直接有 owned/joined 两种视角的样本，无需手动建团队；幂等（重复 seed 不重复建），slug 避开 E2E 固定 fixture（`proj-a`）
+
 ### 修复
 
 - 用户菜单 Teams 项样式/结构修正：Teams 按钮移入 `.user-dropdown` 容器（`dropdown-item` 统一样式），移除 dropdown 外的独立浮层样式与 36px 定位偏移

@@ -13,7 +13,6 @@ Creates:
 - 18 entries from seed-data/ directory
 """
 
-import base64
 import json
 import sys
 from pathlib import Path
@@ -145,7 +144,6 @@ def main():
         if d.is_dir() and (d / "meta.json").exists()
     )
 
-    archived_slug = None
     for entry_dir in entry_dirs:
         slug = entry_dir.name
         meta = json.loads((entry_dir / "meta.json").read_text(encoding="utf-8"))
@@ -175,7 +173,6 @@ def main():
                     headers={"Authorization": f"Bearer {token}"},
                     json={"status": "archived"},
                 )
-                archived_slug = result["slug"]
         except requests.HTTPError as e:
             print(f"  FAIL {slug}: {e}")
 
@@ -204,10 +201,57 @@ def main():
         except Exception as e:
             print(f"  WARN disable dave: {e}")
 
+    # Teams (TPV0095): 2 teams, owner + member, for manual UX of owned/joined views.
+    # Slugs must NOT collide with E2E fixtures (team-visibility uses 'proj-a'; teams-page uses T-<ts> random).
+    TEAM_SEEDS = [
+        {"slug": "frontend-team", "name": "frontend-team", "owner": "alice", "members": ["bob"]},
+        {"slug": "backend-solo", "name": "backend-solo", "owner": "carol", "members": []},
+    ]
+    created_teams = 0
+    for t in TEAM_SEEDS:
+        owner_token = tokens.get(t["owner"])
+        if owner_token is None:
+            print(f"  SKIP team {t['slug']}: owner disabled")
+            continue
+        try:
+            existing = requests.get(
+                f"{BASE}/api/v1/teams",
+                headers={"Authorization": f"Bearer {owner_token}"},
+            ).json()
+            owned_slugs = {team["slug"] for team in existing.get("owned", [])}
+            if t["slug"] in owned_slugs:
+                print(f"  OK   team {t['slug']}: already exists (idempotent)")
+                continue
+            r = requests.post(
+                f"{BASE}/api/v1/teams",
+                headers={"Authorization": f"Bearer {owner_token}"},
+                json={"name": t["name"]},
+            )
+            if not r.ok:
+                print(f"  WARN team {t['slug']}: create {r.status_code} {r.text[:80]}")
+                continue
+            team = r.json()
+            for username in t["members"]:
+                member_token = tokens.get(username)
+                if member_token is None:
+                    continue
+                mr = requests.post(
+                    f"{BASE}/api/v1/teams/{team['slug']}/members",
+                    headers={"Authorization": f"Bearer {owner_token}"},
+                    json={"username": username},
+                )
+                if mr.ok:
+                    print(f"      + member {username} -> {team['slug']}")
+            created_teams += 1
+            print(f"  OK   team {t['slug']}: created (owner={t['owner']}, members={len(t['members'])})")
+        except Exception as e:
+            print(f"  WARN team {t['slug']}: {e}")
+
     # Summary
     r = requests.get(f"{BASE}/api/v1/entries", headers={"Authorization": f"Bearer {alice}"})
     total = r.json().get("total", "?")
     print(f"\nDone. Total entries: {total}")
+    print("Teams: frontend-team (alice owned, bob joined) / backend-solo (carol owned)")
     print("Users: alice/bob/carol/dave (password: testpass123, dave disabled)")
     print(f"Entries: {len(entry_dirs)} loaded from seed-data/")
 
