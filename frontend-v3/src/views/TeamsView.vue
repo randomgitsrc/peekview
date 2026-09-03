@@ -12,7 +12,7 @@
 
     <div class="teams-body">
       <div class="teams-head">
-        <h1 class="teams-title">我的团队</h1>
+        <h1 class="teams-title">团队管理</h1>
         <router-link class="teams-explore-link" data-testid="teams-explore-link" to="/explore?view=teams">返回团队内容</router-link>
       </div>
 
@@ -72,7 +72,7 @@
               <p v-if="renameError" class="field-error" data-testid="team-error" role="alert">{{ renameError }}</p>
             </form>
 
-            <div class="team-detail">
+            <div class="team-card-detail">
               <h3 class="detail-title">成员（{{ team.memberCount }}）</h3>
               <div v-if="memberLoadingSlug === team.slug" class="detail-loading">加载中…</div>
               <template v-else>
@@ -95,16 +95,16 @@
 
                 <form class="member-add-form" @submit.prevent="handleAddMember(team.slug)">
                   <input
-                    v-model="memberUsername"
+                    v-model="memberUsernames[team.slug]"
                     type="text"
                     class="text-input"
                     data-testid="team-member-username-input"
                     placeholder="用户名添加成员"
-                    aria-describedby="member-error"
+                    :aria-describedby="`member-error-${team.slug}`"
                   />
                   <button type="submit" class="primary-btn small">添加</button>
                 </form>
-                <p v-if="memberError" id="member-error" class="field-error" data-testid="team-error" role="alert">{{ memberError }}</p>
+                <p v-if="memberErrors[team.slug]" :id="`member-error-${team.slug}`" class="field-error" data-testid="team-error" role="alert">{{ memberErrors[team.slug] }}</p>
               </template>
             </div>
 
@@ -167,8 +167,8 @@ const { loadMyTeams, createTeam, renameTeam, deleteTeam, addMember, removeMember
 const liveMessage = ref('')
 const newTeamName = ref('')
 const createError = ref('')
-const memberUsername = ref('')
-const memberError = ref('')
+const memberUsernames = ref<Record<string, string>>({})
+const memberErrors = ref<Record<string, string>>({})
 const renameName = ref('')
 const renameError = ref('')
 const renamingSlug = ref<string | null>(null)
@@ -293,37 +293,37 @@ function closeConfirm(): void {
 }
 
 async function handleAddMember(slug: string): Promise<void> {
-  memberError.value = ''
-  const username = memberUsername.value.trim()
+  memberErrors.value[slug] = ''
+  const username = (memberUsernames.value[slug] ?? '').trim()
   if (!username) {
-    memberError.value = '请输入用户名'
+    memberErrors.value[slug] = '请输入用户名'
     return
   }
   try {
     const detail = await addMember(slug, username)
     if (slug === detail.slug) teamMembers.value[slug] = detail.members
     speak(`已添加成员 ${username}`)
-    memberUsername.value = ''
+    memberUsernames.value[slug] = ''
   } catch (err) {
-    memberError.value = serverError(err)
-    speak(`添加成员失败：${memberError.value}`)
+    memberErrors.value[slug] = serverError(err)
+    speak(`添加成员失败：${memberErrors.value[slug]}`)
   }
 }
 
 async function removeMember(slug: string, userId: number): Promise<void> {
-  memberError.value = ''
+  memberErrors.value[slug] = ''
   try {
     const detail = await removeMemberAction(slug, userId)
     if (slug === detail.slug) teamMembers.value[slug] = detail.members
     speak('已移除成员')
   } catch (err) {
-    memberError.value = serverError(err)
+    memberErrors.value[slug] = serverError(err)
   }
 }
 
 async function openDetail(team: Team): Promise<void> {
   memberLoadingSlug.value = team.slug
-  memberError.value = ''
+  memberErrors.value[team.slug] = ''
   teamMembers.value[team.slug] = []
   try {
     const detail = await fetchDetail(team.slug)
@@ -360,8 +360,9 @@ watch(owned, (teams) => {
 .teams-title { font-size: var(--font-xl); font-weight: 700; color: var(--c-text); margin: 0; }
 .teams-explore-link { color: var(--c-accent); text-decoration: none; font-size: var(--font-sm); font-weight: 500; }
 .teams-live { min-height: 1.5em; font-size: var(--font-sm); color: var(--c-text-secondary); margin-bottom: var(--space-3); }
-.section-title { font-size: var(--font-md); font-weight: 600; color: var(--c-text); margin: var(--space-5) 0 var(--space-3); }
+.section-title { font-size: var(--font-md); font-weight: 600; color: var(--c-text); margin: var(--space-6) 0 var(--space-3); }
 .field-label { display: block; font-size: var(--font-sm); font-weight: 500; color: var(--c-text-secondary); margin-bottom: var(--space-2); }
+.team-create-form { margin-bottom: var(--space-5); }
 .create-row, .member-add-form, .rename-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
 .text-input { flex: 1 1 200px; min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--c-border-strong); border-radius: var(--radius-md); background: var(--c-surface); color: var(--c-text); font-size: var(--font-sm); }
 .primary-btn { min-height: 44px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-md); background: var(--c-accent); color: var(--text-on-accent); font-size: var(--font-sm); font-weight: 600; cursor: pointer; }
@@ -373,8 +374,10 @@ watch(owned, (teams) => {
 .danger-btn { min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--c-error); border-radius: var(--radius-md); background: transparent; color: var(--c-error); font-size: var(--font-sm); font-weight: 500; cursor: pointer; }
 .field-error { color: var(--c-error); font-size: var(--font-sm); margin: var(--space-2) 0 0; }
 .team-cards { display: flex; flex-direction: column; gap: var(--space-4); }
-.team-card { background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); padding: var(--space-4); }
+.team-card { background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-sm); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+.team-card:hover { border-color: var(--c-accent); box-shadow: var(--shadow-md); }
 .team-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.team-card-detail { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--c-border); }
 .team-card-title { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; min-width: 0; }
 .team-name { font-size: var(--font-md); font-weight: 600; color: var(--c-text); }
 .team-slug { font-family: var(--font-mono); font-size: var(--font-xs); color: var(--c-text-tertiary); }

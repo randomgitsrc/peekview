@@ -18,6 +18,9 @@
 - `make lint` / `make lint-fix` 改走 venv（`.venv/bin/ruff`）+ guard-venv 依赖：此前依赖 PATH 中的 ruff，非交互 shell 会报 `ruff: 未找到命令`；现与 test-quick 等其他 target 的 venv 惯例统一，任何环境可跑
 - E2E/测试链路端口统一支持 `PORT` 覆盖：`make debug-test`、`make debug-test-mcp`、`scripts/run-e2e-tests.sh` 从 `PORT`（默认 8888）取目标端口，与 `make debug-seed` 一致——多实例（`PORT=8889`）启动后可直接对相应实例跑 E2E 与 MCP 测试，不再硬编码 :8888
 - Playwright 默认 baseURL 从 `:5173` 改为 `:8888` 并移除 vite 自启 webServer：`:5173`（vite dev）会把 `/api` 代理到生产 :8080，绕过 `make debug-test` 直接跑 `npx playwright test` 时有误打生产风险；现在默认指向 debug backend，未起服务时快速失败而非静默转生产
+- Teams 页成员添加输入框按团队隔离：`memberUsernames[slug]`/`memberErrors[slug]` 替代全局 `memberUsername`——此前多个团队卡片的输入框共享同一 state，一个框输入全部框同步显示，点"添加"只落到第一个团队；错误提示 `aria-describedby` 同步按 slug 绑定
+- Teams 管理页视觉修正（对照 DESIGN.md）：页标题改"团队管理"；新建团队表单与团队列表间补 `--space-5` 间距；团队卡片加 `--shadow-sm` 基底 + hover 提升（`--shadow-md` + accent 边框，与 EntryCard 一致）；卡片头与成员详情区加分隔线分组
+- `teams-page.spec.ts` E2E fixture 清理：新增 `test.afterEach` 收集清理队列（创建即注册，无条件删除），消除每次跑 E2E 往 debug DB 泄漏 `Alpha-*`/`T-*`/`Del-*` 团队（此前删除测试只断言确认框出现从不真删）；删除测试补齐"点确认 → 卡片消失"的 BDD-42 闭环断言
 
 ## [mcp-v0.12.0] - 2026-09-03
 

@@ -29,6 +29,21 @@ test.beforeEach(async ({ context }) => {
   await context.clearCookies()
 })
 
+// Fixture 清理队列：每个自建团队 push {slug, token}，afterEach 无条件删除
+// （放测试末尾的清理在断言失败时会跳过→泄漏，必须走钩子）
+const createdTeams: Array<{ slug: string; token: string }> = []
+test.afterEach(async ({ request }) => {
+  for (const t of createdTeams.splice(0)) {
+    const del = await request.delete(`/api/v1/teams/${t.slug}`, {
+      headers: { Authorization: `Bearer ${t.token}` },
+    })
+    // 200/204/404 均可接受（404 = 本测试已删或 slug 未生成，无需报错）
+    if (![200, 204, 404].includes(del.status())) {
+      throw new Error(`cleanup team ${t.slug} failed: ${del.status()}`)
+    }
+  }
+})
+
 async function login(page: Page, username = 'alice') {
   await page.goto(`${BASE_URL}/explore`)
   const authBtn = page
@@ -119,6 +134,9 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
     const live = page.locator('[data-testid="teams-status-live"]')
     await expect(live).toContainText(/已创建团队/, { timeout: 5000 })
     await page.screenshot({ path: '/tmp/e2e-results/tpv0095-bdd42-create-team.png' })
+
+    // fixture 清理队列：afterEach 统一删除（_slugify 确定性映射 Alpha-${ts} → alpha-${ts}）
+    createdTeams.push({ slug: `alpha-${ts}`, token })
   })
 
   test('BDD-42: 成员添加失败三类（username 不存在/已是成员/无权）三文案两两互异', async ({ page, request }) => {
@@ -166,6 +184,9 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
     const unique = new Set([c1, c2, c3])
     expect(unique.size).toBe(3) // 三文案两两互异
     await page.screenshot({ path: '/tmp/e2e-results/tpv0095-bdd42-member-error-copies.png' })
+
+    // fixture 清理队列：afterEach 统一删除自建团队
+    createdTeams.push({ slug: teamSlug, token: bobToken })
   })
 
   test('BDD-42: 删除 team 出现确认对话框（含后果提示）', async ({ page, request }) => {
@@ -180,20 +201,26 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
     })
     if (createResp.status() !== 201) {
       // P3 期后端 teams API 未实现 → 红灯（预期）
+      console.error(`create Del-${ts} → ${createResp.status()} ${JSON.stringify(await createResp.text()).slice(0, 200)}`)
       expect(createResp.status()).toBe(201)
       return
     }
+    const team = await createResp.json()
+    createdTeams.push({ slug: team.slug, token })
     await login(page)
     await page.goto(`${BASE_URL}/teams`)
     await page.waitForSelector('[data-testid="teams-owned"]', { timeout: 10000 })
 
-    const ownedCard = page.locator('[data-testid="teams-owned"]').filter({ hasText: `Del-${ts}` }).first()
+    const ownedCard = page.locator(`[data-testid="teams-owned"] .team-card[data-slug="del-${ts}"]`)
     const deleteBtn = ownedCard.locator('button:has-text("删除"), button:has-text("Delete")').first()
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click()
       const dialog = page.locator('[role="alertdialog"]')
       await expect(dialog).toBeVisible({ timeout: 5000 })
       await expect(dialog).toContainText(/仅自己可见/)
+      // 闭环：真正确认删除，团队卡片从「我拥有的」消失（BDD-42 删除语义）
+      await dialog.locator('button:has-text("确认"), button:has-text("Confirm")').click()
+      await expect(ownedCard).not.toBeVisible({ timeout: 8000 })
       await page.screenshot({ path: '/tmp/e2e-results/tpv0095-bdd42-delete-confirm.png' })
     }
   })
