@@ -240,6 +240,27 @@ def main():
         {"slug": "backend-solo", "name": "backend-solo", "owner": "carol", "members": []},
     ]
     created_teams = 0
+
+    def ensure_members(team_slug: str, usernames: list[str], owner_token: str) -> None:
+        """Idempotently add expected members (skip already-added)."""
+        detail = requests.get(
+            f"{BASE}/api/v1/teams/{team_slug}",
+            headers={"Authorization": f"Bearer {owner_token}"},
+        ).json()
+        existing = {m["username"] for m in detail.get("members", [])}
+        for username in usernames:
+            if username in existing:
+                continue
+            if tokens.get(username) is None:
+                continue
+            mr = requests.post(
+                f"{BASE}/api/v1/teams/{team_slug}/members",
+                headers={"Authorization": f"Bearer {owner_token}"},
+                json={"username": username},
+            )
+            if mr.ok:
+                print(f"      + member {username} -> {team_slug}")
+
     for t in TEAM_SEEDS:
         owner_token = tokens.get(t["owner"])
         if owner_token is None:
@@ -252,6 +273,7 @@ def main():
             ).json()
             owned_slugs = {team["slug"] for team in existing.get("owned", [])}
             if t["slug"] in owned_slugs:
+                ensure_members(t["slug"], t["members"], owner_token)
                 print(f"  OK   team {t['slug']}: already exists (idempotent)")
                 continue
             r = requests.post(
@@ -263,17 +285,7 @@ def main():
                 print(f"  WARN team {t['slug']}: create {r.status_code} {r.text[:80]}")
                 continue
             team = r.json()
-            for username in t["members"]:
-                member_token = tokens.get(username)
-                if member_token is None:
-                    continue
-                mr = requests.post(
-                    f"{BASE}/api/v1/teams/{team['slug']}/members",
-                    headers={"Authorization": f"Bearer {owner_token}"},
-                    json={"username": username},
-                )
-                if mr.ok:
-                    print(f"      + member {username} -> {team['slug']}")
+            ensure_members(team["slug"], t["members"], owner_token)
             created_teams += 1
             print(f"  OK   team {t['slug']}: created (owner={t['owner']}, members={len(t['members'])})")
         except Exception as e:

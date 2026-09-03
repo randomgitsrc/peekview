@@ -21,6 +21,8 @@
 - Teams 页成员添加输入框按团队隔离：`memberUsernames[slug]`/`memberErrors[slug]` 替代全局 `memberUsername`——此前多个团队卡片的输入框共享同一 state，一个框输入全部框同步显示，点"添加"只落到第一个团队；错误提示 `aria-describedby` 同步按 slug 绑定
 - Teams 管理页视觉修正（对照 DESIGN.md）：页标题改"团队管理"；新建团队表单与团队列表间补 `--space-5` 间距；团队卡片加 `--shadow-sm` 基底 + hover 提升（`--shadow-md` + accent 边框，与 EntryCard 一致）；卡片头与成员详情区加分隔线分组
 - `teams-page.spec.ts` E2E fixture 清理：新增 `test.afterEach` 收集清理队列（创建即注册，无条件删除），消除每次跑 E2E 往 debug DB 泄漏 `Alpha-*`/`T-*`/`Del-*` 团队（此前删除测试只断言确认框出现从不真删）；删除测试补齐"点确认 → 卡片消失"的 BDD-42 闭环断言
+- Teams 管理页布局重构为「行列表 + 展开管理面板」：每个团队一行（名称/#slug/成员数 + 管理/重命名/删除），点「管理」才展开成员面板（默认收起、互斥展开、懒加载详情）——此前 N 个团队 = N 张含完整成员管理的大卡片垂直堆叠，占屏且扫视困难；行样式保留 shadow/hover 提升的卡片语言；E2E 同步适配 `.team-row` 选择器 + 成员测试先点「管理」展开
+- `make debug-seed` 团队 seed 幂等升级：已存在团队也校验成员完备性（`ensure_members` 补齐缺失成员），E2E「成员退出」测试消耗掉 bob 的 frontend-team 成员关系后，重跑 seed 可恢复
 
 ## [mcp-v0.12.0] - 2026-09-03
 

@@ -165,6 +165,10 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
     await page.goto(`${BASE_URL}/teams`)
     await page.waitForSelector('[data-testid="teams-owned"]', { timeout: 10000 })
 
+    // 方案 A：成员面板默认收起——先点该团队的「管理」展开
+    await page.locator(`[data-testid="team-manage-${teamSlug}"]`).click()
+    await page.waitForSelector('[data-testid="team-member-username-input"]', { timeout: 5000 })
+
     const addMember = async (username: string): Promise<string> => {
       const input = page.locator('[data-testid="team-member-username-input"]').first()
       await expect(input).toBeVisible({ timeout: 5000 })
@@ -211,7 +215,7 @@ test.describe('TPV0095 teams-page — owner 操作（BDD-42）', () => {
     await page.goto(`${BASE_URL}/teams`)
     await page.waitForSelector('[data-testid="teams-owned"]', { timeout: 10000 })
 
-    const ownedCard = page.locator(`[data-testid="teams-owned"] .team-card[data-slug="del-${ts}"]`)
+    const ownedCard = page.locator(`[data-testid="teams-owned"] .team-row[data-slug="del-${ts}"]`)
     const deleteBtn = ownedCard.locator('button:has-text("删除"), button:has-text("Delete")').first()
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click()

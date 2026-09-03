@@ -42,21 +42,35 @@
 
         <ul v-else-if="owned.length === 0" class="section-empty">暂无拥有的团队</ul>
 
-        <div v-else class="team-cards">
-          <article v-for="team in owned" :key="team.slug" class="team-card" :data-slug="team.slug">
-            <div class="team-card-head">
-              <div class="team-card-title">
+        <div v-else class="team-rows">
+          <div v-for="team in owned" :key="team.slug" class="team-row" :data-slug="team.slug">
+            <div class="team-row-main">
+              <div class="team-row-title">
                 <span class="team-name">{{ team.name }}</span>
                 <span class="team-slug">#{{ team.slug }}</span>
                 <span class="team-member-count">{{ team.memberCount }} 成员</span>
               </div>
-              <button
-                v-if="!isRenaming(team.slug)"
-                type="button"
-                class="link-btn"
-                data-testid="team-rename-toggle"
-                @click="startRename(team)"
-              >重命名</button>
+              <div class="team-row-actions">
+                <button
+                  type="button"
+                  class="link-btn"
+                  :data-testid="`team-manage-${team.slug}`"
+                  @click="toggleManager(team)"
+                >{{ managerSlug === team.slug ? '收起' : '管理' }}</button>
+                <button
+                  v-if="!isRenaming(team.slug)"
+                  type="button"
+                  class="link-btn"
+                  data-testid="team-rename-toggle"
+                  @click="startRename(team)"
+                >重命名</button>
+                <button
+                  type="button"
+                  class="link-btn danger"
+                  data-testid="team-delete"
+                  @click="requestDelete(team)"
+                >删除</button>
+              </div>
             </div>
 
             <form v-if="isRenaming(team.slug)" class="rename-form" data-testid="team-rename-form" @submit.prevent="handleRename(team)">
@@ -72,10 +86,10 @@
               <p v-if="renameError" class="field-error" data-testid="team-error" role="alert">{{ renameError }}</p>
             </form>
 
-            <div class="team-card-detail">
-              <h3 class="detail-title">成员（{{ team.memberCount }}）</h3>
+            <div v-if="managerSlug === team.slug" class="team-panel">
               <div v-if="memberLoadingSlug === team.slug" class="detail-loading">加载中…</div>
               <template v-else>
+                <h3 class="detail-title">成员（{{ team.memberCount }}）</h3>
                 <ul v-if="teamMembers[team.slug]?.length" class="member-list">
                   <li v-for="m in teamMembers[team.slug]" :key="m.id" class="member-item">
                     <span class="member-name">
@@ -107,14 +121,7 @@
                 <p v-if="memberErrors[team.slug]" :id="`member-error-${team.slug}`" class="field-error" data-testid="team-error" role="alert">{{ memberErrors[team.slug] }}</p>
               </template>
             </div>
-
-            <button
-              type="button"
-              class="danger-btn"
-              data-testid="team-delete"
-              @click="requestDelete(team)"
-            >删除团队</button>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -172,6 +179,7 @@ const memberErrors = ref<Record<string, string>>({})
 const renameName = ref('')
 const renameError = ref('')
 const renamingSlug = ref<string | null>(null)
+const managerSlug = ref<string | null>(null)
 
 const ownerUsername = ref('')
 const teamMembers = ref<Record<string, Array<{ id: number; username: string }>>>({})
@@ -249,6 +257,16 @@ async function handleRename(team: Team): Promise<void> {
   } catch (err) {
     renameError.value = serverError(err)
   }
+}
+
+function toggleManager(team: Team): void {
+  if (managerSlug.value === team.slug) {
+    managerSlug.value = null
+    return
+  }
+  managerSlug.value = team.slug
+  renamingSlug.value = null
+  void openDetail(team)
 }
 
 function requestDelete(team: Team): void {
@@ -343,8 +361,9 @@ onMounted(() => {
 })
 
 watch(owned, (teams) => {
-  if (teams && teams.length > 0 && !teamMembers.value[teams[0].slug]) {
-    void openDetail(teams[0])
+  // 团队列表变化时若当前展开的团队已不在 owned（如被删/改名），收起面板
+  if (managerSlug.value && !teams?.some((t) => t.slug === managerSlug.value)) {
+    managerSlug.value = null
   }
 })
 </script>
@@ -373,12 +392,13 @@ watch(owned, (teams) => {
 .link-btn.danger { color: var(--c-error); }
 .danger-btn { min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--c-error); border-radius: var(--radius-md); background: transparent; color: var(--c-error); font-size: var(--font-sm); font-weight: 500; cursor: pointer; }
 .field-error { color: var(--c-error); font-size: var(--font-sm); margin: var(--space-2) 0 0; }
-.team-cards { display: flex; flex-direction: column; gap: var(--space-4); }
-.team-card { background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-sm); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
-.team-card:hover { border-color: var(--c-accent); box-shadow: var(--shadow-md); }
-.team-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
-.team-card-detail { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--c-border); }
-.team-card-title { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; min-width: 0; }
+.team-rows { display: flex; flex-direction: column; gap: var(--space-2); }
+.team-row { background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+.team-row:hover { border-color: var(--c-accent); box-shadow: var(--shadow-md); }
+.team-row-main { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+.team-row-title { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; min-width: 0; }
+.team-row-actions { display: flex; align-items: center; gap: var(--space-1); }
+.team-panel { padding: var(--space-3) var(--space-4) var(--space-4); border-top: 1px solid var(--c-border); }
 .team-name { font-size: var(--font-md); font-weight: 600; color: var(--c-text); }
 .team-slug { font-family: var(--font-mono); font-size: var(--font-xs); color: var(--c-text-tertiary); }
 .team-member-count { font-size: var(--font-xs); color: var(--c-text-secondary); }
