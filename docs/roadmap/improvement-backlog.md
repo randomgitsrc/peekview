@@ -55,6 +55,7 @@
 | 46 | 后端 `is_public` 默认值可配置化（`PEEKVIEW_DEFAULTS__IS_PUBLIC` 环境变量） | 配置 | 🟢 长期 | ❌ 删除（需求弱，调用时传参即可覆盖） |
 | 47 | 详情页侧边栏可拖拽调整宽度（file tree + TOC，最大宽度约束） | 体验 | 🟡 中期 | 🔄 T081 |
 | 48 | Team 可见性机制（团队内成员可见，不 public；design-note 已评审通过） | 产品/权限 | 🟠 近期 | ✅ done（TPV0095 → v0.22.0） |
+| 49 | merge-restore 补齐新表/新字段导入（DEBT0006：stars/tombstones/teams/team_members/entries.team_id） | 运维/数据 | 🟡 中期 | ⬜ 待排期（DEBT0006，笔记 docs/design-notes/260903-DEBT0006-restore-merge-scope-drift.md） |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
 | 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
@@ -279,7 +280,23 @@
 
 **方案**：`docs/design-notes/team-visibility.md`（v4 终版，经 plan-eng + plan-design 双独立评审 PASS）。核心：扁平 team（owner 直接添加成员，不做邀请流）+ entry 单值 `team_id` + 三选一可见性（public/team/private）+ `can_read_entry()` 权限收敛 + 防枚举统一 404 + explore Teams tab/chips/badge + CLI `peekview teams`/`--team` + MCP `list_teams` 只读工具。
 
-**状态**：🔄 TPV0095（2026-09-02 立项，P0 进行中）
+**状态**：✅ done（TPV0095 → v0.22.0 + mcp-v0.12.0，2026-09-03）
+
+---
+
+### 🟡 49. merge-restore 补齐新表/新字段导入（DEBT0006）
+
+**来源**：TPV0095 复盘（2026-09-03）——DEBT0006（2026-08-16 登记）核对时发现缺口已扩大；笔记 `docs/design-notes/260903-DEBT0006-restore-merge-scope-drift.md`
+
+**问题**：`_restore_merge`（`backend/peekview/services/admin_service.py:816-1073`）逐表显式编码恢复逻辑，只覆盖 `users/entries/files/shares/reads/stats/apikeys`——TPV0093 引入的 `entry_stars`/`entry_tombstones`、TPV0095 引入的 `teams`/`team_members` 均缺失，且 `entries` 重建逐字段构造**未带 `team_id`**（表恢复但字段被静默清空）。其中 team_id 丢失会使 team-visible 内容退化为"私有且无归属"——**访问控制语义错位**（权限类问题，非纯数据完整性），且无任何报错提示。
+
+**方案**：一次性任务增补 `_restore_merge` 四表（stars/tombstones/teams/team_members）导入 + `entries` 重建补 `team_id`（依赖顺序：team 先于引用 entry 导入，旧 ID 走映射转换）+ `RestorePreview` 计数扩展 + 补"team-visible entry 经 merge-restore 后可见性语义不变"的验收用例。
+
+**排期依据（暂缓立项）**：merge-restore 是低频运维路径（admin 手动备份恢复）；team 功能 v0.22.0 刚发布、存量 team 数据近零，当前实际损失面小。**触发信号**：①用户实际使用 merge-restore 报问题；②下一次涉及新表/新字段的 task（可搭车）；③排期宽松时主动清债。
+
+**流程性动作（随下次涉新表 task 落实）**：P1/P2 派发上下文显式列入"新表/新外键字段是否需接入 `_restore_merge`"检查项（落点项目侧，不动 agateon 协议层 architect.md）。
+
+**状态**：⬜ 待排期（DEBT0006 open，medium）
 
 ---
 
