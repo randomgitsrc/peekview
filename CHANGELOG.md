@@ -10,6 +10,7 @@
 ### 修复
 
 - 用户菜单 Teams 项样式/结构修正：Teams 按钮移入 `.user-dropdown` 容器（`dropdown-item` 统一样式），移除 dropdown 外的独立浮层样式与 36px 定位偏移
+- `make lint` / `make lint-fix` 改走 venv（`.venv/bin/ruff`）+ guard-venv 依赖：此前依赖 PATH 中的 ruff，非交互 shell 会报 `ruff: 未找到命令`；现与 test-quick 等其他 target 的 venv 惯例统一，任何环境可跑
 
 ## [mcp-v0.12.0] - 2026-09-03
 

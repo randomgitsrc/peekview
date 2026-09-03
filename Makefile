@@ -182,13 +182,13 @@ test-backend: guard-venv
 	cd backend && .venv/bin/python -m pytest tests/ -v --tb=short
 
 # Lint and type checking
-lint:
+lint: guard-venv
 	@echo "→ Running ruff check..."
-	cd backend && ruff check peekview/ tests/
+	cd backend && .venv/bin/ruff check peekview/ tests/
 
-lint-fix:
+lint-fix: guard-venv
 	@echo "→ Running ruff check --fix + format..."
-	cd backend && ruff check --fix peekview/ tests/ && ruff format peekview/ tests/
+	cd backend && .venv/bin/ruff check --fix peekview/ tests/ && .venv/bin/ruff format peekview/ tests/
 
 typecheck:
 	@echo "→ Running vue-tsc type check (~30-60s)..."

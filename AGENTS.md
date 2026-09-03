@@ -12,31 +12,31 @@ Agent 写，人看，Agent 也能读。
 
 ```
 backend/peekview/
-├── main.py           # App factory (create_app/get_app), DI via app.state
-├── models.py         # SQLModel Entry/File/User/ApiKey + Pydantic schemas
-├── config.py         # Pydantic Settings (PEEKVIEW_* env vars, __ nested)
-├── database.py       # SQLite init, WAL, FTS5, migrations
+├── main.py           # App factory (create_app/get_app), DI via app.state（挂载全部路由）
+├── models.py         # SQLModel 表 + Pydantic schemas（请求/响应模型）
+├── config.py         # Pydantic Settings（PEEKVIEW_* env vars, __ nested）
+├── database.py       # SQLite init, WAL, FTS5, migrations（幂等 _run_migrations）
 ├── auth.py           # JWT + bcrypt + API key verification
 ├── storage.py        # Filesystem operations (atomic writes)
-├── cli.py            # Click CLI (serve/create/get/list/delete/user/login/apikey/admin)
-├── api/              # Routes: entries, files, auth, apikeys, admin, captcha, config, shares, rate_limit
-└── services/         # entry, file, apikey, admin, share, read_tracking, html_render
+├── cli.py            # Click CLI（全部子命令）
+├── api/              # 路由模块——与 API 端点一一对应，新增路由仿照既有模块
+└── services/         # 业务逻辑域——entry/file/apikey/admin/share/read_tracking/html_render 各自独立模块
 
 frontend-v3/src/
-├── router.ts         # ⚠️ 不是 src/router/index.ts
-├── views/            # Landing, EntryList, EntryDetail, ApiKeyList, NotFound
-├── components/       # CodeViewer(Shiki), MarkdownViewer, MermaidDiagram, FileTree, LoginDialog, ...
-├── stores/           # Pinia: auth, entry, share, theme
-├── composables/      # useShiki, useMermaid, useMarkdown, useToast, useViewMode, useDiagramViewer, usePlantUML, useDebounce, useRelativeTime
+├── router.ts         # ⚠️ 不是 src/router/index.ts；页面路由在此注册
+├── views/            # 页面组件——按 router 路径对应（Landing/EntryList/EntryDetail/Settings/Teams/...）
+├── components/       # 可复用组件（CodeViewer/MarkdownViewer/FileTree/LoginDialog/...）
+├── stores/           # Pinia stores（auth/entry/share/theme）
+├── composables/      # UI 逻辑 hooks（useShiki/useMarkdown/useMermaid/useToast/...）
 ├── api/              # Axios HTTP client wrappers
 └── types/            # TypeScript interfaces
 
 packages/mcp-server/src/
 ├── server.ts         # MCP Server setup, Streamable HTTP transport
 ├── client.ts         # PeekView API client
-├── tools/            # createEntry, publishFiles, get/list/deleteEntry, fileNaming, utils
-├── config/           # file.ts, merge.ts, validators.ts (Env > file > default)
-└── cli/              # config.ts, service.ts (service install/verify)
+├── tools/            # MCP 工具——每个工具一个文件，新增工具仿照既有实现
+├── config/           # 配置解析：Env > file > default
+└── cli/              # 服务安装/验证 CLI（service install/verify）
 ```
 
 **版本源**：`VERSIONS.json` 是唯一版本源，`bump-version`/`bump-mcp-version` 通过 `scripts/sync_versions.py` 同步到所有文件。两个包版本独立管理。
@@ -52,7 +52,7 @@ packages/mcp-server/src/
 7. **前端 URL 路径是 `/:slug`，不是 `/entries/:slug`**。API 是 `/api/v1/entries`，页面路由是 `/{slug}`。此错误反复导致 Playwright 验证失败
 8. **CHANGELOG 及时记录**：用户可见改动完成后，立刻写入 `CHANGELOG.md` 的 `[Unreleased]` 区域，不可延后
 9. 不加注释（除非被要求）
-10. 完成任务后必须跑 lint/typecheck：`make lint && make typecheck`（ruff 不在 venv，用系统 python3；CI 强制）
+10. 完成任务后必须跑 lint/typecheck：`make lint && make typecheck`（ruff 走 venv `backend/.venv/bin/ruff`；CI 强制 typecheck）
 11. 长耗时命令（`make bump-version`、`make build`、`make publish`、`make debug`）必须设 `timeout: 300000`（5 分钟）。超时后检查实际执行状态，不盲目重试
 
 ## 环境隔离
@@ -70,7 +70,7 @@ make dev                  # 创建/更新 backend/.venv（不影响 pipx）
 
 # 后端
 make test-quick                                                          # 测试（用 venv，自动检查 venv 是否过期）
-make lint                                                                # lint（ruff 不在 venv，用系统 python3）
+make lint                                                                # lint（走 venv .venv/bin/ruff）
 make lint-fix                                                            # lint 自动修复
 
 # 前端
