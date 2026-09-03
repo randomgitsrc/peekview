@@ -220,5 +220,5 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 - 预存失败登记模板：`~/.agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `agate-workspace/tasks/{TPVxxxx}/known-failures.md`）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
-- 升级指南：`docs/process/upgrading.md`（破坏性变更 / 升级顺序——有此类改动时在此追加，勿写进 CHANGELOG [Unreleased] 或 README）
+- 升级指南：`docs/process/upgrading.md`（破坏性变更 / 升级顺序，按版本追加）
 - 改善清单：`docs/roadmap/improvement-backlog.md`
