@@ -27,6 +27,7 @@ make bump-version NEW_VERSION=x.y.z && make release
 - 走 agate 流程的任务：P5（技术验证）通过后立刻写
 - 非 agate 任务（热修、小改动等）：完成后立刻写
 - 判断标准：只要改动对用户可见（功能、行为、UI、API），就写。纯内部重构不影响用户的不写
+- **例外——版本信号不写 `[Unreleased]`**：破坏性变更说明、升级顺序、升级注意事项（如"先升后端再升 MCP"）属于运维指引，写入 `docs/process/upgrading.md`（按版本号追加一节）。原因是 `[Unreleased]` 会在 bump 时随新版本滚动，历史版本的升级指引若留在其中会错位；README 则因版本信号过时遗留也不合适。
 
 ```
 ## [Unreleased]
@@ -114,6 +115,7 @@ make update-docs
 **手动检查清单**:
 - [ ] README.md 版本号已更新
 - [ ] CHANGELOG.md `[Unreleased]` 内容已归集到新版本号下，`[Unreleased]` 区域为空
+- [ ] 有破坏性变更 / 升级顺序要求时，`docs/process/upgrading.md` 已同步（**勿**写进 `[Unreleased]` 或 README，避免 bump 滚动错位 / 版本信号过时遗留）
 - [ ] API 路径示例正确 (`/api/v1/entries`)
 - [ ] 环境变量名使用 `__` 分隔符
 
