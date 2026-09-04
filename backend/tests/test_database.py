@@ -400,3 +400,124 @@ class TestRebuildFtsIndex:
             assert result.scalar() == 1
 
         engine.dispose()
+
+
+class TestFTS5ContentlessProbe:
+    """Runtime probe for FTS5 contentless_delete support."""
+
+    def test_probe_true_on_modern_sqlite(self, tmp_path: Path):
+        from peekview.database import _fts5_supports_contentless_delete
+
+        engine = init_db(tmp_path / "probe.db")
+        with engine.connect() as conn:
+            assert _fts5_supports_contentless_delete(conn) is True
+        engine.dispose()
+
+    def test_probe_false_when_option_rejected(self):
+        """If the FTS5 build rejects the option, probe returns False cleanly."""
+        from types import SimpleNamespace
+
+        from sqlalchemy.exc import OperationalError
+        from sqlalchemy.sql.elements import TextClause
+
+        from peekview.database import _fts5_supports_contentless_delete
+
+        calls: list[str] = []
+
+        class FailingConn:
+            def execute(self, statement: TextClause, *args, **kwargs):
+                calls.append(str(statement))
+                raise OperationalError("unrecognized option", None, 'unrecognized option: "contentless_delete"')
+
+            def rollback(self):
+                calls.append("rollback")
+
+        conn = SimpleNamespace(execute=FailingConn().execute, rollback=FailingConn().rollback)
+        # wrap to keep instance state
+        failing = FailingConn()
+        conn = SimpleNamespace(
+            execute=lambda stmt, *a, **k: failing.execute(stmt, *a, **k),
+            rollback=lambda: failing.rollback(),
+        )
+        assert _fts5_supports_contentless_delete(conn) is False
+        assert any("fts5_contentless_probe" in c for c in calls)
+        assert "rollback" in calls
+
+
+class TestFTS5SqliteCompat:
+    """FTS5 DDL adapts to SQLite version (contentless_delete requires >= 3.43.0)."""
+
+    def test_new_sqlite_uses_contentless_delete(self, tmp_path: Path):
+        """Hosts with SQLite >= 3.43 keep the compact contentless index."""
+        import sqlite3
+
+        if sqlite3.sqlite_version_info < (3, 43, 0):
+            import pytest
+
+            pytest.skip("host sqlite < 3.43.0")
+
+        engine = init_db(tmp_path / "new.db")
+
+        with engine.connect() as conn:
+            sql = conn.execute(
+                text("SELECT sql FROM sqlite_master WHERE name='entries_fts'")
+            ).scalar()
+
+        assert sql is not None
+        assert "contentless_delete" in sql
+
+        engine.dispose()
+
+    def test_old_sqlite_falls_back_to_plain_fts(self, tmp_path: Path, monkeypatch):
+        """Hosts whose FTS5 lacks contentless_delete get a plain FTS5 table."""
+        monkeypatch.setattr(
+            "peekview.database._fts5_supports_contentless_delete", lambda conn: False
+        )
+        engine = init_db(tmp_path / "old.db")
+
+        with engine.connect() as conn:
+            sql = conn.execute(
+                text("SELECT sql FROM sqlite_master WHERE name='entries_fts'")
+            ).scalar()
+
+        assert sql is not None
+        assert "contentless_delete" not in sql
+        assert "content=''" not in sql
+
+        engine.dispose()
+
+    def test_old_sqlite_plain_fts_full_flow(self, tmp_path: Path, monkeypatch):
+        """Plain FTS5 fallback supports app-layer write and delete trigger flow."""
+        monkeypatch.setattr(
+            "peekview.database._fts5_supports_contentless_delete", lambda conn: False
+        )
+        engine = init_db(tmp_path / "old_flow.db")
+
+        with Session(engine) as session:
+            entry = Entry(slug="compat", summary="compat entry")
+            session.add(entry)
+            session.commit()
+            entry_id = entry.id
+
+            session.exec(
+                text(
+                    "INSERT INTO entries_fts(rowid, summary, tags, content) "
+                    "VALUES (:id, :summary, :tags, :content)"
+                ).bindparams(id=entry_id, summary="compat entry", tags="", content="body")
+            )
+            session.commit()
+
+            row = session.exec(
+                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id)
+            )
+            assert row.scalar() == 1
+
+            session.delete(entry)
+            session.commit()
+
+            row = session.exec(
+                text("SELECT COUNT(*) FROM entries_fts WHERE rowid = :id").bindparams(id=entry_id)
+            )
+            assert row.scalar() == 0
+
+        engine.dispose()

@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 修复
+
+- FTS5 建表改为运行时实证探测 `contentless_delete` 支持：部分托管环境（实战：PythonAnywhere）`sqlite_version_info` 报告新版本但 FTS5 构建实际不支持该选项，`CREATE VIRTUAL TABLE ... contentless_delete=1` 直接启动崩溃；现用临时表试建探测，不支持时回退普通（内容内联）FTS5 表——触发器、应用层写入、rebuild/backfill/搜索全路径在两种模式下均兼容
+- 保留用户名扩容 3→31：`default/system/admin` 不足以防冒充（`administrator`/`root` 等此前均可注册）；新增 authority/staff（administrator、root、superuser、sysadmin、moderator、staff、support、helpdesk、official、team、security、abuse、webmaster、postmaster、hostmaster）、system/lifecycle（user、guest、anonymous、me、null、none、undefined、deleted、unknown）、product/infra（peekview、api、www、mail、email、bot、automation、notifications、noreply、no-reply）三组；大小写不敏感与用户名字符白名单（阻断同形字注册）保持不变
+
 ## [0.23.0] - 2026-09-03
 
 ### 新增

@@ -5,6 +5,7 @@ Handles SQLite setup with WAL mode, FTS5 for search, and triggers.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -400,12 +401,41 @@ def _setup_indexes(engine: Engine) -> None:
             logger.info("Setup: added partial unique index ux_live_star on entry_stars")
 
 
+def _fts5_supports_contentless_delete(conn) -> bool:
+    """Runtime-probe FTS5 for contentless_delete support.
+
+    sqlite_version_info alone is not reliable here: some hosts (e.g.
+    PythonAnywhere) report a modern SQLite version while shipping an FTS5
+    build that rejects the contentless_delete option, so we test it
+    empirically with a throwaway temp table on the same connection.
+    """
+    try:
+        conn.execute(
+            text(
+                "CREATE VIRTUAL TABLE temp.fts5_contentless_probe "
+                "USING fts5(x, content='', contentless_delete=1)"
+            )
+        )
+        conn.execute(text("DROP TABLE temp.fts5_contentless_probe"))
+        return True
+    except Exception:
+        with contextlib.suppress(Exception):
+            conn.rollback()
+        return False
+
+
 def setup_fts5(engine: Engine) -> None:
     """Setup FTS5 virtual table for full-text search.
 
-    Creates the entries_fts virtual table in contentless+contentless_delete mode
-    with summary, tags, and content columns. Triggers only sync summary/tags;
-    content is managed by the application layer (entry_service).
+    Creates the entries_fts virtual table with summary, tags, and content
+    columns. Triggers only sync summary/tags; content is managed by the
+    application layer (entry_service).
+
+    Support for contentless_delete is probed at runtime (some hosts report a
+    modern SQLite version while shipping an FTS5 build without the option).
+    When unsupported, the table falls back to a plain (content-storing) FTS5
+    table, which supports the same DELETE/UPDATE trigger and app-layer write
+    paths.
     """
     with engine.connect() as conn:
         result = conn.execute(
@@ -415,8 +445,8 @@ def setup_fts5(engine: Engine) -> None:
             logger.debug("FTS5 table already exists")
             return
 
-        conn.execute(
-            text("""
+        if _fts5_supports_contentless_delete(conn):
+            ddl = """
                 CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
                     summary,
                     tags,
@@ -424,8 +454,19 @@ def setup_fts5(engine: Engine) -> None:
                     content='',
                     contentless_delete=1
                 )
-            """)
-        )
+            """
+            mode = "contentless mode, app-layer writes"
+        else:
+            ddl = """
+                CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
+                    summary,
+                    tags,
+                    content
+                )
+            """
+            mode = "plain mode (FTS5 without contentless_delete), app-layer writes"
+
+        conn.execute(text(ddl))
 
         conn.execute(
             text("""
@@ -446,7 +487,7 @@ def setup_fts5(engine: Engine) -> None:
         )
 
         conn.commit()
-        logger.info("FTS5 virtual table and triggers created (contentless mode, app-layer writes)")
+        logger.info("FTS5 virtual table and triggers created (%s)", mode)
 
 
 def get_engine(config_or_path: PeekConfig | Path | str | None = None) -> Engine:
