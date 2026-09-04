@@ -27,8 +27,7 @@ FTS_CONTENT_MAX_PER_ENTRY = 1_000_000
 
 
 # Default SQLite pragmas for performance and safety
-DEFAULT_PRAGMAS = {
-    "journal_mode": "WAL",  # Write-Ahead Logging for better concurrency
+_BASE_PRAGMAS = {
     "busy_timeout": 5000,  # 5 second busy timeout
     "foreign_keys": "ON",  # Enforce foreign key constraints
     "synchronous": "NORMAL",  # Balance safety and performance
@@ -36,6 +35,24 @@ DEFAULT_PRAGMAS = {
     "temp_store": "MEMORY",  # Store temp tables in memory
     "mmap_size": 268435456,  # 256MB memory-mapped I/O
 }
+
+
+def _journal_mode() -> str:
+    """Journal mode with deployment override.
+
+    WAL requires shared memory + POSIX locks that are unreliable on network
+    filesystems (kernel-level hangs on NFS — PythonAnywhere deployment).
+    Such deployments set PEEKVIEW_DATABASE__JOURNAL_MODE=DELETE.
+    """
+    import os
+
+    return os.environ.get("PEEKVIEW_DATABASE__JOURNAL_MODE", "WAL").upper()
+
+
+def _default_pragmas() -> dict:
+    pragmas = dict(_BASE_PRAGMAS)
+    pragmas["journal_mode"] = _journal_mode()
+    return pragmas
 
 
 def _run_migrations(engine: Engine) -> None:
@@ -335,15 +352,20 @@ def init_db(db_path: Path | str, run_migrations: bool = False) -> Engine:
     )
 
     # Apply pragmas
+    expected_journal = _journal_mode().lower()
     with engine.connect() as conn:
-        for pragma, value in DEFAULT_PRAGMAS.items():
+        for pragma, value in _default_pragmas().items():
             conn.execute(text(f"PRAGMA {pragma} = {value}"))
 
-        # Verify WAL mode is enabled
+        # Verify journal mode matches configuration
         result = conn.execute(text("PRAGMA journal_mode"))
         journal_mode = result.scalar()
-        if journal_mode != "wal":
-            logger.warning(f"WAL mode not enabled (current: {journal_mode})")
+        if journal_mode != expected_journal:
+            logger.warning(
+                "Journal mode not enabled (expected: %s, current: %s)",
+                expected_journal,
+                journal_mode,
+            )
 
     # Ensure models are registered before create_all
     from peekview import models as _models  # noqa: F401
@@ -757,9 +779,10 @@ def set_sqlite_pragma(dbapi_conn, connection_record):
 
     All connection-level pragmas (busy_timeout, synchronous, etc.) must be
     applied here because NullPool creates a fresh connection per request.
-    journal_mode=WAL is file-level (persistent), but also set here for safety.
+    journal_mode is file-level (persistent), but also set here for safety
+    and to honor PEEKVIEW_DATABASE__JOURNAL_MODE overrides.
     """
     cursor = dbapi_conn.cursor()
-    for pragma, value in DEFAULT_PRAGMAS.items():
+    for pragma, value in _default_pragmas().items():
         cursor.execute(f"PRAGMA {pragma} = {value}")
     cursor.close()

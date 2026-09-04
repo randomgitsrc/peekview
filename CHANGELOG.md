@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 新增
+
+- `PEEKVIEW_DATABASE__JOURNAL_MODE` 环境变量：journal 模式可按部署覆盖（默认 WAL 不变）。NFS 类托管环境（实战：PythonAnywhere）WAL 的共享内存 + POSIX 锁在内核态挂起导致全站冻结，此类部署设为 `DELETE` 即可稳定运行（文档见部署指南 §2.3）
+
 ### 修复
 
 - FTS5 建表改为运行时实证探测 `contentless_delete` 支持：部分托管环境（实战：PythonAnywhere）`sqlite_version_info` 报告新版本但 FTS5 构建实际不支持该选项，`CREATE VIRTUAL TABLE ... contentless_delete=1` 直接启动崩溃；现用临时表试建探测，不支持时回退普通（内容内联）FTS5 表——触发器、应用层写入、rebuild/backfill/搜索全路径在两种模式下均兼容

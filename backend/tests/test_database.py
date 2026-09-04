@@ -521,3 +521,27 @@ class TestFTS5SqliteCompat:
             assert row.scalar() == 0
 
         engine.dispose()
+
+
+class TestJournalModeOverride:
+    """PEEKVIEW_DATABASE__JOURNAL_MODE supports NFS deployments (e.g. PythonAnywhere)."""
+
+    def test_journal_mode_env_override(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("PEEKVIEW_DATABASE__JOURNAL_MODE", "DELETE")
+        engine = init_db(tmp_path / "journal.db")
+
+        with engine.connect() as conn:
+            mode = conn.execute(text("PRAGMA journal_mode")).scalar()
+
+        assert str(mode).lower() == "delete"
+        engine.dispose()
+
+    def test_journal_mode_default_is_wal(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("PEEKVIEW_DATABASE__JOURNAL_MODE", raising=False)
+        engine = init_db(tmp_path / "wal.db")
+
+        with engine.connect() as conn:
+            mode = conn.execute(text("PRAGMA journal_mode")).scalar()
+
+        assert str(mode).lower() == "wal"
+        engine.dispose()
