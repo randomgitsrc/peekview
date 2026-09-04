@@ -901,7 +901,18 @@ class TeamsListResponse(SQLModel):
 # Auth schemas
 
 
-RESERVED_USERNAMES = {"default", "system", "admin"}
+RESERVED_USERNAMES = {
+    # authority / staff impersonation
+    "admin", "administrator", "root", "superuser", "sysadmin", "moderator",
+    "mod", "staff", "support", "help", "helpdesk", "official", "team",
+    "security", "abuse", "webmaster", "postmaster", "hostmaster",
+    # system / lifecycle placeholders
+    "system", "default", "user", "guest", "anonymous", "null", "none",
+    "undefined", "deleted", "unknown", "me",
+    # product / infra
+    "peekview", "api", "www", "mail", "email", "bot", "automation",
+    "notifications", "noreply", "no-reply",
+}
 
 
 class UserRegister(SQLModel):

@@ -158,7 +158,21 @@ class TestRegister:
     @pytest.mark.asyncio
     async def test_register_reserved_username(self, auth_client):
         """Reserved usernames should be rejected (Pydantic validation)."""
-        for name in ["default", "system", "admin"]:
+        for name in ["default", "system", "admin", "administrator", "root", "moderator",
+                     "staff", "support", "peekview", "api", "me"]:
+            resp = await auth_client.post(
+                "/api/v1/auth/register",
+                json={
+                    "username": name,
+                    "password": "somepassword123",
+                },
+            )
+            assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_register_reserved_username_case_insensitive(self, auth_client):
+        """Reserved check is case-insensitive (Admin / ADMIN also rejected)."""
+        for name in ["Admin", "ADMIN", "Administrator"]:
             resp = await auth_client.post(
                 "/api/v1/auth/register",
                 json={
