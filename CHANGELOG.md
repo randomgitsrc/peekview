@@ -5,6 +5,17 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- `make debug-seed` 新增 `dsh-architecture` entry（alice，公开）：SCNet DSH 架构部署文档，含 4 个裸内嵌 `<svg>` 块 + 表格 + yaml 代码块——作为「裸 HTML SVG 渲染问题」的固定复现样本
+- Markdown 支持裸内嵌 `<svg>`（inline 插图直渲，与 ```` ```svg ```` diagram 区块双模式并存）：预处理阶段把行首块级 `<svg>...</svg>`（fence 外）提取为占位符，每个 SVG 作为独立 html 块单独 sanitize 后按原位回填——保持插图形态，不带 diagram 工具栏
+
+### 修复
+
+- 裸内嵌 `<svg>` 导致「SVG 空壳 + 后续章节被吞」的渲染缺陷：markdown-it html_block 在 SVG 内部空行处切碎块，`<text ...>...</text>` 等单行开闭片段被当段落渲染成 `<p><text>`，DOM 解析在 SVG foreign content 中遇到 `<p>` 强制 breakout（svg 提前闭合），DOMPurify 随即删除错位元素并级联吞掉同块后续章节/表格。修复即上述提取保护；`useMarkdown.svg.spec` 新增 5 例（原 bug 复现场景/fence 不受影响/代码块内 svg 不误提取），`e2e/svg-inline-render.spec.ts` 锁定 dsh-architecture 页 4 SVG + 7 章节 + 2 表格契约
+
 ## [0.24.0] - 2026-09-04
 
 ### 新增

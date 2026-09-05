@@ -223,3 +223,21 @@ source: retrospective
 created_at: 2026-09-03
 ```
 ```
+
+## DEBT0010
+
+```yaml
+id: DEBT0010
+category: process
+title: E2E 渲染类 spec（mermaid/mermaid-check/mermaid-visual）依赖已消失的老 seed entry——长期红灯掩盖真回归
+status: open
+priority: medium
+evidence:
+  - note: 2026-09-05 定位「裸 SVG 渲染吞章节」回归排查时发现：mermaid.spec（test-mermaid-2）、mermaid-check.spec（playwright-test）、mermaid-visual.spec（e2e-test）依赖的 seed entry 全部 404（不在现行 seed-data/ 中），这批 spec 在任何代码状态下都失败（stash 修复前后失败集合不变、t084 两态同为 7 failed）。红灯常态化 = 真回归被淹没，E2E 信号失真
+impact: 渲染类 E2E 约 30+ 用例永久红，任何回归排查都要先做 stash 基线对照才能定性；CI 若接入 E2E 将直接堵死
+recommendation: 二选一：①恢复/重造这批 spec 依赖的 seed fixture（test-mermaid-2/playwright-test/e2e-test 进 seed-data/）②重写 spec 用自建 entry（参照 render-regression.spec 的 createEntry 模式 + afterEach 清理）。同时把「spec 依赖的 entry 必须存在或自建」写进 E2E 编写规范
+closure_criteria:
+  - mermaid/mermaid-check/mermaid-visual 三 spec 在干净 debug 环境全绿（或正式标记 skip + 原因）
+source: retrospective
+created_at: 2026-09-05
+```

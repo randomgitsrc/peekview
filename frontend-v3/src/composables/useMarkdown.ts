@@ -261,6 +261,59 @@ export function useMarkdown() {
     // Store original fence renderer
     const originalFence = md.renderer.rules.fence
 
+    // Raw inline SVG protection: markdown-it's html_block rule breaks an <svg>
+    // block at every internal blank line, and single-line fragments like
+    // `<text ...>label</text>` fall back to paragraph rendering (`<p><text>`).
+    // A <p> inside the svg foreign content forces the HTML parser to break out,
+    // closing the <svg> early; DOMPurify then drops the stray SVG elements and
+    // the cascading fragments swallow the rest of the block. Extracting block
+    // level `<svg>...</svg>` (line-start, outside fences) into placeholders and
+    // sanitizing each one as its own html block keeps inline SVG rendering
+    // intact. Indented (list-nested) svg and nested <svg> are not extracted.
+    const rawSvgChunks: string[] = []
+    {
+      const svgLines: string[] = processedContent.split('\n')
+      const outLines: string[] = []
+      let inFence = false
+      let fenceMarker = ''
+      let collecting: string[] | null = null
+      for (const line of svgLines) {
+        const fenceMatch = line.match(/^\s{0,3}(```+|~~~+)/)
+        if (collecting === null) {
+          if (fenceMatch && !inFence) {
+            inFence = true
+            fenceMarker = fenceMatch[1].slice(0, 3)
+            outLines.push(line)
+            continue
+          }
+          if (inFence) {
+            if (line.includes(fenceMarker)) inFence = false
+            outLines.push(line)
+            continue
+          }
+          if (/^<svg\b/.test(line)) {
+            collecting = [line]
+            if (/<\/svg>\s*$/.test(line)) {
+              rawSvgChunks.push(collecting.join('\n'))
+              outLines.push(`\n<!--RAW_SVG_${rawSvgChunks.length - 1}-->\n`)
+              collecting = null
+            }
+            continue
+          }
+          outLines.push(line)
+        } else {
+          collecting.push(line)
+          if (/<\/svg>\s*$/.test(line)) {
+            rawSvgChunks.push(collecting.join('\n'))
+            outLines.push(`\n<!--RAW_SVG_${rawSvgChunks.length - 1}-->\n`)
+            collecting = null
+          }
+        }
+      }
+      if (collecting !== null) outLines.push(...collecting)
+      processedContent = outLines.join('\n')
+    }
+
     // First pass: collect code blocks
     md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx]
@@ -350,9 +403,23 @@ export function useMarkdown() {
     const parts = html.split(/<!--CODE_BLOCK_(\d+)-->/)
     for (let i = 0; i < parts.length; i++) {
       if (i % 2 === 0) {
-        const segment = parts[i].trim()
-        if (segment) {
-          blocks.push({ type: 'html', html: segment })
+        // Re-split each html segment on raw-SVG placeholders so every extracted
+        // <svg> becomes its own html block (individually sanitized, rendered in
+        // place as an inline illustration).
+        const svgParts = parts[i].split(/<!--RAW_SVG_(\d+)-->/)
+        for (let j = 0; j < svgParts.length; j++) {
+          if (j % 2 === 0) {
+            const segment = svgParts[j].trim()
+            if (segment) {
+              blocks.push({ type: 'html', html: segment })
+            }
+          } else {
+            const svgIdx = parseInt(svgParts[j])
+            const rawSvg = rawSvgChunks[svgIdx]
+            if (rawSvg) {
+              blocks.push({ type: 'html', html: rawSvg })
+            }
+          }
         }
       } else {
         const blockIdx = parseInt(parts[i])

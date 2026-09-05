@@ -1,0 +1,11 @@
+{
+  "summary": "SCNet DSH 架构部署文档（裸内嵌 SVG 渲染测试：4 个原生 <svg> 块 + 表格 + yaml 代码块）",
+  "tags": [
+    "架构",
+    "svg",
+    "渲染测试",
+    "文档"
+  ],
+  "is_public": true,
+  "owner": "alice"
+}
