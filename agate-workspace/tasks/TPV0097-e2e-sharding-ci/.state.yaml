@@ -1,0 +1,13 @@
+phase: P0
+task_id: TPV0097
+task_name: e2e-sharding-ci
+status: blocked-dependency
+created: 2026-09-05T00:00:00Z
+updated: 2026-09-05T00:00:00Z
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: 2026-09-05T00:00:00Z
+  note: '立项：E2E 分片并行（debug-extra × --shard）+ CI E2E job + 硬等待重灾区治理。硬依赖 TPV0096 全绿（红灯不清分片绿灯判定无意义）。CI 修改为强制许可项（铁律 5）——P2 设计产出 CI 变更清单，P4 实施前向用户确认。risk=medium（基建编排跨 Makefile/dev-server.sh/playwright config/CI 四子系统）'
