@@ -1,13 +1,21 @@
 phase: P0
 task_id: TPV0096
 task_name: e2e-fixture-selfcontained
-status: in-progress
-created: 2026-09-05T00:00:00Z
-updated: 2026-09-05T00:00:00Z
+status: pending-start
+created: 2026-09-05 00:00:00+00:00
+updated: '2026-09-05T00:30:00Z'
 judge:
   enabled: true
 history:
 - phase: P0
   action: created
-  ts: 2026-09-05T00:00:00Z
-  note: '立项：E2E 红灯 spec（mermaid/mermaid-check/mermaid-visual）自建 entry 化（DEBT0010）。已实证：依赖 entry（test-mermaid-2/playwright-test/e2e-test）404 且 git 无 fixture 删除记录（从未入库，手动建于旧 debug DB）；stash 基线对照证明与裸 SVG 修复无关。环境自检 5 项全 PASS。risk=low-medium（纯测试改动，无 schema/安全）；TPV0097 硬依赖本任务全绿'
+  ts: 2026-09-05 00:00:00+00:00
+  note: 立项：E2E 红灯 spec（mermaid/mermaid-check/mermaid-visual）自建 entry 化（DEBT0010）。已实证：依赖
+    entry（test-mermaid-2/playwright-test/e2e-test）404 且 git 无 fixture 删除记录（从未入库，手动建于旧
+    debug DB）；stash 基线对照证明与裸 SVG 修复无关。环境自检 5 项全 PASS。risk=low-medium（纯测试改动，无 schema/安全）；TPV0097
+    硬依赖本任务全绿
+- phase: P0
+  action: paused
+  ts: '2026-09-05T00:30:00Z'
+  note: 用户叫停实施：批准范围=立项，P1 analyst 派发为主 Agent 越权（已 interrupt，无产出落盘）。任务保持 P0 完成、待用户明确指令后再进
+    P1
