@@ -5,6 +5,19 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- 渲染类 E2E spec 自建 entry 化（TPV0096）：mermaid/mermaid-check/mermaid-visual 三个 spec 不再依赖已消失的老 seed entry，每 test 匿名创建 fixture——`e2e-` 前缀确定性 slug + 防御性预删 + 创建失败不吞错，`afterEach` 清理队列统一删除创建的 entry，`BASE_URL` 防生产护栏阻断误指生产环境；干净 debug 环境 14 用例双 project 全绿且可重复（DEBT0010 闭环）
+- `docs/process/debug-workflow.md` 新增「E2E 编写规范」节（4 条）：路由写法（页面路由 `/:slug`）、entry 用 seed 或自建 + afterEach 清理、`BASE_URL` 防生产护栏、认证配对（匿名创建/删除与登录视图配对）——spec 依赖的 entry 必须存在或自建自此成为编写规范
+
+### 修复
+
+- mermaid-visual.spec 假绿修复：渲染断言改为无条件执行，不再被条件分支跳过（假绿掩盖真实覆盖面）
+- 死选择器迁移：`.mermaid-content` → `.diagram-viewer` / `.diagram-code`、`.mermaid-action-btn` → `.diagram-action-btn.fullscreen-btn`、`.diagram-modal-overlay` → `.diagram-modal`（对齐前端组件重构后的实际 DOM）
+- E2E 路由迁移：`goto /entries/:slug` → `goto /:slug`（前端页面路由为 `/:slug`，旧写法一律 404）
+
 ## [0.24.1] - 2026-09-07
 
 ### 新增

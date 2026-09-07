@@ -230,7 +230,7 @@ created_at: 2026-09-03
 id: DEBT0010
 category: process
 title: E2E 渲染类 spec（mermaid/mermaid-check/mermaid-visual）依赖已消失的老 seed entry——长期红灯掩盖真回归
-status: open
+status: closed
 priority: medium
 evidence:
   - note: 2026-09-05 定位「裸 SVG 渲染吞章节」回归排查时发现：mermaid.spec（test-mermaid-2）、mermaid-check.spec（playwright-test）、mermaid-visual.spec（e2e-test）依赖的 seed entry 全部 404（不在现行 seed-data/ 中），这批 spec 在任何代码状态下都失败（stash 修复前后失败集合不变、t084 两态同为 7 failed）。红灯常态化 = 真回归被淹没，E2E 信号失真
