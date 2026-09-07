@@ -19,3 +19,4 @@
 - GATE PASS: check-tdd-red.py exit 0（真红灯，AGATE_TDD_TIMEOUT=600，宿主服务在线 + 完成后 debug-stop 还原）。红灯原因核验：debug log 显示 /entries/test-mermaid-2 触发 NotFoundView 资源加载——死路由+死 entry 的预期 fixture 类红灯，非 A 类测试代码错误。NEXT: 等 test-designer（95c45b22）产出 → gate P3 → commit → P4
 - GATE PASS: P3 exit 2（P3-test-cases.md 存在）→ commit a05e381f。红灯基线与 BDD-12 三轮基线已由主 Agent 回填 P3 §5（render-regression 失败家族并集 bdd_3/4/5/7/8 = 既有 flaky；t085-* 无清理跨轮累积 187 entries 污染实证→P5/P6 判定以干净环境重跑为准）。NEXT: P4 implementer（88c5eb2d，改动封闭清单 4 文件）→ design-review（C8: frontend）→ gate P4
 - SUBAGENT DONE: P4 implementer（88c5eb2d）产出 4 文件改造 + P4-implementation.md（自查：单测 1343 passed、静态判据清零、slug 14 枚举、--list 可收集、[PROD_NOT_TOUCHED]）。NEXT: 派 design-review（C8: frontend）→ P4-review.md
+- SUBAGENT DONE: P4 design-review（3a26106f）approved——6 焦点全过、5 条非阻塞、无 BLOCKER；复核采样发现 src 侧 vitest 既有 flaky（与改动面零交集，P5 登记用）。GATE PASS: P4 exit 0（暂存区含代码文件）→ commit 13594c9f。NEXT: P5 verifier（bb9f35f4，5 键 gate_commands；E2E 三键单调用自包含串行）
