@@ -58,6 +58,8 @@ P0-brief 的「自建 + 清理」之外，P1 查证发现以下未言明但技�
 - **约束兼容性**：改的是 `e2e/*.spec.ts` 内的字符串选择器与 goto 路径，不触碰 `src/`——仍在「只改测试代码」边界内
 - [BASELINE_SCOPE_NOTE] 此项为 P1 新识别的隐含需求（P0 改动清单只列了 beforeEach/afterEach 改造），按 [SCOPE+ from P1] 增补基线，待主 Agent 确认并入 P2 设计
 
+[SCOPE_RESOLVED: 2.1 死选择器迁移——主 Agent 2026-09-07 采纳（P1-review 前 SUGGEST-1 定案），已纳入 P2 方案（§1.1 M1/M3 表）并由 P4 实现、P6 BDD-7 静态清零 PASS、P6.5 judge 独立复核确认；本标记为闭环记录，非语义变更 [BASELINE_CHANGE: 主 Agent 批准的闭环标记]]
+
 ### 2.2 goto 路径迁移——`/entries/:slug` 是死路由
 
 `router.ts` 仅有 `path: '/:slug'`（L48），无 `/entries/:slug` 路由亦无 redirect；`/entries/xxx` 两段路径落入 `/:pathMatch(.*)*` → NotFoundView。三个 spec 的 goto 全部使用 `/entries/{slug}` 旧写法，页面必然 404。这是 AGENTS.md 铁律 7 明文的反复复发陷阱。**必须**改为 `/${slug}`（render-regression.spec 的 `gotoEntry` helper L59-60 是正确写法参照）。

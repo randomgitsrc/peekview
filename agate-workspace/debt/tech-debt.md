@@ -241,3 +241,39 @@ closure_criteria:
 source: retrospective
 created_at: 2026-09-05
 ```
+
+## DEBT0011
+
+```yaml
+id: DEBT0011
+category: technical
+title: t022-diagram-refactor / verify-mermaid 两个 spec 同型缺陷（死 goto + 死选择器 + 消失 fixture）——TPV0096 P1 同类扫描延后项
+status: open
+priority: medium
+evidence:
+  - note: TPV0096 P1 同类扫描实证（P1 §4）：t022-diagram-refactor.spec.ts 7 test 全部 goto /entries/test-mermaid-2 等（均不在 seed）+ 死选择器 .mermaid-action-btn/.toolbar-btn；verify-mermaid.spec.ts goto /entries/test-mermaid-2-2（不存在）。主 Agent 采纳 SUGGEST-4 延后单独立项（超出 DEBT0010 closure criteria 三 spec 范围，避免扩大验收面）
+impact: 两 spec 在干净环境永久红灯，与 DEBT0010 同型信号失真；t022 家族 7 用例无法提供回归信号
+recommendation: 立项时按 TPV0096 同方案处理（自建 entry + afterEach 清理 + goto /:slug + 选择器迁移）；BDD-13 E2E 编写规范（docs/process/debug-workflow.md）已为拦截手段
+closure_criteria:
+  - t022-diagram-refactor.spec.ts 与 verify-mermaid.spec.ts 在干净 debug 环境全绿或正式 skip + 原因
+source: retrospective
+created_at: 2026-09-07
+```
+
+## DEBT0012
+
+```yaml
+id: DEBT0012
+category: technical
+title: debug seed 基建预存缺陷——seed-debug.py 团队创建先于成员添加缺重试，偶发 422 致部分 seed entry 未入库
+status: open
+priority: low
+evidence:
+  - note: TPV0096 P6 验收与 P6.5 judge 复核两次独立观察到 make debug-seed 输出 HTTP 422（team_id 时序），3 条 seed entry 未入库（DB 全表真值证实非清理误删）；TPV0096 自建 fixture 不依赖该批 entry 故不影响本任务验收，但任何依赖全量 seed 的 E2E/人工体验会偶发缺数据
+impact: 依赖 seed 完整性的验证路径偶发缺 3 条 entry（随机性，重跑 seed 可能恢复）；干扰"seed 24 条全可访问"类断言
+recommendation: seed 脚本团队创建后同步等待/重试成员添加，或捕获 422 重试；改动点 scripts/seed-debug.py
+closure_criteria:
+  - 连续 10 次 make debug-seed 零 422，seed 后 DB 全表 24 条稳定
+source: retrospective
+created_at: 2026-09-07
+```
