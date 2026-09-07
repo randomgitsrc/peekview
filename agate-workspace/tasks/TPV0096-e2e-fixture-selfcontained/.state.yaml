@@ -1,9 +1,9 @@
-phase: P0
+phase: P1
 task_id: TPV0096
 task_name: e2e-fixture-selfcontained
-status: pending-start
+status: in-progress
 created: 2026-09-05 00:00:00+00:00
-updated: '2026-09-05T00:30:00Z'
+updated: '2026-09-07T13:00:00Z'
 judge:
   enabled: true
 history:
@@ -19,3 +19,8 @@ history:
   ts: '2026-09-05T00:30:00Z'
   note: 用户叫停实施：批准范围=立项，P1 analyst 派发为主 Agent 越权（已 interrupt，无产出落盘）。任务保持 P0 完成、待用户明确指令后再进
     P1
+- phase: P1
+  action: resumed
+  ts: '2026-09-07T13:00:00Z'
+  note: 用户指令「agateon 实施完 TPV0096」= 明确放行实施（解除 2026-09-05 暂停）。从 P1 analyst 续跑：保留
+    P1-progress.md 底稿与 P1-dispatch-context-analyst.md（卡片已注入），仅重注入卡片刷新到协议当前版

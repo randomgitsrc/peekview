@@ -1,21 +1,11 @@
-# P1-dispatch-context-analyst — TPV0096
+# P1-dispatch-context-requirements-review — TPV0096
 
 ---
 phase: P1
 generated_by: agate-inject-card.py + 主 Agent
 task_id: TPV0096
-role: analyst
+role: requirements-review
 ---
-
-## 续跑指令（2026-09-07）
-
-- 本任务为**续跑**：`P1-progress.md` 已有 2026-09-05 的 4 节输入读取底稿（mermaid/mermaid-check/mermaid-visual 断言反推 + render-regression 参照 + 认证疑点）。**不要重做已完成的读取**——先读底稿，从断点继续补齐余下查证。
-- 底稿明示的待补项（续跑重点）：
-  1. teams-page.spec.ts 的「创建+清理队列」完整模式（afterEach 清理参照）
-  2. debug 环境 `POST /api/v1/entries` 的认证要求（render-regression 无认证头可建 → 查证匿名/公开可写策略）
-  3. `.diagram-viewer`（mermaid-check 用）与 `.mermaid-content`（mermaid.spec 用）在渲染链中的关系（同一路径的两个类名还是不同组件）
-  4. playwright.config.ts 的 project 列表（mermaid-visual 自起 chromium 与多 project 的叠加影响，验收基线"chromium+Mobile"表述需修正为实际配置口径）
-- 旧进度底稿在 facts 与结论上与本 dispatch-context 冲突时，以本文件 + P0-brief 为准并在 progress 中记录差异。
 
 <!-- AGATE_CARD_START -->
 ## 当前阶段卡片：P1
@@ -267,52 +257,38 @@ P1-requirements.md 是需求基线，后续阶段（P2-P8）不应直接修改�
 4. **隐含扩展同样要授权**（TAG0025 教训）：P3/P4 的实现细节若事实上扩展了 P1 验收标准的范围（新增豁免条件、放宽/收紧某条 BDD 的判定边界等），即使当下未产生"矛盾"，也视为需要`[BASELINE_CHANGE]` 授权的情形——授权内容必须回写 P1-requirements.md 正文，不得只存在于下游阶段的 dispatch-context 口头引用中
 <!-- AGATE_CARD_END -->
 
-<dispatch_guide>
+## 目标
 
-### 目标
+独立评审 TPV0096 的 P1 需求基线（`P1-requirements.md`）：按 requirements-review 角色清单逐项检查——BDD 可二值判定与编号连续、隐含需求覆盖、跨条一致性、frontend UX 机制要点、裁剪合理性、审声明（risk/ceremony/phases vs 实际改动）、P1 纯净性（无解决方案设计掺入）。
 
-为「E2E 红灯 spec 自建 entry 化」产出 P1-requirements.md：质疑需求、识别隐含依赖、产出 BDD 验收条件（Given/When/Then），声明 domains/packages/risk_level/phases/capability_requirements，标注 NEED_CONFIRM（无则写 [NO_NEED_CONFIRM]）。
+## 约束
 
-### 约束
+- 只审不写：不修改 P1-requirements.md；产出评审意见到 P1-review.md，Header `status:` 初始 draft，评审完成后改为 approved / needs-revision / rejected（gate 读 Header，与返回摘要必须一致）
+- 结论必须引用具体 BDD 编号锚点（agent≠main，主 Agent 会核对）
+- 格式约束：正文避免行首 `- PASS`/`- FAIL` 预判格式
+- 本评审不审代码实现（无 diff 可看——P1 阶段实现未开始；审声明核对对象为 P1 声明 vs 改动清单文字范围，如「只改 e2e/*.spec.ts + docs/」是否与 phases/risk 声明自洽）
+- 子派发能力：不启用
 
-- 只改测试代码与文档，不改产品代码；不 bump 版本
-- fixture entry 内容需从旧 spec 断言**反推**（旧 entry 无处可查）；mermaid-visual 经底稿复核**不存在像素级对比**（实际断言=存在性+尺寸+交互后可见性），但发现**条件包裹静默假绿**缺陷（`if (isVisible)` + `.catch(() => false)` 使 test 1 在 diagram 不可见时静默通过）——BDD 须覆盖"断言无条件执行"这一修复目标
-- 本 task 不做硬等待清理（TPV0097 范围）；fixture 需保证在现有 waitForTimeout 下稳定
-- afterEach 清理必须可靠（重跑 2 次无残留）——BDD 需覆盖
-- 环境还原：自建 entry 的 spec 必须自带清理（afterEach 队列），测试结束 DB 无残留
+## 上游关联
 
-> 格式约束：约束节避免行首 `- PASS`/`- FAIL`。
+- analyst 摘要：13 条 BDD；无 NEED_CONFIRM（4 条 SUGGEST 已由主 Agent 采纳倾向项 1-4）；[SCOPE+ from P1] 死选择器迁移已并入基线 2.1 节
+- 主 Agent 已采纳：SUGGEST-1（死选择器并入，不并入则 BDD-1 不可达）/ SUGGEST-2（规范落点 docs/process/debug-workflow.md）/ SUGGEST-3（e2e- 前缀 slug）/ SUGGEST-4（t022/verify-mermaid 同型缺陷延后立项）
+- P0-brief 裁剪倾向与本基线一致（P6 不可裁、P3 保留、P8 不 bump）
 
-- 子派发能力：不启用（analyst 独立完成查证与产出）
-- 拆小：本任务改动面 ≤5 文件，单 analyst 派发即可，无需拆小
+## 输入文件
 
-### 上游关联
+- agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P1-requirements.md（评审对象）
+- agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P0-brief.md（需求来源与裁剪倾向）
+- /home/kity/oclab/agateon/agate/assets/review-roles/requirements-review.md（角色定义）
+- AGENTS.md（项目约定——核对 BDD 判据与项目测试事实是否冲突，如 make target、端口、路径约定）
 
-- P0 实证：3 spec 依赖的 entry（test-mermaid-2/playwright-test/e2e-test）404，根因=手动建于旧 debug DB 未入 seed-data，`make debug-stop` 清库后消失；stash 基线对照证明失败与产品代码改动无关
-- 自建模式现成参照：render-regression.spec.ts 的 createEntry（无 afterEach 清理——**不要照抄这个缺陷**）与 teams-page.spec.ts（创建+清理完整模式，待你复核）
-- 验收基线种子（P0 预埋，P1 细化/质疑/编号）：①干净 debug 跑 3 spec 全绿 ②重跑 2 次稳定+无残留 ③其余渲染 spec 不回归 ④E2E 编写规范落点
+## 客观查证信息（P0/P1 已实证，可直接引用）
 
-### 输入文件
+- 失败 slug：test-mermaid-2 / playwright-test / e2e-test，seed-data/ 24 条中均不存在；debug :8888 匿名创建放行（dev-server.sh ALLOW_ANONYMOUS_CREATE）、匿名删除 allow_local 放行
+- 详情页路由 `/:slug`（router.ts L48），无 /entries/:slug；mermaid-visual.spec 自起 chromium（非 test fixture）
+- 死选择器实证：`.mermaid-content` / `.mermaid-action-btn` / `.diagram-modal-overlay` 在 frontend-v3/src/ 0 命中；替代类名 `.diagram-viewer` / `.diagram-code` / `.diagram-action-btn.fullscreen-btn` / `.diagram-modal` 存活（analyst 已 grep 实证）
 
-- agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P0-brief.md（任务简报+风险声明）
-- agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P1-progress.md（你自己的续跑底稿）
-- agate-workspace/debt/tech-debt.md（DEBT0010）
-- frontend-v3/e2e/mermaid.spec.ts / mermaid-check.spec.ts / mermaid-visual.spec.ts（断言反推源）
-- frontend-v3/e2e/render-regression.spec.ts / teams-page.spec.ts（自建+清理模式参照）
-- frontend-v3/playwright.config.ts（project 口径查证）
-- AGENTS.md（项目约定，含铁律与测试注意事项）
+## 产出
 
-### 产出文件字段
-
-用 `FILE=agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P1-requirements.md python3 /home/kity/oclab/agateon/agate/scripts/agate-md-field-set.py --list` 查看应填字段；逐个 set 写入；不要手写 frontmatter。
-
-</dispatch_guide>
-
-<objective_info>
-- 环境状态：debug :8888 未启动（P1 查证不需要服务在线；如需 curl 验证 seed entry 状态，用 `make debug-start` 后操作，结束时 `make debug-stop`）
-- 关键标识：失败 slug=test-mermaid-2 / playwright-test / e2e-test；页面路由 `/:slug`（非 /entries/:slug，旧 spec 里的 goto 路径是历史遗留写法）
-- 查证结果：seed-data/ 共 24 entry 且无上述 3 slug（P0 已实证）；git 历史无 fixture 删除记录
-</objective_info>
-
-> 注：本文件禁止包含行首 `- PASS`/`- FAIL` 预判——否则被 check-p6-provenance.py 审计失败。
-
+- agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained/P1-review.md
+- frontmatter 用 `FILE=<产出路径> python3 /home/kity/oclab/agateon/agate/scripts/agate-md-field-set.py --list` 查看后逐个写入；phase: P1 / task_id: TPV0096 / parent: P1-requirements.md / trace_id: TPV0096-P1-20260907 / agent: requirements-review / status: draft（终态改 approved/needs-revision/rejected）
