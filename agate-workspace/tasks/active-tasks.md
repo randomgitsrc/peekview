@@ -11,7 +11,7 @@
 
 | 编号 | 任务名称 | 状态 | 阶段 | 优先级 | 依赖 | 创建日期 | 更新日期 |
 |------|----------|------|------|--------|------|----------|----------|
-| TPV0096 | e2e-fixture-selfcontained | 🔄 进行中 | P7 | 🟡 | DEBT0010 | 2026-09-05 | 2026-09-07 |
+| TPV0096 | e2e-fixture-selfcontained | ✅已完成 | DONE | 🟡 | DEBT0010 | 2026-09-05 | 2026-09-08 |
 | TPV0097 | e2e-sharding-ci | ⏸️依赖阻塞 | P0 | 🟡 | TPV0096 | 2026-09-05 | 2026-09-05 |
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
@@ -100,6 +100,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 编号 | 任务名称 | 最终版本 | 优先级 | 完成日期 |
 |------|----------|----------|--------|----------|
+| TPV0096 | e2e-fixture-selfcontained | 无 bump（CHANGELOG Unreleased） | 🟡 | 2026-09-08 |
 | TPV0095 | team-visibility | v0.22.0 + mcp-v0.12.0 | 🟠 | 2026-09-03 |
 | TPV0090 | cli-remote-xdist-fix | v0.18.6 | 🟡 | 2026-08-13 |
 | TPV0094 | treeview-default-expand | v0.19.0 | 🟡 | 2026-08-15 |
@@ -226,6 +227,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-09-08 | 完成 TPV0096 | e2e-fixture-selfcontained（🟡）：3 渲染类 E2E spec（mermaid/mermaid-check/mermaid-visual）自建 entry 化——e2e- 前缀确定性 slug + 防御性预删 + afterEach 清理队列 + 防生产护栏，干净 debug 环境 14 用例双 project 全绿可重复（DEBT0010 closed）；死选择器/goto 死路由/mermaid-visual 假绿一并修复；E2E 编写规范 4 条落盘 debug-workflow.md；新登记 DEBT0011（t022/verify-mermaid 同型缺陷延后）/DEBT0012（seed 422 预存）；bump_type none（纯测试改动，CHANGELOG [Unreleased]）；完整 agate P0-P8 + P6.5 judge 13/13；P8 审计 7 reuse_blocked → P5 五键全量重跑 5/5 绿；P2/P6 评审循环含 needs-revision 修复轮；复盘 retrospective.md 沉淀 6 项机制发现（平台执行模型/gate 口径/provenance 误伤等）|
 | 2026-08-15 | 完成 TPV0092 | mcp-get-entry-fetch → v0.20.0 + mcp-v0.11.0（get_entry 接受任意 PeekView URL（页面/raw/分享/裸 slug）→ 跨 host 匿名读取 → 净化后结构化 JSON；publish_files 加 raw_url；后端 raw 补 ?share=/?purify=；SSRF 防护=协议白名单+响应结构校验+20MB 上限+超时；26/26 BDD PASS（:8889 跨 host 实测）；基础设施：make debug-extra 多实例 target + dev-server.sh PORT 参数化 + .gitignore lib/ 误伤修复；DEBT0004/0005 登记）|
 | 2026-08-15 | 完成 TPV0094 | treeview-default-expand → v0.19.0（TreeView 默认全展开：节点 ≤2000 全展开 / 超阈值折叠+提示 banner；红线实测 5 量级确定阈值 2000——297ms 达标/5000 超预算；8/8 BDD PASS + E2E 98/98 + 单测 1232 + 后端 1078 全绿；P5→P4 retry1 修复 3 处 E2E spec locator；完整 agate P0-P8，P7 记录 1 条非核心 DEVIATION（perf 脚本位置））|
 | 2026-08-13 | 完成 TPV0090 | cli-remote-xdist-fix → v0.18.6（test_cli_remote.py xdist 并发修复：worker 动态端口 18888+worker_index 消除 16 worker 端口竞争 + poll 死亡检测 + teardown 强化；4/4 BDD PASS（-n auto 连续 5 次全绿 + 全量 1078 passed 0 failed——known-failures 预存失败债还清）；完整 agate P0-P8）|
