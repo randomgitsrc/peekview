@@ -20,3 +20,4 @@
 - GATE PASS: P3 exit 2（P3-test-cases.md 存在）→ commit a05e381f。红灯基线与 BDD-12 三轮基线已由主 Agent 回填 P3 §5（render-regression 失败家族并集 bdd_3/4/5/7/8 = 既有 flaky；t085-* 无清理跨轮累积 187 entries 污染实证→P5/P6 判定以干净环境重跑为准）。NEXT: P4 implementer（88c5eb2d，改动封闭清单 4 文件）→ design-review（C8: frontend）→ gate P4
 - SUBAGENT DONE: P4 implementer（88c5eb2d）产出 4 文件改造 + P4-implementation.md（自查：单测 1343 passed、静态判据清零、slug 14 枚举、--list 可收集、[PROD_NOT_TOUCHED]）。NEXT: 派 design-review（C8: frontend）→ P4-review.md
 - SUBAGENT DONE: P4 design-review（3a26106f）approved——6 焦点全过、5 条非阻塞、无 BLOCKER；复核采样发现 src 侧 vitest 既有 flaky（与改动面零交集，P5 登记用）。GATE PASS: P4 exit 0（暂存区含代码文件）→ commit 13594c9f。NEXT: P5 verifier（bb9f35f4，5 键 gate_commands；E2E 三键单调用自包含串行）
+- GATE PASS: P5 exit 2 + N5 签名校验通过（unit/e2e 签名计数各 1，fail-list 空与 0 failed 一致）→ commit 333f5209（p5_pass_commit=13594c9f）。5/5 gate_commands 键确认全执行（gate WARNING 提醒核对完成）。NEXT: P6 verifier（c324aa6a，13 BDD 逐条实跑+证据）→ P6.5 judge（白名单已预置 P6.5-dispatch-context-judge.md）

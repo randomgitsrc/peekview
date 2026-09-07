@@ -1,0 +1,25 @@
+# P6-progress — TPV0096 verifier（2026-09-07）
+
+- [01] 侦察：读 .state.yaml（phase P5, p5_pass_commit=13594c9f）/ git HEAD=333f5209（P5 commit 仅 agate-workspace 产出）/ Makefile debug targets / playwright.config.ts（chromium + Mobile Chrome 双 project）/ seed-data 24 条 slug → /tmp/p6-seed-slugs.txt
+- [02] 待执行：BDD-6/7/8 静态三判据（P3 §6.1-6.3 命令逐条亲跑）→ P6-evidence/static-checks.log
+- [03] BDD-6/7/8 静态三判据实跑完成 → P6-evidence/static-checks.log（负向全部 0 命中 grep exit 1；正向 expect 13/3/7≥13/3/5、存活选择器 spec+src 双向命中、goto ${BASE_URL}/ 每文件 ≥1）
+- [04] 待执行：BDD-13 规范落盘 grep → P6-evidence/doc-rules.log
+- [05] BDD-13 实跑完成 → P6-evidence/doc-rules.log（三条判据全命中：L245 节 + L249 规则1 + L250 规则2）
+- [06] BDD-4 静态对照完成 → P6-evidence/seed-isolation.log（交集 0 行；fixture slug 前 7 段共 7 个模式 ×2 project；spec 无 seed slug 字面量）；HTTP 抽验部分并入 run1 自包含链
+- [07] 待执行：E2E 重跑链 run1（debug-start → seed → seed 抽验 GET → 3 spec 依次 → DB 残留查询 → debug-stop）→ test-output.log + residue-check.log（BDD-1/9/2 + BDD-4 抽验）
+- [08] 确认调用形态：make debug-test → e2e-safety-check.sh + run-e2e-tests.sh（E2E_GUARD_ENABLED=1，内部 `npx playwright test $spec --reporter=line`，E2E_TIMEOUT 默认值待链内确认）
+- [09] run1 完成：3 spec 全绿（6+2+6=14 passed，chromium 7 + Mobile Chrome 7）、14 slug 残留全 0；spec 遗留 4 张 BDD-10/11 截图（/tmp/mermaid-test-{1,2,3,4}-*.png，01:47）
+- [10] BDD-4 抽验初版 404 诊断：markdown-test/mermaid-charts meta is_public:false（匿名 404=防枚举正确行为）；csv-employees seed 422 预存（P5 e2e.md L54 已记录同现象）；改用认证补抽验 + 公开 slug 抽验（并入 run2 链）
+- [11] 待执行：run2 链（BDD-3 第 2 次重跑 3 spec + 二次残留 + BDD-12 回归对照 + BDD-4 认证补抽验 + BDD-1 Given 三 slug 不存在验证 + sqlite 全表真值 + 最终残留检查 + debug-stop）
+- [12] 链 2 被执行器 600s cap 截断（SIGTERM）：run2 三 spec 全绿（6/2/6，BDD-3 第2次重跑稳定）+ svg-inline-render 2 passed exit 0 已捕获；render-regression 段丢失；服务随沙箱死亡，debug-stop 收尾完成
+- [13] 待执行：链 3（时长收缩：仅 render-regression 补跑 + absent-check + 认证补抽验 + sqlite 真值 + 最终残留 + debug-stop）
+- [14] run2 完成（链 2，被 600s cap 截断但三 spec 段完整）：6/2/6 全绿——BDD-3 第 2 次连跑退出码全 0
+- [15] 链 3 完成：absent-check 3 slug db_count=0 + anon 404（BDD-1 Given）；svg-icons/svg-standalone/dsh-architecture 匿名 200；markdown-test/mermaid-charts/csv-employees alice 认证 404 → sqlite 真值：3 条不在 DB（seed 预存 422，team_id 时序缺陷，P5 同现象）
+- [16] render-regression（链 3）：5 failed/2 flaky/15 passed，失败 ⊆ 基线家族 {bdd_4,5,7,8}，零新失败（BDD-12 判据）
+- [17] 证据落盘：test-output.log / residue-check.log / seed-isolation.log(补记) / regression-compare.log / cleanup-assertion.md / screenshots 4 张（md5 互异，66-91KB）
+- [18] 待执行：post-test 残留终检 → 写 P6-acceptance.md + frontmatter
+- [19] post-test 残留终检：/tmp/peekview-debug/ 已销毁、无 debug 进程、链 3 残留查询 15 行全 0
+- [20] P6-acceptance.md 落盘（13 PASS / 0 FAIL）+ frontmatter（pass:13/fail:0/ui_affected:false，check-frontmatter exit 0）+ check-p6-format --fix exit 0；证据 11 文件全部被 PASS 行引用；[PROD_NOT_TOUCHED]
+- [21] 自查预检：check-p6-evidence exit 0；check-p6-provenance exit 1——拦截点在主 Agent 的 P6-dispatch-context-verifier.md L274（card 块外文档行「- PASS 行格式：…」被预判正则 ^\s*-(PASS|FAIL) 误中，审计 2 先于全部产出审计执行）；BDD-6 行内反引号括号触发证据路径误提已修复（描述去半角括号后 provenance 审计 1 通过）
+- [22] provenance 其余审计人工核读（审计 3/4/5/6/7）：13=13 一致、ui_affected=false 跳过 vision、6 日志 EXIT_CODE:0、无 evidence JSON、p5_pass_commit 审计 7 需主 Agent 真实 git 环境（我仿真缺 git 元数据 fail-closed 属预期）；已知 P1/P3 缺 agent 字段 → exit 2 = 通过码
+- [23] 派发文件属主 Agent 唯一写者域，verifier 不改；修复建议（2 处 sed）已在返回中报告；[PROD_NOT_TOUCHED] 全程成立
