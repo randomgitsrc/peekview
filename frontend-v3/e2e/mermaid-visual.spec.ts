@@ -1,97 +1,136 @@
-import { test, expect, chromium } from '@playwright/test'
+import { test, expect, chromium, type APIRequestContext } from '@playwright/test'
 
-const BASE_URL = 'http://127.0.0.1:8888'
+const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
+const ENTRIES_API = `${BASE_URL}/api/v1/entries`
+
+test.beforeAll(async ({ request }) => {
+  if (BASE_URL.includes(':8080') || BASE_URL.includes('prod')) {
+    throw new Error(`FATAL: E2E tests must NOT run against production (${BASE_URL})`)
+  }
+  const resp = await request.get('/health')
+  if (!resp.ok()) throw new Error(`Health check failed: ${resp.status()}`)
+})
+
+const createdEntries: string[] = []
+
+test.afterEach(async ({ request }) => {
+  for (const slug of createdEntries.splice(0)) {
+    const del = await request.delete(`${ENTRIES_API}/${slug}`)
+    if (![200, 204, 404].includes(del.status())) {
+      throw new Error(`cleanup entry ${slug} failed: ${del.status()}`)
+    }
+  }
+})
+
+async function ensureEntry(request: APIRequestContext, slug: string, files: { filename: string; content: string }[]) {
+  await request.delete(`${ENTRIES_API}/${slug}`).catch(() => {})
+  const resp = await request.post(ENTRIES_API, {
+    data: { slug, summary: `E2E fixture ${slug}`, is_public: true, files },
+  })
+  if (![200, 201].includes(resp.status())) {
+    throw new Error(`ensureEntry ${slug} failed: ${resp.status()}`)
+  }
+  createdEntries.push(slug)
+}
+
+function diagramMd(flowchart: string) {
+  return `# E2E Mermaid Fixture\n\n\`\`\`mermaid\n${flowchart}\n\`\`\`\n`
+}
 
 test.describe('Mermaid Visual Tests', () => {
-  test('check mermaid container height', async () => {
+  test('check mermaid container height', async ({ request }) => {
+    const slug = `e2e-mermaid-visual-height-${test.info().project.name === 'Mobile Chrome' ? 'mobile' : 'chromium'}`
+    await ensureEntry(request, slug, [
+      {
+        filename: 'diagram.md',
+        content: diagramMd(
+          'flowchart TD\n    A[Start] --> B[Measure]\n    B --> C[Container]\n    C --> D[SVG]\n    D --> E[Assert]\n    E --> F[Done]'
+        ),
+      },
+    ])
     const browser = await chromium.launch({ headless: true })
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
     const page = await context.newPage()
 
-    // 访问页面
-    await page.goto(`${BASE_URL}/entries/e2e-test`)
+    await page.goto(`${BASE_URL}/${slug}`)
     await page.waitForTimeout(4000) // 等待Vue和Mermaid渲染
 
-    // 截图
     await page.screenshot({ path: '/tmp/mermaid-full-page.png', fullPage: true })
     console.log('截图已保存: /tmp/mermaid-full-page.png')
 
-    // 检查容器
-    const diagram = page.locator('.mermaid-content[data-mode="diagram"]').first()
-    const isVisible = await diagram.isVisible().catch(() => false)
-    console.log(`Diagram visible: ${isVisible}`)
+    const diagram = page.locator('.diagram-viewer').first()
+    await expect(diagram).toBeVisible()
 
-    if (isVisible) {
-      const box = await diagram.boundingBox()
-      console.log(`Container size: ${box?.width}x${box?.height}`)
+    const box = await diagram.boundingBox()
+    console.log(`Container size: ${box?.width}x${box?.height}`)
 
-      // 检查SVG
-      const svg = diagram.locator('svg').first()
-      const svgVisible = await svg.isVisible().catch(() => false)
-      console.log(`SVG visible: ${svgVisible}`)
+    const svg = diagram.locator('svg').first()
+    await expect(svg).toBeVisible()
 
-      if (svgVisible) {
-        const svgBox = await svg.boundingBox()
-        console.log(`SVG size: ${svgBox?.width}x${svgBox?.height}`)
+    const svgBox = await svg.boundingBox()
+    console.log(`SVG size: ${svgBox?.width}x${svgBox?.height}`)
 
-        // 断言
-        expect(box?.height).toBeGreaterThan(200)
-        expect(svgBox?.height).toBeGreaterThan(100)
-      }
-    }
+    expect(box?.height).toBeGreaterThan(200)
+    expect(svgBox?.height).toBeGreaterThan(100)
 
     await browser.close()
   })
 
-  test('check toggle functionality', async () => {
+  test('check toggle functionality', async ({ request }) => {
+    const slug = `e2e-mermaid-visual-toggle-${test.info().project.name === 'Mobile Chrome' ? 'mobile' : 'chromium'}`
+    await ensureEntry(request, slug, [
+      {
+        filename: 'diagram.md',
+        content: diagramMd('flowchart LR\n    A[Left] --> B[Middle]\n    B --> C[Right]\n    C --> D[End]\n    D --> A'),
+      },
+    ])
     const browser = await chromium.launch({ headless: true })
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
     const page = await context.newPage()
 
-    await page.goto(`${BASE_URL}/entries/e2e-test`)
+    await page.goto(`${BASE_URL}/${slug}`)
     await page.waitForTimeout(3000)
 
-    // 截图初始状态
     await page.screenshot({ path: '/tmp/mermaid-before-toggle.png', fullPage: true })
 
-    // 点击Code按钮
     const toggleBtn = page.locator('.diagram-view-toggle').first()
     await toggleBtn.click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: '/tmp/mermaid-code-view.png', fullPage: true })
 
-    // 点击Diagram按钮
     await toggleBtn.click()
     await page.waitForTimeout(1500)
     await page.screenshot({ path: '/tmp/mermaid-after-toggle.png', fullPage: true })
 
-    // 检查SVG是否还在
-    const svg = page.locator('.mermaid-content[data-mode="diagram"] svg').first()
-    const svgVisible = await svg.isVisible().catch(() => false)
-    expect(svgVisible).toBe(true)
+    const svg = page.locator('.diagram-viewer svg').first()
+    await expect(svg).toBeVisible()
 
     await browser.close()
   })
 
-  test('check fullscreen', async () => {
+  test('check fullscreen', async ({ request }) => {
+    const slug = `e2e-mermaid-visual-fullscreen-${test.info().project.name === 'Mobile Chrome' ? 'mobile' : 'chromium'}`
+    await ensureEntry(request, slug, [
+      {
+        filename: 'diagram.md',
+        content: diagramMd('flowchart TD\n    A[Launch] --> B[Page]\n    B --> C[Modal]\n    C --> D[Verify]'),
+      },
+    ])
     const browser = await chromium.launch({ headless: true })
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
     const page = await context.newPage()
 
-    await page.goto(`${BASE_URL}/entries/e2e-test`)
+    await page.goto(`${BASE_URL}/${slug}`)
     await page.waitForTimeout(3000)
 
-    // 点击Fullscreen
-    const fullscreenBtn = page.locator('.mermaid-action-btn[title="Fullscreen"]').first()
+    const fullscreenBtn = page.locator('.diagram-action-btn.fullscreen-btn').first()
     await fullscreenBtn.click()
     await page.waitForTimeout(1000)
 
     await page.screenshot({ path: '/tmp/mermaid-fullscreen.png' })
 
-    // 检查modal
-    const modal = page.locator('.diagram-modal-overlay').first()
-    const modalVisible = await modal.isVisible().catch(() => false)
-    expect(modalVisible).toBe(true)
+    const modal = page.locator('.diagram-modal').first()
+    await expect(modal).toBeVisible()
 
     const box = await modal.boundingBox()
     expect(box?.height).toBeGreaterThan(500)

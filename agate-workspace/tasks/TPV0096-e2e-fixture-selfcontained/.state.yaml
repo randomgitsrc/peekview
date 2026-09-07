@@ -1,9 +1,9 @@
-phase: P3
+phase: P4
 task_id: TPV0096
 task_name: e2e-fixture-selfcontained
 status: in-progress
 created: 2026-09-05 00:00:00+00:00
-updated: '2026-09-07T14:40:00Z'
+updated: '2026-09-07T15:50:00Z'
 judge:
   enabled: true
 history:

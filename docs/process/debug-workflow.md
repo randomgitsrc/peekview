@@ -242,6 +242,15 @@ curl -s http://127.0.0.1:8080/health | jq '.version'
 - [ ] 用户手动验证通过
 - [ ] 确认可以进入发布流程
 
+## E2E 编写规范
+
+编写 `frontend-v3/e2e/` 下的 spec 时遵守以下规则（范本：`mermaid.spec.ts` / `mermaid-check.spec.ts` / `mermaid-visual.spec.ts` 的自建 fixture 写法）：
+
+1. 页面路由是 `/:slug`，不是 `/entries/:slug`（API 才是 `/api/v1/entries`；`/entries/xxx` 落入 `/:pathMatch(.*)*` → NotFoundView）。spec 内 goto 一律写 `` page.goto(`${BASE_URL}/${slug}`) ``。
+2. spec 依赖的 entry 必须存在于 seed-data/ 或测试内自建且带 afterEach 清理队列（创建成功才入队；清理失败必须显式 FAIL，404 视为已删除）。确定性 slug 加 `e2e-` 前缀，避免与 seed-data 条目冲突。
+3. 直写 DB 的 spec（POST/DELETE `/api/v1/entries`）必须加 BASE_URL 防生产护栏（beforeAll fail-fast）：BASE_URL 含 `:8080`/`prod` 即 throw，另加 `/health` 探活。
+4. fixture 的创建与删除必须同认证上下文（debug 匿名建配匿名删；登录用户建配同一用户删——混用即残留）。清理队列只存 slug，结构上杜绝「匿名建 + 带 token 删」。
+
 ## 常见问题
 
 ### Q: 调试服务使用了生产数据库
