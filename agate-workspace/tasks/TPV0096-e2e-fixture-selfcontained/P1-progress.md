@@ -85,3 +85,7 @@
 - frontmatter（agate-md-field-set 写入）：risk_level=medium / phases=P1-P8 / packages=[frontend-v3, docs] / domains=[frontend] + phase/task_id/parent/trace_id/status/created Header 字段；check-frontmatter.py exit 0
 - 工具白名单限制（已报告主 Agent）：agent / ui_render_shape / ui_ux_dimensions / ceremony / design_trivial / follows_existing_pattern / internal_only 等不在本版 field-set 合法 key 清单——ceremony 缺省 standard（fail-closed 不薄化）、形态缺省 layout 型、其余字段语义在正文第 7 节以文字声明
 - [PROD_NOT_TOUCHED]：全程仅读仓库文件与 git 历史对比，未启动服务、未触碰 :8080 与 ~/.peekview/
+
+### 修复轮（2026-09-07，P2-review needs-revision，主 Agent 批准基线变更）
+- §7 顶部插入行首顶格 design_trivial: true（L226）与 follows_existing_pattern: [...]（L227）+ [BASELINE_CHANGE] 标注行（主 Agent 2026-09-07 批准，P2 评审 P-1：顶格供 check-gate.py P2 机械扫描）；§7 原文字说明保留对账
+- 校验：check-frontmatter.py exit 0；grep -n ^design_trivial 命中 L226；BDD 13 条/8 节结构零变更

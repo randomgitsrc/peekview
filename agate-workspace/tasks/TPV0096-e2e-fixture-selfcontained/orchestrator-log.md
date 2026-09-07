@@ -9,3 +9,10 @@
 - NEXT: 2026-09-07 用户指令「实施完 TPV0096」→ 解除暂停，P1 重启：重注入卡片后派 analyst（续跑 P1-progress.md 底稿）→ 等 P1-requirements.md → 派 requirements-review
 - SUBAGENT DONE: P1 analyst（ec2abc85）产出 P1-requirements.md：13 BDD / 无 NEED_CONFIRM（4 SUGGEST）/ [SCOPE+ from P1] 死选择器迁移
 - DECISION: 采纳 analyst 4 条 SUGGEST——①死选择器迁移并入本任务（不并入则 BDD-1「3 spec 全绿」不可达；改动仍限 e2e 测试文件，非破坏性）②规范落点 docs/process/debug-workflow.md ③fixture slug 用 e2e- 前缀 ④t022/verify-mermaid 同型缺陷延后立项（范围纪律）。NEXT: 派 requirements-review → P1-review.md
+- GATE PASS: P1 exit 2（P1-review approved + agent≠main + BDD 锚点）→ commit 98fda6a8。NEXT: P2 architect（design_trivial 简化）→ plan-design-review（C8: frontend）→ gate P2
+- NEXT: P2 architect 已派发（P2-dispatch-context-architect.md + 卡片注入完成，后台）→ 等 P2-design.md；debug :8888 已由主 Agent 启动（seed 24 条，后台 job 保活）供 architect minimal_validation 实测匿名配对
+- INCIDENT: 本平台 bash 调用不驻留服务——保活 job 到期致 :8888 下线，architect minimal_validation 挂起（证据链见 P2-progress.md）。已重启服务（job bash-3，30min 窗口）+ 通知 architect 补跑（curl 加 --noproxy 防代理干扰）。后续 P5/P6 派发须按「单调用自包含 start→verify→stop」模式设计环境依赖
+- SUBAGENT DONE: P2 architect（4059f59a）产出 P2-design.md（minimal_validation confirmed：匿名 POST 201/DELETE 200/残留 0；gate_commands 12 项 Makefile target；slug 策略定稿 e2e-<spec>-<case>-<project>）。NEXT: 派 plan-design-review（C8: frontend）→ P2-review.md
+- PLATFORM FACT（architect 沙箱实锤，P3/P5/P6 派发约束）：subagent bash = bwrap（--unshare-pid --die-with-parent），只可达本调用进程树内启动的服务（自包含模式）；跨调用保活服务对 subagent 不可达。主 Agent 自身 bash 可达宿主服务（实测 200）。结论：所有 subagent 的 E2E/服务验证一律单调用自包含（start+seed+test+stop）；check-tdd-red 由主 Agent 在包裹模式或宿主服务在线下执行。P2 minimal_validation 权威证据 = architect 首次自包含实测（P2-design §5）
+- REVIEW NEEDS-REVISION: P2 plan-design-review（cc6dc88a）——P-1 阻断级（P1 简化声明非顶格，check-gate P2 机械扫描必 exit 1）+ S-1~S-4 建议。修复轮已派：analyst 补 P1 §7 顶格声明（[BASELINE_CHANGE] 主 Agent 批准，纯位置修正）；architect 补 P2 §0 指针 + 采纳 S-1（AGATE_TDD_TIMEOUT=600 提醒）/S-2（P5_e2e 外层 900s）/S-3（失败分支 debug-stop 形态）/S-4（BDD-12 基线行）。完成后重派同评审者复审
+- REVIEW APPROVED: P2 复审通过（同评审者，P-1/S-1~S-4 七处逐项核对落位；P2-review.md §11 复审结论）。GATE PASS: P2 exit 2 → commit。NEXT: P3 test-designer（红灯命令 E2E_SPEC=mermaid.spec 自包含执行；check-tdd-red 由主 Agent 包裹 AGATE_TDD_TIMEOUT=600 执行）

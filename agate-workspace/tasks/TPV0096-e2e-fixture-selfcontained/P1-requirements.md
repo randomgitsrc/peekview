@@ -223,6 +223,11 @@ verification_env_budget: "止损轮次 2（独立计数，不占 retries[P5/P6]�
 
 ## 7. 裁剪说明
 
+design_trivial: true
+follows_existing_pattern: [frontend-v3/e2e/teams-page.spec.ts, frontend-v3/e2e/render-regression.spec.ts]
+
+[BASELINE_CHANGE: 主 Agent 2026-09-07 批准——P2 评审 P-1 修复：简化声明以顶格字段形式供 check-gate.py P2 机械扫描读取，纯声明位置修正，BDD 语义零变更]
+
 `risk_level: medium`——理由：不改产品代码，破坏面限于测试与文档；但涉及认证语义（匿名创建/删除配对）、清理可靠性（残留即污染后续验证）与渲染断言修复，失败模式隐蔽（假绿/残留不立刻暴露），不宜按 low 薄化。`ceremony: standard`（缺省档，不声明 thin）。
 
 `phases` 裁剪声明（frontmatter 为准，此处写理由）：
