@@ -118,6 +118,13 @@ E2E_SPEC=e2e/search.spec.ts make debug-test   # 只跑一个 spec
 make debug-verify-isolation   # 验证数据隔离（依赖 :8080 在线）
 ```
 
+**跨调用起服务的正确姿势（DSH 沙箱）**：服务存活取决于**起它的那条调用是否仍在运行**——前台调用一结束，其进程树（含 `setsid`/`nohup` detach 的）即被回收。要让 :8888 在后续调用里可用，把它挂在**持续 running 的后台 job** 下托底，后续调用即可正常 seed/跑 E2E：
+```
+# 后台 job：起服务后 sleep 托底，job 活多久服务活多久
+( make debug-start; sleep 3600 )      # 用 run_in_background 提交
+```
+反过来，若把 `make debug-start` 当普通前台命令跑完就返回，下一条调用必然连不上：seed 报 `ConnectTimeout`、`make debug-test` 报 `✗ FATAL: 调试服务未运行`。查证：`/tmp/peekview-debug.pid` 有值但 `ss -ltn` 无 8888 监听。机制见 `~/.dsh/env.md`「已知环境限制」。
+
 改了前端后必须 `make build-frontend` 重建 static（或用 `make debug-quick` 一步到位）。
 
 **多实例（跨 host 测试，TPV0092 引入）**：
@@ -128,7 +135,8 @@ make debug-extra-status PORT=8889   # 查实例状态
 make debug-extra-stop PORT=8889     # 停止 + 清理该实例数据（⚠️ PORT=8888 会被拒绝——主 debug 用 debug-stop）
 ```
 - **端口 + 数据双隔离**：`PORT` → `DATA_DIR=/tmp/peekview-debug-${PORT}` → `DB_PATH=.../peekview.db` 三级独立，各实例 DB/data 零共享；`PEEKVIEW_STORAGE__DATA_DIR`/`DB_PATH`/`PORT` 三个 env 按实例独立传递
-- **后台长驻服务一律走 make → scripts/dev-server.sh**（`debug-extra` 等），**禁止在 bash 工具里裸启动 uvicorn/setsid/nohup/Popen**——后台进程继承工具 fd 会导致 shell 卡死（TPV0092 P6 教训）。dev-server.sh 的 `&` + PID 文件 + 健康检查等待是正确 detach 方式
+- **后台长驻服务一律走 make → scripts/dev-server.sh**（`debug-extra` 等），**禁止在 bash 工具里裸启动 uvicorn/setsid/nohup/Popen**——后台进程继承工具 fd 会导致 shell 卡死（TPV0092 P6 教训）。dev-server.sh 的 `&` + PID 文件 + 健康检查等待解决的是"防 shell 卡死"
+- **⚠️ 但 dev-server.sh 的 detach 只防 shell 卡死，不解决跨调用保活**：服务存活跟随"起它的那条调用"——前台 `make debug-start` 返回后其进程树即被回收（PID 文件残留、端口无监听）。跨调用要用 :8890 等实例，同样要挂在持续 running 的后台 job 下托底（见上「跨调用起服务的正确姿势」）
 - 静态文件（`backend/peekview/static/`）所有实例共享（构建产物非数据，合理）；生产隔离检查（`.peekview` 路径拦截 + `PEEKVIEW_DEBUG_MODE=1`）对 extra 实例同样生效
 
 测试数据：`make debug-seed` 从 `scripts/seed-data/` 目录加载（每子目录一个 entry，含 meta.json + 内容文件），用户 alice/bob/carol（密码 testpass123）。新增/修改数据只需编辑 seed-data/ 下的文件，不改 Python 代码。

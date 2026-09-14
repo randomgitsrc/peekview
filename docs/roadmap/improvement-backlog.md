@@ -56,6 +56,12 @@
 | 47 | 详情页侧边栏可拖拽调整宽度（file tree + TOC，最大宽度约束） | 体验 | 🟡 中期 | 🔄 T081 |
 | 48 | Team 可见性机制（团队内成员可见，不 public；design-note 已评审通过） | 产品/权限 | 🟠 近期 | ✅ done（TPV0095 → v0.22.0） |
 | 49 | merge-restore 补齐新表/新字段导入（DEBT0006：stars/tombstones/teams/team_members/entries.team_id） | 运维/数据 | 🟡 中期 | ⬜ 待排期（DEBT0006，笔记 docs/design-notes/260903-DEBT0006-restore-merge-scope-drift.md） |
+| 50 | E2E 用例可信治理（DEBT0007/0011/0012：CDP 下 18 例预存失败 + 两个死 spec + seed 时序缺条） | 测试/质量 | 🟠 近期 | 🔄 TPV0097 |
+| 51 | E2E 统一入口注册表 + CI E2E job（local/GHA 共用入口，输出用例数与耗时） | 流程/CI | 🟠 近期 | 🔄 TPV0097（CI 改动为强制许可项） |
+| 52 | 本机 E2E 分片并行 + 硬等待剩余治理（分片策略与 CI 相反，本地自有 CPU 宜少 shard） | 测试/性能 | 🟡 中期 | 🔄 TPV0098（依赖 50/51） |
+| 53 | 净化正则双实现漂移（DEBT0004：后端 purify.py + MCP purify.ts 兜底） | 代码质量 | 🔵 长期 | ⬜ roadmap（自然收敛：后端统一支持 ?purify= 后移除 MCP 兜底） |
+| 54 | agate BDD 补「测试副作用/环境还原」gate（DEBT0008） | 流程 | 🔵 长期 | ⬜ roadmap（本仓侧 afterEach 清理已落地；剩余为 agate 协议层，需 agateon 侧排期） |
+| 55 | P1 补「人工体验路径」验收要求（DEBT0009：seed 后页面应有内容类隐性验收项） | 流程 | 🔵 长期 | ⬜ roadmap（本仓侧 seed team 已落地；剩余为 P1 dispatch 模板层，需 agateon 侧排期） |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
 | 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
@@ -297,6 +303,84 @@
 **流程性动作（随下次涉新表 task 落实）**：P1/P2 派发上下文显式列入"新表/新外键字段是否需接入 `_restore_merge`"检查项（落点项目侧，不动 agateon 协议层 architect.md）。
 
 **状态**：⬜ 待排期（DEBT0006 open，medium）
+
+---
+
+### 🟠 50. E2E 用例可信治理（DEBT0007 + DEBT0011 + DEBT0012）
+
+**来源**：2026-09-08 债务盘点实测（用户要求"明确是问题的入 roadmap，可合并的合并立项"）
+
+**问题**：三条债务同属"E2E 信号不可信"，且**不可信用例是任何分片/CI 绿灯判定的前提**——红灯均摊到各 shard 仍是红灯：
+
+- **DEBT0007**：`debug-server.spec.ts` 在 CDP 模式下 **18 failed / 34 passed**（9 用例 × chromium+Mobile Chrome，登记时仅 3 例），本地 E2E 信号长期失真
+- **DEBT0011**：`t022-diagram-refactor.spec.ts` 与 `verify-mermaid.spec.ts` 全部 `goto('/entries/...')`，而 `router.ts` 无 `/entries` 路由（仅 `/:slug`）→ 必 404；另有 `.mermaid-action-btn`/`.toolbar-btn` 死选择器
+- **DEBT0012**：`make debug-seed` 后 DB 实存 20 条 vs seed-data 24 条，`team_members` 仅 1 行（应 ≥3），日志 3× HTTP 422
+
+**方案**：并入 TPV0097「用例可信治理」子目标统一处理（三条同域，分开立项会造成三次同样的 E2E 环境搭建）。DEBT0007 需先判定"CDP 专属 / 环境无关"——CI runner 无 CDP，判定结果决定 CI job 是否被其阻塞。
+
+**状态**：🔄 TPV0097（2026-09-08 立项 v2，待开工）
+
+---
+
+### 🟠 51. E2E 统一入口注册表 + CI E2E job
+
+**来源**：2026-09-05 用户提问"全量超 560s 不正常，可以优化么 并行啥的 ci"；2026-09-08 范围重划
+
+**问题**：E2E 入口逻辑散在 `Makefile` / `scripts/run-e2e-tests.sh` / `playwright.config.ts` / CI 四处，"怎么起服务、端口数据怎么隔离、跑完怎么收"没有单一定义；且 CI 完全无 E2E 门禁（AGENTS.md 明记"完整 suite 可能超时 >5min，优先自定义脚本逐项验证"）。全量耗时长年靠人肉估计，成本模型无数据支撑。
+
+**方案**：抽统一入口注册表，`local` 与 `gha` 两个 target 共用同一份逻辑；**必须输出用例数 + 耗时**。CI job 串行跑全量即可（GitHub Actions job 上限 360 min，全量约 10 min 在预算内），分片提速交给 52。`gha` 模式不得依赖本机专属资源（当前 `run-e2e-tests.sh` 的 CDP 检测即属此类耦合）。
+
+**状态**：🔄 TPV0097（CI 改动为 AGENTS 铁律 5 强制许可项，P4 前需用户确认）
+
+---
+
+### 🟡 52. 本机 E2E 分片并行 + 硬等待剩余治理
+
+**来源**：由 TPV0097 v2 范围修订析出（2026-09-08）
+
+**问题**：本地全量的卡点是**共享 debug DB 互踩**（TPV0092 已备多实例基建但未用于 E2E）与**硬等待累积**（211 处 `waitForTimeout`，单遍累计 ~238s，retries 最坏 ×3）。
+
+**方案**：`make debug-extra PORT=8889/8890` + Playwright `--shard=x/y`，每 shard 独立实例 + 独立 DB；shard 数按本机核数定并附实测墙钟对比。硬等待剩余 ~120 处（重灾区由 0097 处理）集中替换为条件等待。
+
+**为什么与 CI 分开**：分片的成本模型两边相反——本地是自有 CPU（多开会互相抢核，宜少 shard），CI 是按核计费（分片才真正缩短墙钟并省钱），最优 shard 数与验收口径不同，混在一个 task 里会互相牵制。
+
+**状态**：🔄 TPV0098（依赖 50/51 的用例可信治理与注册表）
+
+---
+
+### 🔵 53. 净化正则双实现漂移（DEBT0004）
+
+**来源**：TPV0092 P2 设计（2026-08-15）
+
+**问题**：净化主实现单点在后端 `?purify=`，MCP 侧保留一套 TypeScript 兜底正则（仅老后端触发）。两套正则跨语言，修复需双端同步，存在漂移风险。
+
+**方案**：不主动立项——属**自然收敛项**：待后端版本统一支持 `?purify=` 后，MCP 兜底路径标记 deprecated 或移除。当前以 P3 正则测试作为双端契约锚点。
+
+**状态**：⬜ roadmap（触发条件：后端全面支持 `?purify=` 或双端测试出现分叉）
+
+---
+
+### 🔵 54. agate BDD 补「测试副作用/环境还原」gate（DEBT0008）
+
+**来源**：TPV0095 交付后用户质疑"bob 能添加 dave"，实测为 E2E 残留数据所致（2026-09-03）
+
+**问题**：`teams-page.spec.ts` 无 afterEach 清理，多次跑 E2E 在 debug DB 残留 18 个团队，使 bob 成为自有团队 owner，"污染后的行为"与权限模型矛盾（用户视角像权限 bug）。"测试是否弄脏环境"不在任何 gate 覆盖内。
+
+**方案**：本仓侧 closure 第一条**已落地**（创建型 E2E 带 afterEach 清理队列，TPV0096 进一步固化为 spec 模板）；剩余"agate 侧 post-test 残留检查机制"属 **agateon 协议层**，需在 agateon 仓库排期，非本仓可交付。
+
+**状态**：⬜ roadmap（本仓侧已缓解；协议层待 agateon 侧处理）
+
+---
+
+### 🔵 55. P1 补「人工体验路径」验收要求（DEBT0009）
+
+**来源**：TPV0095 复盘（2026-09-03）——44 条 BDD 全用 P3 自建 fixture，无一条验证"make debug-seed 后 Teams tab 应有内容"，用户 seed 后看到 "No entries found"
+
+**问题**：自动化验收全绿 ≠ 用户按文档体验正确。凡涉及 debug-seed/演示数据的功能，"seed 后页面应有内容"成了隐性验收项，靠用户肉眼发现。
+
+**方案**：本仓侧 closure 第一条**已落地**（debug-seed 含 team + team entry）；剩余"P1 dispatch-context 模板含人工体验验收节"属 **agateon 协议层**（P1 模板），需 agateon 侧排期。
+
+**状态**：⬜ roadmap（本仓侧已缓解；协议层待 agateon 侧处理）
 
 ---
 
