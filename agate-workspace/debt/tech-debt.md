@@ -1,8 +1,8 @@
 # tech-debt 条目模板
 
 > 用途：登记协议/项目技术债。文件落 `{AGATE_WORKSPACE}/debt/tech-debt.md`，每条 DEBT = 一个 ` ```yaml ` fenced block（机器校验）+ 可选正文（人读），标题按 id 编号（`## DEBT0001`）。
-> 机器校验：`bash {agate_root}/scripts/check-debt.sh {AGATE_WORKSPACE}/debt/tech-debt.md`（schema 校验，exit 0/1）。
-> 回退覆盖比对：`bash {agate_root}/scripts/check-debt.sh --retreat-coverage`（git log 的 retreat 提交 vs `source: retreat` 条目，缺失 WARNING）。
+> 机器校验：`FILE={AGATE_WORKSPACE}/debt/tech-debt.md python3 {agate_root}/scripts/agate-debt-check.py`（schema 校验，无输出即通过；exit 0）。
+> 回退覆盖比对：`python3 {agate_root}/scripts/agate-debt-check.py --covered-hashes FILE`（git log 的 retreat 提交 vs `source: retreat` 条目，缺失 WARNING）。
 
 ## 登记判据（三分法）
 
