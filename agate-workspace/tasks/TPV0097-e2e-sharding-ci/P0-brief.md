@@ -4,14 +4,14 @@ task_id: TPV0097
 task_name: e2e-sharding-ci
 trace_id: TPV0097
 created: 2026-09-05
-updated: 2026-09-08
+updated: 2026-09-14
 status: pending
 parent: agate-workspace/tasks/TPV0096-e2e-fixture-selfcontained（依赖其全绿）
 ---
 
 # P0-brief — TPV0097 E2E 入口统一 + CI 门禁 + 用例可信治理
 
-> **v2 范围修订（2026-09-08，用户决策）**：原「分片并行」目标拆出为独立任务 TPV0098；本任务收拢
+> **v2 范围修订（2026-09-14，用户决策）**：原「分片并行」目标拆出为独立任务 TPV0098；本任务收拢
 > ①统一入口注册表 ②CI E2E job ③硬等待重灾区治理 ④**用例可信治理（DEBT0007/0011/0012 并入）**。
 > 拆分理由：分片的成本模型在本地与 CI 相反（本地自有 CPU 宜少 shard，CI 按核计费宜多 shard），
 > 且分片出的绿灯只有在用例本身可信时才有判定意义——顺序上必须先清不可信用例。
@@ -32,7 +32,7 @@ E2E 长期不可用（全量 560s+ 超时、红灯常态化）的基建根治，
 - 现状结构：chromium+Mobile 双 project ×2、本地 retries 1-2、workers 默认并行但共享 debug DB 制约、waitForTimeout 211 处、CI 无 E2E（AGENTS.md 明记"完整 suite 可能超时 >5min，优先自定义脚本逐项验证"）
 - 衍生症状链：全量不可跑 → 不跑 → 红灯无人见（DEBT0010）→ 硬等待无人觉痛
 
-2026-09-08 本轮实测定量（本任务 v2 的直接依据）：
+2026-09-14 本轮实测定量（本任务 v2 的直接依据）：
 
 | 债务 | 实测证据 | 登记时描述 |
 |------|---------|-----------|

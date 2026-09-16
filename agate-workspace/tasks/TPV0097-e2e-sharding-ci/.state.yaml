@@ -3,7 +3,7 @@ task_id: TPV0097
 task_name: e2e-sharding-ci
 status: pending-start
 created: 2026-09-05 00:00:00+00:00
-updated: '2026-09-08T12:00:00Z'
+updated: '2026-09-14T12:00:00Z'
 judge:
   enabled: true
 history:
@@ -20,7 +20,7 @@ history:
     pending-start 待用户指令开工
 - phase: P0
   action: scope-revision
-  ts: '2026-09-08T12:00:00Z'
+  ts: '2026-09-14T12:00:00Z'
   note: '用户决策 v2：原「分片并行」拆出为 TPV0098（本机分片 + 硬等待治理），本任务收拢①统一入口注册表（local/GHA 共用，输出用例数+耗时）②CI
     E2E job ③用例可信治理（DEBT0007/0011/0012 并入）。依据：本轮实测定量——debug-server.spec 18 failed/34 passed（登记仅
     3 例）、router.ts 无 /entries 路由（DEBT0011 spec 必 404）、seed 24 条 vs DB 20 条 + team_members 1 行 + 3×422。目录名保留

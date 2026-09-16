@@ -178,7 +178,7 @@ priority: high
 task_id: TPV0097-e2e-sharding-ci
 evidence:
   - note: 2026-08-28 首次登记 3 例（theme toggle / owner tabs / API keys page，CDP :18800 + debug :8888）
-  - note: 2026-09-08 复测扩大——`E2E_SPEC=e2e/debug-server.spec.ts make debug-test`（未改任何代码）18 failed / 34 passed，9 个用例 × chromium+Mobile Chrome 双 project 全红，耗时 4.0m。失败面覆盖 Theme/Mobile/All-Mine Tabs/API Keys 四组
+  - note: 2026-09-14 复测扩大——`E2E_SPEC=e2e/debug-server.spec.ts make debug-test`（未改任何代码）18 failed / 34 passed，9 个用例 × chromium+Mobile Chrome 双 project 全红，耗时 4.0m。失败面覆盖 Theme/Mobile/All-Mine Tabs/API Keys 四组
 impact: CDP 模式下 18 例（chrome+Mobile 双 project）长期红，掩盖登录态/用户菜单/API keys/移动端布局的真实回归；`run-e2e-tests.sh` 在本机检测到 CDP 即走该路径，故本地验证信号长期失真
 recommendation: 先判定 18 例属「CDP 专属」还是「环境无关」（CI runner 无 CDP、走本地 Chromium）——若 CDP 专属则修 CDP 下登录 cookie 初始化/隔离（参考 f6524e69 cookie isolation fix 方向）并给 CI 侧 skip 理由；若环境无关则必须先修才能上线 CI E2E job。已并入 TPV0097「用例可信治理」子目标
 closure_criteria:
@@ -186,7 +186,7 @@ closure_criteria:
   - 明确记录 18 例的 CDP 归属判定结论（CDP 专属 / 环境无关）
 source: review
 created_at: 2026-08-28
-updated_at: 2026-09-08
+updated_at: 2026-09-14
 ```
 
 ## DEBT0008
@@ -261,14 +261,14 @@ priority: medium
 task_id: TPV0097-e2e-sharding-ci
 evidence:
   - note: TPV0096 P1 同类扫描实证（P1 §4）：t022-diagram-refactor.spec.ts 7 test 全部 goto /entries/test-mermaid-2 等（均不在 seed）+ 死选择器 .mermaid-action-btn/.toolbar-btn；verify-mermaid.spec.ts goto /entries/test-mermaid-2-2（不存在）。主 Agent 采纳 SUGGEST-4 延后单独立项（超出 DEBT0010 closure criteria 三 spec 范围，避免扩大验收面）
-  - note: 2026-09-08 复核确认死路由（静态证据）——`frontend-v3/src/router.ts` 无 `/entries` 路径，页面路由仅 `/:slug`（AGENTS 铁律 7），故两 spec 的 `goto('.../entries/...')` 在任何环境必 404
+  - note: 2026-09-14 复核确认死路由（静态证据）——`frontend-v3/src/router.ts` 无 `/entries` 路径，页面路由仅 `/:slug`（AGENTS 铁律 7），故两 spec 的 `goto('.../entries/...')` 在任何环境必 404
 impact: 两 spec 在干净环境永久红灯，与 DEBT0010 同型信号失真；t022 家族 7 用例无法提供回归信号
 recommendation: 按 TPV0096 同方案处理（自建 entry + afterEach 清理 + goto /:slug + 选择器迁移 .mermaid-action-btn→.diagram-action-btn）；已并入 TPV0097「用例可信治理」子目标
 closure_criteria:
   - t022-diagram-refactor.spec.ts 与 verify-mermaid.spec.ts 在干净 debug 环境全绿或正式 skip + 原因
 source: retrospective
 created_at: 2026-09-07
-updated_at: 2026-09-08
+updated_at: 2026-09-14
 ```
 
 ## DEBT0012
@@ -282,12 +282,12 @@ priority: medium
 task_id: TPV0097-e2e-sharding-ci
 evidence:
   - note: TPV0096 P6 验收与 P6.5 judge 复核两次独立观察到 make debug-seed 输出 HTTP 422（team_id 时序），3 条 seed entry 未入库（DB 全表真值证实非清理误删）；TPV0096 自建 fixture 不依赖该批 entry 故不影响本任务验收，但任何依赖全量 seed 的 E2E/人工体验会偶发缺数据
-  - note: 2026-09-08 复测量化（比原登记更严重）——`make debug-seed` 后 DB 真值 entries=20 而 seed-data 有 24 条（缺 4 条）、teams=2 但 team_members 仅 1 行（frontend-team 应含 alice+bob、backend-solo 应含 carol，即 ≥3）、服务日志 3× HTTP 422
+  - note: 2026-09-14 复测量化（比原登记更严重）——`make debug-seed` 后 DB 真值 entries=20 而 seed-data 有 24 条（缺 4 条）、teams=2 但 team_members 仅 1 行（frontend-team 应含 alice+bob、backend-solo 应含 carol，即 ≥3）、服务日志 3× HTTP 422
 impact: 依赖 seed 完整性的验证路径缺 4 条 entry + 团队归属大面积缺失（随机性，重跑可能部分恢复）；干扰"seed 24 条全可访问"类断言；CI 侧表现为随机数据缺失，比本地更隐蔽（无人工观察）
 recommendation: seed 脚本团队创建后同步等待/重试成员添加，或捕获 422 重试；改动点 scripts/seed-debug.py。已并入 TPV0097「用例可信治理」子目标
 closure_criteria:
   - 连续 10 次 make debug-seed 零 422，seed 后 DB 全表 24 条稳定且 team_members ≥3
 source: retrospective
 created_at: 2026-09-07
-updated_at: 2026-09-08
+updated_at: 2026-09-14
 ```

@@ -34,6 +34,8 @@ ls .opencode/skills/ 2>/dev/null || echo "no project skills"
 
 ## 步骤 2：调试服务
 
+> **DSH 沙箱注意（2026-09-16 实测）**：本步骤 2c 启动的服务**只活在当前这条 bash 调用内**（调用结束进程树即被回收）——后续步骤 4b 的截图必须与 2c **同一条调用**执行（或按项目 AGENTS.md「跨调用起服务的正确姿势」挂后台 job 托底），否则 4b 必报 `ERR_CONNECTION_REFUSED`。
+
 ```bash
 # 2a. 停止旧实例
 make debug-stop

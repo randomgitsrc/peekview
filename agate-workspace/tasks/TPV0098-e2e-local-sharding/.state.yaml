@@ -2,20 +2,20 @@ phase: P0
 task_id: TPV0098
 task_name: e2e-local-sharding
 status: pending-start
-created: 2026-09-08 12:00:00+00:00
-updated: '2026-09-08T12:00:00Z'
+created: 2026-09-14 12:00:00+00:00
+updated: '2026-09-14T12:00:00Z'
 judge:
   enabled: true
 history:
 - phase: P0
   action: created
-  ts: 2026-09-08 12:00:00+00:00
+  ts: 2026-09-14 12:00:00+00:00
   note: '立项：由 TPV0097 v2 范围修订析出的「本机分片并行 + 硬等待剩余治理」。分片策略的成本模型本地与 CI
     相反（本地自有 CPU 宜少 shard / CI 按核计费宜多 shard），故不与 0097 的 CI 链路混在一个 task。硬依赖 TPV0097
     的用例可信治理（DEBT0011 死 spec + DEBT0012 seed 时序，红灯不清则分片绿灯无判定意义）与其统一入口注册表（分片入口应复用而非另起）。risk=medium（基建编排跨
     Makefile/dev-server.sh/playwright config 三子系统）'
 - phase: P0
   action: dependency-noted
-  ts: '2026-09-08T12:00:00Z'
+  ts: '2026-09-14T12:00:00Z'
   note: 依赖 TPV0097（用例可信治理 + 注册表）——两者可并行设计（P1/P2），但 P4 实施前 0097 的用例治理须已落地，否则分片验收证据会被死
     spec 污染。开工待用户指令

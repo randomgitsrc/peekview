@@ -3,7 +3,7 @@ phase: P0
 task_id: TPV0099
 task_name: fullscreen-link
 trace_id: TPV0099
-created: 2026-09-08
+created: 2026-09-16
 status: pending
 parent: 无
 ---

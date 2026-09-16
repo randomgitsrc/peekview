@@ -3,14 +3,14 @@ phase: P0
 task_id: TPV0098
 task_name: e2e-local-sharding
 trace_id: TPV0098
-created: 2026-09-08
+created: 2026-09-14
 status: pending
 parent: agate-workspace/tasks/TPV0097-e2e-sharding-ci（由其 v2 范围修订析出）
 ---
 
 # P0-brief — TPV0098 本机 E2E 分片并行 + 硬等待治理
 
-> 本任务由 TPV0097 v2 范围修订析出（2026-09-08，用户决策）。原 0097 的「分片并行」目标整体移入本处，
+> 本任务由 TPV0097 v2 范围修订析出（2026-09-14，用户决策）。原 0097 的「分片并行」目标整体移入本处，
 > 0097 侧保留统一入口注册表 + CI job + 用例可信治理。拆分依据：分片的成本模型本地与 CI 相反——
 > 本地是自有 CPU（少 shard 更省，多开会互相抢核），CI 是按核计费（分片才能真正缩短墙钟并省钱），
 > 两边的"最优 shard 数"与验收口径不同，混在一个 task 里会互相牵制验收基线。
@@ -24,7 +24,7 @@ parent: agate-workspace/tasks/TPV0097-e2e-sharding-ci（由其 v2 范围修订�
 
 ## 需求来源
 
-2026-09-05 用户提问「全量超 560s 不正常，可以优化么 并行啥的 ci」，经 2026-09-08 范围重划后归属本任务：
+2026-09-05 用户提问「全量超 560s 不正常，可以优化么 并行啥的 ci」，经 2026-09-14 范围重划后归属本任务：
 
 - 现状：chromium+Mobile 双 project ×2、本地 retries 1-2、workers 默认并行但共享 debug DB 制约、waitForTimeout 211 处
 - 本地瓶颈与 CI 不同：本地已有 CPU 可并行，卡点是**共享 DB 互踩**（TPV0092 已备多实例基建）与**硬等待累积**
