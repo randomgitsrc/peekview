@@ -14,6 +14,7 @@
 | TPV0096 | e2e-fixture-selfcontained | ✅已完成 | DONE | 🟡 | DEBT0010 | 2026-09-05 | 2026-09-08 |
 | TPV0097 | e2e-sharding-ci（v2：注册表+CI+用例可信） | ⬜ 待开始 | P0✅ | 🟠 | TPV0096✅ | 2026-09-05 | 2026-09-08 |
 | TPV0098 | e2e-local-sharding | ⬜ 待开始 | P0✅ | 🟡 | TPV0097 | 2026-09-08 | 2026-09-08 |
+| TPV0099 | fullscreen-link | ⬜ 待开始 | P0✅ | 🟠 | 无 | 2026-09-08 | 2026-09-08 |
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
@@ -32,6 +33,10 @@
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
 | T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
+
+### TPV0099: 全屏模式链接（`/{slug}/f`）
+
+分享场景：接收者打开 `/{slug}/f` 直接进入**锁定的纯内容视图**（无 header/侧栏/移动端 chrome/元信息条，f/Escape 均无效）。三个 P0 已锁定决策：①URL 用 path 后缀（`/{slug}/raw` 先例 + 内部导航保态 + 免疫 query 剪参数，否决 `?f`）②完全锁死（用户裁决）③元信息条一并隐藏（zen 外观统一，影响现有 f 键 zen 行为——P1 确认）。实现复用现有 zen 模式，后端零改动（SPA catch-all 已放行两段路径）；与 `?share=token` 正交可组合。
 
 ### TPV0098: 本机 E2E 分片并行 + 硬等待剩余治理
 
@@ -232,6 +237,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-09-08 | 立项 TPV0099 | fullscreen-link（🟠）：全屏模式链接 `/{slug}/f`——分享场景接收者直入锁定的纯内容视图。三决策 P0 锁定：path 后缀（否决 `?f`：raw 先例/内部导航保态/免疫剪参数）、完全锁死（f/Escape 无效）、元信息条隐藏（zen 外观统一）。复用 zen 模式实现，后端零改动。roadmap #56；用户可见功能，P8 预期 bump |
 | 2026-09-08 | 范围修订 TPV0097 + 立项 TPV0098 | 债务盘点实测后（用户决策"明确是问题的入 roadmap、可合并的合并立项"）重划 E2E 基建：**TPV0097 v2** 收拢「统一入口注册表（local/GHA 共用，输出用例数+耗时）+ CI E2E job + 用例可信治理」，原「分片并行」析出为 **TPV0098**（本机分片 + 硬等待剩余治理）。依据本轮实测定量：debug-server.spec 18 failed/34 passed（登记仅 3 例）、router.ts 无 /entries 路由（DEBT0011 spec 必 404）、seed 24 条 vs DB 20 条 + team_members 1 行 + 3×422。DEBT0007/0011/0012 一并转入 0097 子目标（status→in_progress + task_id），roadmap 新增 #50-55；另修复 tech-debt.md 三处 schema 违规（DEBT0009/0010 非法 category=process、DEBT0010 closed 缺 task_id） |
 | 2026-09-08 | 完成 TPV0096 | e2e-fixture-selfcontained（🟡）：3 渲染类 E2E spec（mermaid/mermaid-check/mermaid-visual）自建 entry 化——e2e- 前缀确定性 slug + 防御性预删 + afterEach 清理队列 + 防生产护栏，干净 debug 环境 14 用例双 project 全绿可重复（DEBT0010 closed）；死选择器/goto 死路由/mermaid-visual 假绿一并修复；E2E 编写规范 4 条落盘 debug-workflow.md；新登记 DEBT0011（t022/verify-mermaid 同型缺陷延后）/DEBT0012（seed 422 预存）；bump_type none（纯测试改动，CHANGELOG [Unreleased]）；完整 agate P0-P8 + P6.5 judge 13/13；P8 审计 7 reuse_blocked → P5 五键全量重跑 5/5 绿；P2/P6 评审循环含 needs-revision 修复轮；复盘 retrospective.md 沉淀 6 项机制发现（平台执行模型/gate 口径/provenance 误伤等）|
 | 2026-08-15 | 完成 TPV0092 | mcp-get-entry-fetch → v0.20.0 + mcp-v0.11.0（get_entry 接受任意 PeekView URL（页面/raw/分享/裸 slug）→ 跨 host 匿名读取 → 净化后结构化 JSON；publish_files 加 raw_url；后端 raw 补 ?share=/?purify=；SSRF 防护=协议白名单+响应结构校验+20MB 上限+超时；26/26 BDD PASS（:8889 跨 host 实测）；基础设施：make debug-extra 多实例 target + dev-server.sh PORT 参数化 + .gitignore lib/ 误伤修复；DEBT0004/0005 登记）|

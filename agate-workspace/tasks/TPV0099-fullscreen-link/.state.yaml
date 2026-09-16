@@ -1,0 +1,20 @@
+phase: P0
+task_id: TPV0099
+task_name: fullscreen-link
+status: pending-start
+created: 2026-09-08 12:00:00+00:00
+updated: '2026-09-08T12:00:00Z'
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: 2026-09-08 12:00:00+00:00
+  note: '立项：全屏模式链接 /{slug}/f——分享场景直入锁定的纯内容视图。三个设计决策 P0 已与用户确认锁定：①URL
+    用 path 后缀（否决 ?f：/{slug}/raw 先例 + 内部导航保态 + 免疫 query 剪参数）②完全锁死 f/Escape 均无效（用户裁决，含键盘无页内出口的代价）
+    ③元信息条一并隐藏（zen 外观统一，影响现有 f 键 zen 行为——P1 确认）。实现复用现有 zen 模式，后端零改动（SPA catch-all
+    已放行两段路径）。用户可见功能 → 完整 agate；risk=medium（URL 公开契约 + 移动端 zen 布局未在锁死态验证过）'
+- phase: P0
+  action: pending-start
+  ts: '2026-09-08T12:00:00Z'
+  note: P0 完成，等用户「开工」指令进 P1（P1-dispatch-context-analyst.md + AGATE_CARD 注入）
