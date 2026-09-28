@@ -14,7 +14,7 @@
 | TPV0096 | e2e-fixture-selfcontained | ✅已完成 | DONE | 🟡 | DEBT0010 | 2026-09-05 | 2026-09-08 |
 | TPV0097 | e2e-sharding-ci（v2：注册表+CI+用例可信） | ⬜ 待开始 | P0✅ | 🟠 | TPV0096✅ | 2026-09-05 | 2026-09-14 |
 | TPV0098 | e2e-local-sharding | ⬜ 待开始 | P0✅ | 🟡 | TPV0097 | 2026-09-14 | 2026-09-14 |
-| TPV0099 | fullscreen-link | 🔄 进行中 | P6✅ | 🟠 | 无 | 2026-09-16 | 2026-09-29 |
+| TPV0099 | fullscreen-link | 🔄 进行中 | P8✅ | 🟠 | 无 | 2026-09-16 | 2026-09-29 |
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |

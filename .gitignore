@@ -101,3 +101,5 @@ zip-*-test.zip
 frontend-v3/docs/
 # agate env baseline 缓存（运行时生成）
 docs/.agate-env-baseline-cache/
+# agate 编排临时产物（探针脚本/截图/明文 token —— 运行时生成，禁止入库）
+.agate-tmp/
