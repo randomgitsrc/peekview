@@ -19,7 +19,7 @@
 // 环境隔离：[PROD_NOT_TOUCHED] —— 全部请求走 BASE_URL（默认 :8888 debug backend），
 //    自建 entry 用 `e2e-` 前缀并在 afterEach 无条件删除。
 
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
+import { test, expect, request as pwRequest, type APIRequestContext, type Page } from '@playwright/test'
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 
@@ -148,7 +148,7 @@ test.describe('TPV0099 Auth 1280x800', () => {
 
     // 附：锚点跳转不得破坏全屏视图
     expect(after.zen, 'BDD-9: 锚点跳转后仍须处于全屏视图').toBe(true)
-    expect(after.pathname, 'BDD-9: 锚点跳转不得改变 pathname').toBe(`/${SLUG_MD}`)
+    expect(after.pathname, 'BDD-9: 锚点跳转不得改变 pathname（须保持在 /f 全屏视图）').toBe(`/${SLUG_MD}/f`)
     // ⚠️ 负向对照（防恒真假绿）：P1 实测 `window.scrollY` **恒为 0**（滚动在容器内），
     //    故若把判据写成 window.scrollY，则正确实现与失败态都判 0 → 恒真失效。
     //    本条显式断言 window.scrollY 不参与判定，并把判据绑在 .content-area 上。
@@ -255,19 +255,43 @@ test.describe('TPV0099 Auth 1280x800', () => {
       const token = await aliceToken(request)
 
       // ---- 步骤 2：同一 token 创建**私有** entry（e2e- 前缀） ----
-      const slug = `e2e-tpv0099-share-${Date.now()}`
+      // ⚠️ 区分两个 slug（P3 修正轮 2 / DG-3）：
+      //    requestSlug = 请求时想用的 slug；slug = **服务端实际返回的 slug**。
+      //    后端 `entry_service._retry_with_slug_suffix` 在 slug 冲突（TOCTOU 保护）时
+      //    **静默创建 `{requestSlug}-2` 并返回它**（本 spec 已实测复现）。
+      //    而 `playwright.config.ts` 是 `fullyParallel: true` → chromium 与 Mobile Chrome
+      //    并发跑同一用例，两者 `Date.now()` 毫秒级撞车 → 冲突是真实可发生的。
+      //    故**清理队列与后续一切操作必须一律用服务端 slug**，否则：
+      //      ① 真实资源 `X-2` 永不删除 → 残留
+      //      ② afterEach 复查删错的 `X`（本不存在）→ 断言 `raw===404` 通过但事实相反 = **假绿**
+      //      ③ `DELETE X` 可能误删兄弟 project 的 fixture
+      //    先例：`e2e/t069-settings-refresh-guard.e2e.spec.ts` 一律用 `body.slug`。
+      const requestSlug = `e2e-tpv0099-share-${Date.now()}`
       const createRes = await request.post(`${BASE_URL}/api/v1/entries`, {
         headers: { Authorization: `Bearer ${token}` },
         data: {
-          slug,
+          slug: requestSlug,
           summary: 'TPV0099 BDD-10 私有 share 全屏链接',
           is_public: false,
           files: [{ filename: 'marker.md', content: `# ${MARKER}\n\n${MARKER} 正文内容。\n` }],
         },
       })
       expect(createRes.ok(), `BDD-10 前置: 建私有 entry 须成功（HTTP ${createRes.status()}）`).toBeTruthy()
+      const created = await createRes.json()
+      const slug = created.slug as string
+      // 防回归自证：清理队列登记的必须是**服务端** slug（冲突时后端会改后缀为 `-2`）。
+      // 若此处退回登记 `requestSlug`，则上面①~③三重后果复现——本条让该缺陷可被测出。
+      expect(slug, 'BDD-10 清理钩子: 必须登记服务端返回的 slug（防 -2 后缀残留）').toBeTruthy()
       // 注册清理（创建即注册，无论后续断言成败）
       cleanupQueue.push({ slug, shareId: null })
+      // 登记值**活体校验**：登记对象须是 alice 可读的真实资源（200）。
+      // 冲突场景下若退回登记请求 slug `X`，则真实资源在 `X-2`，`GET X/raw` 必为 404 → 本条 fail。
+      // 这正是原缺陷「登记了 phantom slug → afterEach 复查通过但事实相反（假绿）」的反向断言。
+      const registeredAlive = await request.get(`${BASE_URL}/api/v1/entries/${slug}/raw`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      expect(registeredAlive.status(),
+        `BDD-10 清理钩子: 登记的 slug 须指向真实资源（请求 slug=${requestSlug} / 服务端 slug=${slug}）`).toBe(200)
 
       // ---- 步骤 3：同一 token 创建 share ----
       const shareRes = await request.post(`${BASE_URL}/api/v1/entries/${slug}/shares`, {
@@ -282,12 +306,21 @@ test.describe('TPV0099 Auth 1280x800', () => {
 
       // ---- 区分力判据前置（P2 §6.2 防恒真退化）：三态结果必须互不相同 ----
       // 以 API 层先确立基线（无 token / 伪 token 均不可读，真 token 可读）
-      const anonNoToken = await request.get(`${BASE_URL}/api/v1/entries/${slug}/raw`)
-      const anonFakeToken = await request.get(`${BASE_URL}/api/v1/entries/${slug}/raw?share=faketoken000000`)
-      const anonRealToken = await request.get(`${BASE_URL}/api/v1/entries/${slug}/raw?share=${shareToken}`)
-      expect(anonNoToken.status(), 'BDD-10 基线: 匿名无 token 读私有 entry 须 404').toBe(404)
-      expect(anonFakeToken.status(), 'BDD-10 基线: 匿名伪 token 须 404').toBe(404)
-      expect(anonRealToken.status(), 'BDD-10 基线: 匿名真 token 须 200').toBe(200)
+      // ⚠️ 必须用**独立的匿名 APIRequestContext**：上面的 alice 登录取 token 时，
+      //    `Set-Cookie: peekview_token=...` 会写入 fixture 的 `request` context，
+      //    此后该 context 上任何不带 Authorization 的请求都会被自动以 alice 身份发出
+      //    → 基线恒为 200，三态区分力失效（且失败发生在任何页面交互之前）。
+      const anonCtx = await pwRequest.newContext({ baseURL: BASE_URL })
+      try {
+        const anonNoToken = await anonCtx.get(`/api/v1/entries/${slug}/raw`)
+        const anonFakeToken = await anonCtx.get(`/api/v1/entries/${slug}/raw?share=faketoken000000`)
+        const anonRealToken = await anonCtx.get(`/api/v1/entries/${slug}/raw?share=${shareToken}`)
+        expect(anonNoToken.status(), 'BDD-10 基线: 匿名无 token 读私有 entry 须 404').toBe(404)
+        expect(anonFakeToken.status(), 'BDD-10 基线: 匿名伪 token 须 404').toBe(404)
+        expect(anonRealToken.status(), 'BDD-10 基线: 匿名真 token 须 200').toBe(200)
+      } finally {
+        await anonCtx.dispose()
+      }
 
       // ---- 步骤 4：先测「无 token」态（匿名 context，三个结果互不相同的前提） ----
       await page.goto(`${BASE_URL}/${slug}/f`)

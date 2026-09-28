@@ -9,6 +9,7 @@
 
 ### 新增
 
+- 全屏模式链接 `/{slug}/f`（TPV0099）：分享出去的链接打开即直入锁定的纯内容视图（只剩主体内容，无标题栏/侧栏/移动端 chrome/元信息条），且**无任何页内出口**——`f` / `Escape` 不改变视图、公告文本不提示退出方式，离开需手动改 URL；`/{slug}/f?share=<token>` 组合可用。既有 `f` 键 zen 的进出语义与外观完全不变
 - 渲染类 E2E spec 自建 entry 化（TPV0096）：mermaid/mermaid-check/mermaid-visual 三个 spec 不再依赖已消失的老 seed entry，每 test 匿名创建 fixture——`e2e-` 前缀确定性 slug + 防御性预删 + 创建失败不吞错，`afterEach` 清理队列统一删除创建的 entry，`BASE_URL` 防生产护栏阻断误指生产环境；干净 debug 环境 14 用例双 project 全绿且可重复（DEBT0010 闭环）
 - `docs/process/debug-workflow.md` 新增「E2E 编写规范」节（4 条）：路由写法（页面路由 `/:slug`）、entry 用 seed 或自建 + afterEach 清理、`BASE_URL` 防生产护栏、认证配对（匿名创建/删除与登录视图配对）——spec 依赖的 entry 必须存在或自建自此成为编写规范
 

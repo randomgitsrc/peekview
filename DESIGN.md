@@ -209,6 +209,7 @@ This section defines which components exist, what variants they support, and beh
 
 ### Zen Mode
 - Keyboard shortcut `f` to enter, `Escape` to exit. Hides all chrome — only content area remains at full width.
+- Fullscreen link `/{slug}/f`: same view, entered by URL for sharing. Zen is **locked** — `f` / `Escape` change nothing, and the announcement does not advertise an exit. Leaving requires editing the URL. Works with `?share=<token>`.
 
 ### Navigation & Auth State
 - Anonymous: "Sign in" button. Primary variant on marketing pages, secondary on functional pages (desktop), ghost on functional pages (mobile).

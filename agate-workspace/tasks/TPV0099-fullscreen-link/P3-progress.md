@@ -37,3 +37,79 @@
   **结果**：`check-tdd-red.py` → `TDD_CHECK: classic red-light (assertion failures only)` = **exit 0（真红灯，B 类）** ✅
 - [step 13] 自检全过：① `P3-test-cases.md` 含 `test_code_dir`（frontmatter + §0 双处）② 19 条 BDD 1:1 全覆盖（脚本核验：main e2e 16 + auth e2e 3 = union 19，missing=[]，dupes=[]）③ 真红灯实测确认（单测 6 failed 断言失败 + vue-tsc exit 0 ⇒ 非 A 类）④ `git status --porcelain frontend-v3/` **仅 3 个正式新增测试文件**，零临时探针残留（探针全在 `.agate-tmp/`）
 - [step 14] `check-gate.py P3` = **exit 2**（P3-test-cases.md 存在，符合预期）；`vue-tsc --noEmit` = **exit 0**
+
+---
+
+## 修正轮（P3 定点修正，d dispatch: `P3-dispatch-context-test-designer-fix.md`）
+
+> 背景：P4 已完成实现（形态与 P2 §1.1 最终规格表逐字一致，三个禁止变体均未触碰），匿名 spec 已 32 passed 全绿。
+> auth spec `4 failed / 2 passed` —— 主 Agent 已逐条复核确认**全部由 2 处测试缺陷导致**（P4-implementation.md §8 两条 `[DESIGN_GAP]`），
+> 定性为**「断言写成了与本任务目标相反的方向」**，非实现未达标。本轮只修测试，**不动实现**。
+
+- [step 0] 探活 `curl :8888/health` = **200**（首探即活）
+- [step 1] 读修正指令全文（287 行）+ 通读 auth spec（343 行）复核两处缺陷现状
+- [step 2] **DG-1 修正**（`:151`，BDD-9 pathname 断言）：
+  - 现状 `expect(after.pathname).toBe('/markdown-test')` 必然失败 —— 该用例自己的 Given（`:101`）就导航到 `/markdown-test/f`
+  - 期望值来源被**搬错语境**：搬自 P1 §3.3 一次在 `/{slug}` 上用 **f 键**的测量（当时 `/{slug}/f` 路由尚不存在）
+  - 且与全任务其余 6 条「保留 `/f`」要求（BDD-2/8/13/14/18 + 本 spec BDD-15）**直接互斥** → 改实现迎合它会同时打红那 5+1 条
+  - 修正：期望值改 `/${SLUG_MD}/f`，标签改为「锚点跳转不得改变 pathname（须保持在 /f 全屏视图）」
+  - **非放宽判据**：仍验证"锚点跳转不破坏全屏视图"，只是把"不改变"锚定到该用例实际所处的 URL（`/f`）
+  - 保留未动：`:138-148` 三条实质断言（tocInvisible / scrollTop 增加 / zen===true）+ `:154` 负向对照（window.scrollY 恒为 0）
+- [step 3] **DG-2 修正**（`:288` 一带，BDD-10 匿名基线）：
+  - 现状基线三条请求走已登录的 fixture `request` context —— `:255` 的 `aliceToken(request)` 登录成功后 `Set-Cookie: peekview_token=...` **写入该 context**，
+    此后任何不带 Authorization 的 `request.get` 都自动以 alice 身份发出 → 得 200 而非 404。**失败发生在任何页面交互之前，与实现无关。**
+  - 不可改后端「忽略 Cookie」（违反 **N8 后端零改动**）→ 只能修 context
+  - 修正：`import { request as pwRequest }` 后 `pwRequest.newContext({ baseURL: BASE_URL })` 建**独立匿名 context**，
+    三条基线请求改走该 context，`try/finally` 中 `anonCtx.dispose()` 释放
+    （注：`APIRequestContext` **实例上**无 `newContext()` —— 须从 `@playwright/test` 导入的 `request` 上调用）
+  - 保留未动：**`[false,false,true]` 三态区分力断言**（`:344-347`，防恒真假绿核心判据）+ Then 本体全部断言
+    （真 token 可见 / 无鉴权提示 / zen 类存在 / 5 项 chrome 不可见）+ `afterEach` 清理队列（`{slug,shareId}` 二元组）+ 清理后 alice 复查 `raw=404`
+- [step 4] `make build-frontend-fast` → ✓ built 13.69s / 388 static files（E2E Check 6 新鲜度前置）
+- [step 5] 实跑 `E2E_SPEC=e2e/tpv0099-fullscreen-link-auth.spec.ts make debug-test` → **6 passed (8.7s)**（3 用例 ×2 project）✅
+  （修正前为 4 failed / 2 passed）
+- [step 6] 实跑 `E2E_SPEC=e2e/tpv0099-fullscreen-link.spec.ts make debug-test` → **32 passed** ✅ 无回归
+- [step 7] 实跑 `make test-frontend` 两次：
+  - 首跑 **1 failed | 1349 passed | 4 skipped** —— 失败在 `src/components/__tests__/TableView.spec.ts:158`（与本次 e2e-only 改动无关，本次未触碰 `src/`）
+  - 复跑 **111 files / 1350 passed | 4 skipped (1354)** ✅ 命中基线 ⇒ 该条为**并行负载下的 flaky**（第二个已知 flaky，主 Agent 已知 flaky 为 `DiagramBlock.spec.ts`）
+- [step 8] `git status --porcelain frontend-v3/`：`e2e/tpv0099-fullscreen-link-auth.spec.ts`（本轮唯一改动）
+  + `src/composables/useZenMode.ts` / `src/router.ts` / `src/views/EntryDetailView.vue`（**P4 既有改动，本轮零触碰**）
+  → 本轮 diff 范围严格限于 auth spec（17 insertions / 8 deletions），未动实现文件、未动另两个测试文件
+- [step 9] 纪律：全程未触碰生产 `:8080` 与 `~/.peekview/`，未跑 `uvicorn`/`make debug`/`npm run dev`，未 `git add`/`commit`
+  **[PROD_NOT_TOUCHED]**
+
+---
+
+## P3 修正轮 2（DG-3：清理队列登记「请求 slug」而非「服务端 slug」）
+
+- [step 0] 探活 `curl :8888/health` = **200**（首探即活）
+- [step 1] 读定点修正指令全文（262 行）+ 通读 auth spec（352 行）+ 核对仓库先例 `e2e/t069-settings-refresh-guard.e2e.spec.ts:122,194,238,328,436`（一律 `body.slug`）完成
+- [step 2] **机制端到端复现**（.agate-tmp/，只读 :8888 + 自建 e2e- 资源）：
+  - 第 1 次 POST `/api/v1/entries` slug=X → 服务端 slug = **X**
+  - 第 2 次 POST 同 slug=X → 服务端 slug = **X-2**（静默改后缀，证实 `entry_service._retry_with_slug_suffix` 行为）
+  - 触发面：`playwright.config.ts:5` `fullyParallel: true` → chromium 与 Mobile Chrome 并发跑同一用例，`Date.now()` 毫秒级撞车
+- [step 3] **DG-3 修正**（`:258-294`）：把 `slug` 重新定义为**服务端返回的 slug**，请求值另名 `requestSlug`
+  - `const requestSlug = \`e2e-tpv0099-share-${Date.now()}\`` → POST data 用 `requestSlug`
+  - `const created = await createRes.json()` / `const slug = created.slug as string` ← **清理队列登记它**
+  - 下游**建 share（`:297`）/ 匿名基线（`:315-317`）/ 三次页面访问（`:326,333,340`）全部沿用 `slug`** → 因变量名重绑，天然对齐、无需逐处替换（少改 = 少错）
+  - `cleanupQueue[0] = { slug, shareId: ... }`（`:305`）随之登记服务端 slug
+  - **修的是"登记谁"，不是"断言什么"** —— `afterEach` 无条件删除 + 复查 `raw===404` 结构**逐字未动**
+- [step 4] **防回归自证（指令"顺带"项，做了强化版）**：除指令建议的真值断言外，另加**活体校验**
+  - `expect(slug, '必须登记服务端返回的 slug（防 -2 后缀残留）').toBeTruthy()`（静态：登记值非空）
+  - `expect(registeredAlive.status(), ...).toBe(200)`（**动态**：登记对象须是 alice 可读的真实资源）
+  - 为何加动态条：真值断言只证明"有值"，**证明不了"这个值指向真实资源"** —— 原缺陷正是登记了**有值但不存在**的 phantom slug。
+    冲突场景下退回登记 `X` 时真实资源在 `X-2`，`GET X/raw` 必 404 → 本条 fail，缺陷被直接测出
+- [step 5] **负向对照实证缺陷成立 + 修正有效**（.agate-tmp/probe-conflict.sh，两组各自收尾清理）：
+  - A 组（旧行为）：建 X/X-2 → 只删登记的 X → `X/raw`=404（**断言会通过**）但 `X-2/raw`=**200** → **真实残留 + 假绿**，与主 Agent 实测一致
+  - B 组（新行为）：建 X/X-2 → 删登记的服务端 slug `X-2` → `X-2/raw`=**404** → 清理成功
+- [step 6] `make build-frontend-fast` → ✓ built 13.84s / 388 static files（E2E 新鲜度前置）
+- [step 7] 实跑 `E2E_SPEC=e2e/tpv0099-fullscreen-link-auth.spec.ts make debug-test` → **6 passed (8.4s)** ✅
+- [step 8] 实跑 `E2E_SPEC=e2e/tpv0099-fullscreen-link.spec.ts make debug-test` → **32 passed (14.4s)** ✅ 无回归
+- [step 9] 实跑 `make test-frontend` → **111 files / 1350 passed | 4 skipped (1354)** ✅ 命中基线（本轮串行跑，避开已知 flaky 的并行负载）
+- [step 10] **残留自证（本轮最关键验收点）**：auth spec 跑完后 + 冲突探针收尾后，**两次**查 :8888 中 `e2e-tpv0099-share` 前缀
+  → **RESIDUE_COUNT = 0** ✅（口径：alice token 查 `/api/v1/entries?limit=200` 过滤前缀）
+- [step 11] 纪律与范围：
+  - `git status --porcelain frontend-v3/` 中**本轮唯一改动** = `e2e/tpv0099-fullscreen-link-auth.spec.ts`（+43/-10），无 untracked 文件
+  - 三实现文件 + 另一测试文件 mtime 仍为前轮（19:46 / 20:27），**本轮零触碰**；后端**零改动**（N8 遵守）
+  - 临时/探针文件全在 `.agate-tmp/`（`check-residue.sh` / `probe-conflict.sh`），**未落入 `frontend-v3/`**
+  - 未触碰生产 `:8080` 与 `~/.peekview/`；未跑 `uvicorn`/`make debug`/`npm run dev`；未 `git add`/`commit`
+  - **[PROD_NOT_TOUCHED]**

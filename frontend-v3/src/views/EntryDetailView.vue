@@ -152,7 +152,7 @@ const shareStore = useShareStore()
 const { currentEntry, activeFile, fileContent } = storeToRefs(entryDetailStore)
 const { authState } = storeToRefs(authStore)
 
-const { zenMode, zenAriaText, handleZenKeydown } = useZenMode()
+const { zenMode, zenAriaText, handleZenKeydown } = useZenMode(() => route.meta?.zen === 'locked')
 const { isMobile, isDesktop, handleResize } = useResponsiveLayout()
 
 provide(ZenModeKey, zenMode)

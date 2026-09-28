@@ -1,0 +1,14 @@
+- 2026-09-28 P4 implementer 开工：读 P4-dispatch-context + implementer 角色 + P2 §1.1/§6/§7。debug :8888 health=200（在线）。
+- M1 完成：router.ts `/:slug/f` 路由（name detail-zen-locked, props true, meta.zen=locked）插入 /:slug 之后、catch-all 之前。
+- M2 完成：useZenMode.ts 改为 `(locked: () => boolean = () => false)`；zenMode = computed(() => locked() || manualZen.value)；zenAriaText = computed（锁死文案 'Fullscreen view. Content only.'，不含 Escape/exit）；移除 updateZenAria（含返回键）；handleZenKeydown 首行锁死整函数 return（不 preventDefault/不 stopPropagation）。
+- M3 完成：EntryDetailView.vue:155 传 thunk `() => route.meta?.zen === 'locked'`；provide/class 写法未动。
+- M4/M5/M6 完成：DESIGN.md「Zen Mode」补全屏链接入口；CHANGELOG [Unreleased]/新增 记录用户可见功能；improvement-backlog #56 状态改已完成 + 划除并更正已被证伪前提（"zen 外观统一…同时影响 f 键 zen"）。
+- 自查：vitest useZenMode.spec.ts 7/7 passed；make test-frontend exit 0（111 files / 1350 passed | 4 skipped，基线 110/1343 零回归，+7=新增）；make typecheck exit 0；make lint exit 0；make check-docs exit 0；make build-frontend-fast exit 0（388 static files，static/index.html 新鲜）。
+- P4-implementation.md 已落盘。下一步：E2E 双 spec 实跑。
+- E2E 匿名组实跑：E2E_SPEC=e2e/tpv0099-fullscreen-link.spec.ts make debug-test → exit 0，32 passed（16 用例 ×2 project），P3 时点 26 failed 全转绿；3 条回归护栏（BDD-11/12/19）仍绿。
+- E2E 登录组实跑：E2E_SPEC=e2e/tpv0099-fullscreen-link-auth.spec.ts make debug-test → exit 2，2 passed（BDD-15 双 project 绿）/ 4 failed（BDD-9 ×2、BDD-10 ×2）。
+- 诊断 BDD-9（:151 断言 pathname==='/markdown-test'）：与本用例自身 Given（:101 导航至 /markdown-test/f）及 BDD-2/8/13/14/18+BDD-15 的"/f 后缀必须保留"矛盾；期望值系 P3 从 P1 §3.3 在 /{slug} 上用 f 键测得的字面锚点搬入（当时 /{slug}/f 路由不存在）。P1 BDD-9 Then 原文只要求目录侧栏不可见 + .content-area.scrollTop 增加，二者实测均已通过 → 用例缺陷。
+- 诊断 BDD-10（:288 基线"匿名无 token 须 404"）：Playwright request 夹具与 page 共享 cookie jar；:255 aliceToken(request) 登录后 cookie 泄漏 → 无 Authorization 头的 request.get 以 alice 身份发出得 200。独立探针（.agate-tmp/probe-bdd10.cjs）：同 context 200 / 全新匿名 context 404。
+- BDD-10 Then 本体独立实跑（.agate-tmp/probe-bdd10-then.cjs，真匿名 browser context + 1280×800）：no_token/fake_token 正文不可见、real_token 可见、zen=true、chrome 全不可见、三元组 [false,false,true]（未退化恒真）、清理后 raw=404 → **Then 全绿**。
+- 按 implementer 决策树第 2 条（测试断言与 BDD 矛盾 → 标 DESIGN_GAP，不改测试），未改动任何测试文件；P4-implementation.md §8 已登记 2 条 DESIGN_GAP 待主 Agent 裁决（均为 P3 产出修正，非实现缺陷）。
+- 清理核查：探针 entry 已删（alice 检索 tpv0099 count=0，raw=404）；临时脚本全在 .agate-tmp/，frontend-v3/ 下无临时文件（git status 仅 3 改 + 3 新 spec）。[PROD_NOT_TOUCHED]

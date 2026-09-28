@@ -1,5 +1,5 @@
 task_id: TPV0099
-phase: P3
+phase: P4
 status: pending-start
 retries:
   P1:
@@ -16,14 +16,24 @@ retries:
     failure_mode: quality
     prompt_changed: true
     adjustment: null
+  P3:
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
+  - round: 2
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
 judge:
   enabled: true
 task_name: fullscreen-link
 created: 2026-09-16 12:00:00+00:00
-updated: '2026-09-28T19:00:00Z'
+updated: '2026-09-28T14:58:20Z'
 retry_count:
   P1: 2
   P2: 1
+  P3: 2
 history:
 - phase: P0
   action: created

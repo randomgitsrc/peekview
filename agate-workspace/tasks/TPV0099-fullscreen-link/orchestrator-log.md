@@ -270,3 +270,88 @@
   5. **处置（认可子 agent 的做法）**：走 agate **官方扩展点** `$task_dir/.agate/formatters/vitest.sh`（`resolve_formatter` 优先级链：绝对路径 → **`$task_dir/.agate/formatters/`** → `$agate_root/assets/formatters/`，主 Agent 已核 `agate_common.py:629-647`）。主 Agent `diff` 复核：**仅改输出传递方式**（`OUTPUT` 环境变量 → `mktemp` 临时文件 + `python3 - "$TMP"`），**判定语义逐字等价**（`exit_code` 解析、正则、输出 JSON 结构均未动）→ **未改 agate 本体、未改 P2 固化的 `gate_commands`** ✓。用真实 1.5MB 基线输出喂新 formatter → **exit 0、JSON 正常解析** ✓
   6. **约束（须写进 P4/P5/P6 上下文）**：**`P3_formatter: "vitest.sh"` 不可删、不可改回内置名**，否则误判重现（P5/P6 的 `make test-frontend` 同样受影响——虽 P5/P6 不经 formatter，但其红灯会进 `known-failures` 判读，且**未来任何前端任务的 P3 都会再踩**）
 - DECISION（2026-09-28）：**登记该缺陷为项目技术债（DEBT0014）**，理由命中登记判据 2（"不修会让未来变更更贵/更危险"）——它**已实际威胁 CI 判定**（`ci-gate-backstop.py` 会误判 FAIL），且**影响 4 个既有任务 + 未来所有前端任务**。**这是本任务发现、但不属本任务修复范围**（修复点在协议层 `~/.agate/**` 的内置 formatter，属 agate 上游；或退一步在项目侧给 4 个既有任务补同型任务级 formatter）。**主 Agent 不改协议本体**（`~/.agate/**` 属协议层且有全局文件修改的许可约束），仅在项目登记簿登记 + 建议上游修复
+- GATE PASS（2026-09-28）：**P3 已 commit（`18f1e40f`，12 文件 / +2032 行）**，含 `P3-test-cases.md` + 3 个测试文件 + 任务级 formatter + DEBT0014 登记。pre-commit 提示 `GATE WARNING: phase=P3 但暂存了代码文件`——**该 WARNING 在本阶段属预期**（P3 的产出**就是**测试代码文件，P3 卡明确要求"P3 产出含 P3-test-cases.md + 测试代码"），非违规改动
+- DECISION（2026-09-28）：**phase 推进 P3 → P4 由 `agate-next.py` 完成**（`check-gate.py P3` exit 2 ∈ pass_set）。依 P4 卡规则，`.state.yaml`（phase=P4）**保持 staged**，与 P4 产出同一 commit（**不单独做 phase commit**）
+- DECISION（2026-09-28）：**派发 implementer（P4）**，`P4-dispatch-context-implementer.md`（362 行，AGATE_CARD 已注入 1/1）。派发前把 P2/P3 沉淀的全部关键约束写入，重点是：
+  - **实现形态唯一权威 = P2 §1.1「最终规格」表 + 三个禁止变体**（尤其第三个"签名改 `locked: boolean` 能同时过两道 gate 但固化为 setup 快照 = 假绿"——**必须在派发指令里点名**，否则 implementer 很可能为消解类型冲突而选它）
+  - **R3 澄清**：锁死短路 = 整函数 `return`，**不调用任何事件方法**；并明确指出 **P1 §2.1 的归因是方向性误述**（真凶是 capture+stopPropagation，非 preventDefault）——**防 implementer 按 P1 原措辞去防一个不存在的坑、反而踩中真正的坑**
+  - **三条环境陷阱**（P2/P3 实测沉淀）：① 改 `src/` 后必须先 `make build-frontend-fast` 否则 `make debug-test` FATAL（Check 6 新鲜度）② 不可动任务级 `vitest.sh`/`P3_formatter`（DEBT0014 规避）③ 裸 `make debug-test` 只跑 1 spec
+  - **TDD 方向性提醒**：P3 的 26 用例中**有 4 个本就该绿**（单测 `test_bdd_12` 正向对照 + E2E 的 BDD-11/12/19 回归护栏）——**明确告知不要把"已绿"误当"已完成"**，它们是回归护栏、实现后必须仍绿
+  - **Not Modify 清单**（P1 §4.3 三处 + banner + 既有 spec 不得为让 E2E 全绿而改）
+- 记录（2026-09-28，**P3 阶段沉淀的环境事实，供 P5/P6 复用**）：`scripts/e2e-safety-check.sh` 的 Check 6 以 `find frontend-v3/src -type f -newer backend/peekview/static/index.html` 判新鲜度，**任一 `src/` 文件比 static 新即 FATAL 拒绝跑 E2E** → **P4 改了 `src/`（必然）后，P5/P6 的每个 E2E 键执行前都须先 `make build-frontend-fast`**。这是本任务 P5 的**必做前置**，须写入 P5 派发上下文
+- NEXT: 收 P4 产出 → 跑 P4 自查复验（`make test-frontend`/`typecheck`/`lint` 全绿 + 三新 spec 26 用例全绿 + 既有无回归）→ 按 C8 映射派 **design-review**（`domains=[frontend]`、`risk=medium` → 仅此一个评审）→ 跑 `check-gate.py P4`（须暂存区有代码文件）→ commit（phase=P4）
+- 记录（2026-09-28）：**P4 implementer 完成** —— `P4-implementation.md`（`implementation_dir: frontend-v3/src`）+ 改动 6 文件（`useZenMode.ts` / `router.ts` / `EntryDetailView.vue` / `DESIGN.md` / `CHANGELOG.md` / `improvement-backlog.md`）。**主 Agent 独立复核实现形态（逐字对照 P2 §1.1 最终规格表）**：
+  - `useZenMode(locked: () => boolean = () => false)` ✓（thunk 入参）
+  - `const zenMode = computed(() => locked() || manualZen.value)` ✓（**computed 派生，未落 ref**——第三个禁止变体已避开）
+  - `zenAriaText` 为 computed ✓；**`updateZenAria` 整体移除**（返回对象仅 3 键）✓
+  - `handleZenKeydown` 首行 `if (locked()) return` ✓（**不 preventDefault、不 stopPropagation**——BDD-7 依赖此）
+  - M1 路由 `/:slug/f` + `meta: { zen: 'locked' }` 已在 `/:slug` 之后、catch-all 之前 ✓
+  - M3 调用点 `useZenMode(() => route.meta?.zen === 'locked')` ✓（**thunk + `?.` 二者齐备**）
+  - **三个禁止变体均未触碰** ✓
+  - **未改任何测试文件**（`git diff --stat HEAD` 对 3 个 spec 为空 ✓）——与自报一致
+- GATE PASS（2026-09-28，**主 Agent 亲自复跑**）：`make test-frontend` → **`111 files / 1350 passed | 4 skipped (1354)` exit 0**（基线 110/1343 → **+7 恰为 M9 新增单测**，既有 110 files 零回归 ✓）。匿名 E2E `E2E_SPEC=e2e/tpv0099-fullscreen-link.spec.ts make debug-test` → implementer 报 **exit 0 / 32 passed**（16×2 project）
+- **DESIGN_GAP 裁决（2 条，主 Agent 逐条独立复核，均确认成立）**——均为 **P3 产出（测试代码）缺陷，非本任务实现缺陷**：
+  - **DG-1（BDD-9 `:151`）成立**：断言 `after.pathname === '/markdown-test'`，但**该用例自己的 Given（`:101`）就导航到 `/markdown-test/f`** → 必然失败。**关键在于核对 P1 权威 Then**（主 Agent 已读 `P1-requirements.md:218-224`）：BDD-9 的 Then 原文**只有两条**——「目录侧栏不可见」+「`.content-area.scrollTop` 增加 > 0」，**均不含 pathname**。P3 把它作为"附：锚点跳转不得破坏全屏视图"自行加了断言，期望值搬自 P1 §3.3「zen 态下 pathname 仍为 `/markdown-test`」的实测记录——**但 P1 那次测量是在 `/{slug}` 上用 f 键做的**（当时 `/{slug}/f` 路由尚不存在）→ **搬错了语境**。且该期望值与 BDD-2/8/13/14/18 及本 spec BDD-15 的"保留 `/f`"要求**直接互斥**（主 Agent `grep` 确认 `:119`/`:439` 等均要求 `/${slug}/f`）。**实测失败详情已核**：`Expected "/markdown-test" / Received "/markdown-test/f"` —— **恰证明实现是对的**。→ **修正方向 = 改断言为 `/${SLUG_MD}/f`**（属测试修正，非放宽判据）
+  - **DG-2（BDD-10 `:288`）成立**：基线断言「匿名无 token 读私有 entry 须 404」实测得 **200**。**主 Agent 独立探针复现**（`.agate-tmp/p4-cookie-probe.mjs`）：`request` 夹具调 `/auth/login` 后 `Set-Cookie: peekview_token=...` **写入该 `APIRequestContext`** → 此后无 Authorization 头的 `request.get` **自动以 alice 身份发出** → `SAME context = 200` / `FRESH context = 404`（与 implementer 报告逐字一致）。**失败发生在任何页面交互之前**，与本任务实现无关。而 **BDD-10 的 Then 本体主 Agent 已用真匿名 browser context 独立实跑全部通过**（`.agate-tmp/p4-bdd10-then.mjs`）：三态可见性 `[false,false,true]`（**区分力成立、未退化恒真**）、`zen count = 1`、`chromeVisible = false`、清理后复查 `404`。→ **修正方向 = 基线改用独立匿名 `APIRequestContext`**（`playwright.request.newContext()`；主 Agent 已实测该 API 可用且匿名 GET 返回 200/正确语义），**不得**改后端忽略 Cookie（那会违反 N8"后端零改动"）
+  - **两条 DESIGN_GAP 的共同性质**：**"断言写成了与本任务实现目标相反的方向"**——DG-1 期望"不保留 `/f`"（与全任务目标相反）、DG-2 期望"匿名不可读"但用了一个已被登录污染的 context。**都不是"实现没做到"，而是"测试没测对"**
+- DECISION（2026-09-28）：**不采用 P4→P3 正式回退（retreat）**，改为**派 test-designer 定点修正 P3 产出**。理由（流程性且已实证）：
+  - **① 正式回退在结构上已不可行**：P3 卡推进条件要求 `check-tdd-red.py exit 0`（真红灯），而**实现已存在** → 主 Agent 实跑得 **exit 2（`tests pass, no red-light`）** → **P3 无法再次合法完成**。硬走回退会卡在"红灯无法重建"（除非删实现，而那会毁掉已通过的全部验证，代价远超收益）
+  - **② 修正面极窄且方向唯一**（2 处测试缺陷，改法已由证据锁定），不构成"测试设计返工"——P3 的 19 条 BDD 1:1 覆盖、真红灯形态、四条硬约束落实**均未被推翻**
+  - **③ 不占 P4 retry 预算**（P4 实现本身无缺陷；DESIGN_GAP 是 P4 对**上游产出**的偏差声明，正是该机制的设计用途）
+  - **④ 诚实记账**：仍按 P3 产出缺陷**记录 `retries.P3 = 1`**（`failure_mode: quality`）——依据 `state-machine.md`「重试记录不能存在 LLM 记忆里（会忘）」，P3 的实际质量缺陷不应因"未走正式回退"而在账上消失
+- DECISION（2026-09-28）：**两条 DESIGN_GAP 的最终裁决须在 P7 转抄并配对 `[DESIGN_GAP_REVIEWED:]`**（`check-gate.py` P7 要求 `[DESIGN_GAP:` 计数 == `[DESIGN_GAP_REVIEWED` 计数，P4 卡与 state-machine 双重规定）。**已记入待办**，P7 时执行
+- NEXT: 派 test-designer 定点修正 2 处测试缺陷（**须保持断言意图、不得放宽判据**）→ 复核 auth spec 转全绿 → 按 C8 派 **design-review**（P4，`domains=[frontend]`）→ `check-gate.py P4`（须暂存区有代码文件）→ commit（phase=P4）
+- DECISION（2026-09-28）：**派发 test-designer 修正轮**（`P3-dispatch-context-test-designer-fix.md`，已注入 P3 卡片——该文件修的是 P3 产出故用 P3 卡，注入用 `agate-inject-card.py P3 .`；**记录一处操作细节**：`agate-inject-card.py <PHASE>` **只处理当前 phase 的文件**，故以 P4 调用时该 P3-named 文件不会被注入，须显式传 P3）
+  - 修正指令的核心设计：**给出"为什么是缺陷"的完整证据链**（DG-1 引 P1 权威 Then 原文 + 指出期望值搬错语境 + 指出它与另 6 条"保留 /f"互斥；DG-2 给主 Agent 独立探针的 `SAME context=200 / FRESH context=404` 对照），并**明确两条铁律**：① **不得放宽判据**（DG-1 改锚定 `/f` 仍是有效断言；DG-2 换 context 后三态区分力必须保留）② **不得改实现与后端**（改后端忽略 Cookie 违反 N8）
+  - 另附**主 Agent 已实测的 BDD-10 Then 通过证据**（`[404,404,200]` 基线 + `[false,false,true]` 浏览器三态 + `zen=1` + `chromeVisible=false` + 清理 `404`）→ **明确告知"你的测试设计意图是对的、实现也对，只是基线用错了 context"**，防修正轮把判据写弱
+  - 同时给出可执行细节：`APIRequestContext` **实例上没有** `newContext()`（实测 false），须从 `@playwright/test` 导入的 `request` 上调；并提示 `e2e/` 不在 `src/` 下、理论上不触发 Check 6，但稳妥起见跑 E2E 前先 build
+- GATE PASS（2026-09-28，**主 Agent 亲自复跑，不信自报**）：P3 修正轮完成（唯一改动 `tpv0099-fullscreen-link-auth.spec.ts`，+17/-8）。**两处修正落点已逐字复核**：
+  - **DG-1**：`:151` 已改为 `expect(after.pathname, '...（须保持在 /f 全屏视图）').toBe(`/${SLUG_MD}/f`)` ✓；`:138-148` 三条实质断言 + `:154` 的 `window.scrollY` 负向对照**均在位**（`grep` 命中 7 处 scrollY 相关）→ **判据未放宽** ✓
+  - **DG-2**：已 `import { request as pwRequest }`（`:22`）+ `:289` `pwRequest.newContext({ baseURL: BASE_URL })` + `try/finally` dispose（`:298`）✓；三态区分力断言仍在（`grep` 命中 3 处）✓
+  - **范围合规**：`git status --porcelain frontend-v3/` 中**测试文件仅 auth spec 一处**（另 3 个是 P4 既有实现改动，本轮零触碰）✓
+  - **实测**：auth spec `E2E_SPEC=... make debug-test` → **exit 0 / 6 passed (8.2s)** ✓（3 用例 × 2 project）；匿名 spec 复跑中
+- 记录（2026-09-28）：修正轮报告**第二个 flaky** —— `make test-frontend` 首跑出现 `TableView.spec.ts:158` 单条失败、复跑全绿。**主 Agent 独立验证**：该 spec **隔离连跑 3 次全绿（13 passed ×3）** → 与已知的 `DiagramBlock.spec.ts` 同类（全量并发下的时序 flaky），**非本任务引入**（本轮改动是 e2e-only、`src/` 零触碰，因果上不可能）。**P5 判定口径相应扩充**：`make test-frontend` 若出现**单条**失败，须**隔离复跑确认**再定性，勿直接记为回归（现有两条已知 flaky：`DiagramBlock.spec.ts`、`TableView.spec.ts`）
+- GATE PASS（2026-09-28）：两 spec **主 Agent 亲自复跑全绿** —— auth spec **exit 0 / 6 passed (8.2s)**、匿名 spec **exit 0 / 32 passed (13.4s)** → **P3 修正轮闭环**（26 用例 + 修正后 auth 6 条 = 32 条全部可执行且全绿）
+- DECISION（2026-09-28）：**派发 design-review（P4）**，`P4-dispatch-context-design-review.md`（已注入 P4 卡片 203 行）。C8 映射依据：`domains=[frontend]` + `risk_level: medium` → **仅 design-review 一个角色**（无 high/full/security 触发）故**无需专家组汇总**，由该评审直接产出 `P4-review.md`。派发指令要点：
+  - **三个最高优先评审点**：① 实现形态与 P2 §1.1 逐字对照（**特别点名第三个禁止变体最阴险——签名改 `locked: boolean` 能同时过两道 gate 但固化为 setup 快照 = 假绿**）② 真实浏览器实跑 BDD（重点 **BDD-3 的 A/B 排除集不可简化**，要求做**三态负向对照**证明判据有拦截力；以及 **BDD-11/12 回归**这个最关键回归面）③ **独立复核两条 DESIGN_GAP**（明确要求"不要采信 P4-implementation.md 自述"，并给出要核的具体问题与可自写的探针方法）
+  - 写入本任务**四次"验证失效"的实例**作为方法论警示，要求给结论时附可复现命令
+  - 写入 Not Modify 清单（P1 §4.3 三处 / banner / `zen-shortcut.ts` / 既有 spec 不得为让 E2E 全绿而改 / 零 CSS 改动）防"顺手改进"
+  - 提示 `P4-review.md` **允许 `needs-revision`**（与职能评审文件名不同），`agent` 不能是 `main`
+- 记录（2026-09-28）：`design-review`（P4）返回 **`status: needs-revision`，阻塞级 1 项**（`P4-review.md`，351 行）。**产品实现侧无阻塞缺陷**（它独立复核确认：P2 §1.1 七个面逐字一致、三个禁止变体全避开**且变体③的 M9 拦截力经真实 vue 响应式独立验证**（正确 `[false,true,false]` / 变体 `[false,false,false]`）、BDD-3 三态 0/3/1 与 P1 逐数字一致、基线零回归、Not Modify 全遵守、三处文档同步）→ **P4 实现本身可直接沿用**
+- **阻塞项（主 Agent 独立复核，确认成立且性质严重）—— BDD-10 清理钩子登记"请求 slug"而非"后端返回 slug"**：
+  - **机制（主 Agent 端到端复现）**：spec `:258` 生成 `e2e-tpv0099-share-${Date.now()}` 并 `:270` 用**该请求值**入清理队列；但后端 `entry_service._retry_with_slug_suffix`（`:1107-1138`，TOCTOU 保护）在 slug 冲突时**静默返回 `-2` 后缀的新 slug**。主 Agent 实测：同 slug 连发两次创建 → 第 2 次响应 `slug = '...-2'`（**且响应体确实含服务端 slug 字段**，键列表 `[created_at, expires_at, files, id, is_public, owner_id, slug, url]`）→ **spec 从未读它**
+  - **三重后果（均已实证）**：① **真实残留**——主 Agent 查 debug DB 实测 **2 条 `e2e-tpv0099-share-*-2`**（summary 与本 spec 完全对应，创建时刻 21:48:07 / 22:15:24，与 `needs-revision` 报告吻合）② **假绿**——afterEach 的"无残留"断言（`:245-247` 复查 `raw === 404`）**锚在被删错的 slug 上**：删 `X`（不存在）→ 尴尬 200/404 但断言通过，而真实资源 `X-2` 仍 **200** → **断言通过与事实相反**（reviewer 已构造性复现 `LEAK_DETECTED: true`）③ **可能误删兄弟 project 的 fixture**——`DELETE` 用请求 slug，若恰好命中同 slug 资源会删错对象
+  - **触发条件**：Playwright `fullyParallel: true`（`playwright.config.ts:5`）→ chromium 与 Mobile Chrome **并发跑同一用例**，两者 `Date.now()` 毫秒级撞车概率低但**非零**（reviewer 报实测连续 6 次全量 delta 为 0，但**已真实留痕**）→ 属**低概率高后果**类缺陷
+  - **违反的强制要求**：P4 卡「**创建即注册**、测试结束**无条件删除**」+ P3 卡同源要求「清理队列存 `{slug, share_id}` 二元组，清理后复查 `raw`=404」——**当前实现满足了字面（确实复查了 404）却锚错了对象**，是"形式上合规、实质上失效"的典型
+  - **主 Agent 处置**：**已用 sanctioned 路径（debug backend HTTP API）删除 2 条残留**并复查 `raw=404` + 残留扫描 `e2e-* count = 0`、alice 可见回到 **22**（**未用 sqlite3 直改 DB**，遵守项目铁律 5 的取向；**未触碰生产**）
+  - **修复方向已由主 Agent 实测锁定**：`cleanupQueue.push({ slug: (await createRes.json()).slug, ... })`——**仓库已有先例**：`t069-settings-refresh-guard.e2e.spec.ts:122,194,238,328,436` 均用 `body.slug`（服务端返回的 slug）而非请求值。**属 P3 产出（测试）缺陷**，非实现缺陷
+- 记录（2026-09-28）：reviewer **如实登记自己在 DG-2 复核中第一版探针曾得出与主 Agent 相反的结论（三态全 true）**，根因是它用了 Chrome 默认 context（带着历史 alice cookie）——**正是 DG-2 同一个坑**；改隔离 context 后得 `[false,false,true]`，并**补了一个更强的因果对照**（给全新 context 仅注入 cookie → 404 翻 200，证明 cookie 是唯一因果变量）。**这是本任务第五次"验证失效"，且是第一次由验证者自己发现并纠正**——且它踩的坑恰是被验证对象本身，属"同一陷阱的两次命中"，方法论价值高
+- 记录（2026-09-28）：reviewer 非阻塞 6 项中，**N-6 值得立即处置**：`.agate-tmp/` **未被 gitignore**（主 Agent 此前已实测确认），`git add -A` 会把探针脚本误入库 → 主 Agent 全程**按显式路径 add**（未用 `-A`），已合规
+- DECISION（2026-09-28）：**修复走 test-designer 定点修正（同 P3 修正轮路径），不回退 P4**。理由：① 缺陷在**测试代码**（P4 实现无阻塞项，reviewer 明确"产品实现侧无阻塞级缺陷"）② 修复面**一行**且方向已由仓库先例锁定 ③ **正式回退在结构上仍不可行**（实现已存在 → `check-tdd-red` exit 2，P3 无法合法完成）
+  - **诚实记账**：记 `retries.P3 = 2`（P3 产出第二次缺陷；累计 P3 retry 2/2 = cap 上限——**须注意**：若再有 P3 产出缺陷，按 `MAX_RETRY_MAP` 的 `P3:2` 将超出上限，届时应评估是否改走其他路径）
+- DECISION（2026-09-28）：**派发 test-designer 修正轮 2**（`P3-dispatch-context-test-designer-fix2.md`，已注入 P3 卡片 122 行）。指令要点：
+  - 给出**完整机制证据**（后端 `_retry_with_slug_suffix` 的 `-2` 行为 + 主 Agent 实测响应体含服务端 slug 字段 + 2 条真实残留 + 假绿机理 + `fullyParallel` 并发根因）
+  - **给出仓库先例**：`t069-settings-refresh-guard.e2e.spec.ts` 的 5 处 `body.slug` 用法 → 修正方向不是"发明新写法"而是"用仓库已有惯例"
+  - **明确"修的是登记谁，不是断言什么"**——`afterEach` 的「无条件删除 + 复查 raw=404」结构保持不变，防把断言写弱
+  - **门槛第 5 项设为"残留自证"**（跑完 auth spec 后自查 `e2e-tpv0099-share*` 残留 = 0），并**推荐构造冲突场景验证**（连发同 slug 观察 `-2` → 确认清理能删掉它）——比"跑一遍没留残留"更有力
+- 记录（2026-09-28）：主 Agent **已用 sanctioned 路径清理 2 条残留**（debug backend HTTP API DELETE → 复查 `raw=404` → `e2e-* 残留 count = 0`、alice 可见 **22**）。**全程未用 sqlite3 直改 DB**（遵守项目铁律 5 的取向：必须清理时走应用逻辑）、**未触碰生产**。另主 Agent 自己的 2 条 `e2e-probe-slugshape-*` 探针 entry 亦已删除复查 200→404
+- GATE PASS（2026-09-28，**主 Agent 亲自复跑 + 独立探针复核**）：修正轮 2 完成（auth spec 唯一改动 +43/-10）。**DG-3 修正已闭环**：
+  - **修正落点复核** ✓：`:274` `const slug = created.slug as string`（登记**服务端 slug**，请求值另名 `requestSlug`）；因变量重绑，建 share（`:300`）/ 匿名基线 / 三次页面访问 / `afterEach` 删除**全部一致使用它** → 一处改动带动全部下游，写法干净
+  - **保留项复核** ✓：`afterEach`「无条件删除 + 复查 `raw===404`」结构未动；三态 `[false,false,true]` 与 Then 本体断言全在
+  - **实测**：auth spec **exit 0 / 6 passed (8.4s)**、匿名 spec **exit 0 / 32 passed (13.8s)**、`make test-frontend` **exit 0 / 111 files / 1350 passed | 4 skipped** ✓（零回归）
+  - **残留自证 ✓**：主 Agent 独立扫描 `e2e-*` 残留 **0**、`probe/guard` 残留 **0**、alice 可见 **22**
+  - **范围合规 ✓**：`git status --porcelain frontend-v3/` 测试面**仅 auth spec 一处**；三个实现文件仍为 P4 既有改动（未被本轮触碰）
+- **记录（主 Agent 独立探针，对 subagent 的"强化守卫"声明做精确校准 —— 结论：方向对、效力被高估，但非阻塞）**：subagent 称其补的活体校验（`GET ${slug}/raw === 200`）是"该缺陷的直接探测器"。主 Agent 构造真实冲突场景实测，**该守卫的检出是时序依赖的、非可靠的**：
+  - 真实冲突里 `fullyParallel` 下 A（chromium）建 `X`、B（Mobile Chrome）建 `X-2`。若 B 退回旧逻辑（登记 `X`），B 的守卫执行 `GET X/raw`：
+    - **A 尚未 afterEach 清理时 → `X` 仍存在 → 200 → 守卫 PASS（漏检）**
+    - **A 已清理后 → `X` 已 404 → 守卫 FAIL（检出）**
+  - 即**检出与否取决于 A 的清理时序**，不是确定性探测器。**但它仍是严格改进**：① 比 `toBeTruthy()` 强（能证明登记值指向真实资源）② **不会产生误报**（正常场景 `created.slug === requestSlug` → 200 通过；冲突场景 `X-2` → 200 通过）
+  - **定性：非阻塞、不要求返工**。真正的缺陷闭环证据是**修正本身**（登记服务端 slug）+ **残留扫描 = 0**，而非守卫。**该守卫的声明强度须在 P7 一致性检查时按此校准**（避免把"时序依赖的部分检出"记成"确定性拦截"）
+  - **元意义**：这是本任务**第六次"验证声明需要被验证"**——前五次是判据/探针/标签/并发污染，**这次是"新增守卫的效力被自己的作者高估"**。主 Agent 一律以独立复现为准
+- 记录（2026-09-28）：subagent 附带发现 `:8080` 生产探测返回 000（未监听）—— 主 Agent 复核确认 `:8080 unreachable`。**与"禁止触碰生产"无冲突**（本就不可达），**无需动作**；仅提示若将来 `debug-verify-isolation` 类校验依赖 :8080 在线需另行处理
+- NEXT: **重跑 P4 评审**（`P4-review.md` 现为 `needs-revision`，`check-gate.py P4` 要求 status==approved，**不可跳过**）→ 复审通过 → 跑 `check-gate.py P4` → commit（phase=P4）→ 进 P5
+- DECISION（2026-09-28）：**派发 P4 design-review 复审轮**（`P4-dispatch-context-design-review-rev1.md`，已注入 P4 卡片 203 行）。理由：`P4-review.md` 现为 `needs-revision`，`check-gate.py P4` **要求 status==approved**（主 Agent 实跑确认 exit 1）→ **不可跳过**。派发要点：
+  - **范围极小**：只验证该 1 个阻塞项闭环（5 个独立确认点）+ 一次未回退抽查，**明确禁止重审**已通过项
+  - **把"活体校验守卫"的校准交给它独立判定**：主 Agent 已实测该守卫的检出**依赖 A 的清理时序**（A 未清理时漏检 / 已清理时检出），**不是确定性探测器**；但**仍是严格改进且不误报**，故**不构成返回理由**。要求复审者核实该校准，**若认为守卫其实是确定性的则须给出实证锚点**——保持独立复核的真实性（不要求它照抄主 Agent 结论）
+  - 写入本任务**六次"验证声明需要被验证"**的实例清单作方法论警示
+  - 特别提醒 App 端**自建 entry 必须用服务端 slug 清理**（正是它自己上轮发现的坑）

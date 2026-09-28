@@ -51,6 +51,13 @@ const routes: RouteRecordRaw[] = [
     props: true,
   },
   {
+    path: '/:slug/f',
+    name: 'detail-zen-locked',
+    component: () => import('./views/EntryDetailView.vue'),
+    props: true,
+    meta: { zen: 'locked' },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('./views/NotFoundView.vue'),
