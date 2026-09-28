@@ -355,3 +355,50 @@
   - **把"活体校验守卫"的校准交给它独立判定**：主 Agent 已实测该守卫的检出**依赖 A 的清理时序**（A 未清理时漏检 / 已清理时检出），**不是确定性探测器**；但**仍是严格改进且不误报**，故**不构成返回理由**。要求复审者核实该校准，**若认为守卫其实是确定性的则须给出实证锚点**——保持独立复核的真实性（不要求它照抄主 Agent 结论）
   - 写入本任务**六次"验证声明需要被验证"**的实例清单作方法论警示
   - 特别提醒 App 端**自建 entry 必须用服务端 slug 清理**（正是它自己上轮发现的坑）
+- GATE PASS（2026-09-28，**P4 阶段正式通过 —— 主 Agent 亲自跑真实 CLI 入口**）：`check-gate.py P4` → **exit 0**（P4 的通过码；`P4-review.md` status=approved + agent=design-review≠main + 暂存区有代码文件）；`P4-review.md` 复审轮 **`status: approved`，阻塞级 0 项**
+- 记录（2026-09-28）：复审轮**确认 5 点闭环**（逐项源码复核）：`:281` `const slug = created.slug` → `:286` push / `:305` queue[0] / `:297` 建 share / `:326,:333,:340` 三次页面访问 / `:241,:245` afterEach 删除+复查**全部锚服务端 slug**；`requestSlug` 在 afterEach 中**零出现**。实跑 auth spec **连跑 6 次均 6 passed/exit 0**（零 flaky）；残留扫描 `e2e-tpv0099|e2e-dr-` = **0**。`make test-frontend` **111 files / 1350 passed** 与基线逐数字一致
+- **记录（主 Agent 第六次自我校准，且本轮被 subagent 反超 —— 我的校准方向对但强度不够，subagent 的判定更准）**：我此前指出"活体校验守卫检出依赖 A 的清理时序、非确定性探测器"。复审**独立复核后给出更强且正确的结论**：
+  - **① 该守卫在已修正代码上是恒 200 的 tautology**——它读的就是它登记的变量（`slug = created.slug` → `push({slug})` → `GET ${slug}/raw`）→ **恒真，不可能失败**。**主 Agent 已用 node 复现该论证**：即使有人**把登记行改回 `requestSlug`（回归原缺陷）**，局部变量 `slug` 仍是 `created.slug` → **守卫照样 200 通过 → 它根本抓不到它声称要抓的那个缺陷**。这比"时序依赖"更本质：**它不是弱探测器，而是零效力探测器**
+  - **② 按 spec 真实时点**（守卫在登记当下执行），旧逻辑下它落在"A 存活"分支 → **漏检**；要检出反而需要**逆序竞态**（兄弟 project 先跑完 ~8s 用例体并清理）→ **该分支在真实时序下几乎不出现**（复审实测 3/3 落在漏检分支）
+  - **③ 复审给出确定性替代**：`expect(cleanupQueue[0].slug).toBe(created.slug)`（**戴"登记值与创建响应恒等"**）——主 Agent 已用 node 验证：对回归代码**检出**（false）、对修正代码**通过**（true）、**时序无关且无误报**。复审正确判为**建议项、非返回理由**
+  - **④ 复审还量化了碰撞率**：同毫秒并发建同名 **12 轮 → 12/12 全部碰撞** → 说明"6 次运行零残留"**不代表冲突罕见**，只反映两 project 到达创建点的时间差通常 >1ms。**这纠正了"低概率"的直觉**（碰撞本身不罕见，是"碰撞+旧逻辑"才留痕）
+  - **主 Agent 采信复审结论**（它比我的表述更精确）：真正的闭环证据 = **修正本身 + 残留扫描 0**；守卫保留合理（严格改进、不误报）但**不得记为"确定性拦截"**。**该措辞须在 P7 一致性检查时对齐**（复审 N-1 已提出；主 Agent 已记入待办）
+- 记录（2026-09-28，**本轮的方法论意义**）：这是本任务**第七次"验证声明需要被验证"**，且**这一次是主 Agent 自己的校准被下属评审修正**——我判"非确定性探测器"（方向对），复审判"恒真 tautology 且抓不到回归"（更准）。**说明"独立复核"是双向的**：主 Agent 不采信 subagent 自述，subagent 同样不采信主 Agent 的校准，**两者各自实证后收敛**才是可靠结构
+- 记录（2026-09-28）：复审**未回退抽查全通过**（三实现文件 sha256/mtime 与上轮一致、P2 §1.1 七个面逐字一致、三禁止变体全避开、BDD-10 Then + 三态 `[false,false,true]` 完整、BDD-9 pathname 仍锚 `/${SLUG_MD}/f`、DG-2 独立匿名 context 仍在、`frontend-v3/` 零 untracked）
+- NEXT: commit P4（**已确认暂存区无 `.agate-tmp`**，按显式路径 add 而非 `-A`——复审 N-4 提示；`.agate-tmp/` 未被 gitignore）→ 进 P5。**P5 派发前须转抄三条硬约束**：① 跑任何 E2E 前先 `make build-frontend-fast`（Check 6 新鲜度）② `P5_e2e*` 必须 `E2E_SPEC=` 定向（裸调用只跑 1 spec）③ 已知 2 条 flaky（`DiagramBlock.spec.ts`/`TableView.spec.ts`）单条失败须隔离复跑确认
+- **GATE FAIL → DIAGNOSIS（2026-09-28，P4 commit 被 pre-commit 硬阻断，且主 Agent 判定"gate 是对的、错在我"）**：`git commit` 报 **`GATE STATE: P3=2 (MAX=2)，phase 应为 PAUSED`**（`check-state-transition.py` 的 `retries_over` 检查，exit 1）。
+  - **根因 = 主 Agent 自己的 retry 账本记错了**（非实现问题、非测试问题）：我把 P3 记成 2 条（**虚构**），却把 P4 的**真实**门槛失败（首轮评审 `needs-revision`）**漏记**为 0。P3 cap=2 → 我虚构的 2 条正好触发硬阻断
+  - **取证（主 Agent 用四路客观证据交叉确认，非为解阻而改账）**：
+    1. **规则**：`state-machine.md:611`「每次某阶段**门槛失败**」才 `retries[Pn].append`；`phase-cards/P4:135`「review 不通过 → 修改 → 再 review…（**review 和 gate 重试共享 retry 预算**）」→ **评审失败消耗的是被评审阶段的预算**
+    2. **客观账本**（`gate-events.jsonl`）：**P1 FAIL(1) / P2 FAIL(1) / P3 恒 PASS(exit 2 ×2) / P4 FAIL(1)** → **P3 门槛从未失败**
+    3. **协议自己的口径**：`_BDD1_REVIEW_RETRY_RE` 枚举的评审角色**不含 `test-designer`** → 机械扫描该任务得 **P1=2 / P2=2 / P4=1 / P3=0**（与我修正后的账本一致）
+    4. **结构性事实**：P3 卡**无任何评审角色** → 无"共享预算"可计；且 **phase 从未转回 P3**（无 `agate-retreat-*.py` 调用、无 `write_retreat` 写入）
+  - **我此前的推理错误（须留存）**：我在两轮 test-designer 修正时写"仅登记 `retries.P3` 但不走正式回退，是**诚实记账**"——**方向错了**。P3 的门槛（`check-gate P3` / `check-tdd-red`）**从头到尾都是通过状态**，P3 也从未重入；两轮修正修正的是「**已被 P4 消费的 P3 产出**」，其失败是在 **P4 评审**中被发现的 → 按 Rule B，**应记 P4，不记 P3**。我把"发现缺陷的时点"当成了"缺陷所属阶段的失败"，**多记了 P3、漏记了 P4**——这同时是**虚增一个阶段的 retry**（触发假 PAUSED）与**漏记另一个阶段**（掩盖 P4 的真实失败）
+  - **处置**：按证据修正为 **`P1:2 / P2:1 / P4:1`（P3 归 0）**；`check-state-yaml.py` exit 0；`retries_over` 输出空（无阶段超 cap）；`check-state-transition.py` **exit 0**（阻断解除）
+  - **元教训（本会话第五类错误形态）**：前四类是"验证方法有缺陷"（恒真判据/降级 stub/标签张冠李戴/并发污染），**这次是"状态账本记错，且错误方向是双重的（一虚增一漏记）"**。**价值在于机制**：`retries_over` 的硬阻断把一个**我以为已经"诚实处理"了的**错误抓了出来——**若我当初只图方便少记 P3，反而不会触发阻断、P4 的漏记也不会被发现**。**"多记"比"少记"更容易被机械抓到**，这反过来说明该 gate 的设计是有效的
+- GATE PASS（2026-09-28，**P4 阶段正式通过**）：commit **`f1cfd5c3`**（20 文件 / +2418 行），pre-commit 输出 **`GATE P4 (TPV0099): 通过`**
+- DECISION（2026-09-28）：**phase 推进 P4 → P5 由 `agate-next.py` 完成**（`check-gate.py P4` exit 0 ∈ pass_set）→ `.state.yaml` phase=P5 已 `git add`（未 commit）；依 P5 卡规则，**phase 与 P5 产出同一 commit**（`P5-test-results/` 三件套就绪后），不单独做 phase commit
+- DECISION（2026-09-28）：**派发 verifier（P5）**，`P5-dispatch-context-verifier.md`（已注入 P5 卡片 147 行）。派发要点：
+  - **权威命令清单 = P2-design.md `:465-490` 的 `gate_commands` 块（6 键）**：`P5`(`make test-frontend`) / `P5_typecheck` / `P5_lint` / `P5_docs`(`make check-docs`) / `P5_e2e` / `P5_e2e_auth` —— **明确要求"逐条跑、原样执行、不改写不简化不合并"**
+  - **三个环境陷阱前置写入**（否则 verifier 会白跑或误判）：① 跑 E2E 前必须 `make build-frontend-fast`（Check 6 新鲜度会 FATAL）② 两个 E2E 键**必须带 `E2E_SPEC=`**（裸调用只跑 1 spec → 会误以为"E2E 跑了"而实际 19 条 BDD 的 E2E 层零覆盖，最坏一类假绿）③ **已知 2 条 flaky**（`DiagramBlock`/`TableView`）→ 单条失败**必须隔离复跑确认**再定性，并给出"隔离复跑绿=flaky / 仍红=真失败"的判定规则
+  - **基线只作"核对"不作"采信"**：明确要求"不要采信上表基线——自己跑、自己记；若结果与基线不同，如实记录并给证据（那正是验证的价值）"——防 verifier 把基线当答案抄
+  - **独立性**：不修任何文件（代码/测试/文档）、不改 `gate_commands`；若发现 `gate_commands` 本身有问题（命令不存在/指向错误）须记录上报而非自行改命令
+  - **产出规格**：`unit.md`（exit code + failed 数）+ `fail-list.txt`（**无失败时留空文件，不可缺**）+ `e2e.md`（UI 任务必需的 Playwright 结果 + 截图路径）；**不写 `known-failures.md`**（主 Agent 统一登记）
+  - 环境前置（主 Agent 派发前已做）：`make build-frontend-fast` 已跑（static 新鲜）、`:8888` health 200、alice seed 22、残留 0
+- NEXT: 收 P5 结果 → **主 Agent 亲自复核**（`check-gate.py P5` + 检查 `P5-test-results/` 存在 + failed 计数）→ 若有失败，判性质（真 bug 回 P4 / 环境问题修环境 / flaky 记 三振）→ 写 `p5_pass_commit` 字段（TAG0016）→ commit（phase=P5）→ 进 P6
+- GATE PASS（2026-09-28，**P5 阶段通过 —— 主 Agent 亲自复核**）：verifier 报告 **6/6 命令 exit 0、总 failed=0**。主 Agent 独立核验：
+  - `check-gate.py P5` → **exit 2**（P5 正常通过码；stderr 的 WARNING 提示"1 主 + 5 辅助 = 6 条命令请确认已全部执行"→ 已核对 `unit.md` 逐条列出 6 条，非子集）
+  - `P5-test-results/` 三件套齐备：`unit.md`（9468B，含 6 条命令的 exit code + failed 数）+ `fail-list.txt`（**0 字节空文件**，无失败）+ `e2e.md`（7917B）+ `evidence/tpv0099-bdd16-desktop_1280x800.png`（445918B）
+  - **N5 签名校验**：`grep -cE '^(PASSED|FAILED|passed|failed|ok|not ok)' unit.md` = **6**（>0，有效产出）
+  - **截图证据真实性（主 Agent 独立验证）**：md5 = `9fe109450b1a46fda7793637706925dd`（与 verifier 报告**逐字一致**）；PIL 读取 → 尺寸 **3520×2200**、灰度 **stdev = 36.43**（与报告**逐字一致**）、min/max = 32/255 → **非空白图**，证据有效
+- **发现（主 Agent 独立复核 verifier 的"残留 0"结论时发现一处口径陷阱，已补全验证）**：verifier 用 `?limit=200` 查残留得 `total_visible=20`，但**该 API 的 `limit` 参数未被识别、`per_page` 默认 20**（响应字段实测：`per_page: 20`、无 `limit` 字段）→ **只返回了 22 条中的前 20 条**。verifier 报的 "total 20" 其实是**页大小**而非总数（真实 `total: 22`）。
+  - **主 Agent 补做完整分页扫描**（`page=1,2,3&per_page=20`）→ 收齐 **22/22** 条 → `e2e-`/`tpv0099` 前缀残留 **0** ✓
+  - **结论不变**（残留确实为 0），但**证据强度被补足**：原扫描若真有残留在第 21-22 条会**漏检**。这是本任务**第八次"验证声明需要被验证"**——形态是"**分页参数未生效导致扫描面被静默截断**"，与 P3 那次"`make debug-seed` 的 `tail -10` 截断掩盖 FAIL 行"**同族**（都是"输出/结果被静默截断 → 观察者以为看全了"）
+- GATE PASS（2026-09-28，**主 Agent 补跑全量后端套件 —— P5 卡要求"应运行全量测试套件"**）：verifier **正确地**按"命令原样执行、不得增删"纪律只跑了 `gate_commands.P5` 的 6 条（后端 pytest 不在其内），并**明确标注"该基线未经我独立复跑验证、仅转录"**——**这是诚实的边界声明**。主 Agent 据此**自行补跑** `make test-quick`：
+  - **首轮** `2 failed / 1171 passed / 3 skipped`：① `test_admin_backup.py::TestBdd01ConsistentBackup::test_backup_produces_tarball` ② `test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key`
+  - **逐条独立定性（两条均为预存，非本任务引入）**：① `test_admin_backup` **隔离复跑绿**（单文件测得 `1 passed`）+ **全量重跑亦绿** → **flaky**（`backup .tmp` 竞态，TPV0092 同源，**TPV0095 已登记为预存 flaky**）② `test_cli_remote` **全量重跑仍红**，且在 **HEAD 基线 worktree（`.agate-tmp/baseline-0099`）复现同样失败** → **预存 + 环境性**（DSH 沙箱只读 `~/.peekview/config.yaml`）
+  - **重跑验证**：`make test-quick` 第二轮 = **`1 failed / 1172 passed / 3 skipped`**（flaky 消失、只剩预存环境性失败）→ 与主 Agent 在 P2 期建立的基线**逐字一致**
+  - **已登记 `known-failures.md`**（4 条，含前端两条 flaky），并写明"第 1/2 条属后端、不在本任务 gate 内、为满足 P5 卡全量要求而补跑发现"+"判定依据（基线 worktree 复现 / 隔离复跑绿）"
+  - **附注**：本任务**后端零改动**（仅前端 3 文件 + 文档），故后端失败在因果上不可能由本任务引入
+- GATE FAIL → DIAGNOSIS（2026-09-28 16:54 UTC）：**debug `:8888` 第四次掉线**——8h 托底 job `bash-1880` 到期结束。**诊断与前三次一致**（服务存活跟随挂它的那条调用）。**处置**：已重启并把托底加长到 **43200s（12h）**（job `bash-2858`）。**对本阶段无影响**（P5 已完成、6 条命令均在掉线前跑完）；对 P6 有影响故提前恢复
+- NEXT: commit P5（phase=P5，随产出）→ 写 `p5_pass_commit`（TAG0016）→ 进 P6
