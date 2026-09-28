@@ -329,3 +329,32 @@ created_at: 2026-09-28
 
 > **编号说明（主 Agent，2026-09-28）**：eng-review 建议用 `DEBT0014`，理由是"避开 `DEBT0013`"——但**本项目登记簿**实测最高为 `DEBT0012`、`DEBT0013`/`DEBT0014` 均 0 命中；`DEBT0013` 被占用的说法来自 **agate 协议层**（`~/.agate/v0.76.0/agate/rules/phases.yaml` 的 P8 时序注意），属**另一套登记簿**。主 Agent 采**本项目登记簿的连续性**（自增到 `DEBT0013`），理由：登记簿 id 的唯一边界是**同一文件内唯一**（`agate-debt-check.py` 的校验口径），为跨登记簿错开编号会让本项目编号出现**无解释的空洞**，反而降低可读性。若并置阅读时确有歧义，在两处各加一行来源标注即可。
 
+## DEBT0014
+
+```yaml
+id: DEBT0014
+category: protocol
+title: agate 内置 vitest formatter 用环境变量传全量测试输出，超 MAX_ARG_STRLEN 致 formatter exit 126 → check-tdd-red.py 误判 A 类假红灯（CI 会误判 P3 FAIL）
+status: open
+priority: high
+task_id: TPV0099-fullscreen-link
+evidence:
+  - path: /home/kity/.agate/v0.76.0/agate/assets/formatters/vitest.sh
+    note: "第 6-8 行 `OUTPUT=\"$(cat)\"; export EXIT_CODE OUTPUT` 把整份测试输出经**环境变量**传给 python3；本仓前端全量输出 1,509,095 字节，11.5× 超 MAX_ARG_STRLEN=131072 → `/usr/bin/python3: 参数列表过长`，formatter exit 126（TPV0099 P3 实测复现）"
+  - path: agate-workspace/tasks/TPV0099-fullscreen-link/P3-test-cases.md
+    note: "§5.4 载有完整根因链与预存性证明；任务级 formatter 落在 `$task_dir/.agate/formatters/vitest.sh`（agate 官方扩展点，判定语义逐字等价、仅改输出传递方式）"
+  - note: "预存性证明（主 Agent 独立复现）——**移出 TPV0099 全部 3 个 spec 后**跑全量 npx vitest run 输出 1,509,095 字节、含 15 处 matching（来自既有 spec 的 No diagram type detected matching given configuration）；把该真实输出直接喂内置 formatter → exit 126，与含本任务 spec 时完全一致 ⇒ 与本任务测试代码无关"
+  - note: "误判路径——formatter 失败后 run_test_with_formatter 回退 _fallback_json(raw_output=全量)，check-tdd-red.py:110-121 的 exit_code==2 且 failed==0 且正则含 matching 的分支命中 → 误判 A 类 exit 1"
+impact: "①本仓另有 4 个任务声明 P3_formatter vitest.sh（T081/T084/T086/T087，其中 T084/T087 仍为 READY，会实际命中）②**CI backstop 同源中招**——ci-gate-backstop.py:181-183 对 tdd_exit==1 判 FAIL（假红灯），故本仓任何前端任务的 P3 在 CI 上都会被误判 FAIL ③主 Agent 排查期间 check-tdd-red.py 首轮即返回 exit 1（假红灯），若不追根因会误退回 P3 改测试（错误方向）"
+recommendation: "上游修 agate 内置 assets/formatters/vitest.sh——把输出经临时文件而非环境变量传递（TMP=$(mktemp); cat > \"$TMP\"; python3 - \"$TMP\"），判定语义不变；这与 TPV0099 任务级 formatter 的改法逐字一致，可直接采用。项目侧临时缓解：受影响任务各自补 $task_dir/.agate/formatters/vitest.sh"
+closure_criteria:
+  - 内置 assets/formatters/vitest.sh 改为经临时文件传输出；以 ≥1.5MB 输入实测 exit 0 且 JSON 可解析
+  - check-tdd-red.py 在本仓前端全量输出上返回语义正确的 exit（真红灯 0 / 绿灯 2），不再误判 A 类
+  - CI backstop P3 分支在本仓前端任务上不再因该缺陷判 FAIL
+source: review
+created_at: 2026-09-28
+```
+
+> **登记理由（主 Agent，2026-09-28）**：命中登记判据 2——"不修会让未来变更更贵/更危险"。它**已实际威胁 CI 判定**（非假设：`ci-gate-backstop.py` 会把假红灯判成 FAIL），且影响 4 个既有任务 + 未来所有前端任务。**性质**：`category: protocol`（缺陷在 agate 协议层内置脚本，非本项目代码）。**不在 TPV0099 修复**（修复点是协议层 `~/.agate/**` 属 agate 上游；本项目仅以任务级 formatter 规避）。主 Agent 未改协议本体。
+
+
