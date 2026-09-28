@@ -415,3 +415,30 @@ created_at: 2026-09-29
 > **登记理由（主 Agent，2026-09-29）**：命中登记判据 2。属审计完整性缺口且判定非确定性（位置依赖）。**性质**：`category: protocol`。**不在 TPV0099 修复**；本任务未因此出错（已实证被吞区间无违规）。主 Agent 未改协议本体。
 
 
+## DEBT0017
+
+```yaml
+id: DEBT0017
+category: protocol
+title: make bump-version 的 Step 4 直接 git add -A，会把工作区未忽略的临时目录（含明文凭证）扫进 release commit，无提交前暂存面防护
+status: open
+priority: high
+task_id: TPV0099-fullscreen-link
+evidence:
+  - path: Makefile
+    note: "bump-version 的 Step 4 为 `git add -A` 后直接 `git commit`（TPV0099 实测 Makefile:262-266 区间），对暂存面不做任何审查或提示"
+  - note: "TPV0099 实测 `git add -A --dry-run` 会 stage 162 条路径，其中 158 条在 `.agate-tmp/` 下（该目录当时未被 .gitignore 覆盖），含 10 个明文凭证文件：alice-token.txt / bob-token.txt / alice-cookies.txt / login.json / ck.txt 等"
+  - note: "若不处置，release commit 会把明文 token/cookie 写入 git 历史（且 release commit 通常在 tag 上，清理成本高）。TPV0099 已实证 `git log --all -- .agate-tmp/` 为空即历史上从未入库，属尚未发生的风险"
+  - path: .gitignore
+    note: "TPV0099 的临时缓解：新增 `.agate-tmp/` 规则后复验 `git add -A --dry-run | grep -c agate-tmp` = 0、staged 总数 162→5。但这是**项目侧**规避，未改变 bump-version 本身无防护的事实"
+impact: ①任何 agent 编排任务只要在仓库内留下未被 .gitignore 覆盖的临时目录/文件（探针脚本、日志、凭证、备份），`make bump-version` 就会把它们一并提交并在 tag 上固化；②明文凭证入 git 历史属**不可逆**（需 filter-branch/BFG 重写历史）；③当前防护完全依赖"该项目的 .gitignore 恰好覆盖了临时目录"这一偶然条件
+recommendation: 二选一或并用——① `bump-version` 在 `git add -A` 之后、`git commit` 之前加"暂存面审查"步骤：打印 `git diff --cached --name-only` 并校验不含未忽略的临时/敏感路径（可配置白名单/黑名单），异常则中止并要求确认；② 改为按路径白名单 `git add`（只加 version 文件 + 静态产物 + CHANGELOG），而非 `git add -A`。另建议模板层为项目 `.gitignore` 预置常见 agent 临时目录（如 `.agate-tmp/`）
+closure_criteria:
+  - bump-version 提交前对暂存面有显式校验或按白名单 add，未忽略的临时目录不会静默进入 release commit
+  - 有可配置的敏感路径黑名单（或与 .gitignore 联动），命中时中止并提示
+  - 项目模板 `.gitignore` 预置 agent 常见临时目录
+source: retrospective
+created_at: 2026-09-29
+```
+
+> **登记理由（主 Agent，2026-09-29）**：命中登记判据 2（"不修会让未来变更更贵/更危险"），且**后果不可逆**（凭证入 git 历史需重写历史）。**性质**：`category: protocol`——缺陷在 agate 上游命令模板（`bump-version` 属协议/项目模板层）。**本任务已做项目侧缓解**（`.gitignore` 新增 `.agate-tmp/`），但**未改协议本体**。**优先级 high**：与其余 protocol 债不同，本条的失败模式是"静默泄漏"，无 gate 会在泄漏前提示。

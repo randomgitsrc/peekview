@@ -115,8 +115,8 @@ P8 的「临时资源清单」让主 Agent 收尾有据可依，且**明确区�
 | 1 | 修 `SCOPE_PLUS_RE` 以覆盖粗体/引用等常见包裹形态；早退分支输出显式 stderr 提示（区分"未检出"与"已闭环"）；明确纳入 `check-gate.py P7` | agate 上游（DEBT0015）；本任务不改协议本体 |
 | 2 | 剥离 frontmatter 改为**只剥离文件顶部第一对 `---`**，找不到闭合对时不删除并告警；或剥离后校验行数守恒 | agate 上游（DEBT0016） |
 | 3 | 内置 vitest formatter 改为经临时文件传输出（`TMP=$(mktemp); cat > "$TMP"; python3 - "$TMP"`） | agate 上游（DEBT0014）；本项目已以任务级 formatter 规避 |
-| 4 | **`bump-version` 提交前增加暂存面检查**：`git add -A` 后校验 `git diff --cached --name-only` 不含未忽略的临时/敏感路径（或改为按路径白名单 `git add`） | agate 上游（建议新登记 DEBT）；**本项目已加 `.gitignore: .agate-tmp/`** |
-| 5 | 在协议中补 **retries 归属的显式示例**（"评审失败记被评审阶段"正反例各一） | agate 上游（建议新登记 DEBT 或并入 F-4） |
+| 4 | **`bump-version` 提交前增加暂存面检查**：`git add -A` 后校验 `git diff --cached --name-only` 不含未忽略的临时/敏感路径（或改为按路径白名单 `git add`） | agate 上游 **DEBT0017**（priority high）；**本项目已加 `.gitignore: .agate-tmp/`** |
+| 5 | 在协议中补 **retries 归属的显式示例**（"评审失败记被评审阶段"正反例各一） | agate 上游；经 `mechanism_issues` 的 F-4 反馈提交（未单独登记 DEBT，因该规则已存在、仅缺示例） |
 | 6 | 派发模板：格式样例**一律放进 AGATE_CARD 块内**或改写为不含行首判定词的形态；"禁止清单"用**原则性表述**（"白名单之外一律不读"）而非逐条枚举 | 本项目 `agate-workspace/agents/project.md` + agate 上游模板 |
 | 7 | 写入类操作（看板/state/文档）后**必须回读目标行验证**，不以脚本 exit 0 代替 | 本项目 `agate-workspace/agents/project.md` |
 
@@ -146,7 +146,7 @@ P8 的「临时资源清单」让主 Agent 收尾有据可依，且**明确区�
 | dispatch-context.md | 是 | ✅ | —— | 全部派发均有对应 dispatch-context（含 rev 轮） |
 | pre-commit hook（gate / 状态转移 / 裁剪） | 是 | ✅ | —— | 多次实际拦截（P2 缺 review、P3 假 PAUSED、provenance、scope-resolved） |
 | CI backstop | 是 | —（未 push） | 未 push 故未触发；但已识别 DEBT0014 会让 CI 误判 P3 FAIL | 本任务未执行 `git push`（P8 卡：推送由人手动触发） |
-| **技术债登记** | 是 | ✅ | —— | **DEBT0013**（产品，open）/ **DEBT0014**·**DEBT0015**·**DEBT0016**（均 protocol，open）；另有 1 条建议新登记（`bump-version` 的 `git add -A` 暂存面防护），已在本复盘改进措施 4 中给出落点 |
+| **技术债登记** | 是 | ✅ | —— | **DEBT0013**（产品，open）/ **DEBT0014**·**DEBT0015**·**DEBT0016**·**DEBT0017**（均 protocol，open）。其中 DEBT0017 = 本复盘问题 4（`bump-version` 的 `git add -A` 暂存面防护，priority high）。**全部已登记、无"待定"** |
 
 ## agate 反馈
 
