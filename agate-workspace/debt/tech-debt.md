@@ -357,4 +357,61 @@ created_at: 2026-09-28
 
 > **登记理由（主 Agent，2026-09-28）**：命中登记判据 2——"不修会让未来变更更贵/更危险"。它**已实际威胁 CI 判定**（非假设：`ci-gate-backstop.py` 会把假红灯判成 FAIL），且影响 4 个既有任务 + 未来所有前端任务。**性质**：`category: protocol`（缺陷在 agate 协议层内置脚本，非本项目代码）。**不在 TPV0099 修复**（修复点是协议层 `~/.agate/**` 属 agate 上游；本项目仅以任务级 formatter 规避）。主 Agent 未改协议本体。
 
+## DEBT0015
+
+```yaml
+id: DEBT0015
+category: protocol
+title: check-scope-resolved.py 对粗体包裹的行首 SCOPE+ 不可见致真空早退；且 check-gate.py 不调用它 → P7 gate 通过 ≠ SCOPE+ 被校验过
+status: open
+priority: medium
+task_id: TPV0099-fullscreen-link
+evidence:
+  - path: /home/kity/.agate/v0.76.0/agate/scripts/check-scope-resolved.py
+    note: "SCOPE_PLUS_RE = `^\\s*-?\\s*\\[SCOPE\\+\\]`（行首匹配）。TPV0099 的 P2-design.md:120 实际形态为 `**[SCOPE+]** 发现：…`（粗体包裹、行首非 `[`）→ 主 Agent 实测 re.search 该行 = False；逐文件扫描（排除 dispatch-context/progress）→ 行首 SCOPE+ 命中 0"
+  - path: /home/kity/.agate/v0.76.0/agate/scripts/check-scope-resolved.py
+    note: "第 83-84 行为 `if not scope_found: sys.exit(0)` 早退 → scope_found 为空时直接 exit 0，**从未进入 [SCOPE_RESOLVED] 判定分支**。即该 exit 0 对本案恒真（vacuous pass）：与『已闭环』无因果关系"
+  - path: /home/kity/.agate/v0.76.0/agate/scripts/check-gate.py
+    note: "grep -c check-scope-resolved = 0 → check-gate.py（含 gate_p7）**根本不调用**该脚本；真实调用方是 pre-commit-gate.py:439，且该行有 `if gate_exit != 1 and …` 前置条件 → 当 gate 本身 exit 1 时该项被跳过"
+  - note: "反向对照矩阵（P7 reviewer 复审轮，临时副本，单变量）：A 原样 → exit 0 且 stderr 空（复现真空早退）；B 副本改为行首 [SCOPE+] + P1 有标记 → exit 0 且 stderr 报「P1 有 1 个 [SCOPE_RESOLVED]」（真正走通判定分支）；C 在 B 上仅移除 P1 标记 → exit 1；D 还原 → exit 0 ⇒ 该检查**有区分力**，但**仅当 SCOPE+ 以行首形态书写时**才被触发"
+impact: ①产出里用粗体 `**[SCOPE+]**` 等行首非 `[` 形态声明新隐含需求时，该脚本静默真空早退，SCOPE+ 闭环**实际未被机械校验**，存在"标记缺失却一路绿灯"的盲区（TPV0099 即如此：BLOCKER 由 P7 consistency-reviewer 人工发现，而非脚本）②check-gate.py 不调用它 → **P7 gate 通过 ≠ SCOPE+ 被校验过**（本次 TPV0099 P7 gate exit 0 时该盲区依然存在）③方法论层面：被引作"闭环证据"的 exit 0 可能是真空通过——本任务因此出现第 10 例"验证声明需要被验证"
+recommendation: 上游修 check-scope-resolved.py——SCOPE_PLUS_RE 放宽以覆盖粗体/列表/引用等常见包裹形态（如允许行内 `**[SCOPE+]**`），或在早退分支输出显式提示（如 "no line-start SCOPE+ found; resolved-check skipped"）以免 exit 0 被误读为"已校验通过"；并评估是否需将本脚本纳入 check-gate.py P7 分支（当前仅 pre-commit-gate.py 条件调用）
+closure_criteria:
+  - 产出以粗体/引用等常见包裹形态写 [SCOPE+] 时，该脚本不再真空早退（能检出并进入 SCOPE_RESOLVED 判定）
+  - 早退分支有显式 stderr 提示，"未检出 SCOPE+" 与 "SCOPE+ 已闭环" 在输出上可区分
+  - 明确 check-gate.py P7 与 pre-commit-gate.py 对该脚本的调用关系与前置条件，消除"gate 通过即已校验"的误读
+source: review
+created_at: 2026-09-29
+```
+
+> **登记理由（主 Agent，2026-09-29）**：命中登记判据 2——"不修会让未来变更更贵/更危险"。它构成**静默盲区**（真空通过 + gate 不调用），且已被实证导致一次真实误判（主 Agent 把 `exit 0` 当作 SCOPE+ 闭环证据，被 P7 reviewer 推翻）。**性质**：`category: protocol`（缺陷在 agate 协议层脚本）。**不在 TPV0099 修复**（修复点属 agate 上游）。主 Agent 未改协议本体；本任务已按协议要求补齐 `[SCOPE_RESOLVED]` 标记，并在 P7 记录该盲区。
+
+## DEBT0016
+
+```yaml
+id: DEBT0016
+category: protocol
+title: check-p6-provenance.py 剥离 frontmatter 用 --- 逐对配对，奇数个 --- 时末个 --- 吞掉其后至 EOF，致审计 2 对尾部行漏检（同一违规因位置不同判定相反）
+status: open
+priority: medium
+task_id: TPV0099-fullscreen-link
+evidence:
+  - path: /home/kity/.agate/v0.76.0/agate/scripts/check-p6-provenance.py
+    note: "第 372-382 行剥离顶部 frontmatter 的实现：遇 `---` 则 i+=1 后向后找到下一个 `---`，若找不到则 i 越界到 EOF——**奇数个 `---` 时最后一个 `---` 会把其后所有行一并删除**"
+  - path: agate-workspace/tasks/TPV0099-fullscreen-link/P6-dispatch-context-verifier.md
+    note: "主 Agent 实测：该文件剥离 AGATE_CARD 块后剩 179 行、含 `^---$` **9 个（奇数）** → 第 142 行的 `---` 吞掉其后 38 行（原始行 383-419 在被剥离卡片前的编号域内）→ 该区间整体不参与审计 2（行首 PASS/FAIL 预判扫描）"
+  - note: "反向对照（主 Agent 独立复现，临时副本）：把同一违规行 `- PASS BDD-99: …` 放入**被吞区间**（文件尾部）→ check-p6-provenance.py **exit 0（漏检）**；改放入**存活区间**（卡片块后早期行）→ **exit 1（检出）** ⇒ **同一违规因位置不同判定相反**"
+  - note: "TPV0099 本任务未因此出错：主 Agent 实测该文件被吞尾部（38 行）行首 PASS/FAIL 命中 **0**，存活区间亦 0 → P6 provenance 结论（exit 0）不依赖该盲区"
+impact: ①dispatch-context 等被审计文件若含奇数个 `---` 分隔线（常见：多个水平分隔线/子 frontmatter 示例），其**尾部区间静默逃过审计 2**（行首验收结论预判扫描）→ 存在"违规写在尾部即不被检出"的盲区 ②判定**非确定性**（同一输入因行位置不同结论相反）③当前影响面有限（仅审计 2 受该剥离影响，其余 6 道审计不受），但属审计完整性缺口
+recommendation: 上游修 check-p6-provenance.py 的 frontmatter 剥离——改为**只剥离文件顶部第一对 `---`**（用 `if stripped[0]=='---'` 起点判定 + 找不到闭合对时**不删除**并给出显式提示），而非"任意位置遇 `---` 即开始配对"；或在剥离后校验行数守恒（删行数 > 0 且尾部被吞时报警）
+closure_criteria:
+  - 文件含奇数个 `---` 时，尾部区间仍参与审计 2（同一违规在任意位置均被检出）
+  - 剥离逻辑有"未闭合对"的显式告警，不静默吞掉至 EOF
+  - 反向对照：同一违规行放文件任意位置，判定一致
+source: review
+created_at: 2026-09-29
+```
+
+> **登记理由（主 Agent，2026-09-29）**：命中登记判据 2。属审计完整性缺口且判定非确定性（位置依赖）。**性质**：`category: protocol`。**不在 TPV0099 修复**；本任务未因此出错（已实证被吞区间无违规）。主 Agent 未改协议本体。
+
 

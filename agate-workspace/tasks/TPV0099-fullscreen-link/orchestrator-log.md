@@ -442,3 +442,46 @@
   - **judge 的独立性**：它自报未读 `P6-acceptance.md` / 各 dispatch-context / P4-* / P5-*（信息隔离）——**且它独立复跑了只读 API 复核残留**：`per_page=100`（**正确用了 `per_page` 而非失效的 `limit`**）→ `total=22/returned=22`、`RESIDUAL=[]`，与证据一致 ✓
   - **judge 的边界诚实**：它明确记录两处 `vision-raw` 与 DOM 不一致（BDD-14 的 meta 条实为正文引用块、BDD-15 按钮在折叠区），**经源码溯源判为 vision 误读、不构成反证**——而非把 vision 的误读当作实现缺陷，也未用它推翻已通过的判据
 - DECISION（2026-09-29）：**P6.5 verdict + dispatch-context 随 commit 落库**，`.state.yaml` **phase 保持 P6**（P6.5 非独立 phase 值，P6 卡明确）；verdict 落库后 pre-commit hook 会自动重验双脚本；全部通过 → 随后写 `phase: P7` **随 P7 产出 commit**（不单独 phase commit）
+- GATE PASS（2026-09-29，**P6.5 已 commit `4e683ca1`**；phase 保持 P6 ✓ 符合"P6.5 非独立 phase 值"）；`agate-next.py` 消费 `next: P7` → phase 已推进 **P7**（staged，随 P7 产出同 commit）
+- 记录（2026-09-29）：pre-commit 对 `P6.5-*` 两文件报 `GATE WARNING: 无法识别该产出文件的阶段号，一致性检查未覆盖`——**属预期**（协议明确 P6.5 非独立 phase 值、2p dispatch-context glob 按 phase 匹配不覆盖 `P6.5-*`、卡片 hash 校验不强制），非缺陷
+- DECISION（2026-09-29）：**派发 consistency-reviewer（P7）**，`P7-dispatch-context-consistency-reviewer.md`（已注入 P7 卡片 128 行）。派发前**先读 `check-gate.py` 的 `gate_p7` 实现**把硬校验写进指令（这是前两次踩坑换来的纪律）：
+  - **硬校验 1**：frontmatter `design_gap_reviewed_count >= design_gap_count`，否则 exit 1
+  - **硬校验 2**：**P4/P7 交叉核对**——P7 转抄的 `[DESIGN_GAP]` 条数必须 ≥ P4 实际声明数（本任务 = **2**，主 Agent 已 `grep` 确认），否则报"architect 遗漏转抄"exit 1
+  - **WARNING 项**：`design_gap_reviewed_count > 0` 时正文须含**跨文件引用关键词**（`P1...BDD` / `P2...packages` / `P4...implementation` 形态），否则报"review 可能未做实质性交叉检查"
+  - 故指令里明确给出 frontmatter 模板（含 `design_gap_count: 2` / `design_gap_reviewed_count: 2`）+ 要求正文含实质跨文件引用
+  - **两条 DESIGN_GAP 的完整上下文**已写入（本质 = 测试代码缺陷、实现无损；**且明确告知"P4 文档记录的 4 failed/2 passed 是 P4 时点的真实事实，不是文档失实"**——防 reviewer 把它误报为不一致）
+  - **SCOPE+ 链路**已写明（P2 裁决"不采纳、仅登记"→ DEBT0013；`check-scope-resolved.py` 主 Agent 已跑 **exit 0**）
+  - **两个"不适用"项**已预先查证：`decisions/` 目录不存在、`CODE-MAP.md` 不存在 → 按 P7 卡"机制未采用则跳过"处理，避免 reviewer 为找不到它们而误报
+  - **派发前自测我方产物**（本次第三道）：`grep` 我方 P7 上下文 → **无行首 `- PASS/FAIL`**（且 P7 阶段无 gate 扫描 dispatch-context，与 P6/P6.5 不同）
+- **GATE FAIL → DIAGNOSIS（2026-09-29，P7 gate exit 1；**reviewer 的 BLOCKER 成立，且它推翻了我自己给出的闭环证据**）**：`check-gate.py P7` → **exit 1**（`GATE P7: BLOCKER=1, DEVIATION-CRITICAL=0`）
+  - **BLOCKER = `P1-requirements.md` 全文无 `[SCOPE_RESOLVED]` 标记**，而本任务产出含 `[SCOPE+]`（`P2-design.md:120`）→ 违反 `dispatch-protocol.md`「未标记 `[SCOPE_RESOLVED]` 的 `[SCOPE+]` → gate 不通过」+ P7 卡推进条件逐字要求
+  - **⚠️ 关键：reviewer 同时推翻了我引为证据的"`check-scope-resolved.py` exit 0 ✓"**。主 Agent **独立复现其论证**：该行原文是 `**[SCOPE+]** 发现：…`（**粗体包裹、行首非 `[`**）→ 脚本正则 `^\s*-?\s*\[SCOPE\+\]` **匹配不到** → `_scan_scope_plus` 返回空 → 脚本走「**无 SCOPE+ → 早退 0**」分支，**从未进入 `SCOPE_RESOLVED` 判定分支**。主 Agent 实测 `re.search` 该行 → **False** ✓ → **即：我引作闭环证据的 exit 0 对本例恒真、属真空通过（vacuous pass）**
+  - **这是本任务第十次「验证声明需要被验证」，且是形态最隐蔽的一次**：前九次我都抓到了，**这次是我的判据（exit 0）本身不检测该场景**——`exit 0` 与"已闭环"之间**没有因果关系**，我却把它当成了闭环证据。**更值得记的是：reviewer 不是照抄我的结论，而是去读了脚本正则、逐字复算，才发现我的证据是空的**。这正是 P6.5 judge / P7 reviewer 这类独立角色存在的意义
+- DECISION（2026-09-29）：**采纳 BLOCKER，按先例 ① 处置**——在 `P1-requirements.md` 追加 `[SCOPE_RESOLVED: …]` 闭环标记（**纯闭环标记、不改任何 BDD、不改语义**）。依据：
+  - **先例 `TPV0096`**（commit `f5bc4b6b`，同为"P7 阶段补 SCOPE_RESOLVED 闭环标记"）——其标记形态含**来源 + 裁决 + 落地证据链 + `[BASELINE_CHANGE: 主 Agent 批准的闭环标记]`** 尾注
+  - **协议明文**（`dispatch-protocol.md`）："产出含 [SCOPE+] 时，主 Agent **必须在 P1-requirements.md 增补对应条目并标记 [SCOPE_RESOLVED: 来源文件]**" → **这是主 Agent 的职责**，非 architect 的
+  - **实质闭环三要素 reviewer 已逐项证实**（P2 裁决理由 / P4·P6 零扩范围 / DEBT0013 已登记）→ 标记是**补记录**而非补工作
+  - 备选 ② "以显式裁决替换该推进条件" 被否：那会**改动协议推进条件**，而 `~/.agate/**` 属协议层且改动成本与风险远高于补一行标记；且先例明确走 ①
+- 记录（2026-09-29）：**主 Agent 逐条复核 reviewer 的 5 条 DEVIATION**（不采信自述）：**4 条成立、1 条已过时**
+  - **D1 成立**：`P6-acceptance.md:92` 把 BDD-17 尺寸写成「24×24」，而实测证据 `assert-bdd-17.json` 为 **w=800 / h=600**（`naturalWidth=800`/`naturalHeight=600`，`seed_choice` 明写取 `svg-standalone`）→ **24×24 是未被采用的 `svg-icons`**，且同文件 `:46` 自相矛盾。**属 P6 产出笔误**
+  - **D2 成立**：`P4-implementation.md:232` 称「**未改动任何测试文件**」，但**同一 commit `f1cfd5c3`** 的 `git show --stat` 实证 **auth spec +43/-10** → P4 产出集自身不自洽（成因：P4 首轮确实未改测试，**后续修正轮**改了，但该句未随之更新）
+  - **D3 成立**：P5 残留扫描自述用 `limit=200`，而该 API **无 `limit` 参数**（只 `per_page`，默认 20）；reviewer **如实标注不确定性**（无法从留痕区分"被截断"还是"两次可见集合变化"）→ 主 Agent 已确认**影响为零**（残留 0 已由 P6 与 judge 各自独立证实）
+  - **D4 成立（此前未被我注意到）**：P2 §6 声明的 `P6`/`P6_typecheck` 两键在 P6 阶段**无执行留痕**（主 Agent `grep` `P6-evidence/test-output.log` → `test-frontend|typecheck` 命中 **0**）→ P6 只跑了 E2E 与截图类验证。**风险低**（P5 已在前一 commit 跑过同样两条且全绿，且 `f1cfd5c3`→P6 的 commit 间零产品码改动），但**确实是与 P2 声明的一处不一致**
+  - **D5 已过时（reviewer 判错，主 Agent 纠正）**：它称 `check-p6-provenance.py` "exit 1 至今未清"，但**主 Agent 已在 P6 gate 前修复**（把 P6-dispatch-context 的格式样例改为不以判定词起首）→ 主 Agent 实测当前 **exit 0**。reviewer 的依据是 `P6-progress.md:58` 的**过程自记**（记录的是修复前的中间态），**它把过程记录当成了当前事实** —— 这与本任务多次"时点快照被当成普遍事实"同族（P2 期我把某时点计数当成设计写错、D1/D2 也是同类）。**但不苛责**：它按"只审不写"未改文件，且该 note 确实存在
+- DECISION（2026-09-29）：**派发 consistency-reviewer 复审轮**（`P7-dispatch-context-consistency-reviewer-rev1.md`，已注入 P7 卡片 128 行；派发前自测：无行首判定词 ✓）
+  - **指令开头先承认 reviewer 上一轮的关键正确性**（它推翻了我的真空证据），并**明确要求本轮"必须做非真空验证"**：不能只看 `check-scope-resolved.py` 的 exit code，须读源码确认分支逻辑 + 在 `.agate-tmp/` 临时副本上做**反向对照**（去掉标记 → 观察是否 FAIL）以证明该检查**对本案有区分力**。**这是把上轮教训直接转化为下轮方法**
+  - 逐条给出我对它 5 条 DEVIATION 的复核结论（**含 1 条判定它判错（D5）并说明其成因是"把过程自记当成当前事实"**），并给 D1/D2/D4 的**处置决定 + 理由**（不修改他人已 commit 产出；先例 TPV0096 亦"记录不修"）→ 要求它**如实登记计数**，不得为好看清零
+- 记录（2026-09-29）：**本轮 BLOCKER 的处置已落地并自测**：`P1-requirements.md` 追加 1 行 `[SCOPE_RESOLVED: …]`（首部、标记形态符合脚本正则）→ `check-scope-resolved.py` **exit 0**；`check-frontmatter.py P1` **exit 0**；**BDD 总数仍 19**（未改 BDD、未改语义）✓。**并记录本轮"非真空"证据**：主 Agent 逐文件扫描（排除 dispatch-context/progress）确认**无任何文件含行首 `[SCOPE+]`** → 证实 reviewer 的"正则匹配不到、脚本早退"论证为真
+- GATE PASS（2026-09-29，**P7 复审通过 —— 主 Agent 亲自跑真实 CLI**）：`check-gate.py P7` → **exit 0**（reviewer 更新 frontmatter `blocker_count: 0` 后）；`P7-consistency.md` frontmatter = `status: approved` / `blocker_count: 0` / `deviation_count: 4` / `deviation_critical_count: 0` / `design_gap_count: 2` / `design_gap_reviewed_count: 2`
+- **记录（reviewer 本轮做了「非真空验证」，方法值得作为范例留存）**：它**拒绝复用任何 exit code 作证据**，两步走：① **读源码定分支**——定位 `check-scope-resolved.py:83-84` 的 `if not scope_found: sys.exit(0)` 早退点是真空点，并**按脚本自身的 `SCOPE_PLUS_RE` + `SKIP_NAME_RE` + CARD 剥离三者独立重实现**扫描全目录 → `scope_found=''`（证明根因未变）② **临时副本反向对照矩阵**（放 `.agate-tmp/`，单变量）：**A** 原样 → exit 0 **且 stderr 空**（复现真空早退）／**B** 副本改为行首 `[SCOPE+]` + P1 有标记 → exit 0 **且 stderr 报「P1 有 1 个 [SCOPE_RESOLVED]」**（**真正走通判定分支**）／**C** 在 B 上**仅移除 P1 标记** → **exit 1**／**D** 还原 → exit 0 ⇒ **B/C 单变量对照证明该检查对本案有区分力，B 的 0 是真通过**
+  - **这正是我派发时要求的"必须做非真空验证"**，且它做得比我要求的更完整（用 4 状态矩阵而非单点对照）
+- **GATE PASS（主 Agent 独立复核 reviewer 的三项补充实证，全部为真）**：
+  - **标记形态与"纯新增"证明**：`[SCOPE_RESOLVED]` 在 `P1-requirements.md:35` 行首、正则命中 1 处；**`git diff --numstat` = `2 0`（纯新增、零删除）**——reviewer 指出这**比"BDD 仍 19"更强**（后者无法排除"删一条加一条"）✓ **主 Agent 采纳该加固**
+  - **D5 撤回得到交叉确认**：它独立复算 provenance 的审计 2 剥离逻辑并做反向对照（`:296` 回退为修复前形态 → **exit 1**；还原 → 0）→ **证明该行确为唯一因果行、我的修复真实有效** ✓
+  - **本轮新发现一条 D5 之外的确认**：它**如实自陈**上轮错在"把 `P6-progress.md:58` 的**修复前过程自记**当成当前事实、且未在结论前复跑脚本"——**这正是本任务反复出现的"时点快照被当成普遍事实"同族**，且是**subagent 主动承认并说明成因**（本任务第二次由 subagent 自我纠正）
+- **GATE PASS（主 Agent 独立复现 reviewer 的两条协议层发现，均成立并已登记债务）**：
+  - **① `check-scope-resolved.py` 真空盲区**：主 Agent 复核 `check-gate.py` 中 `grep -c check-scope-resolved` = **0** → **gate 根本不调用它**；真实调用方是 `pre-commit-gate.py:439`，且该行有 `if gate_exit != 1 and …` 前置 → **P7 gate 通过 ≠ SCOPE+ 被校验过** ✓。→ **登记 DEBT0015**
+  - **② `check-p6-provenance.py` 的 `---` 奇数配对吞尾**：主 Agent **独立实测**该文件剥离 CARD 后 `^---$` = **9 个（奇数）**、第 142 行的 `---` **吞掉其后 38 行至 EOF**；并**独立做反向对照**：同一违规 `- PASS BDD-99: …` 放**被吞区间** → **exit 0（漏检）**、放**存活区间** → **exit 1（检出）** ⇒ **同一违规因位置不同判定相反** ✓ → **登记 DEBT0016**
+    - **本任务未因此出错**（主 Agent 实测被吞尾部与存活区间的行首判定词命中**均为 0**）→ P6 结论不依赖该盲区
+  - **两条性质均为 `category: protocol`**（缺陷在 agate 上游）、**不在 TPV0099 修复**、**主 Agent 未改协议本体**；`agate-debt-check.py` 复验 **exit 0**
+- 记录（2026-09-29）：reviewer 的两条发现让我在本任务**第二次**意识到：**"gate exit 0"未必意味着"该项被校验过"**（第一次是它推翻我的 `check-scope-resolved` 真空证据）。两条 DEBT 都指向同一类问题——**校验器的"跳过分支"与"通过分支"在退出码上不可区分**

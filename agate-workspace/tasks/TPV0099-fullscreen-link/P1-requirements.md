@@ -32,6 +32,8 @@ ui_ux_dimensions:
 
 [NO_NEED_CONFIRM]
 
+[SCOPE_RESOLVED: from P2-design.md:120（§1.3 R-04 / §10 遗留表第 1 项）——P2 阶段识别的 `[SCOPE+]`：`.archived-banner` / `.expired-warning-banner` 在 zen/全屏视图下仍可见且构成满宽顶部横条（实测 1280×49、top=0），且不在 zen 隐藏集、不在 BDD-3 的 A/B 排除集内。**主 Agent 2026-09-28 裁决：本任务不采纳、不增补 BDD、不改隐藏集**，理由三条：① `/{slug}/f` 复用 zen 类 → banner 在**今天的 zen 态就已可见**（既有行为、早于立项）→ 本任务对其视觉状态**增量为零**，纳入即等于为"实现前后逐像素一致"背书（虚假验收面）② 匿名不可达该状态（`legacy-deploy` 匿名 404、需 alice），与"分享给匿名接收者"的核心用户故事不相交 ③ `status: archived` 系 `seed-debug.py:204-209` 的有意设计，非环境劣化。**落地证据链**：P2 §1.2 N12（Not Modify）+ §1.3 R-04（含双向缓解）+ §6.5（BDD-1/2/3 钉定非归档 seed `dsh-architecture`）→ P4 零范围外改动（`git show --stat f1cfd5c3` 仅前端 3 文件 + 文档）→ P6 验收 19/19 PASS 且 BDD-3 三态负向对照 0/3/1 闭环 → P6.5 judge 独立复核确认。**缺口已登记为 DEBT0013**（`agate-workspace/debt/tech-debt.md`，status: open），待后续任务处理。[BASELINE_CHANGE: 主 Agent 批准的闭环标记——纯闭环记录，未改 BDD、未改语义]]
+
 > **修订轮说明（rev1）**：本文件按 `P1-review.md` 的 8 项必修 + 8 项建议修订（`needs-revision` → 本轮）。修订只针对被点名的问题，未被点名的节保持原样；**未削弱任何 BDD 的判定强度**（BDD-3 的改法是排除容器链而非放宽阈值；被换掉的 seed 都补写了前提或改用匿名可达者）。三个 P0 锁定决策未重开。修订后 **BDD 总数 = 19 条**（BDD-1~BDD-19 连续），详见第 3 节导语。
 >
 > **人工体验路径验收**：见 BDD-16（Given seed 数据 → 页面有内容）。本任务产出用户可见页面且内容受 seed 数据影响，故按 P1 卡强制节追加该 BDD，不以 fixture / 单测断言替代。
