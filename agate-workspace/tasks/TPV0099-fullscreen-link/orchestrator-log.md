@@ -529,3 +529,10 @@
   - **协议一致性**：README badge `version-0.25.0` **= tag `v0.25.0`** ✓、`INDEX.md` `Backend/Frontend v0.25.0 · MCP Server v0.12.0` ✓
   - **清理项**：`.agate-tmp/`（136 文件 / 5.8MB 探针与旧 token）**已删** ✓；**Chrome CDP `:18800` 属外部既有服务、按清单保留运行**（实测 200）✓
 - 记录（2026-09-29）：**本任务全程 `[PROD_NOT_TOUCHED]`** —— 所有验证均走 debug `:8888` 与 CDP `:18800`；生产 `:8080` 从沙箱不可达、`~/.peekview/peekview.db` 未写入（多轮 mtime 复核均早于各阶段开工时刻）
+- 记录（2026-09-29）：**复盘已撰写**（`retrospective.md`，`check-retrospective.py` **exit 0**）。触发理由：本任务发现 **4 条机制缺口**（含 1 条高危安全面）+ 多次"验证声明需要被验证"实例 → 命中 P8 卡"异常模式 / 发现机制缺口 / 高价值任务"三项。
+  - frontmatter 齐备（`mechanism_issues` 5 条 / `execution_issues` 4 条 / `feedback_ready: true`）；正文四节 + 技术债登记核对清单（24 项逐条填写）+ **5 条 agate 反馈（F-1~F-5）**
+  - **F-5 为本复盘最高优先级建议**：`bump-version` 的 `git add -A` 需提交前暂存面防护（本任务实测会 stage 158 个 `.agate-tmp/` 路径、含 10 个明文 token/cookie）
+- GATE PASS（2026-09-29，**任务终态确认**）：
+  - `.state.yaml` phase = **READY**（`check-state-yaml.py` exit 0）。**未写 DONE**：协议 `state-machine.md:252` 明确 `READY --[人手动触发 make publish]--> DONE` → **DONE 需人手动发布后才置**，故 READY 是本任务自动化流程的**正确终态**（与先例 `TPV0095` 一致）
+  - **9 个阶段 gate 全部通过**：P0 exit2 / P1 exit2 / P2 exit2 / P3 exit2 / **P4 exit0** / P5 exit2 / P6 exit2 / **P7 exit0** / P8 exit2
+  - git 工作区**干净**；tag `v0.25.0` 已创建；`VERSIONS.json` = `0.25.0`
