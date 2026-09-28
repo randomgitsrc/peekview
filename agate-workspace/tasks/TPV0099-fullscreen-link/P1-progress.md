@@ -1,0 +1,80 @@
+## P1-progress (analyst)
+
+- [读取] 已读 analyst.md 角色定义 + P1-dispatch-context-analyst.md（含 P1 卡片全文）
+- [读取] 已读 P0-brief.md（含 2026-09-28 时效性自检节）+ AGENTS.md + project.md
+- [发现] 注意：P0-brief 实核节写 'seed 15 entries'，dispatch-context/客观查证写 'seed 19 entries' → 轻度不一致，以 19 为准（dispatch-context 更新），仅记录不阻塞
+- [下一步] 读取前端路由/zen 相关源码（router.ts / EntryDetailView.vue / useZenMode.ts / zen-shortcut.ts / layout.css / EntryDetailContent.vue）
+- [读取] router.ts： 在 catch-all 之前；两段路由仅 （redirect）与  → 确认与  无冲突（事实 E 核实一致）
+- [读取] useZenMode.ts（36 行全文）：zenMode ref + zenAriaText 硬编码文案 'Zen mode on. Press f or Escape to exit.'；handleZenKeydown 无锁定概念 → 锁死需新增状态
+- [读取] zen-shortcut.ts（20 行全文）：shouldHandleZenShortcut 无 zen 状态输入 → 锁死短路需在 useZenMode 内做，不改此 util
+- [读取] EntryDetailView.vue：155 useZenMode() / 158 provide(ZenModeKey) / 257-260 scoped 样式含第 7 项 .meta-tags-bar → 事实 A/B 核实一致
+- [读取] layout.css:649-654 = 6 项 zen 隐藏（不含 meta-tags-bar）→ 事实 B 核实一致
+- [读取] EntryDetailContent.vue:24  → 事实 A 核实一致
+- [下一步] 读 backend main.py（FRONTEND_ROUTES/_is_frontend_route/catch-all）+ E2E 规范
+- [读取] backend/peekview/main.py:25 FRONTEND_ROUTES = {""/"explore"/"settings/apikeys"/"login"}；:53-56 _is_frontend_route 仅额外放行 users/ 前缀；:598-629 serve_spa_catchall → 事实 C/D 核实一致（slug/f 会走 resolve_entry_raw 或纯 index.html）
+- [读取] main.py:619 _slug_exists(request, path) 对 "slug/f" 返回 False → 不会注入 Link/alternate（两段路径非 slug），与现有单段行为不同但不冲突
+- [读取] EntryDetailView.vue:2 (:class zen-mode) / :3 sr-only aria-live=zenAriaText / :216 document keydown 监听 → 锁死实现面收敛在 useZenMode + route.meta
+- [下一步] 读 frontend-v3/e2e/ 现有 spec + playwright.config.ts（TPV0096 规范）
+- [读取] playwright.config.ts：双 project（chromium 桌面 + Mobile Chrome Pixel5），baseURL 默认 127.0.0.1:8888，无 webServer 自启 → E2E 双 project 可行
+- [读取] e2e/mermaid-visual.spec.ts + t090-mobile-detail-ux-polish.spec.ts：确认 TPV0096 规范（BASE_URL 防生产护栏 + e2e- 前缀 slug + afterEach 清理队列 + API 建 fixture）
+- [读取] 全部输入文件读完，进入需求分析 + 同类扫描
+- [下一步] 同类扫描：grep zen-mode / meta-tags-bar / ZenModeKey / zenMode / shouldHandleZenShortcut / updateZenAria / zenAriaText（预期 <60s）
+- [命令] grep ZenModeKey|zenAriaText|updateZenAria|shouldHandleZenShortcut|redirectFocusIfHidden（预期 <30s）→ 命中 244 处；src 侧关键文件：entryDetailKeys.ts(3/5 行)、zen-shortcut.ts、EntryDetailView.vue(3/136/155/158/160)、EntryDetailHeader.vue(97/142)、EntryDetailMobileBar.vue(60/97)、useZenMode.ts；测试侧：zen-shortcut.spec.ts x2（重复文件！）、__tests__/zen-shortcut.spec.ts、t031/t067/tpv0095/T079 组件测试
+- [发现] 双测试文件重复：frontend-v3/src/utils/__tests__/zen-shortcut.spec.ts 与 frontend-v3/src/utils/zen-shortcut.spec.ts 同时存在 → 同类扫描需登记（本次不处理，非本任务范围，但 P4 若改 zen-shortcut.ts 两处都受影响）
+- [下一步] 补充扫描 zen-mode / meta-tags-bar / zenMode + e2e 中 zen 用法（预期 <30s）
+- [命令] grep zen-mode|meta-tags-bar|zenMode（frontend-v3 全域，预期 <30s）→ 72 处命中。关键新增发现：
+  - layout.css:208 `.zen-mode .resize-handle { display:none }` → **第 8 个 zen 隐藏项**，P0/dispatch 的事实 B「三处机制」未列出（zen 隐藏集实为 8 项 + 2 处 v-show 兜底）
+  - layout.css:624-626 `@media(min-width:768px){ .meta-tags-bar{display:none} }` → 第二道 meta bar 隐藏（桌面端 CSS 隐藏，第一道是 v-if=isMobile）
+  - e2e 已有 zen/meta-bar 断言可复用：render-regression.spec.ts:188-199、t091:343/348、t090:91-146/382、t049:140
+- [命令] grep zen（*.css）→ 仅 layout.css 7 处（208 + 649-654），未发现第二份 zen 样式文件 → zen 隐藏集容器确认为 layout.css + EntryDetailView.vue scoped
+- [读取] main.py:309-375 api_key_auth 中间件为条件注册（`if api_key:`）→ 与事实 C/D 不矛盾（debug 无 api_key 时不拦 SPA 路由）
+- [读取] main.py:539 `@app.get("/{slug}/raw")` 先于 static 注册 → raw 短链是 `/f` 同族先例，确认 URL 家族一致性要求
+- [下一步] 扫 docs/README/CHANGELOG 中 zen 与 /raw 短链的文档承诺面（URL 契约公开 → P8 同步面）
+- [发现] Escape 键多消费方（grep *.vue/ts）：MermaidDiagram 全屏 modal（t022 spec:77-89 断言 Escape 关闭）、OverflowMenu、ShareDialog、SearchInput、TableView 分页下拉 → **锁死必须只吞 zen 退出，不能吞掉内容区内嵌组件的 Escape**（BDD-8「图表内置全屏按钮正常」隐含依赖）→ 转成隐式需求 + 独立 BDD
+- [发现] EntryMetaTagsBar.vue 纯展示组件（无 ZenModeKey inject），靠父级 :deep() 隐藏 → 与 T090 P2 结论一致
+- [读取] entryDetailKeys.ts：ZenModeKey=Ref<boolean>、IsMobileKey、ZenAriaTextKey=Ref<string> → 锁死态可复用/扩展此 provide 面
+- [读取] entryDetail.ts loadEntry(slug,fileId,shareToken) + selectFile 为纯 store 操作（不 router.push）→ 事实「切文件不跳路由」核实：`/{slug}/f` 下切文件天然保态，无需额外 URL 处理
+- [下一步] 用 agate-md-field-set 写 frontmatter（需 FILE 环境变量）；预期 <20s
+- [命令] curl /health（预期 <5s）→ 200 {"status":"ok","version":"0.24.1"} → debug :8888 在线，与 P0 环境自检一致
+- [命令] curl 匿名 /api/v1/entries?limit=100 → total=15（公开 entry 数）；alice 登录后 → total=19 → **澄清「15 vs 19 entries」不一致**：15 = 匿名可见(公开)条数，19 = alice 可见总数（含私有）。两处数字都对，非漂移
+- [命令] sqlite3 /tmp/peekview-debug/peekview.db → 打不开（DSH 沙箱下 /tmp 不可读）→ 改用 API 计数，已达成目的；不深挖
+- [发现] layout.css:480 `.meta-tags-bar.hidden { opacity:0 }` 但全仓无任何代码添加 `hidden` class（EntryMetaTagsBar.vue 不产生该 class）→ 疑似死 CSS + `frontend-v3/src/__tests__/t052-header-redesign.test.ts:141`「meta-tags-bar uses IntersectionObserver」亦无对应实现 → 同类扫描登记（本次不处理，理由：与本任务无关且在 zen 下被 display:none 覆盖）
+- [下一步] 写 P1-requirements.md（含 8 个维度 BDD + 同类扫描 + 能力声明）
+- [命令] curl 边界复核（预期 <30s）：/{slug}/f → 200 text/html；不存在 slug /{slug}/f → 200；Accept: application/json 的 /{slug}/f → **404**；/f 单段 → 200；/{slug} 控制组 → 200 且带 link: alternate → 事实 C/D/E 全部复现，并补充发现：两段路径不注入 alternate Link（main.py:619 _slug_exists("slug/f")=False）
+- [命令] grep redirectFocusIfHidden/share 等补充扫描（预期 <30s）：MermaidRenderer/SvgRenderer/PlantUmlRenderer 全屏弹层**无 Escape 监听**（t022 的 Escape 断言早已随组件重构失效）→ 锁死不会与内容区图表弹层抢 Escape；真正的 Escape 消费方是 ShareDialog/OverflowMenu/TableView（后者在内容区）
+- [下一步] 写 P1-requirements.md 正文（write）→ 再逐字段 md-field-set（预期 <60s）
+- [产出] P1-requirements.md 已写入（383 行 / 30KB），8 节结构，16 条 BDD（BDD-1..BDD-16 连续不跳号）
+- [命令] check-frontmatter.py P1-requirements.md（预期 <5s）→ exit 0 ✅
+- [命令] check-gate.py P1（预期 <10s）→ exit 1，仅因 'P1-review.md 不存在'（评审属主 Agent 下一步，非本角色范围）；子检查 _gate_p1_vision_capability=True、_gate_p1_ui_shape=True、NC blocking=0
+- [命令] 自检 BDD 反模式（主观词 / CSS 类名绑定 / 实现细节）（预期 <10s）→ 无命中
+- [自检] frontmatter：phase/task_id/type/parent/trace_id/status/created/agent + risk_level=medium/phases(8)/packages(3)/domains(frontend,backend)/ui_render_shape=layout/ui_ux_dimensions(布局结构,交互行为,视觉呈现) 齐备
+- [自检] 门槛逐项：BDD≥1 ✅、同类扫描结论（4.1 逐符号命中+逐条判定 / 4.2 隐藏集 8 项更正 / 4.3 三处存量 / 4.4 拦截手段）✅、[P0_STALE: 具体漂移点] 显式记录 ✅、视觉能力条目(status=available) ✅、UX 类别 BDD（BDD-2 布局结构 / BDD-3 视觉呈现 / BDD-4~7 交互行为）✅、人工体验 BDD-16 ✅、[NO_NEED_CONFIRM] ✅
+- [环境隔离] 全程只读操作 + debug :8888 只读 GET/health/login（alice 登录仅取计数，未写数据）；未触碰生产 :8080、未触碰 ~/.peekview/、未用 CLI peekview create
+- [PROD_NOT_TOUCHED]
+- [11:50] rev1 启动：读完 analyst.md / rev1 dispatch-context / P1-review.md / P1-requirements.md(383行) / 上轮 dispatch-context；seed 匿名可达性实测 11 条（tsv-server-metrics/unicode-filenames/dsh-architecture/svg-icons/plantuml-arch/multi-format-demo=200；markdown-test/mermaid-charts/csv-employees/image-gallery/legacy-deploy=404，与 review 一致）
+- [12:06] 本轮自证实测（Playwright/CDP 1280x800 + 390x844 + curl，均只读 debug :8888）：① BDD-3 现判据 zen 态命中 4 元素（.entry-detail.zen-mode/.detail-content/.content-area/.markdown-viewer），修订判据（排除 html/body/#app + .entry-detail 内容流容器链）命中 0；② tsv-server-metrics 匿名 200/60 行/.per-page-trigger 可见，开浮层 .per-page-listbox h=134，Escape 后浮层消失且 zen 保持；③ unicode-filenames 匿名 200，zen 内容区 2 个 a[data-peekview-file-id] 可点，点击后正文切换且 path 保持；④ markdown-test 需 alice 登录、?firstFileId=43 → 10 条正文锚点链接，点击后 .content-area scrollTop 0→10341；⑤ mermaid-charts 需 alice 登录，zen 下 diagramBlock=1/fullscreenBtn=1/svg 850x400，弹层 h=800、.close-btn 关闭后回内联；svg-icons 匿名 200 但为独立 SVG 文件（ImageViewer，无 fullscreen 按钮）；⑥ /nonexistent-slug-xyz/f → 200+Page not found（.not-found 根）
+- [12:20] 必修 1-8 + 建议 9-16 全部落实完毕（edit 定点修改，未重写未点名节）：必修1 BDD-3 排除集改法+命中0推理；必修2 BDD-7 seed→tsv-server-metrics(匿名200)；必修3 BDD-8 seed→unicode-filenames + 三处(a)可达/(b)保态分开；必修4 BDD-9 seed→markdown-test(alice)+scrollTop绑定.content-area；必修5 BDD-15拆为 mermaid(需alice)/BDD-17(独立SVG,匿名)；必修6 BDD-13负向拆为BDD-18；必修7 packages=[frontend-v3,docs] domains=[frontend]；必修8 §4.1 三处+§4.2+§2.3 改P2待取舍。建议9 BDD-5/7优先级写进BDD；10 BDD-6作用域+枚举词表；11 BDD-1 桌面1280x800；12 BDD-11响应头降辅助；13 BDD-10 afterEach；14 §4.2补登两条banner；15 §2.4/§5 补记 is_public≠匿名可达 + 修正无新增漂移措辞；16 §2.1表格 document级更正
+- [12:20] 门槛自检：BDD 总数 = 19（BDD-1~19 连续升序，新增 17/18/19 三条，无删除无复用）；check-frontmatter.py exit 0；_gate_p1_vision_capability=True / _gate_p1_ui_shape=True；risk_level=medium / phases 全 8 阶段 / ceremony 缺省 standard 未变；[NO_NEED_CONFIRM] 与 [P0_STALE] 保留；三 P0 决策未重开；grep 确认 5 处方案选型表述已清除
+- [PROD_NOT_TOUCHED]（全程只读 debug :8888；未触碰 :8080 与 ~/.peekview/；未用 CLI create）
+- [12:22] 独立复核更正：legacy-deploy 实际在库（有 deploy.sh，seed 脚本 :204 有意 PATCH 为 archived），仅 image-gallery 未入库（无内容文件 → SKIP :184）；已更正 §5 建议15 段落（不盲抄 review 结论）
+
+## rev1 第二轮评审（requirements-review）独立复核记录
+- 匿名可达实测：tsv-server-metrics 200 / unicode-filenames 200 / svg-icons 200 / svg-standalone 200 / dsh-architecture 200 / multi-format-demo 200；mermaid-charts 404 / markdown-test 404 / csv-employees 404（与修订文本一致）
+- 登录矩阵：alice mermaid-charts 200 / bob 200 / carol 404；markdown-test 同
+- legacy-deploy：alice 查 ?status=archived → id=9 status=archived，raw 200（analyst 更正成立）；image-gallery 目录仅 meta.json，anon/alice 均 404，不入库（正确）
+- anon total 15 / alice total 22；markdown-test file id 43 = rich-markdown.md；正文锚点 10 条
+- BDD-14 移动 390×844：content-area top=0 h=844，三 chrome display:none，可滚动
+- BDD-6 zen dsh-architecture：aria-live 文本 = "Zen mode on. Press f or Escape to exit."，内容区外可聚焦元素 0
+- **BDD-3 关键发现**：按修订后判据（"上述任一元素的祖先/后代"，含 html）→ 排除集覆盖整个 DOM，判据恒真：正确实现 0 命中、header 强制可见 0 命中、新造横条 0 命中 → **丧失全部拦截力（新缺陷）**
+- 实测正确写法（根元素链取自身+祖先；.entry-detail 不连后代；内容流容器链取自身+后代）：正确实现 0 / header 可见 3 / 新造横条 1
+- gate：check-frontmatter exit 0；_gate_p1_vision_capability True；_gate_p1_ui_shape True；check-gate.py P1 因 review status 尚未 approved 而 exit 1（预期）
+
+## rev2 第二轮修订（retry 2/3，范围仅 BDD-3）
+- [rev2 环境] 起始探测发现 debug :8888 已停机（CDP :18800 仍在）→ `make debug-start` + `make debug-seed`（后台 job 托底）恢复；seed 匿名 total=15，`dsh-architecture` raw 200。**未触碰生产 :8080 / ~/.peekview/**
+- [rev2 实测] 按改后 A/B 判据（A 组自身+祖先、B 组自身+后代）三态实测（Playwright/CDP 1280x800，zen，seed dsh-architecture）：① 正确实现命中 **0**（candidateCount=0，excluded=439）；② 强制 `.detail-header` 可见命中 **3**（header.detail-header 1280x107 top=0 / div.title-row 1232x44 top=12 / div.meta-row 1232x26 top=68）；③ 注入 `#bespoke-bar` 100%x40 top=0 命中 **1**（1280x40 top=0）
+- [rev2 实测] 满宽可见元素自测数字（我的实测，≥90%视口宽 & 高≥8px）：文档级共 **7** 个（html/body/#app/.entry-detail.zen-mode/.detail-content/.content-area 各 1280x800 + .markdown-viewer **1238x4399** top=16）；`.entry-detail` 子树内 **4** 个 → 旧文"4 个 / 1248x4431"的 4 是子树内计数、1248 与 4431 为错值，已按实测更正
+- [PROD_NOT_TOUCHED]
+- [rev2 落盘] BDD-3 改写完成：When 拆为 A 组（html/body/#app/.entry-detail → 排除自身+祖先，**不含后代**）与 B 组（.detail-content/.content-area/.markdown-viewer/.code-viewer/.table-view/.image-viewer/.html-viewer/.empty-state/.error-state/.loading-state → 排除自身+后代），并显式写明"两组不可互换、不可统一写成祖先/后代"；保留 rev1 修订说明原文并追加 rev2 说明；删除被证伪的 rev1 自证第 3 点，替换为 ①②③ 三态负向对照自证（0 / 3 / 1）+ 数字口径说明（4→7、1248×4431→1238×4399）
+- [rev2 自查] diff 仅 1 个 hunk（@@ -151,14 +151,20 @@，共 18 行增删），其余节零改动；BDD 编号 19 条连续 1–19（grep -c = 19）；BDD-3 恰好 1 组 Given/When/Then；无主观词命中；frontmatter 未变（risk_level=medium / phases 8 阶段 / packages=[frontend-v3,docs] / domains=[frontend] / ui_render_shape=layout）
+- [rev2 gate] `check-frontmatter.py` → **exit 0**；`_gate_p1_vision_capability` = True、`_gate_p1_ui_shape` = True、`read_vision_tri_state` = available
+- [PROD_NOT_TOUCHED]（全程仅 debug :8888 只读 GET + CDP 临时 DOM 操作；未触碰生产 :8080、未触碰 ~/.peekview/、未写库、未用 CLI create）
