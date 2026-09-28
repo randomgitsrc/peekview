@@ -1,5 +1,5 @@
 task_id: TPV0099
-phase: P8
+phase: READY
 status: pending-start
 retries:
   P1:
@@ -32,6 +32,27 @@ retry_count:
   P4: 1
 p5_pass_commit: f1cfd5c32f3e09a8ce2e79cfc38fd454eeebfe80
 history:
+- phase: P8
+  action: completed
+  ts: '2026-09-29T04:30:00Z'
+  note: "P8 发布完成：bump_type=minor，0.24.1 → 0.25.0（commit c23efabd + tag v0.25.0）；VERSIONS.json
+    / frontend-v3/package.json / backend/pyproject.toml 三处同步 0.25.0。CHANGELOG [Unreleased] 条目
+    （本任务 1 条 + TPV0096 累积 5 条，经 ancestry 实测确认未随 v0.24.1 发版）整体归入 [0.25.0]，
+    **已复验段下有实质内容、未重演 2e18b902 的 0.21.0 空段事故**。debt_check=reviewed。
+    **P8 不可委托项主 Agent 亲自执行**：① audit7 = reuse_blocked（因 tech-debt.md 改动在
+    EXCLUDE_PRODUCE_PREFIX 之外）→ 完整重跑 gate_commands.P5，6/6 全绿（1350 passed / typecheck /
+    lint / check-docs / E2E 32 passed / auth 6 passed），bump 后再跑一次仍 6/6 绿 ② version 文件路径
+    三处核对一致 ③ git log v0.24.1..HEAD 对照 CHANGELOG 无遗漏。check-gate.py P8 exit 2（0 WARNING）。
+    **安全处置**：发现 bump-version 的 Step 4 是 git add -A，会 stage 158 个 .agate-tmp 路径（含 10 个
+    明文 token/cookie）→ 已在 .gitignore 新增 .agate-tmp/ 规则并复验（staged 162→5、无凭证）；
+    git log --all 确认从未入库、无历史泄漏。"
+- phase: READY
+  action: completed
+  ts: '2026-09-29T04:35:00Z'
+  note: "READY 收尾检查：debug :8888 已停（keepalive job 终止后端口释放，health unreachable）；
+    .agate-tmp 探针目录已删（5.8MB）；Chrome CDP :18800 属外部服务、按清单保持运行；
+    README badge 0.25.0 = tag v0.25.0、INDEX.md 0.25.0 一致；[PROD_NOT_TOUCHED]（:8080 全程不可达、
+    ~/.peekview/ 只读未写入）。"
 - phase: P0
   action: created
   ts: 2026-09-16 12:00:00+00:00

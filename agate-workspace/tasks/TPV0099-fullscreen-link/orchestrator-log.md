@@ -511,3 +511,21 @@
   - **另核实"是否已泄漏"**：`git log --all -- .agate-tmp/` → **空**（**从未入库，无历史泄漏**）✓
   - **附带**：按 releaser 提示先 `git worktree remove .agate-tmp/baseline-0099 --force`（嵌套 worktree 直接 `rm` 会留孤儿注册）→ 已移除，`git worktree list` 仅剩主工作区；`.agate-tmp` 由 76MB 降至 **5.8MB**（实际清理放 READY 收尾）
   - **元意义**：这是本任务**第十一次"验证声明需要被验证"，但性质不同——它保住的是"不该入库的东西不入库"**。releaser 主动检查了 `bump-version` 的实现（而非只照其文档），才发现 `git add -A` 的爆炸半径
+- **GATE PASS（2026-09-29，P8 发布执行 —— 主 Agent 亲自执行全部不可委托动作）**：
+  - **bump 前安全确认（关键）**：`git check-ignore .agate-tmp/alice-token.txt` → **IGNORED**（`.gitignore:105`）；`git diff --cached --name-only | grep -c agate-tmp` = **0** → **无明文凭证会被提交** ✓（修复见上条）
+  - **phase 跳变合法性确认**：HEAD `.state.yaml` = `phase: P7`、暂存区 = `phase: P8` → 单步前进合法 ✓
+  - **执行 `make bump-version NEW_VERSION=0.25.0`** → commit **`c23efabd`**（`chore(release): bump to v0.25.0`）+ **tag `v0.25.0`**；`VERSIONS.json` `0.25.0` / `frontend-v3/package.json` `0.25.0` / `backend/pyproject.toml` `0.25.0` **三处同步** ✓；release commit 含 16 文件（version 文件 + 静态产物 + `CHANGELOG.md` + `P8-release.md` + `.state.yaml` + 看板 + `.gitignore`）✓
+  - **⚠️ 主动规避先例事故（releaser 纠错的价值在此兑现）**：`bump-version` 的 Step 1 只做 `sync_versions.py`（**仅插入 `## [0.25.0]` 标题行**），与 `2e18b902`（0.21.0 空段事故）的成因完全一致。**主 Agent 复验结果：本次 `[0.25.0]` 段下有实质内容**（`### 新增` 三条 + `### 修复` 三条，即 `[Unreleased]` 的既有条目**被正确归入新版本节**）→ **未重演空段事故** ✓。依据：`sync_versions.py:126-131` 的插入语义是「在 `[Unreleased]` 下方插入新节标题，`[Unreleased]` 内容自动归入此节」
+  - **P8 gate**：bump 前 exit 2（WARNING 无 version 变更，预期）；**bump+tag 后复跑 `check-gate.py P8` → exit 2 且 0 WARNING** ✓（tag 存在性 WARNING 也随之消除）
+  - **发布检查（post-bump 复验）**：`check-changelog` → **✓ contains peekview v0.25.0 and mcp v0.12.0**、exit 0｜`check-version` → **✅ 所有文件版本同步完成**、exit 0
+- **GATE PASS（2026-09-29，P5 全量重跑 post-bump/post-tag —— 6/6 全绿）**：因 bump 改了 version 文件与静态产物，主 Agent **重新执行完整 `gate_commands.P5` 链**（不复用旧证据）：`make test-frontend` exit 0（1350 passed）／`make typecheck` exit 0／`make lint` exit 0／`make check-docs` exit 0／`P5_e2e` **32 passed (12.3s)** exit 0／`P5_e2e_auth` **6 passed (8.1s)** exit 0 ✓
+  - **DEBT0013 时序注记核查**：该注记提醒"若 P5 链路含 `check-protocol-consistency.py` 的 CHECK 7（README badge vs tag），须先 tag 后重跑"。主 Agent `grep` Makefile → **该脚本不在 P5 链路内**，且本次**本就是在 tag 之后重跑** → 无论哪种情形均已满足 ✓
+- 记录（2026-09-29）：**看板一处滞后被主 Agent 发现并修正**：`active-tasks.md` 的 TPV0099 行此前仍是 `P6✅`（P7 完成时我更新看板的动作实际未落地——P7 那次 python 替换脚本的 assert 通过但写入的是另一行？经查为我的替换目标串与实际行不匹配、静默未生效）。已用正则精确匹配修正为 **`P8✅`**，并**记下该教训**：**写入类操作必须回读验证**，不能以"脚本 exit 0"代替"目标已改"
+- GATE PASS（2026-09-29，**READY 收尾检查 —— 主 Agent 逐项实跑，不凭记忆打勾**）：
+  - **状态与版本**：`.state.yaml` phase = **READY**（`check-state-yaml.py` exit 0；`check-state-transition.py` **exit 0**，P8→READY 合法）✓；看板 TPV0099 行 → **`✅已完成 / DONE`** ✓；git 工作区仅剩本任务流程文件 ✓；**tag `v0.25.0` 已创建** ✓
+  - **测试环境已清理**：debug `:8888` —— **`make debug-stop` 报"服务已停止"但端口仍在监听**；主 Agent 排查发现**真正持有者是挂托底的 keepalive job `bash-2858`**（且 `/tmp` 在本沙箱为 per-call tmpfs，pidfile 不可见 → `debug-stop` 看不到进程）→ **终止该 job 后复验 `ss -ltn` 无 8888、`/health` unreachable** ✓。**这是本任务第 5 次遇到"服务存活跟随挂它的调用"机制**，且首次在**收尾阶段**遇到——已按同一根因处置；`/tmp/peekview-debug*` 已随之清除 ✓
+  - **开发环境已还原**：本任务**未做任何 pip 安装**（全程只用 `backend/.venv` 既有 venv）✓；系统环境无污染 ✓
+  - **生产环境无残留**：`[PROD_NOT_TOUCHED]`（`:8080` 全程不可达、`~/.peekview/` 只读未写入、`git log` 无生产库操作）✓
+  - **协议一致性**：README badge `version-0.25.0` **= tag `v0.25.0`** ✓、`INDEX.md` `Backend/Frontend v0.25.0 · MCP Server v0.12.0` ✓
+  - **清理项**：`.agate-tmp/`（136 文件 / 5.8MB 探针与旧 token）**已删** ✓；**Chrome CDP `:18800` 属外部既有服务、按清单保留运行**（实测 200）✓
+- 记录（2026-09-29）：**本任务全程 `[PROD_NOT_TOUCHED]`** —— 所有验证均走 debug `:8888` 与 CDP `:18800`；生产 `:8080` 从沙箱不可达、`~/.peekview/peekview.db` 未写入（多轮 mtime 复核均早于各阶段开工时刻）
