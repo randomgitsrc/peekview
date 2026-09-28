@@ -1,10 +1,11 @@
-# P2-dispatch-context-architect — TPV0099
+# P2-dispatch-context-architect-rev1 — TPV0099（**增量修订轮**）
 
 ---
 phase: P2
 generated_by: agate-inject-card.py + 主 Agent
 task_id: TPV0099
 role: architect
+retry: 1
 ---
 
 <!-- AGATE_CARD_START -->
@@ -332,117 +333,215 @@ check-gate.py P2 $TASK_DIR
 > 完成 → 读 phase-cards/P3-tdd.md
 <!-- AGATE_CARD_END -->
 
-> ⚠️ 以下派发指引是本次任务的强制指令，不是参考信息。执行优先级：派发指引 > 客观查证信息 > 阶段卡片（参考规范）
+> 本文件是 **P2 retry 1/3** 的**定点修订**派发指令（P2 retry_cap = 3，预算充裕）。
+> **这是增量指令，不是完整派发上下文**——第一轮上下文见 `P2-dispatch-context-architect.md`（含阶段卡片 AGATE_CARD 与全部约束），本文件只写**本轮要改什么**。
+> 未点名的节**一律保持原样**，不要顺手改动、不要重做候选方案。
 
-## 目标
+---
 
-为「全屏模式链接 `/{slug}/f`」产出技术方案 `P2-design.md`：候选方案权衡 + 影响面梳理 + gate_commands 固化 + files_to_read 导航。P2 不可裁剪。
+## 0. 一句话任务
 
-## 约束
+两份独立评审（`P2-review-design.md` 判 `needs-revision`、`P2-review-eng.md` 判 `rejected`——后者系工具枚举所迫，语义同为"须修订再审"）**均确认方案骨架成立、无需重选候选**，但发现 **2 个阻塞级固化面缺陷**。你的任务：**定点修订 `P2-design.md`，只改这两处（约 6-8 行规格文本 + §6.1 一段前提），改完回报**。
 
-- **三个 P0 决策已由用户裁决锁定，不得重开**：①URL = 路径后缀 `/{slug}/f`（否决 `?f`）②完全锁死（f/Escape 均无效、无页内出口）③元信息条一并隐藏
-- **P1 已实核的重要结论（直接采信，勿重新论证）**：meta 条隐藏**早已存在**（`EntryDetailView.vue:260`，自 T082 起）→ 本任务**预期零 CSS 改动**；"zen 外观统一"不存在取舍
-- **`→ 见 P1 §4.2**：zen 隐藏集实为 **8 项 + 3 处机制**，分布在 `layout.css`（7 项，含 :208 的 `.resize-handle` 与 :649-654 的 6 项）与 `EntryDetailView.vue:260`（1 项）+ 两处 `v-show` 兜底。**若你的方案决定"不复用 zen 类而新造锁死隐藏规则"，必须覆盖全部 8 项**，否则拖拽手柄会残留
-- **不引入无关改动**：P1 §4.3 已登记三处存量问题（死选择器 `.mobile-actions`、重复 `zen-shortcut.spec.ts` 两文件、`t052:141` 恒真假绿测试）判定为"本次不处理"，**不得顺手修复**（违反 P1 范围声明）
-- 严格遵循 P1 的 **19 条 BDD**（BDD-1~19）语义，不擅自放宽/收紧判据；若确需变更须报告主 Agent（P1 基线保护）
-- **BDD-3 有特殊约束**：其排除集写成 A/B 两组**不对称**规则（A 组结构链取"自身+祖先不含后代"、B 组内容流链取"自身+后代"），并注明"两组不可互换、不可统一写成祖先/后代"。P2 设计 UI 相关实现时**不得**把该判据简化为"排除容器链"——已实测证明那样会退化成恒真判据（应 FAIL 却判 PASS）
-- 子派发能力：不启用
+### ⚠️ 权威修订指令的位置（先读这个）
 
-## 需要你决策的三个开放点（P1 已明确留给你）
+**组长已汇总出统一评审文件 `P2-review.md`，其「§5 修订指令」是你的权威修订清单**，粒度比本文件更细（逐处行号 + 为什么 + 验收判据）。**请先完整读 `P2-review.md` 的 §2.1 / §2.2 / §5.1（R-1）/ §5.2（R-2）/ §5.3**，再执行。
 
-| 编号 | 开放点 | P1 记录位置 |
+- **`P2-review.md` §5 = 权威**（组长汇总，主 Agent 已复核采纳）
+- 本文件 §1 / §2 = **问题框架与实证证据**（帮 you 理解"为什么要这样改"），若两者表述有差异，**以 `P2-review.md` §5 为准**
+
+### 相对本文件初稿的**补充要求**（组长汇总时新增，务必一并落实）
+
+1. **`P2-design.md:118` 的代码草图注释**：把「（形态示意，非最终代码）」改为「**签名与调用形态为最终规格，P4 照此实现**」——**这是本缺陷的根因**：草图与 M 栏同为规格却标注不同权威级，导致 P4 照抄清单、忽略草图。**必须改**。
+2. **`updateZenAria` 的处置已由组长定论为「移除」**（非"no-op 或移除"二选一）：全仓非测试代码零消费方（`useZenMode.ts:34` 仅导出、`:16/:25` 仅内部调用），故**从返回对象一并移除该键**；`zenAriaText` 改为 computed，锁死文案分支由 computed 承载。附带：两处 spec mock（`t031:106` / `t067:119`）的 `updateZenAria: vi.fn()` 字面量**键名不变即可继续使用**（多出的键无害），故**无需改这两处 mock**。
+3. **M9 单测（`frontend-v3/src/composables/__tests__/useZenMode.spec.ts`）须补一条用例**：「**锁定态派生随 route meta 翻转**」。理由：这是 §2.4/§3.2 **自己声明**的不变量（"不落 ref、随 route 响应式翻转"），也是**排除第三种假绿读法的唯一可执行判据**——不补则该不变量无 gate 承担。
+4. **`files_to_read` 补两条**（现清单零 share 条目）：除 `frontend-v3/e2e/t058-share-redesign.e2e.spec.ts` 外，**另补 `backend/peekview/api/shares.py:18-23`**（三个 share 端点 `Depends(require_auth)` 的契约，说明为何匿名路径不可行）。
+5. **R-2 的清理判定再精确一步**：`afterEach` 清理队列存 **`{slug, share_id}` 二元组**（而非仅 slug），清理后**以 alice 复查 `GET /api/v1/entries/{slug}/raw` = 404** 作为"无残留"判定；并同步更新 **`env_constraints.auth_premise`（`:660`）** 为"**登录创建**私有 entry + 登录建 share + 登录删除（afterEach 存 `{slug, share_id}`）"。
+
+### 第三种假绿读法（组长补充，**务必理解，它决定修订目标是"唯一化"而非"消除报错"**）
+
+除"裸值抛错"与"TS2540"两个报错分支外，还存在**第三种更隐蔽的读法**：若 P4 为消解类型冲突而把签名改成 `locked: boolean`（M3 裸值字面因而"类型通过"），配合可选链可**同时通过 `make typecheck` 与 `make test-frontend`** —— 但该写法把锁定态固化为 **setup 期一次性快照**，与 §2.4/§3.2 声明的"不落 ref、随 route 响应式翻转"不变量相悖（组件复用前提已实测：`onMounted` 仅 1 次、DOM 节点同一）→ **最坏结果是假绿**。
+
+→ **故修订目标是「把形态唯一化」，不是「消除两个报错」**。只把报错消掉而留形态歧义，等于把假绿留在设计里。
+
+**不要动**：方案 A 的选择、R1/R2/R3 三个开放点结论、`gate_commands` 的键形态与超时档位（评审已四项核查全部合规）、候选方案权衡、影响面 Modify/Not Modify/Risk 主体、UI 设计节。
+
+---
+
+## 1. 阻塞项①（合并自 design-review **G-1** ≡ eng-review **BLOCKER-2**）：M2/M3 接口规格自相矛盾，且按 M3 字面实现会**打红本任务自己声明的 gate 键**
+
+### 问题（主 Agent 已独立复核为真）
+
+`P2-design.md` 对"锁死态如何承载、调用点如何传入"给出了**三种互不兼容的写法**，而 P4 implementer 照抄的是**文件级清单 M2/M3**（§2.1 自述"形态示意，非最终代码"）：
+
+| 出处 | 现状原文 | 形态 |
 |---|---|---|
-| R1 | JSON-accept 客户端访问 `/{slug}/f` 返回 **404**（走 `resolve_entry_raw("slug/f")`）——是否新增后端分支（如把两段 `*/f` 归入 `_is_frontend_route`）？**注：P0 原判"后端零改动"，故此项若选择处理即为范围扩大，须显式论证** | P1 §8 R1 |
-| R2 | 锁死状态**如何承载**：新增独立状态位 vs 复用/扩展 `zenMode`+`route.meta`？须显式区分"锁死态"与"zen 态"，避免误改全局 zen 把 f 键 zen 一起锁死 | P1 §8 R3 |
-| R3 | 锁死的 `preventDefault` **边界**：如何做到"不改变全屏视图状态"但**不吞掉**内容区内嵌组件的 Escape（`TableView.vue:227` 分页浮层等） | P1 §8 R4 / BDD-7 |
+| §2.1 `:119` | `useZenMode(locked: () => boolean = () => false)` | **thunk**（权威） |
+| §2.1 `:121` | `computed(() => locked() \|\| manualZen.value)` | 调 thunk |
+| M2① `:46` | 「新增 `locked` 入参与 `lockedMode` **状态**」 | **暗示落 ref** ← 与 §3.2 `:210`「**不落 ref**（computed）」冲突 |
+| M2② `:46` | `computed(() => lockedMode.value \|\| manualZen.value)` | 读 `.value`（Ref 语义）← 冲突 |
+| **M3 `:47`** | 「传入 **`route.meta.zen === 'locked'`** 作为锁定入参」 | **裸 boolean 值** ← 第三种形态 |
+| M2③ `:46` | 「`updateZenAria` 增加锁死分支」 | ← 与 M2② 的 computed 化冲突（TS2540） |
 
-## 上游关联
+### 两条已实测的打红路径（主 Agent 与 eng-review 各自独立复现）
 
-- **P1 产出**：`P1-requirements.md`，**19 条 BDD**（BDD-1~19 连续），0 待确认项（`[NO_NEED_CONFIRM]`）。P1 经 **3 轮独立评审闭合**（初版 16 BDD → review#1 needs-revision 8 必修 → rev1 19 BDD → review#2 needs-revision 1 必修 → rev2 定点修订 → review#3 approved）
-- **P1 关键结论**：① meta 条隐藏已存在（本任务零 CSS 改动，范围缩小）② zen 隐藏集 8 项/3 处机制（更正了 P0 的"7 项"）③ `.resize-handle` 为 P1 新发现的第 8 项 ④ `shouldHandleZenShortcut` 不改（纯函数不持 zen 状态，短路应在 `useZenMode` 调用方）⑤ 图表全屏弹层**当前无任何 Escape 监听**（t022 的 Escape 断言所依赖选择器已死），故锁死与图表的 Escape 冲突面**较窄**，真正消费方是 `TableView` 分页浮层 / `ShareDialog` / `OverflowMenu`
-- **P1 同类扫描**：逐符号命中清单见 P1 §4.1；三处存量问题见 §4.3（均"不处理 + 理由"）
-- **[P0_STALE]**：meta 条前提为假，已就地更正 + 严重性判定为「轻微，不重开 P0」（P1 §5）
-- **P1 §7 裁剪说明**：全 8 阶段保留，无裁剪 → **不声明 `跳过风险` / `coupling_checklist` / `internal_only`**；`ceremony` 缺省 standard
+1. **`route.meta.zen` 裸值 → 既有 spec 挂载即抛**
+   - `frontend-v3/src/components/__tests__/t031-entry-detail-view.spec.ts:164-168` 与 `t067-detail-framework.spec.ts:173-177` 的 `useRoute` mock **都没有 `meta` 键**，且两者**都真实 `mount(EntryDetailView)`**（`t031:203` / `t067:237,252`）
+   - 二者虽 `vi.mock('@/composables/useZenMode')`（`t031:105-106` / `t067:118-119`），但 M3 的裸值表达式是在 **`EntryDetailView` 组件代码内**求值的 → **不受 composable mock 保护**
+   - 主 Agent 实测：这两 spec 当前 **2 files / 29 tests 全绿**；按 M3 字面实现将 `TypeError: Cannot read properties of undefined (reading 'zen')` → **打红 `P3`/`P5`/`P6`（三键同为 `make test-frontend`）**
+   - 主 Agent 已实核修法有效：`route.meta.zen` **抛异常**；`route.meta?.zen === 'locked'` **返回 `false`**（安全）
+2. **`updateZenAria` 写 computed → TS2540**（`P5_typecheck`）
+   - `zenAriaText` 变 computed 后，`useZenMode.ts:9` 的 `zenAriaText.value = ...` 赋值触发 TS2540（只读属性不可赋值）→ **打红 `P5_typecheck`**
+   - 主 Agent 已核：`updateZenAria` 在 `useZenMode.ts:8,16,25,34` 仅内部引用，**全仓非测试代码零消费**
 
-## 输入文件
+### 要求的修订（**权威清单见 `P2-review.md` §5.1，逐处行号齐全**；下方为提要）
 
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P1-requirements.md`（**主要输入**：16 BDD + 影响面 + R1-R6 风险登记）
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P0-brief.md`（环境约束、已知风险、**文末「P0 时效性自检」与「环境自检」节**）
-- `frontend-v3/src/router.ts`（路由表；`:slug` 在 catch-all 前；现存两段路由仅 `/settings/apikeys` 与 `/users/:username`）
-- `frontend-v3/src/composables/useZenMode.ts`（36 行全文，锁死短路落点）
-- `frontend-v3/src/utils/zen-shortcut.ts`（`shouldHandleZenShortcut` / `redirectFocusIfHidden`）
-- `frontend-v3/src/composables/entryDetailKeys.ts`（`ZenModeKey`/`IsMobileKey`/`ZenAriaTextKey`）
-- `frontend-v3/src/views/EntryDetailView.vue`（zen 装配 + scoped 第 7 项隐藏）
-- `frontend-v3/src/styles/layout.css`（:208 第 8 项；:649-654 六项；:624-626 桌面 meta 条隐藏）
-- `frontend-v3/src/components/TableView.vue` 第 220-250 行（Escape 消费方，BDD-7 对象）
-- `backend/peekview/main.py` 第 25 行 / 第 52-62 行 / 第 590-635 行，以及 `backend/peekview/api/files.py` 的 `resolve_entry_raw`（R1 决策用）
-- `frontend-v3/playwright.config.ts` + `frontend-v3/e2e/` 任一近期 spec（E2E 双 project 与编写规范）
-- `AGENTS.md`（项目约定）、`agate-workspace/agents/project.md`（gate 命令与测试基线）
+1. **M2①（`:46`）改述**为：「新增 `locked: () => boolean` **入参**（默认 `() => false`）；锁定态为**只读派生**，**不落 ref**」
+2. **M2②（`:46`）**：把 `lockedMode.value` 改为 **`locked()`**
+3. **M2③（`:46`）定论为「移除 `updateZenAria`」**（非同前稿的"no-op 或移除"）——`zenAriaText` 已是 computed，文案分支由 computed 承载；并从返回对象移除该键
+4. **M3（`:47`）改述**为：「传入 **`() => route.meta?.zen === 'locked'`**（**thunk + 可选链**，**勿传裸值**）」
+   - ⚠️ **必须同时是 thunk 且带可选链**——thunk 解决签名一致，可选链解决 mock 缺 `meta`。二者取其一都不够
+   - 钉定可选链后，**既有两处 `useRoute` mock 无需改动**；若你选择不加可选链，则**必须**把 `t031:164-168` / `t067:173-177` 补 `meta` 并**列入 §1.1 M 栏**（二选一，须显式声明取哪个，**不得留"待决定"**）
+5. **`P2-design.md:118` 草图注释**改为「**签名与调用形态为最终规格，P4 照此实现**」（**根因修复，必改**）
+6. **§1.1 M 栏补充**：声明上述二选一的路径
+7. **§2.1 风险①（`:136`）更正**：补前提「"既有 mock 仍兼容"**仅对 thunk 形态成立**——mocked 时 thunk 从未被调用；裸值形态在**调用点**求值，早于 mock 拦截」
+8. **M9（`:53`）补一条单测**：「锁定态派生随 route meta 翻转」
 
-## P2 最小验证（强制）
+### 验收判据（改完自查）
 
-方案设计前先用最小验证确认关键假设（curl / 20 行脚本 / 10 行 HTML）。方案依赖浏览器行为与安全模型（路由匹配、DOM 可见性、键盘事件分发）→ **必须做最小验证**，不得只声明"纯代码逻辑"。
+- `locked` 的**签名 / 调用点 / 读取方式**三者**唯一**：签名 `() => boolean`、调用点传 thunk、读取用 `locked()`；全文不再出现 `lockedMode`（或出现时明确其为 `computed(() => locked())` 且注明"非状态存储"）
+- `route.meta` 访问处**带 `?.` 可选链**（或明确声明改 mock——二选一，写明）
+- `updateZenAria` **已移除**（含返回对象）
+- `:118` 草图注释已改为"最终规格"；`:136` 兼容性断言已补 thunk 前提
+- **实现前**（本修订只改文本）跑 `make test-frontend` 与 `make typecheck`：**均保持绿**，既有两 spec **29 tests 全绿**
 
-建议验证点（结果写入 P2-design.md 的 `minimal_validation` 字段）：
-- `/yaml-docker-compose/f` 当前的路由归属（命中 NotFoundView 而非 `:slug`）——**主 Agent 已实测**：`path=/yaml-docker-compose/f`、`.entry-detail` 不存在、`Page not found` 文案存在
-- `document` 级 keydown 与元素级 Escape 的**分发顺序**（验证 BDD-7 可行：锁死不吞内嵌浮层 Escape 的实现路径）
-- `route.meta` 在参数化路由下的可用性（`/:slug/f` 的 meta 读取）
-- 若涉及 R1 的后端分支：`_prefers_json` 判定链的实际行为（**主 Agent 已实测**：浏览器 accept → 200 + NotFoundView；`Accept: application/json` → 404 `{"error":{"code":"NOT_FOUND","message":"Entry not found: {slug}/f"}}`；对照 `/{slug}/raw` → 302）
+---
 
-## 产出与格式
+## 2. 阻塞项②（合并自 design-review **G-2** ≡ eng-review **BLOCKER-1**）：BDD-10 认证前提写反，按现规格**不可执行**（或退化为恒真假绿）
 
-- 产出：`agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md`
-- **必含 frontmatter 机器字段**（用 `agate-md-field-set` 写，不手写）：`candidate_count`（≥2；若声明 `design_trivial`/`follows_existing_pattern` 可 1，**须附理由**）、`packages`、`domains`、`ui_affected`
-- **P2 gate 会校验**：`ui_affected: true` → 正文必须含 `## UI 设计` 节，节内含**渲染形态声明**（复用 P1 `ui_render_shape: layout` 的规范值，gate 按规范化值比对 P1-P2 一致性）+ **维度选择**（复用 P1 `ui_ux_dimensions`：布局结构/交互行为/视觉呈现）+ **按形态 checklist**（常规布局型 = 布局/交互/视觉三类）。缺任一 → exit 1
-- 正文必含**影响面梳理**（Modify / Not Modify / Risk 三部分，改动落点须到"哪个文件的哪个小节/函数"）；**Not Modify 栏尤其重要**（P1 §4.3 三处存量问题须列在此，避免 P4"顺手修复"）
-- 正文必含 `gate_commands`（**引用 Makefile target，不手写裸命令**——Makefile 是测试命令的唯一真相源）+ `files_to_read` + `env_constraints` + `minimal_validation`
-- **`gate_commands` 硬要求**：`ui_affected: true` → **必须含 `P5_e2e`**（本次 19 条 BDD 大量落在 E2E 层）；建议同时声明 `P5_e2e_timeout_seconds: 300`（E2E 档）与 `P5_timeout_seconds: 120`（单测档）。**禁止把多个命令用 `&&` 拼进同一 key**（短路会让后半段从不执行）
-- 写完跑 `python3 /home/kity/.agate/v0.76.0/agate/scripts/check-frontmatter.py <产出路径>`，非 0 先修正再返回
-- 分阶段落盘：每读完一个文件/完成一个关键步骤，立即追加写 `P2-progress.md`；每条 bash 命令执行前也追加一行
+### 问题（两方独立实测同三条服务端约束，主 Agent 已复核）
 
-## 命令超时（强制）
+`P2-design.md:480,482`（§6.1）要求 BDD-10「**匿名创建 + 匿名删除**（成对）」，但 BDD-10 的 Given 是「**私有** entry + 有效 share token」——二者**服务端不可共存**：
 
-任何 bash 命令设 `timeout 180s <cmd>`（E2E/构建类按 300s/600s×1.5）。超时或非预期失败 → ① 停止，不换命令不深挖；② progress 写一行；③ 返回主 Agent 决定。
+1. **匿名创建被强制转公开**：`backend/peekview/api/entries.py:135-138`「Anonymous users forced to is_public=True」（主 Agent 已核）
+2. **share 端点需登录**：`backend/peekview/api/shares.py:24` `Depends(require_auth)` → 匿名 POST `/shares` **实测 401**
+3. **公开 entry 禁建 share**：`backend/peekview/services/share_service.py:54-55`「Public entries don't need share links」→ **实测 400**
 
-## 环境隔离（强制）
+→ 结论：按现规格，要么该条 E2E **不可实现**，要么**退化为恒真断言**（公开 entry 本来就匿名可读 = 假绿）。
+→ **根因**：把 TPV0096 针对**公开 fixture** 的"匿名建+匿名删"铁律，**误移用**到了**私有 + share token** 场景。
 
-只用 debug `:8888`（**主 Agent 已起，挂了长托底 job**）。**严禁**触碰生产 `:8080` 与 `~/.peekview/`；**严禁** `uvicorn` 直接启动、**严禁** `make debug`/`npm run dev`（vite :5173 会代理到生产）。状态标记二值格式：`[PROD_TOUCHED] {描述}` / `[PROD_NOT_TOUCHED]`。
+### 唯一可行路径（两方均已跑通）
 
-## 环境约束（P0-brief 已详载，此处重申关键项）
+**alice 建私有 entry → alice 建 share → 匿名带 token 访问**：
+- 匿名 `?share=<token>` → **200 可见正文**；**不带 token / bogus token → 均不可见**（区分力为真）
+- 参考先例（eng-review 要求补进 `files_to_read`）：`frontend-v3/e2e/t058-share-redesign.e2e.spec.ts:33-56,80-88`（登录 → Bearer 建私有 → Bearer 建 share 的既有范式）
 
-- **DSH 沙箱**：`/tmp` 与 `~/.local/share` 只读；`/tmp` **跨 bash 调用不共享文件**；后台服务须挂持续 running 的 job 托底。临时产物落 `{project_root}/.agate-tmp/`
-- **⚠️ 两条不同根因的 seed 事实（主 Agent 已实核；**勿合并归因**——第一版此处曾把二者捆在 `DEBT0012` 一个标签下，导致 `viewer.spec.ts` 红灯被误归 DEBT0012，已更正）**：
-  1. **【DEBT0012】seed 时序缺陷 → entry 未入库（数据缺失）**：`seed-debug.py` 先建 entry（L173）后建 team（L264），而 `_resolve_team_for_user` 对不存在 team 抛 422 → **全新 DB 首次 seed 时 3 条带 `team_id` 的 entry（`csv-employees`/`markdown-test`/`mermaid-charts`）必定失败**，**重跑即恢复**。`make debug-seed` 默认 `tail -10` **会截断掉 FAIL 行**（用 Makefile 看不到失败）——需完整输出请直接 `python3 scripts/seed-debug.py http://127.0.0.1:8888`。**归属：TPV0097/TPV0098**
-  2. **【TPV0095 引入，非 DEBT0012】team-scoped entry 匿名不可达（数据完好、可见性语义变了）**：这些 entry **即使 `is_public: true`，匿名也 404**（团队限定；owner/admin 可读）→ 成因是 `59182590`（TPV0095，2026-09-03）给 seed entry 指派团队，**`team_id` 是 seed 数据本身，重跑 `make debug-seed` 不能恢复**。`frontend-v3/e2e/viewer.spec.ts` 的 **18 failed** 即由此而来（其 `openMarkdownFile` 依赖 `markdown-test`）。**归属：TPV0097/TPV0098「用例可信治理」**
-  - **判据（区分二者）**：重跑 `make debug-seed` 后**能否恢复**。能 → 第 1 条；不能 → 第 2 条。二者**根因与修复面均不同，禁止合并归因**
-  - **设计 E2E 时不要依赖 team-scoped entry 的匿名可达性**（P1 已在 rev1 把 BDD-7/BDD-15 涉及的两条 Given 改掉：BDD-7 改用匿名可达的 `tsv-server-metrics`、BDD-15 用 `mermaid-charts` 并写明需 alice 登录前提）
-- **BDD 引用的 seed 与可达性前提（P1 已逐条实测，P2 直接用）**：`dsh-architecture`（BDD-1/3/9 相关，匿名 200）、`tsv-server-metrics`（BDD-7，匿名 200，表格 60 行）、`unicode-filenames`（BDD-8，匿名 200，zen 下内容区有可点 navigate-file 链接）、`multi-format-demo`（匿名 200 但四文件互相 0 个 md 链接 → 不可用于"切换文件"）、`mermaid-charts`（BDD-15，**需 alice 登录**，有 fullscreenBtn、不含 svg）、`svg-icons`（BDD-17，匿名 200，独立 SVG 文件走 ImageViewer、**无 fullscreen 按钮**）、`markdown-test`（BDD-9，**需 alice 登录** + `?firstFileId=43`，rich-markdown.md 有 10 条正文锚点）
-- seed 计数三口径（都对，勿混淆）：seed-data 目录 24 / alice 可见 22 / **匿名可见 15**
+### 附带更正（design-review 实测，方向与现文相反）
 
-## 门槛（什么算完成）
+现 §6.1 担心的"匿名建、带 token 删被拒 → 404 静默残留"**方向是反的**：实测**匿名 DELETE 可删 alice 私有 entry 返回 200**（`api/entries.py:477-478` 的 `allow_local = no_server_auth and current_user is None`，debug 无 server api_key 时放行）。
+→ **清理对抗衡应落在"删除后以 alice 复查 404"**（证明真删掉了），而非"以匿名删除成功为清理证据"。
 
-- `P2-design.md` 存在且非空；`candidate_count`/`packages`/`domains`/`ui_affected` 齐备且与正文一致
-- 候选方案 ≥2（或声明简化 + 理由）+ 权衡 + 选择理由
-- 影响面梳理三部分齐备（Modify 落点到文件+小节/函数；Not Modify 含 P1 §4.3 三处；Risk 每条配缓解）
-- `ui_affected: true` → `## UI 设计` 节含形态声明 + 维度选择 + 按形态 checklist
-- `gate_commands` 含 `P5_e2e`（ui_affected），引用 Makefile target，无 `&&` 拼接；含 `_timeout_seconds` 声明
-- `minimal_validation` 有实跑结果（非"纯代码逻辑"空声明）
-- `check-frontmatter.py` 退出码 0
-- R1/R2/R3 三个开放点均有明确取舍结论
+### 要求的修订
 
-## 返回给我（只两行）
+1. **§6.1 的 BDD-10 行前提列**：改为「**alice 登录建私有 entry → alice 建 share → 匿名带 token 读**；清理 = alice 删除后**以 alice 复查 404**」
+2. **`P2-design.md:480,482` 的"匿名创建 + 匿名删除（成对）"表述删除/改写**为上述路径
+3. **§8 `files_to_read` 补**：`frontend-v3/e2e/t058-share-redesign.e2e.spec.ts`（share 建/撤销范式先例；现 §8 **零 share 条目**）
+4. **§6.1 的"切分轴 = 认证前提"结论保留**（评审认可该轴），但 BDD-10 归入 auth spec 的理由须与新路径一致（它现在确实需要 alice 登录态）
+
+### 验收判据
+
+- §6.1 中 BDD-10 的认证前提与清理方式**与上述可行路径一致**，不再出现"匿名创建私有 entry"
+- `files_to_read` 含 share 范式先例
+- 全文中"匿名创建 + 匿名删除（成对）"的表述**已清除**
+
+---
+
+## 3. 非阻塞项（**建议随本次一并处理，但不构成退回理由**）
+
+评审列出非阻塞 5 条 + 测试缺口 6 条。**请顺带处理以下低成本项**（其余若判断需大改则**不要动**，在本轮回报里说明留待后续）：
+
+- **N-1 / design-review 非阻塞**：**双 project 默认视口 = 1280×720 / 393×727，两个都不是 BDD 要求的 1280×800 / 390×844** → 建议在 §6.1 或 §6.5 写明 P3 须按 `tpv0091` 范式**显式 `test.use({ viewport })`** 钉定视口（判据动态取 `innerHeight` 故非必然失败，但应显式化）
+- **统计口径说明（建议补述，非"改错"）**：`env_constraints` 现写"alice 22 / 匿名 15"——**主 Agent 已实测该值是"全新 seed 后"的正确值**（重启后全新 DB 双跑 `make debug-seed`，实测 alice 22 / 匿名 15，与现文逐字一致）。评审期实测到的 alice 26 / 匿名 19 是**同一 DB 被 E2E 自建 slug 累积污染后**的值，**两者都是真值、只是时点不同**。
+  - → 请**不要**把 22/15 改成 26/19（那会把一个时点值当成新基准，是同一类错误的镜像）；应补述为：「**计数随 E2E 自建残留漂移（全新 seed 后 alice 22 / 匿名 15；跑过 E2E 后可达 alice 26 / 匿名 19），故 P6 前须重跑 `make debug-seed` 或按 slug 精确断言，勿依赖总数**」
+- **`§7` 悬空引用**（design-review 非阻塞）：风险节实为 §1.3，UI 设计节插在 §6/§8 之间致编号断档 → 修正引用编号
+- **eng-review N-2~N-5**：`firstFileId` 动态解析、`EntryDetailView` 300 行上限登记、`P5_lint` 覆盖面描述、`P5_timeout_seconds` 档位——**若属一行补述则改，否则留给后续**
+
+---
+
+## 4. 不要做的事
+
+- **不要重做候选方案**（评审确认方案 A 成立，骨架无需重选）
+- **不要改 `gate_commands` 的键形态与超时档位**（附录 A 四项核查已确认全部合规）
+- **不要改 R1/R2/R3 结论**（两方均确认成立）
+- **不要改 P1**（`[P1_CORRIGENDUM]` 已按裁决登记在 P2 内，本轮保留）
+- **不要动 banner 不处理的裁决**（N12 + R-04 保持）
+- **不要顺手修复 P1 §4.3 三处存量问题**（N1/N2/N3 保持）
+
+---
+
+## 5. 环境与纪律（与第一轮相同，重申）
+
+- 只用 debug `:8888`（已运行，主 Agent 挂长托底 job）；Chrome CDP `:18800` 在线
+- **严禁**触碰生产 `:8080` 与 `~/.peekview/`；**严禁** `uvicorn` 直接启动、**严禁** `make debug`/`npm run dev`。返回时标注 `[PROD_NOT_TOUCHED]`
+- 临时产物落 `/home/kity/oclab/peekview/.agate-tmp/`；**`/tmp` 跨 bash 调用不共享**
+- **任何 bash 命令设 `timeout 180s <cmd>`**
+- **探针文件用后即删**：上一轮与评审期出现过 `frontend-v3/src/__*probe*.spec.ts`（会把前端基线临时抬高）。如需类型探针请放 `.agate-tmp/`，**不要放 `frontend-v3/src/`**；确需放入 src 的，用完立即删除并复查 `git status frontend-v3/` 为空
+- 前端基线：`110 files / 1343 passed | 4 skipped (1347)`；后端 `1172 passed` + 1 条预存环境性失败（勿当本任务问题）
+- 子派发能力：不启用
+- 分阶段落盘：每完成一步**立即追加**一行到 `P2-progress.md`
+
+## 6. 产出
+
+- 就地修订 `agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md`（**同阶段内定点修订，无需归档旧产出**）
+- 追加 `P2-progress.md`
+- 改完跑 `python3 /home/kity/.agate/v0.76.0/agate/scripts/check-frontmatter.py <产出路径>`，非 0 先修正
+- **自查 §1/§2 的验收判据**并在回报里逐条说明改了什么（含行号）
+
+## 7. 返回给我（只三行）
 
 1. 产出文件路径
-2. 一句话摘要（≤30 字，含候选方案数 + 关键决策）
+2. 一句话摘要（≤30 字）
+3. **两个阻塞项各自的修改落点**（行号 + 改后形态一句话）
 
 **不要返回文件全文。**
 
-## 客观查证信息（objective_info）
-
-- 环境：debug backend `http://127.0.0.1:8888`（主 Agent 已起 + 长托底），version 0.24.1；`VERSIONS.json` peekview=0.24.1
-- 主 Agent 实测（可直接引用）：`/yaml-docker-compose/f` → `path` 保持 `/yaml-docker-compose/f`、`.entry-detail` 不存在、页面含 `Page not found`（命中的是 `/:pathMatch(.*)*`）；`Accept: application/json` 时 → 404；`/{slug}/raw` → 302
-- 前端测试基线：`Test Files 110 passed` / `Tests 1343 passed | 4 skipped (1347)`
-- E2E：`playwright.config.ts` 双 project（chromium + Mobile Chrome/Pixel5），`baseURL` 默认 `:8888`，无 webServer 自启
-- 关键选择器：`.entry-detail`（zen 类挂载点）、`[data-testid="content-area"]`、`.meta-tags-bar`（`v-if="isMobile"`）、`[data-testid="mobile-bottom-bar"]`、`.diagram-modal`
-
 > 本文件不含通过/失败预判。
+
+---
+
+## 附录 C（主 Agent 于**第二次派发前**追加，2026-09-28）：`viewer.spec.ts` 归属措辞的**定点更正**（1 处事实，4 个落点）
+
+> **本条是主 Agent 自身派发缺陷的补救（错在派发方，不在 architect）**。主 Agent 已回源定位成因：**第一轮派发上下文 `P2-dispatch-context-architect.md:414` 的那条 bullet 把两个不同根因的事实捆在同一个 `DEBT0012` 标签下**——原文写「**seed 数据缺陷（DEBT0012…）**：…422…且这些 entry **即使 `is_public: true`，匿名也 404**（团队限定）」。其中"匿名也 404"实为 **TPV0095 的 seed 语义变更**（另一根因），却被并入 DEBT0012 条目 → architect 把 `viewer.spec.ts` 的红灯一并归给 DEBT0012，是**忠实执行了派发指令**，非其失误。**主 Agent 已在 `debt/tech-debt.md` 的 DEBT0012 条目下就地补记该区分**（含"勿据此关账 DEBT0012"），本条即与之对齐。
+
+### 要改什么（事实更正，不是重写论证）
+
+`P2-design.md` 有 **4 处**把 `viewer.spec.ts` 的 18 failed 归给 **DEBT0012**，该归属**与已核实的事实不符**：
+
+| 行 | 现措辞 | 应改为 |
+|---|---|---|
+| `:118` | 「既有 spec 的红灯归 **DEBT0012**」 | 「既有 spec 的红灯归 **TPV0097/TPV0098（用例可信治理）**」 |
+| `:543` | 「（P0 登记的 **DEBT0012 类**）」 | 同义更正（见下方"准确表述"） |
+| `:544` | 「建议归入 **DEBT0012** 的后续清理」 | 「**归属 TPV0097/TPV0098 的用例可信治理范围**」 |
+| `:700` | `env_constraints.known_red_baseline` 中「归 **DEBT0012**」 | 同上 |
+| `:718` | §9 汇总表「建议归 **DEBT0012** 后续清理 / **待主 Agent 决定是否立项**」 | **主 Agent 已决定：不立项**，改为「归属 TPV0097/TPV0098，本任务不新立条目」 |
+
+### 准确表述（可直接采用）
+
+> `viewer.spec.ts` 18 failed 的成因是 **TPV0095（`59182590`，2026-09-03）给 seed entry 指派团队后引入的 seed 语义回归**——`markdown-test` 变为 `is_public: true` 但带 `team_id: frontend-team` → 匿名 404，而该 spec 的 `openMarkdownFile` 依赖它。该 spec 最后一次全绿为 `d4b05ee4`（TPV0088，2026-08-12），`git merge-base --is-ancestor d4b05ee4 59182590` 为真。**归属 TPV0097/TPV0098「用例可信治理」**（E2E 用例与 seed 语义脱节）。
+
+### 为什么**不**归 DEBT0012（关键区别，务必保留这层区分）
+
+| | DEBT0012 | 本项（`viewer.spec.ts`） |
+|---|---|---|
+| 根因 | `seed-debug.py` 先建 entry 后建 team → 422 → **entry 未入库**（数据**缺失**） | TPV0095 指派 team → **可见性语义变更**（数据**完好**） |
+| 重跑 `make debug-seed` 能否恢复 | **能**（team 已存在即无 422） | **不能**（`team_id` 是 seed 数据本身） |
+| 修复面 | `scripts/seed-debug.py`（时序/重试） | E2E 用例与 seed 语义的**对齐治理** |
+
+→ 挂 DEBT0012 会**污染该条目的根因与 `closure_criteria`**。**主 Agent 已在 `agate-workspace/debt/tech-debt.md` 的 DEBT0012 条目下就地补记该区分**（并写入"勿据此关账 DEBT0012"），故**本处措辞若不改，会与债务登记簿出现跨文件矛盾**——这是本次要求修订的直接理由。
+
+### 边界（不要扩大）
+
+- **只改归属措辞**。§6.3 的**实质结论完全正确、不要动**：既有 spec **不作 gate 键**、本任务 E2E 键**全部指向新建 spec**、P4/P5 **不得为让 E2E 全绿而改既有 spec**——这三条保持原样
+- **不要**顺手修 `viewer.spec.ts` 本身（明确在范围外）
+- **不要**把这写成新的阻塞项/风险条，这是**事实更正**
+- 改完重跑 `check-frontmatter.py`（exit 0）、`make lint`、`make typecheck`

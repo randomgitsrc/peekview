@@ -14,7 +14,7 @@
 | TPV0096 | e2e-fixture-selfcontained | ✅已完成 | DONE | 🟡 | DEBT0010 | 2026-09-05 | 2026-09-08 |
 | TPV0097 | e2e-sharding-ci（v2：注册表+CI+用例可信） | ⬜ 待开始 | P0✅ | 🟠 | TPV0096✅ | 2026-09-05 | 2026-09-14 |
 | TPV0098 | e2e-local-sharding | ⬜ 待开始 | P0✅ | 🟡 | TPV0097 | 2026-09-14 | 2026-09-14 |
-| TPV0099 | fullscreen-link | ⬜ 待开始 | P0✅ | 🟠 | 无 | 2026-09-16 | 2026-09-16 |
+| TPV0099 | fullscreen-link | 🔄 进行中 | P2✅ | 🟠 | 无 | 2026-09-16 | 2026-09-28 |
 | TPV0071 | docker-deploy | ⬜ 待开始 | P0 | 🟡 | T070✅ | 2026-07-24 | 2026-07-28 |
 | TPV0090 | cli-remote-xdist-fix | ✅已完成 | DONE | 🟡 | 无 | 2026-08-12 | 2026-08-13 |
 | TPV0091 | unicode-download-header-fix | ✅已完成 | DONE | 🟠 | 无 | 2026-08-12 | 2026-08-13 |
@@ -237,6 +237,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-09-28 | P2 完成 TPV0099 | 方案设计层通过（`P2-design.md` 735 行 + 双评审 + 组长汇总 `approved`，`check-gate P2` exit 2）。**方案**：3 候选选 A = `route.meta` 派生 **computed** + node 级键盘短路（锁死时整函数 `return`，不 `preventDefault`/不 `stopPropagation`）+ **复用 zen 类**；R1 JSON-accept 404 **不处理**（系 `FRONTEND_ROUTES` 白名单的普遍行为，让 `/f` 返回 HTML 属不一致扩大）/ R2 computed（实测淘汰"setup 期 ref"，组件复用下会残留 zen 且 f 键永久失效）/ R3 整函数 return（实测澄清 P1 §2.1 归因误述：真正吞掉元素级 Escape 的是 **capture + stopPropagation**，非 preventDefault）。**13 条最小验证 V1-V13 全实跑**含三处反证。**评审闭合**：design-review G-1/G-2 + eng-review BLOCKER-1/2 → rev1 定点修订（形态唯一化 + 三个禁止变体；BDD-10 认证配对改正）+ rev2 归属补丁 → 双复审 `approved`（阻塞 0）。**关键机制发现**：`make debug-test` 裸调用**只跑 1 个 spec**（`run-e2e-tests.sh:78` 缺省 `debug-server.spec.ts`）→ `P5_e2e` 必须 `E2E_SPEC=` 定向，否则 19 条 BDD 的 E2E 层**整体零覆盖**（最坏一类假绿）；**第三种不报错假绿读法**（签名改 `locked: boolean` + 可选链可同时通过 typecheck 与 test-frontend，但把锁定态固化为 setup 期快照）已被 §1.1 显式禁止、由 M9 单测承担唯一可执行拦截。**副产品**：登记 `DEBT0013`（archived/expired banner 不在 zen 隐藏集）+ 更正 `DEBT0012`（偶发 422 → **确定性**；补记 `tail -10` 截断掩盖 FAIL 行、带 `team_id` 的 entry 匿名不可达）+ 定性 `viewer.spec.ts` 18 failed 为 TPV0095 seed 语义回归（**非 DEBT0012**，归 TPV0097/0098） |
 | 2026-09-16 | 立项 TPV0099 | fullscreen-link（🟠）：全屏模式链接 `/{slug}/f`——分享场景接收者直入锁定的纯内容视图。三决策 P0 锁定：path 后缀（否决 `?f`：raw 先例/内部导航保态/免疫剪参数）、完全锁死（f/Escape 无效）、元信息条隐藏（zen 外观统一）。复用 zen 模式实现，后端零改动。roadmap #56；用户可见功能，P8 预期 bump |
 | 2026-09-14 | 范围修订 TPV0097 + 立项 TPV0098 | 债务盘点实测后（用户决策"明确是问题的入 roadmap、可合并的合并立项"）重划 E2E 基建：**TPV0097 v2** 收拢「统一入口注册表（local/GHA 共用，输出用例数+耗时）+ CI E2E job + 用例可信治理」，原「分片并行」析出为 **TPV0098**（本机分片 + 硬等待剩余治理）。依据本轮实测定量：debug-server.spec 18 failed/34 passed（登记仅 3 例）、router.ts 无 /entries 路由（DEBT0011 spec 必 404）、seed 24 条 vs DB 20 条 + team_members 1 行 + 3×422。DEBT0007/0011/0012 一并转入 0097 子目标（status→in_progress + task_id），roadmap 新增 #50-55；另修复 tech-debt.md 三处 schema 违规（DEBT0009/0010 非法 category=process、DEBT0010 closed 缺 task_id） |
 | 2026-09-08 | 完成 TPV0096 | e2e-fixture-selfcontained（🟡）：3 渲染类 E2E spec（mermaid/mermaid-check/mermaid-visual）自建 entry 化——e2e- 前缀确定性 slug + 防御性预删 + afterEach 清理队列 + 防生产护栏，干净 debug 环境 14 用例双 project 全绿可重复（DEBT0010 closed）；死选择器/goto 死路由/mermaid-visual 假绿一并修复；E2E 编写规范 4 条落盘 debug-workflow.md；新登记 DEBT0011（t022/verify-mermaid 同型缺陷延后）/DEBT0012（seed 422 预存）；bump_type none（纯测试改动，CHANGELOG [Unreleased]）；完整 agate P0-P8 + P6.5 judge 13/13；P8 审计 7 reuse_blocked → P5 五键全量重跑 5/5 绿；P2/P6 评审循环含 needs-revision 修复轮；复盘 retrospective.md 沉淀 6 项机制发现（平台执行模型/gate 口径/provenance 误伤等）|

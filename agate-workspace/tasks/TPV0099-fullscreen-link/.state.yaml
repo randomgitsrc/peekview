@@ -1,11 +1,27 @@
 task_id: TPV0099
-phase: P1
+phase: P2
 status: pending-start
 judge:
   enabled: true
 task_name: fullscreen-link
 created: 2026-09-16 12:00:00+00:00
-updated: '2026-09-16T12:00:00Z'
+updated: '2026-09-28T19:00:00Z'
+retries:
+  P1:
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
+  - round: 2
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
+  P2:
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
+retry_count: { P1: 2, P2: 1 }
 history:
 - phase: P0
   action: created
@@ -18,3 +34,26 @@ history:
   action: pending-start
   ts: '2026-09-16T12:00:00Z'
   note: P0 完成，等用户「开工」指令进 P1（P1-dispatch-context-analyst.md + AGATE_CARD 注入）
+- phase: P1
+  action: completed
+  ts: '2026-09-28T05:25:37Z'
+  note: 'P1 完成：P1-requirements.md（19 BDD，BDD-1~19 连续；risk=medium，domains=[frontend]，
+    packages=[frontend-v3, docs]，全 8 阶段不裁）+ P1-review.md approved（3 轮评审闭合：初版 16
+    BDD → review#1 needs-revision 8 必修 → rev1 19 BDD → review#2 needs-revision 1 必修 →
+    rev2 定点修订 → review#3 approved）。核心缺陷修复：BDD-3 排除集原与 BDD-2 互斥（必 FAIL）→
+    rev1 反向失效为恒真（必 PASS）→ rev2 按 A/B 两组不对称规则（A 组取祖先不含后代 / B 组取后代）
+    修复，三方独立实测三态 ①0 ②3 ③1 闭环。P0 时效性实核更正一处（meta 条隐藏自 T082 已存在 →
+    预期零 CSS 改动）。check-gate P1 exit 2；commit 72ff375f'
+- phase: P2
+  action: completed
+  ts: '2026-09-28T19:00:00Z'
+  note: 'P2 完成：P2-design.md（735 行；3 候选方案选 A = route.meta 派生 computed + node 级键盘
+    短路 + 复用 zen 类；R1 不处理 / R2 computed / R3 整函数 return；13 条最小验证 V1-V13 全实跑含
+    三处反证）+ 双评审 + 组长汇总 P2-review.md approved。评审闭合过程：review#1 → design-review
+    needs-revision（G-1/G-2）+ eng-review rejected（BLOCKER-1/2，系枚举所迫、语义=须修订再审）→
+    architect rev1 定点修订（R-1 形态唯一化含三个禁止变体 + R-2 BDD-10 认证配对）+ rev2 归属补丁
+    （viewer.spec 脱离 DEBT0012）→ 双复审均 approved（阻塞 0）。关键机制发现：make debug-test 裸调用
+    只跑 1 spec（run-e2e-tests.sh:78）→ P5_e2e 必须 E2E_SPEC 定向，否则 19 条 BDD 的 E2E 层零覆盖；
+    第三种不报错假绿读法（locked: boolean + 可选链可同时过两道 gate 但固化为 setup 快照）已被
+    §1.1 显式禁止、由 M9 单测承担拦截。check-gate P2 exit 2。评审期发现并登记 DEBT0013（banner
+    不在 zen 隐藏集）+ 更正 DEBT0012（偶发→确定性）'

@@ -4,3 +4,11 @@
 {"event":"state_transition","from":"P0","phase":"P1","prev_hash":"b1e383c3bc1fcdc22c56f9c7ca1ea30d5165e6263b06fe1b03b2bc7a280000c1","to":"P1","ts":"2026-09-28T02:09:06.007384Z"}
 {"cmd":"check-gate.py P1","event":"gate_run","exit":1,"phase":"P1","prev_hash":"8ccc2f27ec8aa740e8bfee8645a0eb83e70f8c09b42a1c7a12c2e8e5cc9dbbca","runner":"pre-commit","ts":"2026-09-28T02:09:42.897068Z"}
 {"event":"state_transition","from":"P0","phase":"P1","prev_hash":"a372a7312866b6269a10643457e6db51400bb8998b2c0a7a5aac165369d5333f","to":"P1","ts":"2026-09-28T02:09:42.897150Z"}
+{"cmd":"check-gate.py P1","event":"gate_run","exit":2,"phase":"P1","prev_hash":"5e1529b3ec0a92c9b73577931a60670d2d6465c0ba32cde2d8f517b688b5a107","runner":"pre-commit","ts":"2026-09-28T05:25:22.996162Z"}
+{"event":"state_transition","from":"P0","phase":"P1","prev_hash":"c1339eec60366d2e827b44eb5c280bd82cb021261ab7c6c9f6f28998495322ac","to":"P1","ts":"2026-09-28T05:25:22.996239Z"}
+{"event":"state_transition","from":"P1","phase":"P2","prev_hash":"18e3733d11e6f46d6790188efd6b18e8f96a0d76874543284583849d39305655","to":"P2","ts":"2026-09-28T05:25:37.535044Z"}
+{"cmd":"check-gate.py P2","event":"gate_run","exit":1,"phase":"P2","prev_hash":"828d13a4cb961e3f2b6f5597673f65d349951f496ca0250890d73c3c24c2354f","runner":"pre-commit","ts":"2026-09-28T05:43:43.459343Z"}
+{"event":"state_transition","from":"P1","phase":"P2","prev_hash":"f5946ad5fb8a16f3ef19897bb502f6c790f001a76ee9dbd514b95c3834a4f4a0","to":"P2","ts":"2026-09-28T05:43:43.459412Z"}
+{"cmd":"check-gate.py P2","event":"gate_run","exit":2,"phase":"P2","prev_hash":"0350023a5f1486c0cb489ad55a5f27638600304d454379b7ea0032e516c2b916","runner":"pre-commit","ts":"2026-09-28T10:59:57.238792Z"}
+{"event":"state_transition","from":"P1","phase":"P2","prev_hash":"aceb0222ca494dfa824f798e2238baf7b959d7d443319cfe0f9e24670db41fef","to":"P2","ts":"2026-09-28T10:59:57.240723Z"}
+{"cmd":"check-gate.py P2","event":"gate_run","exit":2,"phase":"P2","prev_hash":"b236ce28e96e3c50ec65040ebc330a9b2ea820bc23b09dbb4dc8dd014d07bb00","runner":"pre-commit","ts":"2026-09-28T11:02:40.135704Z"}

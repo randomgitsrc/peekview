@@ -1,10 +1,10 @@
-# P2-dispatch-context-architect — TPV0099
+# P2-dispatch-context-plan-eng-review — TPV0099
 
 ---
 phase: P2
 generated_by: agate-inject-card.py + 主 Agent
 task_id: TPV0099
-role: architect
+role: plan-eng-review
 ---
 
 <!-- AGATE_CARD_START -->
@@ -332,117 +332,116 @@ check-gate.py P2 $TASK_DIR
 > 完成 → 读 phase-cards/P3-tdd.md
 <!-- AGATE_CARD_END -->
 
-> ⚠️ 以下派发指引是本次任务的强制指令，不是参考信息。执行优先级：派发指引 > 客观查证信息 > 阶段卡片（参考规范）
+> ⚠️ 以下派发指引是本次任务的强制指令。**只审不写**：不修改 `P2-design.md`。
 
 ## 目标
 
-为「全屏模式链接 `/{slug}/f`」产出技术方案 `P2-design.md`：候选方案权衡 + 影响面梳理 + gate_commands 固化 + files_to_read 导航。P2 不可裁剪。
+独立评审 TPV0099 的 P2 方案设计（`P2-design.md`）的**工程维度**：数据流与状态机完整性、接口/路由契约、错误边界、测试策略（单测 vs E2E 分层）、实现就绪度（files_to_read 是否够）、gate_commands 是否可执行且自洽、架构债登记。产出 `P2-review-eng.md`。
 
-## 约束
+## 你是独立视角
 
-- **三个 P0 决策已由用户裁决锁定，不得重开**：①URL = 路径后缀 `/{slug}/f`（否决 `?f`）②完全锁死（f/Escape 均无效、无页内出口）③元信息条一并隐藏
-- **P1 已实核的重要结论（直接采信，勿重新论证）**：meta 条隐藏**早已存在**（`EntryDetailView.vue:260`，自 T082 起）→ 本任务**预期零 CSS 改动**；"zen 外观统一"不存在取舍
-- **`→ 见 P1 §4.2**：zen 隐藏集实为 **8 项 + 3 处机制**，分布在 `layout.css`（7 项，含 :208 的 `.resize-handle` 与 :649-654 的 6 项）与 `EntryDetailView.vue:260`（1 项）+ 两处 `v-show` 兜底。**若你的方案决定"不复用 zen 类而新造锁死隐藏规则"，必须覆盖全部 8 项**，否则拖拽手柄会残留
-- **不引入无关改动**：P1 §4.3 已登记三处存量问题（死选择器 `.mobile-actions`、重复 `zen-shortcut.spec.ts` 两文件、`t052:141` 恒真假绿测试）判定为"本次不处理"，**不得顺手修复**（违反 P1 范围声明）
-- 严格遵循 P1 的 **19 条 BDD**（BDD-1~19）语义，不擅自放宽/收紧判据；若确需变更须报告主 Agent（P1 基线保护）
-- **BDD-3 有特殊约束**：其排除集写成 A/B 两组**不对称**规则（A 组结构链取"自身+祖先不含后代"、B 组内容流链取"自身+后代"），并注明"两组不可互换、不可统一写成祖先/后代"。P2 设计 UI 相关实现时**不得**把该判据简化为"排除容器链"——已实测证明那样会退化成恒真判据（应 FAIL 却判 PASS）
-- 子派发能力：不启用
+**不要转述 architect 自述**——对关键声明回到源码 grep/read 实证。P1 阶段的教训：判据/方案可能"看起来对但自相矛盾或恒真"。P2 阶段的同类风险是 **gate_commands 骗过门禁**（如命令不存在、用 `&&` 拼接导致后半段从不执行、E2E 命令其实不覆盖 UI 判据）。
 
-## 需要你决策的三个开放点（P1 已明确留给你）
+## 职责范围（C8 映射：domains 含 backend → plan-eng-review）
 
-| 编号 | 开放点 | P1 记录位置 |
-|---|---|---|
-| R1 | JSON-accept 客户端访问 `/{slug}/f` 返回 **404**（走 `resolve_entry_raw("slug/f")`）——是否新增后端分支（如把两段 `*/f` 归入 `_is_frontend_route`）？**注：P0 原判"后端零改动"，故此项若选择处理即为范围扩大，须显式论证** | P1 §8 R1 |
-| R2 | 锁死状态**如何承载**：新增独立状态位 vs 复用/扩展 `zenMode`+`route.meta`？须显式区分"锁死态"与"zen 态"，避免误改全局 zen 把 f 键 zen 一起锁死 | P1 §8 R3 |
-| R3 | 锁死的 `preventDefault` **边界**：如何做到"不改变全屏视图状态"但**不吞掉**内容区内嵌组件的 Escape（`TableView.vue:227` 分页浮层等） | P1 §8 R4 / BDD-7 |
+- **数据流**：`/{slug}/f` → 路由匹配 → 锁死状态注入 → 渲染，每步的异常路径（不存在的 slug、私有 entry、share token、JSON-accept 客户端）
+- **状态机**：锁死态 vs zen 态的状态转换是否完整（进入/保持/切换文件/离开）；是否存在"误改全局 zen 把 f 键 zen 一起锁死"的路径
+- **接口契约**：`/{slug}/f` 是**公开 URL 契约**，与 `/{slug}/raw` 同族；R1（JSON-accept 404）的取舍是否论证充分；是否影响既有契约
+- **错误边界**：不存在 slug / 无权限 / 已归档 entry 下 `/{slug}/f` 的行为（P1 有 BDD-13/18/19 覆盖）
+- **测试策略**：19 条 BDD 分配到单测（vitest）/ 组件测 / E2E 的分层是否合理；`P5_e2e` 是否真能覆盖 UX 类别 BDD；伪造风险（是否存在"断言恒真"式测试）
+- **实现就绪度**：`files_to_read` 是否覆盖 implementer 所需全部上下文；方案是否清晰到无需步骤计划即可实现
+- **gate_commands 可执行性**（重点）：是否引用 Makefile target（项目铁律：**Makefile 是测试命令唯一真相源**）；是否含 `P5_e2e`（ui_affected 必填）；是否声明 `_timeout_seconds`；**是否用 `&&` 把多命令拼进同一 key**（反模式：短路会让后半段从不执行）；命令在当前环境是否存在
+- **最小验证**：`minimal_validation` 是否为实跑结果（本任务依赖浏览器行为/路由匹配/键盘事件分发 → **不得**只声明"纯代码逻辑"）
+- **架构债**：若判定存在"后续应重构/架构债"，须用标准 DEBT 条目格式（模板 `{agate_root}/assets/templates/tech-debt-template.md`，`evidence` 必填）
 
-## 上游关联
+## 本项目已实证的关键事实（可直接采信；独立复核出矛盾请报告）
 
-- **P1 产出**：`P1-requirements.md`，**19 条 BDD**（BDD-1~19 连续），0 待确认项（`[NO_NEED_CONFIRM]`）。P1 经 **3 轮独立评审闭合**（初版 16 BDD → review#1 needs-revision 8 必修 → rev1 19 BDD → review#2 needs-revision 1 必修 → rev2 定点修订 → review#3 approved）
-- **P1 关键结论**：① meta 条隐藏已存在（本任务零 CSS 改动，范围缩小）② zen 隐藏集 8 项/3 处机制（更正了 P0 的"7 项"）③ `.resize-handle` 为 P1 新发现的第 8 项 ④ `shouldHandleZenShortcut` 不改（纯函数不持 zen 状态，短路应在 `useZenMode` 调用方）⑤ 图表全屏弹层**当前无任何 Escape 监听**（t022 的 Escape 断言所依赖选择器已死），故锁死与图表的 Escape 冲突面**较窄**，真正消费方是 `TableView` 分页浮层 / `ShareDialog` / `OverflowMenu`
-- **P1 同类扫描**：逐符号命中清单见 P1 §4.1；三处存量问题见 §4.3（均"不处理 + 理由"）
-- **[P0_STALE]**：meta 条前提为假，已就地更正 + 严重性判定为「轻微，不重开 P0」（P1 §5）
-- **P1 §7 裁剪说明**：全 8 阶段保留，无裁剪 → **不声明 `跳过风险` / `coupling_checklist` / `internal_only`**；`ceremony` 缺省 standard
+**A. `/{slug}/f` 现状（主 Agent 实测）**
+- 浏览器 accept → **HTTP 200 + NotFoundView**（命中 `/:pathMatch(.*)*`）
+- `Accept: application/json` → **404**（走 `resolve_entry_raw("slug/f")`，因 `/{slug}/f` 不在 `FRONTEND_ROUTES`、`_is_frontend_route` 对非 `users/` 前缀返回 False）
+- 对照 `/{slug}/raw` → **302**
+- 现存两段路由仅 `/settings/apikeys`（静态 redirect）与 `/users/:username`
+- `serve_spa_catchall`（`backend/peekview/main.py:599`）对未知两段路径返回 index.html；`_slug_exists("slug/f")` = False → 不注入 alternate Link
+
+**B. 前端路由与状态机制**
+- `router.ts`：`/:slug`（name `detail`）注册在 `/:pathMatch(.*)*` 之前；`beforeEach` 有 auth 重定向逻辑（`/`、`/settings`、`/stars`、`/teams`）
+- `useZenMode.ts`（36 行）：`zenMode` ref + `zenAriaText` + `handleZenKeydown`，**无锁死概念**；键盘监听 `document` 级（`EntryDetailView.vue:216`）
+- `shouldHandleZenShortcut` 是纯函数、不持 zen 状态 → P1 结论：短路应在调用方 `useZenMode` 实现
+- **切文件不跳路由**：`entryDetailStore.selectFile` 是纯 store 操作（不 `router.push`）→ `/{slug}/f` 下切文件天然保态（P1 §2.3 已核）
+
+**C. Escape 多消费方**：`TableView.vue` 元素级 `@keydown`（`:227`/`:243`，在内容区内）；`ShareDialog.vue:218` / `OverflowMenu.vue:150` 为 `document` 级（全屏下入口不可达）；图表弹层**当前无 Escape 监听**
+
+**D. 测试与 CI 事实**
+- 后端 pytest ~1068+ passed（`make test-quick`）；前端 vitest `Test Files 110 passed` / `Tests 1343 passed | 4 skipped (1347)`（`make test-frontend`）；`make lint`（ruff）；`make typecheck`（vue-tsc，**CI 强制**）
+- E2E：Playwright 双 project（chromium + Mobile Chrome/Pixel5），`baseURL` 默认 `:8888`，无 webServer 自启
+- **CI 门禁**（`.github/workflows/ci.yml`）：后端 pytest + 前端 `vue-tsc --noEmit` + 前端 `npm run build` + 文档版本一致性。**ruff 不在 CI**
+- 项目铁律：`make test-frontend`（`npm run test` 是 watch 模式会挂住 agent，禁止）；E2E 必须针对 debug `:8888`（严禁指向生产 `:8080`）
+
+**E. BDD-3 判据的特殊约束**
+排除集为 A/B 两组**不对称**规则（A 组"自身+祖先不含后代"、B 组"自身+后代"），明写"两组不可互换、不可统一写成祖先/后代"。已实测：统一写法会退化为恒真。三态基线 ①0 / ②3 / ③1。若 P3/P4 把它简化，会制造假绿。
+
+**F. 环境**
+- debug `:8888`（**主 Agent 已起 + 长托底**，v0.24.1，seed 22 条 / 匿名 15 条）
+- **DSH 沙箱**：`/tmp` 与 `~/.local/share` 只读；`/tmp` 跨 bash 调用不共享；临时产物落 `{project_root}/.agate-tmp/`
+- **seed 数据坑**：`is_public: true` ≠ 匿名可达（带 `team_id` 的 `csv-employees`/`markdown-test`/`mermaid-charts` 匿名 404）；`make debug-seed` 默认 `tail -10` **截断 FAIL 行**（DEBT0012：seed 脚本先建 entry 后建 team，全新 DB 首跑 3 条 team-scoped entry 必 422 失败）
+- Playwright 用全局包 `require('/home/kity/.nvm/versions/node/v24.15.0/lib/node_modules/playwright')`
 
 ## 输入文件
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md`（**评审对象**）
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P1-requirements.md`（19 条 BDD + §7 裁剪 + §8 风险）
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P2-dispatch-context-architect.md`（含 R1/R2/R3 开放点与 gate_commands 硬要求）
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P0-brief.md`
+- `Makefile`（**核对 gate_commands 引用的 target 是否真实存在**）
+- `backend/peekview/main.py`（`FRONTEND_ROUTES` / `_is_frontend_route` / `serve_spa_catchall`）、`backend/peekview/api/files.py`（`resolve_entry_raw`）
+- `frontend-v3/src/router.ts`、`frontend-v3/src/composables/useZenMode.ts`、`frontend-v3/src/views/EntryDetailView.vue`、`frontend-v3/playwright.config.ts`
+- `/home/kity/.agate/v0.76.0/agate/assets/review-roles/plan-eng-review.md`（角色定义）
+- `AGENTS.md`、`agate-workspace/agents/project.md`
 
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P1-requirements.md`（**主要输入**：16 BDD + 影响面 + R1-R6 风险登记）
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P0-brief.md`（环境约束、已知风险、**文末「P0 时效性自检」与「环境自检」节**）
-- `frontend-v3/src/router.ts`（路由表；`:slug` 在 catch-all 前；现存两段路由仅 `/settings/apikeys` 与 `/users/:username`）
-- `frontend-v3/src/composables/useZenMode.ts`（36 行全文，锁死短路落点）
-- `frontend-v3/src/utils/zen-shortcut.ts`（`shouldHandleZenShortcut` / `redirectFocusIfHidden`）
-- `frontend-v3/src/composables/entryDetailKeys.ts`（`ZenModeKey`/`IsMobileKey`/`ZenAriaTextKey`）
-- `frontend-v3/src/views/EntryDetailView.vue`（zen 装配 + scoped 第 7 项隐藏）
-- `frontend-v3/src/styles/layout.css`（:208 第 8 项；:649-654 六项；:624-626 桌面 meta 条隐藏）
-- `frontend-v3/src/components/TableView.vue` 第 220-250 行（Escape 消费方，BDD-7 对象）
-- `backend/peekview/main.py` 第 25 行 / 第 52-62 行 / 第 590-635 行，以及 `backend/peekview/api/files.py` 的 `resolve_entry_raw`（R1 决策用）
-- `frontend-v3/playwright.config.ts` + `frontend-v3/e2e/` 任一近期 spec（E2E 双 project 与编写规范）
-- `AGENTS.md`（项目约定）、`agate-workspace/agents/project.md`（gate 命令与测试基线）
+## 产出
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P2-review-eng.md`
+- frontmatter 用 `FILE=<产出路径> python3 /home/kity/.agate/v0.76.0/agate/scripts/agate-md-field-set.py --list` 查看后逐个写入：`phase: P2` / `task_id: TPV0099` / `parent: P2-design.md` / `trace_id: TPV0099-P2-20260928` / `agent: plan-eng-review` / `status: draft`（评审后改终态）
+- 输出结构按角色文件：架构问题（阻塞级）/ 架构问题（非阻塞）/ 结论
 
-## P2 最小验证（强制）
-
-方案设计前先用最小验证确认关键假设（curl / 20 行脚本 / 10 行 HTML）。方案依赖浏览器行为与安全模型（路由匹配、DOM 可见性、键盘事件分发）→ **必须做最小验证**，不得只声明"纯代码逻辑"。
-
-建议验证点（结果写入 P2-design.md 的 `minimal_validation` 字段）：
-- `/yaml-docker-compose/f` 当前的路由归属（命中 NotFoundView 而非 `:slug`）——**主 Agent 已实测**：`path=/yaml-docker-compose/f`、`.entry-detail` 不存在、`Page not found` 文案存在
-- `document` 级 keydown 与元素级 Escape 的**分发顺序**（验证 BDD-7 可行：锁死不吞内嵌浮层 Escape 的实现路径）
-- `route.meta` 在参数化路由下的可用性（`/:slug/f` 的 meta 读取）
-- 若涉及 R1 的后端分支：`_prefers_json` 判定链的实际行为（**主 Agent 已实测**：浏览器 accept → 200 + NotFoundView；`Accept: application/json` → 404 `{"error":{"code":"NOT_FOUND","message":"Entry not found: {slug}/f"}}`；对照 `/{slug}/raw` → 302）
-
-## 产出与格式
-
-- 产出：`agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md`
-- **必含 frontmatter 机器字段**（用 `agate-md-field-set` 写，不手写）：`candidate_count`（≥2；若声明 `design_trivial`/`follows_existing_pattern` 可 1，**须附理由**）、`packages`、`domains`、`ui_affected`
-- **P2 gate 会校验**：`ui_affected: true` → 正文必须含 `## UI 设计` 节，节内含**渲染形态声明**（复用 P1 `ui_render_shape: layout` 的规范值，gate 按规范化值比对 P1-P2 一致性）+ **维度选择**（复用 P1 `ui_ux_dimensions`：布局结构/交互行为/视觉呈现）+ **按形态 checklist**（常规布局型 = 布局/交互/视觉三类）。缺任一 → exit 1
-- 正文必含**影响面梳理**（Modify / Not Modify / Risk 三部分，改动落点须到"哪个文件的哪个小节/函数"）；**Not Modify 栏尤其重要**（P1 §4.3 三处存量问题须列在此，避免 P4"顺手修复"）
-- 正文必含 `gate_commands`（**引用 Makefile target，不手写裸命令**——Makefile 是测试命令的唯一真相源）+ `files_to_read` + `env_constraints` + `minimal_validation`
-- **`gate_commands` 硬要求**：`ui_affected: true` → **必须含 `P5_e2e`**（本次 19 条 BDD 大量落在 E2E 层）；建议同时声明 `P5_e2e_timeout_seconds: 300`（E2E 档）与 `P5_timeout_seconds: 120`（单测档）。**禁止把多个命令用 `&&` 拼进同一 key**（短路会让后半段从不执行）
-- 写完跑 `python3 /home/kity/.agate/v0.76.0/agate/scripts/check-frontmatter.py <产出路径>`，非 0 先修正再返回
-- 分阶段落盘：每读完一个文件/完成一个关键步骤，立即追加写 `P2-progress.md`；每条 bash 命令执行前也追加一行
+## 约束
+- **只审不写**：不修改 `P2-design.md`
+- status 终态必须与返回摘要一致
+- 正文避免行首 `- PASS` / `- FAIL` 预判格式
+- 子派发能力：不启用
+- **不要**直接写入 `{AGATE_WORKSPACE}/debt/tech-debt.md`（如需登记债，在评审里给出标准格式条目，主 Agent 统一登记）
 
 ## 命令超时（强制）
-
-任何 bash 命令设 `timeout 180s <cmd>`（E2E/构建类按 300s/600s×1.5）。超时或非预期失败 → ① 停止，不换命令不深挖；② progress 写一行；③ 返回主 Agent 决定。
+任何 bash 命令设 `timeout 180s <cmd>`。超时/非预期失败 → 停止，不换命令不深挖，返回主 Agent。
 
 ## 环境隔离（强制）
-
-只用 debug `:8888`（**主 Agent 已起，挂了长托底 job**）。**严禁**触碰生产 `:8080` 与 `~/.peekview/`；**严禁** `uvicorn` 直接启动、**严禁** `make debug`/`npm run dev`（vite :5173 会代理到生产）。状态标记二值格式：`[PROD_TOUCHED] {描述}` / `[PROD_NOT_TOUCHED]`。
-
-## 环境约束（P0-brief 已详载，此处重申关键项）
-
-- **DSH 沙箱**：`/tmp` 与 `~/.local/share` 只读；`/tmp` **跨 bash 调用不共享文件**；后台服务须挂持续 running 的 job 托底。临时产物落 `{project_root}/.agate-tmp/`
-- **⚠️ 两条不同根因的 seed 事实（主 Agent 已实核；**勿合并归因**——第一版此处曾把二者捆在 `DEBT0012` 一个标签下，导致 `viewer.spec.ts` 红灯被误归 DEBT0012，已更正）**：
-  1. **【DEBT0012】seed 时序缺陷 → entry 未入库（数据缺失）**：`seed-debug.py` 先建 entry（L173）后建 team（L264），而 `_resolve_team_for_user` 对不存在 team 抛 422 → **全新 DB 首次 seed 时 3 条带 `team_id` 的 entry（`csv-employees`/`markdown-test`/`mermaid-charts`）必定失败**，**重跑即恢复**。`make debug-seed` 默认 `tail -10` **会截断掉 FAIL 行**（用 Makefile 看不到失败）——需完整输出请直接 `python3 scripts/seed-debug.py http://127.0.0.1:8888`。**归属：TPV0097/TPV0098**
-  2. **【TPV0095 引入，非 DEBT0012】team-scoped entry 匿名不可达（数据完好、可见性语义变了）**：这些 entry **即使 `is_public: true`，匿名也 404**（团队限定；owner/admin 可读）→ 成因是 `59182590`（TPV0095，2026-09-03）给 seed entry 指派团队，**`team_id` 是 seed 数据本身，重跑 `make debug-seed` 不能恢复**。`frontend-v3/e2e/viewer.spec.ts` 的 **18 failed** 即由此而来（其 `openMarkdownFile` 依赖 `markdown-test`）。**归属：TPV0097/TPV0098「用例可信治理」**
-  - **判据（区分二者）**：重跑 `make debug-seed` 后**能否恢复**。能 → 第 1 条；不能 → 第 2 条。二者**根因与修复面均不同，禁止合并归因**
-  - **设计 E2E 时不要依赖 team-scoped entry 的匿名可达性**（P1 已在 rev1 把 BDD-7/BDD-15 涉及的两条 Given 改掉：BDD-7 改用匿名可达的 `tsv-server-metrics`、BDD-15 用 `mermaid-charts` 并写明需 alice 登录前提）
-- **BDD 引用的 seed 与可达性前提（P1 已逐条实测，P2 直接用）**：`dsh-architecture`（BDD-1/3/9 相关，匿名 200）、`tsv-server-metrics`（BDD-7，匿名 200，表格 60 行）、`unicode-filenames`（BDD-8，匿名 200，zen 下内容区有可点 navigate-file 链接）、`multi-format-demo`（匿名 200 但四文件互相 0 个 md 链接 → 不可用于"切换文件"）、`mermaid-charts`（BDD-15，**需 alice 登录**，有 fullscreenBtn、不含 svg）、`svg-icons`（BDD-17，匿名 200，独立 SVG 文件走 ImageViewer、**无 fullscreen 按钮**）、`markdown-test`（BDD-9，**需 alice 登录** + `?firstFileId=43`，rich-markdown.md 有 10 条正文锚点）
-- seed 计数三口径（都对，勿混淆）：seed-data 目录 24 / alice 可见 22 / **匿名可见 15**
-
-## 门槛（什么算完成）
-
-- `P2-design.md` 存在且非空；`candidate_count`/`packages`/`domains`/`ui_affected` 齐备且与正文一致
-- 候选方案 ≥2（或声明简化 + 理由）+ 权衡 + 选择理由
-- 影响面梳理三部分齐备（Modify 落点到文件+小节/函数；Not Modify 含 P1 §4.3 三处；Risk 每条配缓解）
-- `ui_affected: true` → `## UI 设计` 节含形态声明 + 维度选择 + 按形态 checklist
-- `gate_commands` 含 `P5_e2e`（ui_affected），引用 Makefile target，无 `&&` 拼接；含 `_timeout_seconds` 声明
-- `minimal_validation` 有实跑结果（非"纯代码逻辑"空声明）
-- `check-frontmatter.py` 退出码 0
-- R1/R2/R3 三个开放点均有明确取舍结论
+只用 debug `:8888`。**严禁**触碰生产 `:8080` 与 `~/.peekview/`。状态标记二值格式：`[PROD_TOUCHED] {描述}` / `[PROD_NOT_TOUCHED]`。
 
 ## 返回给我（只两行）
-
 1. 产出文件路径
-2. 一句话摘要（≤30 字，含候选方案数 + 关键决策）
+2. 一句话摘要（≤30 字，含终态 status + 阻塞级问题数）
 
 **不要返回文件全文。**
 
-## 客观查证信息（objective_info）
-
-- 环境：debug backend `http://127.0.0.1:8888`（主 Agent 已起 + 长托底），version 0.24.1；`VERSIONS.json` peekview=0.24.1
-- 主 Agent 实测（可直接引用）：`/yaml-docker-compose/f` → `path` 保持 `/yaml-docker-compose/f`、`.entry-detail` 不存在、页面含 `Page not found`（命中的是 `/:pathMatch(.*)*`）；`Accept: application/json` 时 → 404；`/{slug}/raw` → 302
-- 前端测试基线：`Test Files 110 passed` / `Tests 1343 passed | 4 skipped (1347)`
-- E2E：`playwright.config.ts` 双 project（chromium + Mobile Chrome/Pixel5），`baseURL` 默认 `:8888`，无 webServer 自启
-- 关键选择器：`.entry-detail`（zen 类挂载点）、`[data-testid="content-area"]`、`.meta-tags-bar`（`v-if="isMobile"`）、`[data-testid="mobile-bottom-bar"]`、`.diagram-modal`
-
 > 本文件不含通过/失败预判。
+
+---
+
+## 附录 A（主 Agent 于派发前追加，2026-09-28）：`P5_e2e` 的**专项核查项**——这是本轮最可能藏假绿的地方
+
+**背景（主 Agent 独立核查 runner 源码所得，非推测）**：`scripts/run-e2e-tests.sh:78` 是
+
+```bash
+spec="${E2E_SPEC:-e2e/debug-server.spec.ts}"
+```
+
+→ **`make debug-test` 裸调用只跑 `e2e/debug-server.spec.ts` 一条**（与 BDD 无关的健康检查），**不跑全量 E2E**。
+
+**因此本轮必须对本项做实证判定（这是你工程维度的核心职责之一）**：
+
+1. `P2-design.md` 的 `gate_commands.P5_e2e`（或多键 `P5_e2e_a/b/...`）**是否用 `E2E_SPEC=<spec> make debug-test` 定向到本任务的 spec 文件**？
+   - 若写成裸 `"make debug-test"` → **阻塞级**：P5 会绿灯但 19 条 BDD 的 E2E 层覆盖为空（最坏一类假绿）
+   - 正确形态先例（可直接比对）：`TPV0093-star-lifecycle/P2-design.md:384`、`TPV0095-team-visibility/P2-design.md:380-381`、`TPV0096-e2e-fixture-selfcontained/P2-design.md:219-224`
+2. **超时档位是否 ≥ 900s**？外层 `_timeout_seconds` 必须 > runner 内层 `E2E_TIMEOUT`（**默认 600s**），否则外层先超时、拿不到 runner 的结构化超时诊断。先例 TPV0096 声明 **900s**。注意：阶段卡片里的"建议 300s"是**通用建议档**，本仓库内层实为 600s → 300s 在此**不适用**
+3. **`P5_e2e` 键与 spec 的映射是否显式列出**（每个 E2E 键 → 哪个 spec 文件 → 覆盖哪些 BDD 编号）？这是 P2 固化的验证契约，P3/P5 据此执行，事后改动即违规。若只写"E2E 覆盖 BDD-1~19"而未落到具体 spec，请判为需补充
+4. 其余既有核查项不变：是否引用 Makefile target、是否 `&&` 拼接多命令（反模式）、命令是否存在于当前环境
+
+**独立性要求**：不要采信 `P2-design.md` 的自述。请**自己**打开 `scripts/run-e2e-tests.sh` 与上述三个先例的 `P2-design.md` 核对，并在 `P2-review-eng.md` 里给出你实测/实读的锚点（文件:行号）。

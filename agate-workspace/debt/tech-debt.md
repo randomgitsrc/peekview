@@ -289,5 +289,43 @@ closure_criteria:
   - 连续 10 次 make debug-seed 零 422，seed 后 DB 全表 24 条稳定且 team_members ≥3
 source: retrospective
 created_at: 2026-09-07
-updated_at: 2026-09-14
+updated_at: 2026-09-28
 ```
+
+> **主 Agent 更正与补记（2026-09-28，TPV0099 P2 期实核）**——原始定性"**偶发** 422"实测**不成立**，应改为**确定性缺陷**；并补记四条新事实：
+>
+> 1. **不是偶发，是确定性时序缺陷**：`seed-debug.py` 先建 entry（L173）后建 team（L264），而 `entry_service._resolve_team_for_user` 对**不存在**的 team 抛 422 → **全新 DB 首次 seed 时，3 条带 `team_id` 的 entry（`csv-employees`/`markdown-test`/`mermaid-charts`）必定失败**；**重跑一次即恢复**（team 已存在）。已在**全新实例**（:8889）**双跑复现**：首跑 3×422 + `total=19` → 重跑无错 + `total=22`；TPV0099 期 debug 重启后**再次双跑复现**同一模式。
+> 2. **`make debug-seed` 默认 `tail -10` 截断掉了 FAIL 行** → **用 Makefile 跑看不到失败**。这是该缺陷长期被当作"偶发/随机"的直接原因（失败被输出截断掩盖）。需完整输出请直接 `python3 scripts/seed-debug.py http://127.0.0.1:8888`。
+> 3. **带 `team_id` 的 entry 匿名不可达（即使 `is_public: true`）**：`markdown-test`/`mermaid-charts`/`csv-employees` 均 `is_public: true` 但带 `team_id` → **匿名 404**（owner/admin 可读）。此**不是**本条 seed 时序问题，而是 TPV0095（`59182590`）给 seed entry 指派团队后引入的**可见性语义变更**。
+> 4. **由上条衍生、但根因不同（不并入本条）**：`frontend-v3/e2e/viewer.spec.ts` 因此**预存红灯 18 failed / 20 passed**（其 `openMarkdownFile` 依赖 `markdown-test`）。证据链：`git log -S'"team_id": "frontend-team"' -- scripts/seed-data/markdown-test/meta.json` 唯一命中 `59182590`（TPV0095，2026-09-03）；`viewer.spec.ts` 最后一次全绿 = `d4b05ee4`（TPV0088，2026-08-12）；`git merge-base --is-ancestor d4b05ee4 59182590` = 真 → **TPV0095 是回归成因**。归属 **TPV0097/TPV0098「用例可信治理」**（E2E 用例与 seed 语义脱节）——本条是"入库失败、重跑可恢复"，前者是"数据完好但可见性变了、重跑不恢复"，**根因与修复面均不同，勿混同**。此处仅作指引，**勿据此关账 DEBT0012**。
+>
+> **对 `closure_criteria` 的影响**：第 1 条（连续 10 次零 422）**仍有效**；但"零 422"须在**全新 DB** 上验证才有意义（重跑本就无 422）。
+
+## DEBT0013
+
+```yaml
+id: DEBT0013
+category: technical
+title: zen 隐藏集不含 archived/expired banner，使"全屏视图只剩纯内容"的产品承诺在归档/过期 entry 上不成立
+status: open
+priority: low
+task_id: TPV0099-fullscreen-link
+evidence:
+  - path: agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md
+    note: §1.3 R-04 与 §4 V7 结果 C——实测 archived entry（legacy-deploy，需 alice 登录，匿名 404）在 zen 态下 .archived-banner 仍为 1280×49、top=0 的满宽横条，且不在 BDD-3 的 A/B 排除集内、不在 zen 隐藏集内；该范围内可聚焦控件实测为 ["Reactivate"]
+  - path: frontend-v3/src/styles/layout.css
+    note: :208 与 :649-654 的 zen 隐藏规则（8 项规则 + 2 处 v-show 兜底）均不含 .archived-banner / .expired-warning-banner；二者唯一定义处为 frontend-v3/src/components/EntryDetailBanners.vue
+  - path: agate-workspace/tasks/TPV0099-fullscreen-link/P1-requirements.md
+    note: §4.2 补登行（:359）已把二者登入 zen 隐藏集清单，但同文件 :403（§5）又确认 legacy-deploy 确在 debug DB 中且 status=archived——P1 内部自相矛盾，P2 已以 [P1_CORRIGENDUM] 就地更正（未改 P1 文件）
+impact: 经 /{slug}/f 分享的 archived/expired entry 顶部残留 49px 满宽横条且含可聚焦控件，与全屏视图"只剩纯内容"目标冲突；TPV0099 以"验证侧钉定非归档 seed（BDD-1/2/3 用 dsh-architecture）"规避，故不影响本次验收，但产品缺口留存——未来任何依赖"zen 态无 chrome"的断言（含 BDD-3 的 A/B 排除集与"内容区外可聚焦元素为 0"）都会再次踩到
+recommendation: 在 EntryDetailView.vue 的 scoped zen 块为 .archived-banner / .expired-warning-banner 补 display:none（约 +2 行），并同步评估锁死态是否需保留 Reactivate 入口（P0 决策②"完全锁死"与可操作性存在张力）；改动面小但需独立验收（涉及 BDD-3 排除集与可聚焦元素清单，可参考 TPV0099 的 BDD-3 三态负向对照方法防恒真）
+closure_criteria:
+  - zen 态下 archived/expired entry 的 .archived-banner / .expired-warning-banner 均 display:none 且 bounding box 高度为 0
+  - BDD-3 的 A/B 排除集判据与"内容区外可聚焦元素为 0"断言在归档 entry 上同样成立
+  - 补入至少 1 条 E2E 断言覆盖 archived entry 的 zen 态无满宽横条（含三态负向对照，防恒真）
+source: review
+created_at: 2026-09-28
+```
+
+> **编号说明（主 Agent，2026-09-28）**：eng-review 建议用 `DEBT0014`，理由是"避开 `DEBT0013`"——但**本项目登记簿**实测最高为 `DEBT0012`、`DEBT0013`/`DEBT0014` 均 0 命中；`DEBT0013` 被占用的说法来自 **agate 协议层**（`~/.agate/v0.76.0/agate/rules/phases.yaml` 的 P8 时序注意），属**另一套登记簿**。主 Agent 采**本项目登记簿的连续性**（自增到 `DEBT0013`），理由：登记簿 id 的唯一边界是**同一文件内唯一**（`agate-debt-check.py` 的校验口径），为跨登记簿错开编号会让本项目编号出现**无解释的空洞**，反而降低可读性。若并置阅读时确有歧义，在两处各加一行来源标注即可。
+

@@ -1,10 +1,11 @@
-# P2-dispatch-context-architect — TPV0099
+# P2-dispatch-context-review-lead-rev1 — TPV0099（**汇总复审轮**）
 
 ---
 phase: P2
 generated_by: agate-inject-card.py + 主 Agent
 task_id: TPV0099
-role: architect
+role: review-lead
+retry: 1
 ---
 
 <!-- AGATE_CARD_START -->
@@ -332,117 +333,143 @@ check-gate.py P2 $TASK_DIR
 > 完成 → 读 phase-cards/P3-tdd.md
 <!-- AGATE_CARD_END -->
 
-> ⚠️ 以下派发指引是本次任务的强制指令，不是参考信息。执行优先级：派发指引 > 客观查证信息 > 阶段卡片（参考规范）
+> 本文件是 **P2 汇总复审轮**的派发指令。你上一轮作为组长汇总出 `P2-review.md`，判 **`needs-revision`**（阻塞 2 项）；architect 已按你的 §5 修订指令完成**定点修订 + 一轮归属补丁**；两份职能评审已**复审**。现请你**重新汇总**，给出新的 `P2-review.md` 终态。
+>
+> 本轮范围：**验证两份复审的结论并给出统一终态**。不要重新评审方案本身。
 
-## 目标
+---
 
-为「全屏模式链接 `/{slug}/f`」产出技术方案 `P2-design.md`：候选方案权衡 + 影响面梳理 + gate_commands 固化 + files_to_read 导航。P2 不可裁剪。
+## 一、你的输入（两份复审，已产出）
 
-## 约束
+| 评审 | 文件 | 上轮终态 |
+|---|---|---|
+| plan-design-review | `P2-review-design.md` | `needs-revision`（阻塞 2） |
+| plan-eng-review | `P2-review-eng.md` | `rejected`（阻塞 2；系枚举所迫，语义 = 须修订再审） |
 
-- **三个 P0 决策已由用户裁决锁定，不得重开**：①URL = 路径后缀 `/{slug}/f`（否决 `?f`）②完全锁死（f/Escape 均无效、无页内出口）③元信息条一并隐藏
-- **P1 已实核的重要结论（直接采信，勿重新论证）**：meta 条隐藏**早已存在**（`EntryDetailView.vue:260`，自 T082 起）→ 本任务**预期零 CSS 改动**；"zen 外观统一"不存在取舍
-- **`→ 见 P1 §4.2**：zen 隐藏集实为 **8 项 + 3 处机制**，分布在 `layout.css`（7 项，含 :208 的 `.resize-handle` 与 :649-654 的 6 项）与 `EntryDetailView.vue:260`（1 项）+ 两处 `v-show` 兜底。**若你的方案决定"不复用 zen 类而新造锁死隐藏规则"，必须覆盖全部 8 项**，否则拖拽手柄会残留
-- **不引入无关改动**：P1 §4.3 已登记三处存量问题（死选择器 `.mobile-actions`、重复 `zen-shortcut.spec.ts` 两文件、`t052:141` 恒真假绿测试）判定为"本次不处理"，**不得顺手修复**（违反 P1 范围声明）
-- 严格遵循 P1 的 **19 条 BDD**（BDD-1~19）语义，不擅自放宽/收紧判据；若确需变更须报告主 Agent（P1 基线保护）
-- **BDD-3 有特殊约束**：其排除集写成 A/B 两组**不对称**规则（A 组结构链取"自身+祖先不含后代"、B 组内容流链取"自身+后代"），并注明"两组不可互换、不可统一写成祖先/后代"。P2 设计 UI 相关实现时**不得**把该判据简化为"排除容器链"——已实测证明那样会退化成恒真判据（应 FAIL 却判 PASS）
+**请读全两份复审**，确认：① 你上轮 §5.1（R-1）/ §5.2（R-2）的每一条修订指令是否被**如实落实** ② 两份复审是否都判定闭环 ③ 有无冲突。
+
+---
+
+## 二、本轮要验证的 3 个闭环点（主 Agent 已复核，请独立确认）
+
+### 闭环点 1：锁死态接口形态**唯一化**（你上轮的 R-1）
+
+**关键**：不只"两个报错消失"，而是**形态唯一**。你上轮发现的**第三种不报错的假绿读法**（签名改 `locked: boolean` + 可选链可同时过 `make typecheck` 与 `make test-frontend`，但把锁定态固化成 setup 期快照、组件复用下状态残留）**必须已被显式禁止**。
+
+主 Agent 已复核的落点（请独立确认）：
+- `:46` M2①/②/③、`:47` M3、`:138` 草图注释（已改「最终规格，P4 照此实现」——**根因修复**）、`:136` 风险①前提、`:53` M9 补「随 route meta 翻转」单测
+- **新增 `:60-77`**「锁死态接口最终规格」四面板表 + **三个禁止变体**（第三项即你发现的假绿读法，并点明 M9 新单测是其**唯一可执行拦截**）
+- `:69` `route.meta` 访问**二选一已显式定案取可选链**（不留"待决定"），并说明该分支下两处 mock 无需改动
+
+### 闭环点 2：BDD-10 认证配对已改正（你上轮的 R-2）
+
+应为「alice 登录建私有 → 登录建 share → 匿名带 token 读 → 登录删除」，清理判据 = **alice 复查 `raw` = 404**，且含**区分力判据**（真实 token 可见 / 无 token 与伪 token 均不可见，三者须互异）。`files_to_read` 应补 share 范本两条。
+
+### 闭环点 3（本轮新增，跨文件一致性）：`viewer.spec.ts` 归属措辞已更正
+
+- 现已改为「**TPV0095 引入的 seed 语义回归，归属 TPV0097/TPV0098「用例可信治理」**」
+- **判据**：`grep -n DEBT0012 <P2-design.md>` 命中**全部**为"明确说明**不归** DEBT0012"的对照性表述，**不得**有一处归给 DEBT0012
+- 应同时确认 **§6.3 三条实质结论一字未动**（既有 spec 不作 gate 键 / E2E 键全指新建 spec / P4/P5 不得为让 E2E 全绿改既有 spec）
+- **背景（不必重新论证，若你认为有反例请给反证）**：主 Agent 已裁决该问题**不新立债务条目、不归 DEBT0012**；根因是**第一轮派发上下文**把"seed 时序 422（DEBT0012）"与"team-scoped 匿名 404（TPV0095 语义变更）"**捆在同一标签下**，architect 是忠实执行指令。
+
+---
+
+## 三、你的汇总职责（与上一轮相同）
+
+1. 读全两份复审
+2. **冲突消解**（若两份复审结论冲突，明确判定谁对 + 理由，**不要和稀泥**）
+3. **去重**
+4. **定级**（阻塞级 / 非阻塞）
+5. **判定终态**：
+   - 任一复审有**阻塞级** → 不可给 `approved`
+   - 两份复审均闭环且无阻塞级 → `approved`
+6. 若仍须修订：给出逐条可执行的修订指令
+
+---
+
+## 四、若本轮闭环 → `approved` 的额外要求（**重要**）
+
+**两份职能评审文件不允许 `needs-revision`**（`agate-md-field-set.py` 的 `STATUS_ENUM_BY_BASENAME` **按文件名**映射，仅 `P2-review.md` 允许该值）——故复审若判"须修订"只能写 `rejected` 并注明语义。你已经历过该摩擦，本轮 `P2-review.md` **允许** `needs-revision`，**请按真实语义取值**（不是照抄职能评审的字面）。
+
+**`agent` 字段**：必须写 **`review-lead`**（组长角色名），**不是** `plan-eng-review`/`plan-design-review`。
+- ⚠️ **已知工具摩擦（你上轮已实测）**：`agate-md-field-set.py` 在写非 draft 的 `status` 时会校验 `agent` 是否 ∈ `assets/review-roles/*.md` **文件名集合**，而该目录**只有 `review.md`、无 `review-lead.md`** → `agent: review-lead` **无法经 setter 写 status**。
+- **处置（沿用你上轮的有效做法）**：**保留 `agent: review-lead`**，改用 **Write 落盘**写 `status`，然后用 `check-frontmatter.py`（应为 exit 0）+ **真实 `check-gate.py P2`** 双重验证该形态被 gate 接受。
+- **主 Agent 已复核并采纳**：该摩擦是**协议层两个工具之间的口径不一致**（setter 的 UX 引导校验 ≈ `role-system.md` 第二层角色表，而组长是**汇总角色、不在该表内**），**不是本任务缺陷**。先例：`TPV0093/P2-review.md` 即用 `agent: review-lead`。
+
+---
+
+## 五、约束
+
+- **只审不写**：不修改 `P2-design.md`，也不改两份职能评审文件
+- **不要**写 `agate-workspace/debt/tech-debt.md`（主 Agent 已登记 `DEBT0013` 并更正 DEBT0012，**勿重复登记**）
+- `status:` 终态必须与返回摘要一致（**主 Agent 只读 Header 判定**）
+- 正文避免行首 `- PASS` / `- FAIL` 格式（触发 provenance 审计拦截）
 - 子派发能力：不启用
 
-## 需要你决策的三个开放点（P1 已明确留给你）
+---
 
-| 编号 | 开放点 | P1 记录位置 |
-|---|---|---|
-| R1 | JSON-accept 客户端访问 `/{slug}/f` 返回 **404**（走 `resolve_entry_raw("slug/f")`）——是否新增后端分支（如把两段 `*/f` 归入 `_is_frontend_route`）？**注：P0 原判"后端零改动"，故此项若选择处理即为范围扩大，须显式论证** | P1 §8 R1 |
-| R2 | 锁死状态**如何承载**：新增独立状态位 vs 复用/扩展 `zenMode`+`route.meta`？须显式区分"锁死态"与"zen 态"，避免误改全局 zen 把 f 键 zen 一起锁死 | P1 §8 R3 |
-| R3 | 锁死的 `preventDefault` **边界**：如何做到"不改变全屏视图状态"但**不吞掉**内容区内嵌组件的 Escape（`TableView.vue:227` 分页浮层等） | P1 §8 R4 / BDD-7 |
+## 六、环境与纪律
 
-## 上游关联
+- debug `:8888` 已运行（开工前先探 `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8888/health`）
+- **严禁**触碰生产 `:8080` 与 `~/.peekview/`；**严禁** `uvicorn`/`make debug`/`npm run dev`；返回标注 `[PROD_NOT_TOUCHED]`
+- 临时产物落 `/home/kity/oclab/peekview/.agate-tmp/`；**任何 bash 命令设 `timeout 180s <cmd>`**
+- **探针文件严禁放 `frontend-v3/src/`**（本任务已两次出现探针残留抬高基线）；用完即删并复查 `git status frontend-v3/` 为空
+- 前端基线：`110 files / 1343 passed | 4 skipped (1347)`（`DiagramBlock.spec.ts` 有一条**已知 flaky**）
+- **工具调用提示**：`agate-read-gate-commands.py` 必须用 `GATE_FILE=<绝对路径>` 环境变量传参，位置参数会被忽略并 KeyError
+- **方法论提醒**：本任务已出现三次"用错误方式验证"（判据恒真/恒假、importlib 探针因缺 `sys.path` 落到**降级 stub** 产出与真实 gate **相反**的结论、根因标签张冠李戴）。**验证工具与验证结论本身都要被验证**——给"某 gate 检查不过"的结论时，请用 `check-gate.py` 的**真实 CLI 入口**，附可复现命令
 
-- **P1 产出**：`P1-requirements.md`，**19 条 BDD**（BDD-1~19 连续），0 待确认项（`[NO_NEED_CONFIRM]`）。P1 经 **3 轮独立评审闭合**（初版 16 BDD → review#1 needs-revision 8 必修 → rev1 19 BDD → review#2 needs-revision 1 必修 → rev2 定点修订 → review#3 approved）
-- **P1 关键结论**：① meta 条隐藏已存在（本任务零 CSS 改动，范围缩小）② zen 隐藏集 8 项/3 处机制（更正了 P0 的"7 项"）③ `.resize-handle` 为 P1 新发现的第 8 项 ④ `shouldHandleZenShortcut` 不改（纯函数不持 zen 状态，短路应在 `useZenMode` 调用方）⑤ 图表全屏弹层**当前无任何 Escape 监听**（t022 的 Escape 断言所依赖选择器已死），故锁死与图表的 Escape 冲突面**较窄**，真正消费方是 `TableView` 分页浮层 / `ShareDialog` / `OverflowMenu`
-- **P1 同类扫描**：逐符号命中清单见 P1 §4.1；三处存量问题见 §4.3（均"不处理 + 理由"）
-- **[P0_STALE]**：meta 条前提为假，已就地更正 + 严重性判定为「轻微，不重开 P0」（P1 §5）
-- **P1 §7 裁剪说明**：全 8 阶段保留，无裁剪 → **不声明 `跳过风险` / `coupling_checklist` / `internal_only`**；`ceremony` 缺省 standard
+## 七、产出
 
-## 输入文件
+- `agate-workspace/tasks/TPV0099-fullscreen-link/P2-review.md`（**就地更新**为统一门槛文件）
+- frontmatter：`phase: P2` / `task_id: TPV0099` / `parent: P2-design.md` / `trace_id: TPV0099-P2-20260928` / `agent: review-lead` / `status: <终态>`
+- 正文须含：① 两份复审的来源与各自结论 ② 去重后问题清单 ③ 冲突消解结论（若有）④ 阻塞/非阻塞定级 ⑤ 若仍须修订：逐条修订指令 ⑥ 19 条 BDD 覆盖性确认 ⑦ **三个闭环点的验证结论**
 
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P1-requirements.md`（**主要输入**：16 BDD + 影响面 + R1-R6 风险登记）
-- `agate-workspace/tasks/TPV0099-fullscreen-link/P0-brief.md`（环境约束、已知风险、**文末「P0 时效性自检」与「环境自检」节**）
-- `frontend-v3/src/router.ts`（路由表；`:slug` 在 catch-all 前；现存两段路由仅 `/settings/apikeys` 与 `/users/:username`）
-- `frontend-v3/src/composables/useZenMode.ts`（36 行全文，锁死短路落点）
-- `frontend-v3/src/utils/zen-shortcut.ts`（`shouldHandleZenShortcut` / `redirectFocusIfHidden`）
-- `frontend-v3/src/composables/entryDetailKeys.ts`（`ZenModeKey`/`IsMobileKey`/`ZenAriaTextKey`）
-- `frontend-v3/src/views/EntryDetailView.vue`（zen 装配 + scoped 第 7 项隐藏）
-- `frontend-v3/src/styles/layout.css`（:208 第 8 项；:649-654 六项；:624-626 桌面 meta 条隐藏）
-- `frontend-v3/src/components/TableView.vue` 第 220-250 行（Escape 消费方，BDD-7 对象）
-- `backend/peekview/main.py` 第 25 行 / 第 52-62 行 / 第 590-635 行，以及 `backend/peekview/api/files.py` 的 `resolve_entry_raw`（R1 决策用）
-- `frontend-v3/playwright.config.ts` + `frontend-v3/e2e/` 任一近期 spec（E2E 双 project 与编写规范）
-- `AGENTS.md`（项目约定）、`agate-workspace/agents/project.md`（gate 命令与测试基线）
-
-## P2 最小验证（强制）
-
-方案设计前先用最小验证确认关键假设（curl / 20 行脚本 / 10 行 HTML）。方案依赖浏览器行为与安全模型（路由匹配、DOM 可见性、键盘事件分发）→ **必须做最小验证**，不得只声明"纯代码逻辑"。
-
-建议验证点（结果写入 P2-design.md 的 `minimal_validation` 字段）：
-- `/yaml-docker-compose/f` 当前的路由归属（命中 NotFoundView 而非 `:slug`）——**主 Agent 已实测**：`path=/yaml-docker-compose/f`、`.entry-detail` 不存在、`Page not found` 文案存在
-- `document` 级 keydown 与元素级 Escape 的**分发顺序**（验证 BDD-7 可行：锁死不吞内嵌浮层 Escape 的实现路径）
-- `route.meta` 在参数化路由下的可用性（`/:slug/f` 的 meta 读取）
-- 若涉及 R1 的后端分支：`_prefers_json` 判定链的实际行为（**主 Agent 已实测**：浏览器 accept → 200 + NotFoundView；`Accept: application/json` → 404 `{"error":{"code":"NOT_FOUND","message":"Entry not found: {slug}/f"}}`；对照 `/{slug}/raw` → 302）
-
-## 产出与格式
-
-- 产出：`agate-workspace/tasks/TPV0099-fullscreen-link/P2-design.md`
-- **必含 frontmatter 机器字段**（用 `agate-md-field-set` 写，不手写）：`candidate_count`（≥2；若声明 `design_trivial`/`follows_existing_pattern` 可 1，**须附理由**）、`packages`、`domains`、`ui_affected`
-- **P2 gate 会校验**：`ui_affected: true` → 正文必须含 `## UI 设计` 节，节内含**渲染形态声明**（复用 P1 `ui_render_shape: layout` 的规范值，gate 按规范化值比对 P1-P2 一致性）+ **维度选择**（复用 P1 `ui_ux_dimensions`：布局结构/交互行为/视觉呈现）+ **按形态 checklist**（常规布局型 = 布局/交互/视觉三类）。缺任一 → exit 1
-- 正文必含**影响面梳理**（Modify / Not Modify / Risk 三部分，改动落点须到"哪个文件的哪个小节/函数"）；**Not Modify 栏尤其重要**（P1 §4.3 三处存量问题须列在此，避免 P4"顺手修复"）
-- 正文必含 `gate_commands`（**引用 Makefile target，不手写裸命令**——Makefile 是测试命令的唯一真相源）+ `files_to_read` + `env_constraints` + `minimal_validation`
-- **`gate_commands` 硬要求**：`ui_affected: true` → **必须含 `P5_e2e`**（本次 19 条 BDD 大量落在 E2E 层）；建议同时声明 `P5_e2e_timeout_seconds: 300`（E2E 档）与 `P5_timeout_seconds: 120`（单测档）。**禁止把多个命令用 `&&` 拼进同一 key**（短路会让后半段从不执行）
-- 写完跑 `python3 /home/kity/.agate/v0.76.0/agate/scripts/check-frontmatter.py <产出路径>`，非 0 先修正再返回
-- 分阶段落盘：每读完一个文件/完成一个关键步骤，立即追加写 `P2-progress.md`；每条 bash 命令执行前也追加一行
-
-## 命令超时（强制）
-
-任何 bash 命令设 `timeout 180s <cmd>`（E2E/构建类按 300s/600s×1.5）。超时或非预期失败 → ① 停止，不换命令不深挖；② progress 写一行；③ 返回主 Agent 决定。
-
-## 环境隔离（强制）
-
-只用 debug `:8888`（**主 Agent 已起，挂了长托底 job**）。**严禁**触碰生产 `:8080` 与 `~/.peekview/`；**严禁** `uvicorn` 直接启动、**严禁** `make debug`/`npm run dev`（vite :5173 会代理到生产）。状态标记二值格式：`[PROD_TOUCHED] {描述}` / `[PROD_NOT_TOUCHED]`。
-
-## 环境约束（P0-brief 已详载，此处重申关键项）
-
-- **DSH 沙箱**：`/tmp` 与 `~/.local/share` 只读；`/tmp` **跨 bash 调用不共享文件**；后台服务须挂持续 running 的 job 托底。临时产物落 `{project_root}/.agate-tmp/`
-- **⚠️ 两条不同根因的 seed 事实（主 Agent 已实核；**勿合并归因**——第一版此处曾把二者捆在 `DEBT0012` 一个标签下，导致 `viewer.spec.ts` 红灯被误归 DEBT0012，已更正）**：
-  1. **【DEBT0012】seed 时序缺陷 → entry 未入库（数据缺失）**：`seed-debug.py` 先建 entry（L173）后建 team（L264），而 `_resolve_team_for_user` 对不存在 team 抛 422 → **全新 DB 首次 seed 时 3 条带 `team_id` 的 entry（`csv-employees`/`markdown-test`/`mermaid-charts`）必定失败**，**重跑即恢复**。`make debug-seed` 默认 `tail -10` **会截断掉 FAIL 行**（用 Makefile 看不到失败）——需完整输出请直接 `python3 scripts/seed-debug.py http://127.0.0.1:8888`。**归属：TPV0097/TPV0098**
-  2. **【TPV0095 引入，非 DEBT0012】team-scoped entry 匿名不可达（数据完好、可见性语义变了）**：这些 entry **即使 `is_public: true`，匿名也 404**（团队限定；owner/admin 可读）→ 成因是 `59182590`（TPV0095，2026-09-03）给 seed entry 指派团队，**`team_id` 是 seed 数据本身，重跑 `make debug-seed` 不能恢复**。`frontend-v3/e2e/viewer.spec.ts` 的 **18 failed** 即由此而来（其 `openMarkdownFile` 依赖 `markdown-test`）。**归属：TPV0097/TPV0098「用例可信治理」**
-  - **判据（区分二者）**：重跑 `make debug-seed` 后**能否恢复**。能 → 第 1 条；不能 → 第 2 条。二者**根因与修复面均不同，禁止合并归因**
-  - **设计 E2E 时不要依赖 team-scoped entry 的匿名可达性**（P1 已在 rev1 把 BDD-7/BDD-15 涉及的两条 Given 改掉：BDD-7 改用匿名可达的 `tsv-server-metrics`、BDD-15 用 `mermaid-charts` 并写明需 alice 登录前提）
-- **BDD 引用的 seed 与可达性前提（P1 已逐条实测，P2 直接用）**：`dsh-architecture`（BDD-1/3/9 相关，匿名 200）、`tsv-server-metrics`（BDD-7，匿名 200，表格 60 行）、`unicode-filenames`（BDD-8，匿名 200，zen 下内容区有可点 navigate-file 链接）、`multi-format-demo`（匿名 200 但四文件互相 0 个 md 链接 → 不可用于"切换文件"）、`mermaid-charts`（BDD-15，**需 alice 登录**，有 fullscreenBtn、不含 svg）、`svg-icons`（BDD-17，匿名 200，独立 SVG 文件走 ImageViewer、**无 fullscreen 按钮**）、`markdown-test`（BDD-9，**需 alice 登录** + `?firstFileId=43`，rich-markdown.md 有 10 条正文锚点）
-- seed 计数三口径（都对，勿混淆）：seed-data 目录 24 / alice 可见 22 / **匿名可见 15**
-
-## 门槛（什么算完成）
-
-- `P2-design.md` 存在且非空；`candidate_count`/`packages`/`domains`/`ui_affected` 齐备且与正文一致
-- 候选方案 ≥2（或声明简化 + 理由）+ 权衡 + 选择理由
-- 影响面梳理三部分齐备（Modify 落点到文件+小节/函数；Not Modify 含 P1 §4.3 三处；Risk 每条配缓解）
-- `ui_affected: true` → `## UI 设计` 节含形态声明 + 维度选择 + 按形态 checklist
-- `gate_commands` 含 `P5_e2e`（ui_affected），引用 Makefile target，无 `&&` 拼接；含 `_timeout_seconds` 声明
-- `minimal_validation` 有实跑结果（非"纯代码逻辑"空声明）
-- `check-frontmatter.py` 退出码 0
-- R1/R2/R3 三个开放点均有明确取舍结论
-
-## 返回给我（只两行）
+## 八、返回给我（只两行）
 
 1. 产出文件路径
-2. 一句话摘要（≤30 字，含候选方案数 + 关键决策）
+2. 一句话摘要（含终态 status + 阻塞级问题数）
 
 **不要返回文件全文。**
 
-## 客观查证信息（objective_info）
-
-- 环境：debug backend `http://127.0.0.1:8888`（主 Agent 已起 + 长托底），version 0.24.1；`VERSIONS.json` peekview=0.24.1
-- 主 Agent 实测（可直接引用）：`/yaml-docker-compose/f` → `path` 保持 `/yaml-docker-compose/f`、`.entry-detail` 不存在、页面含 `Page not found`（命中的是 `/:pathMatch(.*)*`）；`Accept: application/json` 时 → 404；`/{slug}/raw` → 302
-- 前端测试基线：`Test Files 110 passed` / `Tests 1343 passed | 4 skipped (1347)`
-- E2E：`playwright.config.ts` 双 project（chromium + Mobile Chrome/Pixel5），`baseURL` 默认 `:8888`，无 webServer 自启
-- 关键选择器：`.entry-detail`（zen 类挂载点）、`[data-testid="content-area"]`、`.meta-tags-bar`（`v-if="isMobile"`）、`[data-testid="mobile-bottom-bar"]`、`.diagram-modal`
-
 > 本文件不含通过/失败预判。
+
+---
+
+## 附录 A（主 Agent 于派发前追加，2026-09-28）：两份复审**已回报**——本轮已核事实
+
+### A.1 两份复审结论（均为 `approved`，阻塞级 **0**）
+
+| 评审 | 文件 | 本轮终态 | 阻塞级 |
+|---|---|---|---|
+| plan-design-review | `P2-review-design.md` | **`approved`** | 0 |
+| plan-eng-review | `P2-review-eng.md` | **`approved`** | 0 |
+
+两份复审**均判定你上轮的 R-1 / R-2 已实际闭合**，且**未发现冲突**。主 Agent 已抽验（`check-frontmatter.py` exit 0 / `P2-design.md` mtime 未变 / 未越权改动）→ 与自报一致。
+
+### A.2 两方各自的关键独立验证（可直接采信，不必重跑）
+
+- **design-review**：用响应式 `route.meta` 探针实测判据**区分力**——正确 thunk 形态 `zenMode` 序列 `[false,true,false]`（M9 通过）、禁止变体 `[true,true,true]`（M9 不通过），并证明 **BDD-4 单独拦不住该变体** → 坐实 M9 是**载荷性条款**
+- **eng-review**：分四步**先验证工具判别力再采信结论**——① `locked: boolean` 变体实测 `vue-tsc` exit 0 + vitest 3 passed（**证实设计 `:77` 的事实前提为真**：该假绿读法确能同时穿过两道 gate）② 同 harness 反例（computed 后写 `.value`）必红 `TS2540` exit 2 ③ M9 翻转用例对"thunk 签名 + setup 期快照"的隐蔽变体确有拦截力 ④ 挂载探针逐字复刻既有 mock，复现裸值形态的 `TypeError`
+- 两方均复核**跨文件一致性（你上轮的验证点 3）**：`DEBT0012` 命中全为"不归 DEBT0012"的对照性表述、与 `debt/tech-debt.md` 一致、§6.3 三条实质结论一字未动；eng-review 明确"**未发现该裁决的反例**"
+
+### A.3 本轮非阻塞残留（**不构成退回**，请只登记不阻断）
+
+两方合计 6 条（design 2 + eng 4），**均判不构成退回理由**。主 Agent **已裁决：本轮不改 `P2-design.md`**，理由是流程性的——设计已被两份评审批准，**此刻再改（哪怕仅措辞）会使两份 `approved` 立即失效**，须再走一轮评审 = 额外消耗 retry 预算（P2 cap 3），为措辞级非阻塞项不成比例。**改由主 Agent 在 P3/P4 派发上下文转达**。
+
+→ **你的汇总里请把它们列为"非阻塞、已由主 Agent 裁定延后转达"**，不要据此判 needs-revision。
+
+其中两条值得你在汇总里点出（供 P3/P4 用）：
+- **eng-NB-1（最值得注意）**：M9 翻转用例（`:53`）**未写明"thunk 须读 reactive 源"**——eng-review 实测用非响应式局部变量驱动时**正确实现也会返回 `[false,false,false]`** → 会**误红正确实现**（性质是判据精度问题，最坏是误红、**非假绿**）。建议 P3 落为显式硬前提（推荐用 `reactive` 模拟 `route.meta`）
+- **eng-NB-3**：`:97`(N14) 引用的 300 行上限 spec **路径有误**——写作 `src/components/__tests__/t082-error-format.spec.ts`，实际在 `src/components/t082-error-format.spec.ts`（**无 `__tests__/` 层**；主 Agent 已实核确认）。行号与断言内容正确，仅目录层级偏差
+
+### A.4 债务编号争议已闭（**请勿再提 DEBT0014**）
+
+eng-review 已**主动撤回**其 `DEBT0014` 编号建议，声明"以已登记条目为准"。主 Agent 已登记为 **`DEBT0013`**（`debt/tech-debt.md`），并已就地更正 DEBT0012（含"勿据此关账 DEBT0012"）。**你的汇总只需确认"banner 缺口已登记 + viewer.spec 归属已更正"，不要给出新编号建议。**
+
+### A.5 一条工程侧事实（供你判断，不必动作）
+
+eng-review 报告：`check-gate.py P2` 当前 exit 1 的**唯一**原因是你的 `P2-review.md` 仍为 `needs-revision`；它在**临时副本**上把 status 改为 `approved` 后复跑得 **exit 2（nudge，非失败）**→ 证明职能评审的 `approved` 可被 gate 接受。临时副本已删。**你本轮把 `P2-review.md` 改为 `approved` 后，主 Agent 会亲自跑真实 gate 复验。**
+
+### A.6 工作区残留已闭环（供你确认"未回退抽查"的基线）
+
+评审期出现的 `frontend-v3/.agate-tsprobe/` 残留（曾把 vitest 基线抬到 115 files）**已由 eng-review 整目录删除**；`git status --porcelain frontend-v3/` 为空。主 Agent 正在复跑全量套件确认基线回到 **110 files / 1343 passed | 4 skipped (1347)**。**若你的未回退抽查涉及前端基线，以此为准。**
