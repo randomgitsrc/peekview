@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-15-modal
+
+image: P6-evidence/screenshots/bdd-15-mermaid-modal-open-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd15-modal.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-15-modal
+      verdict: pass
+      finding: >-
+        存在深色遮罩 + 中央浅色弹层（标题 "Mermaid Diagram"），弹层内为放大的流程图，右上角有清晰的「×」关闭按钮；遮罩覆盖整个视口而弹层卡片留有边距。
+      dom_reconciliation: >-
+        与 DOM 实测一致：点击 .fullscreen-btn 后 .diagram-modal 高度 800、宽 1280（可见），.diagram-modal .close-btn 计数 1；点其关闭后弹层计数归 0 且内联 SVG 恢复。
+      conclusion: >-
+        BDD-15 Then「全屏弹层可见且关闭控件可将其关闭并回到内联视图」成立（vision 独立确认弹层与关闭控件）
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

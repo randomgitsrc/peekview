@@ -1,0 +1,301 @@
+{
+  "bdd": "BDD-3",
+  "given": {
+    "viewport": "1280x800",
+    "seed": "dsh-architecture",
+    "note": "本条 Given entry 无关，钉定非归档 seed 以避免 archived-banner 满宽横条污染"
+  },
+  "exclusion_rules": {
+    "groupA": [
+      "html",
+      "body",
+      "#app",
+      ".entry-detail"
+    ],
+    "groupA_rule": "自身 + 全部祖先（不含后代）",
+    "groupB": [
+      ".detail-content",
+      ".content-area",
+      ".markdown-viewer",
+      ".code-viewer",
+      ".table-view",
+      ".image-viewer",
+      ".html-viewer",
+      ".empty-state",
+      ".error-state",
+      ".loading-state"
+    ],
+    "groupB_rule": "自身 + 全部后代（整棵子树）",
+    "not_unifiable": true
+  },
+  "three_state": {
+    "state1_correct_impl": {
+      "vw": 1280,
+      "candidateCount": 1,
+      "hitCount": 0,
+      "hits": [],
+      "wideInDocCount": 7,
+      "wideInDoc": [
+        {
+          "tag": "HTML",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": "app",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "entry-detail zen-mode",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "detail-content",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "MAIN",
+          "cls": "content-area entry-content",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "markdown-viewer",
+          "id": "",
+          "w": 1248,
+          "h": 4431,
+          "top": 16
+        }
+      ],
+      "caLeft": 0,
+      "caRight": 1280
+    },
+    "state2_header_forced_visible": {
+      "vw": 1280,
+      "candidateCount": 52,
+      "hitCount": 3,
+      "hits": [
+        {
+          "tag": "HEADER",
+          "cls": "detail-header",
+          "id": "",
+          "w": 1280,
+          "h": 107,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "title-row",
+          "id": "",
+          "w": 1232,
+          "h": 44,
+          "top": 12
+        },
+        {
+          "tag": "DIV",
+          "cls": "meta-row",
+          "id": "",
+          "w": 1232,
+          "h": 26,
+          "top": 68
+        }
+      ],
+      "wideInDocCount": 10,
+      "wideInDoc": [
+        {
+          "tag": "HTML",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": "app",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "entry-detail zen-mode",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "HEADER",
+          "cls": "detail-header",
+          "id": "",
+          "w": 1280,
+          "h": 107,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "title-row",
+          "id": "",
+          "w": 1232,
+          "h": 44,
+          "top": 12
+        },
+        {
+          "tag": "DIV",
+          "cls": "meta-row",
+          "id": "",
+          "w": 1232,
+          "h": 26,
+          "top": 68
+        },
+        {
+          "tag": "DIV",
+          "cls": "detail-content",
+          "id": "",
+          "w": 1280,
+          "h": 693,
+          "top": 107
+        },
+        {
+          "tag": "MAIN",
+          "cls": "content-area entry-content",
+          "id": "",
+          "w": 1280,
+          "h": 693,
+          "top": 107
+        },
+        {
+          "tag": "DIV",
+          "cls": "markdown-viewer",
+          "id": "",
+          "w": 1248,
+          "h": 4431,
+          "top": 123
+        }
+      ],
+      "caLeft": 0,
+      "caRight": 1280
+    },
+    "state3_injected_bespoke_bar": {
+      "vw": 1280,
+      "candidateCount": 2,
+      "hitCount": 1,
+      "hits": [
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": "bespoke-bar",
+          "w": 1280,
+          "h": 40,
+          "top": 0
+        }
+      ],
+      "wideInDocCount": 8,
+      "wideInDoc": [
+        {
+          "tag": "HTML",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": "app",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "entry-detail zen-mode",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "detail-content",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "MAIN",
+          "cls": "content-area entry-content",
+          "id": "",
+          "w": 1280,
+          "h": 800,
+          "top": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "markdown-viewer",
+          "id": "",
+          "w": 1248,
+          "h": 4431,
+          "top": 16
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": "bespoke-bar",
+          "w": 1280,
+          "h": 40,
+          "top": 0
+        }
+      ],
+      "caLeft": 0,
+      "caRight": 1280
+    }
+  },
+  "criterion": "候选集内不存在「宽度 ≥ 视口 90% 且高度 ≥ 8px 且 top < 100px」的可见横条；且内容区左右边界与视口边界之差各 ≤ 1px"
+}

@@ -1,0 +1,25 @@
+# TPV0099 P6 视觉分析 — bdd-17
+
+image: P6-evidence/screenshots/bdd-17-svg-image-fullscreen-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd17-svg.txt 与 P6-evidence/vision-raw/bdd17-svg.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-17
+      verdict: pass
+      finding: >-
+        可见渲染出的完整矢量架构图（非破图/非空白框）：顶部标题「PeekView 架构图」，一排三个圆角矩形节点「前端（Vue 3 + TS、Shiki + Mermaid）」「后端（FastAPI + SQLModel、SQLite WAL + FTS5）」「MCP Server（Node.js + TS、Streamable HTTP）」以带箭头连线串联；下方「数据流」分组框内含两行流程链（create_entry → SQLModel → SQLite WAL；FTS5 搜索 → jieba 分词 → MATCH 查询）；底部小字「PeekView v0.14.0 — 2026-08-01」。vision 判定为正常渲染（文字清晰、边框完整、圆角规整、箭头指向明确、无变形错位），图形周围无裂图图标/破图占位框/错误提示，页面无标题栏或侧栏，画面被深色背景铺满、无未渲染空白区。
+      dom_reconciliation: >-
+        与 DOM 实测一致：img 计数 1、[data-testid="image-error"] 计数 0、bounding box 800×600 且 naturalWidth/Height = 800/600，.fullscreen-btn 计数 0（本条不要求该能力，BDD-17 的 Given 明确只断言图片渲染与全屏形态）。
+      seed_choice: >-
+        seed 选择说明：BDD-17 的 Given 允许 svg-icons 或 svg-standalone，本报告取 svg-standalone——其 SVG 为 800×600 的架构图，可逐节点实证渲染；svg-icons 仅 24×24 图标，在大留白页面中视觉证据强度弱。
+      conclusion: >-
+        BDD-17 Then「SVG 以 img 渲染、bounding box 宽高 > 0、内容完整且全屏形态成立」成立
+  anomalies: []
+  criterion_note: >-
+        本条视觉判定以「模型对图形内容的具体描述」为锚点——vision 能逐节点读出 SVG 内的文字与结构（前端/后端/MCP Server/数据流各链路），这是「图形真实渲染且内容完整」的强证据，而非仅凭 naturalWidth>0 / complete=true 的指标断言。

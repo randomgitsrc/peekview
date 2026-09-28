@@ -1,0 +1,16 @@
+{
+  "bdd": "BDD-13",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800"
+  },
+  "when": "访问 /dsh-architecture/f",
+  "then": {
+    "not_found_count": 0,
+    "body_contains_Page_not_found": false,
+    "entry_detail_zen": true,
+    "pathname": "/dsh-architecture/f",
+    "content_head": "SCNet DSH 完整架构部署图\n\n单主架构 · 三层保活（cron / keepalive / screen 循环）"
+  },
+  "negative_control": "P3 实测实现前 /dsh-architecture/f 命中 .not-found=1 且含 Page not found（FAIL）→ 实现后转 PASS，判据随实现翻转"
+}

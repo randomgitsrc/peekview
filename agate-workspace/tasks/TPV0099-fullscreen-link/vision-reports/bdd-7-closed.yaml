@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-7-closed
+
+image: P6-evidence/screenshots/bdd-7-per-page-listbox-closed-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd7-closed.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-7-closed
+      verdict: pass
+      finding: >-
+        页面上**没有**展开的下拉浮层（仅剩一个带下拉箭头的「100/page」触发按钮）；表格仍清晰可见；无顶部标题栏、无侧栏。
+      dom_reconciliation: >-
+        与 DOM 实测一致：按 Escape 后 .per-page-listbox 计数由 1 → 0，而 .entry-detail.zen-mode 仍存在、URL 仍为 /tsv-server-metrics/f。
+      conclusion: >-
+        BDD-7 Then「浮层关闭且全屏视图保持」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

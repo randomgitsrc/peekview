@@ -19,3 +19,6 @@
 {"cmd":"check-gate.py P4","event":"gate_run","exit":0,"phase":"P4","prev_hash":"65672bbacea66f9c156762163955cba9eced41a293627c5e2aec848431220b9b","runner":"pre-commit","ts":"2026-09-28T16:07:57.676476Z"}
 {"event":"state_transition","from":"P3","phase":"P4","prev_hash":"9a04e0703bc847071d7a3e517023cb797a06458a7b21e256c8b98b5ee49e76a3","to":"P4","ts":"2026-09-28T16:07:57.676979Z"}
 {"event":"state_transition","from":"P4","phase":"P5","prev_hash":"f8bec42a4a54b3132abec845198d61e4c5e7dee2224ad59d799182b9a470185c","to":"P5","ts":"2026-09-28T16:08:30.498817Z"}
+{"cmd":"check-gate.py P5","event":"gate_run","exit":2,"phase":"P5","prev_hash":"09719ac3581200c742fe1d0a230d92b945561e41e91a91a75672e8c4ae5a2067","runner":"pre-commit","ts":"2026-09-28T16:57:20.822075Z"}
+{"event":"state_transition","from":"P4","phase":"P5","prev_hash":"e065b537fb06a0986c45dccde484bfdfd21b1e181b0283691b279bb735d62c76","to":"P5","ts":"2026-09-28T16:57:20.822164Z"}
+{"event":"state_transition","from":"P5","phase":"P6","prev_hash":"f9ca46b1607cc5f77a91db66162ce68d749309164ad6ffa9bd57fd569755217e","to":"P6","ts":"2026-09-28T16:57:34.362891Z"}

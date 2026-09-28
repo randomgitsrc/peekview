@@ -1,0 +1,28 @@
+{
+  "bdd": "BDD-17",
+  "given": {
+    "seed": "svg-standalone",
+    "seed_kind": "独立 SVG 文件 entry（ImageViewer 路径）",
+    "anonymous_raw": 200,
+    "viewport": "1280x800"
+  },
+  "then": {
+    "img_count": 1,
+    "image_error_count": 0,
+    "img_box": {
+      "w": 800,
+      "h": 600,
+      "naturalWidth": 800,
+      "naturalHeight": 600,
+      "complete": true,
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MDAgNjAwIiB3aWR0aD0iOD",
+      "tag": "IMG"
+    },
+    "fullscreen_btn_count": 0,
+    "zen": true,
+    "chrome_all_hidden": true,
+    "pathname": "/svg-standalone/f"
+  },
+  "note": "本条只断言图片渲染与全屏形态；不要求 fullscreen 按钮/弹层（该能力属 BDD-15 路径）",
+  "seed_choice": "BDD-17 的 Given 允许 svg-icons 或 svg-standalone；本条取 svg-standalone——其 SVG 为 800x600，视觉上可实证渲染（svg-icons 仅 24x24 图标，在大留白页面中视觉证据强度弱）"
+}

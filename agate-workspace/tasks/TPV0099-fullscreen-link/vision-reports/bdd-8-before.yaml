@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-8-before
+
+image: P6-evidence/screenshots/bdd-8-before-file-switch-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd8-before.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-8-before
+      verdict: pass
+      finding: >-
+        正文为 README 型长文档（H1×1 + H2×6，含多个图片色块占位），无标题栏/文件侧栏/目录侧栏；截图范围内未见「中文附件下载」等文件间链接文本（该链接位于第 815px，超出 800px 视口下沿）。
+      dom_reconciliation: >-
+        vision「截图范围内未见链接文本」与 DOM 实测不矛盾：a[data-peekview-file-id] 计数为 2，其 getBoundingClientRect().top 分别为 815 / 843，均在视口外 ⇒ 链接客观存在但需点击前滚动。本次点击由 Playwright 自动滚动完成。
+      conclusion: >-
+        BDD-8 Given「切换动作可达」成立（DOM 计数 + 点击成功为准；截图仅证明切换前正文为长文档）
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

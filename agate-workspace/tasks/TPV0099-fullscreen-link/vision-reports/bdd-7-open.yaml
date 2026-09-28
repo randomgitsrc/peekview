@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-7-open
+
+image: P6-evidence/screenshots/bdd-7-per-page-listbox-open-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd7-open.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-7-open
+      verdict: pass
+      finding: >-
+        表格清晰可见（多列数据行）；表格附近有一个已展开的下拉浮层，列出每页条数选项（可见 50 / 100）；页面无顶部标题栏、无侧栏。
+      dom_reconciliation: >-
+        与 DOM 实测一致：tbody tr=60、.per-page-trigger 计数 1、点击后 .per-page-listbox 高度 134 且含 3 个 [role=option]。
+      conclusion: >-
+        BDD-7 Given 前置「分页浮层已打开」成立（操作类证据组的前态）
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

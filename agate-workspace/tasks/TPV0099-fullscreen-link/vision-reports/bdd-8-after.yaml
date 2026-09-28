@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-8-after
+
+image: P6-evidence/screenshots/bdd-8-after-file-switch-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd8-after.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-8-after
+      verdict: pass
+      finding: >-
+        正文变为极短的单行占位文本「这是中文文件名附件的占位内容，用于 TPV0089 的 E2E 链接点击验证（BDD-11）。」；无标题栏/文件侧栏/目录侧栏。
+      dom_reconciliation: >-
+        与 DOM 实测一致：内容区正文由 347 字符（8 标题）变为 49 字符（0 标题），pathname 仍为 /unicode-filenames/f、zen 类仍在。
+      conclusion: >-
+        BDD-8 Then「正文已切换为新文件内容且全屏视图保持」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

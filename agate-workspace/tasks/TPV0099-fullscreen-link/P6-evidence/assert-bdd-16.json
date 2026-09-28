@@ -1,0 +1,23 @@
+{
+  "bdd": "BDD-16",
+  "given": {
+    "env": "make debug-start + make debug-seed 得到的干净 debug 环境 :8888",
+    "seed": "dsh-architecture",
+    "viewport": "1280x800",
+    "data_construction": "无额外构造数据，使用 seed 数据"
+  },
+  "when": "人工/等价脚本在浏览器打开 /dsh-architecture/f",
+  "then": {
+    "content_text_len": 4113,
+    "contains_arch_marker": true,
+    "text_head": "SCNet DSH 完整架构部署图\n\n单主架构 · 三层保活（cron / keepalive / screen 循环）· 5 项受管服务\n\n本文档是 SCNe",
+    "zen": true,
+    "chrome_all_hidden": true,
+    "pathname": "/dsh-architecture/f"
+  },
+  "screenshot_form": "滚动内容区到正文中段后截图（体现 seed 正文有实质内容，且与 BDD-1 的顶部视口截图逐字节不同）",
+  "scrolled_view": {
+    "scrollTop": 1600,
+    "tail": "SCNet DSH 完整架构部署图\n\n单主架构 · 三层保活（cron / keepalive / screen 循环）"
+  }
+}

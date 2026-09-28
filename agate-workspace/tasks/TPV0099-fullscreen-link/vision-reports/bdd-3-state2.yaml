@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-3-state2
+
+image: P6-evidence/screenshots/bdd-3-state2-header-forced-visible-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd3-state2.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-3-state2
+      verdict: pass
+      finding: >-
+        页面顶部存在一条横向贯穿整个视口的横条（含 PeekView logo、作者/时间/权限元信息、标签与右侧操作图标），高度约 40-50px。
+      dom_reconciliation: >-
+        该截图是 BDD-3 的**失败态对照臂②**（注入 .detail-header{display:flex!important}）。vision「有满宽横条」的判定与 DOM 度量命中数 3（header 1280x107 / title-row / meta-row）一致。
+      conclusion: >-
+        失败态对照臂②：vision 独立确认横条存在 ⇒ BDD-3 判据对失败态有拦截力
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

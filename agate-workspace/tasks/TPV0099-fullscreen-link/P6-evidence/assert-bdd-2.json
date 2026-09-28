@@ -1,0 +1,21 @@
+{
+  "bdd": "BDD-2",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800"
+  },
+  "then": {
+    "ca_top": 0,
+    "ca_height": 800,
+    "ca_width": 1280,
+    "innerHeight": 800,
+    "innerWidth": 1280,
+    "top_delta": 0,
+    "height_minus_viewport": 0,
+    "computed_style": {
+      "position": "static",
+      "overflowY": "auto"
+    }
+  },
+  "non_screenshot_quantitative": "DOM 度量（getBoundingClientRect）——可量化几何判据，按 role 文件「DOM 度量量化证据」条款以断言文件为证据"
+}

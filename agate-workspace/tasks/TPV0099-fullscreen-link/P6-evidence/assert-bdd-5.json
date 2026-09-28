@@ -1,0 +1,64 @@
+{
+  "bdd": "BDD-5",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800",
+    "entry": "/dsh-architecture/f"
+  },
+  "when": "按 Escape",
+  "before": {
+    "chrome": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "zen": true,
+    "rect": {
+      "top": 0,
+      "left": 0,
+      "width": 1280,
+      "height": 800
+    },
+    "pathname": "/dsh-architecture/f",
+    "search": "",
+    "ariaText": "Fullscreen view. Content only.",
+    "innerHeight": 800,
+    "innerWidth": 1280
+  },
+  "after": {
+    "chrome": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "zen": true,
+    "rect": {
+      "top": 0,
+      "left": 0,
+      "width": 1280,
+      "height": 800
+    },
+    "pathname": "/dsh-architecture/f",
+    "search": "",
+    "ariaText": "Fullscreen view. Content only.",
+    "innerHeight": 800,
+    "innerWidth": 1280
+  },
+  "then": {
+    "zen_still_true": true,
+    "chrome_unchanged": true,
+    "rect_unchanged": true,
+    "pathname_unchanged": true
+  },
+  "negative_control": "对照 BDD-12：非锁死 f 键 zen 下按 Escape **会**退出 zen（zen 由 true→false）——本条与 BDD-12 同一按键给出相反结果，判据非恒真"
+}

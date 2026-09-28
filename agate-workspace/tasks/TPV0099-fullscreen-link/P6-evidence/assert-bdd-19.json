@@ -1,0 +1,16 @@
+{
+  "bdd": "BDD-19",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800"
+  },
+  "when": "访问中段路径 /dsh-architecture/f/xyz",
+  "then": {
+    "body_contains_entry_marker": false,
+    "entry_detail_count": 0,
+    "not_found_count": 1,
+    "error_state_count": 0,
+    "body_head": "Page not found\n\n/dsh-architecture/f/xyz\n\n返回首页"
+  },
+  "negative_control": "对照 BDD-13：/dsh-architecture/f 上 .entry-detail 存在且正文含「总体架构」；本条同一 seed 的中段路径上两者均不成立 ⇒ 段数匹配严格，判据随路由定义翻转"
+}

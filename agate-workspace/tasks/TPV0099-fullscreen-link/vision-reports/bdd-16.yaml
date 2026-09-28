@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-16
+
+image: P6-evidence/screenshots/bdd-16-seeded-fullscreen-scrolled-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd16-scrolled.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-16
+      verdict: pass
+      finding: >-
+        正文文本可见且非空，为真实架构/配置文档内容（含 YAML 代码块、trustedHosts、cookieMaxAgeDays: 3650、streamable-http 等具体配置与说明），无空状态/错误提示特征。vision 提到「顶部有蓝色文字提示与流程概括文本」，判为页面顶部「有状态栏」倾向。
+      dom_reconciliation: >-
+        DOM 溯源判定归属：滚动到 1600px 后视口顶部带文字的元素全部落在正文内容流内（H1「SCNet DSH 完整架构部署图」、P「单主架构…」、CODE、H2「1. 总体架构」、SVG text 等，均 el.closest(".markdown-viewer") === true 且 in_content_area === true）；视口顶部唯一的非正文元素是 .sr-only 无障碍公告（top=-1，视觉不可见）。chrome 实测 .detail-header / .mobile-sticky-header / archived-banner / expired-warning-banner 可见高度均为 0/false。⇒ 该「顶部文本」是正文内容随滚动经过顶部，不是 chrome。
+      conclusion: >-
+        BDD-16 Then「无需额外构造数据即呈现 seed 正文内容、全屏形态成立」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

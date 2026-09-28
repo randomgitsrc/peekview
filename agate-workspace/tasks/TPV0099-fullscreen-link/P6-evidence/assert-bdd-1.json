@@ -1,0 +1,31 @@
+{
+  "bdd": "BDD-1",
+  "given": {
+    "seed": "dsh-architecture",
+    "seed_status": "active（非 archived / 非 expired）",
+    "viewport": "1280x800"
+  },
+  "when": "访问 /dsh-architecture/f",
+  "then": {
+    "content_text_len": 4113,
+    "content_head": "SCNet DSH 完整架构部署图\n\n单主架构 · 三层保活（cron / keepalive / screen 循环）· 5 项受管服务\n\n本文档是 SCNet 太原 tycs2 集群部署 DeepSeek Harness 的完整架构图与",
+    "contains_arch_marker": true,
+    "entry_detail_zen": true,
+    "chrome_visible": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "chrome_all_hidden": true,
+    "pathname": "/dsh-architecture/f"
+  },
+  "viewport_measured": {
+    "innerWidth": 1280,
+    "innerHeight": 800
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "bdd": "BDD-15",
+  "given": {
+    "seed": "mermaid-charts",
+    "requires_login": "alice（team-scoped，匿名 404）",
+    "anon_control_status": 200,
+    "viewport": "1280x800"
+  },
+  "then": {
+    "svg_box": {
+      "w": 850,
+      "h": 400
+    },
+    "svg_rendered": true,
+    "fullscreen_btn_count": 1,
+    "modal_count_before_click": 0,
+    "modal_after_click": {
+      "w": 1280,
+      "h": 800,
+      "visible": true
+    },
+    "modal_visible_after_click": true,
+    "close_btn_count": 1,
+    "modal_count_after_close": 0,
+    "inline_svg_visible_after_close": true,
+    "zen_at_end": true,
+    "pathname_after": "/mermaid-charts/f"
+  },
+  "note": "本条不要求 Escape 关闭弹层（当前实现无此能力，t022 Escape 断言所依赖选择器已死）——只要求既有关闭路径可用"
+}

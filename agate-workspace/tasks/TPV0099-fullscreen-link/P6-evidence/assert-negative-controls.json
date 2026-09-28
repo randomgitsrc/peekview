@@ -1,0 +1,164 @@
+{
+  "bdd4_bdd5_negative_control": {
+    "arm": "对照臂 = 非锁死页 /dsh-architecture（无 /f），同一按键序列",
+    "measurements": {
+      "initial": {
+        "zen": false,
+        "chrome": {
+          ".detail-header": true,
+          ".file-sidebar": false,
+          ".toc-sidebar": true,
+          ".mobile-actions": false,
+          ".mobile-sticky-header": false,
+          "[data-testid=\"mobile-bottom-bar\"]": false,
+          ".meta-tags-bar": false,
+          ".resize-handle": true
+        },
+        "rect": {
+          "top": 107,
+          "left": 0,
+          "width": 1040,
+          "height": 693
+        },
+        "ariaText": "Zen mode off.",
+        "pathname": "/dsh-architecture"
+      },
+      "after_first_f": {
+        "zen": true,
+        "chrome": {
+          ".detail-header": false,
+          ".file-sidebar": false,
+          ".toc-sidebar": false,
+          ".mobile-actions": false,
+          ".mobile-sticky-header": false,
+          "[data-testid=\"mobile-bottom-bar\"]": false,
+          ".meta-tags-bar": false,
+          ".resize-handle": false
+        },
+        "rect": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 800
+        },
+        "ariaText": "Zen mode on. Press f or Escape to exit.",
+        "pathname": "/dsh-architecture"
+      },
+      "after_second_f": {
+        "zen": false,
+        "chrome": {
+          ".detail-header": true,
+          ".file-sidebar": false,
+          ".toc-sidebar": true,
+          ".mobile-actions": false,
+          ".mobile-sticky-header": false,
+          "[data-testid=\"mobile-bottom-bar\"]": false,
+          ".meta-tags-bar": false,
+          ".resize-handle": true
+        },
+        "rect": {
+          "top": 107,
+          "left": 0,
+          "width": 1040,
+          "height": 693
+        },
+        "ariaText": "Zen mode off.",
+        "pathname": "/dsh-architecture"
+      },
+      "after_escape": {
+        "zen": false,
+        "chrome": {
+          ".detail-header": true,
+          ".file-sidebar": false,
+          ".toc-sidebar": true,
+          ".mobile-actions": false,
+          ".mobile-sticky-header": false,
+          "[data-testid=\"mobile-bottom-bar\"]": false,
+          ".meta-tags-bar": false,
+          ".resize-handle": true
+        },
+        "rect": {
+          "top": 107,
+          "left": 0,
+          "width": 1040,
+          "height": 693
+        },
+        "ariaText": "Zen mode off.",
+        "pathname": "/dsh-architecture"
+      }
+    },
+    "varies_with_f": true,
+    "varies_with_escape": true,
+    "conclusion": "同一「按键前后取快照 + chrome/rect/pathname 逐项比对」的判据，在非锁死页上给出**变化**结论；在 /{slug}/f 锁死页上给出**不变**结论（见 assert-bdd-4.json / assert-bdd-5.json）⇒ 判据非恒真，具备拦截「锁死短暂路缺失」失败态的能力"
+  },
+  "bdd4_failure_state_probe": {
+    "state_correct": {
+      "zen": true,
+      "chrome": {
+        ".detail-header": false,
+        ".file-sidebar": false,
+        ".toc-sidebar": false,
+        ".mobile-actions": false,
+        ".mobile-sticky-header": false,
+        "[data-testid=\"mobile-bottom-bar\"]": false,
+        ".meta-tags-bar": false,
+        ".resize-handle": false
+      },
+      "rect": {
+        "top": 0,
+        "left": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "ariaText": "Fullscreen view. Content only.",
+      "pathname": "/dsh-architecture/f"
+    },
+    "state_lock_removed": {
+      "zen": false,
+      "chrome": {
+        ".detail-header": false,
+        ".file-sidebar": false,
+        ".toc-sidebar": true,
+        ".mobile-actions": false,
+        ".mobile-sticky-header": false,
+        "[data-testid=\"mobile-bottom-bar\"]": false,
+        ".meta-tags-bar": false,
+        ".resize-handle": true
+      },
+      "rect": {
+        "top": 0,
+        "left": 0,
+        "width": 1040,
+        "height": 800
+      },
+      "ariaText": "Fullscreen view. Content only.",
+      "pathname": "/dsh-architecture/f"
+    },
+    "field_discriminates": {
+      "zen": true,
+      "chrome": true,
+      "rect": true,
+      "ariaText": false,
+      "pathname": false
+    },
+    "conclusion": "若锁死短路缺失（f 会把 zen 切掉），chrome 与 rect（宽度 1280→1040、toc-sidebar 复现）立即改变 ⇒ BDD-4 的 Then（三者均与按键前一致）判 FAIL，拦截力成立"
+  },
+  "bdd9_negative_control": {
+    "arm": "同一判据的两个候选绑定对象：容器 .content-area vs window",
+    "before": {
+      "container_scrollTop": 0,
+      "window_scrollY": 0,
+      "ca_scrollHeight": 15577,
+      "ca_clientHeight": 800
+    },
+    "after": {
+      "container_scrollTop": 13691,
+      "window_scrollY": 0,
+      "toc_display": "none",
+      "toc_height": 0
+    },
+    "container_field_varies": true,
+    "window_field_varies": false,
+    "conclusion": "window.scrollY 前后恒为 0（不随锚点跳转变化）→ 若把判据绑在 window 上则恒真失效；.content-area.scrollTop 由 0 变为 13xxx ⇒ 判据必须绑容器（本条据此绑容器，非恒真）"
+  }
+}

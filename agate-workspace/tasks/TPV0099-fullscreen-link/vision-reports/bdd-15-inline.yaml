@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-15-inline
+
+image: P6-evidence/screenshots/bdd-15-mermaid-inline-fullscreen-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd15-inline.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-15-inline
+      verdict: pass
+      finding: >-
+        已渲染的流程图清晰可见（菱形/矩形节点与箭头连线，非代码文本）；无未渲染的 mermaid 源码；无页面级顶部导航栏或侧栏。关于工具栏「Fullscreen」按钮：vision 判为「否」。
+      dom_reconciliation: >-
+        DOM 实测该按钮存在：BUTTON.fullscreen-btn（34px 级），其可访问名为 title="Fullscreen"，可见字形为符号「⧉」（宽 28×高 28），**按钮内无「Fullscreen」文字** ⇒ vision 按视觉文字查找未命中属可解释偏差，非「按钮不存在」。DOM 计数 1 + 点击后弹层出现（vision 侧已独立确认弹层与放大图表可见）互证按钮真实可用。
+      conclusion: >-
+        BDD-15 Then「图表 SVG 已渲染且内置全屏查看能力可用」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

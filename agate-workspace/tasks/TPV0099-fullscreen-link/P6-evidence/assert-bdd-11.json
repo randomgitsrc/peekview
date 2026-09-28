@@ -1,0 +1,28 @@
+{
+  "bdd": "BDD-11",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800"
+  },
+  "when": "访问 /dsh-architecture（无 f）",
+  "then": {
+    "detail_header_visible": true,
+    "content_area_visible": true,
+    "zen_class_count": 0,
+    "ca_top": 107,
+    "chrome_visibility": {
+      ".detail-header": true,
+      ".file-sidebar": false,
+      ".toc-sidebar": true,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": true
+    }
+  },
+  "aux_evidence": {
+    "link_header": "</api/v1/entries/dsh-architecture/raw>; rel=\"alternate\"; type=\"application/json\""
+  },
+  "negative_control": "同一判据在 /dsh-architecture/f 下给出相反结果（chrome 全不可见、内容区 top=0，见 assert-bdd-1.json / assert-bdd-2.json）"
+}

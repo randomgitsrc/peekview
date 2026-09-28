@@ -402,3 +402,27 @@
   - **附注**：本任务**后端零改动**（仅前端 3 文件 + 文档），故后端失败在因果上不可能由本任务引入
 - GATE FAIL → DIAGNOSIS（2026-09-28 16:54 UTC）：**debug `:8888` 第四次掉线**——8h 托底 job `bash-1880` 到期结束。**诊断与前三次一致**（服务存活跟随挂它的那条调用）。**处置**：已重启并把托底加长到 **43200s（12h）**（job `bash-2858`）。**对本阶段无影响**（P5 已完成、6 条命令均在掉线前跑完）；对 P6 有影响故提前恢复
 - NEXT: commit P5（phase=P5，随产出）→ 写 `p5_pass_commit`（TAG0016）→ 进 P6
+- GATE PASS（2026-09-28，**P5 阶段正式通过**）：commit **`97848f25`**（11 文件 / +743 行）
+- DECISION（2026-09-28）：**phase 推进 P5 → P6 由 `agate-next.py` 完成**（`check-gate.py P5` exit 2 ∈ pass_set）→ `.state.yaml` phase=P6 已 staged，**随 P6 产出同 commit**（P6 卡规则；且 P6 卡强调"P5→P6 是唯一硬拦边界——P5 的 .txt/.json 等合法产出必须在 phase=P5 的 commit 里提交，不能带进 phase=P6"→ **已满足**：`P5-test-results/` 三件套 + 截图证据已在 `97848f25` 落库）
+- 记录（2026-09-28）：`p5_pass_commit` 已写入 `.state.yaml` = **`f1cfd5c32f3e09a8ce2e79cfc38fd454eeebfe80`**（TAG0016，P5 gate 通过点 = P4 提交）→ 供 P6/P8 判定"可引用 P5 证据、不重跑"
+- GATE FAIL → DIAGNOSIS（2026-09-28）：**debug `:8888` 第四次掉线**（8h 托底 `bash-1880` 到期）→ 已重启并把托底加长到 **43200s（12h）**（`bash-2858`）。**重启后 DB 为空** → 已 `make debug-seed` **双跑**（DEBT0012 确定性首次 422）→ **alice 22 / 匿名 15** 恢复；关键 seed `dsh-architecture` / `tsv-server-metrics` / `unicode-filenames` / `svg-icons` 匿名 raw **均 200** ✓。**这是本任务第 4 次同因掉线**，托底时长逐次加长（7200→14400→28800→43200s）
+- DECISION（2026-09-28）：**派发 verifier（P6 验收）**，`P6-dispatch-context-verifier.md`（已注入 P6 卡片 241 行）。派发前把全程沉淀的约束前置写入：
+  - **P6 核心原则**（P6 卡）：功能验证与 gate 格式**两者都要**（T046 教训：花 2 小时凑 PASS 格式、没花 5 分钟查 API 响应头）+ "记录的是**验收时的事实**，不是修复后的状态"
+  - **四条硬约束**：① BDD-1/2/3 钉定 `dsh-architecture`（防 archived banner 造成非本任务成因 FAIL）② **BDD-3 的 A/B 排除集不可简化**且**须做三态负向对照**（基线 0/3/1，**明确"仅验 ① 不算通过"**）③ BDD-10 认证配对 + **清理必须用服务端返回 slug**（防 `-2` 残留与假绿）④ 双视口**显式 `test.use({viewport})`** 钉定（默认档位不是 BDD 档位）
+  - **三个环境陷阱**：① E2E 前必须 `make build-frontend-fast` ② 裸 `make debug-test` 只跑 1 spec ③ **Playwright 每次 run 清空 `test-results/`** → 截图须立即复制到 `P6-evidence/`（P5 期已丢过一次）
+  - **19 条 BDD × seed × 视口 × 类型对照表**（含 BDD-9/15 需 alice、BDD-10 自建私有+share）
+  - **两个已踩过的数据陷阱**：① 不要用 `/entries` 总数断言（随残留漂移）② **该 API 的 `limit` 参数不生效、用 `per_page`（默认 20）**——本任务已因此踩过"扫描面被静默截断"，明确要求分页扫全量
+  - **视觉证据要求**：P1 声明能力 `available` → 每条 UI 类 PASS 须预留 `(vision: vision-reports/bdd-N.yaml)`；**不得仅以 `naturalWidth>0`/`complete=true`/`HTTP 200`/像素方差断言视觉 PASS**；vision-analyst 由主 Agent 另行派发
+  - **post-test 残留检查**（P6 卡强制步骤）与 `P6-evidence/` 规格（非空、截图 >1KB、操作类 md5 互不相同、不接受 1 行 txt 凑数）
+- NEXT: 收 P6 产出 → 派 **vision-analyst**（产 `vision-reports/`）→ 主 Agent 逐条核实 BDD 对照 + post-test 残留检查 → `check-p6-format.py --fix` → 跑 `check-gate.py P6` + `check-p6-evidence.py` + `check-p6-provenance.py` → commit（phase=P6）→ **P6.5 judge（强制）**
+- GATE PASS（2026-09-28，**P6 验收 —— 主 Agent 亲自跑三道门禁**）：verifier 报 **19/19 PASS / 0 FAIL**。主 Agent 独立核验：
+  - `check-gate.py P6` → **exit 2**（`证据目录非空，FAIL=0，NC=0，P6_TOTAL=19`）
+  - `check-p6-evidence.py` → **exit 0**（`19 条 BDD，证据目录非空`；1 组 ahash 相同截图已降级待复核且含人工复核记录 → 放行）
+  - `check-p6-provenance.py` → **exit 0**（修复后，见下）
+  - `check-p6-format.py --fix` → exit 0（归一化后 PASS=19 / FAIL=0 不变）
+  - **证据质量抽验**：`P6-evidence/` **52 文件 / 1.5MB**；14 张截图 **md5 唯一 14/14**、**全部 >1KB**（0 张过小）；`vision-reports/` **14 份全部 `blocker_count: 0`**；19 条 PASS 中 **10 条带 vision 引用**、**4 条带 manual-review 记录**（交互/输入态类）
+  - **BDD-3 判据拦截力抽验（最关键的一条）**：acceptance 明确写出 A/B 不对称排除集 + **三态负向对照闭环 ①0 ②3 ③1**（②列出实测矩形 1280×107 / 1232×44 / 1232×26；③ 1280×40），且**每个失败态都有独立截图 + vision 引用**（`bdd-3-state2-header-forced-visible`、`bdd-3-state3-injected-bar`）→ **不是"只验 ① 就宣称通过"**，与我派发时的硬要求一致
+- **GATE FAIL → DIAGNOSIS（2026-09-28，本轮 gate 拦截的根因在**主 Agent 自己的派发产物**，verifier 正确指出且未越权修改）**：`check-p6-provenance.py` 起初 **exit 1**，唯一原因 = `P6-dispatch-context-verifier.md` 的格式样例行（行首 `- PASS`）落在 **AGATE_CARD 块之外**，被**审计 2**（`dispatch-context 内容约束：不含 PASS/FAIL 验收结论预判`）判为预判。
+  - **主 Agent 读源码确认机制**（`check-p6-provenance.py:332-386`）：该审计**只剥离 AGATE_CARD 块与顶部 frontmatter 块，不剥离围栏代码块** → 故我写在 ``` 里的"格式样例"照样被逐行正则 `^\s*- (PASS|FAIL)\b` 命中。历史任务（TPV0094 / T087 / T080）同类样例行恰在 CARD 块内故未被判罚 → **是位置差异而非规则差异**
+  - **处置（主 Agent 修自己的产物，未让 verifier 代改）**：把样例改为**不以判定词开头的列表行**（用「判定词取 `PASS`/`FAIL`；以列表项起首……」的文字描述 + 一段不含行首判定词的代码示例），并**补写一行警示**说明该审计不剥离围栏代码块 → 复验：**块外行首判定词命中数 = 0**、provenance **exit 0** ✓
+  - **记录（本任务第九次"验证声明需要被验证"，且这次是派发方自身产物违规）**：前八次分别是判据恒真/恒假、降级 stub、标签张冠李戴、并发污染、评审者踩同一个坑、守卫效力被高估、分页截断；**这次是"我自己写的派发模板违反了它自己声明的规则"**——我在同一份文件里既要求 verifier 别写行首判定词、又在文件里放了行首判定词的样例。**verifier 检出后未擅自改派发产物（正确地守住了"不在我可改范围"的边界）**，只在返回里指出修法二选一 → 处置得当

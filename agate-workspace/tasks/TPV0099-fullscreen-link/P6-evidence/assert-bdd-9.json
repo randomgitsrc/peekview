@@ -1,0 +1,36 @@
+{
+  "bdd": "BDD-9",
+  "given": {
+    "seed": "markdown-test",
+    "requires_login": "alice（team-scoped，匿名 404）",
+    "anon_control_status": 200,
+    "firstFileId": 43,
+    "firstFileId_resolution": "动态解析（未硬编码）",
+    "viewport": "1280x800"
+  },
+  "anchor_links_in_body": 10,
+  "before": {
+    "scrollTop": 0,
+    "scrollHeight": 15626,
+    "clientHeight": 800,
+    "toc_display": "none",
+    "toc_height": 0,
+    "windowScrollY": 0
+  },
+  "after": {
+    "scrollTop": 13731,
+    "toc_display": "none",
+    "toc_height": 0,
+    "zen": true,
+    "pathname": "/markdown-test/f",
+    "windowScrollY": 0
+  },
+  "then": {
+    "toc_invisible": true,
+    "scrollTop_increased": true,
+    "scroll_delta": 13731,
+    "zen_kept": true,
+    "pathname_kept": true
+  },
+  "negative_control": "window.scrollY 恒为 0（滚动容器是 .content-area）——判据若绑 window 则恒真失效，故审慎绑容器并记录该值"
+}

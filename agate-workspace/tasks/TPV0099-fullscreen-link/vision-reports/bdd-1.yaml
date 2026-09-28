@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-1
+
+image: P6-evidence/screenshots/bdd-1-fullscreen-form-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd1-form.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-1
+      verdict: pass
+      finding: >-
+        页面顶部仅有正文大标题与引言，无标题栏横条、无作者/时间信息区、无左右侧栏、无满宽顶部横幅；正文完整可见。
+      dom_reconciliation: >-
+        vision 未发现任何 chrome 元素；DOM 侧同步实测 chrome 8 项 getBoundingClientRect 高宽均为 0（assert-bdd-1.json）。两侧一致。
+      conclusion: >-
+        BDD-1 Then「呈现主体内容且标题栏/元信息区/文件侧栏/目录侧栏/移动顶部条/移动底部条均不可见」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

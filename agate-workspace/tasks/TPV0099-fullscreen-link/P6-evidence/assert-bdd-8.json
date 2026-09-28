@@ -1,0 +1,39 @@
+{
+  "bdd": "BDD-8",
+  "given": {
+    "seed": "unicode-filenames",
+    "anonymous_visible": true,
+    "viewport": "1280x800",
+    "in_body_file_links": 2,
+    "links": [
+      {
+        "text": "中文附件下载",
+        "fileId": "37"
+      },
+      {
+        "text": "English attachment",
+        "fileId": "34"
+      }
+    ]
+  },
+  "before": {
+    "pathname": "/unicode-filenames/f",
+    "text_len": 347,
+    "headings": 8,
+    "text_head": "Unicode 文件名资源引用（TPV0089 fixture）\n\n本 entry 用于端到端验证非 ASCII 文件名本地资源的链接解析修复（BDD-10~1"
+  },
+  "after": {
+    "pathname": "/unicode-filenames/f",
+    "text_len": 49,
+    "headings": 0,
+    "zen": true,
+    "text_head": "1\n这是中文文件名附件的占位内容，用于 TPV0089 的 E2E 链接点击验证（BDD-11）。"
+  },
+  "then": {
+    "pathname_kept": true,
+    "f_suffix_kept": true,
+    "text_changed": true,
+    "zen_kept": true,
+    "chrome_all_hidden": true
+  }
+}

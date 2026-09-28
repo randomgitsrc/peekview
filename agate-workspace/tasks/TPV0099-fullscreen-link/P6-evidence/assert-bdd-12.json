@@ -1,0 +1,88 @@
+{
+  "bdd": "BDD-12",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800"
+  },
+  "when": "按 f 进入 zen，再按 Escape 退出",
+  "full_page": {
+    "chrome": {
+      ".detail-header": true,
+      ".file-sidebar": false,
+      ".toc-sidebar": true,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": true
+    },
+    "zen": false,
+    "rect": {
+      "top": 107,
+      "left": 0,
+      "width": 1040,
+      "height": 693
+    },
+    "pathname": "/dsh-architecture",
+    "search": "",
+    "ariaText": "Zen mode off.",
+    "innerHeight": 800,
+    "innerWidth": 1280
+  },
+  "zen": {
+    "chrome": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "zen": true,
+    "rect": {
+      "top": 0,
+      "left": 0,
+      "width": 1280,
+      "height": 800
+    },
+    "pathname": "/dsh-architecture",
+    "search": "",
+    "ariaText": "Zen mode on. Press f or Escape to exit.",
+    "innerHeight": 800,
+    "innerWidth": 1280
+  },
+  "restored": {
+    "chrome": {
+      ".detail-header": true,
+      ".file-sidebar": false,
+      ".toc-sidebar": true,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": true
+    },
+    "zen": false,
+    "rect": {
+      "top": 107,
+      "left": 0,
+      "width": 1040,
+      "height": 693
+    },
+    "pathname": "/dsh-architecture",
+    "search": "",
+    "ariaText": "Zen mode off.",
+    "innerHeight": 800,
+    "innerWidth": 1280
+  },
+  "then": {
+    "zen_entered": true,
+    "zen_geometry_matches_locked": true,
+    "aria_announces_exit": true,
+    "exit_restores_page": true,
+    "url_unchanged": true
+  },
+  "negative_control": "本条证明既有 f 键 zen 的 Escape **能**退出（zen true→false）；BDD-5 证明 /f 锁死态下 Escape **不能**退出——同一按键两种结果，两条判据均非恒真"
+}

@@ -1,0 +1,23 @@
+{
+  "bdd": "BDD-18",
+  "given": {
+    "slug": "nonexistent-slug-xyz",
+    "existence": "seed 中不存在",
+    "viewport": "1280x800"
+  },
+  "when": "访问 /nonexistent-slug-xyz/f",
+  "control_baseline_single_segment": {
+    "status": 200,
+    "note": "与 /{slug} 单段路径解析语义对照"
+  },
+  "then": {
+    "not_found_count": 0,
+    "body_contains_Page_not_found": false,
+    "entry_detail_count": 1,
+    "content_area_count": 1,
+    "error_state_count": 1,
+    "empty_state_count": 0,
+    "body_head": "Fullscreen view. Content only.\nRequest failed with status code 404"
+  },
+  "negative_control": "P3 实测实现前 /nonexistent-slug-xyz/f → .not-found=1 + Page not found（FAIL）；单段 /nonexistent-slug-xyz → .not-found=0 + .entry-detail=1（PASS）⇒ 同一判据两条路径不同结论"
+}

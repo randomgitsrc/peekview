@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-10
+
+image: P6-evidence/screenshots/bdd-10-share-token-fullscreen-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd10-share.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-10
+      verdict: pass
+      finding: >-
+        正文可见且含特征串 TPV0099-SHARE-MARKER；无鉴权失败/无权限/401/403 提示；无顶部标题栏或侧栏；无登录表单。
+      dom_reconciliation: >-
+        与 DOM/API 实测一致：三态区分力 [false,false,true]（无 token/fake token 不可见、真 token 可见）、API 基线 404/404/200、chrome 8 项全不可见。
+      conclusion: >-
+        BDD-10 Then「全屏视图成立且私有内容主体文本可见、无鉴权失败提示」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

@@ -1,0 +1,40 @@
+{
+  "bdd": "BDD-14",
+  "given": {
+    "viewport": "390x844（Pixel 5 等效）",
+    "seed": "dsh-architecture"
+  },
+  "negative_control_non_zen": {
+    "sticky": 56,
+    "bottom_bar": 64,
+    "meta_tags": 89,
+    "ca_top": 56
+  },
+  "then": {
+    "chrome_visible": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "chrome_all_hidden": true,
+    "ca_top": 0,
+    "ca_height": 844,
+    "ca_width": 390,
+    "innerHeight": 844,
+    "innerWidth": 390,
+    "viewport_pinned_by": "test.use({ viewport: { width: 390, height: 844 } })",
+    "top_delta": 0,
+    "height_minus_viewport": 0,
+    "scrollHeight": 5175,
+    "clientHeight": 844,
+    "scrollTop_after_scroll_to_end": 4331,
+    "tail_text_len": 60,
+    "tail_text": "过：长驻 ✓、工具静默失效 ✓、无状态 ✓、pgrep mcp-playwright 可测 ✓、仅主节点 ✓——可收编。",
+    "windowScrollY": 0
+  }
+}

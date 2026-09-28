@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-14
+
+image: P6-evidence/screenshots/bdd-14-mobile-fullscreen-390x844.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd14-mobile.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-14
+      verdict: pass
+      finding: >-
+        移动端顶部条不可见、移动端底部条不可见；正文可见且横向占满窄屏。关于「元信息条」：vision 起初把标题下方灰色「单主架构 · 三层保活…· 5 项受管服务」摘要文本读作标签类元信息。
+      dom_reconciliation: >-
+        DOM 溯源判定其归属：该文本节点为 <p>（在 blockquote 内），祖先链为 BLOCKQUOTE → .markdown-body → .markdown-viewer → MAIN.content-area.entry-content → .detail-content → .entry-detail.zen-mode，**完全位于正文内容流内、不在 .meta-tags-bar 内**（node.closest(".meta-tags-bar") === false）。而 .meta-tags-bar 实测 display:none、宽高 0。⇒ vision 的「部分可见」属误读：它看到的是正文摘要，非元信息条。BDD-14 判定以 .meta-tags-bar 元素可见性为准，结论不受影响。
+      conclusion: >-
+        BDD-14 Then「移动端顶部条/底部条/元信息条均不可见且内容区占满视口」成立（vision 误读已按 DOM 溯源澄清）
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

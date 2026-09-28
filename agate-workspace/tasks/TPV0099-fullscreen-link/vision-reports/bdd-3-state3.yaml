@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-3-state3
+
+image: P6-evidence/screenshots/bdd-3-state3-injected-bar-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd3-state3.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-3-state3
+      verdict: pass
+      finding: >-
+        截图最顶部存在一条横向贯穿整个页面宽度的纯红色横条，无文字图标，约占页面高度 3%-4%。
+      dom_reconciliation: >-
+        该截图是**失败态对照臂③**（注入 #bespoke-bar，1280x40、top=0、红色 #c00）。vision 的「红色满宽横条」判定与注入元素一致；DOM 度量命中数 1。
+      conclusion: >-
+        失败态对照臂③：vision 独立确认横条存在 ⇒ BDD-3 判据对失败态有拦截力
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

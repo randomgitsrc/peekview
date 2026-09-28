@@ -1,0 +1,50 @@
+{
+  "bdd": "BDD-10",
+  "request_slug": "e2e-tpv0099-share-1790615954662",
+  "server_slug": "e2e-tpv0099-share-1790615954662",
+  "slug_suffix_rewritten": false,
+  "share_token_prefix": "v6PSF0oG…",
+  "alive_check_status": 200,
+  "api_baseline": {
+    "no_token": 404,
+    "fake_token": 404,
+    "real_token": 200
+  },
+  "page_states": {
+    "no_token": false,
+    "fake_token": false,
+    "real_token": true,
+    "triplet": [
+      false,
+      false,
+      true
+    ],
+    "chrome_visible": {
+      ".detail-header": false,
+      ".file-sidebar": false,
+      ".toc-sidebar": false,
+      ".mobile-actions": false,
+      ".mobile-sticky-header": false,
+      "[data-testid=\"mobile-bottom-bar\"]": false,
+      ".meta-tags-bar": false,
+      ".resize-handle": false
+    },
+    "chrome_all_hidden": true,
+    "zen": true,
+    "pathname": "/e2e-tpv0099-share-1790615954662/f",
+    "auth_error_prompt_present": false,
+    "content_head": "TPV0099-SHARE-MARKER\n\nTPV0099-SHARE-MARKER 正文内容。"
+  },
+  "then": {
+    "triplet_distinct": true,
+    "fullscreen_established": true,
+    "marker_visible_with_real_token": true
+  },
+  "cleanup": {
+    "deleted_slug": "e2e-tpv0099-share-1790615954662",
+    "alice_raw_status_after_delete": 404,
+    "cleaned": true,
+    "request_slug": "e2e-tpv0099-share-1790615954662",
+    "request_slug_raw_status": 404
+  }
+}

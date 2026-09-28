@@ -1,0 +1,26 @@
+# TPV0099 P6 视觉分析 — bdd-9
+
+image: P6-evidence/screenshots/bdd-9-anchor-scrolled-1280x800.png
+analyzer: vision-engine skill（role=quick，真实模型调用；原始输出留档于 .agate-tmp/p6/visionraw/bdd9-scroll.txt）
+analyzed_at: 2026-09-29
+task: TPV0099（全屏模式链接 /{slug}/f）
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+    result: pass
+  bdd_results:
+    - id: bdd-9
+      verdict: pass
+      finding: >-
+        页面已滚动至文档中后段（视口顶部直接显示「10. FAQ」章节标题）；左侧无目录侧栏；无页面顶部标题栏；正文问答内容清晰可读。
+      dom_reconciliation: >-
+        与 DOM 实测一致：.content-area.scrollTop 由 0 → 13731，.toc-sidebar display=none 且高度 0，pathname 仍为 /markdown-test/f。
+      conclusion: >-
+        BDD-9 Then「目录侧栏不可见且滚动容器 scrollTop 增加」成立
+  anomalies: []
+  criterion_note: >-
+    本报告的视觉判定**不**以 naturalWidth>0 / complete=true / HTTP 200 / 像素方差为据，
+    而是基于视觉模型对截图像素的描述性判定（chrome 是否存在、弹层是否可见、图形是否渲染正确）。
+    vision 提出的两处疑问（BDD-14「元信息条部分可见」、BDD-16「顶部有状态栏」、BDD-15「无 Fullscreen 按钮」）
+    均已按 DOM 溯源逐条澄清，见上 dom_reconciliation 字段；无未闭合 blocker。

@@ -1,0 +1,30 @@
+{
+  "bdd": "BDD-6",
+  "given": {
+    "seed": "dsh-architecture",
+    "viewport": "1280x800",
+    "entry": "/dsh-architecture/f"
+  },
+  "scope": "全屏视图自身 chrome（.entry-detail 内、排除内容区及其后代）",
+  "exit_word_list": [
+    "退出",
+    "返回",
+    "exit",
+    "关闭全屏",
+    "退出全屏",
+    "Exit fullscreen",
+    "Close fullscreen"
+  ],
+  "result": {
+    "aria_text": "Fullscreen view. Content only.",
+    "aria_count": 1,
+    "phrase_hits": [],
+    "contains_Escape": false,
+    "contains_exit_lower": false,
+    "focusable_total_in_root": 28,
+    "focusable_in_scope": 0,
+    "focusables": [],
+    "word_hits": []
+  },
+  "negative_control": "同一作用域在**非锁死 f 键 zen** 下公告文本含 Escape 且命中退出词组（见 assert-bdd-12.json 的 zen.ariaText）——同一判据给出相反结果，非恒真"
+}

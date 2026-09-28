@@ -1,0 +1,31 @@
+{
+  "bdd": "BDD-7",
+  "given": {
+    "seed": "tsv-server-metrics",
+    "anonymous_visible": true,
+    "viewport": "1280x800",
+    "rows_rendered": 60
+  },
+  "when": "打开内容区分页浮层后按 Escape",
+  "listbox_when_open": {
+    "exists": true,
+    "height": 134,
+    "options": [
+      "50",
+      "100",
+      "500"
+    ]
+  },
+  "after_escape": {
+    "listbox_count": 0,
+    "zen": true,
+    "pathname": "/tsv-server-metrics/f"
+  },
+  "then": {
+    "listbox_closed": true,
+    "zen_kept": true,
+    "chrome_unchanged": true,
+    "pathname_unchanged": true
+  },
+  "priority_note": "元素级 @keydown 消费优先于 document 级锁死短路（BDD-5 管视图状态 / 本条管内容区浮层）"
+}
