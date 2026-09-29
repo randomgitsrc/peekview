@@ -1,5 +1,5 @@
 task_id: TPV0099
-phase: READY
+phase: DONE
 status: pending-start
 retries:
   P1:
@@ -32,6 +32,18 @@ retry_count:
   P4: 1
 p5_pass_commit: f1cfd5c32f3e09a8ce2e79cfc38fd454eeebfe80
 history:
+- phase: DONE
+  action: completed
+  ts: '2026-09-29T14:50:00Z'
+  note: "任务完成（人手动触发发布，用户指令 'do 1 & 2'）：① git push —— origin/main
+    = dfa76d74（本地=远端一致）、tag v0.25.0 = c23efabd 已推送（ls-remote 复核）② make publish
+    —— peekview-0.25.0 已上传 PyPI（exit 0），PyPI JSON API 独立复核 info.version = 0.25.0、
+    file = peekview-0.25.0-py3-none-any.whl (6771725 bytes)。上传前主 Agent 独立验证 wheel 内容：
+    6 项检查全过（locked aria 文案 / '/:slug/f' / 'detail-zen-locked' / meta zen locked /
+    既有 zen 文案保留（回归）/ updateZenAria 已移除（符合 §1.1 最终规格））。
+    沙箱适配：~/.cache 与 ~/.local/state 只读致 `pipx run twine` 默认失败 → 将 XDG_* 重定向到
+    工作区内可写目录后成功（未改项目配置）。**待人工**：生产升级 `pipx upgrade peekview &&
+    sudo systemctl restart peekview`（协议要求人工，本次未做；:8080 从沙箱不可达）。"
 - phase: P8
   action: completed
   ts: '2026-09-29T04:30:00Z'
