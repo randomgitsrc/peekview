@@ -1,0 +1,29 @@
+phase: P1
+task_id: TPV0100
+task_name: web-publish
+status: in_progress
+created: 2026-10-01
+updated: '2026-10-01T22:30:00Z'
+judge:
+  enabled: true
+retries:
+  P1:
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
+retry_count:
+  P1: 1
+history:
+- phase: P0
+  action: created
+  ts: '2026-10-01T12:00:00Z'
+  note: 立项：网页发布入口（人类上传通道）——登录用户在 /publish 上传文件/多文件并发布 entry，对标 MCP publish_files。方案 A——复用 POST /api/v1/entries，后端零改动。
+- phase: P0
+  action: pending-start
+  ts: '2026-10-01T12:00:00Z'
+  note: P0 完成，等用户「开工」指令进 P1（P1-dispatch-context-analyst.md + AGATE_CARD 注入）
+- phase: P1
+  action: completed
+  ts: '2026-10-01T22:30:00Z'
+  note: 'P1 完成：P1-requirements.md（30 BDD，连续；risk=medium，domains=[frontend]，packages=[peekview-frontend, docs]，全 8 阶段不裁）+ P1-review.md approved（2 轮评审闭合：初版 25 BDD → review#1 needs-revision（1 阻塞 + 2 需修订 + 3 建议）→ rev1 修订（BDD-12 拆分 + 新增 BDD-13 再发一个/BDD-19 slug 校验/BDD-21 可选字段/BDD-25·26 拆分/BDD-29 视觉呈现）30 BDD → review#2 approved）。核心修复：BDD-12 标题承诺"可再次发布"但 Then 未覆盖→拆分；ui_ux_dimensions 声明"视觉呈现"无对应 BDD→补 BDD-29 对齐。同类扫描 9 类符号 + P0 时效性无漂移已落正文。check-gate P1 exit 2'
