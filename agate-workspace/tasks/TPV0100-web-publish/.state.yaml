@@ -1,9 +1,9 @@
-phase: P1
+phase: P2
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-01T22:30:00Z'
+updated: '2026-10-01T23:15:00Z'
 judge:
   enabled: true
 retries:
@@ -12,8 +12,14 @@ retries:
     failure_mode: quality
     prompt_changed: true
     adjustment: null
+  P2:
+  - round: 1
+    failure_mode: quality
+    prompt_changed: true
+    adjustment: null
 retry_count:
   P1: 1
+  P2: 1
 history:
 - phase: P0
   action: created
@@ -27,3 +33,7 @@ history:
   action: completed
   ts: '2026-10-01T22:30:00Z'
   note: 'P1 完成：P1-requirements.md（30 BDD，连续；risk=medium，domains=[frontend]，packages=[peekview-frontend, docs]，全 8 阶段不裁）+ P1-review.md approved（2 轮评审闭合：初版 25 BDD → review#1 needs-revision（1 阻塞 + 2 需修订 + 3 建议）→ rev1 修订（BDD-12 拆分 + 新增 BDD-13 再发一个/BDD-19 slug 校验/BDD-21 可选字段/BDD-25·26 拆分/BDD-29 视觉呈现）30 BDD → review#2 approved）。核心修复：BDD-12 标题承诺"可再次发布"但 Then 未覆盖→拆分；ui_ux_dimensions 声明"视觉呈现"无对应 BDD→补 BDD-29 对齐。同类扫描 9 类符号 + P0 时效性无漂移已落正文。check-gate P1 exit 2'
+- phase: P2
+  action: completed
+  ts: '2026-10-01T23:15:00Z'
+  note: 'P2 完成：P2-design.md（2 架构候选 + 三组 UI 维度候选各 ≥2；影响面梳理改/不改/风险；UI 设计节 layout 三组 checklist；gate_commands 实读 Makefile 固化；minimal_validation 实做——debug :8888 curl 实测 POST 契约与幂等 + JS 端口对齐后端 is_binary_content 8 样本；[SCOPE+]×2：错误体形状 error.message、响应 url 非当前源）+ P2-review.md approved（C8: domains=[frontend] → plan-design-review；2 轮评审：rev 初版 72/100 needs-revision（≥2 UI 候选缺失 + 组件契约/a11y/422 渲染三缺口）→ rev1 补 §2.x UI 候选/§4.10 组件契约（fileErrors 改 fileId）/§3.4 a11y 契约/§4.6 422 detail 渲染口径/视觉移动端细化/I-6 slug 提示 → 复评 91/100 approved）。主 Agent 评审后修正 gate_commands.P3 → make test-frontend + P3_formatter=vitest.sh，消除 check-gate 假阳性 WARNING。check-gate P2 exit 2'

@@ -1,0 +1,75 @@
+# P2-progress — TPV0100 (architect)
+
+- [read] P2-dispatch-context-architect.md — done
+- [read] architect.md role — done
+- [next] read P1-requirements.md / P0-brief.md / spec V1.1
+- [read] P0-brief.md — done
+- [read] spec V1.1 — done (§6.3 module table / §6.5 idempotency / §3.2 limits)
+- [next] read frontend client.ts / router.ts / UserMenu.vue / EntryListView.vue
+- [read] client.ts — axios withCredentials:true (L13); no createEntry; transformEntry pattern
+- [read] router.ts — beforeEach L97-114 static path guards; routes L6-65
+- [read] UserMenu.vue — dropdown L9-13, data-testid pattern
+- [read] EntryListView.vue — props.owner L299, toolbar L8-12, authState gate
+- [next] backend models.py CreateEntryRequest/FileCreate, entry_service input, config limits
+- [read] backend: FileCreate(path≤500,filename≤255)/CreateEntryRequest(summary min1 max500, slug≤64, idempotency_key≤128)/CreateEntryResponse
+- [read] config_router.py /limits → 6 fields exact; slug regex ^[a-z0-9_-]+$; is_binary_content: NUL→binary else strict utf-8
+- [read] package.json scripts: test=vitest(watch), build=vue-tsc && vite build; Makefile test-frontend=vitest run, typecheck=vue-tsc --noEmit, test-quick, debug-test(E2E_SPEC)
+- [next] minimal_validation: start debug :8888 (bg job) + curl content/content_base64 + JS is_binary port test
+- [cmd] ( make debug-start; sleep 3600 ) — bg job, expect ~40s startup
+- [minimal_validation-1] JS is_binary port matches backend on 8 samples (ALL_PASS); base64 inflation 1.333x confirmed
+- [cmd] make debug-seed (expect ~10s); then curl POST /api/v1/entries content + content_base64 with alice login cookie
+- [minimal_validation-2] curl: 201 text(content,lang=text,is_binary=false) + binary(content_base64,lang=null,is_binary=true); idempotent re-POST=200; raw anon=200; invalid slug=400
+- [FINDING] error body shape = {"error":{"code","message"}}, NOT {"detail"} (BDD-26 wording mismatch → frontend reads error.message; flag as [SCOPE+])
+- [FINDING] response.url = server-configured base_url (config.py:161/500), not current origin → BDD-10 requires frontend build links from window.location.origin
+- [cleanup] test entry e2e-tpv0100-p2val deleted via API, GET=404
+- [next] read DESIGN.md §6 lines, then write P2-design.md
+- [read] DESIGN.md L216-217 menu text; SettingsView/ProfileTab data-testid convention
+- [cmd] make debug-stop (expect <15s)
+- [next] write P2-design.md
+- [self-check] check-frontmatter.py exit=0; check-gate P2 run (review missing expected); key sections all OK
+- [done] P2-design.md written
+## plan-design-review 进度
+- [x] 读 dispatch-context
+- [x] 读 role: plan-design-review.md
+- [x] 读 AGENTS.md / DESIGN.md / P0-brief.md
+- [x] 读 P2-design.md / P1-requirements.md
+- [ ] 读 spec
+- [ ] 实核 P2 关键声明（selector/limits/router/EntryListView/error shape）
+- [ ] 逐维度评分
+- [ ] 写 P2-review-design.md
+- [x] 读 spec V1.1
+- [x] 实核: router beforeEach 守卫惯例（/settings /stars /teams return '/'）✓
+- [x] 实核: client.ts withCredentials:true (L13) ✓
+- [x] 实核: Makefile targets test-frontend/typecheck/test-quick/debug-test 均存在，非 watch ✓
+- [x] 实核: run-e2e-tests.sh 默认 PORT=8888 + 生产 8080 拦截 ✓
+- [x] 实核: EntryListView .content-toolbar + props.owner (L300) ✓
+- [x] 实核: UserMenu 下拉三按钮（无 Publish）✓
+- [x] 实核: config/limits 6 字段 ✓；PeekError 错误体 {"error":{code,message,details}} ✓；429 {"error":{code:RATE_LIMITED}} ✓
+- [x] 实核: 无 RequestValidationError handler → 422 走 FastAPI 默认 {"detail":[...数组]}（P2 未说明数组 detail 渲染）
+- [x] 实核: SLUG_PATTERN=^[a-z0-9_-]+$，slug≤64，summary 1-500 ✓
+- [x] 实核: BaseButton 只有 disabled 无 loading/aria-busy
+- [x] 实核: 项目 aria 惯例存在于 ProfileTab/TeamsView（aria-describedby+field-error+role=alert），P2 未承接
+- [x] 实核: P2 引用的 CSS token 全部存在（--font-lg/xl/sm/xs, --radius-md, --c-error, --space-4/5 等）
+- [x] 实核: DESIGN.md §4 functional view 容器 1280px/32px padding，P2 用 720px 未说明偏离理由
+- [ ] 写 P2-review-design.md
+- [x] 写 P2-review-design.md（status: needs-revision, agent: plan-design-review）
+- [x] 验证 header + git status 无写操作
+- [PROD_NOT_TOUCHED]
+
+## architect 修复轮 rev1
+- [read] P2-review-design.md §5 补充清单 1-6 + §1 事实核验 4 项
+- [read] P2-design.md 当前全文
+- [read] 项目惯例: ProfileTab.vue(L21,106 field-error), TeamsView.vue(L34-38,117-121 aria-describedby+role=alert)
+- [read] DESIGN.md §3/§4/§8/§9/§10/§12; BaseButton(无 loading prop, slot 文案); useToast.show(msg,variant,action)
+- [read] variables.css: --font-mono L21; --transition-fast 150ms/--transition-medium 250ms; 无 350ms token → Slow 用字面 350ms
+- [read] P1 BDD-9~30 原文 + I-6/I-7 原文
+- [next] 逐条修订 P2-design.md: 新增 §2.x UI 维度候选与权衡(3组各3候选)
+- [fix1] §2.x UI 维度候选与权衡: 布局 L1/L2/L3, 结果态 R1/R2/R3, 行编辑 E1/E2/E3 (各优点/风险/工作量/选择理由) — done
+- [fix2] §4.10 逐组件契约表 (FileDropZone/PublishFileList/PublishResultPanel/错误渲染件 props+emits+状态+空态+触发) + §4.11 PublishResult 字段与构造处; fileErrors 改 Record<fileId,msg> (M8+M8 消费方)
+- [fix3] §3.4 a11y 契约 (aria-describedby/aria-invalid/role=alert/aria-busy/aria-live) + §3.2.2 焦点迁移表; 承接 ProfileTab/TeamsView 惯例
+- [fix4] §4.6 错误体形状表 400(error.message) vs 422(detail[].msg 拼接) + extractApiErrorMessage; §4.1 数据流同步
+- [fix5] §3.1.1 720px 偏离记录 / §3.1.2 tablet / §3.1.3 390 结果态+错误态 / §3.2.1 过渡 150ms / §3.3 双主题+mono+断言⑥⑦⑧
+- [fix6] §4.7.1 slug 覆盖语义提示 (I-6) + §4.3 「再发一个」内存释放 (R7)
+- [verify] check-frontmatter.py exit=0; check-gate P2 仅剩 P2-review.md 缺失(评审下游步骤,非缺陷); UI 设计节/形态声明 P1-P2 一致
+- [done] P2-design.md rev1 完成
+- [PROD_NOT_TOUCHED] 全程未起服务,只读代码/grep + 文档编辑
