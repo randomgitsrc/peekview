@@ -1,9 +1,9 @@
-phase: P2
+phase: P3
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-01T23:15:00Z'
+updated: '2026-10-01T22:55:00Z'
 judge:
   enabled: true
 retries:
@@ -37,3 +37,7 @@ history:
   action: completed
   ts: '2026-10-01T23:15:00Z'
   note: 'P2 完成：P2-design.md（2 架构候选 + 三组 UI 维度候选各 ≥2；影响面梳理改/不改/风险；UI 设计节 layout 三组 checklist；gate_commands 实读 Makefile 固化；minimal_validation 实做——debug :8888 curl 实测 POST 契约与幂等 + JS 端口对齐后端 is_binary_content 8 样本；[SCOPE+]×2：错误体形状 error.message、响应 url 非当前源）+ P2-review.md approved（C8: domains=[frontend] → plan-design-review；2 轮评审：rev 初版 72/100 needs-revision（≥2 UI 候选缺失 + 组件契约/a11y/422 渲染三缺口）→ rev1 补 §2.x UI 候选/§4.10 组件契约（fileErrors 改 fileId）/§3.4 a11y 契约/§4.6 422 detail 渲染口径/视觉移动端细化/I-6 slug 提示 → 复评 91/100 approved）。主 Agent 评审后修正 gate_commands.P3 → make test-frontend + P3_formatter=vitest.sh，消除 check-gate 假阳性 WARNING。check-gate P2 exit 2'
+- phase: P3
+  action: completed
+  ts: '2026-10-01T22:55:00Z'
+  note: 'P3 完成：P3-test-cases.md（test_code_dir=frontend-v3；30 BDD 1:1 → 12 vitest 单测 + 18 Playwright E2E 含双视口）+ 测试代码落 frontend-v3/src/__tests__/tpv0100-publish.spec.ts 与 frontend-v3/e2e/tpv0100-publish.spec.ts。check-tdd-red.py exit 0（B 类真红灯：useFileEncoding/usePublishValidation/createEntry/getLimits 未实现 → import 失败）。发现并规避内置 vitest.sh 两处 gate 基础设施缺陷（1.5MB 输出 env 传参超限 + 不识别 Vite Failed-to-resolve-import），改用任务本地 .agate/formatters/vitest-vite.sh（临时文件传输出 + Vite 形态识别 + @/ alias 归一化），平台假设扫描 0 命中。P2-design.md 的 gate_commands.P3_formatter 相应更新为 vitest-vite.sh（P3 提交前的基础设施修正）'

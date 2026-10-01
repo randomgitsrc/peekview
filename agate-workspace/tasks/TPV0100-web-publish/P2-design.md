@@ -473,8 +473,12 @@ interface PublishResult {
 gate_commands:
   # P3 红灯基线：前端单测运行器（Makefile test-frontend = npx vitest run，非 watch）。check-tdd-red.py 读取此键。
   P3: "make test-frontend"
-  # vitest 输出经内置 formatter 标准化为 JSON，供 check-tdd-red.py 判 A/B 类错误
-  P3_formatter: "vitest.sh"
+  # vitest 输出经 formatter 标准化为 JSON，供 check-tdd-red.py 判 A/B 类错误。
+  # 用项目本地 vitest-vite.sh（非内置 vitest.sh）：内置版只识别 `Cannot find module`，
+  # 不识别 Vite 的 `Failed to resolve import`——后者正是「测试 import 尚未实现的项目模块」
+  # 这一正常 TDD 红态的报错形态，会被内置版误判为 A 类。本地 formatter 经
+  # resolve_formatter 从 {task_dir}/.agate/formatters/ 解析。
+  P3_formatter: "vitest-vite.sh"
   project_module: "src/"
   # P5：前端单测紧凑模式（Makefile test-frontend = vitest run）
   P5: "make test-frontend"
@@ -604,5 +608,6 @@ env_constraints:
 | 日期 | 版本 | 变更 |
 | :--- | :--- | :--- |
 | 2026-10-01 | v1 | 初稿。基于 P1 v2（30 BDD）+ spec V1.1 + P0-brief；实读前端 7 文件/后端 5 文件；对 debug :8888 实测 POST 契约与幂等 + JS 端口对齐后端判定（8 样本）；固化 gate_commands（Makefile/package.json 实读）；2 候选方案（集中式 composable vs 单文件+路由化结果态）；含 UI 设计节与 [SCOPE+]×2 |
+| 2026-10-01 | v1.1（rev1.2） | P3 红灯确认阶段发现内置 `vitest.sh` 的两处 gate 基础设施缺陷（与本任务测试代码无关）：① 本仓 `make test-frontend` 全量输出约 1.5MB，内置版以环境变量传递输出会超 `MAX_ARG_STRLEN`（同 TPV0099 已记录的预存缺陷）；② 内置版 import-error 正则只匹配 `Cannot find module/package`，**不识别 Vite 解析器的 `Failed to resolve import`**——后者正是「测试 import 尚未实现的项目模块」这一正常 TDD 红态，会被误判为 A 类。故 `P3_formatter` 改为**任务本地** `vitest-vite.sh`（`{task_dir}/.agate/formatters/`，经 `resolve_formatter` 生效）：临时文件传输出 + 额外匹配 Vite 形态 + `@/` alias 归一化为 `src/`。改后 `check-tdd-red.py` exit 0（B 类真红灯），平台假设扫描 0 命中 |
 | 2026-10-01 | v1.1（rev1.1） | 主 Agent 修正 `gate_commands.P3`：`cd frontend-v3 && npx vitest run --reporter=dot` → `make test-frontend`（Makefile 为测试命令唯一真相源，且消除 check-gate 对首 token `cd` 的假阳性 WARNING），并将 `P3_formatter` 由空串改为内置 `vitest.sh`（vitest 输出标准化为 JSON，供 check-tdd-red.py 判 A/B 类错误）。`agate-read-gate-commands.py` 实跑确认解析为 `{"cmd": "make test-frontend", "formatter": "vitest.sh"}`，P2 gate 无 WARNING |
 | 2026-10-01 | v1.1（rev1） | 闭合 plan-design-review §5 补充清单 1–6：①新增 §2.x「UI 维度候选与权衡」（布局 L1/L2/L3、结果态 R1/R2/R3、行编辑 E1/E2/E3，各含优点/风险/工作量/选择理由，§2 架构候选与 `candidate_count: 2` 不动）；②新增 §4.10 逐组件契约表（`FileDropZone`/`PublishFileList`/`PublishResultPanel`/错误渲染件的 props/emits/内部状态/空态/触发）+ §4.11 `PublishResult` 字段与构造处；`fileErrors` 由 `Record<idx,msg>` 改为 **`Record<fileId,msg>`**（稳定 `crypto.randomUUID()`，删除行同步 `delete`，无 index 重映射）；③新增 §3.4 可访问性契约（`aria-describedby`+`aria-invalid`+`role="alert"` 三件套、`aria-busy`/`aria-live`、焦点迁移表，承接 `ProfileTab`/`TeamsView` 惯例）+ §3.2.2 焦点管理；④新增 §4.6 错误体形状表（400 `error.message` vs 422 `detail[].msg` 拼接，`extractApiErrorMessage` 统一，禁 `[object Object]`）；⑤视觉/移动端细化：§3.1.1 720px 偏离 DESIGN.md §4 记录、§3.1.2 tablet 断点、§3.1.3 结果态/错误态 390 布局、§3.2.1 过渡档（150ms）、§3.3 light/dark 双主题 + mono 场景 + 断言⑥⑦⑧；⑥§4.7.1 slug 覆盖语义 UI 提示（I-6）+ §4.3「再发一个」内存释放（R7）。**未改动**已达标项（§2 架构候选 / §4.2 幂等 / §4.4 编码 / §5 gate_commands / §1 影响面 / `[SCOPE+]` 标记） |
