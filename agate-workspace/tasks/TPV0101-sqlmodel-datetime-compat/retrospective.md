@@ -4,9 +4,11 @@ mechanism_issues:
   - "任务新增测试文件未纳入 lint 门禁面：agate P2 gate_commands 无 lint key，P5/P6/P7 全程不跑 ruff，直到 P8 发布检查才撞 make lint exit 1（已登记 DEBT0020）"
   - "check-judge-verdict.py 证据引用括号宽度鲁棒性缺口：结论行证据引用括号全角/半角不配对（开 `（` + 闭 `)`）时 regex 不匹配，整行证据被判『未被引用』exit 1，且报错不指向真因（已追加进 DEBT0018 evidence）"
   - "项目发布流程『bump-version 后 git commit --amend』会使 tag 停留在 pre-amend 提交（tag 缺 CHANGELOG 正文）——AGENTS.md 发布流程未含 tag 重指步骤（已登记 DEBT0021）"
+  - "check-retrospective.py 的 DEBT 信号代理（机制缺口检测）对本项目 task_id 约定失效：以 `task_id:` 精确匹配 .state.yaml 短 id，而 tech-debt.md 按约定写全名（TPV0101-<slug>）→ 永不命中；本任务登记 DEBT0020/0021 后脚本仍零告警"
 execution_issues:
   - "主 Agent 把『lint autofix + 两轮全量 pytest + typecheck』并入同一前台 subagent，长跑被平台中断、零改动；应拆分职责（subagent 只做编辑，长跑验证由主 Agent 执行）"
   - "P4 orchestrator-log 记『ruff 全绿』但本次自查范围未含 backend/tests/，口径与实际 make lint（ruff check peekview/ tests/）不一致"
+  - "复盘产出落在 DONE 提交而非 P8/READY 提交（P8 卡将其列入『状态与版本』清单）——无制品影响，与 TPV0100 先例一致"
 feedback_ready: true
 ---
 
@@ -43,6 +45,8 @@ feedback_ready: true
 | 3 | **发布流程 amend 后 tag 失真**：AGENTS.md 流程为「bump-version（含 commit+tag）→ 填 CHANGELOG → `git commit --amend`」，amend 重写提交后 tag 仍指向旧提交（缺 CHANGELOG 正文）；本次由主 Agent 发现并 `git tag -f` 纠正 | 机制缺口 |
 | 4 | 主 Agent 把 lint autofix 与两轮全量测试 + typecheck 并入同一**前台** subagent → 长跑被平台中断、零改动，需重派 | 执行错误 |
 | 5 | P4 orchestrator-log 记『ruff 全绿』，实际自查范围未含 `backend/tests/`，口径与 `make lint`（`ruff check peekview/ tests/`）不一致 | 执行错误 |
+| 6 | **check-retrospective.py 的 DEBT 信号代理失效**：`_scan_debt_roadmap_signal` 以 `task_id:\s*"?{tid}"?\s*$` 精确匹配 `.state.yaml` 的短 id（`TPV0101`），而 `tech-debt.md` 按项目约定写全名（`task_id: TPV0101-sqlmodel-datetime-compat`）→ 代理永不命中；本任务已登记 DEBT0020/0021 却零告警，「机制缺口检测」实际由人工判断兜底 | 机制缺口 |
+| 7 | 复盘产出落在 DONE 提交而非 P8/READY 提交（P8 卡将其列入「状态与版本」清单）；无制品影响，与 TPV0100 先例一致 | 执行错误 |
 
 ## 四、改进措施
 
@@ -51,10 +55,12 @@ feedback_ready: true
 3. **（派发纪律）** 编辑类任务与长跑验证拆分：subagent 只做代码编辑 + 秒级自检（`make lint` / `git diff --stat`），全量测试/typecheck 等长跑由主 Agent 亲自执行。落点：派发指引模板。
 4. **（项目）** P4 自查范围明确为 `ruff check backend/`（含 `tests/`），与 `make lint` 对齐。
 5. **（项目）** 发布流程补 tag 修正步骤：要么「先写 CHANGELOG 正文再 `make bump-version`」，要么在 amend 后执行 `git tag -f vX.Y.Z HEAD`。落点：`AGENTS.md` 发布流程 / `docs/process/release.md`。→ DEBT0021
+6. **（agate 上游）** `check-retrospective.py` 的 DEBT 信号匹配改为前缀/包含式（如 `task_id:\s*"?{tid}[-\w]*"?\s*$`），兼容项目常用的 `TPVxxxx-<slug>` 全名约定。落点：`agate/scripts/check-retrospective.py`。→ 计入「## agate 反馈」
 
 ## agate 反馈
 
 - **机制缺口-1（P6.5 verdict 括号宽度）**：`check-judge-verdict.py` 的引用提取仅认 ASCII 配对括号；judge 用中文全角标点书写结论行时，开闭括号宽度混用会让整行证据被判未被引用，报错信息不指向真因。TPV0100 已登记同类鲁棒性缺口（DEBT0018：路径前缀/代码块误扫），本次为其**第三例**，建议一并在角色文件明确「结论行证据引用须用 ASCII 半角括号 `(a, b)`」或让脚本容错。→ 已追加 DEBT0018 evidence。
+- **机制缺口-2（check-retrospective DEBT 信号代理失效）**：`_scan_debt_roadmap_signal` 用 `task_id:\s*"?{tid}"?\s*$` 精确匹配 `.state.yaml` 的短 id（`TPV0101`），而 `tech-debt.md` 按项目约定写全名（`task_id: TPV0101-sqlmodel-datetime-compat`）→ **永不命中**；本任务已登记 2 条债务，`check-retrospective.py` 仍零告警（EXIT 0），「机制缺口检测」实际失效（仅 roadmap 路径在小 id 行时可能命中）。建议改为前缀匹配。→ 本任务在此记录，供 `agate-feedback.py` 提取。
 - **非 agate 缺口（记录备查）**：本任务另有两处属**项目侧**（lint 门禁面、发布流程 tag 修正），已分别登记 DEBT0020 / DEBT0021，非 agate 协议本体问题。
 
 ## 技术债登记核对清单
