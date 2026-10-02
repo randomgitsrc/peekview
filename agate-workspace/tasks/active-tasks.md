@@ -34,7 +34,7 @@
 | T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
 | TPV0100 | web-publish | ✅已完成 | DONE | 🟡 | 无 | 2026-10-01 | 2026-10-02 |
-| TPV0101 | sqlmodel-datetime-compat | 🔵 进行中 | P0 | 🔴 | 无（来源 DEBT0019） | 2026-10-02 | 2026-10-02 |
+| TPV0101 | sqlmodel-datetime-compat | ✅已完成 | READY | 🔴 | 无（来源 DEBT0019） | 2026-10-02 | 2026-10-03 |
 
 ### TPV0099: 全屏模式链接（`/{slug}/f`）
 

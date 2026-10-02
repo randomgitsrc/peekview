@@ -480,9 +480,9 @@ created_at: 2026-10-02
 id: DEBT0019
 category: technical
 title: sqlmodel 0.0.47 起将裸 datetime 列映射为 tz-aware 的 UTCDateTime 并在绑定 naive 值时抛错，项目多处 naive-UTC 时间写入（Entry.archive_delete_at / User.disabled_at 等）在 CI 全新装依赖下大面积失败
-status: open
+status: closed
 priority: high
-task_id: TPV0100-web-publish
+task_id: TPV0101-sqlmodel-datetime-compat
 evidence:
   - path: backend/peekview/models.py
     note: "EntryBase.archive_delete_at (L103) 用裸 datetime 标注，但全代码库按 naive UTC 写入：backfill_archive_delete_at 用 launch_naive (database.py:755)、admin_service 用 now_naive (L158/264)、star_service._naive_utc docstring 明写 'matching the archive_delete_at storage'。列迁移 SQL 亦为 DATETIME（database.py:102）"
@@ -492,6 +492,12 @@ evidence:
   - note: "根因：sqlmodel/sql/sqltypes.py:34 UTCDateTime.process_bind_param 对 value.utcoffset() is None 抛 ValueError；sqlmodel 0.0.47 main.py:757 将裸 datetime 映射为 UTCDateTime(timezone=True)，仅 NaiveDatetime 标注映射为 DateTime(timezone=False)"
   - note: "隔离复现（/tmp/ci-repro-venv，精确匹配 CI 版本）实测失败 SQL 形态：UPDATE entries SET archive_delete_at=?, updated_at=CURRENT_TIMESTAMP ... / UPDATE users SET disabled_at=?, ... updated_at=CURRENT_TIMESTAMP ...；局部修 archive_delete_at 后暴露 disabled_at 同类问题；读路径 expires_at 比较、restore/备份恢复亦命中——缺陷面跨 Entry/User/备份/清理/star 生命周期"
   - note: "NaiveDatetime 标注在 0.0.38 会 'ValueError: has no matching SQLAlchemy type'（本地不可用），故修模型标注会破坏本地；跨版本稳定修法为显式 sa_column=Column(DateTime(timezone=False))（0.0.38 与 0.0.47 均验证通过）"
+  - path: agate-workspace/tasks/TPV0101-sqlmodel-datetime-compat/P5-test-results/unit.md
+    note: "TPV0101 关闭证据：本地 0.0.38 全量 1186 passed / 3 skipped；隔离 0.0.47（CI 等价）全量 1186 passed / 0 failed（基线 550 failed/errors）——closure_criteria #1 满足"
+  - path: agate-workspace/tasks/TPV0101-sqlmodel-datetime-compat/P6-acceptance.md
+    note: "TPV0101 关闭证据：P6 18/18 PASS（BDD-16 ORM 枚举 25 列/11 表全 DateTime(timezone=False)，无裸列）——closure_criteria #2/#4 满足"
+  - note: "criteria #3 差异说明：未把本地与 CI 钉到同一版本，以 sqlmodel 上限 <1.0.0 + 双版本（0.0.38/0.0.47）行为一致全量各自全绿按满足处理（留痕）"
+  - note: "由 TPV0101-sqlmodel-datetime-compat 关闭（2026-10-03，v0.26.1）：后端 models.py 25 列显式 naive + pyproject 依赖上限 + 守卫测试；P8 发布检查 make lint/typecheck/test-quick/0.0.47 全量全 exit 0；tag v0.26.1"
 impact: ①CI Backend Tests 长期红（自 TPV0099 起），安全网失效——真实回归无法从 CI 区分；②任何人 clone 后 pip install -e 装到新 sqlmodel 即触发大面积失败，开发体验与 onboarding 受损；③本地与 CI 依赖漂移使'本地全绿'不可信；④修法涉及 Entry/User 核心表 + 备份恢复/清理/star 生命周期，回归面广
 recommendation: ①单独立项（非本轮顺手修）：全代码库甄别时间字段存储约定（naive vs aware），统一策略后逐字段显式声明列类型（先例：sa_column=Column(DateTime(timezone=False)) 跨 sqlmodel 版本稳定）；②pyproject 为 sqlmodel 加上限或改用 UV/lock 钉住 CI 依赖版本，消除本地/CI 漂移；③补 CI 依赖版本与本地一致的检查；④先做失败面清单（38+502）→ 分组修复 → 全量回归
 closure_criteria:

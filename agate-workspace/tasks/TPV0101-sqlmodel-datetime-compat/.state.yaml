@@ -1,9 +1,9 @@
-phase: P8
+phase: READY
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-03T01:00:00Z'
+updated: '2026-10-03T02:00:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -46,4 +46,12 @@ history:
     action: completed
     ts: '2026-10-03T00:30:00Z'
     note: 'P6.5 judge 独立复核通过：status=passed / criteria 18/18（零挑验）。信息隔离白名单合规 + 证据交叉核对（verdict_evidence 23 文件全部存在非空且被引用）。首跑 check-judge-verdict exit 1（BDD-15 结论行证据引用括号全角/半角不配对 → 4 证据未被识别引用），judge 自行修正为半角配对后 exit 0；check-gate P6.5 复跑 exit 0（账本 14 行哈希链完整，judge 轮次×1）。commit e390b9a2（phase 保持 P6）。'
+  - phase: P7
+    action: completed
+    ts: '2026-10-03T01:00:00Z'
+    note: 'P7 一致性检查通过：BLOCKER=0 / DEVIATION-CRITICAL=0 / DESIGN_GAP 0 条（P4 确无声明）/ SCOPE+ 闭环（0 增补）/ CODE-MAP 机制未采用 / decisions 目录不存在无待落决策。跨文件一致性引源文件节名（P1 BDD 18 ↔ P6 pass 18；P2 packages[peekview] ↔ P4 实现路径）。check-gate P7 exit 0。commit abebbfe9。'
+  - phase: P8
+    action: completed
+    ts: '2026-10-03T02:00:00Z'
+    note: 'P8 发布准备完成：bump_type=patch，peekview 0.26.0→0.26.1（mcp_server 0.12.0 不 bump）；make bump-version 提交 8450d044 + tag v0.26.1（amend 后 tag 已重指 HEAD 含 CHANGELOG 正文）；CHANGELOG [Unreleased]→[0.26.1]。发布检查全 exit 0：make lint / make check-version / make check-changelog / make test-quick（1186 passed/3 skipped）/ 0.0.47 全量（CI 等价，0 failed）/ make typecheck。P8 发布阻断：make lint 首跑 exit 1（4 个本任务新增测试文件 lint 错误）→ 派 implementer ruff autofix → 复跑全绿（详见 P8-gate-diagnosis.md）。audit7=reuse_blocked → 已按卡重跑 P5 gate_commands 双环境全量。check-gate P8 exit 2。DEBT0019 已 closed（附 P5/P6 证据）。'
 p5_pass_commit: 14ca829a24f6bd5afc7947530a489dccac154128
