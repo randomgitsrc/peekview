@@ -413,7 +413,7 @@ pre-publish: clean build dev check-version check-changelog test verify-wheel
 	@echo ""
 	@echo "Ready to publish with: make publish"
 
-# Full publish pipeline (uses build-fast to save time after pre-publish)
+# Publish pipeline: 校验 wheel 版本与 VERSIONS.json 一致 → 最终检查 → 上传该版本 wheel
 publish:
 	@echo "→ Step 1/4: 检查静态文件是否已构建..."
 	@if [ ! -f "backend/peekview/static/index.html" ]; then \
@@ -426,15 +426,34 @@ publish:
 		exit 1; \
 	fi
 	@echo "  ✓ 静态文件已构建"
-	@echo "→ Step 2/4: 检查 wheel 是否存在..."
-	@if [ ! -f "backend/dist/peekview-*.whl" ]; then \
-		echo "→ No wheel found, building..."; \
-		make build; \
+	@echo "→ Step 2/4: 校验 wheel 与当前版本是否一致..."
+	@VER=$$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['peekview'])"); \
+	WHEEL="backend/dist/peekview-$$VER-py3-none-any.whl"; \
+	if [ ! -f "$$WHEEL" ]; then \
+		echo "  → 未找到当前版本 wheel ($$WHEEL)，构建中 (build-fast)..."; \
+		$(MAKE) build-fast; \
+	else \
+		echo "  ✓ 已有当前版本 wheel: $$WHEEL"; \
 	fi
 	@echo "→ Step 3/4: 运行最终检查..."
-	@make check-version check-changelog verify-wheel
+	@$(MAKE) check-version check-changelog verify-wheel
+	@VER=$$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['peekview'])"); \
+	WHEEL="backend/dist/peekview-$$VER-py3-none-any.whl"; \
+	if [ ! -f "$$WHEEL" ]; then \
+		echo "✗ Error: 待发布 wheel 不存在: $$WHEEL"; exit 1; \
+	fi; \
+	EXTRA=$$(ls backend/dist/*.whl 2>/dev/null | grep -vF "$$WHEEL" || true); \
+	if [ -n "$$EXTRA" ]; then \
+		echo "✗ Error: backend/dist/ 含非当前版本的 wheel（会被一并上传）:"; \
+		echo "$$EXTRA"; \
+		echo "  解决：make build-backend（清理 dist 并按当前版本重建）"; \
+		exit 1; \
+	fi; \
+	echo "  ✓ wheel 版本一致: $$WHEEL"
 	@echo "→ Step 4/4: 发布到 PyPI (filtering ANSI escape codes)..."
 	@set -o pipefail; \
+	VER=$$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['peekview'])"); \
+	WHEEL="peekview-$$VER-py3-none-any.whl"; \
 	TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
@@ -454,7 +473,7 @@ publish:
 	fi; \
 	# 注意：以下仅适用于 publish 的 twine upload（用 \r 覆盖同一行做进度条）。 \
 	# sed 删 ANSI 码并将 \r 转 \n，让进度数字可见。不适用于其他命令。 \
-	cd backend && pipx run twine upload dist/* \
+	cd backend && pipx run twine upload "$$WHEEL" \
 		-u __token__ -p "$$TOKEN" --non-interactive 2>&1 \
 		| sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r/\n/g'
 	@echo ""
