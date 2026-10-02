@@ -56,3 +56,31 @@ feedback_ready: true
 - **机制缺口-2（P6-evidence 外证据形态）**：vision-reports/ 等目录在 P6-evidence/ 之外，无规定引用形式。建议补 `../` 相对路径约定并在角色文件举例。
 - **机制缺口-3（行首预判扫描误报）**：`_check_prediction` 扫全文（排除 AGATE_CARD/frontmatter）但未排除代码块；dispatch-context 的格式示例天然含 `- PASS`/`- FAIL` 示例行。建议排除 fenced code block。
 - **机制缺口-4（P3 schema 核对）**：P3 无"断言字段须存在于后端响应模型"的检查，导致必败红灯直通 P4。建议 P3 卡加该检查项（可比对 `models.py` 响应类字段集）。
+
+## 技术债登记核对清单
+
+| 机制 | 应该触发？ | 实际触发？ | 未触发后果 | 原因 |
+|------|-----------|-----------|-----------|------|
+| retry 记录 | 是 | ✅ | — | P1/P2 各 1 次（`.state.yaml retries`）；P6.5 首次 gate 不通过未计 retry（机械修正非质量失败） |
+| PAUSED | 否 | — | — | 无 retry 超限、无不可逆操作 |
+| PROD_TOUCHED | 否 | ✅ | — | `[PROD_NOT_TOUCHED]`（:8080 全程不可达、~/.peekview/ 只读） |
+| SCOPE+ | 是 | ✅ | — | P2 §9 两处（R3 错误体形状 / R4 结果态链接源），已在 P2/P4 吸收未新增 BDD |
+| SCOPE_RESOLVED | 否 | — | — | P2 的 `[SCOPE+]` 为行内标注，不匹配 `check-scope-resolved.py` 行首正则 → 无闭环要求（见机制缺口-2） |
+| DESIGN_GAP | 是 | ✅ | — | P4 声 3 条（§2.5 limits / §2.6 UserMenu / §4 BDD-22） |
+| DESIGN_GAP_REVIEWED | 是 | ✅ | — | P7 全部转抄 + 配对（3/3），gate exit 0 |
+| NEED_CONFIRM | 否 | — | — | P6 无"实跑与 BDD 偏差" |
+| CAPABILITY_GAP | 否 | — | — | P1 vision/browser 能力均 `available`，P6 实调成功 |
+| gate 验证（每阶段） | 是 | ✅ | — | P1 exit2 / P2 exit2 / P3 exit0 / P4 exit0 / P5 exit2 / P6 exit0+证据0+溯源0 / P6.5 exit0 / P7 exit0 / P8 exit2 |
+| 阶段产出文件（每阶段） | 是 | ✅ | — | 每阶段均有对应产出文件落盘 |
+| .state.yaml phase 同步 | 是 | ✅ | — | P0→DONE 全程同步，phase=产出同 commit |
+| 裁剪条件 + override | 否 | — | — | 全 8 阶段不裁 |
+| capability_requirements | 是 | ✅ | — | P1 声明 visual-vision + browser-automation（available） |
+| 分阶段落盘（防 subagent 空返回） | 是 | ✅ | — | 各 subagent 写 `P{N}-progress.md`；P4/P6 均有 |
+| phase-产出一致性 | 是 | ✅ | — | pre-commit hook 校验；GATE SKIP 均为非产出文件预期态 |
+| P6 evidence（含截图 + 引用 + vision YAML） | 是 | ✅ | — | 70 证据文件（37 截图 + 30 assert + 3 日志）+ 28 vision YAML；5 组相似截图含人工复核记录放行 |
+| P2 候选方案 + 权衡（≥2） | 是 | ✅ | — | 2 架构候选 + 三组 UI 维度候选各 ≥2 |
+| P8 internal_only_reason | 否 | — | — | 非 internal-only（对用户可见） |
+| dispatch-context.md | 是 | ✅ | — | P1–P8 + P6.5 各角色独立 dispatch-context + AGATE_CARD 注入 |
+| pre-commit hook（gate / 状态转移 / 裁剪） | 是 | ✅ | — | 每次 commit 触发；P8 bump commit 触发暂存面审查 |
+| CI backstop | 是 | ❌ | push 未执行（沙箱无外网）→ CI 未跑 | 环境限制，非执行错误；联网后 push 即触发 |
+| **技术债登记** | 是 | ✅ | — | **DEBT0018**（P6.5 judge 证据路径/预判扫描鲁棒性，protocol，medium）；另有本任务命中上游既有债 DEBT0014（vitest formatter，已规避） |
