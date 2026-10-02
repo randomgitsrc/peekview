@@ -33,3 +33,11 @@
   - **全量**：本地 0.0.38 = 0 failed（exit 0）；隔离 0.0.47 = **0 failed（exit 0）** ← 基线对比：还原改动后 0.0.47 全量 = 550 failed/errors（即 CI 原失败面）；证明修复真实生效
   - ruff 全绿；无新增注释；archive_delete_at description 保留
   - 过程中遇到 test_cli_remote.py::TestCLIRemoteDelete::test_delete_entry 偶发失败（integration 测试起 :18888 server，全量并行下端口/时序 flake）——单独/复跑均通过，且基线同样命中，非本改动引入
+
+- GATE PASS（2026-10-02）：P5 技术验证通过（verifier external-output-gate）——4 个 gate_commands key 全 exit 0 / 0 failed；本地全量(0.0.38)=1186 passed；隔离全量(0.0.47, CI 等价)=1186 passed；N5 签名 count=6；fail-list.txt 空；[PROD_NOT_TOUCHED]。commit 28a2b16b；check-gate P5 exit 2。
+- GATE PASS（2026-10-02）：P6 验收通过（refactor 回归口径三段式）——P6-acceptance.md pass=18 / fail=0 / regression_pass=true；P6-evidence/ 23 文件（regression.log 尾行 EXIT_CODE: 0）；BDD-15 注入漂移端到端实测；BDD-18 [PROD_NOT_TOUCHED]。四道 gate 全过（format/check-gate/evidence/provenance）。commit ba27b2ee。
+- GATE FAIL→FIX（2026-10-03）：P6.5 judge 首跑 check-judge-verdict **exit 1**——BDD-15 结论行证据引用**开括号全角 `（` / 闭括号半角 `)` 不配对**，gate 仅认半角 `(...)` 逗号分隔路径 → 4 个证据（bdd_15_*）被判「未被引用」。回派 judge（**作者自修**，非主 Agent 代改）修正为半角配对；复跑 exit 0（status=passed, criteria 18/18；账本 14 行哈希链完整）。
+- GATE PASS（2026-10-03）：P6.5 judge 复核通过——status=passed / criteria 18/18（零挑验），信息隔离白名单合规 + 证据交叉核对（verdict_evidence 23 文件存在非空且被引用）。commit e390b9a2（phase 保持 P6）。
+- GATE PASS（2026-10-03）：P7 一致性检查通过——BLOCKER=0 / DEVIATION-CRITICAL=0 / DESIGN_GAP 0 条（P4 确无声明）/ SCOPE+ 闭环（0 增补）/ CODE-MAP 机制未采用 / decisions 目录不存在无待落决策。跨文件一致性（P1 BDD 18 ↔ P6 pass 18、P2 packages[peekview] ↔ P4 实现路径）均引源文件节名。check-gate P7 exit 0，pre-commit 钩子亦报「GATE P7 (TPV0101): 通过」。commit abebbfe9。
+- GATE FAIL→FIX（2026-10-03）：P8 发布检查 `make lint` **exit 1**——4 个本任务新增测试文件引入的机械 lint 错误（3×F401 未用 import + 1×I001 import 排序）。根因：`make lint` 不在 P2 gate_commands（P5 全为 pytest），CI 亦不含 ruff，故 agate gate 链未捕获；但 AGENTS.md 铁律 #10 强制 lint/typecheck 全绿。处置：派 backend implementer 仅做 ruff autofix（attempt 1 因把两轮全量测试并入同一前台 subagent 被平台中断、零改动；attempt 2 拆分为「subagent 只 autofix + make lint」成功）。主 Agent 独立复跑：make lint exit 0 / 本地 0.0.38 全量 exit 0（1186 passed/3 skipped）/ 0.0.47 全量 exit 0（0 FAILED，100%）/ make typecheck exit 0。详见 P8-gate-diagnosis.md。因代码有变，P5 证据不走复用路径、已重跑两环境全量。
+- NEXT（2026-10-03）：P8 收尾——CHANGELOG [Unreleased]→[0.26.1]（主 Agent）→ make bump-version NEW_VERSION=0.26.1（commit + tag v0.26.1）→ check-gate P8 → READY 收尾（.agate-tmp / 临时资源 / 生产未触碰）→ phase READY commit → phase DONE commit。

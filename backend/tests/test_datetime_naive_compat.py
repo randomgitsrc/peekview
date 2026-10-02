@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import DateTime
 from sqlalchemy.sql.type_api import TypeDecorator, TypeEngine
-from sqlmodel import Session, SQLModel, select
+from sqlmodel import Session, select
 
 from peekview.models import (
     ApiKey,
@@ -37,8 +37,6 @@ from peekview.models import (
     EntryStar,
     EntryTombstone,
     File,
-    Team,
-    TeamMember,
     User,
 )
 

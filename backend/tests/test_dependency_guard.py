@@ -13,12 +13,12 @@ so it can be run non-destructively. The full end-to-end injection (editing
 pyproject.toml, re-running, restoring) is performed manually in P6.
 """
 
-import tomllib
 from pathlib import Path
 
+import sqlmodel
+import tomllib
 from packaging.requirements import Requirement
 from packaging.version import Version
-import sqlmodel
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 PYPROJECT_TOML = BACKEND_DIR / "pyproject.toml"
