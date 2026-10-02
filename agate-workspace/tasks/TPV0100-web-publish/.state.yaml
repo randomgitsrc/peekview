@@ -54,3 +54,7 @@ history:
   action: completed
   ts: '2026-10-02T14:10:00Z'
   note: 'P6 验收完成（verifier 用户视角实跑）：P6-acceptance.md 30/30 PASS 0 FAIL（ui_affected=true）。P6-evidence/ 70 文件（37 截图 + 30 assert JSON + 3 日志）+ vision-reports/ 28 YAML（全 blocker_count=0；BDD-11/30 为断言类无 vision 引用属正确）。E2E 40 passed / 单测 1364 passed 均 exit 0（独立实跑）。post-test 残留检查：首轮失败遗留 1 条 nuwttl 已 API 清理，复查 0 残留。[PROD_NOT_TOUCHED]。check-gate P6 exit 2 / check-p6-evidence exit 0（5 组高度相似截图含人工复核记录放行）/ check-p6-provenance exit 0（e2e.log/unit-test.log 缺 EXIT_CODE 尾行 WARNING 不阻塞）'
+- phase: P6.5
+  action: completed
+  ts: '2026-10-02T14:35:00Z'
+  note: 'P6.5 judge 独立复核通过（fresh context，白名单输入隔离）：P6.5-judge-verdict.md status=passed, criteria 30/30，逐条重验全部 BDD（含 P6 已判 PASS 项，零挑验）。主 Agent 修正 judge 产出的 verdict_evidence 路径形态（去 P6-evidence/ 前缀；vision-reports 改 ../vision-reports/ 相对路径）+ 修正自身 dispatch-context 内格式示例的行首预判（去掉 - 前缀），重跑 check-gate P6.5 exit 0（check-judge-verdict + check-events 双通过，judge 轮次×1）。phase 保持 P6，随 P7 commit 推进'
