@@ -1,9 +1,9 @@
-phase: READY
+phase: DONE
 task_id: TPV0100
 task_name: web-publish
-status: in_progress
+status: done
 created: 2026-10-01
-updated: '2026-10-02T15:35:00Z'
+updated: '2026-10-02T15:50:00Z'
 p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
@@ -70,3 +70,7 @@ history:
   action: completed
   ts: '2026-10-02T15:35:00Z'
   note: 'READY 收尾检查：debug :8888 已停（make debug-stop；ss -ltn 端口已释放、无 uvicorn 8888 进程）；/tmp/peekview-debug/ + .pid + /tmp/e2e-results/ 已清；.agate-tmp/ 已清空（含 pv-cookies.txt 明文凭证，已删）。VERSIONS.json peekview=0.26.0 = frontend-v3/package.json = backend/pyproject.toml 三处一致；mcp_server 保持 0.12.0 不动；tag v0.26.0 已建。提交前暂存面审查：bump commit 035feccd 共 13 文件，无临时/敏感路径。[PROD_NOT_TOUCHED]（:8080 pipx 用户服务全程未触碰、~/.peekview/ 只读未写入）。生产升级 pipx upgrade + systemctl restart 属人工步骤，未执行。**待办**：git push + git push origin v0.26.0；make publish（PyPI）'
+- phase: DONE
+  action: completed
+  ts: '2026-10-02T15:50:00Z'
+  note: 'TPV0100 终态 DONE：网页发布入口（登录用户 /publish 上传文件发布 entry，后端零改动）已交付并发布 v0.26.0（peekview minor 0.25.0→0.26.0；mcp_server 保持 0.12.0）。P1–P8 全阶段走完 + P6.5 judge 独立复核 30/30。30 条 BDD 全绿（前端 1364 / 后端 1173 / typecheck / E2E 40）。复盘 retrospective.md（4 条机制缺口 + 5 条 agate 反馈）+ 登记 DEBT0018（P6.5 judge 证据路径/预判扫描鲁棒性缺口，protocol，medium）。**待人工**：git push + git push origin v0.26.0；make publish（PyPI）；生产升级 pipx upgrade peekview && sudo systemctl restart peekview'

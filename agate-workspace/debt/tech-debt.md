@@ -442,3 +442,33 @@ created_at: 2026-09-29
 ```
 
 > **登记理由（主 Agent，2026-09-29）**：命中登记判据 2（"不修会让未来变更更贵/更危险"），且**后果不可逆**（凭证入 git 历史需重写历史）。**性质**：`category: protocol`——缺陷在 agate 上游命令模板（`bump-version` 属协议/项目模板层）。**本任务已做项目侧缓解**（`.gitignore` 新增 `.agate-tmp/`），但**未改协议本体**。**优先级 high**：与其余 protocol 债不同，本条的失败模式是"静默泄漏"，无 gate 会在泄漏前提示。
+
+
+## DEBT0018
+
+```yaml
+id: DEBT0018
+category: protocol
+title: check-judge-verdict.py 证据引用路径形态与行首预判扫描的鲁棒性缺口——P6.5 judge 产出高概率机械失败（TPV0100 实测两处）
+status: open
+priority: medium
+task_id: TPV0100-web-publish
+evidence:
+  - path: agate/scripts/check-judge-verdict.py
+    note: "_evidence_md5_dedup 以 os.path.join(evidence_dir, ref) 解析证据引用，evidence_dir 已是 .../P6-evidence；judge 若按直觉写 P6-evidence/assert-bdd-1.json 前缀 → 路径重复 → 判'引用不存在' exit 1（TPV0100 实测首次 P6.5 gate exit 1）"
+  - path: agate/assets/review-roles/judge.md
+    note: "角色文件只说'引用须在 verdict_evidence 清单内且指向真实存在、非空的证据文件'，未声明引用相对何目录解析，也未规定 P6-evidence/ 外证据（如 vision-reports/）的引用形式"
+  - note: "TPV0100 的 vision YAML 落任务根 vision-reports/（P6-evidence/ 之外），无法以 P6-evidence/ 相对路径表达；改用 ../vision-reports/bdd-NN.yaml 方通过——该形态无任何文档依据"
+  - path: agate/scripts/check-judge-verdict.py
+    note: "_check_prediction 扫全文行首 `- (PASS|FAIL)`（仅排除 AGATE_CARD/frontmatter，未排除 fenced code block）；P6.5-dispatch-context-judge.md 内的结论行**格式示例** `- PASS BDD-1: {描述}` 被误判为验收结论预判（TPV0100 实测 gate 报'含 2 处行首验收结论预判' exit 1）"
+impact: ①每有 P6.5 judge 的任务，judge 或主 Agent 若按直觉书写证据路径/示例行，必然机械失败并多耗一轮修正——非确定性、位置依赖的摩擦；②dispatch-context 的格式示例（模板化产物）天然含 `- PASS`/`- FAIL` 示例行，是对扫描器的系统性误报源
+recommendation: ①judge.md 显式声明 verdict_evidence 引用**相对 P6-evidence/ 解析**，并给出 P6-evidence/ 外证据的 `../<dir>/<file>` 约定与示例；②check-judge-verdict.py 对已知前缀（`P6-evidence/`）做容错剥离，或改用"任一基准可解析"的宽松匹配；③_check_prediction 排除 fenced code block（复用 AGATE_CARD/frontmatter 的双排除模式）
+closure_criteria:
+  - judge 角色文件明确规定 verdict_evidence 引用的解析基准与外置目录引用形式
+  - check-judge-verdict.py 对证据路径前缀歧义有容错或明确报错定位
+  - _check_prediction 不再把 dispatch-context 代码块内的格式示例误判为预判
+source: retrospective
+created_at: 2026-10-02
+```
+
+> **登记理由（主 Agent，2026-10-02）**：命中登记判据 2（"不修会让未来变更更贵"）。属性为 `category: protocol`——缺陷在 agate 上游脚本（`check-judge-verdict.py`）与角色文件（`judge.md`）的契约约定。**本任务已做任务侧绕过**（主 Agent 机械修正 judge 产出的路径前缀 + 改写自身 dispatch-context 的示例行为无前缀），但**未改协议本体**。非 high：失败是"阻断 + 可机械修正"，无静默错误/不可逆后果；但**复现率高**（任何 P6.5 任务都可能命中），故记 medium。
