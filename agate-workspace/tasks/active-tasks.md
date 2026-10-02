@@ -33,7 +33,7 @@
 | T084 | detail-scroll-architecture | ✅已完成 | DONE | 🟠 | 无 | 2026-07-31 | 2026-08-01 |
 | T086 | admin-settings-consolidation | ✅已完成 | DONE | 🟡 | T080✅ | 2026-08-06 | 2026-08-07 |
 | T087 | code-linenumber-offbyone | ✅已完成 | DONE | 🟠 | 无 | 2026-08-06 | 2026-08-07 |
-| TPV0100 | web-publish | ✅已完成 | READY | 🟡 | 无 | 2026-10-01 | 2026-10-02 |
+| TPV0100 | web-publish | ✅已完成 | DONE | 🟡 | 无 | 2026-10-01 | 2026-10-02 |
 
 ### TPV0099: 全屏模式链接（`/{slug}/f`）
 
