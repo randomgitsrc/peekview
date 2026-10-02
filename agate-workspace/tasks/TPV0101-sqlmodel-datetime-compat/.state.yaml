@@ -1,9 +1,9 @@
-phase: P6
+phase: P7
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-03T00:10:00Z'
+updated: '2026-10-03T00:30:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -42,4 +42,8 @@ history:
     action: completed
     ts: '2026-10-03T00:10:00Z'
     note: 'P6 验收通过（refactor 回归口径三段式）：P6-acceptance.md pass=18 / fail=0 / regression_pass=true；P6-evidence/ 23 文件（regression.log 尾行 EXIT_CODE: 0）。BDD-15 注入漂移真实端到端实测（改 pyproject→守卫 exit 1→恢复→exit 0，git diff 空）；BDD-18 [PROD_NOT_TOUCHED]。四道 gate 全过：check-p6-format exit 0 / check-gate P6 exit 2(FAIL=0,18 BDD) / check-p6-evidence exit 0 / check-p6-provenance exit 0（清除 P1-revision-context-analyst.md 缺 agent 字段 WARNING：重命名为 P1-dispatch-context-analyst-revision.md 匹配跳过约定）。'
+  - phase: P6.5
+    action: completed
+    ts: '2026-10-03T00:30:00Z'
+    note: 'P6.5 judge 独立复核通过：status=passed / criteria 18/18（零挑验）。信息隔离白名单合规 + 证据交叉核对（verdict_evidence 23 文件全部存在非空且被引用）。首跑 check-judge-verdict exit 1（BDD-15 结论行证据引用括号全角/半角不配对 → 4 证据未被识别引用），judge 自行修正为半角配对后 exit 0；check-gate P6.5 复跑 exit 0（账本 14 行哈希链完整，judge 轮次×1）。commit e390b9a2（phase 保持 P6）。'
 p5_pass_commit: 14ca829a24f6bd5afc7947530a489dccac154128
