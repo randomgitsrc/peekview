@@ -461,6 +461,8 @@ evidence:
   - note: "TPV0100 的 vision YAML 落任务根 vision-reports/（P6-evidence/ 之外），无法以 P6-evidence/ 相对路径表达；改用 ../vision-reports/bdd-NN.yaml 方通过——该形态无任何文档依据"
   - path: agate/scripts/check-judge-verdict.py
     note: "_check_prediction 扫全文行首 `- (PASS|FAIL)`（仅排除 AGATE_CARD/frontmatter，未排除 fenced code block）；P6.5-dispatch-context-judge.md 内的结论行**格式示例** `- PASS BDD-1: {描述}` 被误判为验收结论预判（TPV0100 实测 gate 报'含 2 处行首验收结论预判' exit 1）"
+  - path: agate/scripts/check-judge-verdict.py
+    note: "TPV0101 实测第三例：verdict 结论行证据引用**括号全角/半角不配对**（开全角 `（` + 闭半角 `)`）时，`_REF_GROUP_RE`（仅匹配 ASCII 配对括号）与全角变体均不匹配 → 该行全部证据被判『未被任何结论引用』exit 1；judge 正文用中文全角标点属自然书写，开闭混用风险高，且报错信息（未被引用）不指向真正原因（括号宽度）"
 impact: ①每有 P6.5 judge 的任务，judge 或主 Agent 若按直觉书写证据路径/示例行，必然机械失败并多耗一轮修正——非确定性、位置依赖的摩擦；②dispatch-context 的格式示例（模板化产物）天然含 `- PASS`/`- FAIL` 示例行，是对扫描器的系统性误报源
 recommendation: ①judge.md 显式声明 verdict_evidence 引用**相对 P6-evidence/ 解析**，并给出 P6-evidence/ 外证据的 `../<dir>/<file>` 约定与示例；②check-judge-verdict.py 对已知前缀（`P6-evidence/`）做容错剥离，或改用"任一基准可解析"的宽松匹配；③_check_prediction 排除 fenced code block（复用 AGATE_CARD/frontmatter 的双排除模式）
 closure_criteria:
@@ -510,3 +512,54 @@ created_at: 2026-10-02
 ```
 
 > **登记理由（主 Agent，2026-10-02）**：命中登记判据 1（"不修它，验收声明会变成假的"）—— CI Backend Tests 是项目的安全网，长期红意味着"CI 通过=可发布"的声明失真。**性质**：`category: technical`（依赖行为变更暴露的既有编码缺陷），非本任务引入（TPV0100 后端零改动，失败早于本任务）。**不在 TPV0100 修复**：①本任务已 DONE 且范围是纯前端，根因与之无关；②修复面跨 Entry/User 核心表与备份/清理/star 域，属新非平凡任务（跨子系统 + 数据语义），按 agate 规则应立项走流程，不在已完成任务里顺手改。**紧急度**：high——CI 安全网失效 + 新环境 onboarding 直接失败。
+
+## DEBT0020
+
+```yaml
+id: DEBT0020
+category: management
+title: 任务新增测试文件未纳入 lint 门禁面——agate P2 gate_commands 无 lint key，P5/P6/P7 全绿仍可能在 P8 才撞 make lint 红灯
+status: open
+priority: medium
+task_id: TPV0101-sqlmodel-datetime-compat
+evidence:
+  - path: backend/tests/test_datetime_naive_compat.py
+    note: "TPV0101 P3 新增测试文件含 3 处 F401 未用 import（SQLModel/Team/TeamMember）；同批 backend/tests/test_dependency_guard.py 含 1 处 I001 import 排序"
+  - path: agate-workspace/tasks/TPV0101-sqlmodel-datetime-compat/P2-design.md
+    note: "gate_commands 的 P3/P5/P5_ci_repro/P5_dep_guard/P5_schema_guard 全为 pytest，无 ruff/lint key → P5/P6/P7 全程不跑 lint"
+  - path: agate-workspace/tasks/TPV0101-sqlmodel-datetime-compat/P8-gate-diagnosis.md
+    note: "P8 发布检查 make lint exit 1（4 项）→ 需插一轮 ruff autofix + 双环境全量回归重跑；CI 门禁（.github/workflows/ci.yml）不含 ruff，lint 仅由 AGENTS.md 铁律 #10 强制，故 gate 链无覆盖"
+impact: 任务可在 lint 红灯状态下走完 P0–P7 全部 gate（P4 orchestrator-log 曾记『ruff 全绿』但自查范围未含 tests/），到 P8 才发现；同类漏检对未来任何新增测试文件的任务均会复现
+recommendation: ①P2-design.md 的 gate_commands 增加 lint key（如 P5_lint 执行 `backend/.venv/bin/ruff check backend/`），把 lint 纳入 P5 技术验证；②或把 ruff 纳入 CI backend job；③P4 自查范围明确为 `ruff check backend/`（含 tests/）
+closure_criteria:
+  - gate_commands（或 CI）含 lint 检查，任务在 P7 前即可发现 lint 红灯
+source: retrospective
+created_at: 2026-10-03
+```
+
+> **登记理由（主 Agent，2026-10-03）**：命中登记判据 2（"不修会让未来变更更贵"）。`category: process`——缺口在项目侧 gate_commands 的覆盖范围（非 agate 协议本体）。**本任务已就地修复**（P8 补跑 lint 并复跑双环境全量），但**门禁面本身未补**，未来新增测试文件仍会漏检，故登记待办。
+
+## DEBT0021
+
+```yaml
+id: DEBT0021
+category: management
+title: 发布流程「bump-version 后 git commit --amend」使 tag 停留在 pre-amend 提交——tag 指向的提交缺少 CHANGELOG 正文
+status: open
+priority: medium
+task_id: TPV0101-sqlmodel-datetime-compat
+evidence:
+  - path: Makefile
+    note: "`make bump-version` 内部完成 sync_versions + build-frontend-fast + git add -A + commit + `git tag vX.Y.Z`（第 5 步）；此时提交仅含 CHANGELOG 版本节标题（sync_versions.ensure_changelog 插入），正文尚未填"
+  - path: AGENTS.md
+    note: "发布流程写明『填 CHANGELOG（bump 后必须做）→ git add CHANGELOG.md && git commit --amend --no-edit』——amend 重写提交后 tag 仍指向旧提交（缺 CHANGELOG 正文），流程未含 tag 重指步骤"
+  - note: "TPV0101 实测：bump 产生 tag→3f0c5bb3（CHANGELOG 正文为空）；amend 后 HEAD=8450d044（含正文）但 tag 仍指向 3f0c5bb3，须手动 `git tag -f v0.26.1 HEAD` 纠正。若未纠正并直接 push tag，远端 tag 将永久缺正文"
+impact: 按项目文档流程执行的每次发布都会产出「tag 提交缺 CHANGELOG 正文」的失真制品；若已 push 才发现，纠正需 force-push tag（影响他人）
+recommendation: 二选一：①调整流程为「先写 CHANGELOG 正文 → make bump-version（正文随 bump 提交）」，去 amend；②保留 amend 流程但在其后补 `git tag -f vX.Y.Z HEAD`，并写入 AGENTS.md / docs/process/release.md
+closure_criteria:
+  - 按文档流程发布后，tag 指向的提交含完整 CHANGELOG 版本正文（无手工纠正步骤）
+source: retrospective
+created_at: 2026-10-03
+```
+
+> **登记理由（主 Agent，2026-10-03）**：命中登记判据 1（"不修会让未来变更更贵"）。`category: management`——缺口在项目发布流程文档与 Makefile 的衔接。**本任务已就地纠正**（tag 重指 HEAD），但流程本身未补，下次发布仍会复现。

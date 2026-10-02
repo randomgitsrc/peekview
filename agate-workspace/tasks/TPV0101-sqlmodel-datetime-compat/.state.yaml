@@ -1,9 +1,9 @@
-phase: READY
+phase: DONE
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
-status: in_progress
+status: done
 created: 2026-10-02
-updated: '2026-10-03T02:00:00Z'
+updated: '2026-10-03T03:00:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -54,4 +54,12 @@ history:
     action: completed
     ts: '2026-10-03T02:00:00Z'
     note: 'P8 发布准备完成：bump_type=patch，peekview 0.26.0→0.26.1（mcp_server 0.12.0 不 bump）；make bump-version 提交 8450d044 + tag v0.26.1（amend 后 tag 已重指 HEAD 含 CHANGELOG 正文）；CHANGELOG [Unreleased]→[0.26.1]。发布检查全 exit 0：make lint / make check-version / make check-changelog / make test-quick（1186 passed/3 skipped）/ 0.0.47 全量（CI 等价，0 failed）/ make typecheck。P8 发布阻断：make lint 首跑 exit 1（4 个本任务新增测试文件 lint 错误）→ 派 implementer ruff autofix → 复跑全绿（详见 P8-gate-diagnosis.md）。audit7=reuse_blocked → 已按卡重跑 P5 gate_commands 双环境全量。check-gate P8 exit 2。DEBT0019 已 closed（附 P5/P6 证据）。'
+  - phase: READY
+    action: completed
+    ts: '2026-10-03T02:30:00Z'
+    note: 'READY 收尾：active-tasks 行置 READY；DEBT0019 closed（附 P5/P6 证据，agate-debt-check exit 0）；新建 docs/notes/lessons.md（3 条教训）；临时资源清理（/tmp/ci-repro-venv、探针脚本、debug 日志）；无调试端口 8888/8889/8890；.agate-tmp 空且 ignored；[PROD_NOT_TOUCHED]（:8080 PID 1583302 未动、DB md5 d68a32c1 未变）。commit c94f7b96。'
+  - phase: DONE
+    action: completed
+    ts: '2026-10-03T03:00:00Z'
+    note: '终态 DONE：retrospective.md（mechanism_issues 3 / execution_issues 2）；技术债登记 DEBT0020（lint 门禁面缺口）、DEBT0021（发布流程 tag 修正）、DEBT0018 追加第三例证据；active-tasks 行置 DONE。人工待办：make publish（PyPI）、pipx upgrade + sudo systemctl restart、git push（沙箱无外网）。'
 p5_pass_commit: 14ca829a24f6bd5afc7947530a489dccac154128
