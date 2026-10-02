@@ -21,3 +21,7 @@
 - 复盘（2026-10-02）：`retrospective.md` — 4 条机制缺口（P6.5 judge 证据路径基准、P6-evidence/ 外证据形态、行首预判扫描未排除代码块、P3 无后端 schema 核对）+ 5 条 agate 反馈。登记 **DEBT0018**（P6.5 judge 证据路径/预判扫描鲁棒性，protocol，medium，agate-debt-check exit 0）。
 - 终态（2026-10-02）：phase=DONE，commit `bd0592e0` + `d69c38f4`（状态列对齐）。git 工作区干净。
 - BLOCKED（2026-10-02，环境限制）：`git push` 失败（`gnutls_handshake() failed: TLS connection non-properly terminated`）——沙箱无外网（与 :8080 不可达同因）。**待人工/联网环境**：`git push && git push origin v0.26.0`；`make publish`（PyPI，不可逆）；生产升级 `pipx upgrade peekview && sudo systemctl restart peekview`（AGENTS.md 铁律要求人工）。
+- CI 结果核查（2026-10-02）：push 后 CI run 36985737250 —— Doc&Version ✅ / Frontend Build&TypeCheck ✅ / **Backend Tests (pytest) ❌ 38 failed + 502 errors**。判定：**预存失败，非 TPV0100 引入**（本任务后端零改动；TPV0099 的 CI run 36585567238/36584856939 Backend Tests 同样失败）。
+- 根因定位（主 Agent，隔离复现 /tmp/ci-repro-venv 精确匹配 CI 版本）：CI `pip install -e ".[test]"` 拉到 **sqlmodel 0.0.47 + sqlalchemy 2.0.54 + pytest 9.1.1**（本地 0.0.38/2.0.51）。sqlmodel 0.0.47 起裸 `datetime` 列映射为 **UTCDateTime(timezone=True)**，对 naive 值绑定抛 `ValueError: Datetime values must have timezone information`；项目多处 naive-UTC 写入命中（`Entry.archive_delete_at` / `User.disabled_at` / 读路径 expires_at / restore 备份）。
+- 修复范围研判：局部修 `archive_delete_at` 后暴露 `disabled_at` 同类问题；缺陷面跨 Entry/User/备份恢复/清理/star 生命周期。**判定超出"顺手修 CI"范围** → 单独立项（`category: technical`，属依赖行为变更暴露的既有编码缺陷）。
+- 决策（2026-10-02）：**不在 TPV0100 修复**（任务已 DONE 且纯前端、根因无关；修复属新非平凡任务）。已还原临时模型改动（工作区干净）+ 登记 **DEBT0019**（high，agate-debt-check exit 0）。

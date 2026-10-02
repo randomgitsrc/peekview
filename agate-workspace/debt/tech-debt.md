@@ -472,3 +472,35 @@ created_at: 2026-10-02
 ```
 
 > **登记理由（主 Agent，2026-10-02）**：命中登记判据 2（"不修会让未来变更更贵"）。属性为 `category: protocol`——缺陷在 agate 上游脚本（`check-judge-verdict.py`）与角色文件（`judge.md`）的契约约定。**本任务已做任务侧绕过**（主 Agent 机械修正 judge 产出的路径前缀 + 改写自身 dispatch-context 的示例行为无前缀），但**未改协议本体**。非 high：失败是"阻断 + 可机械修正"，无静默错误/不可逆后果；但**复现率高**（任何 P6.5 任务都可能命中），故记 medium。
+
+
+## DEBT0019
+
+```yaml
+id: DEBT0019
+category: technical
+title: sqlmodel 0.0.47 起将裸 datetime 列映射为 tz-aware 的 UTCDateTime 并在绑定 naive 值时抛错，项目多处 naive-UTC 时间写入（Entry.archive_delete_at / User.disabled_at 等）在 CI 全新装依赖下大面积失败
+status: open
+priority: high
+task_id: TPV0100-web-publish
+evidence:
+  - path: backend/peekview/models.py
+    note: "EntryBase.archive_delete_at (L103) 用裸 datetime 标注，但全代码库按 naive UTC 写入：backfill_archive_delete_at 用 launch_naive (database.py:755)、admin_service 用 now_naive (L158/264)、star_service._naive_utc docstring 明写 'matching the archive_delete_at storage'。列迁移 SQL 亦为 DATETIME（database.py:102）"
+  - path: backend/pyproject.toml
+    note: "dependencies 声明 sqlmodel>=0.0.14 无上限；CI 用 pip install -e '.[test]' 装最新 → 实测拉到 sqlmodel 0.0.47 + sqlalchemy 2.0.54 + pytest 9.1.1，本地 venv 为 0.0.38 + 2.0.51"
+  - note: "CI run 36985737250（TPV0100 push）Backend Tests 失败：38 failed + 502 errors；TPV0099 的 run 36585567238/36584856939 同样失败——属预存，非 TPV0100 引入（本任务后端零改动）"
+  - note: "根因：sqlmodel/sql/sqltypes.py:34 UTCDateTime.process_bind_param 对 value.utcoffset() is None 抛 ValueError；sqlmodel 0.0.47 main.py:757 将裸 datetime 映射为 UTCDateTime(timezone=True)，仅 NaiveDatetime 标注映射为 DateTime(timezone=False)"
+  - note: "隔离复现（/tmp/ci-repro-venv，精确匹配 CI 版本）实测失败 SQL 形态：UPDATE entries SET archive_delete_at=?, updated_at=CURRENT_TIMESTAMP ... / UPDATE users SET disabled_at=?, ... updated_at=CURRENT_TIMESTAMP ...；局部修 archive_delete_at 后暴露 disabled_at 同类问题；读路径 expires_at 比较、restore/备份恢复亦命中——缺陷面跨 Entry/User/备份/清理/star 生命周期"
+  - note: "NaiveDatetime 标注在 0.0.38 会 'ValueError: has no matching SQLAlchemy type'（本地不可用），故修模型标注会破坏本地；跨版本稳定修法为显式 sa_column=Column(DateTime(timezone=False))（0.0.38 与 0.0.47 均验证通过）"
+impact: ①CI Backend Tests 长期红（自 TPV0099 起），安全网失效——真实回归无法从 CI 区分；②任何人 clone 后 pip install -e 装到新 sqlmodel 即触发大面积失败，开发体验与 onboarding 受损；③本地与 CI 依赖漂移使'本地全绿'不可信；④修法涉及 Entry/User 核心表 + 备份恢复/清理/star 生命周期，回归面广
+recommendation: ①单独立项（非本轮顺手修）：全代码库甄别时间字段存储约定（naive vs aware），统一策略后逐字段显式声明列类型（先例：sa_column=Column(DateTime(timezone=False)) 跨 sqlmodel 版本稳定）；②pyproject 为 sqlmodel 加上限或改用 UV/lock 钉住 CI 依赖版本，消除本地/CI 漂移；③补 CI 依赖版本与本地一致的检查；④先做失败面清单（38+502）→ 分组修复 → 全量回归
+closure_criteria:
+  - CI Backend Tests 在最新 sqlmodel 下全绿（或依赖已钉住且解释一致）
+  - 全代码库时间字段存储约定统一且显式（naive 列显式 DateTime(timezone=False)，aware 列显式 timezone=True）
+  - pyproject / CI 依赖版本可控，本地与 CI 不再漂移
+  - 备份恢复/清理/star 生命周期等受影响域的回归测试通过
+source: retrospective
+created_at: 2026-10-02
+```
+
+> **登记理由（主 Agent，2026-10-02）**：命中登记判据 1（"不修它，验收声明会变成假的"）—— CI Backend Tests 是项目的安全网，长期红意味着"CI 通过=可发布"的声明失真。**性质**：`category: technical`（依赖行为变更暴露的既有编码缺陷），非本任务引入（TPV0100 后端零改动，失败早于本任务）。**不在 TPV0100 修复**：①本任务已 DONE 且范围是纯前端，根因与之无关；②修复面跨 Entry/User 核心表与备份/清理/star 域，属新非平凡任务（跨子系统 + 数据语义），按 agate 规则应立项走流程，不在已完成任务里顺手改。**紧急度**：high——CI 安全网失效 + 新环境 onboarding 直接失败。
