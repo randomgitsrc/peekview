@@ -1,9 +1,10 @@
-phase: P4
+phase: P5
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-01T23:20:00Z'
+updated: '2026-10-02T13:50:00Z'
+p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
 retries:
@@ -45,3 +46,7 @@ history:
   action: completed
   ts: '2026-10-01T23:20:00Z'
   note: 'P4 完成：13 源文件改动 + 3 测试文件修订（router/UserMenu/EntryListView/client/types/useFileEncoding/usePublishValidation/PublishView/FileDropZone/PublishFileList/PublishResultPanel/DESIGN.md；修订 UserMenu.spec/T079-entry-detail-header.spec/tpv0100 E2E）+ P4-implementation.md + P4-review.md approved（C8 domains=[frontend] → design-review，0 BLOCKER，30 BDD 全覆盖）。两条 DESIGN_GAP 主 Agent 裁决并落地：① BDD-22 端点 /raw → /entries/{slug}；② UserMenu Publish 回归 .dropdown-item（下拉 3→4 项）同步 3 测试文件。复跑 make test-frontend 1364 passed / typecheck passed / build-frontend passed / E2E 40/40 passed。后端零改动。check-gate P4 exit 0'
+- phase: P5
+  action: completed
+  ts: '2026-10-02T13:50:00Z'
+  note: 'P5 技术验证完成（verifier 外部产出）：make test-frontend = 1364 passed/0 failed；make test-quick = 1173 passed/0 failed；make typecheck = passed；E2E_SPEC=e2e/tpv0100-publish.spec.ts make debug-test = 39 passed/0 failed + 1 flaky（test_bdd_10_result_links_copyable @Mobile Chrome，首次 page.waitForSelector(#app > *) 20s 超时→重试#1 通过，第1次记录，非确定性）。全量套件已跑（非抽样）。[PROD_NOT_TOUCHED]（ss -ltn 仅 8888，无 :8080）。N5 签名校验 grep -cE 计数=2（>0 有效）。fail-list.txt 空（0 失败）。P5-test-results/ 已落盘。check-gate P5 exit 2'
