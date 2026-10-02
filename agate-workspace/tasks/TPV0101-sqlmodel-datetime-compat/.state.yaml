@@ -1,9 +1,9 @@
-phase: P3
+phase: P4
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-02T18:40:00Z'
+updated: '2026-10-02T19:20:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -30,3 +30,7 @@ history:
     action: completed
     ts: '2026-10-02T18:40:00Z'
     note: 'P3 测试设计完成（refactor 双重口径）：P3-test-cases.md（18 BDD 1:1 映射，test_code_dir=backend/tests/）+ 新增 test_datetime_naive_compat.py + test_dependency_guard.py。主 Agent 独立核验：check-tdd-red exit 0（B 类真红灯）；隔离 venv 0.0.47 = 10 failed/3 passed；本地 0.0.38 = datetime 守卫 10 passed + dependency guard 1 failed（无上限，与版本无关）；check-platform-assumptions 0 命中；check-gate P3 exit 2。修正 subagent 在 §2 BDD-4 行不准确的「0.0.38 全绿」表述。'
+  - phase: P4
+    action: completed
+    ts: '2026-10-02T19:20:00Z'
+    note: 'P4 实现完成：models.py 25 列/11 表显式 Column(DateTime(timezone=False)) + pyproject sqlmodel>=0.0.14,<1.0.0。P4-review.md approved（review，0 BLOCKER）。主 Agent 独立核验：全量套件 0.0.38 = 0 failed；0.0.47（CI 等价）= 0 failed（基线 550 failed/errors）；ORM 枚举 25 列 0 BAD。修正 P2 gate_commands.P5_schema_guard 的 -k schema→-k Bdd16（原命令收集 0 测试）。check-gate P4 exit 0。'

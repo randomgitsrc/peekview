@@ -13,7 +13,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydantic import field_validator
-from sqlalchemy import Column, ForeignKey, Index, Text, text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Text, text
 from sqlalchemy.dialects.sqlite import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -98,10 +98,17 @@ class EntryBase(SQLModel):
         default=None,
         sa_column=Column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True),
     )
-    expires_at: datetime | None = Field(default=None)
-    archived_at: datetime | None = Field(default=None)
+    expires_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
+    archived_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
     archive_delete_at: datetime | None = Field(
         default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
         description="Absolute deadline for permanent deletion of archived entries (paused while starred)",
     )
 
@@ -114,7 +121,10 @@ class UserBase(SQLModel):
     display_name: str | None = Field(default=None, max_length=64)
     is_active: bool = Field(default=True, sa_column_kwargs={"server_default": "1"})
     is_admin: bool = Field(default=False, sa_column_kwargs={"server_default": "0"})
-    disabled_at: datetime | None = Field(default=None)
+    disabled_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
     disabled_by: int | None = Field(default=None, foreign_key="users.id")
     disabled_reason: str | None = Field(default=None, max_length=500)
 
@@ -137,14 +147,20 @@ class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
     updated_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={
-            "server_default": text("CURRENT_TIMESTAMP"),
-            "onupdate": text("CURRENT_TIMESTAMP"),
-        },
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+            onupdate=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     # Relationships
@@ -177,14 +193,20 @@ class Team(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
     updated_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={
-            "server_default": text("CURRENT_TIMESTAMP"),
-            "onupdate": text("CURRENT_TIMESTAMP"),
-        },
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+            onupdate=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     def __repr__(self) -> str:
@@ -217,7 +239,11 @@ class TeamMember(SQLModel, table=True):
     )
     joined_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     def __repr__(self) -> str:
@@ -235,18 +261,30 @@ class ApiKey(SQLModel, table=True):
     name: str = Field(..., min_length=1, max_length=64)
     key_prefix: str = Field(..., max_length=8)
     key_hash: str = Field(..., max_length=64, unique=True)
-    expires_at: datetime | None = Field(default=None)
-    last_used_at: datetime | None = Field(default=None)
+    expires_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
+    last_used_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
     updated_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={
-            "server_default": text("CURRENT_TIMESTAMP"),
-            "onupdate": text("CURRENT_TIMESTAMP"),
-        },
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+            onupdate=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     # Relationships
@@ -284,14 +322,20 @@ class Entry(EntryBase, table=True):
 
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
     updated_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={
-            "server_default": text("CURRENT_TIMESTAMP"),
-            "onupdate": text("CURRENT_TIMESTAMP"),
-        },
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+            onupdate=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     # Relationships
@@ -319,15 +363,25 @@ class EntryShare(SQLModel, table=True):
     entry_id: int = Field(foreign_key="entries.id", index=True)
     token_hash: str = Field(unique=True, max_length=64, index=True)
     token_prefix: str = Field(max_length=8)
-    expires_at: datetime | None = Field(default=None)
+    expires_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
     max_views: int | None = Field(default=None, ge=1)
     view_count: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
     created_by: int = Field(foreign_key="users.id", index=True)
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
-    revoked_at: datetime | None = Field(default=None)
+    revoked_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
 
     entry: Entry | None = Relationship(back_populates="shares")
     creator: User | None = Relationship()
@@ -357,8 +411,14 @@ class EntryRead(SQLModel, table=True):
     count: int = Field(default=1)
     window_key: str = Field(unique=True, max_length=200)
     reader_fingerprint: str = Field(default="", max_length=50)
-    read_at: datetime = Field(default_factory=now_utc)
-    updated_at: datetime = Field(default_factory=now_utc)
+    read_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column=Column(DateTime(timezone=False), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column=Column(DateTime(timezone=False), nullable=False),
+    )
 
 
 class EntryStar(SQLModel, table=True):
@@ -390,7 +450,11 @@ class EntryStar(SQLModel, table=True):
     tombstone_id: int | None = Field(default=None)
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     def __repr__(self) -> str:
@@ -415,7 +479,11 @@ class EntryTombstone(SQLModel, table=True):
     deleted_by: str = Field(..., max_length=32)
     deleted_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
     reason: str = Field(default="author_deleted", max_length=32)
 
@@ -433,8 +501,14 @@ class EntryReadStats(SQLModel, table=True):
     by_channel: str = Field(default="{}", sa_column=Column(Text))
     by_source: str = Field(default="{}", sa_column=Column(Text))
     reader_fingerprints: str = Field(default="")
-    last_read_at: datetime | None = Field(default=None)
-    updated_at: datetime = Field(default_factory=now_utc)
+    last_read_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=False), nullable=True),
+    )
+    updated_at: datetime = Field(
+        default_factory=now_utc,
+        sa_column=Column(DateTime(timezone=False), nullable=False),
+    )
 
 
 class ReadStatsResponse(SQLModel):
@@ -498,7 +572,11 @@ class File(FileBase, table=True):
     entry_id: int = Field(..., foreign_key="entries.id", index=True)
     created_at: datetime = Field(
         default_factory=now_utc,
-        sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
+        sa_column=Column(
+            DateTime(timezone=False),
+            nullable=False,
+            server_default=text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     # Relationships

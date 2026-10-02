@@ -250,7 +250,7 @@ gate_commands:
   P5_dep_guard_timeout_seconds: 120
 
   # 架构适应度：模型列时区语义静态可核验（BDD-16，25 列显式声明）
-  P5_schema_guard: "backend/.venv/bin/python -m pytest backend/tests/test_datetime_naive_compat.py -q --tb=short --rootdir=backend -k schema"
+  P5_schema_guard: "backend/.venv/bin/python -m pytest backend/tests/test_datetime_naive_compat.py -q --tb=short --rootdir=backend -k Bdd16"
   P5_schema_guard_timeout_seconds: 120
 
   project_module: "peekview"

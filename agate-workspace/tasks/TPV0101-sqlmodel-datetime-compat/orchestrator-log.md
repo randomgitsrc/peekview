@@ -25,3 +25,11 @@
   - check-platform-assumptions.py 0 命中；check-gate P3 exit 2
   - 隔离性：conftest isolate_config_file（autouse，tmp_path）+ session fixture（conftest L87）；生产 DB ~/.peekview/peekview.db 未触碰；生产服务 PID 1583302 未触碰
 - GATE FAIL→FIX（2026-10-02）：subagent 在 P3-test-cases.md §2 BDD-4 行声称「新增 datetime 守卫在 0.0.38 下全绿（10/10）」**不准确**（漏了 test_dependency_guard.py 在 0.0.38 也 failed）。主 Agent 实测纠正该单元格为准确表述（datetime 守卫 10 passed + dependency guard 1 failed 无上限）。§6 红灯预期汇总表原本已准确（分文件列示），无需改。
+
+- GATE FAIL→FIX（2026-10-02）：P2 gate_commands 的 `P5_schema_guard` 键用 `-k schema` 过滤，但 P3 测试无任何用例名含 "schema" → 收集 0 测试（exit 5 = NO_TESTS_COLLECTED）。主 Agent 在 P4 自查时发现并修正为 `-k Bdd16`（BDD-16 测试类 `TestBdd16ExplicitNaiveColumns`）→ 收集 2 测试通过。属 P2 设计命令与 P3 测试命名的失配（gate_commands 命令需与实际测试名对齐）。
+- 主 Agent 独立核验 P4 实现（不信 implementer 自报）：
+  - ORM 枚举 25 列 / 11 表全 DateTime(timezone=False)，0 BAD；响应模型未改
+  - 定向：0.0.47 = 13 passed；0.0.38 = 13 passed
+  - **全量**：本地 0.0.38 = 0 failed（exit 0）；隔离 0.0.47 = **0 failed（exit 0）** ← 基线对比：还原改动后 0.0.47 全量 = 550 failed/errors（即 CI 原失败面）；证明修复真实生效
+  - ruff 全绿；无新增注释；archive_delete_at description 保留
+  - 过程中遇到 test_cli_remote.py::TestCLIRemoteDelete::test_delete_entry 偶发失败（integration 测试起 :18888 server，全量并行下端口/时序 flake）——单独/复跑均通过，且基线同样命中，非本改动引入
