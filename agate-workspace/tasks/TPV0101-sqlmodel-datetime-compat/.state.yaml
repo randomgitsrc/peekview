@@ -1,9 +1,9 @@
-phase: P5
+phase: P6
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-02T20:00:00Z'
+updated: '2026-10-03T00:10:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -38,4 +38,8 @@ history:
     action: completed
     ts: '2026-10-02T20:00:00Z'
     note: 'P5 技术验证通过（verifier external-output-gate）：4 个 gate_commands key 全 exit 0 / 0 failed。P5 本地全量(0.0.38)=1186 passed；P5_ci_repro 隔离全量(0.0.47, CI 等价)=1186 passed；P5_dep_guard=3 passed；P5_schema_guard=2 passed。N5 签名 count=6；fail-list.txt 空；[PROD_NOT_TOUCHED]。check-gate P5 exit 2。'
+  - phase: P6
+    action: completed
+    ts: '2026-10-03T00:10:00Z'
+    note: 'P6 验收通过（refactor 回归口径三段式）：P6-acceptance.md pass=18 / fail=0 / regression_pass=true；P6-evidence/ 23 文件（regression.log 尾行 EXIT_CODE: 0）。BDD-15 注入漂移真实端到端实测（改 pyproject→守卫 exit 1→恢复→exit 0，git diff 空）；BDD-18 [PROD_NOT_TOUCHED]。四道 gate 全过：check-p6-format exit 0 / check-gate P6 exit 2(FAIL=0,18 BDD) / check-p6-evidence exit 0 / check-p6-provenance exit 0（清除 P1-revision-context-analyst.md 缺 agent 字段 WARNING：重命名为 P1-dispatch-context-analyst-revision.md 匹配跳过约定）。'
 p5_pass_commit: 14ca829a24f6bd5afc7947530a489dccac154128
