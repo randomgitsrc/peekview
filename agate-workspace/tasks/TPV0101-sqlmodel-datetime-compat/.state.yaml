@@ -1,9 +1,9 @@
-phase: P1
+phase: P2
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-02T17:15:00Z'
+updated: '2026-10-02T18:00:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -22,3 +22,7 @@ history:
     action: completed
     ts: '2026-10-02T17:15:00Z'
     note: 'P1 需求基线完成：18 BDD（risk_level=high，domains=[backend]，packages=[peekview]，change_type=refactor）。retry #1（requirements-review 首轮 changes_requested M1–M4，补 aware 写入面扫描 + 修正 §2.1 三分类判定 + BDD 可二值化）→ round 2 approved（M1–M6 全部闭合）。check-gate P1 exit 2（首次 exit 1 因正文出现 NEED_CONFIRM 字样触发兜底，改措辞后通过）。'
+  - phase: P2
+    action: completed
+    ts: '2026-10-02T18:00:00Z'
+    note: 'P2 设计完成：candidate_count=3，选定方案 1（25 列显式 Column(DateTime(timezone=False)) + 依赖上限守卫）；gate_commands 含 P3 真红灯(隔离 venv 0.0.47) / P5 本地全量(0.0.38) / P5_ci_repro 隔离全量(0.0.47，CI 等价核心) / P5_dep_guard + P5_schema_guard 适应度检查。P2-review.md approved（plan-eng-review，0 BLOCKER）。check-gate P2 exit 2（首跑 4 WARNING 因 gate_commands 以 cd 开头，主 Agent 改为 --rootdir 形式消除）。'

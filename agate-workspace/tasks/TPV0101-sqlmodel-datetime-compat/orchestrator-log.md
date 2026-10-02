@@ -13,3 +13,6 @@
 
 - GATE FAIL→FIX（2026-10-02）：check-gate P1 首次 exit 1，拦「不合规 NEED_CONFIRM 标记格式」——根因是 P1-requirements.md L365 正文出现 `[NEED_CONFIRM]` **字样**（"无 `[NEED_CONFIRM]`"），触发 check-gate.py:723 兜底（检测到字样但无行首阻塞项）。修：改写措辞为"无阻塞级待确认项"（不出现字面标记）。复跑 exit 2 通过。属产出文案问题，非需求缺陷。
 - GATE PASS（2026-10-02）：P1 通过——P1-requirements.md（18 BDD）+ P1-review.md（status:approved，round 2 重审，M1–M6 全部闭合，agent=requirements-review≠main）。
+
+- GATE PASS（2026-10-02）：P2 设计通过——P2-design.md（candidate_count=3，选定方案 1：25 列显式 Column(DateTime(timezone=False)) + sqlmodel 依赖上限守卫）+ P2-review.md（status:approved，plan-eng-review，0 BLOCKER / 3 非阻塞 WARNING）。minimal_validation 双版本四路径各 8/8。check-gate P2 exit 2。
+- GATE FAIL→FIX（2026-10-02）：check-gate P2 首跑 4 条 WARNING——gate_commands 的 P5* 键以 `cd backend && ...` 开头，gate 检查首 token 为 `cd` 非可执行文件（T075 教训）。**主 Agent 主动修复**（评审未列为 BLOCKER 但属真实隐患）：改为 `backend/.venv/bin/python -m pytest backend/tests/ --rootdir=backend` 形式（首 token 可执行），实测 collect + 真实测试通过、conftest 隔离生效，复跑 WARNING 消除。
