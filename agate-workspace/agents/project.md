@@ -47,3 +47,16 @@ project_root: /home/kity/oclab/peekview
 - **`npm run test` 是 watch 模式会挂住 agent，禁止使用**；用 `make test-frontend`
 - 环境自检：启动 Task 前必须跑 `docs/process/env-check-protocol.md`（5 项全 PASS 才进 P1）
 - 预存失败登记：P5 发现预存失败时拷贝 `~/.agate/assets/templates/known-failures-template.md` 到 `agate-workspace/tasks/{Txxx}/known-failures.md`
+
+## 用户工具（提交/推送/合流）—— 优先用，勿自造流程
+
+- **`~/bin/git-to-main`**：收到「推到 main / to-main / 合到 main」时的**首选命令**（`~/bin` 不在 PATH，须按路径调用）。行为：在默认分支上 → `_ensure_committed`（必要时提交）→ `git push`；带 PR 号/功能分支时 → 等 CI → `gh pr merge --merge` → pull → 删分支。
+- **`~/bin/git-to-pr`**：从功能分支建 PR。
+- 真实脚本在 `~/lab/scripts/git-auto/`（`git-to-main` / `git-to-pr` / `git-push-lib.sh`）。
+- **不要**为这类请求再走 `finishing-a-development-branch` skill 或自拟 merge/push 步骤；直接调命令。
+- 注意：`git-to-main` 只推**分支**，不含 tag；发版后 tag 需单独 `git push origin vX.Y.Z`。
+
+## 教训（勿重犯）
+
+- **环境结论必须现场验证，禁止沿用历史会话假设**：如「沙箱无外网」——一条 `git ls-remote origin` / `gh auth status` 即可证实或证伪。先验后用，尤其在它 gate 住某个动作（push/publish）时。
+- **已 DONE 的任务做机械动作（push/合流）时不要重跑全量测试**：树的正确性已在 P5/P8 验证；除非本次动作改了代码。
