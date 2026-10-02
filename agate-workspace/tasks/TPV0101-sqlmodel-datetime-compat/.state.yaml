@@ -1,9 +1,9 @@
-phase: P2
+phase: P3
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-02T18:00:00Z'
+updated: '2026-10-02T18:40:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -26,3 +26,7 @@ history:
     action: completed
     ts: '2026-10-02T18:00:00Z'
     note: 'P2 设计完成：candidate_count=3，选定方案 1（25 列显式 Column(DateTime(timezone=False)) + 依赖上限守卫）；gate_commands 含 P3 真红灯(隔离 venv 0.0.47) / P5 本地全量(0.0.38) / P5_ci_repro 隔离全量(0.0.47，CI 等价核心) / P5_dep_guard + P5_schema_guard 适应度检查。P2-review.md approved（plan-eng-review，0 BLOCKER）。check-gate P2 exit 2（首跑 4 WARNING 因 gate_commands 以 cd 开头，主 Agent 改为 --rootdir 形式消除）。'
+  - phase: P3
+    action: completed
+    ts: '2026-10-02T18:40:00Z'
+    note: 'P3 测试设计完成（refactor 双重口径）：P3-test-cases.md（18 BDD 1:1 映射，test_code_dir=backend/tests/）+ 新增 test_datetime_naive_compat.py + test_dependency_guard.py。主 Agent 独立核验：check-tdd-red exit 0（B 类真红灯）；隔离 venv 0.0.47 = 10 failed/3 passed；本地 0.0.38 = datetime 守卫 10 passed + dependency guard 1 failed（无上限，与版本无关）；check-platform-assumptions 0 命中；check-gate P3 exit 2。修正 subagent 在 §2 BDD-4 行不准确的「0.0.38 全绿」表述。'

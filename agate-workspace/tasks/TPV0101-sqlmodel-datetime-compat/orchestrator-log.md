@@ -16,3 +16,12 @@
 
 - GATE PASS（2026-10-02）：P2 设计通过——P2-design.md（candidate_count=3，选定方案 1：25 列显式 Column(DateTime(timezone=False)) + sqlmodel 依赖上限守卫）+ P2-review.md（status:approved，plan-eng-review，0 BLOCKER / 3 非阻塞 WARNING）。minimal_validation 双版本四路径各 8/8。check-gate P2 exit 2。
 - GATE FAIL→FIX（2026-10-02）：check-gate P2 首跑 4 条 WARNING——gate_commands 的 P5* 键以 `cd backend && ...` 开头，gate 检查首 token 为 `cd` 非可执行文件（T075 教训）。**主 Agent 主动修复**（评审未列为 BLOCKER 但属真实隐患）：改为 `backend/.venv/bin/python -m pytest backend/tests/ --rootdir=backend` 形式（首 token 可执行），实测 collect + 真实测试通过、conftest 隔离生效，复跑 WARNING 消除。
+
+- GATE PASS（2026-10-02）：P3 测试设计完成——P3-test-cases.md（test_code_dir=backend/tests/，18 BDD 1:1 映射，双口径：新增守卫测试走真红灯 + 既有测试走回归覆盖）+ 新增测试文件 2 个。
+- 主 Agent 独立核验（不信 subagent 自报）：
+  - check-tdd-red.py exit 0（TDD_CHECK: red-light unexpected test failure = B 类真红灯）
+  - 隔离 venv 0.0.47 实测：10 failed / 3 passed（test_datetime_naive_compat.py 9 failed + test_dependency_guard.py 1 failed）
+  - 本地 venv 0.0.38 实测：test_datetime_naive_compat.py 10 passed；test_dependency_guard.py 1 failed（无上限，与版本无关）
+  - check-platform-assumptions.py 0 命中；check-gate P3 exit 2
+  - 隔离性：conftest isolate_config_file（autouse，tmp_path）+ session fixture（conftest L87）；生产 DB ~/.peekview/peekview.db 未触碰；生产服务 PID 1583302 未触碰
+- GATE FAIL→FIX（2026-10-02）：subagent 在 P3-test-cases.md §2 BDD-4 行声称「新增 datetime 守卫在 0.0.38 下全绿（10/10）」**不准确**（漏了 test_dependency_guard.py 在 0.0.38 也 failed）。主 Agent 实测纠正该单元格为准确表述（datetime 守卫 10 passed + dependency guard 1 failed 无上限）。§6 红灯预期汇总表原本已准确（分文件列示），无需改。
