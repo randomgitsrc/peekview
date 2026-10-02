@@ -555,10 +555,10 @@ test.describe('TPV0100 Publish 1280x800', () => {
     const actualSlug = (await page.locator(PAGE_LINK).innerText()).trim().split('/').pop()!
     cleanupQueue[cleanupQueue.length - 1] = actualSlug
 
-    const raw = await request.get(`${BASE_URL}/api/v1/entries/${actualSlug}/raw`, {
+    const res = await request.get(`${BASE_URL}/api/v1/entries/${actualSlug}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    const body = await raw.json()
+    const body = await res.json()
     expect(body.owner_id, 'BDD-22: owner_id 须等于 alice 的 id').toBeTruthy()
     if (aliceId !== null) {
       expect(body.owner_id, 'BDD-22: owner_id 须等于 alice 的 id').toBe(aliceId)

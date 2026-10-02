@@ -1,8 +1,47 @@
 import axios, { type AxiosInstance } from 'axios'
-import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult, StarItem, StarListParams, StarListResponse, CountdownInfo, Team, TeamDetail, TeamListResponse, TeamMemberRef } from '@/types'
-import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse, StarApiResponse, StarListItemResponse, StarListApiResponse, TombstoneItemResponse, CountdownResponse, RemoveStarsResponse, TeamListApiResponse, TeamDetailResponse } from './types'
+import type { Entry, EntryListResponse, ListEntriesParams, AuthResponse, User, UserListResponse, ListUsersParams, ApiKey, ApiKeyCreateResult, ShareInfo, ShareCreateResult, StarItem, StarListParams, StarListResponse, CountdownInfo, Team, TeamDetail, TeamListResponse, TeamMemberRef, PublishResult, PublishLimits } from '@/types'
+import type { EntryResponse, EntryListItemResponse, EntryListApiResponse, AuthApiResponse, UserApiResponse, UserListApiResponse, ApiKeyResponse, ApiKeyCreateResponse, ApiKeyListApiResponse, ShareResponse, ShareCreateResponse, ShareListApiResponse, StarApiResponse, StarListItemResponse, StarListApiResponse, TombstoneItemResponse, CountdownResponse, RemoveStarsResponse, TeamListApiResponse, TeamDetailResponse, CreateEntryRequestPayload, CreateEntryApiResponse, PublicLimitsApiResponse } from './types'
 
 const API_BASE = '/api/v1'
+
+export function extractApiErrorMessage(err: unknown): string {
+  const response = (err as { response?: { status?: number; data?: unknown } } | null)?.response
+  const status = response?.status
+  const data = response?.data as Record<string, unknown> | undefined
+
+  if (status === 429) {
+    return '请求过于频繁，请稍后重试'
+  }
+
+  const errorMessage = (data?.error as { message?: unknown } | undefined)?.message
+  if (typeof errorMessage === 'string' && errorMessage.trim()) {
+    return errorMessage
+  }
+
+  const detail = data?.detail as unknown
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+  if (Array.isArray(detail)) {
+    const joined = detail
+      .map((d) => {
+        const msg = (d as { msg?: unknown } | null)?.msg
+        if (typeof msg === 'string' && msg.trim()) return msg
+        try {
+          return JSON.stringify(d)
+        } catch {
+          return String(d)
+        }
+      })
+      .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+      .join('；')
+    if (joined.trim()) return joined
+  }
+
+  const fallback = (err as { message?: unknown } | null)?.message
+  if (typeof fallback === 'string' && fallback.trim()) return fallback
+  return '发布失败，请稍后重试'
+}
 
 class PeekAPI {
   private client: AxiosInstance
@@ -16,7 +55,7 @@ class PeekAPI {
       },
     })
 
-    this.client.interceptors.response.use(
+    this.client?.interceptors?.response?.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
@@ -168,6 +207,31 @@ class PeekAPI {
 
   async deleteEntry(slug: string): Promise<void> {
     await this.client.delete(`/entries/${slug}`)
+  }
+
+  async createEntry(payload: CreateEntryRequestPayload): Promise<PublishResult> {
+    const response = await this.client.post<CreateEntryApiResponse>('/entries', payload)
+    const data = response.data
+    return {
+      slug: data.slug,
+      expiresAt: data.expires_at,
+      pageLink: `${window.location.origin}/${data.slug}`,
+      rawLink: `${window.location.origin}/${data.slug}/raw`,
+      isPublic: data.is_public,
+    }
+  }
+
+  async getLimits(): Promise<PublishLimits> {
+    const response = await this.client.get<PublicLimitsApiResponse>('/config/limits')
+    const data = response.data
+    return {
+      defaultExpiresIn: data.default_expires_in,
+      maxFileSize: data.max_file_size,
+      maxEntryFiles: data.max_entry_files,
+      maxEntrySize: data.max_entry_size,
+      maxSlugLength: data.max_slug_length,
+      maxSummaryLength: data.max_summary_length,
+    }
   }
 
   async getFileContent(slug: string, fileId: number): Promise<string> {

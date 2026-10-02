@@ -217,6 +217,45 @@ export interface RemoveStarsResponse {
   removed: number
 }
 
+// Create entry API types (POST /entries)
+export interface CreateEntryFilePayload {
+  filename: string
+  path?: string
+  content?: string
+  content_base64?: string
+}
+
+export interface CreateEntryRequestPayload {
+  summary: string
+  slug?: string
+  tags?: string[]
+  is_public?: boolean
+  team_id?: string | null
+  expires_in?: string
+  files: CreateEntryFilePayload[]
+  idempotency_key?: string | null
+}
+
+export interface CreateEntryApiResponse {
+  id: number
+  slug: string
+  url: string
+  is_public: boolean
+  owner_id: number | null
+  expires_at: string | null
+  created_at: string
+  files: FileResponse[]
+}
+
+export interface PublicLimitsApiResponse {
+  default_expires_in: string
+  max_file_size: number
+  max_entry_files: number
+  max_entry_size: number
+  max_slug_length: number
+  max_summary_length: number
+}
+
 // Team API response types
 export interface TeamSummaryResponse {
   slug: string

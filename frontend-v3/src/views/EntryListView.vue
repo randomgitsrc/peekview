@@ -62,6 +62,12 @@
           </div>
         </div>
         <div class="toolbar-right">
+          <router-link
+            v-if="authState === 'authenticated' && !props.owner"
+            class="explore-publish-button"
+            data-testid="explore-publish-button"
+            to="/publish"
+          >Publish</router-link>
           <div class="explore-search">
             <SearchInput
               v-model="searchQuery"
@@ -1078,6 +1084,34 @@ onBeforeRouteUpdate((to) => {
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.explore-publish-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-lg);
+  background: var(--c-accent);
+  color: var(--text-on-accent);
+  border: 1px solid var(--c-accent);
+  box-shadow: 0 6px 20px var(--c-glow);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.explore-publish-button:hover {
+  background: var(--c-accent-secondary);
+  border-color: var(--c-accent-secondary);
+}
+
+.explore-publish-button:focus-visible {
+  outline: 2px solid var(--c-accent-secondary);
+  outline-offset: 2px;
 }
 
 .entry-panel {

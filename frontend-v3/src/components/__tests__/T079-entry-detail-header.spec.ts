@@ -181,10 +181,11 @@ describe('EntryDetailHeader — T079', () => {
       await flushPromises()
 
       const items = header.findAll('.dropdown-item')
-      expect(items.length).toBe(3)
-      expect(items[0].text()).toBe('Teams')
-      expect(items[1].text()).toBe('Settings')
-      expect(items[2].text()).toBe('Logout')
+      expect(items.length).toBe(4)
+      expect(items[0].text()).toBe('Publish')
+      expect(items[1].text()).toBe('Teams')
+      expect(items[2].text()).toBe('Settings')
+      expect(items[3].text()).toBe('Logout')
     })
   })
 
@@ -210,10 +211,11 @@ describe('EntryDetailHeader — T079', () => {
       await flushPromises()
 
       const items = mobileHeader.findAll('.dropdown-item')
-      expect(items.length).toBe(3)
-      expect(items[0].text()).toBe('Teams')
-      expect(items[1].text()).toBe('Settings')
-      expect(items[2].text()).toBe('Logout')
+      expect(items.length).toBe(4)
+      expect(items[0].text()).toBe('Publish')
+      expect(items[1].text()).toBe('Teams')
+      expect(items[2].text()).toBe('Settings')
+      expect(items[3].text()).toBe('Logout')
     })
   })
 

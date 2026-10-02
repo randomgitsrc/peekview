@@ -135,6 +135,34 @@ export interface MarkdownBlocksResult {
   headings: TocHeading[]
 }
 
+// Publish (web publish entry) types
+export interface PublishFileDraft {
+  fileId: string
+  file: globalThis.File
+  filename: string
+  size: number
+  isBinary: boolean
+  path: string
+  encoded: string
+}
+
+export interface PublishLimits {
+  defaultExpiresIn: string
+  maxFileSize: number
+  maxEntryFiles: number
+  maxEntrySize: number
+  maxSlugLength: number
+  maxSummaryLength: number
+}
+
+export interface PublishResult {
+  slug: string
+  expiresAt: string | null
+  pageLink: string
+  rawLink: string
+  isPublic: boolean
+}
+
 // Theme
 export type Theme = 'light' | 'dark'
 

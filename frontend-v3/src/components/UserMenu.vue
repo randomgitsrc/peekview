@@ -7,6 +7,7 @@
     </button>
     <Transition name="dropdown">
       <div v-if="showUserMenu" class="user-dropdown">
+        <button class="dropdown-item dropdown-item-publish" data-testid="user-menu-publish-item" @click="navigateToPublish">Publish</button>
         <button class="dropdown-item" data-testid="user-menu-teams-item" @click="navigateToTeams">Teams</button>
         <button class="dropdown-item" data-testid="user-menu-settings-item" @click="navigateToSettings">Settings</button>
         <button class="dropdown-item" @click="handleLogout">Logout</button>
@@ -58,6 +59,11 @@ function navigateToSettings() {
 function navigateToTeams() {
   showUserMenu.value = false
   router.push('/teams')
+}
+
+function navigateToPublish() {
+  showUserMenu.value = false
+  router.push('/publish')
 }
 
 function handleLogout() {
@@ -148,6 +154,10 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
   font-size: var(--font-sm);
   text-align: left;
   border-radius: var(--radius-sm);
+}
+
+.dropdown-item-publish {
+  font-weight: 600;
 }
 
 .dropdown-item:hover {

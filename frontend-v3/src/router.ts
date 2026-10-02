@@ -15,6 +15,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./views/EntryListView.vue'),
   },
   {
+    path: '/publish',
+    name: 'publish',
+    component: () => import('./views/PublishView.vue'),
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('./views/SettingsView.vue'),
@@ -101,6 +106,9 @@ router.beforeEach(async (to) => {
   }
   if (to.path === '/') {
     if (authStore.authState === 'authenticated') return '/explore'
+  }
+  if (to.path === '/publish') {
+    if (authStore.authState !== 'authenticated') return '/'
   }
   if (to.path === '/settings') {
     if (authStore.authState !== 'authenticated') return '/'

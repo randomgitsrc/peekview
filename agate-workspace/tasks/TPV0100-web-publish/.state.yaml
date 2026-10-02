@@ -1,9 +1,9 @@
-phase: P3
+phase: P4
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-01T22:55:00Z'
+updated: '2026-10-01T23:20:00Z'
 judge:
   enabled: true
 retries:
@@ -41,3 +41,7 @@ history:
   action: completed
   ts: '2026-10-01T22:55:00Z'
   note: 'P3 完成：P3-test-cases.md（test_code_dir=frontend-v3；30 BDD 1:1 → 12 vitest 单测 + 18 Playwright E2E 含双视口）+ 测试代码落 frontend-v3/src/__tests__/tpv0100-publish.spec.ts 与 frontend-v3/e2e/tpv0100-publish.spec.ts。check-tdd-red.py exit 0（B 类真红灯：useFileEncoding/usePublishValidation/createEntry/getLimits 未实现 → import 失败）。发现并规避内置 vitest.sh 两处 gate 基础设施缺陷（1.5MB 输出 env 传参超限 + 不识别 Vite Failed-to-resolve-import），改用任务本地 .agate/formatters/vitest-vite.sh（临时文件传输出 + Vite 形态识别 + @/ alias 归一化），平台假设扫描 0 命中。P2-design.md 的 gate_commands.P3_formatter 相应更新为 vitest-vite.sh（P3 提交前的基础设施修正）'
+- phase: P4
+  action: completed
+  ts: '2026-10-01T23:20:00Z'
+  note: 'P4 完成：13 源文件改动 + 3 测试文件修订（router/UserMenu/EntryListView/client/types/useFileEncoding/usePublishValidation/PublishView/FileDropZone/PublishFileList/PublishResultPanel/DESIGN.md；修订 UserMenu.spec/T079-entry-detail-header.spec/tpv0100 E2E）+ P4-implementation.md + P4-review.md approved（C8 domains=[frontend] → design-review，0 BLOCKER，30 BDD 全覆盖）。两条 DESIGN_GAP 主 Agent 裁决并落地：① BDD-22 端点 /raw → /entries/{slug}；② UserMenu Publish 回归 .dropdown-item（下拉 3→4 项）同步 3 测试文件。复跑 make test-frontend 1364 passed / typecheck passed / build-frontend passed / E2E 40/40 passed。后端零改动。check-gate P4 exit 0'

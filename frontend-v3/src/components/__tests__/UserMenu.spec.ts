@@ -99,10 +99,11 @@ describe('UserMenu', () => {
     expect(dropdown.exists()).toBe(true)
 
     const items = wrapper.findAll('.dropdown-item')
-    expect(items.length).toBe(3)
-    expect(items[0].text()).toBe('Teams')
-    expect(items[1].text()).toBe('Settings')
-    expect(items[2].text()).toBe('Logout')
+    expect(items.length).toBe(4)
+    expect(items[0].text()).toBe('Publish')
+    expect(items[1].text()).toBe('Teams')
+    expect(items[2].text()).toBe('Settings')
+    expect(items[3].text()).toBe('Logout')
   })
 
   it('BDD-08: Explore page renders same Settings + Logout menu', async () => {
@@ -113,10 +114,11 @@ describe('UserMenu', () => {
     await flushPromises()
 
     const items = wrapper.findAll('.dropdown-item')
-    expect(items.length).toBe(3)
-    expect(items[0].text()).toBe('Teams')
-    expect(items[1].text()).toBe('Settings')
-    expect(items[2].text()).toBe('Logout')
+    expect(items.length).toBe(4)
+    expect(items[0].text()).toBe('Publish')
+    expect(items[1].text()).toBe('Teams')
+    expect(items[2].text()).toBe('Settings')
+    expect(items[3].text()).toBe('Logout')
   })
 
   it('BDD-09: Detail desktop renders user menu with Settings + Logout', async () => {
@@ -127,10 +129,11 @@ describe('UserMenu', () => {
     await flushPromises()
 
     const items = wrapper.findAll('.dropdown-item')
-    expect(items.length).toBe(3)
-    expect(items[0].text()).toBe('Teams')
-    expect(items[1].text()).toBe('Settings')
-    expect(items[2].text()).toBe('Logout')
+    expect(items.length).toBe(4)
+    expect(items[0].text()).toBe('Publish')
+    expect(items[1].text()).toBe('Teams')
+    expect(items[2].text()).toBe('Settings')
+    expect(items[3].text()).toBe('Logout')
   })
 
   it('BDD-10: Detail mobile renders user menu with Settings + Logout', async () => {
@@ -141,10 +144,11 @@ describe('UserMenu', () => {
     await flushPromises()
 
     const items = wrapper.findAll('.dropdown-item')
-    expect(items.length).toBe(3)
-    expect(items[0].text()).toBe('Teams')
-    expect(items[1].text()).toBe('Settings')
-    expect(items[2].text()).toBe('Logout')
+    expect(items.length).toBe(4)
+    expect(items[0].text()).toBe('Publish')
+    expect(items[1].text()).toBe('Teams')
+    expect(items[2].text()).toBe('Settings')
+    expect(items[3].text()).toBe('Logout')
   })
 
   it('BDD-11: admin user shows admin badge in trigger', () => {
@@ -172,7 +176,7 @@ describe('UserMenu', () => {
 
     const items = wrapper.findAll('.dropdown-item')
     const texts = items.map((i) => i.text())
-    expect(texts).toEqual(['Teams', 'Settings', 'Logout'])
+    expect(texts).toEqual(['Publish', 'Teams', 'Settings', 'Logout'])
   })
 
   it('BDD-12: admin user menu still has same items (Settings + Logout)', async () => {
@@ -184,7 +188,7 @@ describe('UserMenu', () => {
 
     const items = wrapper.findAll('.dropdown-item')
     const texts = items.map((i) => i.text())
-    expect(texts).toEqual(['Teams', 'Settings', 'Logout'])
+    expect(texts).toEqual(['Publish', 'Teams', 'Settings', 'Logout'])
   })
 
   it('BDD-17: clicking Settings navigates to /settings?tab=apikeys', async () => {
@@ -194,7 +198,7 @@ describe('UserMenu', () => {
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
 
-    const settingsItem = wrapper.findAll('.dropdown-item')[1]
+    const settingsItem = wrapper.findAll('.dropdown-item')[2]
     await settingsItem.trigger('click')
 
     expect(mockRouter.push).toHaveBeenCalledWith('/settings?tab=apikeys')
@@ -207,7 +211,7 @@ describe('UserMenu', () => {
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
 
-    const logoutItem = wrapper.findAll('.dropdown-item')[2]
+    const logoutItem = wrapper.findAll('.dropdown-item')[3]
     await logoutItem.trigger('click')
 
     expect(mockAuthStore.logout).toHaveBeenCalledTimes(1)
@@ -269,7 +273,7 @@ describe('UserMenu', () => {
     await wrapper.find('.user-menu-trigger').trigger('click')
     await flushPromises()
 
-    const settingsItem = wrapper.findAll('.dropdown-item')[1]
+    const settingsItem = wrapper.findAll('.dropdown-item')[2]
     await settingsItem.trigger('click')
     await flushPromises()
 

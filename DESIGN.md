@@ -213,7 +213,7 @@ This section defines which components exist, what variants they support, and beh
 
 ### Navigation & Auth State
 - Anonymous: "Sign in" button. Primary variant on marketing pages, secondary on functional pages (desktop), ghost on functional pages (mobile).
-- Authenticated: avatar + username trigger → user menu (Settings, Teams, Logout). Admin badge pill when `is_admin`.
+- Authenticated: avatar + username trigger → user menu (Publish, Settings, Teams, Logout). Admin badge pill when `is_admin`.
 - Same menu content across all pages.
 
 ### Drawers (Mobile)
