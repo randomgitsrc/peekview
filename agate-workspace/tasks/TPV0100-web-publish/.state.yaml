@@ -1,9 +1,9 @@
-phase: P8
+phase: READY
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-02T15:20:00Z'
+updated: '2026-10-02T15:35:00Z'
 p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
@@ -66,3 +66,7 @@ history:
   action: completed
   ts: '2026-10-02T15:20:00Z'
   note: 'P8 发布准备完成（releaser 外部产出）：P8-release.md bump_type=minor，peekview 0.25.0 → 0.26.0（mcp_server 不 bump，后端/MCP 零源改动）；debt_check=reviewed（DEBT0014/0017/0013，均上游/遗留不阻断）。ruff 走 venv、CI 强制 typecheck。P5 验证：audit7 = reuse_allowed（P5→P8 间无非产出文件改动）→ 复用 P5-test-results/，不重跑。主 Agent 亲自执行：make lint exit 0 / make typecheck exit 0。待主 Agent：make bump-version NEW_VERSION=0.26.0 + CHANGELOG 条目 + tag v0.26.0'
+- phase: READY
+  action: completed
+  ts: '2026-10-02T15:35:00Z'
+  note: 'READY 收尾检查：debug :8888 已停（make debug-stop；ss -ltn 端口已释放、无 uvicorn 8888 进程）；/tmp/peekview-debug/ + .pid + /tmp/e2e-results/ 已清；.agate-tmp/ 已清空（含 pv-cookies.txt 明文凭证，已删）。VERSIONS.json peekview=0.26.0 = frontend-v3/package.json = backend/pyproject.toml 三处一致；mcp_server 保持 0.12.0 不动；tag v0.26.0 已建。提交前暂存面审查：bump commit 035feccd 共 13 文件，无临时/敏感路径。[PROD_NOT_TOUCHED]（:8080 pipx 用户服务全程未触碰、~/.peekview/ 只读未写入）。生产升级 pipx upgrade + systemctl restart 属人工步骤，未执行。**待办**：git push + git push origin v0.26.0；make publish（PyPI）'
