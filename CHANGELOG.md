@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-10-03
+
+### 修复
+
+- sqlmodel 0.0.47 起把裸 `datetime` 列映射为 tz-aware 的 `UTCDateTime`，导致项目按 naive-UTC 写入时抛 `ValueError`（CI 后端测试大面积失败，DEBT0019）：`models.py` 的全部 25 个 datetime 列（11 张表）改为显式 `Column(DateTime(timezone=False))`，naive 存储语义与 API 响应 / 备份 JSON / CLI 输出时间形态均保持不变；`sqlmodel` 依赖增加可机械校验上限 `<1.0.0`，并新增依赖守卫与列语义静态守卫测试，拦截未来同类依赖漂移（TPV0101）
+
 ## [0.26.0] - 2026-10-02
 
 ### 新增
