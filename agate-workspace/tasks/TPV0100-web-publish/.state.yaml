@@ -74,3 +74,4 @@ history:
   action: completed
   ts: '2026-10-02T15:50:00Z'
   note: 'TPV0100 终态 DONE：网页发布入口（登录用户 /publish 上传文件发布 entry，后端零改动）已交付并发布 v0.26.0（peekview minor 0.25.0→0.26.0；mcp_server 保持 0.12.0）。P1–P8 全阶段走完 + P6.5 judge 独立复核 30/30。30 条 BDD 全绿（前端 1364 / 后端 1173 / typecheck / E2E 40）。复盘 retrospective.md（4 条机制缺口 + 5 条 agate 反馈）+ 登记 DEBT0018（P6.5 judge 证据路径/预判扫描鲁棒性缺口，protocol，medium）。**待人工**：git push + git push origin v0.26.0；make publish（PyPI）；生产升级 pipx upgrade peekview && sudo systemctl restart peekview'
+  note_append: '补充（2026-10-02）：git push 因沙箱无外网失败（TLS handshake non-properly terminated），push + PyPI publish + 生产升级三项均需人工/联网环境执行'
