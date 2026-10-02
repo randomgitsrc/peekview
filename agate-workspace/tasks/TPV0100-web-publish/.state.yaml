@@ -1,9 +1,9 @@
-phase: P6
+phase: P7
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-02T14:10:00Z'
+updated: '2026-10-02T14:55:00Z'
 p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
@@ -58,3 +58,7 @@ history:
   action: completed
   ts: '2026-10-02T14:35:00Z'
   note: 'P6.5 judge 独立复核通过（fresh context，白名单输入隔离）：P6.5-judge-verdict.md status=passed, criteria 30/30，逐条重验全部 BDD（含 P6 已判 PASS 项，零挑验）。主 Agent 修正 judge 产出的 verdict_evidence 路径形态（去 P6-evidence/ 前缀；vision-reports 改 ../vision-reports/ 相对路径）+ 修正自身 dispatch-context 内格式示例的行首预判（去掉 - 前缀），重跑 check-gate P6.5 exit 0（check-judge-verdict + check-events 双通过，judge 轮次×1）。phase 保持 P6，随 P7 commit 推进'
+- phase: P7
+  action: completed
+  ts: '2026-10-02T14:55:00Z'
+  note: 'P7 一致性检查完成（consistency-reviewer 外部产出）：P7-consistency.md status=approved。blocker=0 / deviation_critical=0 / design_gap_count=3 / design_gap_reviewed=3（P4 的 3 条 [DESIGN_GAP] 全部转抄 + 配 DESIGN_GAP_REVIEWED，核验源码落地）。跨文件一致：P1 BDD(30)=P6 PASS(30)=judge criteria_total(30)；P2 §1 M1–M14 ↔ P4 §1 改动清单吻合；packages=peekview-frontend,docs（本任务不 bump 版本）。SCOPE+：P2 §9 两处（R3 错误体形状/R4 结果态链接源）已在 P2/P4 吸收未新增 BDD。CODE-MAP/decisions 机制未采用 → 跳过。check-gate P7 exit 0'
