@@ -1,0 +1,11 @@
+{
+  "initial_text": "公开：所有人可见",
+  "initial_indicates_public": true,
+  "after_toggle_text": "私有：仅自己与团队成员可见",
+  "after_toggle_indicates_private_or_team": true,
+  "text_changed": true,
+  "screenshots": [
+    "screenshots/bdd-29-visibility-public.png",
+    "screenshots/bdd-29-visibility-private.png"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "slug": "p6-bdd9-1790920711223",
+  "paths": [
+    "bdd9-a.txt",
+    "src/b.cs"
+  ],
+  "has_src_path": true,
+  "has_root_file": true,
+  "detail_shows_src_dir": true,
+  "screenshots": [
+    "screenshots/bdd-09-path-edited.png",
+    "screenshots/bdd-09-detail-tree.png"
+  ]
+}

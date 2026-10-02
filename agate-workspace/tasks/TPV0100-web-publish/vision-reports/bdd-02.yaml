@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-02
+task_id: TPV0100
+bdd_id: BDD-02
+title_zh: "布局结构：Explore 页为已登录用户渲染发布主按钮"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-02-explore-publish-button.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "Explore 页顶部工具栏从左到右：All/Mine/Teams/Archived/Starred 标签、右对齐的纯蓝 'Publish' 主按钮、搜索框、网格/列表视图切换。"
+    - "工具栏 Publish 为实心蓝色主按钮，位置显著，可点击。"
+    - "列表区渲染 seed 的 entry 卡片（含标题/作者/时间/文件数/标签/可见性徽章）。"
+verdict:
+  pass: true
+  reason: "Explore 顶部渲染出可点击的 Publish 主按钮，点击后地址变为 /publish。"

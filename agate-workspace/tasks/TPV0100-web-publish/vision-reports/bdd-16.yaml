@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-16
+task_id: TPV0100
+bdd_id: BDD-16
+title_zh: "交互行为：超出限额（文件数 / 单文件 / 总量）阻止提交并指出对象"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-16-over-limit-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "选择超过 max_file_size（20971520 字节）的文件后，文件行显示红色错误 \"文件 bdd16-big.bin 超过单文件上限 20971520 字节\"。"
+    - "顶部错误横幅 \"请检查表单中的错误后重试\"，未发出创建请求（POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "超限阻止提交，提示中指明被违反的限额维度（超限文件名与上限字节数）。"

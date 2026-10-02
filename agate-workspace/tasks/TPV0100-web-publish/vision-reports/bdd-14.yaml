@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-14
+task_id: TPV0100
+bdd_id: BDD-14
+title_zh: "交互行为：空 summary 阻止提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-14-empty-summary-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "Summary 为空时点击发布，Summary 字段下方出现红色提示 \"Summary 为必填项\"。"
+    - "顶部出现红色错误横幅 \"请检查表单中的错误后重试\"。"
+    - "表单保留，未发出创建请求（网络监听 POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "空 summary 阻止提交并就地显示必填提示。"

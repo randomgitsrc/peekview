@@ -1,0 +1,7 @@
+{
+  "post_requests": 0,
+  "summary_error_visible": true,
+  "summary_error_text": "Summary 为必填项",
+  "still_on_form": true,
+  "screenshot": "screenshots/bdd-14-empty-summary-error.png"
+}

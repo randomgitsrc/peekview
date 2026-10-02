@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-10
+task_id: TPV0100
+bdd_id: BDD-10
+title_zh: "交互行为：结果态提供可复制的页面链接与 Raw 链接"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-10-result-links.png
+  - screenshots/bdd-10-mobile-result.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "发布成功面板含两个灰底 URL 块：第一块标签 \"页面链接\"，URL 为 http://127.0.0.1:8888/{slug}，下方 \"复制\" 按钮；第二块标签 \"Raw 链接（给 Agent 用，免认证可读）\"，URL 为 .../{slug}/raw，下方 \"复制\" 按钮。"
+    - "底部有蓝色主按钮 \"查看详情\" 与描边按钮 \"再发一个\"，以及过期时间行。"
+    - "移动视口（390×844）结果态无横向溢出（scrollWidth ≤ 390），链接块与复制按钮不重叠。"
+verdict:
+  pass: true
+  reason: "结果态同时展示页面链接与 Raw 链接，两个复制按钮点击后剪贴板与展示链接逐字一致（clipboard 实测）。"

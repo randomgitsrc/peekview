@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-21
+task_id: TPV0100
+bdd_id: BDD-21
+title_zh: "交互行为：填写的可选字段被正确提交与采纳"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-21-optional-fields-filled.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "表单填写：Summary \"P6 BDD21 optional fields\"、slug p6-bdd21-*、Tags chip \"alpha\"、过期时间 \"7 天\"、团队 \"frontend-team\"。"
+    - "提交后 detail 接口返回：slug 一致、tags 含 alpha、team.slug=frontend-team、expires_at - created_at = 7.00 天。"
+verdict:
+  pass: true
+  reason: "slug / tags / team 归属 / expires_at 均与所填值一致。"

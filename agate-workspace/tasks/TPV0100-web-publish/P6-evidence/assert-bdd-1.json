@@ -1,0 +1,9 @@
+{
+  "menu_item_visible": true,
+  "menu_item_text": "Publish",
+  "url_after_click": "/publish",
+  "form_visible": true,
+  "summary_visible": true,
+  "dropzone_visible": true,
+  "screenshot": "screenshots/bdd-01-user-menu-open.png"
+}

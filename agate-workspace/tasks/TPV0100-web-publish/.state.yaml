@@ -1,9 +1,9 @@
-phase: P5
+phase: P6
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-02T13:50:00Z'
+updated: '2026-10-02T14:10:00Z'
 p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
@@ -50,3 +50,7 @@ history:
   action: completed
   ts: '2026-10-02T13:50:00Z'
   note: 'P5 技术验证完成（verifier 外部产出）：make test-frontend = 1364 passed/0 failed；make test-quick = 1173 passed/0 failed；make typecheck = passed；E2E_SPEC=e2e/tpv0100-publish.spec.ts make debug-test = 39 passed/0 failed + 1 flaky（test_bdd_10_result_links_copyable @Mobile Chrome，首次 page.waitForSelector(#app > *) 20s 超时→重试#1 通过，第1次记录，非确定性）。全量套件已跑（非抽样）。[PROD_NOT_TOUCHED]（ss -ltn 仅 8888，无 :8080）。N5 签名校验 grep -cE 计数=2（>0 有效）。fail-list.txt 空（0 失败）。P5-test-results/ 已落盘。check-gate P5 exit 2'
+- phase: P6
+  action: completed
+  ts: '2026-10-02T14:10:00Z'
+  note: 'P6 验收完成（verifier 用户视角实跑）：P6-acceptance.md 30/30 PASS 0 FAIL（ui_affected=true）。P6-evidence/ 70 文件（37 截图 + 30 assert JSON + 3 日志）+ vision-reports/ 28 YAML（全 blocker_count=0；BDD-11/30 为断言类无 vision 引用属正确）。E2E 40 passed / 单测 1364 passed 均 exit 0（独立实跑）。post-test 残留检查：首轮失败遗留 1 条 nuwttl 已 API 清理，复查 0 残留。[PROD_NOT_TOUCHED]。check-gate P6 exit 2 / check-p6-evidence exit 0（5 组高度相似截图含人工复核记录放行）/ check-p6-provenance exit 0（e2e.log/unit-test.log 缺 EXIT_CODE 尾行 WARNING 不阻塞）'

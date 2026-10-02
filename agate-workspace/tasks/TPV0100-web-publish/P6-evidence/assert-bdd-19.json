@@ -1,0 +1,10 @@
+{
+  "post_requests": 0,
+  "slug_65_chars_error_visible": true,
+  "slug_65_chars_error_text": "Slug 不能超过 64 个字符",
+  "slug_with_space_error_visible": true,
+  "slug_with_space_error_text": "Slug 只能包含小写字母、数字、下划线和连字符",
+  "slug_with_slash_error_visible": true,
+  "slug_with_slash_error_text": "Slug 只能包含小写字母、数字、下划线和连字符",
+  "screenshot": "screenshots/bdd-19-slug-too-long-error.png"
+}

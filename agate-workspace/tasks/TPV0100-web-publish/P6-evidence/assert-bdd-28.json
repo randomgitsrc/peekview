@@ -1,0 +1,10 @@
+{
+  "explore_text_length": 1230,
+  "explore_publish_button_present": true,
+  "published_slug": "p6-bdd28-1790920763012",
+  "screenshots": [
+    "screenshots/bdd-28-explore-seeded.png",
+    "screenshots/bdd-28-publish-form-filled.png",
+    "screenshots/bdd-28-result.png"
+  ]
+}

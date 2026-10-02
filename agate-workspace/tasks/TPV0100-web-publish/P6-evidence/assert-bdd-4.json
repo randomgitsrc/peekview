@@ -1,0 +1,7 @@
+{
+  "publish_entries_anon": 0,
+  "signed_in_trigger_present": false,
+  "context_cookie_names": [],
+  "url": "http://127.0.0.1:8888/explore",
+  "screenshot": "screenshots/bdd-04-anon-explore.png"
+}

@@ -1,0 +1,7 @@
+{
+  "layer": "unit",
+  "command": "make test-frontend",
+  "source": "frontend-v3/src/__tests__/tpv0100-publish.spec.ts",
+  "note": "BDD-30 由 vitest 实跑覆盖（见 P6-evidence/logs/unit-test.log）",
+  "verified_by": "P6 verifier 实跑 make test-frontend exit 0"
+}

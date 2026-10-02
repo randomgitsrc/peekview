@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-19
+task_id: TPV0100
+bdd_id: BDD-19
+title_zh: "交互行为：自定义 slug 非法或超长时阻止提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-19-slug-too-long-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "slug 填 65 个字符时，Slug 字段下方显示红色提示 \"Slug 不能超过 64 个字符\"。"
+    - "含空格 my slug 与含 / 的 a/b 同样触发 slug 非法提示。"
+    - "三种情况均未发出创建请求（POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "自定义 slug 超长/含空格/含斜杠均阻止提交并就地显示 slug 非法提示。"

@@ -1,0 +1,6 @@
+{
+  "submit_disabled_inflight": true,
+  "submit_button_text_inflight": "发布中…",
+  "post_count_after_double_click": 1,
+  "screenshot": "screenshots/bdd-27-submitting-state.png"
+}

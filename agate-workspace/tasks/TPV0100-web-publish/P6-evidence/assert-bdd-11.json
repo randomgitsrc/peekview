@@ -1,0 +1,14 @@
+{
+  "slug": "p6-bdd11-1790920719042",
+  "anonymous_status": 200,
+  "is_json": true,
+  "has_slug": true,
+  "has_files": true,
+  "sample": {
+    "slug": "p6-bdd11-1790920719042",
+    "summary": "P6 BDD11 public raw",
+    "files": [
+      "x.txt"
+    ]
+  }
+}

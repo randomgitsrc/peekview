@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-08
+task_id: TPV0100
+bdd_id: BDD-08
+title_zh: "交互行为：无 NUL 但非合法 UTF-8 的文件被判为二进制"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-08-invalid-utf8-selected.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "选择不含 NUL 但无法 UTF-8 严格解码的文件（Latin-1 0xE9 0x80）后，文件行显示红色 \"二进制\" 徽章。"
+    - "提交后 detail 接口返回该文件 is_binary=true。"
+verdict:
+  pass: true
+  reason: "无 NUL 非法 UTF-8 文件被前端正确判为二进制并落库 is_binary=true。"

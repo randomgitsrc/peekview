@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-20
+task_id: TPV0100
+bdd_id: BDD-20
+title_zh: "交互行为：默认公开且过期时间默认 15 天"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-20-defaults.png
+screenshots_note: "断言为主（detail 接口字段），截图为表单默认态辅助。"
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "未改动可见性：复选框勾选且提示文本 \"公开：所有人可见\"。"
+    - "未改动过期时间：下拉默认值为 15d（来自 GET /api/v1/config/limits 的 default_expires_in）。"
+    - "提交后 detail 接口 is_public=true，expires_at - created_at = 15.00 天。"
+verdict:
+  pass: true
+  reason: "默认公开且过期时间与创建时刻相差默认 15 天。"

@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-23
+task_id: TPV0100
+bdd_id: BDD-23
+title_zh: "交互行为：失败后保留表单且重试不产生重复 entry"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-23-failure-form-kept.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "首个创建请求被拦截返回 500 后，表单保留 Summary \"P6 BDD23 retry intent\"（21/500）与 1 个文件 bdd23.txt。"
+    - "页面显示错误提示，原样重试后成功进入结果态。"
+    - "库中 summary=\"P6 BDD23 retry intent\" 的 entry 计数为 1（幂等命中，未重复创建）。"
+verdict:
+  pass: true
+  reason: "失败后表单保留，原样重试后仅存在 1 个 entry。"

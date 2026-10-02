@@ -1,0 +1,7 @@
+{
+  "post_requests": 0,
+  "global_error_visible": true,
+  "global_error_text": "至少选择一个文件",
+  "empty_hint_visible": true,
+  "screenshot": "screenshots/bdd-15-no-files-error.png"
+}

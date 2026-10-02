@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-05
+task_id: TPV0100
+bdd_id: BDD-05
+title_zh: "交互行为：未登录访问发布页被重定向到首页"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-05-anon-publish-redirect.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "匿名直接访问 /publish，最终渲染的是首页落地页而非发布表单。"
+    - "落地页主标题 \"Agent writes. You read. Agents read too.\"，主按钮 \"Browse public\"、安装命令按钮，属首页内容。"
+    - "页面内无 Summary 输入、无文件拖拽区等发布表单元素。"
+verdict:
+  pass: true
+  reason: "未登录访问 /publish 被重定向到首页，不渲染发布表单。"

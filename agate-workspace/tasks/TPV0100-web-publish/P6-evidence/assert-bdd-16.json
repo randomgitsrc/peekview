@@ -1,0 +1,21 @@
+{
+  "limits": {
+    "default_expires_in": "15d",
+    "max_file_size": 20971520,
+    "max_entry_files": 50,
+    "max_entry_size": 104857600,
+    "max_slug_length": 64,
+    "max_summary_length": 500
+  },
+  "max_file_size": 20971520,
+  "file_size": 20972544,
+  "rows_after_select": 1,
+  "post_requests": 0,
+  "global_error_visible": true,
+  "global_error_text": "请检查表单中的错误后重试",
+  "row_error_texts": [
+    "文件 bdd16-big.bin 超过单文件上限 20971520 字节"
+  ],
+  "mentions_violated_dimension": true,
+  "screenshot": "screenshots/bdd-16-over-limit-error.png"
+}

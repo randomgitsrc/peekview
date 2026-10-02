@@ -1,0 +1,20 @@
+{
+  "selected_rows": 2,
+  "slug": "p6-bdd6-1790920706928",
+  "files": [
+    {
+      "filename": "bdd6-note.md",
+      "is_binary": false
+    },
+    {
+      "filename": "bdd6-blob.bin",
+      "is_binary": true
+    }
+  ],
+  "md_is_binary": false,
+  "bin_is_binary": true,
+  "screenshots": [
+    "screenshots/bdd-06-files-selected.png",
+    "screenshots/bdd-06-result.png"
+  ]
+}

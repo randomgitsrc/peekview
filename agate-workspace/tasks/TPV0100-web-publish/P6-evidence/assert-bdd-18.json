@@ -1,0 +1,12 @@
+{
+  "post_requests": 0,
+  "paths": [
+    "same/a.txt",
+    "same/a.txt"
+  ],
+  "row_error_count": 1,
+  "row_error_texts": [
+    "相对路径重复"
+  ],
+  "screenshot": "screenshots/bdd-18-duplicate-path-error.png"
+}

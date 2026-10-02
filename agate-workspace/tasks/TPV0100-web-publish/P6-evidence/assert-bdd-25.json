@@ -1,0 +1,6 @@
+{
+  "error_text": "请求过于频繁，请稍后重试",
+  "form_summary_kept": "P6 BDD25 rate limited",
+  "matches_rate_limit_wording": true,
+  "screenshot": "screenshots/bdd-25-rate-limit-error.png"
+}

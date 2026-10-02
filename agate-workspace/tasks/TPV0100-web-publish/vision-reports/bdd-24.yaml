@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-24
+task_id: TPV0100
+bdd_id: BDD-24
+title_zh: "交互行为：载荷变更后重试视为新意图"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-24-changed-payload.png
+screenshots_note: "断言为主（幂等键重置逻辑经直接提交与指纹计算验证）。"
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "首个创建请求被拦截返回 500 后，用户修改 summary（original → changed payload）与文件 slug。"
+    - "再次提交成功创建新 entry，库中该新 slug 计数为 1 且 summary 为变更后的值。"
+verdict:
+  pass: true
+  reason: "载荷变更后重试产生新 entry（未命中前一次幂等键）。"

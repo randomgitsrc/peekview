@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-04
+task_id: TPV0100
+bdd_id: BDD-04
+title_zh: "布局结构：未登录时不渲染发布入口"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-04-anon-explore.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "匿名（全新 browser context，零 cookie）访问 /explore。"
+    - "页头右侧为 \"Sign in\" 按钮，无用户头像菜单。"
+    - "页面任何位置均无 Publish 按钮或 /publish 链接。"
+verdict:
+  pass: true
+  reason: "未登录 Explore 未渲染任何发布入口。"

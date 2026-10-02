@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-29
+task_id: TPV0100
+bdd_id: BDD-29
+title_zh: "视觉呈现：表单上以可见文本标明当前可见性状态，默认指明为公开"
+role: visual
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-29-visibility-public.png
+  - screenshots/bdd-29-visibility-private.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "默认态：复选框勾选 + 可见文本 \"公开：所有人可见\"。"
+    - "切换（取消勾选）后可见文本更新为 \"私有：仅自己与团队成员可见\"。"
+    - "文本随可见性设置切换而更新，非静态。"
+verdict:
+  pass: true
+  reason: "表单可见性区域存在明确可见文本，默认指明公开，且随切换更新。"

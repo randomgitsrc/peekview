@@ -1,0 +1,78 @@
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+✓ 调试服务使用独立数据库 (lsof)
+ℹ  生产数据库条目数: 131
+→ Check 6: 验证静态产物新鲜度...
+✓ 静态产物新鲜 (src 未比 static/index.html 新)
+
+=== ✓ 安全检查通过，可以运行 E2E 测试 ===
+
+→ 非交互模式，自动继续...
+
+→ Step 2: 启动 E2E 测试 (带数据隔离保护)...
+=== PeekView E2E 测试 ===
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+→ 检查服务状态...
+✓ 服务运行中: http://127.0.0.1:8888
+✓ Service using debug database: /tmp/peekview-debug/peekview.db
+
+→ 运行 E2E 测试 (e2e/tpv0100-publish.spec.ts)...
+✓ 使用 CDP Chrome: http://127.0.0.1:18800
+→ E2E 超时上限: 600s（可用 E2E_TIMEOUT 覆盖）
+
+Running 40 tests using 8 workers
+
+[1A[2K[1/40] [chromium] › e2e/tpv0100-publish.spec.ts:238:3 › TPV0100 Publish 1280x800 › test_bdd_6_multi_file_publish_types
+[1A[2K[2/40] [chromium] › e2e/tpv0100-publish.spec.ts:223:3 › TPV0100 Publish 1280x800 › test_bdd_5_anonymous_publish_redirects_home
+[1A[2K[3/40] [chromium] › e2e/tpv0100-publish.spec.ts:191:3 › TPV0100 Publish 1280x800 › test_bdd_3_other_user_page_has_no_publish_entry
+[1A[2K[4/40] [chromium] › e2e/tpv0100-publish.spec.ts:209:3 › TPV0100 Publish 1280x800 › test_bdd_4_anonymous_explore_has_no_publish_entry
+[1A[2K[5/40] [chromium] › e2e/tpv0100-publish.spec.ts:319:3 › TPV0100 Publish 1280x800 › test_bdd_9_edit_path_builds_nested_tree
+[1A[2K[6/40] [chromium] › e2e/tpv0100-publish.spec.ts:276:3 › TPV0100 Publish 1280x800 › test_bdd_7_text_renders_binary_downloadable
+[1A[2K[7/40] [chromium] › e2e/tpv0100-publish.spec.ts:148:3 › TPV0100 Publish 1280x800 › test_bdd_1_user_menu_publish_entry
+[1A[2K[8/40] [chromium] › e2e/tpv0100-publish.spec.ts:171:3 › TPV0100 Publish 1280x800 › test_bdd_2_explore_publish_button
+[1A[2K[9/40] [chromium] › e2e/tpv0100-publish.spec.ts:354:3 › TPV0100 Publish 1280x800 › test_bdd_10_result_links_copyable
+[1A[2K[10/40] [chromium] › e2e/tpv0100-publish.spec.ts:387:3 › TPV0100 Publish 1280x800 › test_bdd_11_public_raw_link_anonymous
+[1A[2K[11/40] [chromium] › e2e/tpv0100-publish.spec.ts:415:3 › TPV0100 Publish 1280x800 › test_bdd_12_result_view_detail_navigates
+[1A[2K[12/40] [chromium] › e2e/tpv0100-publish.spec.ts:439:3 › TPV0100 Publish 1280x800 › test_bdd_13_publish_again_resets_form_and_key
+[1A[2K[13/40] [chromium] › e2e/tpv0100-publish.spec.ts:485:3 › TPV0100 Publish 1280x800 › test_bdd_21_optional_fields_roundtrip
+[1A[2K[14/40] [chromium] › e2e/tpv0100-publish.spec.ts:572:3 › TPV0100 Publish 1280x800 › test_bdd_23_failure_keeps_form_and_idempotent_retry
+[1A[2K[15/40] [chromium] › e2e/tpv0100-publish.spec.ts:534:3 › TPV0100 Publish 1280x800 › test_bdd_22_created_entry_owned_by_user
+[1A[2K[16/40] [chromium] › e2e/tpv0100-publish.spec.ts:621:3 › TPV0100 Publish 1280x800 › test_bdd_27_submit_disabled_while_inflight
+[1A[2K[17/40] [chromium] › e2e/tpv0100-publish.spec.ts:668:3 › TPV0100 Publish 1280x800 › test_bdd_28_manual_flow_after_seed
+[1A[2K[18/40] [chromium] › e2e/tpv0100-publish.spec.ts:701:3 › TPV0100 Publish 1280x800 › test_bdd_29_visibility_text_reflects_state
+[1A[2K[19/40] [chromium] › e2e/tpv0100-publish.spec.ts:743:3 › TPV0100 Publish 390x844 › test_bdd_10_result_links_mobile_no_overflow
+[1A[2K[20/40] [chromium] › e2e/tpv0100-publish.spec.ts:777:3 › TPV0100 Publish 390x844 › test_bdd_17_mobile_row_error_no_overflow
+[1A[2K[21/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:148:3 › TPV0100 Publish 1280x800 › test_bdd_1_user_menu_publish_entry
+[1A[2K[22/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:171:3 › TPV0100 Publish 1280x800 › test_bdd_2_explore_publish_button
+[1A[2K[23/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:191:3 › TPV0100 Publish 1280x800 › test_bdd_3_other_user_page_has_no_publish_entry
+[1A[2K[24/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:209:3 › TPV0100 Publish 1280x800 › test_bdd_4_anonymous_explore_has_no_publish_entry
+[1A[2K[25/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:223:3 › TPV0100 Publish 1280x800 › test_bdd_5_anonymous_publish_redirects_home
+[1A[2K[26/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:238:3 › TPV0100 Publish 1280x800 › test_bdd_6_multi_file_publish_types
+[1A[2K[27/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:276:3 › TPV0100 Publish 1280x800 › test_bdd_7_text_renders_binary_downloadable
+[1A[2K[28/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:319:3 › TPV0100 Publish 1280x800 › test_bdd_9_edit_path_builds_nested_tree
+[1A[2K[29/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:354:3 › TPV0100 Publish 1280x800 › test_bdd_10_result_links_copyable
+[1A[2K[30/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:387:3 › TPV0100 Publish 1280x800 › test_bdd_11_public_raw_link_anonymous
+[1A[2K[31/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:415:3 › TPV0100 Publish 1280x800 › test_bdd_12_result_view_detail_navigates
+[1A[2K[32/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:439:3 › TPV0100 Publish 1280x800 › test_bdd_13_publish_again_resets_form_and_key
+[1A[2K[33/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:485:3 › TPV0100 Publish 1280x800 › test_bdd_21_optional_fields_roundtrip
+[1A[2K[34/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:534:3 › TPV0100 Publish 1280x800 › test_bdd_22_created_entry_owned_by_user
+[1A[2K[35/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:572:3 › TPV0100 Publish 1280x800 › test_bdd_23_failure_keeps_form_and_idempotent_retry
+[1A[2K[36/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:621:3 › TPV0100 Publish 1280x800 › test_bdd_27_submit_disabled_while_inflight
+[1A[2K[37/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:668:3 › TPV0100 Publish 1280x800 › test_bdd_28_manual_flow_after_seed
+[1A[2K[38/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:701:3 › TPV0100 Publish 1280x800 › test_bdd_29_visibility_text_reflects_state
+[1A[2K[39/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:743:3 › TPV0100 Publish 390x844 › test_bdd_10_result_links_mobile_no_overflow
+[1A[2K[40/40] [Mobile Chrome] › e2e/tpv0100-publish.spec.ts:777:3 › TPV0100 Publish 390x844 › test_bdd_17_mobile_row_error_no_overflow
+[1A[2K  40 passed (23.5s)
+
+=== ✓ 所有 E2E 测试通过 ===
+截图保存位置: /tmp/e2e-results/
+
+请访问 http://127.0.0.1:8888 进行人工验证
+确认无误后运行: make debug-stop
+
+测试截图:

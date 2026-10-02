@@ -1,0 +1,10 @@
+{
+  "slug": "p6-bdd8-1790920709839",
+  "file": {
+    "filename": "bdd8-latin1.txt",
+    "is_binary": true,
+    "language": null
+  },
+  "binary_badge_in_ui": 1,
+  "screenshot": "screenshots/bdd-08-invalid-utf8-selected.png"
+}

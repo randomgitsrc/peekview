@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-22
+task_id: TPV0100
+bdd_id: BDD-22
+title_zh: "交互行为：创建的 entry 归属登录用户"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-22-ownership.png
+screenshots_note: "断言为主（归属字段），截图为提交结果态。"
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "alice 登录后通过发布页创建 entry。"
+    - "detail 接口返回 owner_id=1，与 /auth/me 的 alice id=1 一致。"
+verdict:
+  pass: true
+  reason: "entry 的 owner_id 等于登录用户 alice 的 id。"

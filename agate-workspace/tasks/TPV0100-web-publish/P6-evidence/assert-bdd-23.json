@@ -1,0 +1,12 @@
+{
+  "slug": "p6-bdd23-1790920752486",
+  "intercepted_500": true,
+  "error_text": "boom",
+  "summary_kept": "P6 BDD23 retry intent",
+  "rows_kept": 1,
+  "matching_entries": 1,
+  "matching_slugs": [
+    "p6-bdd23-1790920752486"
+  ],
+  "screenshot": "screenshots/bdd-23-failure-form-kept.png"
+}

@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-18
+task_id: TPV0100
+bdd_id: BDD-18
+title_zh: "交互行为：重复相对路径阻止提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-18-duplicate-path-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "两个文件相对路径均设为 same/a.txt 时点击发布，第二个文件行显示红色错误 \"相对路径重复\"。"
+    - "未发出创建请求（POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "重复相对路径阻止提交且对应行被标记为错误状态。"

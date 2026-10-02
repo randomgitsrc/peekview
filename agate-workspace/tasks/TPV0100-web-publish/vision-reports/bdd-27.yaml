@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-27
+task_id: TPV0100
+bdd_id: BDD-27
+title_zh: "交互行为：提交进行中禁止重复提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-27-submitting-state.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "创建请求在途时主按钮文本变为 \"发布中...\" 且呈灰色禁用态。"
+    - "强行再次点击后，实际发出的 POST 计数为 1（无第二个创建请求）。"
+verdict:
+  pass: true
+  reason: "提交进行中主按钮禁用且不发出第二个创建请求。"

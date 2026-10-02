@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-15
+task_id: TPV0100
+bdd_id: BDD-15
+title_zh: "交互行为：无文件阻止提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-15-no-files-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "未选择文件时点击发布，顶部红色错误横幅显示 \"至少选择一个文件\"。"
+    - "拖拽区下方同样灰字提示 \"至少选择一个文件\"。"
+    - "未发出创建请求（POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "无文件阻止提交并就地显示至少选一个文件提示。"

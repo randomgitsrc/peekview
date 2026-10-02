@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-25
+task_id: TPV0100
+bdd_id: BDD-25
+title_zh: "交互行为：限流（429）有明确提示"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-25-rate-limit-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "创建请求返回 429 时，顶部红色错误横幅显示 \"请求过于频繁，请稍后重试\"。"
+    - "表单保留：Summary \"P6 BDD25 rate limited\"、文件 bdd25.txt、公开勾选、过期时间 15 天。"
+verdict:
+  pass: true
+  reason: "429 有明确限流提示且表单保留。"

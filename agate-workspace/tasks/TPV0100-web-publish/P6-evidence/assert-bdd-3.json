@@ -1,0 +1,6 @@
+{
+  "publish_entries_on_page": 0,
+  "url": "http://127.0.0.1:8888/users/bob",
+  "note": "user-menu-publish-item 仅在展开菜单后存在，未展开故不计",
+  "screenshot": "screenshots/bdd-03-other-user-page.png"
+}

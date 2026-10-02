@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-06
+task_id: TPV0100
+bdd_id: BDD-06
+title_zh: "交互行为：多文件（文本 + 二进制）发布成功且落库类型正确"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-06-files-selected.png
+  - screenshots/bdd-06-result.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "选择两个文件后，文件列表出现两行：bdd6-note.md 带绿色 '文本' 徽章，bdd6-blob.bin 带红色 '二进制' 徽章，各显示 19 B / 12 B。"
+    - "每行含相对路径输入与移除按钮；表单填写 Summary 与自定义 slug。"
+    - "提交后进入发布成功结果面板。"
+verdict:
+  pass: true
+  reason: "前端对文本/二进制分别标注，落库后 md 为文本、bin 为二进制（API 断言 is_binary 分别 false/true）。"

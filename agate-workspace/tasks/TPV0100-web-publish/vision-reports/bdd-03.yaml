@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-03
+task_id: TPV0100
+bdd_id: BDD-03
+title_zh: "布局结构：他人主页不出现发布入口"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-03-other-user-page.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "访问 /users/bob 的他人主页，页头含 \"← Back to Home\"、PeekView logo、用户下拉、暗色切换、搜索框、网格/列表切换。"
+    - "工具栏与页面内不存在 \"Publish\" 按钮或跳转到 /publish 的链接。"
+    - "内容区为 bob 的 entry 列表，无任何发布入口。"
+verdict:
+  pass: true
+  reason: "他人主页未渲染任何跳转到 /publish 的可点击入口。"

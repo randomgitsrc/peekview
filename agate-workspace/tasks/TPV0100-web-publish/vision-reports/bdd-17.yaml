@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-17
+task_id: TPV0100
+bdd_id: BDD-17
+title_zh: "交互行为：非法相对路径阻止提交"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-17-invalid-path-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "相对路径填为 ../evil.txt 时点击发布，对应文件行下方显示红色错误 \"相对路径不能包含 .. 段\"。"
+    - "顶部红色错误横幅 \"请检查表单中的错误后重试\"，未发出创建请求（POST 计数为 0）。"
+verdict:
+  pass: true
+  reason: "非法相对路径阻止提交，对应文件行被标记为错误状态。"

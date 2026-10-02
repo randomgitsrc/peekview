@@ -1,0 +1,21 @@
+# TPV0100 P6 vision report — BDD-13
+task_id: TPV0100
+bdd_id: BDD-13
+title_zh: "交互行为：结果态\"再发一个\"清空表单并重置幂等键"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-13-form-reset.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "点击 \"再发一个\" 后表单为空：Summary 显示占位符、计数 0/500，无已选文件，Slug/Tags 为占位符。"
+    - "拖拽区下方灰字 \"至少选择一个文件\" 提示当前为空。"
+    - "同意图再次提交后创建出新的 entry（第二 slug ≠ 第一 slug，两者均存在于库）。"
+verdict:
+  pass: true
+  reason: "表单清空且幂等键重置，等价意图新提交创建出新 entry（未命中旧幂等键）。"

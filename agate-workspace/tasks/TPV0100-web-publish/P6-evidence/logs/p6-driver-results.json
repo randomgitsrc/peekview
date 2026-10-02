@@ -1,0 +1,48 @@
+{
+  "results": {
+    "BDD-1": true,
+    "BDD-2": true,
+    "BDD-3": true,
+    "BDD-4": true,
+    "BDD-5": true,
+    "BDD-6": true,
+    "BDD-7": true,
+    "BDD-8": true,
+    "BDD-9": true,
+    "BDD-10": true,
+    "BDD-11": true,
+    "BDD-12": true,
+    "BDD-13": true,
+    "BDD-14": true,
+    "BDD-15": true,
+    "BDD-16": true,
+    "BDD-17": true,
+    "BDD-18": true,
+    "BDD-19": true,
+    "BDD-20": true,
+    "BDD-21": true,
+    "BDD-22": true,
+    "BDD-23": true,
+    "BDD-24": true,
+    "BDD-25": true,
+    "BDD-26": true,
+    "BDD-27": true,
+    "BDD-28": true,
+    "BDD-29": true,
+    "BDD-30": true
+  },
+  "environment": {
+    "base": "http://127.0.0.1:8888",
+    "limits": {
+      "default_expires_in": "15d",
+      "max_file_size": 20971520,
+      "max_entry_files": 50,
+      "max_entry_size": 104857600,
+      "max_slug_length": 64,
+      "max_summary_length": 500
+    },
+    "team_slug": "frontend-team",
+    "alice_id": 1
+  },
+  "timestamp": "2026-10-02T05:59:28.171Z"
+}

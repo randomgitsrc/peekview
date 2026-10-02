@@ -1,0 +1,17 @@
+{
+  "slug": "p6-bdd10-1790920715042",
+  "page_link": "http://127.0.0.1:8888/p6-bdd10-1790920715042",
+  "raw_link": "http://127.0.0.1:8888/p6-bdd10-1790920715042/raw",
+  "clipboard_page": "http://127.0.0.1:8888/p6-bdd10-1790920715042",
+  "clipboard_raw": "http://127.0.0.1:8888/p6-bdd10-1790920715042/raw",
+  "copy_ok": true,
+  "copy_error": null,
+  "screenshot": "screenshots/bdd-10-result-links.png",
+  "mobile": {
+    "slug": "p6-bdd10m-1790920717312",
+    "scroll_width": 390,
+    "viewport_width": 390,
+    "no_overflow": true,
+    "screenshot": "screenshots/bdd-10-mobile-result.png"
+  }
+}

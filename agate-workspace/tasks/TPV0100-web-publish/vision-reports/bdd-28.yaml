@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-28
+task_id: TPV0100
+bdd_id: BDD-28
+title_zh: "交互行为：按文档 seed 后发布流程可人工走通"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-28-explore-seeded.png
+  - screenshots/bdd-28-publish-form-filled.png
+  - screenshots/bdd-28-result.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "alice 登录后 /explore 渲染出 seed 的 entry 列表（约 20 张卡片），页面有实质内容。"
+    - "Explore 顶部有 Publish 按钮；进入 /publish 填写 summary、选择文件、提交后进入发布成功结果态。"
+verdict:
+  pass: true
+  reason: "seed 后 Explore 有内容，发布流程（填 summary → 选文件 → 提交 → 结果态）完整走通。"

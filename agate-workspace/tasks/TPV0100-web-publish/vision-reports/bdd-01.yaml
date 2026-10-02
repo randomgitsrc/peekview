@@ -1,0 +1,23 @@
+# TPV0100 P6 vision report — BDD-01 布局结构：已登录用户可从全局用户菜单进入发布页
+task_id: TPV0100
+bdd_id: BDD-01
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-01-user-menu-open.png
+  - screenshots/bdd-01-publish-form.png
+
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (comprehensive + quick)
+  observations:
+    - "顶部导航右侧有 alice 头像 + ADMIN 徽章；展开的用户下拉菜单包含条目 'Publish'（其后为 Teams/Settings/Logout）。"
+    - "点击 Publish 后进入发布页，页面左侧标题 '发布内容'，表单含 Summary 文本域、'文件' 拖拽区（'拖拽文件到此处，或点击选择'）、Slug、Tags、公开可见性、过期时间、团队、发布按钮。"
+    - "表单渲染完整，无破图、无错位、无空白主区域。"
+
+verdict:
+  pass: true
+  reason: "用户菜单中可见 Publish 项，点击后地址变为 /publish 且完整发布表单渲染。"

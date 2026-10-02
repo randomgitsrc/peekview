@@ -1,0 +1,22 @@
+# TPV0100 P6 vision report — BDD-26
+task_id: TPV0100
+bdd_id: BDD-26
+title_zh: "交互行为：后端校验错误（400/422）有明确提示"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-26-400-error.png
+  - screenshots/bdd-26-422-error.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "400（error.message=\"Slug must match ^[a-z0-9_-]+$\"）时错误横幅显示该原文。"
+    - "422（detail[].msg=\"String should have at most 500 characters\"）时错误横幅显示该原文，未出现 [object Object]。"
+    - "表单在两次错误后均保留 Summary。"
+verdict:
+  pass: true
+  reason: "页面显示后端 detail 原文且表单保留。"

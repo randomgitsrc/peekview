@@ -1,0 +1,23 @@
+# TPV0100 P6 vision report — BDD-07
+task_id: TPV0100
+bdd_id: BDD-07
+title_zh: "交互行为：文本文件在详情页渲染、二进制文件可下载"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-07-detail-render.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "详情页 FILES·2 列出 blob.bin（立方体图标）与 note.md（markdown 图标，选中高亮）。"
+    - "note.md 以渲染后的 markdown 呈现：粗体标题 \"TPV0100-BDD7-TEXT-MARKER\" + 正文行，字符清晰可读。"
+    - "选中二进制 blob.bin 后，溢出菜单（More）内含 \"Download blob.bin\" 与 \"Download as Pack (2 files)\" 可点击下载项。"
+  download_entry_probe:
+    overflow_menu_items: ["Make Private","Download blob.bin","Raw Structured JSON","Download as Pack","Delete entry"]
+verdict:
+  pass: true
+  reason: "文本内容以文本形式渲染；二进制文件提供可点击下载入口，且经 /files/{id} 校验下载字节与原文件一致。"

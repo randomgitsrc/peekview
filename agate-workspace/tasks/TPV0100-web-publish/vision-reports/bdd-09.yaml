@@ -1,0 +1,23 @@
+# TPV0100 P6 vision report — BDD-09
+task_id: TPV0100
+bdd_id: BDD-09
+title_zh: "布局结构：编辑相对路径后构造出嵌套目录结构"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-09-path-edited.png
+  - screenshots/bdd-09-detail-tree.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "发布表单中将第二个文件相对路径改为 src/b.cs，文件行路径输入更新。"
+    - "详情页文件树含 src/ 目录节点，展开可见 b.cs。"
+    - "API /raw 断言返回路径为 [\"bdd9-a.txt\", \"src/b.cs\"]——根级文件与 src/ 目录并存。"
+note: "vision 对文件树缩进存在一次误读（把根级 bdd9-a.txt 描述为 src 下），以 API /raw 的 paths 数组为 ground truth 判定。"
+verdict:
+  pass: true
+  reason: "文件树同时呈现根级文件与 src/ 目录下的文件，两文件路径分别为各自填写值。"

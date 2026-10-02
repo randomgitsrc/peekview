@@ -1,0 +1,6 @@
+{
+  "button_visible": true,
+  "button_text": "Publish",
+  "url_after_click": "/publish",
+  "screenshot": "screenshots/bdd-02-explore-publish-button.png"
+}

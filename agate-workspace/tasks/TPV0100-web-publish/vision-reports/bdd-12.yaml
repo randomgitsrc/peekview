@@ -1,0 +1,20 @@
+# TPV0100 P6 vision report — BDD-12
+task_id: TPV0100
+bdd_id: BDD-12
+title_zh: "交互行为：结果态可跳转详情"
+role: layout
+analyst: verifier
+created: 2026-10-02
+blocker_count: 0
+screenshots:
+  - screenshots/bdd-12-detail-page.png
+vision_analysis:
+  summary:
+    blocker_count: 0
+  engine: vision-engine (Chrome CDP localhost:18800 screenshots)
+  observations:
+    - "点击 \"查看详情\" 后进入 /{slug} 详情页，显示 @alice、创建时间、过期时间、可见性 Public。"
+    - "页面标题/摘要与发布填写一致，内容区渲染文件内容。"
+verdict:
+  pass: true
+  reason: "浏览器地址变为 /{slug} 且渲染对应 entry 详情。"

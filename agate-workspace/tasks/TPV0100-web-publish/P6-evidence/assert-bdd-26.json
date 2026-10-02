@@ -1,0 +1,12 @@
+{
+  "error_400_text": "Slug must match ^[a-z0-9_-]+$",
+  "error_422_text": "String should have at most 500 characters",
+  "form_summary_kept": "P6 BDD26 backend error",
+  "contains_detail_400": true,
+  "contains_detail_422": true,
+  "renders_object_object": false,
+  "screenshots": [
+    "screenshots/bdd-26-400-error.png",
+    "screenshots/bdd-26-422-error.png"
+  ]
+}
