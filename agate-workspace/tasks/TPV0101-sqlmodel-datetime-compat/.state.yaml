@@ -1,9 +1,9 @@
-phase: P4
+phase: P5
 task_id: TPV0101
 task_name: sqlmodel-datetime-compat
 status: in_progress
 created: 2026-10-02
-updated: '2026-10-02T19:20:00Z'
+updated: '2026-10-02T20:00:00Z'
 source_debt: DEBT0019
 judge:
   enabled: true
@@ -34,3 +34,8 @@ history:
     action: completed
     ts: '2026-10-02T19:20:00Z'
     note: 'P4 实现完成：models.py 25 列/11 表显式 Column(DateTime(timezone=False)) + pyproject sqlmodel>=0.0.14,<1.0.0。P4-review.md approved（review，0 BLOCKER）。主 Agent 独立核验：全量套件 0.0.38 = 0 failed；0.0.47（CI 等价）= 0 failed（基线 550 failed/errors）；ORM 枚举 25 列 0 BAD。修正 P2 gate_commands.P5_schema_guard 的 -k schema→-k Bdd16（原命令收集 0 测试）。check-gate P4 exit 0。'
+  - phase: P5
+    action: completed
+    ts: '2026-10-02T20:00:00Z'
+    note: 'P5 技术验证通过（verifier external-output-gate）：4 个 gate_commands key 全 exit 0 / 0 failed。P5 本地全量(0.0.38)=1186 passed；P5_ci_repro 隔离全量(0.0.47, CI 等价)=1186 passed；P5_dep_guard=3 passed；P5_schema_guard=2 passed。N5 签名 count=6；fail-list.txt 空；[PROD_NOT_TOUCHED]。check-gate P5 exit 2。'
+p5_pass_commit: 14ca829a24f6bd5afc7947530a489dccac154128
