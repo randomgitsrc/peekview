@@ -1,0 +1,24 @@
+phase: P1
+task_id: TPV0101
+task_name: sqlmodel-datetime-compat
+status: in_progress
+created: 2026-10-02
+updated: '2026-10-02T17:15:00Z'
+source_debt: DEBT0019
+judge:
+  enabled: true
+retries:
+  P1:
+    - round: 1
+      failure_mode: quality
+      prompt_changed: true
+      adjustment: "requirements-review changes_requested（M1-M4 阻塞）：补 aware 写入面扫描 + 修正 §2.1 判定依据 + BDD-15/17 改可二值判定 + BDD-1/9 Given 纳入 aware 场景"
+history:
+  - phase: P0
+    action: completed
+    ts: '2026-10-02T16:30:00Z'
+    note: 'P0 立项：来源 DEBT0019（sqlmodel 0.0.47 裸 datetime 列推断为 tz-aware UTCDateTime，naive-UTC 写入大面积失败，CI Backend Tests 38 failed + 502 errors）。P0-brief 四字段齐全；同类/影响面预判完成（naive 写入点 12+ 处跨 6 文件、涉及 14 类时间字段、面状缺陷）。环境自检全 PASS；时效性自检「已核对，无漂移」（同日立项）。'
+  - phase: P1
+    action: completed
+    ts: '2026-10-02T17:15:00Z'
+    note: 'P1 需求基线完成：18 BDD（risk_level=high，domains=[backend]，packages=[peekview]，change_type=refactor）。retry #1（requirements-review 首轮 changes_requested M1–M4，补 aware 写入面扫描 + 修正 §2.1 三分类判定 + BDD 可二值化）→ round 2 approved（M1–M6 全部闭合）。check-gate P1 exit 2（首次 exit 1 因正文出现 NEED_CONFIRM 字样触发兜底，改措辞后通过）。'
