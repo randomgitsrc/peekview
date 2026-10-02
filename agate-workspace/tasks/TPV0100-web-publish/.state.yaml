@@ -1,9 +1,9 @@
-phase: P7
+phase: P8
 task_id: TPV0100
 task_name: web-publish
 status: in_progress
 created: 2026-10-01
-updated: '2026-10-02T14:55:00Z'
+updated: '2026-10-02T15:20:00Z'
 p5_pass_commit: 1cbe01f80e972d4f5ee14222f717d50bd01f3f84
 judge:
   enabled: true
@@ -62,3 +62,7 @@ history:
   action: completed
   ts: '2026-10-02T14:55:00Z'
   note: 'P7 一致性检查完成（consistency-reviewer 外部产出）：P7-consistency.md status=approved。blocker=0 / deviation_critical=0 / design_gap_count=3 / design_gap_reviewed=3（P4 的 3 条 [DESIGN_GAP] 全部转抄 + 配 DESIGN_GAP_REVIEWED，核验源码落地）。跨文件一致：P1 BDD(30)=P6 PASS(30)=judge criteria_total(30)；P2 §1 M1–M14 ↔ P4 §1 改动清单吻合；packages=peekview-frontend,docs（本任务不 bump 版本）。SCOPE+：P2 §9 两处（R3 错误体形状/R4 结果态链接源）已在 P2/P4 吸收未新增 BDD。CODE-MAP/decisions 机制未采用 → 跳过。check-gate P7 exit 0'
+- phase: P8
+  action: completed
+  ts: '2026-10-02T15:20:00Z'
+  note: 'P8 发布准备完成（releaser 外部产出）：P8-release.md bump_type=minor，peekview 0.25.0 → 0.26.0（mcp_server 不 bump，后端/MCP 零源改动）；debt_check=reviewed（DEBT0014/0017/0013，均上游/遗留不阻断）。ruff 走 venv、CI 强制 typecheck。P5 验证：audit7 = reuse_allowed（P5→P8 间无非产出文件改动）→ 复用 P5-test-results/，不重跑。主 Agent 亲自执行：make lint exit 0 / make typecheck exit 0。待主 Agent：make bump-version NEW_VERSION=0.26.0 + CHANGELOG 条目 + tag v0.26.0'
