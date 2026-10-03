@@ -446,7 +446,7 @@ publish:
 	@echo "→ Step 4/4: 发布到 PyPI (filtering ANSI escape codes)..."
 	@set -o pipefail; \
 	VER=$$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['peekview'])"); \
-	WHEEL="peekview-$$VER-py3-none-any.whl"; \
+	WHEEL="dist/peekview-$$VER-py3-none-any.whl"; \
 	TOKEN="$$PYPI_API_TOKEN"; \
 	if [ -z "$$TOKEN" ]; then \
 		for f in "$$HOME/.env" "$$HOME/.bash_env" "$$HOME/.peekview/.release-env"; do \
