@@ -1,8 +1,8 @@
-phase: P1
+phase: P2
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-10T15:40:00Z'
+updated: '2026-11-10T19:40:00Z'
 judge:
   enabled: true
 retries:
@@ -12,6 +12,17 @@ retries:
       FAIL / BDD-04 的 17:43:00 字面量在 en-US locale 下必假 FAIL 且与 I-11 矛盾 / 可见性 5 转换缺 3
       个 BDD；+1 MINOR +1 WARNING）→ analyst rev1 五项全修 → 复审 approved'
     ts: '2026-11-10T14:36:00Z'
+  P2:
+  - round: 1
+    reason: 'P2 首轮双评审均 needs-revision（eng 4 阻塞 B-1~B-4：P5_e2e 正则含 team-visibility 致假绿、
+      P5_e2e timeout 420<内层600、P3 红灯配置、setVisibility 丢 revokedShares；design 20 项缺陷 5 高级别）
+      → architect rev1 闭合 → eng approved / design 又发现 N-1~N-5'
+    ts: '2026-11-10T17:00:00Z'
+  - round: 2
+    reason: 'design rev1 复审 needs-revision（D-1~D-5 全闭合，但修订新引入 N-1~N-5：Team 无 id / sheet
+      切换主体悬空 / VC-4 新旧按钮未区分 / inline-icon 文案与 aria-label 缺失 / §6.4#5 行号）→ architect
+      rev2 闭合 → design rev2 approved（N-3 改判）→ 组长汇总 2/2 approved'
+    ts: '2026-11-10T19:30:00Z'
 history:
 - phase: P0
   action: created
@@ -34,4 +45,19 @@ history:
     +1 MINOR BDD-07 点名与 §6.10 遍历声明矛盾 +1 WARNING a11y 零覆盖）→ analyst rev1 五项全修 → 复审 approved（3 BLOCKER 全解决、上轮
     通过项 8 类未破坏、新增 3 条 INFO 非阻塞）。check-gate P1 exit 2。关键事实：vision 能力实测 available（8 模型 alive，需把 ratelimit
     重定向到 .agate-tmp/ve/）；image-gallery 是 0 内容文件目录但 seed-debug.py:184 会 SKIP → 0 文件 entry 须 HTTP API 现造'
+- phase: P2
+  action: completed
+  ts: '2026-11-10T19:40:00Z'
+  note: 'P2 方案设计完成（retry 2/3，三轮评审闭合）：candidate_count=7（3 决策点各 2-3 候选），选
+    A2（mixin 通配 field_serializer when_used=json）+ B1（新建 VisibilityMenu）+ C2（自定义 DOM tooltip +
+    visibility 切换）。双评审 2/2 approved，组长汇总转抄 23 条执行约束（C-1~C-23）给 P4/P5/P6。check-gate
+    P2 exit 2（两条 cosmetic WARNING 经主 Agent 实测为 gate 误报：P3 首 token 是 `(`、P5_fitness 首 token
+    是 shell builtin `cd`）。**关键最小验证发现**：BDD-02/03 的 tooltip 只有自定义 DOM 元素可断言（原生
+    title 属性与 CSS ::after 的 Playwright getByText 命中均 0；opacity:0 的 isVisible() 仍 true）。**gate_commands
+    冻结**：P3 = `--tb=short` + `P3_formatter: pytest.sh` + 无 tail（三件事缺一即 A 类假红，主 Agent 四格矩阵
+    + architect 深层根因共同确认）；P5_e2e 写死 `e2e/tpv0102-explore-card-list-ux.spec.ts` + P5_e2e_legacy
+    独立 key + 两者 900s。**本阶段三次由 subagent 纠正主 Agent 技术结论**：① analyst 否决 new Date(本地化文本)
+    反解（ja-JP→NaN、de-DE→错月份）② architect 补出 tail 截断根因 ③ eng-review 纠正主 Agent 的"假绿"归因
+    （agate_common.py:755-766 强制 set -o pipefail，管道退出码取左侧失败码）。复审阶段 design N-3 亦被主 Agent
+    判为评审误判、最终由评审自行改判闭合'
 

@@ -32,3 +32,59 @@
 - DECISION: 4 条 SUGGEST 全部采纳（主 Agent 权限内，均不涉破坏性变更/业务方向）：① CLI `--json` 统一用 `Z` 后缀（与 API 形态一致，避免消费方写两套解析）② 团队列表由 `EntryListView`/`EntryDetailView` 各触发一次 `loadMyTeams()`（已加载则跳过），视图层下发 `allTeams` 给菜单组件——P2 须在组件契约明确此 prop 链 ③ `ApiKeySettingsTab`/`ApiKeyListView` 两处本地 `formatRelativeTime` 重复实现**本次不合并**，登记技术债 ④ P3/P4 须显式更新 TPV0095 BDD-40 的 4 单测 + 1 E2E 断言，P7 记录「被本任务有意取代」，禁止「测试红就改断言」式静默处理
 - FACT(复审独立实测): 复审方 AST 复现 m1 —— 非 table 含 datetime 17 类，被 table 继承者 = EntryBase/FileBase/UserBase（**FileBase 无 datetime**，故实际排除 2 个）→ 17−2 = 15 类/31 字段，与 §6.9 吻合。复审方还**主动更正了自己上轮的一处错误定位**：上轮把 I-11 当作「undefined 跟随 locale」的载体，实测 I-11 原文只讲 short/shortOffset 与禁拼接 → analyst 不改 I-11 而用 I-24 裁决是正确处置
 - NEXT: 更新 .state.yaml（phase 保持 P1，记 history）+ active-tasks.md，git add + commit P1（phase=P1，产出含 P1-requirements.md + P1-review.md）
+- SUBAGENT FAIL(已修正): 首次 commit 被 pre-commit hook 拦下两条——① `P1-requirements.md` 缺 `prod_touched` 字段（非 legacy 任务必填，设计 §4）→ 用 `agate-md-field-set.py set prod_touched false` 补 ② `retries[P1]` 无对应记录（RM-AG0042 BDD-1 WARNING，检测到 `P1-dispatch-context-*-rev1.md` 但 state 无 retries）→ 在 `.state.yaml` 补 `retries.P1[0]`（round/reason/ts）。两条都是**真实的状态缺失**，不是误报：确实发生了 1 次评审打回，理应记录。修正后 `check-state-yaml` exit 0 + `check-gate P1` exit 2
+- DECISION: P1 已 commit `290f4c43`（12 files, +2755）。进入 P2。**C8 机械映射**：domains 含 backend → plan-eng-review；含 frontend → plan-design-review；risk=medium 非 high 故不额外触发。**两评审并行派发 → 组长汇总 → P2-review.md**
+- NEXT: 写 `P2-dispatch-context-architect.md`（含 P2 最小验证要求 + UI 设计节规格 + gate_commands 固化要求），注入 AGATE_CARD 后派发 architect
+- SUBAGENT OK: architect 产出 P2-design.md（75493 字节，candidate_count=7，ui_affected=true）。**关键最小验证发现（决定实现形态）**：BDD-02/03 要求的 tooltip 若用原生 `title` 属性或 CSS `::after`，Playwright `getByText` 命中 **0**、`textContent` 也不含伪元素内容 → **不可断言**；且 `opacity:0` 在 Playwright 下 `isVisible()` 仍为 true（用 opacity 隐藏会让"未悬停"也可见，破坏 BDD-02 的 Given/When 区分）→ **唯一可断言形态是自定义 DOM tooltip 元素 + visibility 切换 + role="tooltip"**。这条是 P2 最小验证的核心产出，P3 写红灯必须按此形态
+- FACT(gate 预跑): `check-frontmatter` exit 0；`check-gate P2` exit 1 —— 唯一原因是 `P2-review.md 不存在`（评审未派发，预期）。`agate-read-p5-commands.py` 实测 6 条 P5 命令全部可解析：`make test-quick` / `make test-frontend` / `E2E_SPEC='e2e/(tpv0102|team-visibility)' make debug-test` / `make lint` / `make typecheck` / fitness。P5_e2e **已定向 E2E_SPEC**（避开裸调只跑 1 spec 的假绿陷阱）
+- 注：`RECONCILE WARNING: packages grep=frontend-v3 structured=peekview frontend-v3 docs` —— 这是 P2 预跑阶段的正常提示（正文 grep 只看到 frontend-v3，frontmatter 有 3 个包），非错误
+- NEXT: 并行派发 plan-eng-review（backend 域）+ plan-design-review（frontend 域），两评审各写独立 dispatch-context
+- FACT(主 Agent 亲验 3 条 gate_commands 缺陷，已写进 eng-review 派发要求核实): ① `P5_fitness` 引用的 `backend/tests/test_architecture_fitness.py` **不存在**（`find . -name "*fitness*"` 全仓 0 命中）→ P5 必然 exit 4 ② `P5_e2e_timeout_seconds: 420` **小于** runner 内层 `E2E_TIMEOUT` 默认 **600s**（`scripts/run-e2e-tests.sh:92`）→ 外层先超时会杀掉内层，归因错乱；项目先例 TPV0099 用 **900s** ③ `E2E_SPEC='e2e/(tpv0102|team-visibility)'` 是正则片段，而 `e2e/tpv0102*.spec.ts` **尚不存在**（P3 才建）→ 若 P3 文件名不精确对应，Playwright 匹配 0 用例时**仍 exit 0** = 假绿。另 `E2E_SPEC` 实测是作为 `npx playwright test "$spec"` 的位置参数传入（`run-e2e-tests.sh:78`）
+- 注：主 Agent 原在派发前假设 `run-e2e-tests.sh` 在 `frontend-v3/scripts/`、并让评审自查 fitness 是否存在——**两处假设都错**（脚本实际在 `scripts/`，fitness 确实不存在）。已亲验后改写派发内容，未把错误假设传给评审
+- NEXT: 两评审并行跑（plan-eng-review / plan-design-review），返回后派组长汇总 → P2-review.md
+- GATE FAIL: 两个 P2 评审均判 **needs-revision**（eng: 4 阻塞；design: 20 项缺陷 / 5 高级别 / 视觉 6/10 + 交互 6/10）。主 Agent **亲自复验**关键发现，**两处与评审表述不符，已纠正**：
+- FACT(主 Agent 实测·G-1 成立且更严重): `npx playwright test --list 'e2e/(tpv0102|team-visibility)'` → **Total: 12 tests in 1 file**，全部来自 `team-visibility.spec.ts`，`tpv0102` 命中 **0**。故 `P5_e2e` 现在就能绿（exit 0）而本任务 E2E 覆盖为 0 → **假绿无法由 exit code 察觉**（评审补充：Playwright 零命中本身是 exit 1，但 alternation 里的 `team-visibility` 让零命中永不发生）。**必须改写死文件名**（TPV0099 先例）
+- FACT(主 Agent 实测·B-3 结论方向被纠正): 评审称「P3 无 formatter → A 类误判；加 formatter 才对」。**实测相反**——`--tb=no` 抑制 traceback 时：**无 formatter → `red-light (unexpected test failure)` exit 0（正确）**；**加 `P3_formatter: pytest.sh` → `A-class error (test code has errors)`（错误）**。根因：`pytest.py` formatter 靠逐行扫 `ImportError`/`ModuleNotFoundError` 提取 `import_errors`，`--tb=no` 把 traceback 抑制掉 → 提取不到 → `errors=1` 走 A 类分支。**正确修法不是"加 formatter"，而是 `--tb=no` 改 `--tb=short`**（实测：`--tb=short` + formatter → `B-class red-light (import errors from missing project module 'peekview')` exit 0 ✅）
+- FACT(G-2 已失效): architect 最终版 `P5_fitness` 已改为 `tests/test_utc_serialization.py -k mixin_not_in_table_mro`（P3 新建），不再是早先的 `test_architecture_fitness.py`。但 `-k` 零命中 pytest 是 exit 5，须在 P2 写明 P3 必须保留该测试函数名
+- FACT(G-3 成立): `P5_e2e_timeout_seconds: 420` < runner 内层 `E2E_TIMEOUT` 默认 **600s**（`scripts/run-e2e-tests.sh:92`）→ 外层先超时杀内层。项目先例 TPV0099 用 **900s**
+- FACT(16/34 vs 15/31 两个数都对): 主 Agent AST 亲验 —— `ShareCreateResponse` 自身 **0 个 datetime 字段**，其 3 字段全部**继承自 `ShareResponse`**。类自身声明口径 = 15 类/31 字段（P1 §6.9）；含继承的 `model_fields` 遍历口径 = 16 类/34 字段（P2 R6/V4）。两评审均独立确认 P2 处置（以遍历为准、P3 不硬编码）正确
+- DECISION: 两评审均 needs-revision → **不派组长汇总**（组长只在全票无 BLOCKER 时 approved；此处两票都打回，直接回派 architect 修订）。P2 retry 计数 = 1/3
+- NEXT: 写 `P2-dispatch-context-architect-rev1.md`（汇总两评审的全部阻塞项 + 主 Agent 实测纠正的 2 处），注入 AGATE_CARD 后派发 architect 修订
+- FACT(主 Agent 完整四格矩阵实测·B-3 精确归因): 用真实 `check-tdd-red.py` + 真实 collection error（新测试 import 尚不存在的 `peekview.timefmt`，pytest exit **2**）跑四组合：
+  | 配置 | judge 判定 | script exit | 正确性 |
+  |---|---|---|---|
+  | `--tb=no` 无 formatter | `red-light (unexpected test failure)` | 0 | ✅ 但**靠兜底分支**（exit_code=2 不命中 `==1` 的 A 类分支，落到末尾兜底） |
+  | `--tb=no` + `P3_formatter: pytest.sh` | `A-class error (test code has errors)` | **1** | ❌ 假红 |
+  | `--tb=short` 无 formatter | `red-light` | 0 | ✅ 同上靠兜底 |
+  | `--tb=short` + formatter | `B-class red-light (import errors from missing project module 'peekview')` | 0 | ✅ **机制正确** |
+  **结论**：评审 B-3 说「无 formatter → 必然 A 类」**不成立**（实测 exit 0）；但它「应加 `P3_formatter`」的方向对了一半——**只加 formatter 而不改 `--tb=no` 反而会引入 A 类假红**（`pytest.py` 靠逐行扫 `ImportError`/`ModuleNotFoundError` 提取，`--tb=no` 把 traceback 抑制掉 → `import_errors=[]` 但 `errors=1` → 落 `if errors > 0` 的 A 类分支）。**唯一正确配置 = `--tb=short` + `P3_formatter: pytest.sh`**
+- NEXT: 派发 architect rev1（闭合 B-1~B-4 + D-1~D-5 + 2 项裁决 + 中低优先级非阻塞），dispatch-context 已注入 AGATE_CARD exit 0。`P5_e2e_legacy` 经 `is_legal_gate_key` 实测 True，可作拆键方案
+- FACT(主 Agent 追加实测·architect 的 B-3 根因**比我的矩阵更深，且我漏了一层**): architect 指出根因还包括 P3 命令里的 `2>&1 | tail -30` 把 traceback 截掉。**我复验确认，并发现更坏的形态**：`--tb=short` + formatter + **带 `| tail -30` 且保留 `b=$?`** → judge 判定 **`tests pass, no red-light`（script exit 2）**，即**假绿**（比 A 类假红更危险：假红会退回 P3 修正，假绿会直接推进到 P4）。去掉 `tail` 后正确得 `B-class red-light`。故 B-3 的完整正确配置是**三件事**：① `--tb=no`→`--tb=short` ② 声明 `P3_formatter: pytest.sh` ③ **去掉 `| tail -30` 与 `b=$?` 遮蔽**。主 Agent 此前只给出①②，architect 补出③，属**人工纠正主 Agent 的结论**——已在评审复审派发时要求核验这一点
+- FACT(architect 复核成立的项): `EntryDetailMobileBar.vue:50` 有 `<OverflowMenu variant="sheet">` 先例；`DESIGN.md:270` 44px / `:274` bottom sheet on mobile / `:290` focus indicators；`ConfirmDialog.vue` 根为 `<Teleport to="body">` 全文件无 `data-testid`（D-2 成立）；`team.ts` 的 `loadMyTeams()` catch 只置 error 不置 `teamsLoaded` → 失败态与"无团队"不可区分（D-9 成立）
+- SUBAGENT OK: architect rev1 闭合 4 eng 阻塞 + 5 design 高级别 + 2 裁决 + 15 中低项（899→1227 行 / 127.9 KB）。**主 Agent 已实测验证其最终 P3 命令形态**（`--tb=short` + `P3_formatter: pytest.sh` + **去 tail**）→ `B-class red-light`（正确红灯），确认闭合
+- DECISION: **采纳 architect 的修正**（我的矩阵少一格，其根因分析更深：`2>&1 | tail -30` 在真实全量套件下把 `ModuleNotFoundError` 截到 EOF 30 行之外，只剩 pytest 缩写形式使正则取不到 module → `module=''` → 落「import errors are NOT from project module」A 类分支）。这是本任务**第二次由 subagent 纠正主 Agent 的技术结论**（前一次是 analyst 否决 `new Date(反解)` 方案），已计入复盘素材
+- NEXT: 派发两评审 rev1 复审（重点核验 B-1~B-4 / D-1~D-5 / 2 裁决是否真闭合 + 不变项未破坏）
+- SUBAGENT RESULT: design-review rev1 判 **needs-revision**（上轮 D-1~D-5 全闭合、2 裁决正确采纳、两主分 6→8，但**修订过程新引入 5 项缺口**，其中 2 项高级别）。主 Agent 独立复验：
+  - **N-1 属实且必须修**：`types/index.ts` 的 `Team` = `{slug,name,memberCount}`、`TeamRef` = `{slug,name}`；后端 `models.py:947-952` `TeamSummary` = `{slug,name,member_count}` —— **前后端都没有 team 数字 id**。而 P2 §3.5 写 `teams.find(t => t.id === teamId)` 与 `team = {id,slug,name}` → `vue-tsc` 必报错（CI 强制），且 BDD-18「子菜单排除当前团队」失去派生路径。修法：用 `entry.team?.slug` 反查（`api/client.ts:130` 已填充）
+  - **N-2 属实**：`useMediaQuery` 全仓 **0 命中**；`IsMobileKey` 仅 `EntryDetailView.vue:159` `provide`，Explore 页无 `isMobile` → `variant="sheet"` 的切换主体悬空
+  - **N-3 主 Agent 判定为「评审误判」**：architect 已**显式拆成两条**——VC-4 只针对本任务新增的 `VisibilityMenu` 触发按钮（移动端 ≥44px），既有 28×28 按钮**已登记为 §7.1 S2 明确不在本任务范围**（并注明「VC-4 不得写成对既有 28px 按钮的断言，那会把既有不达标写成已达标」）。这不构成「契约必然在 P6 红」
+  - N-4（`inline`/`icon` 变体文案与 `aria-label` 未定义）/ N-5（§6.4#5 行号应为 :111-112 且影响 3 条断言）均属实
+- DECISION: design-review 的 N-3 判「高」不成立（architect 已拆分处置），但 N-1/N-2/N-4/N-5 成立 → 仍需 rev2 修订。**不覆盖评审的 needs-revision 结论**（评审自己也不确定 N-3，明确说「若你认为可 P3/P4 兜，可覆盖我判 approved」——主 Agent 选择按缺陷清单继续修，不降口径放行）
+- NEXT: 等 eng-review rev1 返回 → 合并两份复审为 rev2 修订清单 → 派 architect rev2
+- SUBAGENT RESULT: eng-review rev1 判 **approved**（B-1~B-4 全闭合；B-3 裁决「三件事配置完整正确」）。**但它纠正了主 Agent 一处错误结论**，主 Agent 已亲验确认：
+  - **我的「假绿」那格不成立（我错了）**：`agate_common.py:755-766` 在跑命令时**强制前缀 `set -o pipefail;`**（`"set -o pipefail; " + cmd`），故 `cmd | tail` 的退出码取**左侧失败码**。实测 `bash -c 'set -o pipefail; false | tail -3'` → exit **1**；无 pipefail 的裸 shell → exit 0。我此前在裸 shell 下测出的「`--tb=short` + formatter + tail → `tests pass` 假绿」**是无效结论**（我自己那条测法绕过了 agate 的执行通路）。用真实通路复测：带 tail + `b=$?` → `B-class red-light`（正确）。**去 tail 仍然必须，但真实机制是 A 类假红（ModuleNotFoundError 被截到 EOF 30 行外 → module=''），不是假绿**，而 P2-design.md:993-995 与 V10 本来就写对了
+  - **这是本任务第三次 subagent 纠正主 Agent**（① analyst 否决 `new Date(反解)` ② architect 补出 `tail` 截断根因 ③ eng-review 纠正我的假绿归因）。复盘须记录：**主 Agent 自测时必须走被测系统的真实执行通路，不能用等价的"简化复现"替代**
+  - B-3 结论：architect 的三件事配置（`--tb=short` + `P3_formatter: pytest.sh` + 去 tail）**完整正确**，主 Agent 独立实测 `B-class red-light` 确认
+  - 新发现 6 项非阻塞，其中 **`P5_e2e_legacy_timeout_seconds: 600` 与设计自身 :1000 的「外层必须大于内层 600」矛盾**（等值不满足）→ 建议改 900；**双 toast 风险**（§3.5:549-552 store 内发 revokedShares warning + §5 要求视图层四态含同一句 → 会弹两条）
+- FACT(N-1 精确改法已定): `Entry` 接口有 `teamId?: number | null`（entry 侧归属 ID）+ `team?: TeamRef | null`（`{slug,name}`），但 `Team` 类型无 id → **无法用 `entry.teamId` 在 `allTeams` 里 find**。确定改法：用 `entry.team?.slug` 与 `allTeams` 的 `team.slug` 比对派生 currentTeamSlug
+- NEXT: 派发 architect rev2（只改 N-1~N-5 + E-1/E-2，不动已闭合项），dispatch-context 已注入 AGATE_CARD exit 0
+- SUBAGENT OK: architect rev2 闭合 N-1~N-5 + E-1/E-2（1406 行，edit 定点修改）。**主 Agent 抽验**：
+  - `check-frontmatter` exit 0
+  - N-1 无违规残留（2 处 `Team.id` 均为「**不得**这样做」的否定陈述，正确）；且 `models.py:747-752` 引用的 `TeamRef` 行号精确（`{slug,name}` 无 id）
+  - E-1 `P5_e2e_legacy_timeout_seconds: 900` 已改，§9 理由改写为「等值不满足规则，声明不能自相矛盾」
+  - N-2 选方案②，并**纠正了主 Agent 的一处印象**：项目**已有** `useResponsiveLayout()`（`isMobile = viewportWidth <= 640` + rAF 节流 `handleResize`），已在 `EntryDetailView.vue:156` / `UserManagerTab.vue:87` 使用 —— 主 Agent 此前只查了 `useMediaQuery`（0 命中）就以为「无响应式机制」，**漏查了正确名字**。architect 指出后主 Agent 复验属实。其描述「`:262` 的 import 需补 `onBeforeUnmount`」也精确（该行当前确为 `import { ref, computed, onMounted, watch, nextTick }`，无 useResponsiveLayout、无 onBeforeUnmount）
+  - N-2 还做了逻辑自洽澄清：`EntryDetailHeader` 因 `v-if="isDesktop"`（`:13`）实际恒为 `inline`；`EntryMetaTagsBar` 仅在 `isMobile` 时渲染（`EntryDetailContent.vue:24`）故恒为 `sheet`
+- NEXT: 派发 design-review rev2 复审（N-1~N-5 闭合核验 + 不变项 + 重新打分）
+- GATE PASS: `check-gate.py P2` **exit 2**（RECONCILE 0 mismatches）。两条 WARNING 经主 Agent 实测**确认为 gate 误报**：① `gate_commands.P3 命令 '' 不存在` —— P3 命令首 token 是 `(`（子壳），`shutil.which('(')` 必返空；实测该命令可正常执行（`b=1 f=1`，聚合语义正确）② `P5_fitness 命令 'cd' 不存在` —— `cd` 是 shell builtin，`which` 查不到（实测 `which cd` 非 0）。两条均为 gate 用 `shutil.which(首token)` 检测导致的 cosmetical 误报，eng 评审第 2 轮已预测到并说明「不改变 approved 结论」
+- SUBAGENT OK: 组长汇总产出 `P2-review.md`（26783 字节，status=approved，agent=review ≠ main），专家票型 2/2 approved、无分歧、转抄 **23 条执行约束**（C-1~C-23）给 P4/P5/P6
+- NEXT: 更新 .state.yaml（phase 推进 P2 + history + retries.P2）+ active-tasks.md，git add + commit P2
