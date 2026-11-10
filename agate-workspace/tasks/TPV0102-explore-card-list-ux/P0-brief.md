@@ -65,13 +65,59 @@ def _ser_utc(self, v: datetime | None) -> str | None:
 
 **建议抽公共 Mixin**（如 `UtcSerializeMixin`）避免 15 处重复；P2 定具体形态。
 
+#### 1.2.1 实现契约（独立评审实测确认，四条硬约束）
+
+独立评审（fresh context）实测后补充的四个坑，均已由主 Agent 复验：
+
+| # | 坑 | 实测证据 | 强制做法 |
+|---|---|---|---|
+| 1 | **`field_serializer` 默认 `when_used='always'`** | `model_dump()` 返回**字符串**而非 datetime | 必须显式 `when_used='json'`；推荐用共享 `Annotated[datetime, PlainSerializer(..., when_used='json')]` 而非逐字段 `field_serializer` |
+| 2 | **`response_model` 按声明类重新校验** | 返回带 serializer 的实例、但 `response_model` 指向无 serializer 的类 → `{"dt":"2026-11-10T09:43:00"}` **Z 静默消失** | 契约必须落在 **`response_model` 指名的那个类**上；本项目 10 处 `response_model` 当前均不含 datetime 字段，暂不触发，但新增端点须遵守 |
+| 3 | **`AwareDatetime` 不能用于 `table=True` 模型** | `ValueError: no matching SQLAlchemy type` | 排除方案 B 的变体；也再次确认 serializer 只能加在叶响应模型 |
+| 4 | **覆盖不全导致静默错序** | 部分字段带 Z、部分不带 → 前端字符串排序错乱 | 15 个叶响应模型**必须全覆盖**，P1 出完整清单并逐项核对 |
+
+**补充**：`jsonable_encoder` 内部即 `model_dump(mode='json')`，与 `entries.py` 的 `JSONResponse(model_dump(mode='json'))` 同源，无序列化路径分歧（已实测）。
+
+#### 1.2.2 破坏性变更：`client.py` 的 `fromisoformat`
+
+**独立评审发现（主 Agent 复验并修正表述）**：
+
+- `backend/peekview/client.py:89` 用 `datetime.fromisoformat(v)` 解析服务端返回
+- **CPython 3.10 的 `fromisoformat` 不接受 `Z`**（3.11 起才支持；实测 3.12 可用）
+- 本项目 `requires-python = ">=3.10"`，但 **CI 与 publish 均用 3.12** → 当前环境不炸，**声明支持 3.10 的用户会炸**
+
+**必须同任务内修复**：`client.py` 改为 `datetime.fromisoformat(v.replace("Z", "+00:00"))`（或等价 helper），否则补 Z 会打断 CLI remote 模式。
+
+#### 1.2.3 存量数据 UTC 语义：独立审计（非循环论证）
+
+P0 初版引用的「写 aware → 读 naive → 补 UTC 差 0 秒」被评审正确指出为**循环论证**（只证明写入路径自洽，证明不了历史行）。评审用三种独立方法做了只读验证，**均确认 UTC 成立**：
+
+| 方法 | 结果 |
+|---|---|
+| 全表扫「`created_at` 超前于 `datetime('now')`」的行 | **0 行**（若曾按本地 +08 写墙钟，最近行必超前 8h；已排除 `expires_at`/`archive_delete_at` 这类天然未来列） |
+| 文件系统交叉验证 | entry 550 `created_at = 2026-11-10 03:46:15.439105`(UTC) ↔ 数据目录 mtime `11:46:15.435 +0800` → **毫秒吻合** |
+| 代码审计 | 全仓已无 `datetime.now()`/`utcnow()`；`server_default CURRENT_TIMESTAMP` 在 SQLite 亦为 UTC |
+
+**要求**：把上述审计脚本固化为**本任务内的一次性校验**（P5 执行），不作永久假设。
+
+
 #### 1.3 前端显示（用户选定"靠浏览器时区"）
 
 - 主显**绝对时间**，悬停显示 `相对时间 · 绝对时间`
-- 格式：`toLocaleString(undefined, { timeZoneName: 'shortOffset' })`
-- **为什么用 `shortOffset` 而不是 `short`**（实测）：`short` 在不同时区输出形态不一致——`Asia/Shanghai` → `GMT+8`、`America/New_York` → `EST`、`UTC` → `UTC`、`Europe/London` → `GMT`；其中 **`EST`/`CST` 一类缩写有歧义**（EST 也可能是澳大利亚东部时间）。`shortOffset` 始终输出 `GMT±N` 形态，无歧义
-- 预期输出：`2026/11/10 17:43:00 GMT+8`
+- 行内格式：`toLocaleString(undefined, { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', timeZoneName:'shortOffset' })`
+  → 实测输出 `2026/11/10 GMT+8 17:43:00`
+- Tooltip：`longOffset` + IANA 时区名（`Intl.DateTimeFormat().resolvedOptions().timeZone`）→ `2026/11/10 GMT+08:00 · Asia/Shanghai`
 
+**实测确认的三个前端约束**：
+
+| 约束 | 实测 |
+|---|---|
+| `dateStyle`/`timeStyle` 与 `timeZoneName` **不能共存** | `TypeError: Invalid option : option` → 必须逐字段写 `year/month/day/hour/minute/second` |
+| `short` 有歧义 | `America/New_York` → `EST`（也可能是澳洲东部）、`Europe/London` → `GMT`；`CST` 更是四种含义 → 用 `shortOffset` |
+| 时区名位置随 locale 变 | `zh-CN` 下时区名在**时间之前**（`2026/11/10 GMT+8 17:43:00`）→ **不可字符串拼接**，必须整体交给 `toLocaleString` |
+| `undefined` 跟随浏览器 locale | 非稳定偏好，但用户已选定"靠浏览器" → 接受 |
+
+**P1 需补**：`formatRelativeTime` 对无效日期输出 `NaNm ago`、对未来时间输出 `just now`（实测存在）。改版后这些只藏在 tooltip 里，但仍应修正。
 #### 1.4 消费方影响（已盘点）
 
 | 消费方 | 现状 | 补 Z 后 |
@@ -135,6 +181,21 @@ fileCount >= 2  → 显示 "N files"
 - **消除现有重复**：`EntryCard.vue` 与 `EntryListRow.vue` 的 script 段几乎逐字相同（`TAG_LIMIT=3`、`isExempt`、`isExpiredButActive`、`navigateToEntry/User/Tag`），抽组件时顺带评估是否一并提取
 - **卡片/列表的团队可见性不一致需修复**：卡片在团队内容时渲染空 `team-hint` span（`EntryCard.vue:18-24`），列表模式无任何对应元素 → 统一到 `VisibilityMenu` 后自然消除
 
+## 配套改动清单（独立评审提出，P1 必须纳入基线）
+
+序列化改动不是孤立的，以下必须同任务完成：
+
+| # | 项 | 依据 |
+|---|---|---|
+| 1 | **`client.py:89` 的 `fromisoformat` 兼容 `Z`** | Python 3.10 不接受 Z；补 Z 会打断 CLI remote 模式（见 1.2.2） |
+| 2 | **CLI 输出统一 helper** | `cli.py:378/443/561`、`admin_service.py:643-645` 的 `.isoformat()` 仍无时区标记，与 API 不一致 |
+| 3 | **测试：每端点断言响应以 `Z` 结尾** | 防遗漏；15 个响应模型逐个覆盖 |
+| 4 | **测试：断言 python 模式 `model_dump()` 仍是 datetime** | 防 `when_used` 回归为 `always`（见 1.2.1 第 1 条） |
+| 5 | **测试：前端 `new Date(apiString)` 得正确瞬间** | 锁住端到端时区语义 |
+| 6 | **存量 UTC 审计脚本固化** | 见 1.2.3，P5 执行一次，不作永久假设 |
+| 7 | **升级说明 + CHANGELOG** | 这是**对外可见的响应格式变更**（时间字段多 `Z`），属破坏性变更 |
+| 8 | **E2E 固定 TZ** | 断言勿硬编码 `GMT+8`（CI runner 时区可能不同） |
+
 ## 明确排除（不在本任务范围）
 
 | 项 | 去向 |
@@ -174,6 +235,9 @@ fileCount >= 2  → 显示 "N files"
 - ~~时区解析坑~~ **已实测排除**：库里 naive 值经验证精确等于 UTC（差值 0.000000s），响应层补 `Z` 语义正确
 - **改错层的风险**：`EntryBase` 被表模型 `Entry` 继承，serializer 必须加在**叶响应模型**（15 个），加错会污染表模型
 - **CLI 输出形态变化**：`.isoformat()` 补时区后变为 `+00:00`（Python 不用 `Z`），可能影响 `--json` 消费方，P1 需确认
+- **`client.py:89` 的 `fromisoformat`**：Python 3.10 不接受 `Z`（3.11+ 才行），补 Z 会打断 CLI remote 模式 → **必须同任务修复**（见 1.2.2）
+- **覆盖不全导致静默错序**：15 个叶响应模型若有遗漏，部分字段带 Z 会让前端字符串排序错乱（见 1.2.1 第 4 条）
+- **`archive_delete_at` 类 UI 数值会变**：补 Z 后前端算出的倒计时/相对时间会变化，P6 需 before/after 截图对比
 - **三处复用**：详情页此前无编辑入口，新增菜单会改变详情页交互密度，需视觉确认
 - **`EntryCard`/`EntryListRow` 重复逻辑**若一并重构，改动面会扩大（可拆到 P7 或独立任务）
 - 团队子菜单在团队很多时的可用性（用户已接受"一律子菜单"，但 >15 个团队时体验需实测）
