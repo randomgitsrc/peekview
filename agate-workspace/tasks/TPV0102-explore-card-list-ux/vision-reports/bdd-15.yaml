@@ -1,0 +1,19 @@
+vision_analysis:
+  bdd: '15'
+  images:
+  - bdd-15-three-files-list.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore **列表模式**整页截图，其中有一个 **3 个文件**的 entry。请核对：该 entry 那一行是否出现了文本 "3 files"？请把该行文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 经核对：
+  per_image:
+  - image: bdd-15-three-files-list.png
+    prompt: '这是 PeekView Explore **列表模式**整页截图，其中有一个 **3 个文件**的 entry。请核对：该 entry 那一行是否出现了文本 "3 files"？请把该行文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "经核对：\n\n1. 该 entry（最顶部一项）确实出现了文本 **\"3 files\"**。\n2. 该 entry 行文字原样抄录如下：\n   `bdd15 three-file 1794336878391`\n   `@alice · 11/11/2026, 02:54:51 AM GMT+8 · 3 files`\n   （注：若仅指包含\"3 files\"的元信息行，则为：`@alice · 11/11/2026, 02:54:51 AM GMT+8 · 3 files`）\n\n3. 页面列表模式整体排版规整，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等任何视觉缺陷。\n\nBlocker 数量: 0"
+  raw_response: "===== bdd-15-three-files-list.png（model=xrouter/nx-vision, blocker=0）=====\n经核对：\n\n1. 该 entry（最顶部一项）确实出现了文本 **\"3 files\"**。\n2. 该 entry 行文字原样抄录如下：\n   `bdd15 three-file 1794336878391`\n   `@alice · 11/11/2026, 02:54:51 AM GMT+8 · 3 files`\n   （注：若仅指包含\"3 files\"的元信息行，则为：`@alice · 11/11/2026, 02:54:51 AM GMT+8 · 3 files`）\n\n3. 页面列表模式整体排版规整，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等任何视觉缺陷。\n\nBlocker 数量: 0"

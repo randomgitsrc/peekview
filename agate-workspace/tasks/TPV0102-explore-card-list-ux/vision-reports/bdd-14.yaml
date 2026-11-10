@@ -1,0 +1,36 @@
+vision_analysis:
+  bdd: '14'
+  images:
+  - bdd-14-zero-file-card.png
+  - bdd-14-zero-file-list.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**0 个文件**的 entry 卡片（局部截图）。请核对：该卡片元信息区是否**完全没有**任何形如 "N file" / "N files" 的文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView Explore **列表模式**整页截图，其中有一个**0 个文件**的 entry。请核对：该 entry 那一行是否**没有**任何形如 "N file"/"N files" 的文件数文本？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 经核对：
+  per_image:
+  - image: bdd-14-zero-file-card.png
+    prompt: '这是 PeekView 一个**0 个文件**的 entry 卡片（局部截图）。请核对：该卡片元信息区是否**完全没有**任何形如 "N file" / "N files" 的文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "经核对：\n\n1. **元信息区是否完全没有 \"N file\" / \"N files\" 文本**：是的，完全没有。标题中的 \"zero-file\" 属于主标题名称，元信息区域没有任何关于文件数量的描述。\n2. **元信息区文字原样抄录**：\n   - `@alice ·`\n   - `11/11/2026, 02:54:50 AM GMT+8`\n3. **视觉缺陷检查**：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。整体布局干净，文字完整，间距正常。\n\nBlocker 数量: 0"
+  - image: bdd-14-zero-file-list.png
+    prompt: '这是 PeekView Explore **列表模式**整页截图，其中有一个**0 个文件**的 entry。请核对：该 entry 那一行是否**没有**任何形如 "N file"/"N files" 的文件数文本？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '核对结果：
+
+
+      - 0 个文件的 entry 为 **bdd14 zero-file 1794336878391**。
+
+      - 该行元数据仅显示 `@alice · 11/11/2026, 02:54:50 AM GMT+8`，**没有**任何形如 `N file` / `N files` 的文件数文本。
+
+      - 截图中未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: "===== bdd-14-zero-file-card.png（model=xrouter/nx-vision, blocker=0）=====\n经核对：\n\n1. **元信息区是否完全没有 \"N file\" / \"N files\" 文本**：是的，完全没有。标题中的 \"zero-file\" 属于主标题名称，元信息区域没有任何关于文件数量的描述。\n2. **元信息区文字原样抄录**：\n   - `@alice ·`\n   - `11/11/2026, 02:54:50 AM GMT+8`\n3. **视觉缺陷检查**：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。整体布局干净，文字完整，间距正常。\n\nBlocker 数量: 0\n\n===== bdd-14-zero-file-list.png（model=xrouter/nx-vision, blocker=0）=====\n核对结果：\n\n- 0 个文件的 entry 为 **bdd14 zero-file 1794336878391**。\n- 该行元数据仅显示 `@alice · 11/11/2026, 02:54:50 AM GMT+8`，**没有**任何形如 `N file` / `N files` 的文件数文本。\n- 截图中未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。\n\nBlocker 数量: 0"

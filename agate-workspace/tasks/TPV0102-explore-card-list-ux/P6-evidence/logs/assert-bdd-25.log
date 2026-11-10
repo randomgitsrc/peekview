@@ -1,0 +1,7 @@
+0 文件 entry 详情页 empty-no-files 文案 = "此 entry 无文件"
+「多文件未选中」通用文案常量（EntryDetailContent.vue:73 的 empty-select-file 分支）= "Select a file to view"
+判据 专用提示非空=true；不等于通用文案=true
+对照 3 文件 entry：empty-no-files count=0（期望 0）；empty-select-file count=0
+[判据瑕疵-1] `stores/entryDetail.ts:49-53` 的 loadEntry 在 files.length>0 时恒选 files[0] ⇒ empty-select-file 分支对"有文件 entry"不可达，故「两空态可区分」只能以文案常量对照断言（E2E spec 同口径，见 spec.ts:479-484 注释）
+[截图] screenshots/bdd-25-zero-file-empty.png 25298B / screenshots/bdd-25-with-files-detail.png 39832B
+[VERDICT] BDD-25: PASS — 0 文件 entry 显示专用空态 "此 entry 无文件"（≠ 通用文案 "Select a file to view"）；3 文件 entry 不落该空态（count=0）

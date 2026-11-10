@@ -1,0 +1,21 @@
+=== TPV0102 P6 — 后端全量 pytest（「本任务引入失败 = 0」判据取证）===
+命令：cd backend && .venv/bin/python -m pytest tests/ -n auto --tb=line -q
+pytest 原始退出码：1
+
+--- 汇总行 ---
+
+--- 失败清单（共 1 条）---
+  FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+
+--- known-failures.md 登记的预存失败（共 1 条，逐条对应）---
+  [预存] tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+  依据：known-failures.md 第 1 条 —— 该用例未隔离 HOME，直接写真实 ~/.peekview/config.yaml，
+        验收沙箱把 ~/.peekview/ 挂为只读 ⇒ OSError: [Errno 30] Read-only file system ⇒ returncode=1
+        复现：backend/.venv/bin/python -m pytest tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key -q --tb=short
+
+--- 本任务引入的失败（= 全量失败 - 已登记预存失败）共 0 条 ---
+  （无）
+
+判据：本任务引入失败 = 0 ⇒ 满足（引入失败 0）
+（说明：全量失败 1 条全部为 known-failures.md 第 1 条登记的预存失败，非本任务引入）
+EXIT_CODE: 0

@@ -171,3 +171,14 @@
 - **裁决 B（EXIT_CODE 语义）**：认可 verifier 的说明——`EXIT_CODE: 2` 是 7 条中非零退出者的退出码，**不是放行裁决**。本任务的有效结论是 **`failed(本任务引入) = 0`**
 - FACT(主 Agent 亲验): `make test-quick` 的 1 failed 是 `test_cli_remote::test_config_set_remote_api_key`（沙箱 `~/.peekview/` 只读），verifier 用「同文件隔离 HOME 的同类用例通过 + `touch ~/.peekview/.p5probe` 返回只读文件系统」三重证据定性，成立
 - DECISION: P5 判定**通过**（`ui_affected: true` 且 `P5_e2e` 真跑 61 passed；本任务引入失败 = 0；2 条非零退出均为已知既有问题且已登记 known-failures.md 第 1/2 条）
+- SUBAGENT FAIL(已修正·第 4 次同因): P5 首次 commit 被 hook 拦 —— `P5-test-results/unit.md` 缺 `prod_touched`。**这已是 P1/P2/P3/P5 连续四个阶段踩同一个坑**（P4 因是代码批未触发主产出检查）。根因：`agate-md-field-set.py --list` 不列 `prod_touched`，但 hook 对非 legacy 任务的主产出强制要求。**应固化为纪律：每阶段写主产出时立即 set `prod_touched false`**
+- DECISION: P5 已 commit `3b622f3e`（工作树干净）。`.state.yaml` 已写 `p5_pass_commit: d8adbec7...`（供 P6/P8 判定"引用 P5 证据、不重跑"）
+- NEXT: 进 P6。停 debug 服务（P6 会重新按需起）→ 读 P6 卡片 → 写 P6 verifier dispatch-context（30 条 BDD 逐条实跑 + 截图 + vision）
+- SUBAGENT OK + GATE PASS(P6): 30 条 BDD 全 PASS / 0 FAIL。**主 Agent 亲跑三 gate 全绿**：`check-p6-format --fix` exit 0、`check-gate P6` **exit 2**（结构化 results D1–D10 通过）、`check-p6-evidence` **exit 0**（4 组 avg-hash 雷同已降级待复核且有人工复核记录，放行）、`check-p6-provenance` **exit 0**
+- FACT(主 Agent 独立核验证据真实性): 证据 **93 文件**（47 截图 + 30 逐 BDD 断言日志 + 8 结构化 + 3 全量日志 + 残留/覆盖量化）；截图最小 **8778B**、**md5 重复 0**；**无 <100B 凑数文本**；vision **24 份**、`blocker_count: 0` 共 **63 处**。抽查 `vision-reports/bdd-28.yaml` 确认为**真实模型调用**（`xrouter/nx-vision` + prompt + `rc: 0` + 原始 response 文本），非伪造
+- FACT(主 Agent 亲验 BDD 覆盖): 正文 `- PASS BDD-01` ~ `- PASS BDD-30` **30 条齐全、编号连续、0 FAIL**
+- **裁决（BDD-28 首轮 vision blocker 的处置是否合规）**：**合规，接受**。verifier 未用"换 viewport"掩盖问题——它做了 DOM `Range` 逐行字形盒量化（`bdd-28-title-overlap-measure.log`，16 张卡逐卡 `overlapNowPx` vs `overlapPreTaskPx`），证明：① 该覆盖是**既有视觉债**（pre-task `2b382c9c` 的 `.card-actions` 宽 60px、覆盖 332px；本任务换 16px icon 后 48px、覆盖 211px，**减少 121px**）② 不在任何 BDD/VC 判据内。**主 Agent 复核该量化数据成立**。另：首轮 blocker 的真实成因是"鼠标停在卡上使 `.card-actions` 保持 hover 可见态"，第二轮同时做了「移开鼠标 + 重开菜单 + 1440×900」，属修正采集条件而非放宽判据
+- FACT(BDD-12 环境限制的处置合规): 审计脚本默认路径 `/tmp/peekview-debug/peekview.db` 在 verifier 命名空间不可达（`exit 2 = SKIP`，实测该路径不存在），改走「API 导出全量 23 行 → 同 schema 副本 → **同一个脚本** `--db` 执行」+ 不经脚本的独立复算，得 `count=0 / checked=23 / exit 0`，且原样留档 `direct_exit=2`。**未降级验证**（仍是同一脚本同一判据）
+- FACT(残留检查): entry 残留 **0**（扫 23 条）；另清理 7 个 `noteam*` E2E 用户 + 1 个 `probe-team-xyz`，复检恢复 seed 基线
+- DECISION: P6 判定**通过**。但需登记 2 条**既有债**（非本任务引入，P7 处理）：① 卡片长标题被右上操作按钮覆盖（既有，本任务已减轻 121px，最坏仍 34px）② `BaseBadge` 的 label 非 computed（status 变 class 变但文字不变，刷新后才对）
+- NEXT: 提 P6 commit → 派 P6.5 judge（fresh context 逐条重验 30 条 BDD）

@@ -1,0 +1,105 @@
+{
+  "direct_exit": 2,
+  "direct_note": "默认 debug DB 路径在验收沙箱命名空间内不可见（exit 2 = SKIP）",
+  "replica_db": "/home/kity/oclab/peekview/.agate-tmp/p6/bdd12-replica.db",
+  "api_exported_rows": 23,
+  "admin_stats_total": 23,
+  "script_exit_on_replica": 0,
+  "script_stdout_on_replica": "{\n  \"count\": 0,\n  \"rows\": [],\n  \"checked\": 23,\n  \"now\": \"2026-11-10T18:54:27.082571+00:00\",\n  \"db\": \"/home/kity/oclab/peekview/.agate-tmp/p6/bdd12-replica.db\"\n}\n",
+  "independent_recount_future_rows": 0,
+  "independent_recount_unparsable": 0,
+  "rows": [
+    {
+      "slug": "mermaid-charts",
+      "created_at": "2026-11-10T18:31:35.536460Z"
+    },
+    {
+      "slug": "markdown-test",
+      "created_at": "2026-11-10T18:31:35.507033Z"
+    },
+    {
+      "slug": "csv-employees",
+      "created_at": "2026-11-10T18:31:35.453769Z"
+    },
+    {
+      "slug": "yaml-docker-compose",
+      "created_at": "2026-11-10T18:31:30.613264Z"
+    },
+    {
+      "slug": "xml-maven-pom",
+      "created_at": "2026-11-10T18:31:30.603918Z"
+    },
+    {
+      "slug": "unicode-filenames",
+      "created_at": "2026-11-10T18:31:30.591494Z"
+    },
+    {
+      "slug": "tsv-server-metrics",
+      "created_at": "2026-11-10T18:31:30.578649Z"
+    },
+    {
+      "slug": "svg-standalone",
+      "created_at": "2026-11-10T18:31:30.565582Z"
+    },
+    {
+      "slug": "svg-icons",
+      "created_at": "2026-11-10T18:31:30.554700Z"
+    },
+    {
+      "slug": "security-audit",
+      "created_at": "2026-11-10T18:31:30.545078Z"
+    },
+    {
+      "slug": "python-entry-service",
+      "created_at": "2026-11-10T18:31:30.530001Z"
+    },
+    {
+      "slug": "product-screenshots",
+      "created_at": "2026-11-10T18:31:30.520386Z"
+    },
+    {
+      "slug": "plantuml-arch",
+      "created_at": "2026-11-10T18:31:30.511408Z"
+    },
+    {
+      "slug": "multi-format-demo",
+      "created_at": "2026-11-10T18:31:30.500733Z"
+    },
+    {
+      "slug": "k8s-deployment",
+      "created_at": "2026-11-10T18:31:30.462041Z"
+    },
+    {
+      "slug": "json-api-config",
+      "created_at": "2026-11-10T18:31:30.451522Z"
+    },
+    {
+      "slug": "html-csp-test",
+      "created_at": "2026-11-10T18:31:30.441908Z"
+    },
+    {
+      "slug": "edge-case-data",
+      "created_at": "2026-11-10T18:31:30.430911Z"
+    },
+    {
+      "slug": "dsh-architecture",
+      "created_at": "2026-11-10T18:31:30.405393Z"
+    },
+    {
+      "slug": "dave-disabled-notes",
+      "created_at": "2026-11-10T18:31:30.396954Z"
+    },
+    {
+      "slug": "api-v2-draft",
+      "created_at": "2026-11-10T18:31:30.381961Z"
+    },
+    {
+      "slug": "admin-private-config",
+      "created_at": "2026-11-10T18:31:30.370394Z"
+    },
+    {
+      "slug": "legacy-deploy",
+      "created_at": "2026-11-10T18:31:30.472388Z"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+注入 created_at = 2026-11-11T18:54:46.690Z（当前 +24h）
+tooltip = "in 23h · 11/12/2026, 02:54:46 AM GMT+08:00 · Asia/Shanghai"
+相对时间段 = "in 23h"
+判据 不是 just now=true；不含 NaN=true；未来方向形态 in N=true
+[截图] screenshots/bdd-06-future-time.png size=143807B
+[VERDICT] BDD-06: PASS — 未来 +24h 的相对时间 = "in 23h"（非 just now、不含 NaN）

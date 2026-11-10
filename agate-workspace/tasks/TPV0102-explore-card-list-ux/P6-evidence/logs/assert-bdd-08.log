@@ -1,0 +1,54 @@
+=== BDD-08：表模型（Entry/User）python 模式时间字段仍为 datetime，不被响应层污染 ===
+......                                                                   [100%]
+pytest exit = 0
+
+[独立复算] 直接 import 表模型 → model_dump()（python 模式）逐字段类型：
+{
+  "entry": {
+    "created_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "updated_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "expires_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "archived_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "archive_delete_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    }
+  },
+  "user": {
+    "created_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "updated_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "disabled_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    }
+  },
+  "UtcSerializeMixin_in_table_mro": []
+}
+独立复算结论：全部为 datetime 且不以 Z 结尾、mixin 不在任何表模型 MRO = True
+[VERDICT] BDD-08: PASS — 表模型 python 模式 dump 值仍为 datetime 且不以 Z 结尾（独立复算 8 字段），mixin 不在表模型 MRO

@@ -1,0 +1,3 @@
+PATCH 请求计数（请求未返回前二次点击）= 1（期望 1）
+[截图] screenshots/bdd-24-single-request.png size=131176B
+[VERDICT] BDD-24: PASS — 请求进行中再次点击菜单项只发出 1 个 PATCH（实测 1）

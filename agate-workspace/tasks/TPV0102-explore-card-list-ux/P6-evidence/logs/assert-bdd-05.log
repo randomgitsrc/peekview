@@ -1,0 +1,6 @@
+注入 created_at='not-a-date' 后：
+  卡片文本 = "bdd04 shanghai 1794336878391@alice—Invalid date2 files"
+  tooltip 文本 = "Invalid date"
+判据 卡片无 NaN=true；tooltip 无 NaN=true
+[截图] screenshots/bdd-05-invalid-date.png size=139713B
+[VERDICT] BDD-05: PASS — 无效 created_at 下卡片与 tooltip 均不含 "NaN"（tooltip="Invalid date"）

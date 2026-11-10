@@ -1,0 +1,26 @@
+vision_analysis:
+  bdd: '04'
+  images:
+  - bdd-04-shanghai-zhcn.png
+  - bdd-04-exact-0943.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是一张 PeekView entry 卡片（浏览器时区 Asia/Shanghai、locale zh-CN）。请把卡片上**时间文本原样抄录**出来，并回答：①其中是否含 "GMT+8"？②是否含 24 小时制 "HH:MM:SS"？③是否出现了 UTC 原值 "09:43:00"（若出现说明未做 +8 转换，属缺陷）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 时间文本原样抄录：`2026/11/11 GMT+8 02:54:44`
+  per_image:
+  - image: bdd-04-shanghai-zhcn.png
+    prompt: '这是一张 PeekView entry 卡片（浏览器时区 Asia/Shanghai、locale zh-CN）。请把卡片上**时间文本原样抄录**出来，并回答：①其中是否含 "GMT+8"？②是否含 24 小时制 "HH:MM:SS"？③是否出现了 UTC 原值 "09:43:00"（若出现说明未做 +8 转换，属缺陷）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "时间文本原样抄录：`2026/11/11 GMT+8 02:54:44`\n\n① 含 `GMT+8`：是  \n② 含 24 小时制 `HH:MM:SS`：是（`02:54:44`）  \n③ 出现 UTC 原值 `09:43:00`：否  \n视觉缺陷：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。\n\nBlocker 数量: 0"
+  - image: bdd-04-exact-0943.png
+    prompt: '这是一张 PeekView entry 卡片（浏览器时区固定 Asia/Shanghai、locale 固定 zh-CN），其 created_at 被设为 2026-11-10T09:43:00Z（UTC）。请把卡片上的**时间文本原样抄录**，并回答：①其中是否含 "GMT+8"？②是否含 24 小时制 "17:43:00"？③是否出现了 UTC 原值 "09:43:00"（若出现说明未做 +8 转换，属缺陷）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "时间文本原样抄录：  \n`BDD-04 固定时刻 09:43:00Z`  \n`@alice · 2026/11/10 GMT+8 17:43:00`\n\n① 是否含 `\"GMT+8\"`：**是**。  \n② 是否含 24 小时制 `\"17:43:00\"`：**是**。  \n③ 是否出现 UTC 原值 `\"09:43:00\"`：**是，出现在标题 `固定时刻 09:43:00Z` 中**；但 `created_at` 的展示行已为 `2026/11/10 GMT+8 17:43:00`，已完成 +8 转换。若标题为用户输入内容，则不应据此判为转换缺陷。\n\n视觉缺陷：未见布局溢出、文字被裁切、元素重叠遮挡等 blocker 级问题。\n\nBlocker 数量: 0"
+  raw_response: "===== bdd-04-shanghai-zhcn.png（model=xrouter/nx-vision, blocker=0）=====\n时间文本原样抄录：`2026/11/11 GMT+8 02:54:44`\n\n① 含 `GMT+8`：是  \n② 含 24 小时制 `HH:MM:SS`：是（`02:54:44`）  \n③ 出现 UTC 原值 `09:43:00`：否  \n视觉缺陷：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。\n\nBlocker 数量: 0\n\n===== bdd-04-exact-0943.png（精确 Given 09:43:00Z, model=xrouter/nx-vision, blocker=0）=====\n时间文本原样抄录：  \n`BDD-04 固定时刻 09:43:00Z`  \n`@alice · 2026/11/10 GMT+8 17:43:00`\n\n① 是否含 `\"GMT+8\"`：**是**。  \n② 是否含 24 小时制 `\"17:43:00\"`：**是**。  \n③ 是否出现 UTC 原值 `\"09:43:00\"`：**是，出现在标题 `固定时刻 09:43:00Z` 中**；但 `created_at` 的展示行已为 `2026/11/10 GMT+8 17:43:00`，已完成 +8 转换。若标题为用户输入内容，则不应据此判为转换缺陷。\n\n视觉缺陷：未见布局溢出、文字被裁切、元素重叠遮挡等 blocker 级问题。\n\nBlocker 数量: 0"

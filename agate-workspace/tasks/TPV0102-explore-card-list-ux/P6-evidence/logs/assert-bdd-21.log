@@ -1,0 +1,5 @@
+注入 PATCH → 500；失败提示文本 = "Failed to change visibility×"
+[截图] screenshots/bdd-21-fail-toast.png size=137386B
+服务端态：is_public=true team_id=null（应保持 true / null）
+卡片 UI 时间/元信息 = "bdd21 fail-rollback 1794337613345@alice11/11/2026, 03:07:12 AM GMT+8just now · 11/11/2026, 03:07:12 AM GMT+08:00 · Asia/Shanghai2 filespublic"
+[VERDICT] BDD-21: PASS — 切换失败出现提示（"Failed to change visibility×"），服务端状态保持 is_public=true / team=null 未变

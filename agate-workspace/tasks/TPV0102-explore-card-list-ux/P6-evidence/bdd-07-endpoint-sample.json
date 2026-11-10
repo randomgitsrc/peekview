@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "id": 23,
+      "slug": "mermaid-charts",
+      "summary": "Mermaid 图表示例集",
+      "tags": [
+        "mermaid",
+        "图表",
+        "文档"
+      ],
+      "status": "active",
+      "file_count": 3,
+      "is_public": false,
+      "owner_id": 1,
+      "username": "alice",
+      "team_id": 1,
+      "team": {
+        "slug": "frontend-team",
+        "name": "frontend-team"
+      },
+      "expires_at": "2026-11-25T18:31:35.536117Z",
+      "archived_at": null,
+      "created_at": "2026-11-10T18:31:35.536460Z",
+      "updated_at": "2026-11-10T18:31:35.536468Z",
+      "star_count": 0,
+      "is_starred": false,
+      "countdown": null
+    }
+  ],
+  "total": 22,
+  "page": 1,
+  "per_page": 1,
+  "owner_found": null
+}

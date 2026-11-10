@@ -1,0 +1,17 @@
+{
+  "endpoints": [
+    "/api/v1/entries?per_page=3",
+    "/api/v1/entries/k8s-deployment",
+    "/api/v1/entries/k8s-deployment/raw",
+    "/api/v1/entries?per_page=3&sort=created_at",
+    "/api/v1/teams",
+    "/api/v1/auth/me",
+    "/api/v1/apikeys",
+    "/api/v1/stars",
+    "/api/v1/admin/users",
+    "/api/v1/admin/stats",
+    "/api/v1/config/captcha"
+  ],
+  "datetime_fields_checked": 32,
+  "offenders": []
+}

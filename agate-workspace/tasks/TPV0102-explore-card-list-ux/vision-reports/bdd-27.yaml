@@ -1,0 +1,139 @@
+vision_analysis:
+  bdd: '27'
+  images:
+  - bdd-27-team-submenu-open.png
+  - bdd-27-after-team-a.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**当前为 Private（无团队）** 的 entry，其可见性菜单已展开且 Team 子菜单已展开。请：①把菜单与子菜单内所有可见项文本逐条抄录（区分父菜单项与子菜单团队项）。②子菜单里列出了哪些可选团队？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView 一个**已归属某个团队**的 entry 卡片，其可见性菜单已展开（注意：这张图可能显示了可见性菜单，请仔细找浮层）。请：①把菜单内所有可见项文本逐条抄录。②卡片上显示的可见性状态标记是什么（如 "Public"/"Private"/"仅团队可见 · 团队名"）？请原样抄录。若画面中**没有**任何展开的菜单浮层，请明确说明"无菜单浮层"。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 根据提供的图片，以下是您所要求的信息提取与视觉缺陷检查：
+  per_image:
+  - image: bdd-27-team-submenu-open.png
+    prompt: '这是 PeekView 一个**当前为 Private（无团队）** 的 entry，其可见性菜单已展开且 Team 子菜单已展开。请：①把菜单与子菜单内所有可见项文本逐条抄录（区分父菜单项与子菜单团队项）。②子菜单里列出了哪些可选团队？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '根据提供的图片，以下是您所要求的信息提取与视觉缺陷检查：
+
+
+      ### ① 菜单与子菜单可见项文本抄录
+
+      **父菜单项：**
+
+      *   Public
+
+      *   Team（右侧带有展开箭头）
+
+
+      **子菜单团队项：**
+
+      *   frontend-team
+
+      *   probe team xyz
+
+      *   E2E privA
+
+      *   1794337613345
+
+
+      ### ② 子菜单可选团队列表
+
+      子菜单中列出的可选团队共 4 个，分别为：
+
+      *   frontend-team
+
+      *   probe team xyz
+
+      *   E2E privA
+
+      *   1794337613345
+
+
+      ### ③ 视觉缺陷检查
+
+      经检查，展开的菜单及整个界面**未发现**布局溢出、文字被裁切、元素异常重叠遮挡（下拉菜单覆盖下方元素为正常交互表现）或空白破图等 blocker 级视觉缺陷。菜单层级清晰，图标与文字均正常显示。
+
+
+      Blocker 数量: 0'
+  - image: bdd-27-after-team-a.png
+    prompt: '这是 PeekView 一个**已归属某个团队**的 entry 卡片，其可见性菜单已展开（注意：这张图可能显示了可见性菜单，请仔细找浮层）。请：①把菜单内所有可见项文本逐条抄录。②卡片上显示的可见性状态标记是什么（如 "Public"/"Private"/"仅团队可见 · 团队名"）？请原样抄录。若画面中**没有**任何展开的菜单浮层，请明确说明"无菜单浮层"。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '根据对图片的仔细观察，回答如下：
+
+
+      ① 菜单内部文本：画面中**无菜单浮层**。虽然提示中提到菜单已展开，但截图中并未发现任何展开的下拉菜单或浮层，卡片上的状态标识均为静态徽章或文本框。
+
+
+      ② 卡片可见性状态：第一张卡片（bdd27 private->team...）上显示的可见性状态标记为 **“仅团队可见 · E2E PrivA 1794337613345”**。（注：其他卡片显示了如“Public”、“Private”、“仅团队可见 · Frontend-Team”等状态）。
+
+
+      视觉缺陷检查：经检查，画面中不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等明显的 blocker 级视觉缺陷。整体布局清晰，元素排列整齐。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-27-team-submenu-open.png（model=xrouter/nx-vision, blocker=0）=====
+
+    根据提供的图片，以下是您所要求的信息提取与视觉缺陷检查：
+
+
+    ### ① 菜单与子菜单可见项文本抄录
+
+    **父菜单项：**
+
+    *   Public
+
+    *   Team（右侧带有展开箭头）
+
+
+    **子菜单团队项：**
+
+    *   frontend-team
+
+    *   probe team xyz
+
+    *   E2E privA
+
+    *   1794337613345
+
+
+    ### ② 子菜单可选团队列表
+
+    子菜单中列出的可选团队共 4 个，分别为：
+
+    *   frontend-team
+
+    *   probe team xyz
+
+    *   E2E privA
+
+    *   1794337613345
+
+
+    ### ③ 视觉缺陷检查
+
+    经检查，展开的菜单及整个界面**未发现**布局溢出、文字被裁切、元素异常重叠遮挡（下拉菜单覆盖下方元素为正常交互表现）或空白破图等 blocker 级视觉缺陷。菜单层级清晰，图标与文字均正常显示。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-27-after-team-a.png（model=xrouter/nx-vision, blocker=0）=====
+
+    根据对图片的仔细观察，回答如下：
+
+
+    ① 菜单内部文本：画面中**无菜单浮层**。虽然提示中提到菜单已展开，但截图中并未发现任何展开的下拉菜单或浮层，卡片上的状态标识均为静态徽章或文本框。
+
+
+    ② 卡片可见性状态：第一张卡片（bdd27 private->team...）上显示的可见性状态标记为 **“仅团队可见 · E2E PrivA 1794337613345”**。（注：其他卡片显示了如“Public”、“Private”、“仅团队可见 · Frontend-Team”等状态）。
+
+
+    视觉缺陷检查：经检查，画面中不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等明显的 blocker 级视觉缺陷。整体布局清晰，元素排列整齐。
+
+
+    Blocker 数量: 0'

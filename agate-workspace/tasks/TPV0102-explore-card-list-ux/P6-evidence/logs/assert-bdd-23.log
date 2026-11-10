@@ -1,0 +1,4 @@
+[桌面 1280×800] 详情页 .meta-row 内 visibility-toggle count=1 visible=true
+[移动 390×844] 详情页 meta-tags-bar 内 visibility-toggle count=1 visible=true
+[截图] screenshots/bdd-23-detail-desktop-menu.png 38047B / screenshots/bdd-23-detail-mobile-menu.png 26433B
+[VERDICT] BDD-23: PASS — 详情页桌面头部与移动元信息条均有可见菜单入口（桌面 count=1 / 移动 count=1）

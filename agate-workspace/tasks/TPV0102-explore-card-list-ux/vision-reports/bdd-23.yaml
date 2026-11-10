@@ -1,0 +1,79 @@
+vision_analysis:
+  bdd: '23'
+  images:
+  - bdd-23-detail-desktop-menu.png
+  - bdd-23-detail-mobile-menu.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView **entry 详情页的桌面视口**截图（宽 1280）。请核对：详情页头部/元信息区是否出现了**可见性菜单入口**（一个可点击的可见性按钮，通常带地球/锁/团队图标）？请描述该区域实际出现的内容与图标。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView **entry 详情页的移动视口**截图（宽 390）。请核对：元信息条是否出现了**可见性菜单入口**（可点击的可见性按钮）？请描述该区域内出现的元素与图标。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 详情页头部/元信息区**出现了**可见性菜单入口。该区域实际显示的内容为：`@alice · 11/11/2026, 03:07:18 AM GMT+8 · Expires in 15d · 34 reads ·`，紧接着是一个**地球图标**和文字**“Public”**，这构成了可点击的可见性按钮。
+  per_image:
+  - image: bdd-23-detail-desktop-menu.png
+    prompt: '这是 PeekView **entry 详情页的桌面视口**截图（宽 1280）。请核对：详情页头部/元信息区是否出现了**可见性菜单入口**（一个可点击的可见性按钮，通常带地球/锁/团队图标）？请描述该区域实际出现的内容与图标。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '详情页头部/元信息区**出现了**可见性菜单入口。该区域实际显示的内容为：`@alice · 11/11/2026, 03:07:18 AM GMT+8 · Expires in 15d · 34 reads ·`，紧接着是一个**地球图标**和文字**“Public”**，这构成了可点击的可见性按钮。
+
+
+      经核对，页面不存在布局溢出、文字被裁切、元素重叠遮挡或空白破图等 Blockers 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-23-detail-mobile-menu.png
+    prompt: '这是 PeekView **entry 详情页的移动视口**截图（宽 390）。请核对：元信息条是否出现了**可见性菜单入口**（可点击的可见性按钮）？请描述该区域内出现的元素与图标。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '在提供的视口截图中，元信息条**出现了**可见性菜单入口。
+
+
+      该区域内出现的元素与图标如下：
+
+      1.  **用户信息**：带有 `@` 符号的蓝色文本 `@alice`。
+
+      2.  **时间戳**：灰色的日期时间文本 `11/11/2026, 03:07:18 AM GMT+8`。
+
+      3.  **阅读量**：灰色文本 `36 reads`，前面带有一个小圆点分隔符。
+
+      4.  **可见性图标**：在元信息条的第二行，有一个**地球图标**，它作为可见性菜单的入口（通常表示“公开”状态）。
+
+
+      关于视觉缺陷的核对：未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。卡片标题与正文均显示完整，布局正常。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-23-detail-desktop-menu.png（model=xrouter/nx-vision, blocker=0）=====
+
+    详情页头部/元信息区**出现了**可见性菜单入口。该区域实际显示的内容为：`@alice · 11/11/2026, 03:07:18 AM GMT+8 · Expires in 15d · 34 reads ·`，紧接着是一个**地球图标**和文字**“Public”**，这构成了可点击的可见性按钮。
+
+
+    经核对，页面不存在布局溢出、文字被裁切、元素重叠遮挡或空白破图等 Blockers 级视觉缺陷。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-23-detail-mobile-menu.png（model=xrouter/nx-vision, blocker=0）=====
+
+    在提供的视口截图中，元信息条**出现了**可见性菜单入口。
+
+
+    该区域内出现的元素与图标如下：
+
+    1.  **用户信息**：带有 `@` 符号的蓝色文本 `@alice`。
+
+    2.  **时间戳**：灰色的日期时间文本 `11/11/2026, 03:07:18 AM GMT+8`。
+
+    3.  **阅读量**：灰色文本 `36 reads`，前面带有一个小圆点分隔符。
+
+    4.  **可见性图标**：在元信息条的第二行，有一个**地球图标**，它作为可见性菜单的入口（通常表示“公开”状态）。
+
+
+    关于视觉缺陷的核对：未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。卡片标题与正文均显示完整，布局正常。
+
+
+    Blocker 数量: 0'

@@ -1,0 +1,65 @@
+vision_analysis:
+  bdd: '25'
+  images:
+  - bdd-25-zero-file-empty.png
+  - bdd-25-with-files-detail.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**没有任何文件（0 files）**的 entry 的详情页截图。请核对：①正文区是否显示了一条"该 entry 无文件"语义的空态提示？请把该文案**原样抄录**。②左侧是否有文件列表栏？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView 一个**有 3 个文件**的 entry 的详情页截图。请核对：①正文区是否正常渲染了文件内容（而不是空态提示）？请抄录正文区标题。②正文区是否**没有**出现 "此 entry 无文件" 这类空态文案？③左侧文件栏标题显示的文件数是什么？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 正文区显示了空态提示。文案原样抄录为：**此 entry 无文件**
+  per_image:
+  - image: bdd-25-zero-file-empty.png
+    prompt: '这是 PeekView 一个**没有任何文件（0 files）**的 entry 的详情页截图。请核对：①正文区是否显示了一条"该 entry 无文件"语义的空态提示？请把该文案**原样抄录**。②左侧是否有文件列表栏？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 正文区显示了空态提示。文案原样抄录为：**此 entry 无文件**
+
+      ② 左侧**没有**文件列表栏。页面处于居中空态，左侧无任何侧边栏或文件列表组件。
+
+      ③ 未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。页面整体干净，无异常。
+
+
+      Blocker 数量: 0'
+  - image: bdd-25-with-files-detail.png
+    prompt: '这是 PeekView 一个**有 3 个文件**的 entry 的详情页截图。请核对：①正文区是否正常渲染了文件内容（而不是空态提示）？请抄录正文区标题。②正文区是否**没有**出现 "此 entry 无文件" 这类空态文案？③左侧文件栏标题显示的文件数是什么？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 正文区正常渲染了文件内容。正文区标题为：**bdd25 with files 1794337613345 — file 1**。
+
+      ② 正文区没有出现 "此 entry 无文件" 这类空态文案。
+
+      ③ 左侧文件栏标题显示的文件数是 **3**（显示为 "FILES · 3"）。
+
+      视觉缺陷核对：页面整体布局正常，未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-25-zero-file-empty.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 正文区显示了空态提示。文案原样抄录为：**此 entry 无文件**
+
+    ② 左侧**没有**文件列表栏。页面处于居中空态，左侧无任何侧边栏或文件列表组件。
+
+    ③ 未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。页面整体干净，无异常。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-25-with-files-detail.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 正文区正常渲染了文件内容。正文区标题为：**bdd25 with files 1794337613345 — file 1**。
+
+    ② 正文区没有出现 "此 entry 无文件" 这类空态文案。
+
+    ③ 左侧文件栏标题显示的文件数是 **3**（显示为 "FILES · 3"）。
+
+    视觉缺陷核对：页面整体布局正常，未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

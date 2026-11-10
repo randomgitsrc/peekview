@@ -1,0 +1,8 @@
+悬停前 tooltip 可见性 = false
+tooltip 全文 = "23m ago · 11/11/2026, 02:31:30 AM GMT+08:00 · Asia/Shanghai"
+三段 = ["23m ago","11/11/2026, 02:31:30 AM GMT+08:00","Asia/Shanghai"]
+运行时 IANA = "Asia/Shanghai"
+判据①相对时间=true ②完整偏移 GMT±HH:MM=true ③IANA 等于运行时解析值=true（parts[2]="Asia/Shanghai"）
+[截图] screenshots/bdd-02-tooltip-hover.png size=140417B
+移开后 tooltip 隐藏 = true
+[VERDICT] BDD-02: PASS — tooltip="23m ago · 11/11/2026, 02:31:30 AM GMT+08:00 · Asia/Shanghai"；三段齐备且 IANA 等于运行时值 Asia/Shanghai

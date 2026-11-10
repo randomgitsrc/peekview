@@ -1,0 +1,30 @@
+=== BDD-09：叶响应模型（EntryResponse 等）python 模式时间字段仍为 datetime ===
+..                                                                       [100%]
+pytest exit = 0
+
+[独立复算] 叶模型 python 模式 dump（遍历全部叶模型）：
+{
+  "EntryResponse": {
+    "expires_at": {
+      "type": "datetime",
+      "is_str": false
+    },
+    "archived_at": {
+      "type": "datetime",
+      "is_str": false
+    },
+    "created_at": {
+      "type": "datetime",
+      "is_str": false
+    },
+    "updated_at": {
+      "type": "datetime",
+      "is_str": false
+    }
+  },
+  "leaf_models": 16,
+  "leaf_datetime_fields": 34,
+  "python_mode_all_datetime": true,
+  "violations": []
+}
+[VERDICT] BDD-09: PASS — 叶响应模型 python 模式全部返回 datetime 对象（pytest exit=0；独立复算覆盖叶模型/字段数见 bdd-09-leaf-python-probe.json）

@@ -1,0 +1,37 @@
+vision_analysis:
+  bdd: '05'
+  images:
+  - bdd-05-invalid-date.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面，其中一条 entry 的 created_at 被注入为无法解析的字符串 "not-a-date"。请核对：①卡片上（尤其时间位置）是否出现 "NaN" 字样？②时间位置实际显示什么（请原样抄录）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 卡片上（尤其时间位置）**未出现** "NaN" 字样。
+  per_image:
+  - image: bdd-05-invalid-date.png
+    prompt: '这是 PeekView Explore 页面，其中一条 entry 的 created_at 被注入为无法解析的字符串 "not-a-date"。请核对：①卡片上（尤其时间位置）是否出现 "NaN" 字样？②时间位置实际显示什么（请原样抄录）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 卡片上（尤其时间位置）**未出现** "NaN" 字样。
+
+      ② 时间位置（第一张卡片中）实际弹出的提示浮层显示为：`Invalid date`。
+
+
+      经核对，页面不存在布局溢出、文字被裁切、非预期元素重叠遮挡（正常 Tooltip 悬浮属正常交互）、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-05-invalid-date.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 卡片上（尤其时间位置）**未出现** "NaN" 字样。
+
+    ② 时间位置（第一张卡片中）实际弹出的提示浮层显示为：`Invalid date`。
+
+
+    经核对，页面不存在布局溢出、文字被裁切、非预期元素重叠遮挡（正常 Tooltip 悬浮属正常交互）、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

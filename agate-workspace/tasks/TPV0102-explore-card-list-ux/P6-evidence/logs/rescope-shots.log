@@ -1,0 +1,11 @@
+=== 雷同截图复核的修复：4 组雷同对改为元素级局部截图 ===
+时间：2026-11-10T19:34:17.194Z
+
+BDD-16 scoped: screenshots/bdd-16-card-menu-scoped.png 13989B  菜单项=["Private","Team"]  clip={"x":44,"y":124,"width":304,"height":228.5}
+BDD-20 scoped: screenshots/bdd-20-card-after-private.png 11536B  is_public=false
+BDD-23 scoped: screenshots/bdd-23-detail-header-scoped.png 18263B  meta-row 内 toggle count=1
+BDD-24 scoped: screenshots/bdd-24-card-after-switch.png 10596B  PATCH 计数=1
+BDD-25-with-files scoped: screenshots/bdd-25-content-area-scoped.png 14936B  empty-no-files count=0
+BDD-29 scoped: screenshots/bdd-29-card-after-private.png 11525B  is_public=false team=null
+BDD-30 scoped: screenshots/bdd-30-card-menu-open-scoped.png 14157B / screenshots/bdd-30-card-after-escape-scoped.png 12315B  menu count=0 activeElement=visibility-toggle
+EXIT_CODE: 0

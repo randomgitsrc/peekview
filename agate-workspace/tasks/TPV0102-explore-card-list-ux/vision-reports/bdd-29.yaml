@@ -1,0 +1,63 @@
+vision_analysis:
+  bdd: '29'
+  images:
+  - bdd-29-team-to-private.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**归属已从 Team A 改为 Private** 的 entry 卡片，其可见性菜单已重新打开。请核对：①画面中是否**没有**确认对话框？②菜单内所有可见项文本请逐条抄录（当前已是 Private，理论上不应再有 Private 项）。③卡片上显示的可见性状态标记是什么？若没有展开的菜单浮层请明确说明。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 根据对图片的核对，结果如下：
+  per_image:
+  - image: bdd-29-team-to-private.png
+    prompt: '这是 PeekView 一个**归属已从 Team A 改为 Private** 的 entry 卡片，其可见性菜单已重新打开。请核对：①画面中是否**没有**确认对话框？②菜单内所有可见项文本请逐条抄录（当前已是 Private，理论上不应再有 Private 项）。③卡片上显示的可见性状态标记是什么？若没有展开的菜单浮层请明确说明。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '根据对图片的核对，结果如下：
+
+
+      ① 画面中**没有**确认对话框。
+
+
+      ② 该浮层并非包含选项的可见性菜单，而是一个显示时间信息的提示框。其内所有可见文本逐条如下：
+
+      *   just now · 11/11/2026,
+
+      *   03:07:37 AM GMT+08:00 ·
+
+      *   Asia/Shanghai
+
+
+      ③ 卡片上**没有**显示常规的可见性状态标记（如左下角缺失了其他卡片拥有的 "Public" 或 "Private" 标签）。同时需要明确：画面中确实存在一个展开的浮层，但它是时间戳提示（tooltip），而不是包含可见性选项的菜单。
+
+
+      此外，经检查，画面中未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-29-team-to-private.png（model=xrouter/nx-vision, blocker=0）=====
+
+    根据对图片的核对，结果如下：
+
+
+    ① 画面中**没有**确认对话框。
+
+
+    ② 该浮层并非包含选项的可见性菜单，而是一个显示时间信息的提示框。其内所有可见文本逐条如下：
+
+    *   just now · 11/11/2026,
+
+    *   03:07:37 AM GMT+08:00 ·
+
+    *   Asia/Shanghai
+
+
+    ③ 卡片上**没有**显示常规的可见性状态标记（如左下角缺失了其他卡片拥有的 "Public" 或 "Private" 标签）。同时需要明确：画面中确实存在一个展开的浮层，但它是时间戳提示（tooltip），而不是包含可见性选项的菜单。
+
+
+    此外，经检查，画面中未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

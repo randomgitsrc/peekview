@@ -1,0 +1,4 @@
+点击 Private 后确认框 count=0 visible=false（期望 0 / false）
+切换后 API 态：is_public=false
+[截图] screenshots/bdd-20-no-confirm-private.png size=136705B
+[VERDICT] BDD-20: PASS — 降级无确认对话框（count=0），is_public 变为 false

@@ -1,0 +1,38 @@
+=== TPV0102 P6 — BaseBadge 徽章文字不随 status 更新的核实（BDD-20 切换后观察到的现象）===
+
+动机：BDD-20（Public→Private）切换后，卡片徽章的 **class 已变为 badge-private（红色）、
+      但文字仍显示 "public"**。须判定：这是本任务引入的缺陷，还是既有缺陷。
+
+--- 事实 1：本任务未修改 BaseBadge.vue ---
+命令：git diff --stat 2b382c9c..HEAD -- frontend-v3/src/components/BaseBadge.vue
+输出：（空）—— 该文件本任务零改动
+
+--- 事实 2：缺陷机理（源码）---
+frontend-v3/src/components/BaseBadge.vue:19
+  const label = props.label || labelMap[props.status] || props.status
+  → 在 setup 期**求值一次**，不是 computed。status prop 变更后 label 不重算。
+  → 模板中 :class 是响应式（「badge-${status}」），{{ label }} 不是 ⇒ 「颜色变了、文字没变」。
+
+--- 事实 3：真实浏览器 DOM 实测（Playwright，两份快照对比）---
+命令：node .agate-tmp/p6/badge2.mjs（隔离 entry，走 debug backend :8888）
+
+  切换前：  [{"rawText":"public","cls":"base-badge badge-public","color":"rgb(26, 127, 55)"}]
+  点 Private 后 API：is_public=false  team=null
+  切换后（未刷新）：
+            [{"rawText":"public","cls":"base-badge badge-private","color":"rgb(207, 34, 46)"}]
+            ↑ class 已变 badge-private、颜色已变红，但文字仍是 "public"
+  刷新页面后： [{"rawText":"private","cls":"base-badge badge-private"}]
+            ↑ 重新挂载后文字才正确
+
+--- 判定 ---
+1. 该缺陷**非本任务引入**：BaseBadge.vue 本任务零改动；pre-task 提交 2b382c9c 中
+   `const label = props.label || ...` 同样在 setup 期求值一次（同一缺陷）。
+2. 该缺陷**不影响 BDD-20 / BDD-29 的判定**：两条 BDD 的 Then 断言的是
+   「该 entry 的可见性状态变为 is_public=false（且 team 清空）」，本任务 PASS 行引用的是
+   **服务端 API 态**（is_public=false / team=null，切换后 polling 读到）——那是权威判据；
+   徽章文字属**客户端渲染瑕疵**，且 :class 已正确反映 private。
+3. 该缺陷属既有视觉瑕疵，登记为 SUGGEST 交 P7/P8：
+   修法一行 `const label = computed(() => props.label || labelMap[props.status] || props.status)`
+   + 补一条 setProps 后断言文字的 BaseBadge 单测（当前 BaseBadge.spec.ts 只测初始挂载）。
+
+EXIT_CODE: 0

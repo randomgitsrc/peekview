@@ -1,0 +1,4 @@
+切换前：is_public=false / team=null
+选择 Team A 后：is_public=false team_id=4（数值 id）team.slug=e2e-priva-1794337613345 team={"slug":"e2e-priva-1794337613345","name":"E2E privA 1794337613345"}
+[截图] screenshots/bdd-27-team-submenu-open.png 142162B / screenshots/bdd-27-after-team-a.png 140356B
+[VERDICT] BDD-27: PASS — Private → Team A 后 is_public=false 且 team=4（两字段均断言）

@@ -1,0 +1,55 @@
+=== BDD-10：CLI remote 模式能解析带 Z 的 API 时间字符串 ===
+[A] pytest（parse_iso 语义 + client 解析点源码断言）：
+....                                                                     [100%]
+pytest exit = 0
+
+[B] CLI remote 实跑（真连 debug backend :8888 读取 entry，隔离 HOME）：
+命令：HOME=<隔离> backend/.venv/bin/python -m peekview get k8s-deployment --remote-url http://127.0.0.1:8888 --json-output
+{
+  "id": 8,
+  "slug": "k8s-deployment",
+  "summary": "Kubernetes \u90e8\u7f72\u914d\u7f6e",
+  "status": "active",
+  "tags": [
+    "k8s",
+    "devops",
+    "yaml",
+    "\u90e8\u7f72"
+  ],
+  "files": [
+    {
+      "id": 13,
+      "path": null,
+      "filename": "README.md",
+      "language": "markdown",
+      "size": 632
+    },
+    {
+      "id": 14,
+      "path": null,
+      "filename": "deployment.yaml",
+      "language": "yaml",
+      "size": 893
+    },
+    {
+      "id": 15,
+      "path": null,
+      "filename": "service.yaml",
+      "language": "yaml",
+      "size": 249
+    }
+  ],
+  "created_at": "2026-11-10T18:31:30.462041Z",
+  "updated_at": "2026-11-10T18:31:30.462049Z"
+}
+CLI exit = 0
+  解析成功的 JSON：{'created_at': '2026-11-10T18:31:30.462041Z', 'updated_at': '2026-11-10T18:31:30.462049Z'}
+[C] remote 客户端解析结果（PeekClient.get_entry 真连 :8888）：
+{
+  "created_at_repr": "datetime.datetime(2026, 11, 10, 18, 31, 30, 462041, tzinfo=datetime.timezone.utc)",
+  "tzinfo": "UTC",
+  "utcoffset_seconds": 0.0,
+  "ends_with_z_source": "remote payload",
+  "parse_iso_of_Z": "datetime.datetime(2026, 11, 10, 9, 43, tzinfo=datetime.timezone.utc)"
+}
+[VERDICT] BDD-10: PASS — remote 读取成功且时间 timezone-aware 偏移 0（PeekClient 解析出 created_at=datetime.datetime(2026, 11, 10, 18, 31, 30, 462041, tzinfo=datetime.timezone.utc)（tzinfo=UTC, utcoffset=0.0s）；pytest exit=0）

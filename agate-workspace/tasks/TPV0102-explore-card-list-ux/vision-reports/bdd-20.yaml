@@ -1,0 +1,45 @@
+vision_analysis:
+  bdd: '20'
+  images:
+  - bdd-20-no-confirm-private.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面在可见性菜单里选择 "Private"（从 public **降级**为 private）之后的截图。请核对：①画面中是否**没有**确认对话框（降级不应二次确认）？②是否有表示操作成功的提示（toast）？请抄录文案。③相关 entry 卡片上的可见性状态标记是什么？请原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 根据截图核对结果如下：
+  per_image:
+  - image: bdd-20-no-confirm-private.png
+    prompt: '这是 PeekView Explore 页面在可见性菜单里选择 "Private"（从 public **降级**为 private）之后的截图。请核对：①画面中是否**没有**确认对话框（降级不应二次确认）？②是否有表示操作成功的提示（toast）？请抄录文案。③相关 entry 卡片上的可见性状态标记是什么？请原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '根据截图核对结果如下：
+
+
+      ① 画面中**没有**确认对话框，操作直接完成。
+
+      ② 有表示操作成功的提示（toast）。文案为：**Now private** （右侧带有关闭图标 `x`）。
+
+      ③ 相关 entry 卡片（左上角蓝色边框选中的卡片）上的可见性状态标记原样抄录为：**Public**。
+
+      ④ 画面中**不存在**布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-20-no-confirm-private.png（model=xrouter/nx-vision, blocker=0）=====
+
+    根据截图核对结果如下：
+
+
+    ① 画面中**没有**确认对话框，操作直接完成。
+
+    ② 有表示操作成功的提示（toast）。文案为：**Now private** （右侧带有关闭图标 `x`）。
+
+    ③ 相关 entry 卡片（左上角蓝色边框选中的卡片）上的可见性状态标记原样抄录为：**Public**。
+
+    ④ 画面中**不存在**布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

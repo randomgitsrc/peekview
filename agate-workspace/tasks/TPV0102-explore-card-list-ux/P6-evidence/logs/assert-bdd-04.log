@@ -1,0 +1,11 @@
+
+=== [精确 Given 复验] 注入 created_at = 2026-11-10T09:43:00Z（P1 BDD-04 原文指定时刻）===
+注入值 = 2026-11-10T09:43:00Z
+浏览器 timezoneId = Asia/Shanghai；locale = zh-CN
+页面主显（zh-CN + Asia/Shanghai） = "2026/11/10 GMT+8 17:43:00"
+运行时独立推算的 +8h 墙上时间 = 17:43:00
+判据①含 GMT+8 = true
+判据②含 +8h 墙上时间 17:43:00 = true
+判据③不含 UTC 原值 09:43:00 = true
+[截图] screenshots/bdd-04-exact-0943.png size=13957B
+[VERDICT-精确复验] BDD-04: PASS — 09:43:00Z → "2026/11/10 GMT+8 17:43:00"

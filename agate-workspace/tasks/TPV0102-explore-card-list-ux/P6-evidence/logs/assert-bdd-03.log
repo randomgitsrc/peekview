@@ -1,0 +1,8 @@
+[详情页桌面 .meta-row] = "11/11/2026, 02:54:41 AM GMT+8just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai"
+[详情页桌面 tooltip] = "just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai"
+[截图] screenshots/bdd-03-detail-desktop.png size=40436B
+[详情页移动 meta-tags-bar] = "11/11/2026, 02:54:41 AM GMT+8just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai"
+[详情页移动 tooltip] = "just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai"
+[截图] screenshots/bdd-03-detail-mobile.png size=29968B
+[列表卡片对照] = "11/11/2026, 02:54:41 AM GMT+8"
+[VERDICT] BDD-03: PASS — 三处主显均含 GMT±N + 4 位年份、悬停均同时含相对/绝对时间（桌面="11/11/2026, 02:54:41 AM GMT+8just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai", 移动="11/11/2026, 02:54:41 AM GMT+8just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai", 卡片="11/11/2026, 02:54:41 AM GMT+8"）

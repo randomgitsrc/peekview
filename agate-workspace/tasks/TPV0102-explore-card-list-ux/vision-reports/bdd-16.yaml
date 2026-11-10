@@ -1,0 +1,59 @@
+vision_analysis:
+  bdd: '16'
+  images:
+  - bdd-16-menu-public-state.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 一张**当前为 Public** 的 entry 卡片，其可见性菜单已展开。请：①把菜单浮层内**所有**可见项文本逐条抄录。②菜单里是否**没有** "Public" 项？③是否有 "Private" 项？④是否有 "Team" 入口（带右箭头）？菜单浮层是否完整可见、未被裁切、未遮挡触发按钮？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 菜单浮层内所有可见项文本：
+  per_image:
+  - image: bdd-16-menu-public-state.png
+    prompt: '这是 PeekView Explore 一张**当前为 Public** 的 entry 卡片，其可见性菜单已展开。请：①把菜单浮层内**所有**可见项文本逐条抄录。②菜单里是否**没有** "Public" 项？③是否有 "Private" 项？④是否有 "Team" 入口（带右箭头）？菜单浮层是否完整可见、未被裁切、未遮挡触发按钮？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 菜单浮层内所有可见项文本：
+
+      - Private
+
+      - Team
+
+
+      ② 菜单里是否没有 "Public" 项：是的，没有 "Public" 项。
+
+      ③ 是否有 "Private" 项：有。
+
+      ④ 是否有 "Team" 入口（带右箭头）：有。
+
+      菜单浮层是否完整可见、未被裁切、未遮挡触发按钮：是，完整可见且未遮挡。
+
+
+      其他视觉缺陷检查：图像中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-16-menu-public-state.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 菜单浮层内所有可见项文本：
+
+    - Private
+
+    - Team
+
+
+    ② 菜单里是否没有 "Public" 项：是的，没有 "Public" 项。
+
+    ③ 是否有 "Private" 项：有。
+
+    ④ 是否有 "Team" 入口（带右箭头）：有。
+
+    菜单浮层是否完整可见、未被裁切、未遮挡触发按钮：是，完整可见且未遮挡。
+
+
+    其他视觉缺陷检查：图像中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

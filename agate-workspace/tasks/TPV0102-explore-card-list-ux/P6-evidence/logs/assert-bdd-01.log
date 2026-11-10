@@ -1,0 +1,9 @@
+运行时 IANA = Asia/Shanghai
+运行时 locale = en-US
+[卡片模式] 主显 = "11/11/2026, 02:31:30 AM GMT+8"
+  判据 GMT±N=true 4位年份=true 不含ago/just now=true
+[截图] screenshots/bdd-01-card.png size=134670B
+[列表模式] 主显 = "11/11/2026, 02:31:30 AM GMT+8"
+  判据 GMT±N=true 4位年份=true 不含ago/just now=true
+[截图] screenshots/bdd-01-list.png size=86092B
+[VERDICT] BDD-01: PASS — 卡片="11/11/2026, 02:31:30 AM GMT+8"；列表="11/11/2026, 02:31:30 AM GMT+8"；两模式均含 GMT±N + 4 位年份且不含 ago

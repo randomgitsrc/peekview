@@ -1,0 +1,95 @@
+vision_analysis:
+  bdd: '01'
+  images:
+  - bdd-01-card.png
+  - bdd-01-list.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面的**卡片模式（网格）**截图。请核对：①每条 entry 卡片的时间文本是否为绝对时间，含 4 位年份与 "GMT+N" / "GMT-N" 偏移标识（请抄录其中 2 条时间文本原样）？②是否存在 "3h ago"、"just now" 这类相对时间被当作条目主显？（注意：卡片内可见 "Public"/"仅团队可见" 徽章属可见性状态，不是时间）另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView Explore 页面的**列表模式（单列）**截图。请核对：①每个 entry 行的时间文本是否为绝对时间，含 4 位年份与 GMT±N 偏移标识（请抄录其中 2 条原样）？②是否存在 "3h ago"、"just now" 这类相对时间被当作条目主显？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 经核对截图，结果如下：
+  per_image:
+  - image: bdd-01-card.png
+    prompt: '这是 PeekView Explore 页面的**卡片模式（网格）**截图。请核对：①每条 entry 卡片的时间文本是否为绝对时间，含 4 位年份与 "GMT+N" / "GMT-N" 偏移标识（请抄录其中 2 条时间文本原样）？②是否存在 "3h ago"、"just now" 这类相对时间被当作条目主显？（注意：卡片内可见 "Public"/"仅团队可见" 徽章属可见性状态，不是时间）另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '经核对截图，结果如下：
+
+
+      ① **是绝对时间**。每条 entry 卡片的时间文本均包含了 4 位年份与 "GMT+8" 偏移标识。
+
+      抄录如下：
+
+      1. `11/11/2026, 02:31:30 AM GMT+8`
+
+      2. `11/11/2026, 02:31:30 AM GMT+8`
+
+
+      ② **不存在**。页面中所有可见卡片均使用了上述绝对时间作为主显，未发现 "3h ago"、"just now" 等相对时间。卡片底部的蓝色元素（如 `yaml`、`xml`、`python` 等）为标签（Tag），并非可见性状态徽章。
+
+
+      ③ **不存在**。当前页面排版整齐，卡片间距均匀，长标题（如“非 ASCII 文件名本地资源引用...”）正常换行，标签整齐排列，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-01-list.png
+    prompt: '这是 PeekView Explore 页面的**列表模式（单列）**截图。请核对：①每个 entry 行的时间文本是否为绝对时间，含 4 位年份与 GMT±N 偏移标识（请抄录其中 2 条原样）？②是否存在 "3h ago"、"just now" 这类相对时间被当作条目主显？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 是绝对时间，包含 4 位年份与 GMT+8 偏移标识。抄录 2 条原样：
+
+      - Docker Compose 行：`11/11/2026, 02:31:30 AM GMT+8`
+
+      - Maven 行：`11/11/2026, 02:31:30 AM GMT+8`
+
+
+      ② 未发现 “3h ago”“just now” 等相对时间被作为条目主显；各条目主显时间均为上述绝对时间格式。
+
+
+      视觉核对：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-01-card.png（model=xrouter/nx-vision, blocker=0）=====
+
+    经核对截图，结果如下：
+
+
+    ① **是绝对时间**。每条 entry 卡片的时间文本均包含了 4 位年份与 "GMT+8" 偏移标识。
+
+    抄录如下：
+
+    1. `11/11/2026, 02:31:30 AM GMT+8`
+
+    2. `11/11/2026, 02:31:30 AM GMT+8`
+
+
+    ② **不存在**。页面中所有可见卡片均使用了上述绝对时间作为主显，未发现 "3h ago"、"just now" 等相对时间。卡片底部的蓝色元素（如 `yaml`、`xml`、`python` 等）为标签（Tag），并非可见性状态徽章。
+
+
+    ③ **不存在**。当前页面排版整齐，卡片间距均匀，长标题（如“非 ASCII 文件名本地资源引用...”）正常换行，标签整齐排列，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-01-list.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 是绝对时间，包含 4 位年份与 GMT+8 偏移标识。抄录 2 条原样：
+
+    - Docker Compose 行：`11/11/2026, 02:31:30 AM GMT+8`
+
+    - Maven 行：`11/11/2026, 02:31:30 AM GMT+8`
+
+
+    ② 未发现 “3h ago”“just now” 等相对时间被作为条目主显；各条目主显时间均为上述绝对时间格式。
+
+
+    视觉核对：未发现布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

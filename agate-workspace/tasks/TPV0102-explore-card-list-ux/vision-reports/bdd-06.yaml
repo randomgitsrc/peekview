@@ -1,0 +1,55 @@
+vision_analysis:
+  bdd: '06'
+  images:
+  - bdd-06-future-time.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 一张卡片的悬停截图，其中该 entry 的 created_at 被注入为当前时间 **+24 小时**（未来时间）。请核对悬停提示里的**相对时间部分**：①是否显示为未来方向（如 "in 24h"/"in 1d"）？②是否显示为 "just now"（过去时态文案，属缺陷）？③是否出现 "NaN"？请把提示框文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 悬停提示框文字原样抄录：
+  per_image:
+  - image: bdd-06-future-time.png
+    prompt: '这是 PeekView Explore 一张卡片的悬停截图，其中该 entry 的 created_at 被注入为当前时间 **+24 小时**（未来时间）。请核对悬停提示里的**相对时间部分**：①是否显示为未来方向（如 "in 24h"/"in 1d"）？②是否显示为 "just now"（过去时态文案，属缺陷）？③是否出现 "NaN"？请把提示框文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '悬停提示框文字原样抄录：
+
+      `in 23h · 11/12/2026, 02:54:46 AM GMT+08:00 · Asia/Shanghai`
+
+
+      针对相对时间部分的核对结果如下：
+
+      ① **是**，显示为未来方向（"in 23h"）。
+
+      ② **否**，未显示为 "just now"。
+
+      ③ **否**，未出现 "NaN"。
+
+
+      视觉缺陷检查：经核查，页面布局整齐，文字显示完整未出现裁切，未发现元素重叠遮挡或破图等视觉问题。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-06-future-time.png（model=xrouter/nx-vision, blocker=0）=====
+
+    悬停提示框文字原样抄录：
+
+    `in 23h · 11/12/2026, 02:54:46 AM GMT+08:00 · Asia/Shanghai`
+
+
+    针对相对时间部分的核对结果如下：
+
+    ① **是**，显示为未来方向（"in 23h"）。
+
+    ② **否**，未显示为 "just now"。
+
+    ③ **否**，未出现 "NaN"。
+
+
+    视觉缺陷检查：经核查，页面布局整齐，文字显示完整未出现裁切，未发现元素重叠遮挡或破图等视觉问题。
+
+
+    Blocker 数量: 0'

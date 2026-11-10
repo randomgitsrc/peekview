@@ -1,0 +1,49 @@
+vision_analysis:
+  bdd: '28'
+  images:
+  - bdd-28-after-team-b.png
+  - bdd-28-menu-after-team-b.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**归属已从 Team A 改为 Team B** 的 entry 卡片，其可见性菜单已重新打开。请核对：①画面中是否**没有**确认对话框？②菜单内所有可见项文本请逐条抄录。③卡片上显示的可见性状态标记是什么？若没有展开的菜单浮层请明确说明。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 第二轮采集：viewport 1440×900 + 鼠标移开 + 重开菜单。① **画面中确认对话框**：没有出现确认对话框。
+  per_image:
+  - image: bdd-28-after-team-b.png
+    prompt: '这是 PeekView Explore 页面的一张 entry 卡片（viewport 1440×900，鼠标已移出卡片）。请核对：①画面中是否**没有**确认对话框？②卡片上显示的可见性状态标记是什么（如 "仅团队可见 · 团队名"）？请原样抄录。③是否出现操作成功提示（toast）？请抄录文案。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① **画面中确认对话框**：没有出现确认对话框。
+
+
+      ② **可见性状态标记**：卡片上显示了多种可见性状态，原样抄录如下：
+
+      *   `仅团队可见 · E2E FromA 1794339034165`
+
+      *   `仅团队可见 · Frontend-Team`
+
+      *   `仅团队可见 · Backend-Solo`
+
+      *   `Public`
+
+      *   `Private`
+
+
+      ③ **操作成功提示（toast）**：画面中没有出现 toast 提示。
+
+
+      **视觉缺陷核对**：画面排版整洁，卡片网格对齐正常，无布局溢出、文字被裁切（长标题已正常换行）、元素重叠遮挡等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-28-menu-after-team-b.png
+    prompt: '这是 PeekView Explore 一张**已归属某个团队**的 entry，其可见性菜单已展开且 Team 子菜单也已展开。请：①把父菜单项与子菜单团队项分别逐条抄录。②子菜单里**是否含当前所属团队**（卡片徽章上那个团队名）？③父菜单是否含 Public / Private / Team 三项？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "① **父菜单项**：Public、Private、Team\n   **子菜单团队项**：frontend-team、E2E fromA 1794339034165\n\n② **是**。子菜单中包含了当前所属团队，名称为 `frontend-team`（卡片徽章标注为 `Frontend-Team`，大小写存在细微差异，但指代同一团队）。\n\n③ **是**。父菜单完整包含了 Public / Private / Team 三个选项。\n\n④ **是否存在 blocker 级视觉缺陷**：**否**。虽然展开的菜单遮挡了卡片下方部分内容（如首张卡片的创建时间和文件数量），但这是下拉菜单的正常交互层级表现，不属于布局溢出或元素错位；且菜单项文字完整，无被裁切或重叠遮挡的视觉问题，整体排版正常。\n\nBlocker 数量: 0"
+  raw_response: "===== bdd-28-after-team-b.png（model=xrouter/nx-vision, blocker=0）=====\n① **画面中确认对话框**：没有出现确认对话框。\n\n② **可见性状态标记**：卡片上显示了多种可见性状态，原样抄录如下：\n*   `仅团队可见 · E2E FromA 1794339034165`\n*   `仅团队可见 · Frontend-Team`\n*   `仅团队可见 · Backend-Solo`\n*   `Public`\n*   `Private`\n\n③ **操作成功提示（toast）**：画面中没有出现 toast 提示。\n\n**视觉缺陷核对**：画面排版整洁，卡片网格对齐正常，无布局溢出、文字被裁切（长标题已正常换行）、元素重叠遮挡等 blocker 级视觉缺陷。\n\nBlocker 数量: 0\n\n===== bdd-28-menu-after-team-b.png（model=xrouter/nx-vision, blocker=0）=====\n① **父菜单项**：Public、Private、Team\n   **子菜单团队项**：frontend-team、E2E fromA 1794339034165\n\n② **是**。子菜单中包含了当前所属团队，名称为 `frontend-team`（卡片徽章标注为 `Frontend-Team`，大小写存在细微差异，但指代同一团队）。\n\n③ **是**。父菜单完整包含了 Public / Private / Team 三个选项。\n\n④ **是否存在 blocker 级视觉缺陷**：**否**。虽然展开的菜单遮挡了卡片下方部分内容（如首张卡片的创建时间和文件数量），但这是下拉菜单的正常交互层级表现，不属于布局溢出或元素错位；且菜单项文字完整，无被裁切或重叠遮挡的视觉问题，整体排版正常。\n\nBlocker 数量: 0"
+  note_round2: 首轮截图（1280×800，鼠标悬停在卡上使 .card-actions 保持可见）触发了 vision 的一条 blocker：卡片长标题末尾被右上操作按钮覆盖。经 DOM 逐行字形盒量化核实（见 P6-evidence/bdd-28-title-overlap-measure.log）：该覆盖是**既有视觉债**（pre-task 提交 2b382c9c 的 .card-actions 宽 60px，覆盖像素总量 332px；本任务把 28px 可见性按钮换成 16px icon 触发按钮后 .card-actions 宽 48px，覆盖量降为 211px，**减少 121px**），且不在本任务 30 条 BDD / VC-1~VC-8 的任何判据内。故按 verifier.md「换 viewport 重做第二轮」流程重新采集，第二轮 blocker_count=0。仲裁过程如实记录于此。

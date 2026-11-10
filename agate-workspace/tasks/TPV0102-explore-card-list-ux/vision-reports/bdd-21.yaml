@@ -1,0 +1,55 @@
+vision_analysis:
+  bdd: '21'
+  images:
+  - bdd-21-fail-toast.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面在可见性切换请求被服务端拒绝（HTTP 500）之后的截图。请核对：①画面中是否出现了**失败提示**（toast / 错误条）？请抄录其完整文案。②失败提示是否可见、未被裁切或遮挡？③相关 entry 卡片的可见性状态标记看起来是什么？请原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 根据截图提供的信息，核对结果如下：
+  per_image:
+  - image: bdd-21-fail-toast.png
+    prompt: '这是 PeekView Explore 页面在可见性切换请求被服务端拒绝（HTTP 500）之后的截图。请核对：①画面中是否出现了**失败提示**（toast / 错误条）？请抄录其完整文案。②失败提示是否可见、未被裁切或遮挡？③相关 entry 卡片的可见性状态标记看起来是什么？请原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '根据截图提供的信息，核对结果如下：
+
+
+      ① **出现了失败提示**（页面正上方的粉色错误条）。完整文案为：**`Failed to change visibility`**
+
+
+      ② **失败提示完全可见**。它位于页面顶部导航栏下方中央，未被裁切，也未被其他元素遮挡。
+
+
+      ③ 相关 entry 卡片（带有蓝色边框高亮，标题为 `bdd21 fail-rollback`）的可见性状态标记原样显示为：**`Public`**。
+
+      *(注：页面中其他卡片的标记类型还包括 `仅团队可见 · Frontend-Team`、`仅团队可见 · Backend-Solo` 以及 `Private`)*
+
+
+      ④ 视觉缺陷检查：画面整体排版规整，卡片对齐良好，**不存在**布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-21-fail-toast.png（model=xrouter/nx-vision, blocker=0）=====
+
+    根据截图提供的信息，核对结果如下：
+
+
+    ① **出现了失败提示**（页面正上方的粉色错误条）。完整文案为：**`Failed to change visibility`**
+
+
+    ② **失败提示完全可见**。它位于页面顶部导航栏下方中央，未被裁切，也未被其他元素遮挡。
+
+
+    ③ 相关 entry 卡片（带有蓝色边框高亮，标题为 `bdd21 fail-rollback`）的可见性状态标记原样显示为：**`Public`**。
+
+    *(注：页面中其他卡片的标记类型还包括 `仅团队可见 · Frontend-Team`、`仅团队可见 · Backend-Solo` 以及 `Private`)*
+
+
+    ④ 视觉缺陷检查：画面整体排版规整，卡片对齐良好，**不存在**布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

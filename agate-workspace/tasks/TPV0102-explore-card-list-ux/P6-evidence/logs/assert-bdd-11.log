@@ -1,0 +1,171 @@
+=== BDD-11：CLI --json 输出的时间字段带时区标记 ===
+[A] pytest（CliRunner 内跑 create/list/get -j）：
+...                                                                      [100%]
+pytest exit = 0
+
+[B] CLI 实跑（隔离 HOME + 隔离数据目录，create -j / list -j / get -j）：
+Usage: python -m peekview create [OPTIONS] [PATHS]...
+
+  Create a new entry.
+
+Options:
+  -s, --summary TEXT              Entry summary/description  [required]
+  --slug TEXT                     Custom URL slug (auto-generated if not
+                                  provided)
+  -t, --tag TEXT                  Tags (can be specified multiple times)
+  --expires-in TEXT               Expiration duration (e.g., '7d', '1h',
+                                  '30m'). Default: configured via
+                                  limits.default_expires_in. Use '0' for no
+                                  expiration.
+  --from-stdin                    Read file content from stdin
+  -b, --base-url TEXT             External base URL for generated links
+  -r, --remote-url TEXT           Remote server URL
+  -v, --visibility [public|private]
+                                  Entry visibility (default: public unless
+                                  --team is used)
+  -j, --json-output               Output as JSON
+  --team TEXT                     Team slug to publish to (team-visible)
+  -u, --user TEXT                 Username (required in local mode when --team
+                                  is used)
+  -h, --help                      Show this message and exit.
+
+  Examples:
+
+      peekview create file.txt -s "My code"
+
+      peekview create src/*.py -s "Project" -t python
+
+      peekview create -s "From stdin" --from-stdin < code.py
+
+      echo "content" | peekview create -s "From pipe" --from
+--- $ peekview create /home/kity/oclab/peekview/.agate-tmp/p6/cli11-src.md -s BDD-11 CLI json 样本 --slug bdd11-p6 -j  (exit=0) ---
+{
+  "id": 3,
+  "slug": "bdd11-p6-2-2",
+  "url": "http://127.0.0.1:8080/bdd11-p6-2-2",
+  "created_at": "2026-11-10T18:54:23.647934Z",
+  "file_count": 1
+}
+[stderr] Building prefix dict from the default dictionary ...
+Loading model from cache /tmp/jieba.cache
+Loading model cost 0.362 seconds.
+Prefix dict has been built successfully.
+--- $ peekview list -j  (exit=0) ---
+{
+  "items": [
+    {
+      "id": 3,
+      "slug": "bdd11-p6-2-2",
+      "summary": "BDD-11 CLI json \u6837\u672c",
+      "tags": [],
+      "status": "active",
+      "file_count": 1,
+      "created_at": "2026-11-10T18:54:23.647934Z",
+      "updated_at": "2026-11-10T18:54:23.647940Z"
+    },
+    {
+      "id": 2,
+      "slug": "bdd11-p6-2",
+      "summary": "BDD-11 CLI json \u6837\u672c",
+      "tags": [],
+      "status": "active",
+      "file_count": 1,
+      "created_at": "2026-11-10T18:49:48.956153Z",
+      "updated_at": "2026-11-10T18:49:48.956161Z"
+    },
+    {
+      "id": 1,
+      "slug": "bdd11-p6",
+      "summary": "BDD-11 CLI json \u6837\u672c",
+      "tags": [],
+      "status": "active",
+      "file_count": 1,
+      "created_at": "2026-11-10T18:49:26.139116Z",
+      "updated_at": "2026-11-10T18:49:26.139127Z"
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "per_page": 20
+}
+--- $ peekview get bdd11-p6 -j  (exit=0) ---
+{
+  "id": 1,
+  "slug": "bdd11-p6",
+  "summary": "BDD-11 CLI json \u6837\u672c",
+  "status": "active",
+  "tags": [],
+  "files": [
+    {
+      "id": 1,
+      "path": "cli11-src.md",
+      "filename": "cli11-src.md",
+      "language": "markdown",
+      "size": 9
+    }
+  ],
+  "created_at": "2026-11-10T18:49:26.139116Z",
+  "updated_at": "2026-11-10T18:49:26.139127Z"
+}
+--- $ peekview list --help  (exit=0) ---
+Usage: python -m peekview list [OPTIONS]
+
+  List entries with optional filters.
+
+  Examples:     peekview list     peekview list -q "python"     peekview list
+  -t cli -t python     peekview list --status active     peekview list --team
+  proj-a --user alice     peekview list --remote-url https://example.com
+
+Options:
+  -q, --query TEXT       Search query (FTS5 search)
+  -t, --tag TEXT         Filter by tag
+  -s, --status TEXT      Filter by status
+  -p, --page INTEGER     Page number
+  --per-page INTEGER     Items per page
+  -r, --remote-url TEXT  Remote server URL (e.g., https://example.com)
+  -j, --json-output      Output as JSON
+  --team TEXT            Team slug to filter by
+  -u, --user TEXT        Username (required in local mode when --team is used)
+  -h, --help             Show this message and exit.
+
+CLI --json 输出中检查时间字段 = 9 个；无时区标记 = 0 个
+
+--- $ peekview get k8s-deployment --remote-url :8888 -j (exit=0) ---
+{
+  "id": 8,
+  "slug": "k8s-deployment",
+  "summary": "Kubernetes \u90e8\u7f72\u914d\u7f6e",
+  "status": "active",
+  "tags": [
+    "k8s",
+    "devops",
+    "yaml",
+    "\u90e8\u7f72"
+  ],
+  "files": [
+    {
+      "id": 13,
+      "path": null,
+      "filename": "README.md",
+      "language": "markdown",
+      "size": 632
+    },
+    {
+      "id": 14,
+      "path": null,
+      "filename": "deployment.yaml",
+      "language": "yaml",
+      "size": 893
+    },
+    {
+      "id": 15,
+      "path": null,
+      "filename": "service.yaml",
+      "language": "yaml",
+      "size": 249
+    }
+  ],
+  "created_at": "2026-11-10T18:31:30.462041Z",
+  "updated_at": "2026-11-10T18:31:30.462049Z"
+}
+[VERDICT] BDD-11: PASS — CLI --json 输出 11 个时间字段全部带 Z 或 +00:00，无时区标记 0 个（pytest exit=0）

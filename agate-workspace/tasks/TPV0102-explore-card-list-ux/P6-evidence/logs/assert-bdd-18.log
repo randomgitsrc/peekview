@@ -1,0 +1,7 @@
+entry 当前归属 Team A = e2e-a-1794337613345；用户另有 Team B = e2e-b-1794337613345
+点击 Team 入口后子菜单项 = ["frontend-team","probe team xyz","E2E B 1794337613345"]
+子菜单含 Team A 项 count=0；含 Team B 项 count=1
+点击 Team 入口前后 entry 的 team_id / is_public：before=[4,false] after=[4,false]
+Team 入口不直接执行切换（前后状态相同）= true
+[截图] screenshots/bdd-18-team-submenu.png size=140767B
+[VERDICT] BDD-18: PASS — 子菜单排除当前 Team A（count=0）、含 Team B（count=1）；点击 Team 入口不切换（team_id 保持 e2e-a-1794337613345）

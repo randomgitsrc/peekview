@@ -1,0 +1,77 @@
+vision_analysis:
+  bdd: '02'
+  images:
+  - bdd-02-tooltip-hover.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面一张卡片的悬停截图，鼠标停在时间文本上，出现了悬停提示框。请核对提示框内容：①是否含相对时间（如 "just now"/"35m ago"/"in 2h"）？②是否含带**完整**偏移的时刻（形如 "GMT+08:00"）？③是否含一个 IANA 时区名（如 "Asia/Shanghai"）？请把提示框内全部文字原样抄录。提示框是否完整可见、未被裁切或遮挡？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 针对您提出的问题，核对结果如下：
+  per_image:
+  - image: bdd-02-tooltip-hover.png
+    prompt: '这是 PeekView Explore 页面一张卡片的悬停截图，鼠标停在时间文本上，出现了悬停提示框。请核对提示框内容：①是否含相对时间（如 "just now"/"35m ago"/"in 2h"）？②是否含带**完整**偏移的时刻（形如 "GMT+08:00"）？③是否含一个 IANA 时区名（如 "Asia/Shanghai"）？请把提示框内全部文字原样抄录。提示框是否完整可见、未被裁切或遮挡？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '针对您提出的问题，核对结果如下：
+
+
+      ① **是否含相对时间？** 是，包含 "23m ago"。
+
+      ② **是否含带完整偏移的时刻？** 是，包含 "GMT+08:00"。
+
+      ③ **是否含一个 IANA 时区名？** 是，包含 "Asia/Shanghai"。
+
+
+      **提示框内全部文字原样抄录如下：**
+
+      ```text
+
+      23m ago · 11/11/2026,
+
+      02:31:30 AM GMT+08:00 ·
+
+      Asia/Shanghai
+
+      ```
+
+
+      **提示框可见性：** 提示框完整可见，没有被裁切，也没有被其他元素遮挡。
+
+      **视觉缺陷检查：** 页面整体布局规整，卡片对齐良好；未发现布局溢出、文字被裁切、非预期元素重叠遮挡以及空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-02-tooltip-hover.png（model=xrouter/nx-vision, blocker=0）=====
+
+    针对您提出的问题，核对结果如下：
+
+
+    ① **是否含相对时间？** 是，包含 "23m ago"。
+
+    ② **是否含带完整偏移的时刻？** 是，包含 "GMT+08:00"。
+
+    ③ **是否含一个 IANA 时区名？** 是，包含 "Asia/Shanghai"。
+
+
+    **提示框内全部文字原样抄录如下：**
+
+    ```text
+
+    23m ago · 11/11/2026,
+
+    02:31:30 AM GMT+08:00 ·
+
+    Asia/Shanghai
+
+    ```
+
+
+    **提示框可见性：** 提示框完整可见，没有被裁切，也没有被其他元素遮挡。
+
+    **视觉缺陷检查：** 页面整体布局规整，卡片对齐良好；未发现布局溢出、文字被裁切、非预期元素重叠遮挡以及空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

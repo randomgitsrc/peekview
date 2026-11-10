@@ -1,0 +1,43 @@
+CMD: python -m peekview get k8s-deployment --remote-url http://127.0.0.1:8888 --json-output
+EXIT: 0
+--- stdout ---
+{
+  "id": 8,
+  "slug": "k8s-deployment",
+  "summary": "Kubernetes \u90e8\u7f72\u914d\u7f6e",
+  "status": "active",
+  "tags": [
+    "k8s",
+    "devops",
+    "yaml",
+    "\u90e8\u7f72"
+  ],
+  "files": [
+    {
+      "id": 13,
+      "path": null,
+      "filename": "README.md",
+      "language": "markdown",
+      "size": 632
+    },
+    {
+      "id": 14,
+      "path": null,
+      "filename": "deployment.yaml",
+      "language": "yaml",
+      "size": 893
+    },
+    {
+      "id": 15,
+      "path": null,
+      "filename": "service.yaml",
+      "language": "yaml",
+      "size": 249
+    }
+  ],
+  "created_at": "2026-11-10T18:31:30.462041Z",
+  "updated_at": "2026-11-10T18:31:30.462049Z"
+}
+
+--- stderr ---
+

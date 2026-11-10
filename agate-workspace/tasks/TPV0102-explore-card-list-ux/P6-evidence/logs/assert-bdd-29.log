@@ -1,0 +1,5 @@
+切换前归属 Team A = e2e-cleara-1794337613345
+选择 Private 后：is_public=false team_id=null team=null
+确认对话框 count=0（期望 0）
+[截图] screenshots/bdd-29-team-to-private.png 142164B
+[VERDICT] BDD-29: PASS — Team A → Private 后 is_public=false 且 team 为空（team_id=null），无确认对话框（count=0）

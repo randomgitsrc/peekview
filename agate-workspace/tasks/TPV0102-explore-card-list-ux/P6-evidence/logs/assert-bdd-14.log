@@ -1,0 +1,6 @@
+file_count=0 entry 卡片文本 = "bdd14 zero-file 1794336878391@alice11/11/2026, 02:54:50 AM GMT+8just now · 11/11/2026, 02:54:50 AM GMT+08:00 · Asia/Shanghai"
+file_count=0 entry 列表行文本 = "bdd14 zero-file 1794336878391@alice11/11/2026, 02:54:50 AM GMT+8just now · 11/11/2026, 02:54:50 AM GMT+08:00 · Asia/Shanghai"
+判据 卡片无 \d+ files?=true；列表无 \d+ files?=true
+[截图] screenshots/bdd-14-zero-file-card.png size=8778B
+[截图] screenshots/bdd-14-zero-file-list.png size=87210B
+[VERDICT] BDD-14: PASS — file_count=0 在卡片与列表均无任何 "N file(s)" 文本

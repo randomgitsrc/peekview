@@ -1,0 +1,73 @@
+vision_analysis:
+  bdd: '30'
+  images:
+  - bdd-30-menu-open.png
+  - bdd-30-after-escape.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面的截图，其中左上第一张卡片的**可见性菜单处于打开状态**。请：①把该菜单浮层内所有可见项文本逐条抄录。②菜单是否清晰可见（未被裁切/遮挡）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView Explore 页面的截图，拍摄于上一步按了 **Escape 键之后**。请核对：①画面上是否还残留任何可见性菜单浮层（含 Public/Private/Team 项的白色浮层）？请明确回答"有"或"没有"。②左上第一张卡片右上角的可见性触发按钮周围是否有焦点环/高亮描边（表示焦点回到该按钮）？若无法判定请明确说明。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 菜单浮层内所有可见项文本依次为：
+  per_image:
+  - image: bdd-30-menu-open.png
+    prompt: '这是 PeekView Explore 页面的截图，其中左上第一张卡片的**可见性菜单处于打开状态**。请：①把该菜单浮层内所有可见项文本逐条抄录。②菜单是否清晰可见（未被裁切/遮挡）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 菜单浮层内所有可见项文本依次为：
+
+      - Private
+
+      - Team
+
+
+      ② 菜单清晰可见，未被裁切或遮挡。
+
+
+      不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-30-after-escape.png
+    prompt: '这是 PeekView Explore 页面的截图，拍摄于上一步按了 **Escape 键之后**。请核对：①画面上是否还残留任何可见性菜单浮层（含 Public/Private/Team 项的白色浮层）？请明确回答"有"或"没有"。②左上第一张卡片右上角的可见性触发按钮周围是否有焦点环/高亮描边（表示焦点回到该按钮）？若无法判定请明确说明。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 没有。
+
+      ② 有。左上第一张卡片右上角的锁形图标周围可见明显的蓝色圆形焦点环/高亮描边。
+
+      ③ 画面未见布局溢出、文字被裁切、元素重叠遮挡或破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-30-menu-open.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 菜单浮层内所有可见项文本依次为：
+
+    - Private
+
+    - Team
+
+
+    ② 菜单清晰可见，未被裁切或遮挡。
+
+
+    不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-30-after-escape.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 没有。
+
+    ② 有。左上第一张卡片右上角的锁形图标周围可见明显的蓝色圆形焦点环/高亮描边。
+
+    ③ 画面未见布局溢出、文字被裁切、元素重叠遮挡或破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0'

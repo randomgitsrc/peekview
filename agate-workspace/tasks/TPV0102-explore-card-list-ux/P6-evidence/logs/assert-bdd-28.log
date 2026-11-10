@@ -1,0 +1,21 @@
+切换前归属 Team A = e2e-froma-1794337613345
+选择 Team B 后：is_public=false team.slug=e2e-tob-1794337613345（Team A = e2e-froma-1794337613345，Team B = e2e-tob-1794337613345）
+确认对话框 count=0（期望 0）
+[截图] screenshots/bdd-28-after-team-b.png 137682B
+[VERDICT] BDD-28: PASS — Team A → Team B 后 is_public=false、team=5（不再是 e2e-froma-1794337613345），无确认对话框（count=0）
+
+=== [第二轮采集 2026-11-11] viewport 1440×900 + 鼠标移开 + 重开菜单 ===
+目的：首轮截图是在 1280×800 下拍的，鼠标停在卡上使 .card-actions 保持 hover 可见态，
+      叠在长标题末尾（既有视觉债，非本任务引入，量化见 bdd-28-title-overlap-measure.log）。
+      第二轮换 viewport 并移开鼠标，另补一张「已归属 Team B 后重开菜单」的证据。
+切前归属 Team A = e2e-froma-1794339034165；选择 Team B = e2e-tob-1794339034165
+切换后 API：is_public=false team_id=<数值 id> team.slug=e2e-tob-1794339034165
+确认对话框 count=0（期望 0）
+重开菜单后父菜单项 = ["Public","Private","Team"]
+Team 子菜单项 = ["frontend-team","E2E fromA 1794339034165"]
+  · 当前团队 Team B 项 count=0（期望 0 —— 子菜单排除当前团队）
+  · 旧团队 Team A 项 count=1（期望 1 —— 可切回）
+[截图] screenshots/bdd-28-after-team-b.png 157265B
+[截图] screenshots/bdd-28-menu-after-team-b.png 167896B
+[VERDICT-第二轮] BDD-28: PASS — Team A→Team B 后 is_public=false、team.slug=e2e-tob-1794339034165（不再是 e2e-froma-1794339034165）、
+  无确认框（count=0）；且重开菜单后子菜单排除当前团队 Team B、仍列出 Team A（与 BDD-18 口径一致）

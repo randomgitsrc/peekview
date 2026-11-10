@@ -1,0 +1,87 @@
+vision_analysis:
+  bdd: '03'
+  images:
+  - bdd-03-detail-desktop.png
+  - bdd-03-detail-mobile.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView **entry 详情页**的桌面视口截图（宽 1280）。请核对：①页面头部/元信息区（作者、时间一带）的时间文本是否为绝对时间且含 4 位年份与 GMT±N 偏移？请抄录该时间文本。②是否出现 "N ago"/"just now" 作为主显时间？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView **entry 详情页**的移动视口截图（宽 390）。请核对：①元信息条（作者、时间一带）的时间文本是否为绝对时间且含 4 位年份与 GMT±N 偏移？请抄录该时间文本。②是否出现 "N ago"/"just now" 作为主显时间？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 页面头部/元信息区的时间文本为**绝对时间**，且包含 4 位年份与 GMT±N 偏移。抄录该时间文本为：`11/11/2026, 02:54:41 AM GMT+8`。
+  per_image:
+  - image: bdd-03-detail-desktop.png
+    prompt: '这是 PeekView **entry 详情页**的桌面视口截图（宽 1280）。请核对：①页面头部/元信息区（作者、时间一带）的时间文本是否为绝对时间且含 4 位年份与 GMT±N 偏移？请抄录该时间文本。②是否出现 "N ago"/"just now" 作为主显时间？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 页面头部/元信息区的时间文本为**绝对时间**，且包含 4 位年份与 GMT±N 偏移。抄录该时间文本为：`11/11/2026, 02:54:41 AM GMT+8`。
+
+
+      ② 页面**未**出现 "N ago" 或 "just now" 作为**主显时间**，主界面上直接渲染显示的是绝对时间。图中出现的 "just now" 仅存在于鼠标悬停触发的 Tooltip（提示框）内部，并非页面的主显时间文本。
+
+
+      视觉缺陷检查：页面布局整体正常，未发现布局溢出、文字被裁切（提示框遮挡属于正常物理交互提示态）、元素异常重叠或空白破图等问题，无 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-03-detail-mobile.png
+    prompt: '这是 PeekView **entry 详情页**的移动视口截图（宽 390）。请核对：①元信息条（作者、时间一带）的时间文本是否为绝对时间且含 4 位年份与 GMT±N 偏移？请抄录该时间文本。②是否出现 "N ago"/"just now" 作为主显时间？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 元信息条的时间文本为绝对时间，且含 4 位年份与 GMT 偏移；抄录如下：
+
+
+      `11/11/2026, 02:54:41 AM GMT+8`
+
+
+      （完整元信息行可见为：`@alice · 11/11/2026, 02:54:41 AM GMT+8`）
+
+
+      ② 未将 `just now` / `N ago` 作为主显时间。截图中 `just now` 仅出现在悬浮 tooltip 内，tooltip 内容为：
+
+
+      `just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai`
+
+
+      视觉缺陷检查：未发现布局溢出、文字被裁切、空白破图等 blocker 级问题；tooltip 浮层覆盖属于预期交互展示，不构成 blocker。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-03-detail-desktop.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 页面头部/元信息区的时间文本为**绝对时间**，且包含 4 位年份与 GMT±N 偏移。抄录该时间文本为：`11/11/2026, 02:54:41 AM GMT+8`。
+
+
+    ② 页面**未**出现 "N ago" 或 "just now" 作为**主显时间**，主界面上直接渲染显示的是绝对时间。图中出现的 "just now" 仅存在于鼠标悬停触发的 Tooltip（提示框）内部，并非页面的主显时间文本。
+
+
+    视觉缺陷检查：页面布局整体正常，未发现布局溢出、文字被裁切（提示框遮挡属于正常物理交互提示态）、元素异常重叠或空白破图等问题，无 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-03-detail-mobile.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 元信息条的时间文本为绝对时间，且含 4 位年份与 GMT 偏移；抄录如下：
+
+
+    `11/11/2026, 02:54:41 AM GMT+8`
+
+
+    （完整元信息行可见为：`@alice · 11/11/2026, 02:54:41 AM GMT+8`）
+
+
+    ② 未将 `just now` / `N ago` 作为主显时间。截图中 `just now` 仅出现在悬浮 tooltip 内，tooltip 内容为：
+
+
+    `just now · 11/11/2026, 02:54:41 AM GMT+08:00 · Asia/Shanghai`
+
+
+    视觉缺陷检查：未发现布局溢出、文字被裁切、空白破图等 blocker 级问题；tooltip 浮层覆盖属于预期交互展示，不构成 blocker。
+
+
+    Blocker 数量: 0'

@@ -1,0 +1,4 @@
+菜单打开时 activeElement data-testid = visibility-toggle；焦点在菜单内 = false
+按 Escape 后 visibility-menu count=0（期望 0）；activeElement data-testid=visibility-toggle（期望 visibility-toggle）
+[截图] screenshots/bdd-30-menu-open.png 135506B / screenshots/bdd-30-after-escape.png 131102B
+[VERDICT] BDD-30: PASS — Escape 后菜单关闭（count=0）且焦点回到触发入口（activeElement=visibility-toggle）

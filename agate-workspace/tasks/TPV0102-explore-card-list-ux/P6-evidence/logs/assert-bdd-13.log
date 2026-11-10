@@ -1,0 +1,6 @@
+file_count=1 entry 卡片文本 = "bdd13 one-file 1794336878391@alice11/11/2026, 02:54:48 AM GMT+8just now · 11/11/2026, 02:54:48 AM GMT+08:00 · Asia/Shanghai"
+file_count=1 entry 列表行文本 = "bdd13 one-file 1794336878391@alice11/11/2026, 02:54:48 AM GMT+8just now · 11/11/2026, 02:54:48 AM GMT+08:00 · Asia/Shanghai"
+判据 卡片无 "N file(s)"=true；列表无 "N file(s)"=true
+[截图] screenshots/bdd-13-one-file-card.png size=9019B
+[截图] screenshots/bdd-13-one-file-list.png size=91523B
+[VERDICT] BDD-13: PASS — file_count=1 在卡片与列表均不出现 "1 file"/"1 files" 文本

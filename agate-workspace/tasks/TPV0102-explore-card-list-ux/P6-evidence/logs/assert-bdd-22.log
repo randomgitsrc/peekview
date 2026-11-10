@@ -1,0 +1,5 @@
+[bob 非 owner] Explore 卡片内 visibility-toggle count=0（期望 0）
+[bob 非 owner] Explore 列表行内 visibility-toggle count=0（期望 0）
+[bob 非 owner] 详情页 .meta-row 内 count=0；整页 count=0（期望均 0）
+[截图] screenshots/bdd-22-nonowner-card.png 138793B / screenshots/bdd-22-nonowner-list.png 95156B / screenshots/bdd-22-nonowner-detail.png 36098B
+[VERDICT] BDD-22: PASS — 非 owner（bob）在卡片/列表/详情页三处均无菜单入口（counts=0/0/0，整页=0）

@@ -1,8 +1,8 @@
-phase: P5
+phase: P6
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T02:10:00Z'
+updated: '2026-11-11T03:20:00Z'
 judge:
   enabled: true
 p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
@@ -111,3 +111,15 @@ history:
     不存在致 count=0 使断言静默跳过=假绿，本任务按 P2 §6.4 拆守卫+加 toHaveCount(1) 前置才暴露。拆假绿守卫是既定要求。
     **已知失败登记**：known-failures.md 2 条（#1 沙箱只读 / #2 proj-a fixture 缺失）。环境：debug :8888 由主 Agent
     统一准备（health 200 + seed），每次 E2E 前探活；生产 :8080 全程 000。'
+- phase: P6
+  action: completed
+  ts: '2026-11-11T03:20:00Z'
+  note: 'P6 验收通过：30 条 BDD 逐条实跑**全 PASS / 0 FAIL**。三 gate 亲跑全绿（format exit 0 / check-gate P6 exit 2 结构化
+    results D1-D10 通过 / check-p6-evidence exit 0 / check-p6-provenance exit 0）。证据 93 文件（47 截图最小 8778B、md5
+    重复 0、无 <100B 凑数）、vision 24 份 blocker_count 全 0（真实模型调用 xrouter/nx-vision 已抽查）、残留检查 entry
+    残留 0。**主 Agent 裁决两处特殊处置合规**：① BDD-28 首轮 vision blocker —— verifier 做了 DOM Range 逐行字形盒量化
+    （16 卡逐卡 overlapNow vs overlapPreTask）证明是既有视觉债（pre-task .card-actions 60px 覆盖 332px → 本任务 48px
+    覆盖 211px，减少 121px）且不在任何 BDD/VC 判据内，第二轮同时修正采集条件（移开鼠标+重开菜单+1440x900）而非放宽判据
+    ② BDD-12 审计脚本默认路径在 verifier 命名空间不可达（exit 2 SKIP），改走「API 导出全量 23 行 → 同 schema 副本 →
+    同一脚本 --db」+ 独立复算，direct_exit=2 原样留档，未降级验证。**登记 2 条既有债待 P7**：卡片长标题被操作按钮覆盖
+    （既有，本任务已减轻 121px）/ BaseBadge label 非 computed。'

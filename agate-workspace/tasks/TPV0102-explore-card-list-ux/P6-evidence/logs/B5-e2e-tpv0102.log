@@ -1,0 +1,28 @@
+=== TPV0102 P6 — 本任务 E2E 实跑（E2E_SPEC=tpv0102）===
+命令：E2E_SPEC=e2e/tpv0102-explore-card-list-ux.spec.ts make debug-test
+时间：2026-11-11T03:26:01+08:00
+
+--- 探活（E2E 前）---
+curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:8888/health → 200
+
+--- runner 安全守卫 ---
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+
+--- 结果统计（去掉 ANSI 进度行）---
+  3 skipped
+  60 passed (46.5s)
+
+--- flaky 明细（重试后通过，非失败）---
+  1 flaky
+    [chromium] › e2e/tpv0102-explore-card-list-ux.spec.ts:271:3 › TPV0102 时间显示基础形态（BDD-01/02） › bdd02_hover_tooltip_shows_relative_absolute_and_iana 
+  3 skipped
+  60 passed (46.5s)
+
+--- Playwright runner 结论 ---
+=== ✓ 所有 E2E 测试通过 ===
+
+覆盖：BDD-01/02/03/04/05/06/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30 + VC-1~VC-8（两条 project：chromium 1280×800 / Mobile Chrome 390×844）
+判定：本任务引入的 E2E 失败 = 0（0 failed；1 flaky = 重试后通过；3 skipped = VC-4 仅移动端、VC-8 仅桌面端等显式跳过）
+
+EXIT_CODE: 0

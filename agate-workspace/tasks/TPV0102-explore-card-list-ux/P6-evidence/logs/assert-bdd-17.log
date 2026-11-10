@@ -1,0 +1,6 @@
+注册无团队用户 noteam1794337613345 → HTTP 201
+该用户 GET /api/v1/teams = {"owned":[],"joined":[]}
+菜单项文本 = ["Private"]
+Team 入口 count=0；Private 项 count=1
+[截图] screenshots/bdd-17-no-team-menu.png size=146299B
+[VERDICT] BDD-17: PASS — 用户无任何团队时菜单无 Team 入口（count=0），项=["Private"]

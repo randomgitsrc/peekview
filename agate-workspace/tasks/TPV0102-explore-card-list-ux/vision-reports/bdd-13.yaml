@@ -1,0 +1,71 @@
+vision_analysis:
+  bdd: '13'
+  images:
+  - bdd-13-one-file-card.png
+  - bdd-13-one-file-list.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView 一个**只有 1 个文件**的 entry 卡片（局部截图）。请核对：该卡片元信息区（@作者、时间、文件数一带）是否**没有**出现 "1 file" 或 "1 files" 这类文件数文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView Explore **列表模式**整页截图，其中有一个**只有 1 个文件**的 entry。请核对：该 entry 那一行是否**没有**出现 "1 file"/"1 files" 文件数文本？若有请指出是哪一行、文本是什么。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: 经核对，该卡片元信息区**没有**出现 "1 file" 或 "1 files" 这类文件数文本。
+  per_image:
+  - image: bdd-13-one-file-card.png
+    prompt: '这是 PeekView 一个**只有 1 个文件**的 entry 卡片（局部截图）。请核对：该卡片元信息区（@作者、时间、文件数一带）是否**没有**出现 "1 file" 或 "1 files" 这类文件数文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '经核对，该卡片元信息区**没有**出现 "1 file" 或 "1 files" 这类文件数文本。
+
+
+      元信息区文字原样抄录如下：
+
+      `@alice ·`
+
+      `11/11/2026, 02:54:48 AM GMT+8`
+
+
+      关于视觉缺陷：截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-13-one-file-list.png
+    prompt: '这是 PeekView Explore **列表模式**整页截图，其中有一个**只有 1 个文件**的 entry。请核对：该 entry 那一行是否**没有**出现 "1 file"/"1 files" 文件数文本？若有请指出是哪一行、文本是什么。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '经核对，列表中只有 1 个文件的 entry 是 **"bdd13 one-file 1794336878391"** 这一行，该行元数据部分显示为 `@alice · 11/11/2026, 02:54:48 AM GMT+8`，确实**没有**出现 "1 file" 或 "1 files" 的文件数文本。
+
+
+      关于视觉缺陷：截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。页面整体排版整洁，各类元素展示正常。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-13-one-file-card.png（model=xrouter/nx-vision, blocker=0）=====
+
+    经核对，该卡片元信息区**没有**出现 "1 file" 或 "1 files" 这类文件数文本。
+
+
+    元信息区文字原样抄录如下：
+
+    `@alice ·`
+
+    `11/11/2026, 02:54:48 AM GMT+8`
+
+
+    关于视觉缺陷：截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+    Blocker 数量: 0
+
+
+    ===== bdd-13-one-file-list.png（model=xrouter/nx-vision, blocker=0）=====
+
+    经核对，列表中只有 1 个文件的 entry 是 **"bdd13 one-file 1794336878391"** 这一行，该行元数据部分显示为 `@alice · 11/11/2026, 02:54:48 AM GMT+8`，确实**没有**出现 "1 file" 或 "1 files" 的文件数文本。
+
+
+    关于视觉缺陷：截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。页面整体排版整洁，各类元素展示正常。
+
+
+    Blocker 数量: 0'

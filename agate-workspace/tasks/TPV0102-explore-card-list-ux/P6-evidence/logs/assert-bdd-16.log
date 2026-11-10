@@ -1,0 +1,5 @@
+entry 当前态：is_public=true / team=null
+菜单项文本 = ["Private","Team"]
+Public 项 count=0；Private 项 count=1；Team 入口 count=1
+[截图] screenshots/bdd-16-menu-public-state.png size=135503B
+[VERDICT] BDD-16: PASS — 菜单不含 Public（count=0），含 Private（1）与 Team（1）；项文本=["Private","Team"]

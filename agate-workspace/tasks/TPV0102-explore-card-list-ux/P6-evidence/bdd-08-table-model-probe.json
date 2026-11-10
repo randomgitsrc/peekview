@@ -1,0 +1,47 @@
+{
+  "entry": {
+    "created_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "updated_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "expires_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "archived_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "archive_delete_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    }
+  },
+  "user": {
+    "created_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "updated_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    },
+    "disabled_at": {
+      "type": "datetime",
+      "str": "2026-11-10 09:43:00",
+      "endswith_Z": false
+    }
+  },
+  "UtcSerializeMixin_in_table_mro": []
+}

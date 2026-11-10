@@ -1,0 +1,5 @@
+file_count=3 entry 卡片文本 = "bdd15 three-file 1794336878391@alice11/11/2026, 02:54:51 AM GMT+8just now · 11/11/2026, 02:54:51 AM GMT+08:00 · Asia/Shanghai3 files"
+file_count=3 entry 列表行文本 = "bdd15 three-file 1794336878391@alice11/11/2026, 02:54:51 AM GMT+8just now · 11/11/2026, 02:54:51 AM GMT+08:00 · Asia/Shanghai3 files"
+判据 卡片含 "3 files"=true；列表含 "3 files"=true
+[截图] screenshots/bdd-15-three-files-list.png size=90336B
+[VERDICT] BDD-15: PASS — file_count=3 在卡片与列表均显示 "3 files"

@@ -1,0 +1,21 @@
+=== BDD-07：所有叶响应模型的 datetime 字段在 JSON 输出中以 Z 结尾 ===
+
+[A] pytest 遍历口径（遍历 models.py 非 table 且不被 table 模型继承的类，逐个 datetime 字段断言 Z）：
+....                                                                     [100%]
+pytest exit = 0
+
+[B] 端点实查（真实 HTTP 响应，逐字段检查结尾字符）：
+  /api/v1/entries?per_page=3 → 200，本端点累计检查时间字段 9 个，未带 Z 的 0 个
+  /api/v1/entries/k8s-deployment → 200，本端点累计检查时间字段 13 个，未带 Z 的 0 个
+  /api/v1/entries/k8s-deployment/raw → 200，本端点累计检查时间字段 14 个，未带 Z 的 0 个
+  /api/v1/entries?per_page=3&sort=created_at → 200，本端点累计检查时间字段 23 个，未带 Z 的 0 个
+  /api/v1/teams → 200，本端点累计检查时间字段 23 个，未带 Z 的 0 个
+  /api/v1/auth/me → 200，本端点累计检查时间字段 24 个，未带 Z 的 0 个
+  /api/v1/apikeys → 200，本端点累计检查时间字段 24 个，未带 Z 的 0 个
+  /api/v1/stars → 200，本端点累计检查时间字段 24 个，未带 Z 的 0 个
+  /api/v1/admin/users → 200，本端点累计检查时间字段 31 个，未带 Z 的 0 个
+  /api/v1/admin/stats → 200，本端点累计检查时间字段 32 个，未带 Z 的 0 个
+  /api/v1/config/captcha → 200，本端点累计检查时间字段 32 个，未带 Z 的 0 个
+  合计检查时间字段 = 32 个；未以 Z 结尾 = 0 个
+  [留存] bdd-07-endpoint-sample.json / bdd-07-endpoint-scan.json
+[VERDICT] BDD-07: PASS — 遍历断言 + 端点实查双证：pytest exit=0；真实响应中 32 个时间字段全部以 Z 结尾，违规 0 个

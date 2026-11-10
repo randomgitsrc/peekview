@@ -1,0 +1,47 @@
+=== TPV0102 P6 — 卡片标题字形 vs 右上操作按钮的覆盖量化（DOM Range 逐行字形盒）===
+背景：vision 分析 BDD-28 截图时报告「卡片标题文字被右上角操作图标重叠遮挡」。本文件用 DOM 度量
+      逐卡核实该覆盖是否真实、是否由本任务引入。
+
+方法：
+  · 字形右边界：Range.selectNodeContents(.card-title) → getClientRects() 逐行取实际字形盒（非块级盒宽）
+  · 操作按钮左边界：.card-actions 的 getBoundingClientRect().left
+  · 覆盖量 = max(0, 字形右边界 - actions 左边界)
+  · pre-task 对照：TPV0095-P4 提交 2b382c9c 的 EntryCard.vue 中
+    .card-actions = 28px(旧 card-action-btn 可见性按钮) + 4px(gap) + 28px(删除按钮) = 60px；
+    本任务把可见性按钮换成 VisibilityMenu 的 icon 变体，实测宽 16px → .card-actions = 48px。
+    故同一卡片右边界下 actions 左边界**后移 12px**，覆盖量减少 12px（是减轻，不是引入）。
+
+--- 逐卡实测（viewport 1280×800）---
+  {"title":"Mermaid 图表示例集","cardRight":336,"glyphRight":223,"actionsLeftNow":279,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":268,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"Markdown 渲染测试集","cardRight":632,"glyphRight":531,"actionsLeftNow":575,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":564,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"员工数据表（CSV 表格视图）","cardRight":928,"glyphRight":874,"actionsLeftNow":871,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":860,"overlapNowPx":3,"overlapPreTaskPx":14}
+  {"title":"Docker Compose 编排（YAML 树视图）","cardRight":1224,"glyphRight":1199,"actionsLeftNow":1167,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":1156,"overlapNowPx":32,"overlapPreTaskPx":43}
+  {"title":"Maven 项目配置（XML 树视图）","cardRight":336,"glyphRight":307,"actionsLeftNow":279,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":268,"overlapNowPx":28,"overlapPreTaskPx":39}
+  {"title":"非 ASCII 文件名本地资源引用（TPV0089 E2E fixture）","cardRight":632,"glyphRight":577,"actionsLeftNow":575,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":564,"overlapNowPx":2,"overlapPreTaskPx":13}
+  {"title":"服务器监控指标（TSV 表格视图）","cardRight":928,"glyphRight":905,"actionsLeftNow":871,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":860,"overlapNowPx":34,"overlapPreTaskPx":45}
+  {"title":"SVG 矢量图独立展示","cardRight":1224,"glyphRight":1107,"actionsLeftNow":1167,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":1156,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"SVG 图标库示例","cardRight":336,"glyphRight":187,"actionsLeftNow":279,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":268,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"安全审计记录 Q3","cardRight":632,"glyphRight":490,"actionsLeftNow":575,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":564,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"Entry Service 源码（Python）","cardRight":928,"glyphRight":880,"actionsLeftNow":871,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":860,"overlapNowPx":9,"overlapPreTaskPx":20}
+  {"title":"产品截图与设计稿","cardRight":1224,"glyphRight":1089,"actionsLeftNow":1167,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":1156,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"PlantUML 架构图","cardRight":336,"glyphRight":196,"actionsLeftNow":279,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":268,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"多格式混合（源码/渲染切换验证）","cardRight":632,"glyphRight":584,"actionsLeftNow":575,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":564,"overlapNowPx":9,"overlapPreTaskPx":20}
+  {"title":"Kubernetes 部署配置","cardRight":928,"glyphRight":816,"actionsLeftNow":871,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":860,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"API 服务配置（JSON 树视图）","cardRight":1224,"glyphRight":1178,"actionsLeftNow":1167,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":1156,"overlapNowPx":11,"overlapPreTaskPx":22}
+  {"title":"HTML 渲染与 CSP 测试","cardRight":336,"glyphRight":237,"actionsLeftNow":279,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":268,"overlapNowPx":0,"overlapPreTaskPx":0}
+  {"title":"边界数据测试（空/损坏/解析失败）","cardRight":632,"glyphRight":590,"actionsLeftNow":575,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":564,"overlapNowPx":15,"overlapPreTaskPx":26}
+  {"title":"SCNet DSH 架构部署文档（裸内嵌 SVG 渲染测试：4 个原生 <svg","cardRight":928,"glyphRight":911,"actionsLeftNow":871,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":860,"overlapNowPx":40,"overlapPreTaskPx":51}
+  {"title":"Dave 的私有笔记（disabled 用户名下 entry 样例）","cardRight":1224,"glyphRight":1195,"actionsLeftNow":1167,"actionsWidthNow":48,"toggleW":16,"deleteW":28,"actionsLeftPreTask":1156,"overlapNowPx":28,"overlapPreTaskPx":39}
+
+被覆盖卡片数：本任务后 = 11/20；pre-task 基线 = 11/20
+覆盖像素总量：本任务后 = 211px；pre-task 基线 = 332px（减少 121px）
+.card-actions 实测宽 = 48px（pre-task = 60px）；其中新 VisibilityMenu icon 触发按钮 = 16px，删除按钮 = 28px
+
+结论：
+  1. 该覆盖**真实存在**（DOM 逐行字形盒与 actions 盒相交），vision 的观察正确。
+  2. 它**不是本任务引入**：pre-task 基线（2b382c9c）的 actions 盒更宽（60px vs 48px），覆盖更严重；
+     本任务因把 28px 可见性按钮换成 16px icon 触发按钮，覆盖量反而减少。
+  3. 它**不在本任务 30 条 BDD 的判据内**：BDD 与 VC 均未对「卡片标题与右上操作按钮不重叠」设断言
+     （VC-3 断的是 .card-meta-text 元信息行不溢出；VC-6 断的是**列表模式** .entry-title 与 .entry-actions 不重叠）。
+  4. 属既有视觉债（长标题 + hover 时操作按钮浮层覆盖标题末尾 2~40px）。登记为 SUGGEST，交 P7/P8 决定是否单独立项。
+EXIT_CODE: 0

@@ -1,0 +1,68 @@
+vision_analysis:
+  bdd: '26'
+  images:
+  - bdd-26-seeded-explore.png
+  - bdd-26-unicode-filenames-card.png
+  - bdd-26-single-file-card.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 页面（已按项目文档 seed 数据）的整页截图。请核对：①是否渲染出**多于 1 张** entry 卡片？请给出大致卡片数量。②每张卡片的时间文本是否都含 GMT±N 偏移标识且**不含** "ago"/"just now"？请抄录 2~3 条时间文本原样。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView 一个 **8 个文件**的 entry 卡片（局部截图）。请核对：卡片元信息区是否显示了形如 "8 files" 的文件数文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。 || 这是 PeekView 一个 **1 个文件**的 entry 卡片（局部截图）。请核对：卡片元信息区是否**没有**显示任何文件数文本（即没有 "1 file"/"1 files"）？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 是，渲染出了多于 1 张 entry 卡片。共 5 行，每行 4 张，总计 **20 张**卡片。
+  per_image:
+  - image: bdd-26-seeded-explore.png
+    prompt: '这是 PeekView Explore 页面（已按项目文档 seed 数据）的整页截图。请核对：①是否渲染出**多于 1 张** entry 卡片？请给出大致卡片数量。②每张卡片的时间文本是否都含 GMT±N 偏移标识且**不含** "ago"/"just now"？请抄录 2~3 条时间文本原样。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 是，渲染出了多于 1 张 entry 卡片。共 5 行，每行 4 张，总计 **20 张**卡片。
+
+
+      ② 每张卡片的时间文本均包含 `GMT+8` 偏移标识，且没有出现 "ago" 或 "just now"。抄录如下：
+
+      - `11/11/2026, 02:31:35 AM GMT+8`
+
+      - `11/11/2026, 02:31:30 AM GMT+8`
+
+      - `11/11/2026, 02:31:30 AM GMT+8`
+
+
+      ③ 全页检查未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。整体布局规整，卡片内容完整清晰。
+
+
+      Blocker 数量: 0'
+  - image: bdd-26-unicode-filenames-card.png
+    prompt: '这是 PeekView 一个 **8 个文件**的 entry 卡片（局部截图）。请核对：卡片元信息区是否显示了形如 "8 files" 的文件数文本？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '是的，卡片元信息区显示了形如 "8 files" 的文件数文本。
+
+
+      元信息区文字原样抄录如下：
+
+      ```
+
+      @alice •
+
+      11/11/2026, 02:31:30 AM GMT+8
+
+      • 8 files
+
+      ```
+
+
+      经核对，该局部截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。
+
+
+      Blocker 数量: 0'
+  - image: bdd-26-single-file-card.png
+    prompt: '这是 PeekView 一个 **1 个文件**的 entry 卡片（局部截图）。请核对：卡片元信息区是否**没有**显示任何文件数文本（即没有 "1 file"/"1 files"）？请把元信息区文字原样抄录。另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: "核对结果如下：\n\n1. 卡片元信息区**没有**显示任何文件数文本（未见 \"1 file\" 或 \"1 files\"）。\n2. 元信息区文字原样抄录如下：\n   Docker Compose 编排 (YAML 树视图)\n   @alice ·\n   11/11/2026, 02:31:30 AM GMT+8\n   yaml\n   docker\n   编排\n   +1\n   Public\n3. 经检查，图片中不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等视觉缺陷。\n\nBlocker 数量: 0"
+  raw_response: "===== bdd-26-seeded-explore.png（model=xrouter/nx-vision, blocker=0）=====\n① 是，渲染出了多于 1 张 entry 卡片。共 5 行，每行 4 张，总计 **20 张**卡片。\n\n② 每张卡片的时间文本均包含 `GMT+8` 偏移标识，且没有出现 \"ago\" 或 \"just now\"。抄录如下：\n- `11/11/2026, 02:31:35 AM GMT+8`\n- `11/11/2026, 02:31:30 AM GMT+8`\n- `11/11/2026, 02:31:30 AM GMT+8`\n\n③ 全页检查未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。整体布局规整，卡片内容完整清晰。\n\nBlocker 数量: 0\n\n===== bdd-26-unicode-filenames-card.png（model=xrouter/nx-vision, blocker=0）=====\n是的，卡片元信息区显示了形如 \"8 files\" 的文件数文本。\n\n元信息区文字原样抄录如下：\n```\n@alice •\n11/11/2026, 02:31:30 AM GMT+8\n• 8 files\n```\n\n经核对，该局部截图中未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等 blocker 级视觉缺陷。\n\nBlocker 数量: 0\n\n===== bdd-26-single-file-card.png（model=xrouter/nx-vision, blocker=0）=====\n核对结果如下：\n\n1. 卡片元信息区**没有**显示任何文件数文本（未见 \"1 file\" 或 \"1 files\"）。\n2. 元信息区文字原样抄录如下：\n   Docker Compose 编排 (YAML 树视图)\n   @alice ·\n   11/11/2026, 02:31:30 AM GMT+8\n   yaml\n   docker\n   编排\n   +1\n   Public\n3. 经检查，图片中不存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等视觉缺陷。\n\n\
+    Blocker 数量: 0"

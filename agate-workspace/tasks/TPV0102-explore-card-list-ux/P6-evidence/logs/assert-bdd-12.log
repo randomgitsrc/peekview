@@ -1,0 +1,34 @@
+=== BDD-12：存量数据 UTC 语义一次性审计（created_at 晚于 DB 当前 UTC 的计数）===
+
+[A] 直接对 debug DB 默认路径运行审计脚本：
+命令：backend/.venv/bin/python scripts/audit-utc-semantics.py --json  (exit=2)
+(空)
+[stderr] BDD-12 SKIP: 数据库不存在 /tmp/peekview-debug/peekview.db
+→ exit=2：默认路径 /tmp/peekview-debug/peekview.db 在**验收沙箱命名空间内不可见**
+   （debug backend 由主 Agent 在另一 PID/挂载命名空间的 /tmp tmpfs 下运行，验收侧 /tmp 为独立 tmpfs；实测 lsof/进程枚举均取不到该服务）→ 该路径不可达，脚本按设计 exit 2 = SKIP
+
+[B] 替代取证（等价判据）：经 debug backend API 导出**全部** entry 行，写入同 schema 的本地 SQLite，再用**同一个审计脚本**（--db）执行判据：
+  API 导出条目数 = 23；/entries 的 total 字段 = 22；admin/stats entries.total = 23
+  覆盖完整性：导出 23 行 vs admin/stats total 23 行
+  已构造等价副本：/home/kity/oclab/peekview/.agate-tmp/p6/bdd12-replica.db（schema: entries(id, slug, created_at, updated_at, expires_at)，created_at 为 naive UTC 字符串，与 debug DB 存储形态一致）
+命令：backend/.venv/bin/python scripts/audit-utc-semantics.py --db <副本> --json  (exit=0)
+{
+  "count": 0,
+  "rows": [],
+  "checked": 23,
+  "now": "2026-11-10T18:54:27.082571+00:00",
+  "db": "/home/kity/oclab/peekview/.agate-tmp/p6/bdd12-replica.db"
+}
+--- 人类可读输出 ---
+BDD-12 UTC semantics audit — /home/kity/oclab/peekview/.agate-tmp/p6/bdd12-replica.db
+  checked entries : 23
+  reference (now) : 2026-11-10T18:54:27.104853+00:00
+  future created_at rows : 0
+
+[C] 独立复算（不经脚本，直接按判据算）：
+  reference(now, UTC) = 2026-11-10T18:54:27.107822+00:00
+  检查行数 = 23；created_at 晚于当前 UTC 的行数 = 0；无法解析 = 0
+  注：expires_at / archive_delete_at 属天然未来列，按 P1 BDD-12 判据排除，未参与
+  created_at 最大/最小值抽样 = 2026-11-10T18:31:30.370394Z … 2026-11-10T18:31:35.536460Z
+  脚本 --db 副本结果 JSON：count=0 checked=23 now=2026-11-10T18:54:27.082571+00:00
+[VERDICT] BDD-12: PASS — 存量 UTC 语义审计：全部 23 行（= admin/stats total 23）created_at 晚于当前 UTC 的行数 = 0；脚本 --db 副本 exit=0、count=0、checked=23；直接读 debug DB 因沙箱命名空间隔离不可达（exit 2 SKIP），见 bdd-12-audit-utc.json 的 direct_note

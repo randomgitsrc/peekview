@@ -1,0 +1,81 @@
+vision_analysis:
+  bdd: '18'
+  images:
+  - bdd-18-team-submenu.png
+  model: xrouter/nx-vision
+  role: quick（逐图独立分析；compare role 实测颠倒两图顺序故未采用）
+  tool: .agate-tmp/ve/scripts/vision-analyze.py -r quick --no-cache（vision-engine skill）
+  prompt: '这是 PeekView Explore 一张**当前归属 Team A** 的 entry，可见性菜单已展开且 Team 子菜单也已展开。请：①把菜单与子菜单内所有可见项文本逐条抄录（区分父菜单项与子菜单团队项）。②Team 子菜单是否是独立展开的第二层（而不是在主菜单里直接平铺团队）？③父菜单里的 "Team" 入口是否带展开指示（右箭头）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+  summary:
+    blocker_count: 0
+    notes: ① 菜单与子菜单内可见项文本抄录如下：
+  per_image:
+  - image: bdd-18-team-submenu.png
+    prompt: '这是 PeekView Explore 一张**当前归属 Team A** 的 entry，可见性菜单已展开且 Team 子菜单也已展开。请：①把菜单与子菜单内所有可见项文本逐条抄录（区分父菜单项与子菜单团队项）。②Team 子菜单是否是独立展开的第二层（而不是在主菜单里直接平铺团队）？③父菜单里的 "Team" 入口是否带展开指示（右箭头）？另外：是否存在布局溢出、文字被裁切、元素重叠遮挡、空白破图等 blocker 级视觉缺陷？请最后单独一行给出 "Blocker 数量: N"。'
+    model: xrouter/nx-vision
+    blocker_count: 0
+    rc: 0
+    response: '① 菜单与子菜单内可见项文本抄录如下：
+
+
+      **父菜单项：**
+
+      *   Public
+
+      *   Private
+
+      *   Team
+
+
+      **Team 子菜单团队项：**
+
+      *   frontend-team
+
+      *   probe team xyz
+
+      *   E2E B 1794337613345
+
+
+      ② Team 子菜单是独立展开的第二层。它通过悬浮在主菜单的 "Team" 项右侧以独立的浮层形式弹出，而不是在主菜单里直接平铺列出团队名称。
+
+
+      ③ 父菜单里的 "Team" 入口带有展开指示。在其文字右侧有一个向右的箭头（`>`）。
+
+
+      ④ 经过对整张图片的仔细检查，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等任何阻断级（blocker）视觉缺陷。菜单的层叠关系清晰，内容显示完整。
+
+
+      Blocker 数量: 0'
+  raw_response: '===== bdd-18-team-submenu.png（model=xrouter/nx-vision, blocker=0）=====
+
+    ① 菜单与子菜单内可见项文本抄录如下：
+
+
+    **父菜单项：**
+
+    *   Public
+
+    *   Private
+
+    *   Team
+
+
+    **Team 子菜单团队项：**
+
+    *   frontend-team
+
+    *   probe team xyz
+
+    *   E2E B 1794337613345
+
+
+    ② Team 子菜单是独立展开的第二层。它通过悬浮在主菜单的 "Team" 项右侧以独立的浮层形式弹出，而不是在主菜单里直接平铺列出团队名称。
+
+
+    ③ 父菜单里的 "Team" 入口带有展开指示。在其文字右侧有一个向右的箭头（`>`）。
+
+
+    ④ 经过对整张图片的仔细检查，未发现布局溢出、文字被裁切、元素重叠遮挡或空白破图等任何阻断级（blocker）视觉缺陷。菜单的层叠关系清晰，内容显示完整。
+
+
+    Blocker 数量: 0'

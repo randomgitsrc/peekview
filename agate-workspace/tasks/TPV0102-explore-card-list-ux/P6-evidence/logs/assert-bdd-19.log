@@ -1,0 +1,6 @@
+确认弹窗文本 = "Make this entry public?Anyone with the link will be able to view this entry. Team visibility will be removed. Cancel Make public"
+确认前 API 态：is_public=false team_id=4（数值 id）team.slug=e2e-pub-1794337613345（应仍为 false / e2e-pub-1794337613345）
+[截图] screenshots/bdd-19-confirm-dialog.png size=128926B
+确认后 API 态：is_public=true team_id=null team=null
+[截图] screenshots/bdd-19-after-confirm.png size=136886B
+[VERDICT] BDD-19: PASS — 确认前不发改动（is_public 仍 false）；确认后 is_public=true 且 team 为空（team_id=null）

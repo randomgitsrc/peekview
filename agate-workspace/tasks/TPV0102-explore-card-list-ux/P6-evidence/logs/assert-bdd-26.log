@@ -1,0 +1,13 @@
+seed 用户 alice 登录后 Explore 首页卡片数 = 20（期望 >1）；API 侧公开可见 entry 总数 = 22（首页 per_page 默认 20）
+卡片主显时间样本（前 5） = ["11/11/2026, 02:31:35 AM GMT+8","11/11/2026, 02:31:35 AM GMT+8","11/11/2026, 02:31:35 AM GMT+8","11/11/2026, 02:31:30 AM GMT+8","11/11/2026, 02:31:30 AM GMT+8"]
+全部含 GMT±N = true；全部不含 ago/just now = true（共 20 张卡）
+[截图] screenshots/bdd-26-seeded-explore.png size=234879B（Explore 首页卡片模式全页）
+  unicode-filenames（API file_count=8，summary="非 ASCII 文件名本地资源引用（TPV0089 E2E fixture）"，搜索 q="非 ASCII 文件名本地资源引用（TPV0089 E2E fixture）"）→ 卡片出现=true 含 "N files"=true
+    卡片文本 = "非 ASCII 文件名本地资源引用（TPV0089 E2E fixture）@alice11/11/2026, 02:31:30 AM GMT+835m ago · 11/11/2026, 02:31:30 AM GMT+08:00 · Asia/Shanghai8 filesunicode文件名图片+1public"
+    [截图] screenshots/bdd-26-unicode-filenames-card.png size=17266B
+  multi-format-demo（API file_count=4，summary="多格式混合（源码/渲染切换验证）"，搜索 q="多格式混合（源码/渲染切换验证）"）→ 卡片出现=true 含 "N files"=true
+    卡片文本 = "多格式混合（源码/渲染切换验证）@bob11/11/2026, 02:31:30 AM GMT+835m ago · 11/11/2026, 02:31:30 AM GMT+08:00 · Asia/Shanghai4 files多格式切换测试public"
+  yaml-docker-compose（API file_count=1，summary="Docker Compose 编排（YAML 树视图）"，搜索 q="Docker Compose 编排（YAML 树视图）"）→ 卡片出现=true 含 "N files"=false
+    卡片文本 = "Docker Compose 编排（YAML 树视图）@alice11/11/2026, 02:31:30 AM GMT+835m ago · 11/11/2026, 02:31:30 AM GMT+08:00 · Asia/Shanghaiyamldocker编排+1public"
+    [截图] screenshots/bdd-26-single-file-card.png size=14036B
+[VERDICT] BDD-26: PASS — seed 数据下 Explore 渲染 20 张卡片，主显全部含 GMT±N 且无 ago；unicode-filenames(8 文件)/multi-format-demo(4 文件) 卡片显示 N files=true；yaml-docker-compose(1 文件) 不显示文件数=true
