@@ -1,8 +1,8 @@
-phase: READY
+phase: DONE
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T05:15:00Z'
+updated: '2026-11-11T05:20:00Z'
 judge:
   enabled: true
 p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
@@ -156,3 +156,10 @@ history:
     ② /tmp/peekview-debug 已删 ③ .agate-tmp 已清空（0 项）④ 生产 :8080 全程 000 ⑤ 工作区仅 5 项、暂存区
     4 项无凭证/临时物 ⑥ phase=READY 已单独提交（P8 gate 已在 phase:P8 那次运行过）⑦ 复盘已写
     retrospective.md（SCOPE+ 触发建议 + 四次 subagent 纠正的机制发现 + 4 项建议债务）'
+- phase: DONE
+  action: done
+  ts: '2026-11-11T05:20:00Z'
+  note: '任务完成（终态）。P0-P8 全流程走完：30 条 BDD、112 测试用例、13 条 DESIGN_GAP 全配对、P6.5 judge
+    30/30、check-gate P1/P2/P3/P4/P5/P6/P6.5/P7/P8 依次通过。用户可见四项改动 + 一个破坏性变更已交付。
+    **待人工/独立发布流程**：bump_type=minor 的 version bump 与 tag、PyPI 发布、生产升级（pipx upgrade +
+    systemctl restart）——均按 P8 卡「P8 不 bump version、不 tag」的边界，由独立发布流程 + 人工授权触发。'
