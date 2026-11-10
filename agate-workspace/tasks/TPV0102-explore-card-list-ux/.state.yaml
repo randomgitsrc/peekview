@@ -1,8 +1,8 @@
-phase: P8
+phase: READY
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T05:00:00Z'
+updated: '2026-11-11T05:15:00Z'
 judge:
   enabled: true
 p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
@@ -149,3 +149,10 @@ history:
     .agate-tmp 已清空（原 100 项/23MB 含 20 个测试收集模式文件名，gate WARNING 已消除）、:8888 无监听、/tmp/peekview-debug
     已删、:8080 全程 000、暂存区仅 4 项无凭证。git log v0.26.1..HEAD 22 commit 已对照（19 个 TPV0102 + 3 个非本任务的
     make publish 工具链修正，后者为打 tag 后遗留、用户不可见、非本任务范围）。[PROD_NOT_TOUCHED]'
+- phase: READY
+  action: ready
+  ts: '2026-11-11T05:15:00Z'
+  note: 'READY 收尾检查全部通过（主 Agent 亲自逐项实查，不凭记忆）：① 调试服务 :8888 无监听、无 uvicorn 进程
+    ② /tmp/peekview-debug 已删 ③ .agate-tmp 已清空（0 项）④ 生产 :8080 全程 000 ⑤ 工作区仅 5 项、暂存区
+    4 项无凭证/临时物 ⑥ phase=READY 已单独提交（P8 gate 已在 phase:P8 那次运行过）⑦ 复盘已写
+    retrospective.md（SCOPE+ 触发建议 + 四次 subagent 纠正的机制发现 + 4 项建议债务）'
