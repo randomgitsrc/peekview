@@ -1,8 +1,8 @@
-phase: P2
+phase: P3
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-10T19:40:00Z'
+updated: '2026-11-10T20:30:00Z'
 judge:
   enabled: true
 retries:
@@ -61,3 +61,16 @@ history:
     （agate_common.py:755-766 强制 set -o pipefail，管道退出码取左侧失败码）。复审阶段 design N-3 亦被主 Agent
     判为评审误判、最终由评审自行改判闭合'
 
+- phase: P3
+  action: completed
+  ts: '2026-11-10T20:30:00Z'
+  note: 'P3 TDD 测试设计完成：12 文件 / 112 用例（pytest 20 + vitest 30 + E2E 62[31 用例 ×2 project]），BDD
+    01-30 全覆盖无遗漏。**真红灯确认**：check-tdd-red.py exit 0 = B-class red-light (import errors from
+    missing project module peekview)；check-gate P3 exit 2；check-platform-assumptions 0 命中。**test-designer
+    用桩反证红灯真伪**（注入伪 timefmt + UtcSerializeMixin + 换 16 叶模型基类 → 20 用例 18 passed，剩 2 个
+    正是 P4 真实缺口：client.py 未换 parse_iso、CLI --json 仍 naive），并修掉 3 处测试自身缺陷（1 处与
+    P2 冻结的 parse_iso 契约矛盾 / 1 处空断言恒真 / 2 处与 §3.5 契约耦合过紧）。文件名精确匹配 P2 冻结
+    契约：test_utc_serialization.py（P5_fitness 的 -k mixin_not_in_table_mro）+ e2e/tpv0102-explore-card-list-ux.spec.ts
+    （P5_e2e 写死）。预存失败定性：test_cli_remote::test_config_set_remote_api_key 因沙箱 ~/.peekview/ 只读
+    必红（P2 C-20 已登记），非本任务引入 → P5 登记 known-failures.md。BDD-07 遍历实测 16 类（P2 R6 预期），
+    测试不硬编码数字、只设 ≥10 类/≥20 字段防空跑下限'

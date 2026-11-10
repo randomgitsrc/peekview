@@ -88,3 +88,14 @@
 - GATE PASS: `check-gate.py P2` **exit 2**（RECONCILE 0 mismatches）。两条 WARNING 经主 Agent 实测**确认为 gate 误报**：① `gate_commands.P3 命令 '' 不存在` —— P3 命令首 token 是 `(`（子壳），`shutil.which('(')` 必返空；实测该命令可正常执行（`b=1 f=1`，聚合语义正确）② `P5_fitness 命令 'cd' 不存在` —— `cd` 是 shell builtin，`which` 查不到（实测 `which cd` 非 0）。两条均为 gate 用 `shutil.which(首token)` 检测导致的 cosmetical 误报，eng 评审第 2 轮已预测到并说明「不改变 approved 结论」
 - SUBAGENT OK: 组长汇总产出 `P2-review.md`（26783 字节，status=approved，agent=review ≠ main），专家票型 2/2 approved、无分歧、转抄 **23 条执行约束**（C-1~C-23）给 P4/P5/P6
 - NEXT: 更新 .state.yaml（phase 推进 P2 + history + retries.P2）+ active-tasks.md，git add + commit P2
+- SUBAGENT FAIL(已修正): P2 首次 commit 被 hook 拦下 —— `P2-design.md` 缺 `prod_touched` 字段（非 legacy 任务必填，设计 §4）。补 `prod_touched: false` 后通过。**注意**：`P2-review-*.md`（eng/design）的 md-field-set schema **不含 `prod_touched`**（合法 key 清单无该字段），只有主产出 `P2-design.md` 与汇总件 `P2-review.md` 需要；不要对评审件强行 set
+- DECISION: P2 已 commit `da0c85a7`（20 files, +7298）。进入 P3 TDD 测试设计
+- NEXT: 读 P3 阶段卡片 → 写 `P3-dispatch-context-test-designer.md` → 注入 AGATE_CARD → 派发 test-designer
+- FACT(P3 前置实测): `backend/tests/test_utc_serialization.py` **不存在**（可新建，P2 的 P5_fitness 依赖此文件名 + `-k mixin_not_in_table_mro`）；`frontend-v3/e2e/tpv0102-*.spec.ts` **不存在**（P3 须新建，P2 的 P5_e2e 写死了 `e2e/tpv0102-explore-card-list-ux.spec.ts`）；`backend/tests/` 有 `conftest.py` / `factories.py` / `_team_helpers.py` 等既有基建
+- FACT: 环境基线已捕获（`agate-capture-env-baseline.py` → 「命令 'make test-quick' 无 formatter，无法提取 fail-list，放弃捕获，不写入任何文件」——按脚本设计属预期，不阻塞）
+- NEXT: 派发 test-designer（30 条 BDD 1:1 映射），dispatch-context 已注入 AGATE_CARD exit 0
+- SUBAGENT OK: test-designer 产出 12 文件 / 112 用例（pytest 20 + vitest 30 + E2E 62[31×2 project]），BDD 01-30 全覆盖
+- GATE PASS(主 Agent 亲跑，未采信自述): `check-gate P3` **exit 2**；`check-tdd-red.py` **exit 0 = `B-class red-light (import errors from missing project module 'peekview')`（真红灯）**；`check-platform-assumptions.py backend/tests/test_utc_serialization.py scripts/audit-utc-semantics.py` **exit 0 / 0 命中**。**30 条 BDD 逐条 grep 验证全覆盖、无遗漏**（E2E 覆盖 01-06/13-30，后端覆盖 07-12）。`test_code_dir` 已声明 = `backend/tests/ frontend-v3/src/ frontend-v3/e2e/ scripts/`
+- FACT(test-designer 的桩验证，方法论值得复用): 注入伪 `peekview.timefmt` + `UtcSerializeMixin` + 换 16 个叶模型基类后，后端 20 用例 **18 passed**，剩 2 个正是 P4 真实缺口 —— 这是**用桩反证红灯真伪**，比只看红灯原因更可靠。过程中还修掉 3 处**测试自身缺陷**（1 处与 P2 冻结的 `parse_iso` 契约矛盾 / 1 处空断言恒真 / 2 处与 P2 §3.5 契约耦合过紧）
+- FACT(预存失败已定性): 完整 P3 聚合命令 `AGG_EXIT=1`，其中 `backend/tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key` 是**预存失败**（沙箱 `~/.peekview/` 只读，P2 的 C-20 已登记），**非本任务引入** → P5 须登记 `known-failures.md`
+- FACT(BDD-07 口径): 遍历实测命中 **16 类**（P2 §R6 已预期），测试**不硬编码数字**、只有「≥10 类 / ≥20 字段」防空跑下限 —— 与 P2 定的「以遍历为准」一致
