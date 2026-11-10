@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-11
+
 ### ⚠️ Breaking Change
 
 - API 与 CLI `--json` 返回的 datetime 字段补 `Z`（ISO 8601 UTC 设计符）：`created_at` / `updated_at` / `expires_at` / `archived_at` / `archive_delete_at` / `revoked_at` / `starred_at` / `last_read_at` / `read_at` / `deleted_at` / `last_used_at` / `disabled_at` / `latest_created_at` 由 `2026-11-10T09:43:00` 形态变为 `2026-11-10T09:43:00Z`（管理备份 JSON 的时间字段同此形态）。原形态不带时区标记而实际存 UTC，`new Date()` 按本地时间解析，中国用户会读到早 8 小时的时刻；合规 ISO 8601 解析器无需改动，Python 3.10 的 `datetime.fromisoformat()` 是唯一例外。迁移指引见 `docs/process/upgrading.md`（TPV0102）
