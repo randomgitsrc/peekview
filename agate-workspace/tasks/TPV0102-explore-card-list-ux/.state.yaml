@@ -1,10 +1,11 @@
-phase: P4
+phase: P5
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T01:40:00Z'
+updated: '2026-11-11T02:10:00Z'
 judge:
   enabled: true
+p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
 retries:
   P1:
   - round: 1
@@ -98,3 +99,15 @@ history:
     （全量 vitest 报 Errors 1 error 但 1456 passed，只看 passed 计数会漏 unhandled rejection）。**转 P7 的 3 条判据瑕疵**：
     BDD-25 后半条对有文件 entry 不可测（loadEntry 恒选 files[0]）/ P2 VC-5 的 <=2px 基线几何不可满足 / .entry-detail 潜在裁剪祖先。
     DESIGN_GAP 13 条 + SCOPE+ 2 条待 P7 逐条配对'
+- phase: P5
+  action: completed
+  ts: '2026-11-11T02:10:00Z'
+  note: 'P5 技术验证通过：7 条 gate_commands 全部执行（无挑跑）。**本任务引入失败 = 0**。结果：① make test-quick 1205
+    passed/1 failed（预存 test_cli_remote::test_config_set_remote_api_key，沙箱 ~/.peekview/ 只读，三重证据定性）② make
+    test-frontend 1456 passed/0 failed ③ P5_e2e(tpv0102) **61 passed/0 failed**（真跑）④ P5_e2e_legacy(team-visibility)
+    6 passed/2 failed ⑤ lint 0 ⑥ typecheck 0 ⑦ P5_fitness 1 passed/19 deselected。**④ 的裁决（主 Agent 亲自取证）**：
+    非本任务引入——`proj-a` 由 TPV0095-P3(7586cc1a) 引入、seed 中 0 命中；本任务 spec 用 createTeam() 动态建团队从不依赖它；
+    verifier 指出的"变红由本任务带来"性质是**暴露而非引入**：P4 前该用例是 `if ((await teamCard.count()) > 0)`，proj-a
+    不存在致 count=0 使断言静默跳过=假绿，本任务按 P2 §6.4 拆守卫+加 toHaveCount(1) 前置才暴露。拆假绿守卫是既定要求。
+    **已知失败登记**：known-failures.md 2 条（#1 沙箱只读 / #2 proj-a fixture 缺失）。环境：debug :8888 由主 Agent
+    统一准备（health 200 + seed），每次 E2E 前探活；生产 :8080 全程 000。'

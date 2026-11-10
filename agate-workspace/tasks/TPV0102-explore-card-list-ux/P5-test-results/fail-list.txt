@@ -1,0 +1,3 @@
+FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+FAILED e2e/team-visibility.spec.ts:147 BDD-40: team entry 卡片有 visibility-toggle，delete 保留 [chromium]
+FAILED e2e/team-visibility.spec.ts:147 BDD-40: team entry 卡片有 visibility-toggle，delete 保留 [Mobile Chrome]

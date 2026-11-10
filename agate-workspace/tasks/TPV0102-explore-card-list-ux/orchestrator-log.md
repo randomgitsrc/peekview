@@ -159,3 +159,15 @@
 - SUBAGENT OK: 组长汇总产出 `P4-review.md`（status=approved，agent=review ≠ main），专家 **2/2 approved、0 BLOCKER、无分歧**，转抄 **26 条约束（T-1~T-26）** 给 P5/P6/P7。DESIGN_GAP 精确计数 = **13 条**（前端 11 + docs 2）+ 2 条 `[SCOPE+]`
 - DECISION(组长转来的 IN-1 建议): `cli.py` apikey create/list 与 whoami 的时间显示 local/remote 不对称（后端 review 的 2 条 INFORMATIONAL 之一）→ **不在本任务修**，登记 `docs/roadmap/improvement-backlog.md` 作 follow-up。理由：超出 P1 四项范围，且属既有 CLI 输出形态问题，与本任务的 API 序列化改动无因果关系
 - NEXT: 更新 .state.yaml（phase→P4 + history + retries.P4）+ active-tasks.md → commit P4 → 进 P5
+- SUBAGENT OK: P4 已 commit `d8adbec7`（工作树干净）。`.state.yaml` phase→P4 + history + retries.P4(2 轮) 已写；active-tasks.md 已更新
+- DECISION(P4 edge case): P4 首次 `check-gate` exit 1 且**无 stderr** —— 原因是该 gate 检查**暂存区**（`git diff --cached`），而当时所有产出都还没 `git add`。**这不是失败，是调用顺序问题**：P4/P5/P6 阶段的 gate 必须在 `git add` 之后跑
+- NEXT: 进 P5。按 P5 卡要求：**环境由主 Agent 统一准备**（verifier 默认不自行启动）→ 我先起 :8888 挂后台 job 托底并探活 → 再派 verifier 执行 7 条 gate_commands
+- SUBAGENT OK(P5): 7 条 gate_commands 全部执行（无挑跑），产出 unit.md / fail-list.txt / e2e.md / evidence/ / known-failures.md
+- **裁决 A（verifier 上交的因果争议）**：命令 4（`P5_e2e_legacy` = team-visibility）2 failed，**主 Agent 判定：非本任务引入的缺陷，放行**。证据链（我亲自取证，未采信自述）：
+  1. `proj-a` 由 **TPV0095-P3（commit `7586cc1a`）** 引入，**早于本任务**；`grep -rn "proj-a" scripts/seed-data/` = **0 命中**（seed 里只有 `frontend-team` / `backend-solo`）
+  2. 本任务自己的 spec 用 `createTeam()` **动态建团队**（`tpv0102...spec.ts:596/634/682`），从不依赖 `proj-a` → 本任务与这条 fixture 缺口**无因果关系**
+  3. **verifier 点出的"变红由本任务带来"成立，但性质是"暴露"不是"引入"**：P4 前该用例是 `if ((await teamCard.count()) > 0) { ... }`（`git show 20fd76b3:` 确认），`proj-a` 不存在 → `count=0` → 整块断言**静默跳过、测试假绿**；本任务按 P2 §6.4 拆守卫 + 加 `toHaveCount(1)` 前置 → 缺口暴露成真红。**拆假绿守卫本身是本任务的既定要求（P2 R5 / 陷阱 16），不是缺陷**
+  4. 两条失败都停在 `:157 toHaveCount(1)`，**从未走到** `visibility-toggle` 断言 → 不能据此判定 toggle 行为有误
+- **裁决 B（EXIT_CODE 语义）**：认可 verifier 的说明——`EXIT_CODE: 2` 是 7 条中非零退出者的退出码，**不是放行裁决**。本任务的有效结论是 **`failed(本任务引入) = 0`**
+- FACT(主 Agent 亲验): `make test-quick` 的 1 failed 是 `test_cli_remote::test_config_set_remote_api_key`（沙箱 `~/.peekview/` 只读），verifier 用「同文件隔离 HOME 的同类用例通过 + `touch ~/.peekview/.p5probe` 返回只读文件系统」三重证据定性，成立
+- DECISION: P5 判定**通过**（`ui_affected: true` 且 `P5_e2e` 真跑 61 passed；本任务引入失败 = 0；2 条非零退出均为已知既有问题且已登记 known-failures.md 第 1/2 条）
