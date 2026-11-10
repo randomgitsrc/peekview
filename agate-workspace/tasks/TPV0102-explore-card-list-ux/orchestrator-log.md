@@ -182,3 +182,9 @@
 - FACT(残留检查): entry 残留 **0**（扫 23 条）；另清理 7 个 `noteam*` E2E 用户 + 1 个 `probe-team-xyz`，复检恢复 seed 基线
 - DECISION: P6 判定**通过**。但需登记 2 条**既有债**（非本任务引入，P7 处理）：① 卡片长标题被右上操作按钮覆盖（既有，本任务已减轻 121px，最坏仍 34px）② `BaseBadge` 的 label 非 computed（status 变 class 变但文字不变，刷新后才对）
 - NEXT: 提 P6 commit → 派 P6.5 judge（fresh context 逐条重验 30 条 BDD）
+- GATE PASS(P6.5): `check-gate P6.5` **exit 0**（`status=passed, criteria 30/30`，账本 18 行哈希链完整 + ts 单调 + judge 轮次×1）
+- SUBAGENT OK: judge（fresh context + 严格信息隔离）逐条重验 **30/30 PASS、0 阻断**。**主 Agent 核验其复核是实质性的**（非采信日志）：它自己 `import` 表/叶模型复算 **16 叶模型/34 字段 JSON 全 Z、python 模式全 datetime、11 表模型无污染、mixin 不在任何表 MRO**；自己 `sqlite3` 查 BDD-12 副本得 **23 行/future=0/naive UTC 存储形态**；自己读源码核对 `TimeDisplay.vue:4` 的 `role="tooltip"`、空态两分支文案、`inFlight` 守卫与 `:disabled` 绑定、`loadEntry` 恒选 `files[0]`
+- FACT(judge 的一处主动加固): 它发现本任务账本首事件 `contract_level=2`（非 legacy）→ `check-judge-verdict.py` **强制读 frontmatter 的 `criteria:` 字段**（缺失即 exit 1），故补写了该结构化列表。主 Agent 复验：`criteria:` 在第 101 行存在，正文 30 条结论行全 PASS、无 FAIL/NEEDS-REVISION
+- FACT(judge 的自检隔离): 它把自检跑在 `.agate-tmp/p65/taskcopy/` 副本上（因脚本会向账本 append `judge_verdict` 事件），真实 `gate-events.jsonl` md5 前后一致、17 行无 `judge_verdict` 事件 → 正式 gate 由主 Agent 跑（本次跑后账本 18 行，含 1 条 judge_verdict，符合预期）
+- DECISION: **P6 + P6.5 判定通过**。judge 的 6 项非阻断观察转 P7：① BDD-12 属降级取证（副本是快照非活动 DB 实时视图，等价性成立）② BDD-24 的 E2E 证据偏弱 ③ 卡片长标题与 hover 操作区重叠（既有债，本任务减轻 121px）④ `BaseBadge` label setup 期求值致徽章文字 stale（既有，本任务零改动）
+- NEXT: commit P6.5 verdict（**phase 保持 P6**，P6.5 非独立 phase 值）→ 写 phase: P7 → 派 consistency-reviewer
