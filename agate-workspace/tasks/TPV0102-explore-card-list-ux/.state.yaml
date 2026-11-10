@@ -1,8 +1,8 @@
-phase: P7
+phase: P8
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T04:10:00Z'
+updated: '2026-11-11T05:00:00Z'
 judge:
   enabled: true
 p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
@@ -135,3 +135,17 @@ history:
     （F1 卡片标题与 hover 操作区重叠已减轻 121px / F2 BaseBadge label stale / F3 BDD-25 后半条不可测 /
     F4 P2 VC-5 <=2px 几何不可满足），均非本任务缺陷。**F6 影响 P8**：P4 frontmatter packages 只有 [peekview]，
     但 P1/P2 是三包，P8 bump 范围须以 P1/P2 为准。CODE-MAP/decisions 均不存在 → 按卡跳过。'
+- phase: P8
+  action: completed
+  ts: '2026-11-11T05:00:00Z'
+  note: 'P8 交付收尾通过：check-gate P8 exit 2（脚本化通过）。**三必声明字段**：bump_type=minor（含破坏性变更
+    但项目 0.x 的 minor 即破坏性承载位，与 upgrading.md 的 v0.26.1→v0.27.0 自洽）/ delivery={method:
+    release-notes, ref: 5 项, reason: 同仓交付无独立包发布物}（**注意枚举权威源 level-2.yaml:22 = [release-notes,
+    tag-release, none]，主 Agent 原写 git-commit 非法、已由 releaser 纠正**）/ debt_check=reviewed。三包检查全跑
+    （test-quick 1 failed 为预存沙箱失败与 P5 同因 / lint 0 / test-frontend 0 1456 passed / build-frontend 0
+    392 assets / typecheck 0 / check-docs 0）。P5 验证走 AUDIT7 reuse_allowed 复用。**协议缺陷（主 Agent 亲自坐实）**：
+    check-changelog.py 的右边界正则 `( |:|$|,|-)` 不含全角 `）`，本仓惯例 `（TPV0102）` 判失败，全仓 12/12 历史
+    task_id 皆 exit 1 → 属协议层缺陷非本任务问题；pre-commit-gate 对该检查只 WARNING 不阻断，不阻塞发布。**READY 收尾**：
+    .agate-tmp 已清空（原 100 项/23MB 含 20 个测试收集模式文件名，gate WARNING 已消除）、:8888 无监听、/tmp/peekview-debug
+    已删、:8080 全程 000、暂存区仅 4 项无凭证。git log v0.26.1..HEAD 22 commit 已对照（19 个 TPV0102 + 3 个非本任务的
+    make publish 工具链修正，后者为打 tag 后遗留、用户不可见、非本任务范围）。[PROD_NOT_TOUCHED]'
