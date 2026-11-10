@@ -221,6 +221,7 @@ results:
   - screenshots/bdd-30-card-after-escape-scoped.png
   - logs/assert-bdd-30.log
   vision: vision-reports/bdd-30.yaml
+p5_evidence_reuse: 'false'
 ---
 
 # P6 验收报告 — Explore 卡片/列表体验修正（TPV0102）
