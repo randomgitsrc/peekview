@@ -188,3 +188,14 @@
 - FACT(judge 的自检隔离): 它把自检跑在 `.agate-tmp/p65/taskcopy/` 副本上（因脚本会向账本 append `judge_verdict` 事件），真实 `gate-events.jsonl` md5 前后一致、17 行无 `judge_verdict` 事件 → 正式 gate 由主 Agent 跑（本次跑后账本 18 行，含 1 条 judge_verdict，符合预期）
 - DECISION: **P6 + P6.5 判定通过**。judge 的 6 项非阻断观察转 P7：① BDD-12 属降级取证（副本是快照非活动 DB 实时视图，等价性成立）② BDD-24 的 E2E 证据偏弱 ③ 卡片长标题与 hover 操作区重叠（既有债，本任务减轻 121px）④ `BaseBadge` label setup 期求值致徽章文字 stale（既有，本任务零改动）
 - NEXT: commit P6.5 verdict（**phase 保持 P6**，P6.5 非独立 phase 值）→ 写 phase: P7 → 派 consistency-reviewer
+- GATE PASS(P7): `check-gate P7` **exit 0**（`GATE P7: 成对声明聚合判据通过`）。P1 复跑仍 exit 2（`scope_resolved` 补写未破坏其判据）
+- **SUBAGENT 纠正主 Agent（本任务第 4 次，且这次是我的错）**: 我在 P7 派发单里给的是「**18 条 DESIGN_GAP**」，**subagent 指出实际为 13 条，已亲自复核确认 subagent 正确**：
+  - 我的 18 来自宽松 `grep -c "\[DESIGN_GAP"`，其中 **5 处假阳性**：第 119/178/223/297 行是四个批次的**小节标题**（`### 实现中自主决策（[DESIGN_GAP] 候选…）`，中括号内无冒号），第 326 行是 `[rev1-fix]` 改动表里的**表格单元引用**
+  - 权威口径 = `agate_common.count_design_gap(allow_blockquote=False)` = 正则 `^\s*-?\s*\[DESIGN_GAP:` → **13 条**（实测命中行：121/122/123/124/180/182/184/225/227/229/299/301/330）
+  - 真实分布 **4/3/3/2/1**（frontend-shared 4 / mount-explore 3 / mount-detail 3 / docs 2 / rev1-fix 1），不是我表格里写的 5/4/3/3/3
+  - 若按 18 声明，structured gate 的 id 集合校验会 **exit 1**
+- FACT(subagent 另纠正两处枚举): 本任务走 **structured（成对声明）gate 路径**（`task_level=2`），它**不读** `design_gap_count` 汇总值，而是要求 `design_gaps`(id 集合) 与 `design_gap_reviews`(gap 集合) **集合相等**；verdict 合法枚举是 `accepted|rejected|followup`（我写的 `needs-fix` 不在内）、basis 是 `in_bdd|out_of_scope|followup:DEBT<n>`（我写的 `implementation_detail`/`not_in_scope` 也不在内）。**教训：dispatch-context 里给 subagent 的 schema/枚举必须从脚本源码核对，不能凭印象写**
+- FACT(subagent 的诚实处理): DG7（`stores/team.ts` 失败后无退避重试，请求风暴）本该走 `followup:DEBT<n>`，但 gate 要求 `debt/tech-debt.md` 有对应 DEBT 且 `source_ref` 双向回指 `TPV0102:DG7`；实测该文件最大编号仅 `DEBT0021`、`source_ref` 键 **0 处**、且它无该文件写权限 → 强声明会让 gate exit 1。故记 `out_of_scope` 并把债务落到 `F8` 交 P8 决定。**这个处理是对的（不绕过 gate、如实说明）**
+- FACT(**F6 已复核确认，直接影响 P8**): `P4-implementation.md` 的 `packages` 只写了 `[peekview]`，但 P1/P2 都是 `[peekview, frontend-v3, docs]`。**P8 的 bump 范围必须以 P1/P2 的三包为准**，否则会漏 frontend 的版本同步
+- FACT(SCOPE+ 闭环完成): 2 处均判 `resolved`（SP1 两 t031 spec 的 BDD-7 连带更新 / SP2 CHANGELOG 第 4 条文档连带面，均不改功能语义、无需回补 P1），已用 `agate-md-field-set.py append` 给 P1 补 `scope_resolved`（SP1 + SP2，+9 行）
+- NEXT: commit P7（phase=P7）→ 进 P8（releaser 只产出文件，主 Agent 亲自 bump-version + commit + tag）

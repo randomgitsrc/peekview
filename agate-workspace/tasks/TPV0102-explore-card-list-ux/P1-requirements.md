@@ -32,6 +32,15 @@ ui_ux_dimensions:
 - 交互行为
 - 视觉呈现
 prod_touched: false
+scope_resolved:
+- id: TPV0102:P1-requirements:SP1
+  note: 'P4 第 188 行 [SCOPE+]：t031-entry-card.spec.ts / t031-entry-list-row.spec.ts
+    的 BDD-7 用例因 D7/D9 事件改名连带失效，P2 §6.4 的 11 项更新面未列。判 resolved——implementer 按「覆盖点不删、只改定位与断言」处理（P4
+    表 #6/#7），用例覆盖点未减少、弱断言反而收紧为精确断言，不改功能语义，无需回补 P1 基线'
+- id: TPV0102:P1-requirements:SP2
+  note: P4 第 305 行 [SCOPE+]：CHANGELOG 变更 第 4 条（详情页 .status-tag 可见性文案消失 + overflow
+    菜单四项移除）源自 P2 §12 裁决 1 与 §1.1 D8，P1 四项需求未单列。判 resolved——属第 3 项需求（可见性入口改下拉菜单）的文档连带面，P1
+    原文已含「入口改下拉菜单」语义，未扩展验收范围，无需回补 P1 基线
 ---
 # P1 需求基线 — Explore 列表体验修正（时间显示 / 文件数 / 可见性下拉 / 空态）
 

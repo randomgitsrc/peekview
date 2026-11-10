@@ -1,8 +1,8 @@
-phase: P6
+phase: P7
 task_id: TPV0102
 task_name: explore-card-list-ux
 created: 2026-11-10
-updated: '2026-11-11T03:20:00Z'
+updated: '2026-11-11T04:10:00Z'
 judge:
   enabled: true
 p5_pass_commit: d8adbec7efae02bc425e5980c2ebc77c711891bc
@@ -123,3 +123,15 @@ history:
     ② BDD-12 审计脚本默认路径在 verifier 命名空间不可达（exit 2 SKIP），改走「API 导出全量 23 行 → 同 schema 副本 →
     同一脚本 --db」+ 独立复算，direct_exit=2 原样留档，未降级验证。**登记 2 条既有债待 P7**：卡片长标题被操作按钮覆盖
     （既有，本任务已减轻 121px）/ BaseBadge label 非 computed。'
+- phase: P7
+  action: completed
+  ts: '2026-11-11T04:10:00Z'
+  note: 'P7 一致性检查通过：check-gate P7 exit 0（成对声明聚合判据）。**DESIGN_GAP 13 条全部配对**
+    （DG1~DG13，真实分布 4/3/3/2/1）——主 Agent 原在派发单给的 18 条是宽松 grep 的假阳性（含 4 个小节标题
+    +1 个表格引用），subagent 纠正后经主 Agent 亲自复核确认 13 条正确（权威口径 =
+    agate_common.count_design_gap(allow_blockquote=False)）。**SCOPE+ 2 处均 resolved**（SP1 两 t031
+    spec 的 BDD-7 连带更新 / SP2 CHANGELOG 第 4 条文档连带面，均不改功能语义），P1 已补 scope_resolved×2。
+    blocker_count=0 / deviation_critical_count=0 / deviation_count=2。**4 条既有债+判据瑕疵记入 findings**
+    （F1 卡片标题与 hover 操作区重叠已减轻 121px / F2 BaseBadge label stale / F3 BDD-25 后半条不可测 /
+    F4 P2 VC-5 <=2px 几何不可满足），均非本任务缺陷。**F6 影响 P8**：P4 frontmatter packages 只有 [peekview]，
+    但 P1/P2 是三包，P8 bump 范围须以 P1/P2 为准。CODE-MAP/decisions 均不存在 → 按卡跳过。'
