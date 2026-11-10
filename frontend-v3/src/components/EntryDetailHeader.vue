@@ -59,18 +59,21 @@
     <div class="meta-row">
       <router-link v-if="currentEntry?.username" :to="`/users/${currentEntry.username}`" class="entry-owner-link">@{{ currentEntry.username }}</router-link>
       <span class="meta-dot"></span>
-      <span :title="fullTime">{{ relativeTime }}</span>
+      <TimeDisplay v-if="currentEntry" :date-str="currentEntry.createdAt" />
       <template v-if="currentEntry?.status === 'archived'"><span class="meta-dot"></span><span class="status-tag">Archived</span></template>
       <template v-else-if="isExpiredButActive"><span class="meta-dot"></span><span class="status-tag" style="color:var(--c-warning)">Expired</span></template>
       <template v-else-if="currentEntry?.expiresAt"><span class="meta-dot"></span><span>Expires {{ formatExpiresIn(currentEntry.expiresAt) }}</span></template>
       <span class="meta-sep"></span>
       <template v-if="currentEntry?.readStats"><span>{{ currentEntry.readStats.totalCount }} read{{ currentEntry.readStats.totalCount !== 1 ? 's' : '' }}</span><span class="meta-dot"></span></template>
-      <template v-if="currentEntry?.teamId">
-        <span class="status-tag team">仅团队可见 · {{ currentEntry.team?.name || currentEntry.team?.slug }}</span>
-      </template>
-      <template v-else-if="currentEntry">
-        <span :class="['status-tag', currentEntry.isPublic ? 'public' : 'private']">{{ currentEntry.isPublic ? 'Public' : 'Private' }}</span>
-      </template>
+      <VisibilityMenu
+        v-if="currentEntry && isOwner"
+        :entry="currentEntry"
+        :teams="teams"
+        :variant="variant"
+        :disabled="visibilityDisabled"
+        :teams-failed="teamsFailed"
+        @select="$emit('select-visibility', $event)"
+      />
       <BaseTag
         v-for="tag in currentEntry?.tags ?? []"
         :key="tag"
@@ -93,7 +96,10 @@ import AuthButton from '@/components/AuthButton.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import BaseTag from '@/components/BaseTag.vue'
 import StarToggle from '@/components/StarToggle.vue'
-import type { Entry, TocHeading, AuthState } from '@/types'
+import TimeDisplay from '@/components/TimeDisplay.vue'
+import VisibilityMenu from '@/components/VisibilityMenu.vue'
+import type { Entry, TocHeading, AuthState, Team } from '@/types'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import {
   Folder as FolderIcon,
@@ -106,8 +112,6 @@ import {
 
 const props = withDefaults(defineProps<{
   entryTitle: string
-  relativeTime: string
-  fullTime: string
   isExpiredButActive: boolean
   isFileTreeOpen: boolean
   isTocOpen: boolean
@@ -122,11 +126,21 @@ const props = withDefaults(defineProps<{
   authState: string
   currentEntry: Entry | null
   slug: string
+  teams?: Team[]
+  teamsFailed?: boolean
+  isOwner?: boolean
+  variant?: 'icon' | 'inline' | 'sheet'
   sourceViewMode?: boolean
   isRichRenderable?: boolean
+  visibilityDisabled?: boolean
 }>(), {
+  teams: () => [],
+  teamsFailed: false,
+  isOwner: false,
+  variant: 'inline',
   sourceViewMode: false,
   isRichRenderable: false,
+  visibilityDisabled: false,
 })
 
 const emit = defineEmits<{
@@ -137,6 +151,7 @@ const emit = defineEmits<{
   'toggle-share-dialog': [value: boolean]
   'open-login': []
   'star-changed': [data: { starCount: number; isStarred: boolean }]
+  'select-visibility': [target: VisibilityTarget]
 }>()
 
 const zenMode = inject(ZenModeKey)!
@@ -185,7 +200,4 @@ function navigateToTag(href: string) {
 .entry-owner-link:hover { text-decoration: underline; }
 .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--c-text-tertiary); flex-shrink: 0; }
 .status-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--c-tag-bg); color: var(--c-text-tertiary); }
-.status-tag.public { background: var(--c-accent-surface); color: var(--c-accent); }
-.status-tag.private { background: var(--c-surface-lower); color: var(--c-text-secondary); }
-.status-tag.team { background: var(--c-badge-shared-bg); color: var(--c-warning); }
 </style>

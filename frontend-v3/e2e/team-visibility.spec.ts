@@ -2,7 +2,8 @@
  * TPV0095 team-visibility — E2E（P3 编写，P5/P6 实跑）
  *
  * 覆盖 BDD-38（explore 5-tab 互斥/高亮/URL）、BDD-39（team badge 不叠加 private）、
- * BDD-40（team entry 卡片隐藏 toggle + store 守卫）、BDD-41（?team= 单一不可用态）、
+ * BDD-40（team entry 卡片**有** toggle + store 守卫；TPV0102 翻转，见下方登记）、
+ * BDD-41（?team= 单一不可用态）、
  * BDD-43（移动端 5-tab 横滚 + 触达高度 + tablist/aria-selected）。
  *
  * P2-design §5.7 data-testid：tab-all / tab-mine / tab-teams / tab-archived / tab-starred /
@@ -133,8 +134,17 @@ test.describe('TPV0095 team-visibility — explore Teams tab/chips/badge（BDD-3
   })
 })
 
-test.describe('TPV0095 team-visibility — toggle 隐藏 + store 守卫（BDD-40）', () => {
-  test('BDD-40: team entry 卡片无 visibility-toggle，delete 保留', async ({ page, request }) => {
+/*
+ * ⚠️ BDD-40 已被 TPV0102 有意取代（P2-design §6.4 第 1 项 / 陷阱 16 / R5）：
+ *    团队 entry 现**有**可见性菜单入口（VisibilityMenu 整体替换原
+ *    `v-if="!entry.teamId"` 单按钮 + 空 team-hint span），断言由 count = 0 翻转为
+ *    count = 1。原 `if ((await teamCard.count()) > 0) { … }` 守卫已**拆掉**——守卫
+ *    留着则卡片未渲染时断言同样被跳过，翻转后仍是假绿；改为前置
+ *    `await expect(teamCard).toHaveCount(1)`。原覆盖点（团队 entry 可见性入口存在性 +
+ *    delete 保留）未删除。
+ */
+test.describe('TPV0095 team-visibility — toggle 显现 + store 守卫（BDD-40，TPV0102 翻转）', () => {
+  test('BDD-40: team entry 卡片有 visibility-toggle，delete 保留', async ({ page, request }) => {
     const token = await apiLoginToken(request)
     const summary = `team toggle ${Date.now()}`
     await ensureTeamEntry(request, token, { teamSlug: 'proj-a', summary })
@@ -144,11 +154,10 @@ test.describe('TPV0095 team-visibility — toggle 隐藏 + store 守卫（BDD-40
     await page.waitForSelector(`.entry-card, .entry-list-row`, { timeout: 10000 }).catch(() => {})
 
     const teamCard = page.locator('.entry-card, .entry-list-row').filter({ hasText: summary }).first()
-    if ((await teamCard.count()) > 0) {
-      // 隐藏可见性 toggle（统一 testid，count=0）；delete 按钮仍在
-      await expect(teamCard.locator('[data-testid="visibility-toggle"]')).toHaveCount(0)
-      await expect(teamCard.locator('[data-action="delete"], .card-action-btn--danger').first()).toBeVisible()
-    }
+    await expect(teamCard).toHaveCount(1)
+    // 团队 entry 现有可见性菜单入口（统一 testid）；delete 按钮仍在
+    await expect(teamCard.locator('[data-testid="visibility-toggle"]')).toHaveCount(1)
+    await expect(teamCard.locator('[data-action="delete"], .card-action-btn--danger').first()).toBeVisible()
   })
 })
 

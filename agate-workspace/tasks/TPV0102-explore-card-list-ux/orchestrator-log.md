@@ -99,3 +99,63 @@
 - FACT(test-designer 的桩验证，方法论值得复用): 注入伪 `peekview.timefmt` + `UtcSerializeMixin` + 换 16 个叶模型基类后，后端 20 用例 **18 passed**，剩 2 个正是 P4 真实缺口 —— 这是**用桩反证红灯真伪**，比只看红灯原因更可靠。过程中还修掉 3 处**测试自身缺陷**（1 处与 P2 冻结的 `parse_iso` 契约矛盾 / 1 处空断言恒真 / 2 处与 P2 §3.5 契约耦合过紧）
 - FACT(预存失败已定性): 完整 P3 聚合命令 `AGG_EXIT=1`，其中 `backend/tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key` 是**预存失败**（沙箱 `~/.peekview/` 只读，P2 的 C-20 已登记），**非本任务引入** → P5 须登记 `known-failures.md`
 - FACT(BDD-07 口径): 遍历实测命中 **16 类**（P2 §R6 已预期），测试**不硬编码数字**、只有「≥10 类 / ≥20 字段」防空跑下限 —— 与 P2 定的「以遍历为准」一致
+- SUBAGENT FAIL(已修正·模式化): P3 首次 commit 被 hook 拦下 —— `P3-test-cases.md` 缺 `prod_touched` 字段。**这已是连续第三个阶段（P1/P2/P3）踩同一个坑**：`agate-md-field-set.py` 的 `--list` 输出未含 `prod_touched`，但 pre-commit hook 对非 legacy 任务的主产出强制要求它。**正确做法：写主产出时就主动 set `prod_touched false`**，不要等 commit 撞墙。已记入复盘素材
+- DECISION: P3 已 commit `20fd76b3`（17 files, +3546）。进入 P4 代码实现
+- NEXT: 读 P4 阶段卡片 → 按 P2 的 `dispatch_plan`（static-batch, 5 批）评估是否并行派发 → 写 dispatch-context
+- DECISION: P4 按 P2 的 `dispatch_plan`（static-batch, 5 批）执行。**并行派发前 2 批**（`backend-serialize` + `frontend-shared`）——依据 P2 §2.4：两批**零文件重叠**（后端只在 `backend/`、前端共享件只在 `frontend-v3/src/` 的叶子件），且 `frontend-shared` 是"被两个挂载批共同消费的叶子件"批，必须先于挂载批完成。两批各用独立 dispatch-context（`-backend.md` / `-frontend.md`）
+- DECISION: 剩余 3 批（`mount-explore` / `mount-detail` / `docs-changelog`）待前 2 批返回后再派——因 `mount-*` 两批依赖 `frontend-shared` 的产物（组件与纯函数签名），且 `mount-explore`/`mount-detail` 会改 `tpv0095-*` 既有断言（P2 R5 已标 expected_red），需在同一收敛点核对取代关系
+- FACT(P4 前置): env baseline 已跑（同前，脚本按设计放弃写入）；`P4-dispatch-context-implementer-backend.md` 首次 inject 因缺 AGATE_CARD 占位符失败（我写漏了 START/END 块）→ 补占位符后重注入 exit 0。**教训：dispatch-context 必须预留 AGATE_CARD_START/END 占位符**
+- NEXT: 等两批实现返回 → 核验 → 派 mount 两批
+- SUBAGENT OK(批1): `backend-serialize` 完成 —— `timefmt.py`(新) + `models.py`(UtcSerializeMixin + 15 叶模型换基类) + `client.py` + `cli.py`(7处) + `admin_service.py`(3处)。**主 Agent 亲验**：`EntryBase`/`UserBase` **未改动** ✅、叶模型基类替换 **15 处** ✅、`UtcSerializeMixin` 用 `field_serializer("*", when_used="json", check_fields=False)` + `isinstance(v, datetime)` 守卫 ✅（四硬约束全落实）。测试：`test_utc_serialization.py` **20 passed**、`-k mixin_not_in_table_mro` **1 passed**、`make test-quick` 1205 passed/1 failed(预存 test_cli_remote，已 `git stash` 反证与本批无关)
+  - **批1 发现并修复 P3 遗留**：`make lint` 在 HEAD 就红（P3 提交的 `test_utc_serialization.py:35` ruff I001 import 顺序），用 `ruff --fix` 机械修 1 行、**零断言改动**。属「既有测试因设计要求转红须处理」的边界，P4 review 需复核接受
+- SUBAGENT OK(批2): `frontend-shared` 完成 —— 新建 `visibility-options.ts` / `visibility-target.ts` / `TimeDisplay.vue` / `VisibilityMenu.vue`，改 `useRelativeTime.ts` / `stores/{entryList,entryDetail,entry}.ts` + 1 个既有 spec。测试：本批 6 spec **79 passed**、8 个 tpv0095 spec **29 passed**、`typecheck` ✓、`lint` ✓。**主 Agent 亲验**：`visibility-options.ts` / `VisibilityMenu.vue` **无 `Team.id` 违规** ✅；`P4-implementation.md` **两节共存** ✅
+  - 批2 按 P2 §6.4 第 4 项对 `tpv0095-entry-list-store-team.spec.ts` 做**显式取代**（teamId 守卫断言翻转为正常发起请求 + 用例改名 + 文件头注释登记），未删覆盖点
+  - 批2 报 4 条 `[DESIGN_GAP]`（`useRelativeTime.update()` setup 内同步调用 / `VisibilityItem` 窄类型 / Teleport 泛化到三变体 / 用例改名）→ **P7 须配对 `[DESIGN_GAP_REVIEWED:]`**
+  - 批2 报 `[SCOPE_GAP]`：`stores/entry.ts` 透传导出 `setVisibility` 属 P2 §3.5 要求但我的 dispatch-context 范围表漏列 → 已按 P2 做（1 行），无并行冲突
+- DECISION: 派发 `mount-explore` + `mount-detail` 两批**并行**——两批文件完全不重叠（前者 3 个 Explore 文件、后者 5 个详情页文件），且都只消费不修改共享叶子件。dispatch-context 中明确互相禁止触碰对方的文件
+- NEXT: 等两挂载批返回 → 派 `docs-changelog` 批 → P4 review（C8：backend→review + frontend→design-review，两评审并行 + 组长汇总）
+- SUBAGENT OK(批3/批4): `mount-explore`（10 文件，3 组件/视图 + 7 断言文件）+ `mount-detail`（7 文件）完成。各自自查：全量前端 **119 files / 1456 passed / 0 failed / 4 skipped**、`make typecheck` ✓、`npm run build` 产出 dist
+- FACT(**主 Agent 亲跑发现一个 subagent 未报的真实缺陷**): 全量 vitest 显示 `Tests 1456 passed` 但**同时报 `Errors 1 error`** —— `EntryDetailView.vue:219` 的 `ensureMyTeamsLoaded()` 里 `authState.value` 在 `t031-entry-detail-view.spec.ts` 下为 undefined（该 spec 的 `storeToRefs` mock 只挑"带 `.value` 的键"，而它自己的 auth mock 给的是裸字符串 `authState: 'anonymous'`）。Vitest 明确警告「This might cause false positive tests」。**两个 subagent 都报"0 failed"却都没提这个 error** —— 说明只看 `passed/failed` 计数会漏掉 unhandled rejection 这一类信号
+  - **修法**：按同文件 `:213` 既有先例（`rawTeamOwned?.value ?? []`）改为 `authState?.value`。**修在代码侧而非改测试**（mock 局限不该由产品代码迁就到崩溃，但也不该为此改他人 mock）
+  - 复跑确认：**unhandled error 已消除**（输出无 `Errors` 行），仍 1456 passed / 0 failed。`make typecheck` ✓、`make lint` ✓
+- NEXT: 派 `docs-changelog` 批（CHANGELOG + upgrade 说明）→ 然后 P4 review（C8: backend→review + frontend→design-review 并行 + 组长汇总）
+- SUBAGENT OK(批5): `docs-changelog` 完成 —— `CHANGELOG.md` 的 `[Unreleased]` 新增 4 小节（Breaking Change + 变更×3 + 修复×1，4 项改动全覆盖，均带 `（TPV0102）` 后缀）+ `docs/process/upgrading.md` 新增 `v0.26.1 → v0.27.0` 节（三件事齐全）。`make check-docs` exit 0
+- DECISION(docs 批的 2 条 DESIGN_GAP 裁决): ① **版本号 0.27.0（minor）自定合理** —— 本项目 0.x 按 semver 惯例以 minor 承载破坏性变更（先例 mcp-v0.8.0）；**最终由 P8 的 `bump_type` 定，若 P8 判 patch 只需改 upgrading.md 节标题**（CHANGELOG 条目不含版本号，无需动）② **`####` 四级标题接受** —— 目的是把「三件事」下沉为「破坏性变更」`###` 节的子结构，层级无跳级，属正当用法
+- FACT(P4 全批完成): 5 批全部返回，`P4-implementation.md` **5 节齐全**（backend-serialize / frontend-shared / mount-explore / mount-detail / docs-changelog）。**主 Agent 亲跑验收**：前端全量 **119 files / 1456 passed / 0 failed / 4 skipped**（且 unhandled error 已消除）、`make typecheck` ✓、`make lint` ✓、`make check-docs` ✓
+- NEXT: 派 P4 评审（C8: backend→review + frontend→design-review，**并行**）→ 组长汇总 → 预跑 check-gate P4
+- NEXT: P4 两评审并行派发中（`review`=后端 / `design-review`=前端）。dispatch-context 均已注入 AGATE_CARD exit 0
+- GATE FAIL(P4 评审): `review`(后端) **approved** 0 CRITICAL（16 类/34 字段全覆盖、parse_iso 安全、表模型无污染）；`design-review`(前端) **needs-revision** 4 阻塞 + 5 建议。主 Agent 采纳评审结论，**4 项阻塞均为实测证据支撑的真实实现缺陷**：
+  - **F-1**：`icon` 变体未 Teleport + `.entry-panel{overflow:hidden}` → 列表最后一行下拉被裁 **99/118px（仅 17% 可见）**，`elementFromPoint` 返 BODY。任意行数列表最后一行必现
+  - **F-2**：桌面 `@media(hover:hover)` 只有 `:hover` 无 `:focus-within` → 新补的焦点环被容器 `opacity:0` 一起抹掉 = **空操作**；违反 P2 §UI 设计明写的「键盘用户由 :focus-within 保证可达」
+  - **F-3**：tooltip 桌面 `nowrap` + `max-width:320px` → 文本溢出背景框 **63px**（Range 383px vs 盒 320px）；VC-1 断言 viewport 恒绿抓不到
+  - **F-4（最重要）**：`EntryListRow.spec.ts:105-112` 用 `if (btn.exists())` 守卫 + 已删的选择器 → 断言**永不执行但测试仍绿**，且无注释登记。`git show HEAD:` 确认该用例 P4 前是活的 = **静默丢覆盖点**
+- DECISION: 只修 F-1~F-4 + F-7（1 行记述）。**F-5/F-6/F-8/F-9 建议级不修**（不扩大改动面）。**严禁**再往 `EntryDetailView.vue` 加逻辑（289 行，距 t082 <300 门槛仅 11 行余量）
+- NEXT: 派发 implementer rev1 修复（dispatch-context 已注入 AGATE_CARD）
+- DECISION(流程纠正·用户指出): **停止用 `sleep` 轮询 subagent**。用户明确指出：DSH 在 subagent 完成时会主动通知，反复 sleep+查状态是浪费 token，且 agateon 协议**没有**要求编排者轮询等待。根因是我把「长驻服务存活跟随发起调用、需后台 job 托底」这条平台规则**错误地套用到了 subagent 上**——subagent 不是需要托底的进程，它是受管理的、完成时会回调的任务。正确做法：派发后**转去做独立的下一步工作**（如写下一个 dispatch-context、准备评审材料），或直接停下等通知；只有「确实无独立工作可做且必须拿到结果才能推进」时才等待，且等待应是**阻塞式单次等待**而非循环轮询
+- **GATE FAIL（主 Agent 实测推翻 subagent 定性）**: rev1-fix 报「5 项 e2e 红是既有失败」，**实测不成立**。主 Agent 启动 :8888 亲自跑 `E2E_SPEC=e2e/tpv0102-explore-card-list-ux.spec.ts make debug-test`：
+  - 实测 **8 failed + 1 flaky + 52 passed**（不是 5 项）
+  - **决定性理由**：这 4 条 spec（bdd01/bdd25/bdd26/vc03/vc06）全是**本任务 P3 新写的**，本任务之前**根本不存在** → 在定义上不可能"预存失败"。implementer 的对照只还原了 rev1-fix 的 4 处 CSS，**只能证明"不是那一轮引入"**，不能证明"不是 P4 前四批引入" —— 这是对照基线选错，属**逻辑跳跃**
+  - 逐条根因（主 Agent 已定位）：
+    | 测试 | 根因 | 归属 |
+    |---|---|---|
+    | bdd01 / bdd26 | `textContent()` 取整个 `[data-testid=time-display]`，**包含内部 tooltip**（tooltip 本就含 `just now` → 与 `not /ago\|just now/` 冲突）。应断言 `.time-display__main` | **P3 测试选择器过宽** |
+    | bdd25 | 登录按钮 `disabled`（`waiting for locator('.login__submit')` → resolved to `<button disabled>`），login helper 未等校验就绪 | **P3 登录 helper 缺陷** |
+    | vc03 | **真实实现缺陷**（截图证据）：`.card-meta-text` 是 `display:flex` **无 `flex-wrap`、无收缩约束**，而新的绝对时间文本远比旧 `3h ago` 长 → `2 files` 被挤成两行并**溢出卡片右边界**（1280 宽 4 列布局下每张卡都可见） | **P4 实现缺陷**（时间格式改动的连带回归） |
+    | vc06 | 列表动作区与标题重叠（`actions.x`=108 vs 需 ≥351） | 待修（列表已 `flex-wrap:wrap`，需查具体重叠因） |
+  - **对比证据**：列表 `.entry-meta-row` 有 `flex-wrap: wrap`（`EntryListRow.vue:245`），卡片 `.card-meta-text` 没有 → 这是本次漏改
+- DECISION: **不接受"登记 known-failures 了事"**。这 8 条不是预存失败，是**本任务引入的真实缺陷**（含 1 处用户可见的卡片溢出）。known-failures 只登"P5 之前就存在、与当前任务无关"的失败，把本任务缺陷塞进去就是掩盖。→ 回派 implementer rev2 修复
+- NEXT: 停 debug 服务 → 派 implementer rev2（修 4 类：测试选择器 / 登录 helper / 卡片 flex-wrap / vc06 重叠）
+- SUBAGENT OK(rev2): 修 A/B/C/D 四类 + 2 处额外修复。**主 Agent 独立复验**（未采信自述）：
+  - :8888 亲自启动 → `E2E_SPEC=e2e/tpv0102-explore-card-list-ux.spec.ts make debug-test` → **61 passed / 0 failed / 3 skipped** ✅（rev1 的 8 failed 全部消除）
+  - 前端全量 **119 files / 1456 passed / 0 failed / 4 skipped**，**无 `Errors` 行** ✅
+  - `make typecheck` ✓ / `make lint` ✓ / `make check-docs` ✓
+  - **ver2 的关键判据复核**：`entryDetail.ts:49-53` 确认 `loadEntry` 在 `files.length > 0` 时**必然**把 `activeFile` 设为 `files[0]` → `empty-select-file` 分支（`EntryDetailContent.vue:72`）**不可达**。故 implementer 把 BDD-25 后半条改为「文案互异 + 互斥正向验证」是**正确的等价验证**，不是放宽断言。**但这是 P1 BDD-25 的判据瑕疵**（写了一条产品里不可达的场景），P7 须记录
+  - **ver2 的 D 判定复核**：vc06 移动端单列 title y=72..96 / actions y=157.5..201.5，纵向无交集 → 「不重叠」是二维语义，原断言只比 x 在单列下必然假红。改为 `overlapX<=0 || overlapY<=0` 且**桌面两列保留原强度** → 合理
+  - **ver2 的 C 自我澄清值得肯定**：它主动说明「裸 click 实测也能成功，C 不是 8 项红的实际原因」，补守卫是为消除三条件竞态 —— 没有把非原因当作原因上报
+- FACT(rev2 的 A 修复实测证据): 1280px 全 15 张卡，修前 `scrollWidth=279 > clientWidth=246`、子项右边界 944 越出卡片 928；修后 bad=0。vc03 转绿
+- DECISION: rev2 改动了**测试语义**（bdd25/bdd04/vc06 三处断言重写），必须**重派前端评审复审**，不能直接采信。后端未再改动 → 后端 review 的 approved 仍然有效
+- NEXT: 派 design-review rev2 复审 → 组长汇总 P4-review.md → gate → commit P4
+- GATE PASS: `check-gate P4` **exit 0**（暂存区含代码文件；`P4-review.md` status=approved + agent=review）。首次跑 exit 1 无 stderr —— **原因是 gate 检查暂存区**（`git diff --cached`），当时文件都未 `git add`；暂存后通过
+- SUBAGENT OK: 组长汇总产出 `P4-review.md`（status=approved，agent=review ≠ main），专家 **2/2 approved、0 BLOCKER、无分歧**，转抄 **26 条约束（T-1~T-26）** 给 P5/P6/P7。DESIGN_GAP 精确计数 = **13 条**（前端 11 + docs 2）+ 2 条 `[SCOPE+]`
+- DECISION(组长转来的 IN-1 建议): `cli.py` apikey create/list 与 whoami 的时间显示 local/remote 不对称（后端 review 的 2 条 INFORMATIONAL 之一）→ **不在本任务修**，登记 `docs/roadmap/improvement-backlog.md` 作 follow-up。理由：超出 P1 四项范围，且属既有 CLI 输出形态问题，与本任务的 API 序列化改动无因果关系
+- NEXT: 更新 .state.yaml（phase→P4 + history + retries.P4）+ active-tasks.md → commit P4 → 进 P5

@@ -1,3 +1,9 @@
+// ⚠️ TC-D03/TC-D04 已被 TPV0102 有意取代（P2-design §6.4 第 6/7 项）：主显由
+//    `<span :title=fullTime>{{relativeTime}}</span>` 改为 `<TimeDisplay>`——主显是绝对时间
+//    （`.time-display__main`），完整时间移入 `role="tooltip"` 的 `[data-testid="time-tooltip"]`
+//    节点。`title` 属性不再存在，故断言改为断言主显文本 + tooltip 文本；`useRelativeTime`
+//    mock 相应补 `absolute` 字段（返回值形状由 `{relative,full}` 扩为 `{relative,full,absolute}`）。
+
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
@@ -7,7 +13,11 @@ import type { Entry } from '@/types'
 vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
 vi.mock('@/composables/useRelativeTime', () => ({
-  useRelativeTime: () => ({ relative: ref('2d ago'), full: ref('2026-07-07 14:30') }),
+  useRelativeTime: () => ({
+    relative: ref('2d ago'),
+    full: ref('2026-07-07 14:30 GMT+8 (Asia/Shanghai)'),
+    absolute: ref('2026-07-07 14:30'),
+  }),
 }))
 
 function makeEntry(overrides: Partial<Entry> = {}): Entry {
@@ -59,11 +69,12 @@ describe('EntryListRow', () => {
     expect(badge.props('status')).toBe('expired')
   })
 
-  it('TC-D04: time element has title attribute for absolute time', () => {
+  it('TC-D04: time element exposes absolute time with full-time tooltip', () => {
     const entry = makeEntry()
     const wrapper = mount(EntryListRow, { props: { entry }, global: { stubs: { BaseTag: true, BaseBadge: true } } })
     const timeEl = wrapper.find('.meta-time')
     expect(timeEl.exists()).toBe(true)
-    expect(timeEl.attributes('title')).toBe('2026-07-07 14:30')
+    expect(timeEl.find('.time-display__main').text()).toBe('2026-07-07 14:30')
+    expect(timeEl.find('[data-testid="time-tooltip"]').text()).toBe('2026-07-07 14:30 GMT+8 (Asia/Shanghai)')
   })
 })

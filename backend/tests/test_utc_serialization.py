@@ -32,10 +32,10 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from peekview import models as models_module
-from peekview.timefmt import parse_iso, utc_iso_z
 
 # 叶模型的统一基类（P4 落地后每个叶模型都继承它）。当前不存在 → import 失败即红灯。
 from peekview.models import UtcSerializeMixin
+from peekview.timefmt import parse_iso, utc_iso_z
 
 # BDD 用例共用的已知 UTC 时刻（naive，语义即 UTC——与 DB 存量语义一致）
 KNOWN_UTC = datetime(2026, 11, 10, 9, 43, 0)

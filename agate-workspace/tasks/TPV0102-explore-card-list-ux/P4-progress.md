@@ -1,0 +1,63 @@
+[backend-serialize] 已读 dispatch-context + implementer.md + 契约测试 test_utc_serialization.py(431行) + P2 §2.1/§3.1-3.3/§1.1A/§6.1/§10
+[frontend-shared] 读完 implementer.md + P4-dispatch-context（含 AGATE_CARD）+ 6 个 P3 spec（契约，30 用例）
+[frontend-shared] 已提取硬约束：Team 无 id（用 slug）/ tooltip 必须 role=tooltip 真实 DOM + visibility / 禁 dateStyle+timeZoneName 共存 / 禁字符串拼接时区名
+[backend-serialize] 已建 timefmt.py（utc_iso_z/parse_iso）；models.py 加 UtcSerializeMixin + 15 叶模型换基类；client.py 换 parse_iso；cli.py 7 处 + admin_service.py 3 处换 utc_iso_z。契约测试首跑：20 passed
+[backend-serialize] make lint 前置红：P3 的 test_utc_serialization.py I001 导入顺序（HEAD 即红），已 ruff --fix 机械修复 1 行 import 位置，零断言改动
+[backend-serialize] 自查：test_utc_serialization 20 passed / -k mixin_not_in_table_mro 1 passed(exit0) / make lint 绿 / make test-quick 1205 passed 3 skipped 1 failed（预存 test_cli_remote config_set_remote_api_key，stash 反证）
+[backend-serialize] 已写 P4-implementation.md 的 [backend-serialize] 节（文件原不存在，由本批创建——frontend-shared 批须追加勿覆盖）；prod_touched=false 已 set；PROD_NOT_TOUCHED
+[frontend-shared] 新建 src/utils/visibility-options.ts（buildVisibilityOptions + visibilityStatusLabel）→ spec 12/12 绿
+[frontend-shared] 新建 src/utils/visibility-target.ts（toPatchPayload/needsConfirm）→ spec 15/15 绿
+[frontend-shared] 改 src/composables/useRelativeTime.ts（相对时间未来 in N/无效 ''；formatFullDate shortOffset+无效 '—'；新增 formatTooltip；返回 absolute；update 提前到 setup）→ spec 17/17 绿
+[frontend-shared] 新建 src/components/TimeDisplay.vue（根 data-testid + role=tooltip 真实 DOM + visibility 隐藏 + z-index 10 + 移动端右对齐换行）→ spec 10/10 绿
+[frontend-shared] 新建 src/components/VisibilityMenu.vue（icon/inline/sheet 三变体，Teleport、aria-label/haspopup/expanded、focus-visible、Escape+焦点回归、confirm-cancel 重开、teamsFailed 禁用项）→ spec 15/15 绿
+[frontend-shared] 改 src/stores/entryList.ts（setVisibility：inFlight 响应式守卫/乐观更新+失败三字段回滚/revokedShares 回传/无 toast；toggleVisibility 改为 setVisibility 包装，teamId 守卫删除）
+[frontend-shared] 改 src/stores/entryDetail.ts（syncVisibility 扩为 {isPublic,teamId,team}）+ src/stores/entry.ts（透传导出 setVisibility）
+[frontend-shared] 改既有 spec src/stores/__tests__/tpv0095-entry-list-store-team.spec.ts（P2 §6.4 第 4 项「显式取代」：teamId 守卫断言翻转为 setVisibility 正常发起请求）→ 该文件 2/2 绿
+[frontend-shared] 6 个批次 spec 全绿 79/79；8 个 tpv0095 spec 全绿 29/29；make typecheck ✓；make lint ✓
+[frontend-shared] 全量前端套件自查：1451 passed / 3 failed / 4 skipped；唯一红文件 entry-card-file-count.spec.ts 经 git stash 基线比对确认为 P3 既有红灯（需改 EntryCard/EntryListRow，属 mount-explore 批），非本批引入
+[frontend-shared] 已追加 P4-implementation.md 的 [frontend-shared] 节（不覆盖已有 backend-serialize 节）；标注 4 条 [DESIGN_GAP]
+[frontend-shared] 完成：9 个文件（4 新建 + 1 新建组件×2 + 3 改动 store/composable + 1 既有 spec 显式取代）；[PROD_NOT_TOUCHED]
+[mount-explore] 2026-11-10T21:04:36+08:00 已读 implementer.md + dispatch-context（含 AGATE_CARD）
+[mount-explore] 已读 entry-card-file-count.spec.ts（3 红灯：BDD-13 card/row 不显示 1 file 未实现）+ 两个 tpv0095 spec（bdd40 team entry 断言 count=0 需翻转）
+[mount-explore] 已读 EntryCard.vue / EntryListRow.vue / TimeDisplay.vue / VisibilityMenu.vue 契约
+[mount-detail] 2026-11-10T21:05:09+08:00 已读 implementer.md + dispatch-context（含 AGATE_CARD）+ P4-implementation.md + P2 §1.1/§3.4/§3.6/§3.7/§3.8/§6.4/§12
+[mount-explore] 2026-11-10T21:21:55+08:00 契约/基线读毕（TimeDisplay/VisibilityMenu/useResponsiveLayout/setVisibility/toast 四态、受影响既有 spec 清单），开始改 EntryCard.vue
+[mount-detail] 2026-11-10T21:23:55+08:00 EntryDetailContent.vue：0 文件空态落 data-testid="empty-no-files"（文案「此 entry 无文件」），「多文件未选中」保留 empty-select-file（Select a file to view）；EntryMetaTagsBar 的 relativeTime prop 删除，改下发 teams/teamsFailed/isOwner/variant + select-visibility/confirm-visibility-cancel 事件
+[mount-detail] 2026-11-10T21:25:33+08:00 EntryDetailHeader.vue：:62 时间改 <TimeDisplay :date-str=currentEntry.createdAt>；:68-73 只读 status-tag 原位替换为 <VisibilityMenu variant=inline>（删掉 .status-tag.public/private/team 三条样式，.status-tag 仅留 Archived/Expired）；新增 props teams/teamsFailed/isOwner/variant/visibilityDisabled + emits select-visibility/confirm-visibility-cancel；删 relativeTime/fullTime prop
+[mount-detail] 2026-11-10T21:25:50+08:00 EntryMetaTagsBar.vue：:4 {{relativeTime}} → <TimeDisplay :date-str=currentEntry.createdAt>；:7-12 只读 status-tag → <VisibilityMenu variant=sheet>（v-if=isOwner）；props 改 currentEntry/teams/teamsFailed/isOwner/variant；emits select/confirm-cancel；删相对时间 prop 与 .status-tag 样式
+[mount-explore] EntryCard.vue 改完：TimeDisplay 替换 meta-time span（去 title/useRelativeTime 两套来源）、文件数 >=2 固定 files、VisibilityMenu 替换单按钮+空 team-hint span、新增 teams/variant/disabled/teamsFailed props 与 changeVisibility 事件、补 .card-action-btn:focus-visible
+[mount-detail] 2026-11-10T21:27:00+08:00 useEntryDetailActions.ts：移除 overflow 的 Make Public/Make Private 项（含 Currently Public/Private hint），handleToggleVisibility 死码改名为 handleVisibilitySelect（接 setVisibility + 视图层四态 toast：Made public / Now private / Shared with Team X / N share link(s) revoked），新增 visibilityDisabled（inFlight 派生）；Download 项的 divider 不再依赖 owner 分支
+[mount-explore] EntryListRow.vue 改完：同上（TimeDisplay / 文件数 >=2 / VisibilityMenu 替换单按钮 / teams+variant+disabled+teamsFailed props / changeVisibility 事件 / .action-btn:focus-visible）
+[mount-explore] EntryListView.vue 改完：allTeams/teamsFailed computed 下发、useResponsiveLayout→isMobile 切 sheet/icon、@change-visibility=handleVisibilityChange、setVisibility + toast 四态（含 revokedShares>0 warning）、isVisibilityPending 容错 inFlight、resize 监听成对增删
+[mount-explore] 目标 3 spec 全绿（20 passed）；tpv0095 两个 BDD-40 断言已显式翻转（hides→shows，count 0→1）+ 文件头注释登记取代，并补 toHaveLength(1) 前置与 bdd22 非 owner 守卫
+[mount-explore] 显式更新既有断言 4 处：filter-tabs TC-D03 / expired-warning TC-D04（title→TimeDisplay 主显+tooltip，mock 补 absolute）、t031-entry-card / t031-entry-list-row BDD-7（toggleVisibility→changeVisibility+菜单项），均加文件头登记取代来源
+[mount-detail] 2026-11-10T21:37:10+08:00 EntryDetailView.vue：补 ensureMyTeamsLoaded()（onMounted 内 + watch(authState) 双触发，已加载跳过）+ 下发 teams/teamsFailed/isOwner/variant 给 Header 与 Content；删 useRelativeTime 解构与 relativeTime prop；T079 无需改动；tpv0095-detail-visibility-tag.spec.ts 显式取代（statusTagText .status-tag → visibilityToggleText [data-testid=visibility-toggle]，三态断言全保留 + 新增「.status-tag 不再承载可见性」守卫）→ 4/4 绿；t067 28/28 绿（零改动）
+[mount-explore] E2E 显式更新：e2e/team-visibility.spec.ts BDD-40 拆掉 if(count>0) 守卫 + 前置 toHaveCount(1) + count 0→1 翻转 + 注释登记取代
+[mount-detail] 2026-11-10T21:39:04+08:00 e2e/t052-header-redesign.e2e.spec.ts:108-114 显式取代：overflow 的 Make Private/Public + Currently Public 断言翻转为 toHaveCount(0)，改断言 .meta-row 内 visibility-toggle 可见；t052-header-redesign.test.ts:100 按裁决 1 不动
+[mount-explore] 自查完成：目标 3 spec 20 passed / 全量 119 files 1456 passed 0 failed / make typecheck passed / vite build 产出 dist（dist/index.html 存在）
+[mount-explore] 完成：P4-implementation.md 追加 [mount-explore] 节（不覆盖前两节，DESIGN_GAP 计数 7 = 前批 4 + 本批 3，含 1 条 [SCOPE+]）。改动 10 个文件（3 组件/视图 + 7 断言文件）。[PROD_NOT_TOUCHED]
+[mount-detail] 2026-11-10T21:47:27+08:00 自查完成：目标 2 spec 32/32 绿；make typecheck ✓；全量前端 119 files / 1456 passed / 4 skipped / 0 failed；npm run build ✓ dist 已生成。已追加 P4-implementation.md 的 [mount-detail] 节（3 条 DESIGN_GAP）；末尾报告 EntryDetailView 289 行 / 300 行门槛余量 11 行的风险。PROD_NOT_TOUCHED
+[docs-changelog] 已读 implementer.md + P4-dispatch-context-implementer-docs.md
+[docs-changelog] CHANGELOG.md [Unreleased] 已写入（Breaking Change + 变更×3 + 修复×1，4 项改动全覆盖）
+[docs-changelog] upgrading.md 新增节（v0.26.1 → v0.27.0，最新在上；三件事齐全 + MCP 无需改动 + 窗口期风险）
+[docs-changelog] P4-implementation.md [docs-changelog] 节已追加（4 项映射表 + 三件事落点 + 2 条 DESIGN_GAP + 1 条 SCOPE+）
+[docs-changelog] make check-docs exit 0；git status 确认本批仅 CHANGELOG.md + docs/process/upgrading.md 两个 M（无代码文件）
+[rev1-fix] 2026-11-10T23:12:53+08:00 读完 implementer.md / dispatch-context-rev1 / P4-review-design.md，锁定 F-1~F-4 + F-7，排除 F-5/F-6/F-8/F-9
+[rev1-fix] F-3 已改：TimeDisplay.vue 基础规则 white-space:nowrap→normal，@media 块只留 left/right（1 行+1 行删除）。F-2 已改：EntryCard.vue / EntryListRow.vue 各 +3 行 :focus-within 揭示规则。
+[rev1-fix] F-4 已改：EntryListRow.spec.ts 用例改为 visibility-toggle → visibility-item-private → 断言 changeVisibility.target.kind==='private'，去掉 if(exists()) 守卫，文件头登记被 TPV0102 取代。F-4 实测：把期望值临时改为 '__F4_PROBE_SHOULD_FAIL__' → 用例真实失败（Received: private），证明断言在执行；还原后 15/15 passed。
+[rev1-fix] F-1 已改（选备选②）：EntryListView.vue 的 .entry-panel 去掉 overflow:hidden，改由首/末行自称圆角（13px）。F-1 实测（Playwright 真机 :8888，19 行列表，滚到文档底部，最后一行开菜单 + 展开 Team 子菜单）：panelOverflow=visible；菜单 menuBottom 高于 panelBottom 88px（旧代码此区必被裁）；浮层完全在视口内 overflowBelowViewport=0；Public/Team/frontend-team 三项 elementFromPoint 中心命中 hitInside 全 true；实点击 frontend-team 项成功。反向对照：仅把 .entry-panel overflow 临时设回 hidden → Team 与子项 hitInside 变 false（复现原缺陷）。
+[rev1-fix] F-2 实测（Playwright 真机 :8888，1280px，hover:hover 媒体匹配为 true）：① 卡片：真按 Tab 键落入 .card-actions 内按钮 → .card-actions opacity 0→1，.entry-card.matches(':focus-within')=true，焦点环 2px solid rgb(9,105,218) 可见；② 列表行：焦点入 .entry-actions → opacity 0→1，行 :focus-within=true，焦点环同上；③ 反向对照：注入 @media(hover:hover){...:focus-within{opacity:0 !important}} 抵掉新增规则 → opacity 回 0（复现原缺陷），移除后回 1。
+[rev1-fix] F-3 实测（Playwright 真机 :8888，1280px 桌面）：悬停时间 → tooltip visibility:visible，white-space:normal，盒子 179x64，Range 文本 132x48，textOverflowsBox=false，overflowPx=0；截图确认文本在自身背景框内换行三行不溢出。反向对照：注入 min-width:641px{white-space:nowrap !important} 复原旧规则 → 盒子 320x28、文本 356px → overflowPx=45（复现原缺陷）。
+[rev1-fix] F-7 已改：P4-implementation.md 第 3 条 DESIGN_GAP 记述由「Teleport 对 icon/inline 也启用」改为如实记述「只对 sheet 启用；icon/inline 的裁剪面由父容器解除」，与 VisibilityMenu.vue:22 及本次 F-1 备选②一致。
+[rev1-fix] 新增 e2e vc08_last_row_menu_not_clipped_by_container（e2e/tpv0102-explore-card-list-ux.spec.ts 末尾）：断言①浮层无裁剪祖先②整体在视口内③每个菜单项 elementFromPoint 命中自身。实测：通过；反向验证（把 overflow:hidden 临时加回）→ 该用例失败并报出裁剪祖先 entry-panel:hidden，证明能真正抓 F-1。
+[rev1-fix] 门槛自查：vitest 全量 119 files / 1456 passed / 0 failed / 4 skipped，无 Errors 行；make typecheck ✓；make lint ✓；EntryDetailView.vue 仍 289 行（未加逻辑）；未做 F-5/F-6/F-8/F-9。
+[rev2-fix] 2026-11-11T00:35:00+08:00 基线实测确认：E2E_SPEC=tpv0102 spec → 8 failed / 1 flaky(bdd27 mobile) / 3 skipped / 52 passed。实际红色项与 dispatch 的 A/B/C/D 对应关系：bdd01×2 + bdd26×2 = B（textContent 读到 tooltip 的 "just now"，实测 Received "11/11/2026, 12:28:08 AM GMT+8just now · …"）；vc03 = A（scrollWidth 308 > clientWidth 247）；vc06 仅 Mobile Chrome 红（Expected >=351, Received 108.59）；bdd25×2 **实际报错不是 login 超时而是 empty-select-file 不存在**（登录在本轮正常通过），需单独判定
+[rev2-fix] A 已修：EntryCard.vue `.card-meta-text` 加 flex-wrap:wrap + `.meta-username` min-width:0/ellipsis + `.meta-time` flex-shrink:0。实测（1280px 真机）：修复前 overflow 卡片子元素右边界 944 > cardRight 928、meta sw=279 > cw=246；修复后每项右边界均在卡片内、sw=cw、`2 files` 作为整体落到下一 flex 行（不再拆成 "2"/"files" 两行）。
+[rev2-fix] A 的连带回归（实测发现）：vc05「时间主显与 @username 基线对齐」转为红（Expected <=2, Received 23.5）。根因实测：卡片可用宽 246px，en-US 下 `@alice` 42.9 + 点 3 + 时间主显 207.3 + 空隙 > 246 ⇒ 时间必然换到第 2 行（y=208.5 vs 用户 y=185），一行放不下是几何事实，非实现错误。⇒ VC-5 需按「同一视觉行内对齐」判定（见下）
+[rev2-fix] B 已修：TimeDisplay.vue 主显 span 增 data-testid="time-display-main"；spec SEL 增 timeDisplayMain，bdd01（卡片+列表两处）与 bdd26 的 allTextContents 均改用主显选择器。断言语义未放宽（`not /ago|just now/`、GMT_OFFSET、FOUR_DIGIT_YEAR 全部保留）。
+[rev2-fix] C 已修：login() helper 照抄既有先例 e2e/captcha-disabled.spec.ts:24-25，click 前 await expect(submit).toBeEnabled({timeout:15000})。实测说明：当前 debug 环境下裸 click 也能在 314ms 内成功（按钮填完即 enabled，captcha enabled=false），故 C 不是本轮 8 项红的实际原因——但补此守卫消除 `loading || !formValid || (captchaEnabled && !captchaToken)` 三条件的竞态，且与既有 spec 对齐。
+[rev2-fix] bdd25 真实根因（实测推翻 dispatch 的 C 定性）：报错是 `empty-select-file` 不存在，不是 login 超时。根因 = entryDetail.loadEntry 在 files.length>0 时恒把 activeFile 置为 files[0]（stores/entryDetail.ts:49-53），selectFile 也不置空 ⇒ empty-select-file 分支对「有文件的 entry」不可达（实测 3 文件 entry 该 testid count=0，contentArea 显示文件内容）。已改为：① 0 文件 entry 文案 ≠ EMPTY_SELECT_FILE_TEXT 常量对照；② 有文件 entry 的 empty-no-files count=0 + contentArea 可见。BDD-25 的 Then 两条要求均保留。
+[rev2-fix] D 已判定为测试断言设计问题（非实现缺陷）：实测移动端 390px 单列布局下 title y=72..96、actions y=157.5..201.5，纵向无交集（overlapY=-61.5），两者同列必然横向重叠。「不重叠」是二维语义，原断言只比 x 等价于强制横向分离，单列布局下必然假红。已改为：overlapX<=0 || overlapY<=0（矩形不相交）+ 桌面两列时额外保留原 `actionsBox.x >= titleBox.x + titleBox.width - 1` 强度。
+[rev2-fix] A 收尾：`2 files` 虽整体未拆行，但截图实测点分隔符被留在上一行行尾（孤立 `·`）。已把「用户名+点」与「点+文件数」各包成 `.meta-group`（inline-flex，不可断），使分隔符始终跟随其内容一起换行。改后 1280px 全 15 张卡实测：bad=0（无 overflow、无子项越卡片右边界、文件数未拆行）。
+[rev2-fix] bdd04 flaky 已修（不在 dispatch 的 4 类内，为实测发现的第 5 处）：原写法「页面第一张卡 vs 列表 API 第一条」是两个独立请求，默认排序在并发 seed 下可能指向不同 entry（实测差 1 秒：期望 00:57:27 / 实际 00:57:26）。改为现造一条 entry，页面按 summary 定位其卡片、created_at 从该 slug 的 GET 取，锚定同一条数据。修后连续 2 轮无 flaky。
+[rev2-fix] 最终验证：E2E_SPEC=e2e/tpv0102-explore-card-list-ux.spec.ts make debug-test → 连续 3 轮均为 0 failed / 0 flaky / 61 passed / 3 skipped（合计 64，与基线 52+8+1+3=64 一致）。vitest 全量 119 files / 1456 passed / 4 skipped / 0 failed，无 Errors 行。make typecheck ✓、make lint ✓。EntryDetailView.vue 仍 289 行（未改）。未建 known-failures.md、未放宽断言语义、未动 F-5/F-6/F-8/F-9。PROD_NOT_TOUCHED

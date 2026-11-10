@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useToast } from '@/composables/useToast'
 import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 import type { Entry } from '@/types'
 
 export function useEntryDetailActions(
@@ -44,20 +45,30 @@ export function useEntryDetailActions(
 
   function cancelDelete() {}
 
-  async function handleToggleVisibility() {
-    if (!currentEntry.value) return
-    const wasPublic = currentEntry.value.isPublic
-    const success = await entryListStore.toggleVisibility(currentEntry.value)
-    if (success) {
-      if (wasPublic) toast.show('Entry made private', 'success')
-    } else {
-      toast.show('Failed to change visibility', 'error')
-    }
-  }
-
   async function handleExpiresInUpdated(slug: string) {
     await entryDetailStore.loadEntry(slug)
     toast.show('Entry updated', 'success')
+  }
+
+  async function handleVisibilitySelect(target: VisibilityTarget) {
+    if (!currentEntry.value) return
+    const result = await entryListStore.setVisibility(currentEntry.value, target)
+    if (!result.ok) {
+      toast.show('Failed to change visibility', 'error')
+      return
+    }
+    if (target.kind === 'public') {
+      toast.show('Made public', 'success')
+      if (result.revokedShares > 0) {
+        toast.show(`${result.revokedShares} share link(s) revoked — entry is now public`, 'warning')
+      }
+      return
+    }
+    if (target.kind === 'team') {
+      toast.show(`Shared with Team ${target.teamName}`, 'success')
+      return
+    }
+    toast.show('Now private', 'success')
   }
 
   const overflowItems: ComputedRef<OverflowMenuItem[]> = computed(() => {
@@ -69,21 +80,12 @@ export function useEntryDetailActions(
       divider: false,
       action: () => themeStore.toggle(),
     })
-    if (currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)) {
-      items.push({
-        label: currentEntry.value.isPublic ? 'Make Private' : 'Make Public',
-        icon: currentEntry.value.isPublic ? 'lock' : 'globe',
-        hint: currentEntry.value.isPublic ? 'Currently Public' : 'Currently Private',
-        divider: true,
-        action: handleToggleVisibility,
-      })
-    }
     if (entryDetailStore.canDownload) {
       items.push({
         label: 'Download',
         icon: 'download',
         hint: activeFile.value?.filename ?? '',
-        divider: !!(currentEntry.value && authStore.isOwner(currentEntry.value.ownerId)),
+        divider: true,
         action: onDownloadFile,
       })
     }
@@ -118,6 +120,11 @@ export function useEntryDetailActions(
     return items
   })
 
+  const visibilityDisabled = computed(() => {
+    const entry = currentEntry.value
+    return entry ? entryListStore.inFlight.has(entry.slug) : false
+  })
+
   return {
     showConfirmDelete,
     showExpiresInDialog,
@@ -125,7 +132,8 @@ export function useEntryDetailActions(
     confirmDeleteEntry,
     handleDelete,
     cancelDelete,
-    handleToggleVisibility,
+    handleVisibilitySelect,
+    visibilityDisabled,
     handleExpiresInUpdated,
     overflowItems,
   }

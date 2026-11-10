@@ -1,3 +1,10 @@
+// ⚠️ BDD-7「clicking toggle button」子用例已被 TPV0102 有意取代（P2-design §1.1 D7/D9）：
+//    原单按钮 `@click="$emit('toggleVisibility', entry)"` 被 `<VisibilityMenu>` 替换——
+//    触发按钮只开菜单（testid `visibility-toggle`，不再带 `.card-action-btn` /
+//    `data-action="toggle-visibility"`），选择权在菜单项上，故事件名改为
+//    `changeVisibility({ entry, target })` 且需先点开菜单再点菜单项才发出。
+//    覆盖点（点交互控件不触发导航）未删除。
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EntryCard from '@/components/EntryCard.vue'
@@ -67,12 +74,15 @@ describe('T031 EntryCard', () => {
       expect(username.attributes('href')).toBe('/users/alice')
     })
 
-    it('clicking toggle button should NOT trigger navigation', async () => {
+    it('clicking visibility menu should NOT trigger navigation', async () => {
       const wrapper = createWrapper({ isOwner: true })
-      const toggleBtn = wrapper.find('.card-action-btn')
+      const toggleBtn = wrapper.find('[data-testid="visibility-toggle"]')
       expect(toggleBtn.exists()).toBe(true)
       await toggleBtn.trigger('click')
-      expect(wrapper.emitted('toggleVisibility')).toBeTruthy()
+      await wrapper.find('[data-testid="visibility-item-private"]').trigger('click')
+      const emitted = wrapper.emitted('changeVisibility')
+      expect(emitted).toBeTruthy()
+      expect((emitted![0][0] as { target: { kind: string } }).target.kind).toBe('private')
       expect(pushMock).not.toHaveBeenCalled()
     })
 

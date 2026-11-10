@@ -16,10 +16,10 @@
             @click.prevent="navigateToUser"
           >@{{ entry.username }}</a>
           <span v-if="entry.username" class="meta-dot"></span>
-          <span class="meta-time" :title="fullTime">{{ relativeTime }}</span>
-          <template v-if="entry.fileCount">
+          <TimeDisplay class="meta-time" :date-str="entry.createdAt" />
+          <template v-if="(entry.fileCount ?? 0) >= 2">
             <span class="meta-dot"></span>
-            <span>{{ entry.fileCount }} file{{ entry.fileCount !== 1 ? 's' : '' }}</span>
+            <span>{{ entry.fileCount }} files</span>
           </template>
         </span>
       </div>
@@ -90,17 +90,14 @@
         <BaseBadge v-else-if="isOwner" :status="entry.isPublic ? 'public' : 'private'" />
       </template>
       <div v-if="isOwner" class="entry-actions" @click.stop.prevent>
-        <button
-          v-if="!entry.teamId"
-          type="button"
-          class="action-btn visibility-btn"
-          data-action="toggle-visibility"
-          data-testid="visibility-toggle"
-          :title="entry.isPublic ? 'Make private' : 'Make public'"
-          @click="$emit('toggleVisibility', entry)"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path v-if="entry.isPublic" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle v-if="entry.isPublic" cx="12" cy="12" r="3"/><path v-if="!entry.isPublic" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line v-if="!entry.isPublic" x1="1" y1="1" x2="23" y2="23"/></svg>
-        </button>
+        <VisibilityMenu
+          :entry="entry"
+          :teams="teams"
+          :variant="variant"
+          :disabled="disabled"
+          :teams-failed="teamsFailed"
+          @select="handleSelectVisibility"
+        />
         <button
           type="button"
           class="action-btn delete-btn"
@@ -117,26 +114,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { HelpCircle } from 'lucide-vue-next'
-import type { Entry } from '@/types'
+import type { Entry, Team } from '@/types'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
-import { useRelativeTime } from '@/composables/useRelativeTime'
+import TimeDisplay from '@/components/TimeDisplay.vue'
+import VisibilityMenu from '@/components/VisibilityMenu.vue'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 import { isExpired } from '@/utils/expires'
 
 const props = withDefaults(defineProps<{
   entry: Entry
   isOwner?: boolean
   currentUsername?: string | null
+  teams?: Team[]
+  variant?: 'icon' | 'inline' | 'sheet'
+  disabled?: boolean
+  teamsFailed?: boolean
 }>(), {
   isOwner: false,
   currentUsername: null,
+  teams: () => [],
+  variant: 'icon',
+  disabled: false,
+  teamsFailed: false,
 })
 
 const emit = defineEmits<{
-  toggleVisibility: [entry: Entry]
+  changeVisibility: [payload: { entry: Entry; target: VisibilityTarget }]
   delete: [entry: Entry]
 }>()
 
@@ -167,9 +174,6 @@ const visibleTags = computed(() => props.entry.tags.slice(0, TAG_LIMIT))
 
 const remainingTagCount = computed(() => Math.max(0, props.entry.tags.length - TAG_LIMIT))
 
-const createdAtRef = toRef(() => props.entry.createdAt)
-const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
-
 const isExpiredButActive = computed(() => isExpired(props.entry))
 
 const showExemptHelp = ref(false)
@@ -182,6 +186,10 @@ const isExempt = computed(() =>
 function confirmForceDelete(): void {
   showForceConfirm.value = false
   emit('delete', props.entry)
+}
+
+function handleSelectVisibility(target: VisibilityTarget): void {
+  emit('changeVisibility', { entry: props.entry, target })
 }
 </script>
 
@@ -442,6 +450,9 @@ function confirmForceDelete(): void {
   .entry-list-row:hover .entry-actions {
     opacity: 1;
   }
+  .entry-list-row:focus-within .entry-actions {
+    opacity: 1;
+  }
 }
 
 .action-btn {
@@ -461,6 +472,11 @@ function confirmForceDelete(): void {
 .action-btn:hover {
   background: var(--c-border);
   color: var(--c-text);
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
 }
 
 .entry-list-row--archived {

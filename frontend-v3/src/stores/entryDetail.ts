@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
-import type { Entry, File } from '@/types'
+import type { Entry, File, TeamRef } from '@/types'
 
 export const useEntryDetailStore = defineStore('entryDetail', () => {
   const currentEntry = ref<Entry | null>(null)
@@ -98,9 +98,17 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
     error.value = null
   }
 
-  function syncVisibility(slug: string, isPublic: boolean): void {
+  function syncVisibility(
+    slug: string,
+    patch: { isPublic: boolean; teamId: number | null; team: TeamRef | null },
+  ): void {
     if (currentEntry.value?.slug === slug) {
-      currentEntry.value = { ...currentEntry.value, isPublic }
+      currentEntry.value = {
+        ...currentEntry.value,
+        isPublic: patch.isPublic,
+        teamId: patch.teamId,
+        team: patch.team,
+      }
     }
   }
 

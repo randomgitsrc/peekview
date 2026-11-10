@@ -172,7 +172,11 @@
             :entry="entry"
             :is-owner="authStore.isOwner(entry.ownerId)"
             :current-username="currentUserUsername"
-            @toggle-visibility="handleToggleVisibility"
+            :teams="allTeams"
+            :teams-failed="teamsFailed"
+            :variant="isMobile ? 'sheet' : 'icon'"
+            :disabled="isVisibilityPending(entry.slug)"
+            @change-visibility="handleVisibilityChange"
             @delete="confirmDeleteEntry"
           />
         </div>
@@ -183,7 +187,11 @@
             :entry="entry"
             :is-owner="authStore.isOwner(entry.ownerId)"
             :current-username="currentUserUsername"
-            @toggle-visibility="handleToggleVisibility"
+            :teams="allTeams"
+            :teams-failed="teamsFailed"
+            :variant="isMobile ? 'sheet' : 'icon'"
+            :disabled="isVisibilityPending(entry.slug)"
+            @change-visibility="handleVisibilityChange"
             @delete="confirmDeleteEntry"
           />
         </div>
@@ -259,7 +267,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useEntryListStore } from '@/stores/entryList'
 import { useAuthStore } from '@/stores/auth'
@@ -280,8 +288,10 @@ import BannerBar from '@/components/BannerBar.vue'
 import FilterChip from '@/components/FilterChip.vue'
 import type { Entry } from '@/types'
 import { useDebounce } from '@/composables/useDebounce'
+import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { mergeQuery } from '@/views/searchUrl.logic'
 import { loadViewMode, saveViewMode } from '@/composables/useViewMode'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 
 declare const __APP_VERSION__: string
 const appVersion = ref(__APP_VERSION__)
@@ -293,7 +303,7 @@ const toast = useToast()
 const router = useRouter()
 const { entries, loading, error, total, perPage, ownerFound } = storeToRefs(entryStore)
 const { loadEntries } = entryStore
-const { owned: rawOwned, joined: rawJoined, teamsLoaded: rawTeamsLoaded } = storeToRefs(teamStore)
+const { owned: rawOwned, joined: rawJoined, teamsLoaded: rawTeamsLoaded, error: rawTeamsError } = storeToRefs(teamStore)
 const { loadMyTeams, isMemberOf: isTeamMember } = teamStore
 const { user, authState } = storeToRefs(authStore)
 
@@ -301,6 +311,15 @@ const { user, authState } = storeToRefs(authStore)
 const myOwned = computed(() => rawOwned?.value ?? [])
 const myJoined = computed(() => rawJoined?.value ?? [])
 const teamsLoaded = computed(() => rawTeamsLoaded?.value ?? false)
+const allTeams = computed(() => [...myOwned.value, ...myJoined.value])
+const teamsFailed = computed(() => (rawTeamsError?.value ?? null) !== null)
+
+const { isMobile, handleResize } = useResponsiveLayout()
+
+function isVisibilityPending(slug: string): boolean {
+  const inFlight: Set<string> | undefined = entryStore.inFlight
+  return inFlight ? inFlight.has(slug) : false
+}
 
 const props = defineProps<{
   owner?: string
@@ -634,12 +653,25 @@ function cancelDelete() {
   deleteTarget.value = null
 }
 
-async function handleToggleVisibility(entry: Entry) {
-  const success = await entryStore.toggleVisibility(entry)
-  if (success) {
-    toast.show(entry.isPublic ? 'Entry made public' : 'Entry made private', 'success')
-  } else {
+async function handleVisibilityChange(payload: { entry: Entry; target: VisibilityTarget }) {
+  const { entry, target } = payload
+  const result = await entryStore.setVisibility(entry, target)
+  if (!result.ok) {
     toast.show('Failed to change visibility', 'error')
+    return
+  }
+  if (target.kind === 'team') {
+    toast.show(`Shared with Team ${target.teamName}`, 'success')
+  } else if (target.kind === 'public') {
+    toast.show('Made public', 'success')
+  } else {
+    toast.show('Now private', 'success')
+  }
+  if (result.revokedShares > 0) {
+    toast.show(
+      `${result.revokedShares} share link(s) revoked — entry is now public`,
+      'warning'
+    )
   }
 }
 
@@ -782,12 +814,17 @@ watch(authState, (newState, oldState) => {
 })
 
 onMounted(() => {
+  window.addEventListener('resize', handleResize)
   if (props.owner) {
     currentOwner.value = null
   }
   if (!teamUnavailable.value) {
     loadEntries({ page: currentPage.value, perPage: perPage.value, owner: effectiveOwner.value, status: effectiveStatus.value, starred: effectiveStarred.value, team: effectiveTeam.value, q: searchQuery.value || undefined, tags: currentTags.value.length ? currentTags.value : undefined })
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
 })
 
 onBeforeRouteUpdate((to) => {
@@ -1118,7 +1155,16 @@ onBeforeRouteUpdate((to) => {
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 14px;
-  overflow: hidden;
+}
+
+.entry-panel > .entry-list-row:first-child {
+  border-top-left-radius: 13px;
+  border-top-right-radius: 13px;
+}
+
+.entry-panel > .entry-list-row:last-child {
+  border-bottom-left-radius: 13px;
+  border-bottom-right-radius: 13px;
 }
 
 .entry-grid {

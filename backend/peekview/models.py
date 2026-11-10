@@ -12,10 +12,12 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from pydantic import field_validator
+from pydantic import field_serializer, field_validator
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Text, text
 from sqlalchemy.dialects.sqlite import JSON
 from sqlmodel import Field, Relationship, SQLModel
+
+from peekview.timefmt import utc_iso_z
 
 if TYPE_CHECKING:
     pass
@@ -77,6 +79,18 @@ API_KEY_HMAC_KEY = b"peekview-api-key"
 def hash_api_key(key: str) -> str:
     """HMAC-SHA256 hash of an API key."""
     return hmac.new(API_KEY_HMAC_KEY, key.encode(), "sha256").hexdigest()
+
+
+class UtcSerializeMixin(SQLModel):
+    """Serialize datetime fields as ISO 8601 UTC strings ending in ``Z``.
+
+    Only applies to JSON mode, so ``model_dump()`` keeps returning real
+    ``datetime`` values. Must never be inherited by a ``table=True`` model.
+    """
+
+    @field_serializer("*", when_used="json", check_fields=False)
+    def _serialize_utc(self, value: object, _info: object) -> object:
+        return utc_iso_z(value) if isinstance(value, datetime) else value
 
 
 class EntryBase(SQLModel):
@@ -511,7 +525,7 @@ class EntryReadStats(SQLModel, table=True):
     )
 
 
-class ReadStatsResponse(SQLModel):
+class ReadStatsResponse(UtcSerializeMixin):
     total_count: int = 0
     unique_readers: int = 0
     by_channel: dict[str, int] = {}
@@ -520,7 +534,7 @@ class ReadStatsResponse(SQLModel):
     last_read_at: datetime | None = None
 
 
-class ReadEventResponse(SQLModel):
+class ReadEventResponse(UtcSerializeMixin):
     id: int
     action: str
     channel: str
@@ -713,7 +727,7 @@ class EntryShareContext(SQLModel):
     shared_by: str | None = None
 
 
-class CountdownInfo(SQLModel):
+class CountdownInfo(UtcSerializeMixin):
     """Archive-deletion countdown info for archived entries."""
 
     status: str = "running"  # paused | running | expired
@@ -721,7 +735,7 @@ class CountdownInfo(SQLModel):
     archive_delete_at: datetime | None = None
 
 
-class StarResponse(SQLModel):
+class StarResponse(UtcSerializeMixin):
     """Response for POST/DELETE /{slug}/star."""
 
     star_count: int = 0
@@ -731,7 +745,7 @@ class StarResponse(SQLModel):
     created_at: datetime | None = None
 
 
-class TombstoneResponse(SQLModel):
+class TombstoneResponse(UtcSerializeMixin):
     """Tombstone card for star list / manage page."""
 
     id: int
@@ -751,7 +765,7 @@ class TeamRef(SQLModel):
     name: str
 
 
-class StarItem(SQLModel):
+class StarItem(UtcSerializeMixin):
     """Single item in GET /api/v1/stars (live entry or tombstone card)."""
 
     type: str  # "entry" | "tombstone"
@@ -788,7 +802,7 @@ class StarBatchRemoveRequest(SQLModel):
     entry_ids: list[int] = Field(..., min_length=1, max_length=500)
 
 
-class EntryResponse(SQLModel):
+class EntryResponse(UtcSerializeMixin):
     """Schema for entry response (single entry)."""
 
     id: int
@@ -814,7 +828,7 @@ class EntryResponse(SQLModel):
     countdown: CountdownInfo | None = None
 
 
-class EntryListItem(SQLModel):
+class EntryListItem(UtcSerializeMixin):
     """Schema for entry in list response."""
 
     id: int
@@ -851,7 +865,7 @@ class RawFileItem(SQLModel):
     file_url: str | None = None
 
 
-class EntryRawResponse(SQLModel):
+class EntryRawResponse(UtcSerializeMixin):
     """Response for GET /api/v1/entries/{slug}/raw."""
 
     slug: str
@@ -910,7 +924,7 @@ class CreateEntryRequest(SQLModel):
         return v
 
 
-class CreateEntryResponse(SQLModel):
+class CreateEntryResponse(UtcSerializeMixin):
     """Response schema for POST /entries."""
 
     id: int
@@ -1023,7 +1037,7 @@ class UserLogin(SQLModel):
     )
 
 
-class UserResponse(SQLModel):
+class UserResponse(UtcSerializeMixin):
     """Schema for user in API responses."""
 
     id: int
@@ -1080,7 +1094,7 @@ class ApiKeyCreate(SQLModel):
     )
 
 
-class ApiKeyResponse(SQLModel):
+class ApiKeyResponse(UtcSerializeMixin):
     """Schema for API key in list responses (no secret, no hash)."""
 
     id: int
@@ -1091,7 +1105,7 @@ class ApiKeyResponse(SQLModel):
     created_at: datetime
 
 
-class ApiKeyCreateResponse(SQLModel):
+class ApiKeyCreateResponse(UtcSerializeMixin):
     """Schema for create API key response (includes plaintext key once)."""
 
     id: int
@@ -1105,7 +1119,7 @@ class ApiKeyCreateResponse(SQLModel):
 # Admin schemas
 
 
-class EntryStats(SQLModel):
+class EntryStats(UtcSerializeMixin):
     total: int
     public: int
     private: int
@@ -1182,7 +1196,7 @@ class ShareCreateRequest(SQLModel):
     )
 
 
-class ShareResponse(SQLModel):
+class ShareResponse(UtcSerializeMixin):
     id: int
     token_prefix: str
     expires_at: datetime | None

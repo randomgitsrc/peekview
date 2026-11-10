@@ -1,11 +1,23 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
-import type { Entry, ListEntriesParams } from '@/types'
-import { useToast } from '@/composables/useToast'
+import type { Entry, ListEntriesParams, TeamRef } from '@/types'
+import { toPatchPayload } from '@/utils/visibility-target'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 import { useEntryDetailStore } from './entryDetail'
 
 let loadSeq = 0
+
+export interface SetVisibilityResult {
+  ok: boolean
+  revokedShares: number
+}
+
+interface VisibilitySnapshot {
+  isPublic: boolean
+  teamId: number | null
+  team: TeamRef | null
+}
 
 export const useEntryListStore = defineStore('entryList', () => {
   const entries = ref<Entry[]>([])
@@ -15,6 +27,7 @@ export const useEntryListStore = defineStore('entryList', () => {
   const page = ref(1)
   const perPage = ref(20)
   const total = ref(0)
+  const inFlight = ref<Set<string>>(new Set())
 
   async function loadEntries(params?: ListEntriesParams, options?: { clearOnError?: boolean }): Promise<void> {
     const seq = ++loadSeq
@@ -42,39 +55,61 @@ export const useEntryListStore = defineStore('entryList', () => {
     }
   }
 
-  async function toggleVisibility(entry: Entry): Promise<boolean> {
-    if (entry.teamId) {
-      const toast = useToast()
-      toast.show('此内容为团队可见，请在编辑中调整', 'warning')
-      return false
-    }
-    const originalPublic = entry.isPublic
-    const index = entries.value.findIndex(e => e.id === entry.id)
-    const newPublic = !originalPublic
+  function takeSnapshot(entry: Entry): VisibilitySnapshot {
+    return { isPublic: entry.isPublic, teamId: entry.teamId ?? null, team: entry.team ?? null }
+  }
 
-    entry.isPublic = newPublic
-    if (index >= 0) {
-      entries.value[index] = { ...entries.value[index], isPublic: newPublic }
+  function applyPatch(entry: Entry, target: VisibilityTarget, updated?: Entry): void {
+    if (updated) {
+      entry.isPublic = updated.isPublic
+      entry.teamId = updated.teamId ?? null
+      entry.team = updated.team ?? null
+      return
     }
+    if (target.kind === 'team') {
+      entry.isPublic = false
+      entry.team = { slug: target.teamSlug, name: target.teamName }
+      return
+    }
+    entry.isPublic = target.kind === 'public'
+    entry.teamId = null
+    entry.team = null
+  }
 
-    const detailStore = useEntryDetailStore()
-    detailStore.syncVisibility(entry.slug, newPublic)
+  function restore(entry: Entry, snapshot: VisibilitySnapshot): void {
+    entry.isPublic = snapshot.isPublic
+    entry.teamId = snapshot.teamId
+    entry.team = snapshot.team
+  }
+
+  async function setVisibility(entry: Entry, target: VisibilityTarget): Promise<SetVisibilityResult> {
+    if (inFlight.value.has(entry.slug)) return { ok: false, revokedShares: 0 }
+    inFlight.value.add(entry.slug)
+    const snapshot = takeSnapshot(entry)
+    applyPatch(entry, target)
 
     try {
-      const updated = await api.toggleEntryVisibility(entry.slug, newPublic)
-      if (updated.revokedShares && updated.revokedShares > 0) {
-        const toast = useToast()
-        toast.show(`${updated.revokedShares} share link(s) revoked — entry is now public`, 'warning')
-      }
-      return true
+      const updated = await api.updateEntry(entry.slug, toPatchPayload(target))
+      applyPatch(entry, target, updated)
+      const detailStore = useEntryDetailStore()
+      detailStore.syncVisibility(entry.slug, {
+        isPublic: updated.isPublic,
+        teamId: updated.teamId ?? null,
+        team: updated.team ?? null,
+      })
+      return { ok: true, revokedShares: updated.revokedShares ?? 0 }
     } catch {
-      entry.isPublic = originalPublic
-      if (index >= 0) {
-        entries.value[index] = { ...entries.value[index], isPublic: originalPublic }
-      }
-      detailStore.syncVisibility(entry.slug, originalPublic)
-      return false
+      restore(entry, snapshot)
+      return { ok: false, revokedShares: 0 }
+    } finally {
+      inFlight.value.delete(entry.slug)
     }
+  }
+
+  async function toggleVisibility(entry: Entry): Promise<boolean> {
+    const target: VisibilityTarget = entry.isPublic ? { kind: 'private' } : { kind: 'public' }
+    const result = await setVisibility(entry, target)
+    return result.ok
   }
 
   async function deleteEntry(slug: string): Promise<boolean> {
@@ -97,7 +132,9 @@ export const useEntryListStore = defineStore('entryList', () => {
     page,
     perPage,
     total,
+    inFlight,
     loadEntries,
+    setVisibility,
     toggleVisibility,
     deleteEntry,
   }

@@ -50,6 +50,7 @@ from peekview.models import (
 )
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
+from peekview.timefmt import utc_iso_z
 
 
 def _get_dir_size(path: Path) -> int:
@@ -640,9 +641,9 @@ class AdminService:
             "is_public": entry.is_public,
             "owner_id": entry.owner_id,
             "username": owner.username if owner else None,
-            "expires_at": entry.expires_at.isoformat() if entry.expires_at else None,
-            "created_at": entry.created_at.isoformat() if entry.created_at else None,
-            "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
+            "expires_at": utc_iso_z(entry.expires_at),
+            "created_at": utc_iso_z(entry.created_at),
+            "updated_at": utc_iso_z(entry.updated_at),
         }
 
         files_data = []

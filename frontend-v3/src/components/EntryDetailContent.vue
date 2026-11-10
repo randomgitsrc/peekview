@@ -21,7 +21,16 @@
 
     <!-- Main Content Area -->
     <main class="content-area entry-content" data-testid="content-area" tabindex="-1">
-      <EntryMetaTagsBar v-if="isMobile && currentEntry" :current-entry="currentEntry" :relative-time="relativeTime" />
+      <EntryMetaTagsBar
+        v-if="isMobile && currentEntry"
+        :current-entry="currentEntry"
+        :teams="teams"
+        :teams-failed="teamsFailed"
+        :is-owner="isOwner"
+        :variant="variant"
+        :disabled="visibilityDisabled"
+        @select="$emit('select-visibility', $event)"
+      />
       <div v-if="fileLoading" class="loading-state">
         <div class="skeleton-header">
           <div class="skeleton-bar skeleton-title-bar"></div>
@@ -56,7 +65,11 @@
         <CodeViewer v-else :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
       </template>
 
-      <div v-else class="empty-state">
+      <div v-else-if="currentEntry && currentEntry.files.length === 0" class="empty-state" data-testid="empty-no-files">
+        <span>此 entry 无文件</span>
+      </div>
+
+      <div v-else class="empty-state" data-testid="empty-select-file">
         <span>Select a file to view</span>
       </div>
     </main>
@@ -122,8 +135,9 @@ import TableView from '@/components/TableView.vue'
 import TreeView from '@/components/TreeView.vue'
 import EntryMetaTagsBar from '@/components/EntryMetaTagsBar.vue'
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next'
-import type { Entry, File, TocHeading } from '@/types'
+import type { Entry, File, Team, TocHeading } from '@/types'
 import type { PathMap } from '@/utils/path-map'
+import type { VisibilityTarget } from '@/utils/visibility-options'
 import { useSidebarResize } from '@/composables/useSidebarResize'
 import { IsMobileKey } from '@/composables/entryDetailKeys'
 
@@ -156,7 +170,11 @@ const props = defineProps<{
   canWrap: boolean
   isMultiFile: boolean
   sourceViewMode: boolean
-  relativeTime: string
+  teams: Team[]
+  teamsFailed: boolean
+  isOwner: boolean
+  variant: 'icon' | 'inline' | 'sheet'
+  visibilityDisabled: boolean
   downloadFile: () => void
 }>()
 
@@ -169,6 +187,7 @@ defineEmits<{
   'toggle-wrap': []
   'close-file-drawer': []
   'close-toc-drawer': []
+  'select-visibility': [target: VisibilityTarget]
 }>()
 
 const parseError = ref<string | null>(null)

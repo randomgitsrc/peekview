@@ -1,3 +1,10 @@
+// ⚠️ 原「emits toggleVisibility when visibility button clicked」用例已被 TPV0102 有意取代
+//    （P2-design §1.1 D7/D9）：单按钮 `@click="$emit('toggleVisibility', entry)"` 被
+//    `<VisibilityMenu>` 替换——触发按钮只开菜单（testid `visibility-toggle`，不再带
+//    `.visibility-btn` / `data-action="toggle-visibility"`），事件名改为
+//    `changeVisibility({ entry, target })` 且须先开菜单再点菜单项。覆盖点（可见性控件
+//    发出事件）未删除；原写法用 `if (btn.exists())` 守卫，选择器失效后断言会静默蒸发。
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EntryListRow from '@/components/EntryListRow.vue'
@@ -102,13 +109,13 @@ describe('EntryListRow', () => {
     expect(link.attributes('href')).toContain('test-entry')
   })
 
-  it('emits toggleVisibility when visibility button clicked', async () => {
+  it('emits changeVisibility when visibility menu item clicked', async () => {
     const wrapper = createWrapper({ isOwner: true })
-    const btn = wrapper.find('[data-action="toggle-visibility"]') || wrapper.find('.visibility-btn')
-    if (btn.exists()) {
-      await btn.trigger('click')
-      expect(wrapper.emitted('toggleVisibility')).toBeTruthy()
-    }
+    await wrapper.find('[data-testid="visibility-toggle"]').trigger('click')
+    await wrapper.find('[data-testid="visibility-item-private"]').trigger('click')
+    const emitted = wrapper.emitted('changeVisibility')
+    expect(emitted).toBeTruthy()
+    expect((emitted![0][0] as { target: { kind: string } }).target.kind).toBe('private')
   })
 
   it('emits delete when delete button clicked', async () => {

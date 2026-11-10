@@ -4,8 +4,6 @@
 
     <EntryDetailHeader
       :entry-title="entryTitle"
-      :relative-time="relativeTime"
-      :full-time="fullTime"
       :is-expired-but-active="isExpiredButActive"
       :is-file-tree-open="isFileTreeOpen"
       :is-toc-open="isTocOpen"
@@ -20,6 +18,11 @@
       :auth-state="authState"
       :current-entry="currentEntry"
       :slug="slug"
+      :teams="allTeams"
+      :teams-failed="teamsFailed"
+      :is-owner="isOwner"
+      :variant="isMobile ? 'sheet' : 'inline'"
+      :visibility-disabled="visibilityDisabled"
       :source-view-mode="sourceViewMode"
       :is-rich-renderable="isRichRenderable"
       @toggle-file-tree="isFileTreeOpen = !isFileTreeOpen"
@@ -29,6 +32,7 @@
       @toggle-share-dialog="shareDialogOpen = $event"
       @open-login="showLogin = true"
       @star-changed="handleStarChanged"
+      @select-visibility="handleVisibilitySelect"
     />
 
     <EntryDetailBanners
@@ -67,7 +71,11 @@
       :can-wrap="entryDetailStore.canWrap"
       :is-multi-file="entryDetailStore.isMultiFile"
       :source-view-mode="sourceViewMode"
-      :relative-time="relativeTime"
+      :teams="allTeams"
+      :teams-failed="teamsFailed"
+      :is-owner="isOwner"
+      :variant="isMobile ? 'sheet' : 'inline'"
+      :visibility-disabled="visibilityDisabled"
       :download-file="downloadFile"
       @select-file="entryDetailStore.selectFile"
       @navigate-file="handleNavigateFile"
@@ -75,6 +83,7 @@
       @toggle-wrap="entryDetailStore.toggleWrap()"
       @close-file-drawer="showFileDrawer = false"
       @close-toc-drawer="showTocDrawer = false"
+      @select-visibility="handleVisibilitySelect"
     />
 
     <EntryDetailMobileBar
@@ -127,8 +136,8 @@ import { storeToRefs } from 'pinia'
 import { useEntryDetailStore } from '@/stores/entryDetail'
 import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
+import { useTeamStore } from '@/stores/team'
 import { isExpired } from '@/utils/expires'
-import { useRelativeTime } from '@/composables/useRelativeTime'
 import { useZenMode } from '@/composables/useZenMode'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { useEntryDetailComputed } from '@/composables/useEntryDetailComputed'
@@ -149,8 +158,10 @@ const route = useRoute()
 const entryDetailStore = useEntryDetailStore()
 const authStore = useAuthStore()
 const shareStore = useShareStore()
+const teamStore = useTeamStore()
 const { currentEntry, activeFile, fileContent } = storeToRefs(entryDetailStore)
 const { authState } = storeToRefs(authStore)
+const { teamsLoaded: rawTeamsLoaded, owned: rawTeamOwned, joined: rawTeamJoined, error: rawTeamError } = storeToRefs(teamStore)
 
 const { zenMode, zenAriaText, handleZenKeydown } = useZenMode(() => route.meta?.zen === 'locked')
 const { isMobile, isDesktop, handleResize } = useResponsiveLayout()
@@ -167,7 +178,7 @@ const {
 } = useEntryDetailComputed(slug, currentEntry, activeFile)
 
 const actions = useEntryDetailActions(currentEntry, activeFile, downloadFile, downloadPack)
-const { deleteMessage, overflowItems } = actions
+const { deleteMessage, overflowItems, visibilityDisabled, handleVisibilitySelect } = actions
 
 const showLogin = ref(false)
 const showFileDrawer = ref(false)
@@ -199,8 +210,20 @@ const showShareButton = computed(() => {
   return !currentEntry.value.isPublic
 })
 const isExpiredButActive = computed(() => currentEntry.value ? isExpired(currentEntry.value) : false)
-const createdAtRef = computed(() => currentEntry.value?.createdAt ?? null)
-const { relative: relativeTime, full: fullTime } = useRelativeTime(createdAtRef)
+const allTeams = computed(() => [...(rawTeamOwned?.value ?? []), ...(rawTeamJoined?.value ?? [])])
+const teamsFailed = computed(() => (rawTeamError?.value ?? null) !== null)
+const teamsLoaded = computed(() => rawTeamsLoaded?.value ?? false)
+const isOwner = computed(() => currentEntry.value ? authStore.isOwner(currentEntry.value.ownerId) : false)
+
+function ensureMyTeamsLoaded(): void {
+  if (authState?.value === 'authenticated' && !teamsLoaded.value) {
+    teamStore.loadMyTeams()
+  }
+}
+
+watch(authState, (state) => {
+  if (state === 'authenticated') ensureMyTeamsLoaded()
+})
 
 function handleStarChanged(data: { starCount: number; isStarred: boolean }): void {
   entryDetailStore.syncStar(data)
@@ -215,6 +238,7 @@ onMounted(async () => {
   if (firstFileId || shareToken) router.replace({ path: route.path, query: {} })
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
+  ensureMyTeamsLoaded()
   await nextTick()
   if (isDesktop.value) {
     if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true

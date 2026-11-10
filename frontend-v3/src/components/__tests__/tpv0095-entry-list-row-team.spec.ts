@@ -6,6 +6,11 @@ import type { Entry } from '@/types'
 
 // TPV0095 BDD-39/40：EntryListRow team badge 优先级 + toggle 隐藏（delete 保留）
 // P3 红灯：teamId/team 字段、badge-team 变体、visibility-toggle testid 均未实现 → 断言失败。
+//
+// ⚠️ bdd40_team_entry_hides_visibility_toggle_but_keeps_delete 已被 TPV0102 有意取代
+//    （P2-design §6.4 第 3 项）：列表行现**有**可见性菜单（VisibilityMenu 替换原
+//    `v-if="!entry.teamId"` 单按钮），断言值由 count = 0 翻转为 count = 1。
+//    原覆盖点（team entry 渲染可见性入口与否 + delete 保留）**未删除**，只翻转设计变更影响的值。
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
 vi.mock('vue-router', () => ({ useRouter: () => ({ push: pushMock }) }))
@@ -64,16 +69,16 @@ describe('TPV0095 EntryListRow — team badge 与 toggle 守卫', () => {
     expect(classes).toContain('badge-team')
   })
 
-  it('bdd40_team_entry_hides_visibility_toggle_but_keeps_delete', () => {
+  it('bdd40_team_entry_shows_visibility_toggle_and_keeps_delete', () => {
     const wrapper = mount(EntryListRow, {
       props: {
-        entry: makeEntry({ teamId: 5 }),
+        entry: makeEntry({ teamId: 5, team: { slug: 'proj-a', name: 'Proj A' } }),
         isOwner: true,
       },
       global: { stubs: { BaseTag: true } },
     })
-    // P2 §5.7：两视图 toggle 统一 testid visibility-toggle → team entry count=0
-    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(0)
+    // TPV0102 取代 TPV0095 BDD-40（P2-design §6.4 第 3 项）：team entry 现有可见性菜单入口
+    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(1)
     // delete 保留
     expect(wrapper.findAll('[data-action="delete"]')).toHaveLength(1)
   })
@@ -83,8 +88,14 @@ describe('TPV0095 EntryListRow — team badge 与 toggle 守卫', () => {
       props: { entry: makeEntry({ isPublic: true }), isOwner: true },
       global: { stubs: { BaseTag: true } },
     })
-    const toggle = wrapper.findAll('[data-testid="visibility-toggle"]')
-    // 非 team entry：toggle 应存在（P4 后该断言转绿；P3 期 0 → 红灯提示 testid 未落）
-    expect(toggle.length).toBeGreaterThan(0)
+    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(1)
+  })
+
+  it('bdd22_non_owner_has_no_visibility_toggle', () => {
+    const wrapper = mount(EntryListRow, {
+      props: { entry: makeEntry({ teamId: 5 }), isOwner: false },
+      global: { stubs: { BaseTag: true } },
+    })
+    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(0)
   })
 })

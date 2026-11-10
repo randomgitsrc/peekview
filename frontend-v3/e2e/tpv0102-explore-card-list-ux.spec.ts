@@ -48,8 +48,15 @@ const FOUR_DIGIT_YEAR = /\d{4}/
 const RELATIVE_SHAPE = /just now|\d+(m|h|d|w|mo|y) ago|in \d+(m|h|d|w|mo|y)/
 const ANY_FILE_COUNT = /\d+ files?/
 
+/** 「多文件但未选中」通用空态文案，与 `EntryDetailContent.vue` 的 `empty-select-file` 分支同源。
+ *  该分支对「有文件的 entry」不可达（`loadEntry` 恒自动选中 `files[0]`），故按常量对照而非 DOM。 */
+const EMPTY_SELECT_FILE_TEXT = 'Select a file to view'
+
 const SEL = {
   timeDisplay: '[data-testid="time-display"]',
+  // 断言「主显」必须落在 .time-display__main：根节点 textContent 含内部 tooltip
+  // （tooltip 本就含 `just now · …`，见 BDD-02），会把 `not /ago|just now/` 打成假红。
+  timeDisplayMain: '[data-testid="time-display-main"]',
   timeTooltip: '[data-testid="time-tooltip"]',
   visibilityToggle: '[data-testid="visibility-toggle"]',
   visibilityMenu: '[data-testid="visibility-menu"]',
@@ -58,7 +65,7 @@ const SEL = {
   itemTeam: '[data-testid="visibility-item-team"]',
   teamSubmenu: '[data-testid="visibility-team-submenu"]',
   emptyNoFiles: '[data-testid="empty-no-files"]',
-  emptySelectFile: '[data-testid="empty-select-file"]',
+  contentArea: '[data-testid="content-area"]',
   metaTagsBar: '[data-testid="meta-tags-bar"]',
   confirmDialog: '.confirm-dialog',
 } as const
@@ -122,7 +129,15 @@ async function login(page: Page, username = 'alice'): Promise<void> {
   await page.locator('.login-dialog').waitFor({ state: 'visible', timeout: 15000 })
   await page.locator('#login-username').fill(username)
   await page.locator('#login-password').fill('testpass123')
-  await page.locator('.login__submit').click()
+
+  // submit 按钮的 disabled 条件是 `loading || !formValid || (captchaEnabled && !captchaToken)`
+  // （`LoginDialog.vue:88`）。`captchaEnabled` 由打开弹窗后的异步 `/api/v1/config/captcha`
+  // 决定，formValid 又依赖 v-model 的下一轮更新 —— 填值后立刻 click 会与这两者竞态。
+  // 照既有先例（`e2e/captcha-disabled.spec.ts:24-25`）先等按钮真正 enabled 再点。
+  const submit = page.locator('.login__submit')
+  await expect(submit).toBeEnabled({ timeout: 15000 })
+  await submit.click()
+
   await page.waitForURL('**/explore**', { timeout: 20000 })
   await expect(
     page.locator('.explore-actions button:has-text("Sign in")'),
@@ -235,8 +250,8 @@ test.describe('TPV0102 时间显示基础形态（BDD-01/02）', () => {
     await login(page)
     await gotoExplore(page)
 
-    // 卡片模式
-    const cardTime = page.locator(`.entry-card ${SEL.timeDisplay}`).first()
+    // 卡片模式（断言限定在主显节点，不含内部 tooltip —— 见 SEL.timeDisplayMain 注释）
+    const cardTime = page.locator(`.entry-card ${SEL.timeDisplayMain}`).first()
     await expect(cardTime).toBeVisible({ timeout: 20000 })
     const cardText = (await cardTime.textContent())?.trim() ?? ''
     expect(cardText).toMatch(GMT_OFFSET)
@@ -245,7 +260,7 @@ test.describe('TPV0102 时间显示基础形态（BDD-01/02）', () => {
 
     // 列表模式
     await switchToListView(page)
-    const rowTime = page.locator(`.entry-list-row ${SEL.timeDisplay}`).first()
+    const rowTime = page.locator(`.entry-list-row ${SEL.timeDisplayMain}`).first()
     await expect(rowTime).toBeVisible({ timeout: 15000 })
     const rowText = (await rowTime.textContent())?.trim() ?? ''
     expect(rowText).toMatch(GMT_OFFSET)
@@ -346,24 +361,28 @@ test.describe('TPV0102 时区固定（BDD-04）', () => {
   test.use({ locale: 'zh-CN', timezoneId: 'Asia/Shanghai' })
 
   test('bdd04_shanghai_timezone_shows_plus8_wallclock', async ({ page, request }) => {
+    // 锚定同一条 entry：现造一条，页面按 summary 定位它的卡片，created_at 从该 slug 的 API 取。
+    // （原写法「页面第一张卡 vs 列表 API 第一条」是两个独立请求，默认排序在并发 seed 下
+    //  可能指向不同 entry，实测出现过差 1 秒的假红。）
+    const token = await apiLoginToken(request)
+    const summary = `bdd04 tz ${Date.now()}`
+    const { slug } = await createEntry(request, token, { summary, fileCount: 2 })
+
     await login(page)
     await gotoExplore(page)
 
-    const time = page.locator(SEL.timeDisplay).first()
+    const card = entryLocator(page, summary)
+    await expect(card).toBeVisible({ timeout: 20000 })
+    const time = card.locator(SEL.timeDisplay).first()
     await expect(time).toBeVisible({ timeout: 20000 })
 
     // 主显必须是 GMT+8（Asia/Shanghai 无夏令时）且墙上时间 = 该 entry 的 UTC 时刻 + 8h
     const mainText = (await time.locator('.time-display__main').textContent())?.trim() ?? ''
     expect(mainText).toContain('GMT+8')
 
-    // 反查该卡片的 UTC 时刻：从 API 取 created_at（第一条），与该卡片同一数据源
-    const apiResp = await request.get('/api/v1/entries?per_page=1', {
-      headers: { Authorization: `Bearer ${await apiLoginToken(request)}` },
-    })
-    expect(apiResp.status()).toBe(200)
-    const listBody = await apiResp.json()
-    const iso = listBody.items?.[0]?.created_at as string | undefined
-    expect(iso, '列表 API 未返回 created_at').toBeTruthy()
+    const entryJson = await getEntryJson(request, token, slug)
+    const iso = entryJson.created_at as string | undefined
+    expect(iso, '该 entry 未返回 created_at').toBeTruthy()
 
     const expected = await page.evaluate((raw: string) => {
       // 在浏览器内（context 已固定为 Asia/Shanghai）求 UTC 时刻的 +8h 墙上时间 HH:MM:SS
@@ -446,15 +465,23 @@ test.describe('TPV0102 详情页（BDD-03/23/25）', () => {
     const noFilesText = ((await noFiles.textContent()) ?? '').trim()
     expect(noFilesText.length).toBeGreaterThan(0)
 
-    // 与「多文件但未选中」的空态文本可区分
+    // 专用空态文案 ≠ 「多文件未选中」的通用提示文案（`EntryDetailContent.vue` 的
+    // `empty-select-file` 常量文案）。取常量的原因见下：该分支在真实路径上不可达。
+    expect(noFilesText).not.toBe(EMPTY_SELECT_FILE_TEXT)
+
+    // 对照：有文件的 entry 绝不落 0 文件空态（两分支互斥的正向验证）
     const withFilesSummary = `bdd25 with files ${Date.now()}`
     const withFiles = await createEntry(request, token, { summary: withFilesSummary, fileCount: 3 })
     await page.goto(`${BASE_URL}/${withFiles.slug}`)
-    const selectFile = page.locator(SEL.emptySelectFile)
-    await expect(selectFile).toBeVisible({ timeout: 25000 })
-    const selectFileText = ((await selectFile.textContent()) ?? '').trim()
+    await expect(page.locator(SEL.contentArea)).toBeVisible({ timeout: 25000 })
+    await expect(page.locator(SEL.emptyNoFiles)).toHaveCount(0)
 
-    expect(selectFileText).not.toBe(noFilesText)
+    // ⚠️ 原断言「有文件 entry 显示 empty-select-file」已撤除：该状态**不可达**。
+    // `entryDetail.loadEntry` 在 `files.length > 0` 时恒把 `activeFile` 置为 `files[0]`
+    // （`stores/entryDetail.ts:49-53`），`selectFile` 也不会置空 ⇒ `v-else` 的
+    // `empty-select-file` 分支对「有文件的 entry」永不渲染（实测 3 文件 entry 该 testid count=0）。
+    // 因此「两种空态可区分」只能按文案常量对照断言，不能按 DOM 可达性断言。
+    // BDD-25 的 Then 语义（专用提示 + 与通用提示不同）由上面两条断言保留，未放宽。
   })
 })
 
@@ -880,8 +907,9 @@ test.describe('TPV0102 seed 数据体验路径（BDD-26）', () => {
     const cards = page.locator('.entry-card')
     expect(await cards.count()).toBeGreaterThan(1)
 
-    // 每张卡片的时间都不含 ago 且含 GMT±N
-    const timeTexts = await page.locator(`.entry-card ${SEL.timeDisplay}`).allTextContents()
+    // 每张卡片的主显时间都不含 ago 且含 GMT±N
+    // （断言限定在主显节点：根节点 textContent 含 tooltip，而 tooltip 本就含 `just now`）
+    const timeTexts = await page.locator(`.entry-card ${SEL.timeDisplayMain}`).allTextContents()
     expect(timeTexts.length).toBeGreaterThan(1)
     for (const text of timeTexts) {
       expect(text).toMatch(GMT_OFFSET)
@@ -999,7 +1027,23 @@ test.describe('TPV0102 视觉契约 VC-1~VC-7', () => {
     expect(userBox).not.toBeNull()
     expect(timeBox).not.toBeNull()
     if (userBox && timeBox) {
-      expect(Math.abs(userBox.y + userBox.height - (timeBox.y + timeBox.height))).toBeLessThanOrEqual(2)
+      // 元信息行是 flex-wrap 容器（VC-3 要求不溢出）：可用宽 246px 时，
+      // `@username` + 点 + 主显时间（en-US 实测 207px）一行放不下 ⇒ 时间整体折到第 2 flex 行。
+      // 「基线对齐」只对**同一视觉行**内的两段文本有意义；跨行时断言的是行高而非基线。
+      const sameRow = Math.abs(userBox.y + userBox.height - (timeBox.y + timeBox.height)) <= 2
+      const wrappedToOwnRow = timeBox.y >= userBox.y + userBox.height - 1
+      expect(
+        sameRow || wrappedToOwnRow,
+        `时间与 @username 既不共基线也未整体折行（userBottom=${userBox.y + userBox.height}, timeBottom=${timeBox.y + timeBox.height}）`,
+      ).toBe(true)
+
+      // 折行时仍不得溢出卡片右边界（与 VC-3 同源，防「折行但越界」）
+      const meta = card.locator('.card-meta-text').first()
+      const metrics = await meta.evaluate(el => ({
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      }))
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
     }
   })
 
@@ -1019,7 +1063,24 @@ test.describe('TPV0102 视觉契约 VC-1~VC-7', () => {
     expect(titleBox).not.toBeNull()
     expect(actionsBox).not.toBeNull()
     if (titleBox && actionsBox) {
-      expect(actionsBox.x).toBeGreaterThanOrEqual(titleBox.x + titleBox.width - 1)
+      // 「不重叠」是二维语义：矩形不相交即可。桌面两列（1fr auto）→ 横向分离；
+      // 移动单列（grid-template-columns:1fr，actions 落到下一行）→ 纵向分离。
+      // 原先只比 `x`，等价于「必须横向分离」，在单列布局下必然假红（实测移动端
+      // title y=72..96 与 actions y=157.5..201.5 无纵向交集，本就不重叠）。
+      const overlapX = Math.min(titleBox.x + titleBox.width, actionsBox.x + actionsBox.width)
+        - Math.max(titleBox.x, actionsBox.x)
+      const overlapY = Math.min(titleBox.y + titleBox.height, actionsBox.y + actionsBox.height)
+        - Math.max(titleBox.y, actionsBox.y)
+      expect(
+        overlapX <= 0 || overlapY <= 0,
+        `标题与动作区矩形相交（overlapX=${overlapX}, overlapY=${overlapY}）`,
+      ).toBe(true)
+
+      // 桌面两列布局下额外要求横向分离（保留原断言的强度）
+      const isTwoColumn = await row.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length > 1)
+      if (isTwoColumn) {
+        expect(actionsBox.x).toBeGreaterThanOrEqual(titleBox.x + titleBox.width - 1)
+      }
     }
   })
 
@@ -1043,5 +1104,78 @@ test.describe('TPV0102 视觉契约 VC-1~VC-7', () => {
       return { height: (el as HTMLElement).getBoundingClientRect().height, lineHeight }
     })
     expect(metrics.height).toBeLessThanOrEqual(metrics.lineHeight * 2 + 1)
+  })
+})
+
+// ============================================================
+// VC-8（P4 rev1 补）：列表最后一行浮层不被容器/视口裁剪
+// ============================================================
+// F-1 缺口：`vc02` 只断言浮层上边界不遮触发按钮，**下边界无人测**——`.entry-panel`
+// 曾有 `overflow:hidden`，列表最后一行开菜单时浮层被裁到容器底边（实测仅 17% 可见），
+// 而 vc02 仍恒绿。本用例断言三件事：① 浮层不与任何裁剪祖先共存；② 浮层超出容器底边的
+// 部分仍可命中；③ 浮层整体落在视口内且每个菜单项 elementFromPoint 命中自身。
+test.describe('TPV0102 视觉契约 VC-8（rev1）', () => {
+  test('vc08_last_row_menu_not_clipped_by_container', async ({ page, request, isMobile }) => {
+    test.skip(isMobile, 'VC-8 只断言桌面列表（移动端走底部 sheet，不涉及容器裁剪）')
+    const token = await apiLoginToken(request)
+    const summary = `vc08 ${Date.now()}`
+    await createEntry(request, token, { summary, fileCount: 2 })
+
+    await login(page)
+    await gotoExplore(page)
+    await switchToListView(page)
+
+    const rows = page.locator('.entry-list-row')
+    const lastRow = rows.last()
+    await lastRow.scrollIntoViewIfNeeded()
+    const trigger = lastRow.locator(SEL.visibilityToggle).first()
+    await expect(trigger).toBeVisible({ timeout: 15000 })
+    await trigger.click()
+
+    const menu = page.locator(SEL.visibilityMenu).first()
+    await expect(menu).toBeVisible({ timeout: 10000 })
+
+    // ① 浮层到 documentElement 之间不得存在裁剪祖先（overflow != visible）
+    const clippers = await menu.evaluate(el => {
+      const out: string[] = []
+      for (let node = el.parentElement; node && node !== document.documentElement; node = node.parentElement) {
+        const cs = window.getComputedStyle(node)
+        if (cs.overflow !== 'visible' || cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+          out.push(`${(node.className || node.tagName).toString().split(' ')[0]}:${cs.overflow}`)
+        }
+      }
+      return out
+    })
+    expect(clippers, `浮层存在裁剪祖先：${clippers.join(', ')}`).toEqual([])
+
+    // ② 滚到文档底部使浮层完全可见，再断言整体在视口内 + 逐项命中
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await page.waitForTimeout(200)
+
+    const measured = await menu.evaluate(el => {
+      const box = el.getBoundingClientRect()
+      const items = Array.from(el.querySelectorAll<HTMLElement>('.visibility-item'))
+      return {
+        box: { top: box.top, bottom: box.bottom, height: box.height },
+        height: window.innerHeight,
+        items: items.map(item => {
+          const r = item.getBoundingClientRect()
+          const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+          return {
+            label: (item.textContent ?? '').trim().split('\n')[0],
+            top: r.top,
+            bottom: r.bottom,
+            hitSelf: !!hit && item.contains(hit),
+          }
+        }),
+      }
+    })
+
+    expect(measured.box.top).toBeGreaterThanOrEqual(-1)
+    expect(measured.box.bottom).toBeLessThanOrEqual(measured.height + 1)
+    expect(measured.items.length).toBeGreaterThan(0)
+    for (const item of measured.items) {
+      expect(item.hitSelf, `菜单项「${item.label}」在 (top=${Math.round(item.top)}) 处不可命中`).toBe(true)
+    }
   })
 })

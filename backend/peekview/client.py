@@ -13,6 +13,7 @@ from typing import Any
 import requests
 
 from peekview.exceptions import NotFoundError, PeekError
+from peekview.timefmt import parse_iso
 
 RemoteEntry = namedtuple(
     "RemoteEntry",
@@ -86,7 +87,7 @@ class PeekClient:
         # Parse datetime fields
         def _parse_dt(key: str) -> datetime | None:
             v = data.get(key)
-            return datetime.fromisoformat(v) if v else None
+            return parse_iso(v) if v else None
 
         # Build URL: prefer server-returned, fallback to client construction
         url = data.get("url") or f"{self.base_url}/{slug}"

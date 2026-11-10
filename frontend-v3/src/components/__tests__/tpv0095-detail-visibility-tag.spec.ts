@@ -7,8 +7,16 @@ import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import type { Entry } from '@/types'
 
 // TPV0095 BDD-44 [SCOPE+]：detail 头部状态标签三态（team / private / public）
-// P2 §5.8 载体 = EntryDetailHeader + EntryMetaTagsBar，三态逻辑 teamId ? team 文案 : (isPublic?Public:Private)。
-// P3 红灯：现状 .status-tag 按 currentEntry.isPublic 渲染 → team entry（isPublic=false）误显 "Private" → 断言失败。
+//
+// TPV0102 显式取代登记（P2 §6.4 第 5 项，禁止静默改）：
+//   本文件原以 `wrapper.find('.status-tag')` 取出只读标签文本做三态断言。
+//   TPV0102 D8 把详情页的只读 `.status-tag` 原位**替换**为 `VisibilityMenu`（桌面 `variant="inline"`），
+//   `.status-tag` 不再承载可见性语义 → 定位改为菜单触发按钮 `[data-testid="visibility-toggle"]`，
+//   读取其可见文本（文案逐字沿用 Public / Private / 仅团队可见 · {team.name}）。
+//   三态覆盖点全部保留（team / private / public 各一条），仅换定位载体；
+//   另新增一条守卫断言：`.status-tag` 不得再承载可见性文案（防替换退化成"替换 + 并存"）。
+//   为何不能继续用 `.status-tag` 类名：`EntryDetailHeader.vue` 的 Archived / Expired 也带该类，
+//   替换后同页会出现多个 `.status-tag`，`find()` 取首个会误命中。
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -72,8 +80,6 @@ function createWrapper(entry: Entry) {
   return mount(EntryDetailHeader, {
     props: {
       entryTitle: 'X',
-      relativeTime: '2 hours ago',
-      fullTime: '2026-01-01 00:00:00 UTC',
       isExpiredButActive: false,
       isFileTreeOpen: false,
       isTocOpen: false,
@@ -88,6 +94,10 @@ function createWrapper(entry: Entry) {
       authState: 'authenticated',
       currentEntry: entry,
       slug: 'x',
+      teams: [],
+      teamsFailed: false,
+      isOwner: true,
+      variant: 'inline',
     },
     global: {
       stubs: {
@@ -108,9 +118,9 @@ function createWrapper(entry: Entry) {
   })
 }
 
-function statusTagText(wrapper: ReturnType<typeof createWrapper>): string {
-  const tag = wrapper.find('.status-tag')
-  return tag.exists() ? tag.text().trim() : ''
+function visibilityToggleText(wrapper: ReturnType<typeof createWrapper>): string {
+  const toggle = wrapper.find('[data-testid="visibility-toggle"]')
+  return toggle.exists() ? toggle.text().trim() : ''
 }
 
 describe('TPV0095 EntryDetailHeader — 状态标签三态（BDD-44）', () => {
@@ -132,7 +142,7 @@ describe('TPV0095 EntryDetailHeader — 状态标签三态（BDD-44）', () => {
         team: { slug: 'proj-a', name: 'Proj A' },
       }),
     )
-    const text = statusTagText(wrapper)
+    const text = visibilityToggleText(wrapper)
     expect(text).not.toContain('Private')
     expect(text.toLowerCase()).toContain('团队')
     expect(text).toContain('Proj A')
@@ -140,11 +150,17 @@ describe('TPV0095 EntryDetailHeader — 状态标签三态（BDD-44）', () => {
 
   it('bdd44_private_entry_still_shows_private', () => {
     const wrapper = createWrapper(makeEntry({ isPublic: false }))
-    expect(statusTagText(wrapper)).toContain('Private')
+    expect(visibilityToggleText(wrapper)).toContain('Private')
   })
 
   it('bdd44_public_entry_still_shows_public', () => {
     const wrapper = createWrapper(makeEntry({ isPublic: true }))
-    expect(statusTagText(wrapper)).toContain('Public')
+    expect(visibilityToggleText(wrapper)).toContain('Public')
+  })
+
+  it('bdd44_status_tag_no_longer_carries_visibility_semantics', () => {
+    const wrapper = createWrapper(makeEntry({ isPublic: true }))
+    expect(wrapper.find('[data-testid="visibility-toggle"]').exists()).toBe(true)
+    expect(wrapper.find('.status-tag').exists()).toBe(false)
   })
 })

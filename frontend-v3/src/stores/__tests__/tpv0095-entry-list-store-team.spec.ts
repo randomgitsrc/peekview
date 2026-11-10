@@ -3,13 +3,16 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useEntryListStore } from '@/stores/entryList'
 import type { Entry } from '@/types'
 
-// TPV0095 BDD-40：store 层 toggleVisibility 对 teamId entry 拒绝（UI 与守卫双保险）
-// P3 红灯：toggleVisibility 现无 teamId 守卫 → 对 team entry 仍调用 api 且返回 true → 断言失败。
+// TPV0095 BDD-40 原语义：store 层 toggleVisibility 对 teamId entry 拒绝（守卫）。
+// TPV0102（P2 §6.4 第 4 项，陷阱 11「替代而非叠加」）显式取代：teamId 守卫被删除，
+// 团队 entry 的可见性切换改由 `setVisibility` 走 `api.updateEntry` 正常发起请求。
+// 断言值随之翻转 —— 本文件的更新是设计变更的显式登记，不是静默改。
 
 vi.mock('@/api/client', () => ({
   api: {
     listEntries: vi.fn(),
-    toggleEntryVisibility: vi.fn().mockResolvedValue({ revokedShares: 0 }),
+    updateEntry: vi.fn(),
+    toggleEntryVisibility: vi.fn(),
     deleteEntry: vi.fn(),
   },
 }))
@@ -47,27 +50,38 @@ function makeTeamEntry(): Entry {
   }
 }
 
-describe('TPV0095 entryList store — toggleVisibility teamId 守卫', () => {
+describe('TPV0095 entryList store — teamId 守卫已被 TPV0102 显式取代', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
 
-  it('bdd40_store_toggle_rejects_team_entry_without_api_call', async () => {
+  it('bdd40_store_team_entry_now_allows_visibility_request', async () => {
+    vi.mocked(api.updateEntry).mockResolvedValue({
+      ...makeTeamEntry(),
+      isPublic: true,
+      teamId: null,
+      team: null,
+    })
     const store = useEntryListStore()
     const entry = makeTeamEntry()
     store.entries = [entry]
 
-    const result = await store.toggleVisibility(entry)
+    const result = await store.setVisibility(entry, { kind: 'public' })
 
-    expect(result).toBe(false)
+    expect(result.ok).toBe(true)
+    expect(api.updateEntry).toHaveBeenCalledWith('team-entry', { is_public: true, team_id: null })
     expect(api.toggleEntryVisibility).not.toHaveBeenCalled()
-    // 原值不被翻转（守卫后 isPublic 保持 false）
-    expect(entry.isPublic).toBe(false)
+    expect(entry.isPublic).toBe(true)
   })
 
   it('bdd40_store_toggle_keeps_working_for_non_team_private_entry', async () => {
-    vi.mocked(api.toggleEntryVisibility).mockResolvedValue({ revokedShares: 0 } as never)
+    vi.mocked(api.updateEntry).mockResolvedValue({
+      ...makeTeamEntry(),
+      isPublic: true,
+      teamId: null,
+      team: null,
+    })
     const store = useEntryListStore()
     const entry = makeTeamEntry()
     delete (entry as Partial<Entry>).teamId
@@ -76,7 +90,7 @@ describe('TPV0095 entryList store — toggleVisibility teamId 守卫', () => {
     const result = await store.toggleVisibility(entry)
 
     expect(result).toBe(true)
-    expect(api.toggleEntryVisibility).toHaveBeenCalledTimes(1)
+    expect(api.updateEntry).toHaveBeenCalledTimes(1)
     expect(entry.isPublic).toBe(true)
   })
 })

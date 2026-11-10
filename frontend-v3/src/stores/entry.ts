@@ -16,6 +16,7 @@ export function useEntryStore() {
     perPage: listStore.perPage,
     total: listStore.total,
     loadEntries: listStore.loadEntries,
+    setVisibility: listStore.setVisibility,
     toggleVisibility: listStore.toggleVisibility,
     deleteEntry: listStore.deleteEntry,
     currentEntry: detailStore.currentEntry,

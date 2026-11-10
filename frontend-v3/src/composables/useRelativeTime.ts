@@ -1,48 +1,85 @@
 import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
 
-export function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSec = Math.floor(diffMs / 1000)
-  const diffMin = Math.floor(diffSec / 60)
-  const diffHour = Math.floor(diffMin / 60)
-  const diffDay = Math.floor(diffHour / 24)
-  const diffWeek = Math.floor(diffDay / 7)
-  const diffMonth = Math.floor(diffDay / 30)
-  const diffYear = Math.floor(diffDay / 365)
+const FULL_DATE_OPTIONS = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+} as const
 
-  if (diffSec < 60) return 'just now'
-  if (diffMin < 60) return `${diffMin}m ago`
-  if (diffHour < 24) return `${diffHour}h ago`
-  if (diffDay < 7) return `${diffDay}d ago`
-  if (diffWeek < 5) return `${diffWeek}w ago`
-  if (diffMonth < 12) return `${diffMonth}mo ago`
-  return `${diffYear}y ago`
+function parseDate(dateStr: string): Date | null {
+  const date = new Date(dateStr)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatOffsetDate(date: Date, timeZoneName: 'shortOffset' | 'longOffset'): string {
+  return date.toLocaleString(undefined, { ...FULL_DATE_OPTIONS, timeZoneName })
+}
+
+export function formatRelativeTime(dateStr: string): string {
+  const date = parseDate(dateStr)
+  if (!date) return ''
+
+  const diffMs = Date.now() - date.getTime()
+  const absSec = Math.floor(Math.abs(diffMs) / 1000)
+  if (absSec < 60) return 'just now'
+
+  const absMin = Math.floor(absSec / 60)
+  const absHour = Math.floor(absMin / 60)
+  const absDay = Math.floor(absHour / 24)
+  const absWeek = Math.floor(absDay / 7)
+  const absMonth = Math.floor(absDay / 30)
+  const absYear = Math.floor(absDay / 365)
+
+  let value: string
+  if (absMin < 60) value = `${absMin}m`
+  else if (absHour < 24) value = `${absHour}h`
+  else if (absDay < 7) value = `${absDay}d`
+  else if (absWeek < 5) value = `${absWeek}w`
+  else if (absMonth < 12) value = `${absMonth}mo`
+  else value = `${absYear}y`
+
+  return diffMs < 0 ? `in ${value}` : `${value} ago`
 }
 
 export function formatFullDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleString()
+  const date = parseDate(dateStr)
+  if (!date) return '—'
+  return formatOffsetDate(date, 'shortOffset')
+}
+
+export function formatTooltip(dateStr: string): string {
+  const date = parseDate(dateStr)
+  if (!date) return 'Invalid date'
+  const relative = formatRelativeTime(dateStr)
+  const full = formatOffsetDate(date, 'longOffset')
+  return `${relative} · ${full} · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`
 }
 
 export function useRelativeTime(dateStr: Ref<string | null | undefined>) {
   const relative = ref('')
   const full = ref('')
+  const absolute = ref('')
 
   function update() {
     if (dateStr.value) {
       relative.value = formatRelativeTime(dateStr.value)
-      full.value = formatFullDate(dateStr.value)
+      full.value = formatTooltip(dateStr.value)
+      absolute.value = formatFullDate(dateStr.value)
     } else {
       relative.value = ''
       full.value = ''
+      absolute.value = ''
     }
   }
+
+  update()
 
   let timer: ReturnType<typeof setInterval> | null = null
 
   onMounted(() => {
-    update()
     timer = setInterval(update, 60_000)
   })
 
@@ -52,5 +89,5 @@ export function useRelativeTime(dateStr: Ref<string | null | undefined>) {
 
   watch(dateStr, update)
 
-  return { relative, full, update }
+  return { relative, full, absolute, update }
 }

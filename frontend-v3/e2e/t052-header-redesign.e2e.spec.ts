@@ -105,13 +105,22 @@ test.describe('T052 Entry Detail Header Redesign — Desktop', () => {
     const dropdown = page.locator('.overflow-dropdown')
     await expect(dropdown).toBeVisible()
 
-    // Owner items should include Make Private/Share/Delete
-    await expect(dropdown.locator('text=Make Private')).toBeVisible()
+    // TPV0102 显式取代（P2 §6.4 第 9 项 / 裁决 1）：overflow 菜单的 `Make Private`/`Make Public`
+    // 项与 `Currently Public`/`Currently Private` hint 已移除（动作式项无法表达 Team 态，
+    // 对 team entry 显示 Make Public 而后端会静默落回 private）。可见性入口改为头部的
+    // `VisibilityMenu`（`[data-testid="visibility-toggle"]`，variant=inline）。
+    // 本断言改为：overflow 菜单**不再**含可见性项；头部存在菜单入口。
+    // 注：同源的 `src/__tests__/t052-header-redesign.test.ts:100` 是 `OverflowMenuItem` 字面量
+    // 构造（断言 icon 为 Lucide 名称），与组件行为无关，按裁决 1 不改。
     await expect(dropdown.locator('text=Share')).toBeVisible()
     await expect(dropdown.locator('text=Delete entry')).toBeVisible()
 
-    // Each item should have hint text
-    await expect(dropdown.locator('text=Currently Public')).toBeVisible()
+    await expect(dropdown.locator('text=Make Private')).toHaveCount(0)
+    await expect(dropdown.locator('text=Make Public')).toHaveCount(0)
+    await expect(dropdown.locator('text=Currently Public')).toHaveCount(0)
+    await expect(dropdown.locator('text=Currently Private')).toHaveCount(0)
+
+    await expect(page.locator('.meta-row [data-testid="visibility-toggle"]')).toBeVisible()
 
     await page.screenshot({ path: 'docs/tasks/T052-entry-detail-header-redesign/P3-test-code/evidences/T-B07-E2E-dropdown.png' })
   })

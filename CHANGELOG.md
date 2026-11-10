@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+### ⚠️ Breaking Change
+
+- API 与 CLI `--json` 返回的 datetime 字段补 `Z`（ISO 8601 UTC 设计符）：`created_at` / `updated_at` / `expires_at` / `archived_at` / `archive_delete_at` / `revoked_at` / `starred_at` / `last_read_at` / `read_at` / `deleted_at` / `last_used_at` / `disabled_at` / `latest_created_at` 由 `2026-11-10T09:43:00` 形态变为 `2026-11-10T09:43:00Z`（管理备份 JSON 的时间字段同此形态）。原形态不带时区标记而实际存 UTC，`new Date()` 按本地时间解析，中国用户会读到早 8 小时的时刻；合规 ISO 8601 解析器无需改动，Python 3.10 的 `datetime.fromisoformat()` 是唯一例外。迁移指引见 `docs/process/upgrading.md`（TPV0102）
+
+### 变更
+
+- Explore 卡片 / 列表行 / 详情页桌面头部 / 详情页移动元信息条的时间主显从相对时间（`3h ago`）改为**绝对时间 + 时区偏移**（如 `2026/11/10 GMT+8 17:43:00`），悬停显示「相对时间 · 含完整偏移的绝对时间 · IANA 时区名」；四处共用同一组件，墙上时间格式跟随浏览器 locale（TPV0102）
+- entry 文件数按语义显隐：`0` 与 `1` 个文件不再显示文件数，仅 `2+` 显示 `N files`（此前 `1` 渲染为 `1 file`，`0` 亦会渲染）（TPV0102）
+- 可见性切换入口由 `Make Public` / `Make Private` 单按钮改为下拉菜单，并列 `Public` / `Private` / `Team ▸`（子菜单列出团队并排除当前归属团队；用户无任何团队时不渲染 Team 入口；团队列表加载失败时该项禁用并提示）：卡片、列表行、详情页桌面头部、详情页移动元信息条四处统一；升为 Public 有二次确认并清空团队归属，降级不确认；切换失败保持原状态并提示；切为 Public 吊销 share 链接时追加 `{N} share link(s) revoked` 提示；团队 entry 不再显示空占位（TPV0102）
+- 详情页头部与移动元信息条的可见性状态从只读 `.status-tag` 文案（`Public` / `Private` / 团队）改为菜单触发按钮上的当前状态标识，`.status-tag` 仅保留 `Archived` / `Expired`；详情页 overflow 菜单中的 `Make Public` / `Make Private` 项及 `Currently Public` / `Currently Private` 提示移除，入口统一收敛到可见性菜单（TPV0102）
+
+### 修复
+
+- 详情页对 0 文件 entry 显示专用空态「此 entry 无文件」，此前与「多文件未选中」的 `Select a file to view` 不可区分（TPV0102）
+
 ## [0.26.1] - 2026-10-03
 
 ### 修复

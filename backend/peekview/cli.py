@@ -38,6 +38,7 @@ from peekview.services.admin_service import AdminService
 from peekview.services.apikey_service import ApiKeyService
 from peekview.services.entry_service import EntryService
 from peekview.storage import StorageManager
+from peekview.timefmt import utc_iso_z
 
 
 def _get_backend(
@@ -375,7 +376,7 @@ def create(
                         "id": result.id,
                         "slug": result.slug,
                         "url": result.url,
-                        "created_at": result.created_at.isoformat() if result.created_at else None,
+                        "created_at": utc_iso_z(result.created_at),
                         "file_count": len(result.files),
                     },
                     indent=2,
@@ -440,8 +441,8 @@ def get(slug: str, remote_url: str | None, json_output: bool) -> None:
                             }
                             for f in entry.files
                         ],
-                        "created_at": entry.created_at.isoformat() if entry.created_at else None,
-                        "updated_at": entry.updated_at.isoformat() if entry.updated_at else None,
+                        "created_at": utc_iso_z(entry.created_at),
+                        "updated_at": utc_iso_z(entry.updated_at),
                     },
                     indent=2,
                 )
@@ -561,16 +562,12 @@ def list_entries(
                                 "created_at": (
                                     item.get("created_at")
                                     if isinstance(item, dict)
-                                    else item.created_at.isoformat()
-                                    if item.created_at
-                                    else None
+                                    else utc_iso_z(item.created_at)
                                 ),
                                 "updated_at": (
                                     item.get("updated_at")
                                     if isinstance(item, dict)
-                                    else item.updated_at.isoformat()
-                                    if item.updated_at
-                                    else None
+                                    else utc_iso_z(item.updated_at)
                                 ),
                             }
                             for item in items
@@ -2284,9 +2281,7 @@ def admin_stats(remote_url: str | None, json_output: bool) -> None:
                         "private": result.entries.private,
                         "expired": result.entries.expired,
                         "active": result.entries.active,
-                        "latest_created_at": result.entries.latest_created_at.isoformat()
-                        if result.entries.latest_created_at
-                        else None,
+                        "latest_created_at": utc_iso_z(result.entries.latest_created_at),
                     },
                     "api_keys": {
                         "total": result.api_keys.total,
@@ -2315,7 +2310,7 @@ def admin_stats(remote_url: str | None, json_output: bool) -> None:
                 click.echo(f"  Expired:    {entries.expired}")
                 click.echo(f"  Active:     {entries.active}")
                 if entries.latest_created_at:
-                    click.echo(f"  Latest:     {entries.latest_created_at.isoformat()}")
+                    click.echo(f"  Latest:     {utc_iso_z(entries.latest_created_at)}")
                 click.echo("API Keys:")
                 click.echo(f"  Total:      {api_keys.total}")
                 click.echo(f"  Expired:    {api_keys.expired}")

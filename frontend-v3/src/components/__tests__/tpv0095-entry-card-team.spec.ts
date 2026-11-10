@@ -9,6 +9,12 @@ import type { Entry } from '@/types'
 //  - entry.teamId 在 Entry 类型与组件渲染逻辑均不存在；
 //  - visibility toggle 无 data-testid="visibility-toggle"；
 //  - team entry 现仍渲染 private badge / 显示 toggle → 断言失败。
+//
+// ⚠️ bdd40_team_entry_hides_visibility_toggle_but_keeps_delete 已被 TPV0102 有意取代
+//    （P2-design §6.4 第 2 项）：团队 entry 现**有**可见性菜单（VisibilityMenu 替换原
+//    「单按钮 + 空 team-hint span」，team entry 不再被 `v-if="!entry.teamId"` 排除），
+//    断言值由 count = 0 翻转为 count = 1。原覆盖点（team entry 渲染可见性入口与否 +
+//    delete 保留）**未删除**，只翻转设计变更影响的值。
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }))
 vi.mock('vue-router', () => ({ useRouter: () => ({ push: pushMock }) }))
@@ -67,17 +73,17 @@ describe('TPV0095 EntryCard — team badge 与 toggle 守卫', () => {
     expect(classes).toContain('badge-team')
   })
 
-  it('bdd40_team_entry_hides_visibility_toggle_but_keeps_delete', () => {
+  it('bdd40_team_entry_shows_visibility_toggle_and_keeps_delete', () => {
     const wrapper = mount(EntryCard, {
       props: {
-        entry: makeEntry({ teamId: 5 }),
+        entry: makeEntry({ teamId: 5, team: { slug: 'proj-a', name: 'Proj A' } }),
         isOwner: true,
       },
       global: { stubs: { BaseTag: true } },
     })
-    // P2 §5.7：toggle 统一 testid visibility-toggle → team entry 时 count=0
-    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(0)
-    // delete 保留（仅隐藏 visibility toggle，不整组删）
+    // TPV0102 取代 TPV0095 BDD-40（P2-design §6.4 第 2 项）：team entry 现有可见性菜单入口
+    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(1)
+    // delete 保留（不被菜单替换）
     expect(wrapper.findAll('[data-action="delete"], .card-action-btn--danger')).not.toHaveLength(0)
   })
 
@@ -86,7 +92,7 @@ describe('TPV0095 EntryCard — team badge 与 toggle 守卫', () => {
       props: { entry: makeEntry({ isPublic: true }), isOwner: true },
       global: { stubs: { BaseTag: true } },
     })
-    // 非 team entry 现状也应有统一 testid 的 toggle（P2 §5.7 统一命名，供 count=0 断言基线）
-    expect(wrapper.findAll('[data-testid="visibility-toggle"]').length).toBeGreaterThanOrEqual(0)
+    // 非 team entry 同样有统一 testid 的入口（两态一致，防「一律不渲染」假绿）
+    expect(wrapper.findAll('[data-testid="visibility-toggle"]')).toHaveLength(1)
   })
 })
