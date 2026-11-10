@@ -1,7 +1,7 @@
 # PeekView — project.md（orchestrator 专属操作细节）
 
 > 本项目 orchestrator 专属的操作性事实来源，与面向所有贡献者的 AGENTS.md/CLAUDE.md 分开。
-> orchestrator 通过符号链接使用 `~/.agate/orchestrator-template.md`，本文件是唯一应编辑的项目侧文件。
+> orchestrator 通过符号链接使用 `~/.agate/current/agate/orchestrator-template.md`，本文件是唯一应编辑的项目侧文件。
 
 ## agate_root / project_root
 
@@ -46,7 +46,7 @@ project_root: /home/kity/oclab/peekview
 - **`make debug-verify-isolation` 依赖生产 :8080 在线**——不在线就用 `sqlite3 /tmp/peekview-debug/peekview.db "SELECT COUNT(*) FROM entries"` 手动验证
 - **`npm run test` 是 watch 模式会挂住 agent，禁止使用**；用 `make test-frontend`
 - 环境自检：启动 Task 前必须跑 `docs/process/env-check-protocol.md`（5 项全 PASS 才进 P1）
-- 预存失败登记：P5 发现预存失败时拷贝 `~/.agate/assets/templates/known-failures-template.md` 到 `agate-workspace/tasks/{Txxx}/known-failures.md`
+- 预存失败登记：P5 发现预存失败时拷贝 `~/.agate/current/agate/assets/templates/known-failures-template.md` 到 `agate-workspace/tasks/{Txxx}/known-failures.md`
 
 ## 用户工具（提交/推送/合流）—— 优先用，勿自造流程
 

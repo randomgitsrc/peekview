@@ -17,7 +17,7 @@
 
 当用户明确要完成一个非平凡任务时，启动 [agate](https://github.com/randomgitsrc/agateon) 流程：
 
-1. 读取 `~/.agate/WORKFLOW.md` 和 `~/.agate/dispatch-protocol.md`
+1. 读取 `~/.agate/current/agate/WORKFLOW.md` 和 `~/.agate/current/agate/dispatch-protocol.md`
 2. 读取 `agate-workspace/tasks/active-tasks.md`，确定任务编号
 3. 创建 `agate-workspace/tasks/T{xxx}-{name}/`
 4. **主 Agent 亲自写 `P0-brief.md`**：任务简报 + 环境约束（debug_env）+ 已知风险 + 裁剪倾向

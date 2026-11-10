@@ -31,7 +31,7 @@
 你是 P{N} 阶段的 {角色名} 子 Agent。
 
 ## 你的角色定义
-读取并遵循：~/.agate/assets/execution-roles/{role}.md
+读取并遵循：~/.agate/current/agate/assets/execution-roles/{role}.md
 
 ## 项目约定
 - {project_root}/AGENTS.md

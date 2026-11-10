@@ -224,8 +224,8 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 
 - 完整配置和规范：`CLAUDE.md`
 - 前端设计系统：`DESIGN.md`
-- 开发流程：`~/.agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agateon)）
-- 预存失败登记模板：`~/.agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `agate-workspace/tasks/{TPVxxxx}/known-failures.md`）
+- 开发流程：`~/.agate/current/agate/WORKFLOW.md`（P0-P8，需求基线+验收闭环，[agate](https://github.com/randomgitsrc/agateon)）
+- 预存失败登记模板：`~/.agate/current/agate/assets/templates/known-failures-template.md`（P5 发现预存失败时拷贝到 `agate-workspace/tasks/{TPVxxxx}/known-failures.md`）
 - 调试流程：`docs/process/debug-workflow.md`
 - 发布流程：`docs/process/release.md`
 - 升级指南：`docs/process/upgrading.md`（破坏性变更 / 升级顺序，按版本追加）
