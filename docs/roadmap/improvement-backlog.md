@@ -62,7 +62,9 @@
 | 53 | 净化正则双实现漂移（DEBT0004：后端 purify.py + MCP purify.ts 兜底） | 代码质量 | 🔵 长期 | ⬜ roadmap（自然收敛：后端统一支持 ?purify= 后移除 MCP 兜底） |
 | 54 | agate BDD 补「测试副作用/环境还原」gate（DEBT0008） | 流程 | 🔵 长期 | ⬜ roadmap（本仓侧 afterEach 清理已落地；剩余为 agate 协议层，需 agateon 侧排期） |
 | 55 | P1 补「人工体验路径」验收要求（DEBT0009：seed 后页面应有内容类隐性验收项） | 流程 | 🔵 长期 | ⬜ roadmap（本仓侧 seed team 已落地；剩余为 P1 dispatch 模板层，需 agateon 侧排期） |
-| 56 | 全屏模式链接 `/{slug}/f`（分享场景直入锁定纯内容视图） | 产品/分享 | 🟠 近期 | 🔄 TPV0099 |
+| 56 | 全屏模式链接 `/{slug}/f`（分享场景直入锁定纯内容视图） | 产品/分享 | 🟠 近期 | ✅ v0.25.0（TPV0099） |
+| 57 | 主文件语义：多文件 entry 的"门面文件"可指定且持久化（README 优先 → `is_primary` 字段 + MCP `primary_path`） | 产品/数据模型 | 🟡 中期 | ⬜ 待排期（2026-11-10 讨论，见详情节） |
+| 58 | `/{slug}/f` 多文件时无法指定展示文件（`/f?firstFileId=` + 修清 query 坑） | 产品/URL 契约 | 🟡 中期 | ⬜ 待排期（动已发布 URL 契约，需评估兼容性） |
 | 16 | SCOPE+ 影响范围决策矩阵 | 流程 | 🔵 长期 | 待实战验证 |
 | 17 | BDD 验收条件可量化门槛 | 流程 | 🔵 长期 | 待实战验证 |
 | 18 | P7 一致性检查覆盖度门槛 | 流程 | 🔵 长期 | 待实战验证 |
@@ -399,6 +401,57 @@
 - 后端零改动（SPA catch-all 已放行）；`/{slug}/f?share=token` 组合天然可用
 
 **状态**：✅ 已完成（TPV0099，2026-09-28；实现 = 路由 `meta.zen='locked'` + `useZenMode` computed 派生 + 锁死短路 + 全屏公告文案；待 P8 bump 版本）
+
+---
+
+### 🟡 57. 主文件语义：多文件 entry 的"门面文件"可指定且持久化
+
+**来源**：2026-11-10 用户提问「MCP `publish_files` 多个文件时，默认打开哪个文件？能否指定第一个？」
+
+**问题**：entry 没有"主文件"概念，`files[0]` 由**发布时传入顺序**决定。
+
+实测链路：
+
+| 环节 | 实现 | 结论 |
+|---|---|---|
+| 卡片/列表点击 | `props.entry.files?.[0]?.id` → `?firstFileId=<id>`（`EntryCard.vue:148`） | 取列表第一个 |
+| 详情页消费 | `route.query.firstFileId` → `loadEntry(slug, fileId)` | 支持指定，但**只能由 URL 带** |
+| store 兜底 | `fileId != null ? files.find(...) ?? files[0] : files[0]` | 无效 id 也回落第一个 |
+| 后端排序 | `select(File).where(entry_id == ...)` **无 `order_by`** | 顺序 = 插入顺序（SQLite rowid） |
+| File 表 | **无排序/主文件字段**（`path/filename/language/is_binary/size/sha256/line_count`） | 无法表达"主文件" |
+| MCP `publish_files` | `for (const inputPath of params.paths)` | 顺序由调用方 `paths` 参数决定 |
+
+**影响**：含 `README.md` + 源码的 entry，若 README 不在 `paths` 首位，点开卡片看到的是某个源码文件；传目录时顺序取决于遍历实现，**用户无法控制"门面"**。
+
+**方案（两阶段，可只做 A）**：
+
+- **A. 零 schema 变更（建议先做）**：前端 `navigateToEntry` 不再盲取 `files[0]`，按优先级挑：`README.md` > `index.md` > `main.*` > `files[0]`。纯前端、零风险
+- **B. 真正的"主文件"（根治）**：`File` 加 `is_primary`（或 `sort_order`）+ `publish_files` 增加 `primary_path` 参数 + 创建/更新时写入。需 schema 迁移 + API + MCP 契约变更
+
+**状态**：⬜ 待排期（2026-11-10 讨论，用户决定留后处理）
+
+---
+
+### 🟡 58. `/{slug}/f` 多文件时无法指定展示文件
+
+**来源**：2026-11-10 用户指出「/f 页面只能显示 entry 的一个默认文件，无法指定文件，这是缺陷」
+
+**问题**：`/{slug}/f` 路由**只携带 slug**，不带 `firstFileId`；而详情页选文件的唯一入口是 `route.query.firstFileId`。因此 `/f` 打开多文件 entry 时：
+
+- `firstFileId` 为 `undefined` → 落到 `entry.files[0]`
+- **zen 锁死模式下文件树被隐藏**（`.zen-mode .file-sidebar { display:none }`）→ **完全没有任何途径切换文件**
+
+**与产品意图的冲突**：TPV0099 定的是"全屏链接打开即看到主体内容"，但对多文件 entry，"主体内容"实际是"碰巧排第一的那个文件"（与 #57 同源）。
+
+**方案（三件，建议全做）**：
+
+1. **让 `/f` 支持 query**：`/{slug}/f?firstFileId=123`。`?share=` 已证明 query 与 mode 正交可用，`firstFileId` 同理
+2. **修掉"清 query"的坑**：`EntryDetailView.vue:215` 的 `if (firstFileId || shareToken) router.replace({ path: route.path, query: {} })` 会把 `firstFileId` 从 URL 抹掉 → 接收者刷新页面即回到第一个文件。不改这行，方案 1 在刷新后失效
+3. **不给切文件 UI**（推荐）：链接可指定（分享者决定展示哪个），页面不给切换器（接收者不被打扰），维持"完全锁死"承诺
+
+**风险**：`/{slug}/f` 是 v0.25.0 **已上线的公开 URL 契约**，改动需评估兼容性（新增 query 参数属向后兼容，但需确认分享链接生成端是否要同步）。
+
+**状态**：⬜ 待排期（2026-11-10 讨论，用户决定留后处理）
 
 ---
 
