@@ -25,12 +25,62 @@ Explore 页卡片模式与列表模式的四项用户体验缺陷修正，四项
 
 ## 已确认的设计决策
 
-### 决策 1：时间显示（用户选定"靠浏览器"）
+### 决策 1：时间显示 + 序列化契约（已实测定案）
 
-- **不引入服务端时区配置**——按当前设备时区显示"合理时间"即可
-- 但**必须带时区名**，否则歧义仍在：`toLocaleString(undefined, { timeZoneName: 'short' })` → `2026/11/10 17:43:00 GMT+8`
-- 悬停显示：`相对时间 · 绝对时间`，例如 `3h ago · 2026/11/10 17:43:00 GMT+8`
-- **前置验证（P1 必做）**：后端存 naive UTC，前端 `new Date(dateStr)` 在字符串**不带 `Z`/`+00:00`** 时会被当作本地时间解析，导致整体偏移。P1 必须实查 API 返回的时间字符串形态，若不带时区标记需在任务内一并修正（否则改了显示格式会引入 8 小时偏移）
+#### 1.1 问题定性（实测，非推断）
+
+| 事实 | 实测证据 |
+|---|---|
+| DB 存 naive UTC | 25 个列均 `Column(DateTime(timezone=False))`（TPV0101 刻意为之） |
+| **SQLite 下 `timezone=True/False` 行为完全一致** | 两者都读出 naive、库里都存 `2026-11-10 09:43:00.000000`（SQLite 无原生时区类型）→ **改列定义无效** |
+| 写入侧统一 UTC | 全仓 34 处 `datetime.now(timezone.utc)` + 全部列 `default_factory=now_utc`；**无 `datetime.now()` 裸调用** |
+| **库里 naive 值精确等于 UTC** | 写入 aware UTC → 读回 naive → 补 `tzinfo=utc` 后与写入前**差值 0.000000 秒**；误当本地时间则差 8 小时 |
+| Pydantic 序列化差异 | naive → `"2026-11-10T09:43:00"`（无 Z）；aware → `"2026-11-10T09:43:00Z"` |
+
+**结论**：数据本身正确（是 UTC），**缺陷仅在表示层未声明时区**。前端 `new Date("2026-11-10T09:43:00")` 会按本地时间解析 → 中国用户看到的时间早 8 小时。现状因显示相对时间（`3h ago`）而未暴露，**改成绝对时间会立刻暴露**。
+
+#### 1.2 方案：响应层补时区标记（不做 DB 迁移）
+
+**已排除**：
+
+| 方案 | 排除理由（实测/结构） |
+|---|---|
+| 改 DB 列为 `DateTime(timezone=True)` | ① SQLite 下与 `False` **行为完全一致**，无效 ② 会推翻 TPV0101（25 列 + 依赖守卫 + 静态守卫测试） ③ SQLite 无时区类型，改了对存量数据无实际效果 |
+| 仅前端补 `Z` | 每个消费方（前端 / MCP / CLI / 第三方）都得各自记得，且 MCP 的 `new Date(entry.created_at)` 现状就是错的 |
+| 引入服务端时区配置 | 用户已明确选择"靠浏览器时区"，不需要 |
+
+**采纳：在叶响应模型加 `field_serializer`**（已实测不污染表模型）：
+
+```python
+@field_serializer('created_at', 'updated_at', 'expires_at', 'archived_at', 'archive_delete_at')
+def _ser_utc(self, v: datetime | None) -> str | None:
+    if v is None: return None
+    return (v.replace(tzinfo=timezone.utc) if v.tzinfo is None else v).isoformat().replace('+00:00', 'Z')
+```
+
+**关键陷阱（已验证）**：
+- `Entry` 继承 `EntryBase`，而 `EntryBase` 含 3 个 datetime 字段 → **不能改 `EntryBase`**，否则污染表模型
+- 必须加在**叶响应模型**：`EntryResponse` / `EntryListItem` / `EntryRawResponse` / `CreateEntryResponse` / `UserResponse` / `ApiKeyResponse` / `ApiKeyCreateResponse` / `ShareResponse` / `StarResponse` / `StarItem` / `TombstoneResponse` / `ReadStatsResponse` / `ReadEventResponse` / `CountdownInfo` / `EntryStats`（共 15 个，约 30 个字段）
+- 实测：叶模型加 serializer 后，表模型 `model_dump` 仍输出无 Z、列类型仍 `timezone=False` ✅
+
+**建议抽公共 Mixin**（如 `UtcSerializeMixin`）避免 15 处重复；P2 定具体形态。
+
+#### 1.3 前端显示（用户选定"靠浏览器时区"）
+
+- 主显**绝对时间**，悬停显示 `相对时间 · 绝对时间`
+- 格式：`toLocaleString(undefined, { timeZoneName: 'shortOffset' })`
+- **为什么用 `shortOffset` 而不是 `short`**（实测）：`short` 在不同时区输出形态不一致——`Asia/Shanghai` → `GMT+8`、`America/New_York` → `EST`、`UTC` → `UTC`、`Europe/London` → `GMT`；其中 **`EST`/`CST` 一类缩写有歧义**（EST 也可能是澳大利亚东部时间）。`shortOffset` 始终输出 `GMT±N` 形态，无歧义
+- 预期输出：`2026/11/10 17:43:00 GMT+8`
+
+#### 1.4 消费方影响（已盘点）
+
+| 消费方 | 现状 | 补 Z 后 |
+|---|---|---|
+| 前端 | `new Date()` 按本地解析（错 8h） | 正确 ✅ |
+| MCP | `new Date(entry.created_at)` 同错 | 变正确 ✅ |
+| CLI | `.isoformat()` 输出无 Z | 变为 `+00:00`（注意：Python `isoformat()` 不用 `Z`）→ 若要与 API 一致需 `.replace('+00:00','Z')` |
+
+**P1 需确认**：CLI 输出形态变化是否属可接受的可见变更（影响 `--json` 消费方）。
 
 ### 决策 2：文件数显隐
 
@@ -103,7 +153,10 @@ fileCount >= 2  → 显示 "N files"
 
 ## 验收基线（BDD 倾向，P1 细化）
 
-1. Given 任意 entry When 看卡片/列表的时间 Then 显示绝对时间且**含时区名**（如 `GMT+8`），悬停同时出现相对时间
+1. Given 任意 entry When 看卡片/列表的时间 Then 显示绝对时间且**含 `GMT±N` 形态时区标识**，悬停同时出现相对时间
+1b. Given 任意 API 返回的时间字段（`created_at`/`updated_at`/`expires_at` 等）When 检查响应 JSON Then 值**以 `Z` 结尾**（naive UTC 被显式标注）
+1c. Given 一个已知 UTC 时刻的 entry When 在 `Asia/Shanghai` 设备查看 Then 显示为该时刻 +8 小时（**非**原值），验证无 8 小时偏移
+1d. Given 表模型 `Entry` When `model_dump()` Then 时间**不带 `Z`**（表模型不被响应层 serializer 污染）
 2. Given 一个含 1 个文件的 entry When 看卡片/列表 Then **不显示** `1 file`
 3. Given 一个含 3 个文件的 entry When 看卡片/列表 Then 显示 `3 files`
 4. Given 一个 0 文件 entry When 打开详情页 Then 正文区显示空态提示
@@ -118,7 +171,9 @@ fileCount >= 2  → 显示 "N files"
 
 ## 已知风险
 
-- **时区解析坑**（决策 1 前置验证）——最高风险项，可能导致所有时间显示偏移
+- ~~时区解析坑~~ **已实测排除**：库里 naive 值经验证精确等于 UTC（差值 0.000000s），响应层补 `Z` 语义正确
+- **改错层的风险**：`EntryBase` 被表模型 `Entry` 继承，serializer 必须加在**叶响应模型**（15 个），加错会污染表模型
+- **CLI 输出形态变化**：`.isoformat()` 补时区后变为 `+00:00`（Python 不用 `Z`），可能影响 `--json` 消费方，P1 需确认
 - **三处复用**：详情页此前无编辑入口，新增菜单会改变详情页交互密度，需视觉确认
 - **`EntryCard`/`EntryListRow` 重复逻辑**若一并重构，改动面会扩大（可拆到 P7 或独立任务）
 - 团队子菜单在团队很多时的可用性（用户已接受"一律子菜单"，但 >15 个团队时体验需实测）
