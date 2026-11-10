@@ -1,0 +1,19 @@
+phase: P0
+task_id: TPV0102
+task_name: explore-card-list-ux
+created: 2026-11-10
+updated: '2026-11-10T12:00:00Z'
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: 2026-11-10 12:00:00+00:00
+  note: '立项：Explore 卡片/列表四项 UX 修正——①时间改绝对时间且带时区名（靠浏览器时区，悬停双显）②文件数 0/1 隐藏、2+
+    显示 ③可见性单按钮改下拉（Public/Private/Team 子菜单，三处复用 VisibilityMenu，升 Public 二次确认）④0 文件详情页空态。用户可见改动
+    → CHANGELOG + P8 bump。risk=medium（含权限边界与三处复用，且时间项有 naive-UTC 解析偏移风险）。明确排除主文件语义（roadmap #57）与
+    /f 多文件指定（roadmap #58）'
+- phase: P0
+  action: pending-start
+  ts: '2026-11-10T12:00:00Z'
+  note: P0 完成，等用户「开工」指令进 P1
