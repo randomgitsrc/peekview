@@ -26,7 +26,6 @@ import TimeDisplay from '@/components/TimeDisplay.vue'
 const KNOWN_UTC = '2026-11-10T09:43:00Z'
 const SHORT_OFFSET = /GMT[+-]\d/
 const FULL_OFFSET = /GMT[+-]\d{2}:\d{2}/
-const FOUR_DIGIT_YEAR = /\d{4}/
 
 function mountDisplay(dateStr = KNOWN_UTC) {
   return mount(TimeDisplay, {
@@ -41,13 +40,13 @@ describe('BDD-01: TimeDisplay 主显为绝对时间', () => {
     expect(wrapper.find('[data-testid="time-display"]').exists()).toBe(true)
   })
 
-  it('BDD-01: 主显文本含 GMT±N 与 4 位年份', () => {
+  it('BDD-01: 主显文本与五字段参考输出逐字符相等（无时区偏移、无秒）', () => {
     const wrapper = mountDisplay()
     const main = wrapper.find('.time-display__main')
     expect(main.exists()).toBe(true)
-    const text = main.text()
-    expect(text).toMatch(SHORT_OFFSET)
-    expect(text).toMatch(FOUR_DIGIT_YEAR)
+    const FIVE = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' } as const
+    expect(main.text()).toBe(new Date(KNOWN_UTC).toLocaleString(undefined, FIVE))
+    expect(main.text()).not.toMatch(SHORT_OFFSET)
   })
 
   it('BDD-01: 主显不含相对时间形态（不出现 ago / just now）', () => {

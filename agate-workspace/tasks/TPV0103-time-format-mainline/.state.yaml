@@ -1,8 +1,8 @@
-phase: P1
+phase: PAUSED
 task_id: TPV0103
 task_name: time-format-mainline
 created: 2026-11-11
-updated: '2026-11-11T10:30:00Z'
+updated: '2026-11-11T15:10:00Z'
 judge:
   enabled: true
 history:
@@ -36,3 +36,21 @@ history:
     check-gate P1 exit 2。**本阶段主 Agent 三次判断错误均由 analyst/评审纠正**：正则判据、long 三变体（实测过却忘）、
     hour12 方向（测了 true 却去纠正 false 的正确报告）。**关键交付**：BDD-01 用「与参考格式化输出逐字符相等」+ 两侧
     显式同源；BDD-04 是 hour12 错误的唯一守护点（BDD-01 抓不全，已如实声明）；验收口径写入「TZ=UTC 下 vitest+e2e 全绿」'
+- phase: PAUSED
+  action: aborted-to-hotfix
+  ts: '2026-11-11T15:10:00Z'
+  note: '**中止 agate 流程，改直接 hotfix 交付**（用户在第 4 小时提出质疑，主 Agent 判定流程与任务规模严重失配）。
+    实测数据：生产代码改动约 3 行、P1 阶段耗时约 3 小时、P1 产物体量 4702 行 markdown / 7 文件、四轮评审（3 次打回）；
+    中止后实际交付约 30 分钟。**根因三层**：① agate 的 hotfix 判据（≤3 行 + 现成测试覆盖）不设中间档——本次测试需改
+    （8 处断言反转）即判"不满足 hotfix"→ 进 P0-P8 全流程 ② 主 Agent 把"判据严谨性"当成目的本身，把"P3 写测试的注意
+    事项"升级成"需求基线核心议题"（三轮评审循环）③ 深层：主 Agent 三次给出未经验证的结论（正则判据 / long 三变体在
+    同一次推理里前后矛盾 / hour12 方向），**流程成本真正来源是结论不可靠需三轮评审兜底，不是 agate 要求严**。
+    **保留 P0/P1 产出**（判据演进记录对同类任务有参考价值）；P2 及之后中止。实际交付见 CHANGELOG [Unreleased] + commit。
+    完整复盘见 retrospective.md（含 5 条可复用硬约束沉淀）'
+- phase: PAUSED
+  action: paused-by-design
+  ts: '2026-11-11T15:20:00Z'
+  note: '**本任务以 PAUSED 终态封存（非 agate 完整走完）**。原因：改动已按 hotfix 直接交付并验证（见 CHANGELOG
+    [Unreleased] + commit + retrospective.md），但 agate 状态机不允许从 P1 直接转 DONE（要求前序为 READY/P8），
+    而走 READY 需要补 P2-P8 全套仪式——那正是本次被判定为失配的流程。故用 PAUSED 如实记录"中止"，不伪造完成态。
+    **后续同类任务若需合规终态**：应按「轻量流程」交付，或先补 agate 的中间档机制。'

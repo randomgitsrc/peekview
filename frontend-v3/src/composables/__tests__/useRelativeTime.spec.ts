@@ -37,7 +37,6 @@ const RELATIVE_SHAPE = /^(just now|\d+(m|h|d|w|mo|y) ago|in \d+(m|h|d|w|mo|y))$/
 const FULL_OFFSET = /GMT[+-]\d{2}:\d{2}/
 /** 短偏移形态（BDD-01：`GMT±N`，shortOffset） */
 const SHORT_OFFSET = /GMT[+-]\d/
-const FOUR_DIGIT_YEAR = /\d{4}/
 /** 当前运行时 IANA 时区名（BDD-02 Then ③ 的判据；UTC 下为 "UTC"，无斜杠） */
 const RUNTIME_TZ = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
@@ -49,10 +48,11 @@ afterEach(() => {
 })
 
 describe('BDD-01: 主显绝对时间（formatFullDate）', () => {
-  it('BDD-01: formatFullDate 含 GMT±N 与 4 位年份', () => {
-    const text = formatFullDate(KNOWN_UTC)
-    expect(text).toMatch(SHORT_OFFSET)
-    expect(text).toMatch(FOUR_DIGIT_YEAR)
+  it('BDD-01: formatFullDate 与五字段参考输出逐字符相等（无时区偏移、无秒）', () => {
+    const FIVE = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' } as const
+    const expected = new Date(KNOWN_UTC).toLocaleString(undefined, FIVE)
+    expect(formatFullDate(KNOWN_UTC)).toBe(expected)
+    expect(formatFullDate(KNOWN_UTC)).not.toMatch(SHORT_OFFSET)
   })
 
   it('BDD-01: formatFullDate 主显不是相对时间形态', () => {

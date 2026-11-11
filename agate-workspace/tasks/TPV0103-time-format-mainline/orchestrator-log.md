@@ -109,3 +109,12 @@
   **其中三次是主 Agent 的判断错误**：① 正则判据是我提的 ② `long` 三个变体我实测过却在结论时忘了 ③ hour12 方向我测了 `hour12:true` 却拿它去"纠正" analyst 关于 `hour12:false` 的正确报告
 - SUBAGENT OK(P1 全流程): analyst 三轮修订（rev1/rev2/rev3）+ requirements-review 四轮（3 次 needs-revision → 终审 approved）。**analyst 主动纠正主 Agent 3 次**（正则假 FAIL / short 段数是切片外推 / hour12 方向），主 Agent 纠正 analyst 2 次（数字段数 7/8→6/7、`互不重叠`表述——但后者我自己的替代说法也是错的）
 - NEXT: commit P1 → 写 phase: P2 → 派 architect
+- SUBAGENT OK(P2): architect 产出 `P2-design.md`（520 行，`candidate_count: 1`，design_trivial 单候选）。核心：拆常量使主显**物理上不传** `timeZoneName`/`second`；19 断言落点反转契约；`TZ=UTC` 双门禁固化
+- **architect 报告 3 项，主 Agent 全部独立复验**：
+  - **A（P5 后端门禁取舍）**：`make test-quick` 有 1 个环境性预存失败（`test_cli_remote::test_config_set_remote_api_key`，沙箱 `~/.peekview/` 只读 Errno 30）。主 Agent 单跑复现 ✅。**裁决：采纳 architect 的定向做法**（`P5_backend` = `pytest tests/test_utc_serialization.py`）——依据：① P1 的 **BDD-10⑤ 只要求该文件全绿**，不要求全量后端 ② 主 Agent 实测该文件 **20 passed / exit 0**，比全量跑更干净（全量每次都受沙箱只读干扰，反而制造噪音）
+  - **B（P1 未覆盖的陷阱，已验证）**：`make debug-test` 的 `e2e-safety-check.sh` **Check 6** 会检测 `frontend-v3/src` 是否比 `backend/peekview/static/index.html` 新 → **新则直接 FATAL exit 1**（`scripts/e2e-safety-check.sh:20-22` 确认 `find -newer`）。即 **P4 改完 `useRelativeTime.ts` 后必须先 `make build-frontend-fast` 才能跑 E2E**。已记入 P4 派发必读项
+  - **C（P1 两个数据点独立复现一致）**：`hour12:false` **4/5 locale 逃逸**（主 Agent 复验 ✅）；`zh-CN` 与 `ja-JP` 五字段输出相同 → 对照必须用 `sv-SE` vs `en-US`
+- **FACT(主 Agent 验证 gate_commands 判据可行性)**: `P5_fitness_dead_assertions` 要求 `SHORT_OFFSET`/`GMT_OFFSET`/`FOUR_DIGIT_YEAR` 全仓计数归零。**主 Agent 实测：`grep -e SHORT_OFFSET` 大小写敏感，生产代码的 `'shortOffset'`（小写驼峰字符串）不被命中**（实测 0 命中）→ 该判据不会误伤生产代码，**判据成立**。当前分布：`SHORT_OFFSET` 4（2 个测试文件）/ `GMT_OFFSET` 6 / `FOUR_DIGIT_YEAR` 8 / `FULL_OFFSET` 8（tooltip 侧，须保留 ≥5）
+- FACT(P2 门禁): `check-frontmatter` exit 0；`check-gate P2` exit 1 **唯一原因** `P2-review.md 不存在`（预期）；RECONCILE 0 mismatches；`gate_commands` 10 条命令经 `agate-read-p5-commands.py` 全部可解析（含 `P5_tz_utc` / `P5_e2e_tz_utc`）
+- DECISION(C8 映射): P1 `domains: [frontend]` → 触发 **plan-design-review**（无 backend 域，不派 plan-eng-review）。单评审角色 → **直接产出 `P2-review.md`，无需组长汇总**
+- NEXT: 写 `P2-dispatch-context-plan-design-review.md` → 注入 → 派发

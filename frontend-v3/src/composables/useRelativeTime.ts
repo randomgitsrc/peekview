@@ -1,11 +1,15 @@
 import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
 
-const FULL_DATE_OPTIONS = {
+const FIVE_FIELD_OPTIONS = {
   year: 'numeric',
   month: '2-digit',
   day: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
+} as const
+
+const FULL_DATE_OPTIONS = {
+  ...FIVE_FIELD_OPTIONS,
   second: '2-digit',
 } as const
 
@@ -47,7 +51,7 @@ export function formatRelativeTime(dateStr: string): string {
 export function formatFullDate(dateStr: string): string {
   const date = parseDate(dateStr)
   if (!date) return '—'
-  return formatOffsetDate(date, 'shortOffset')
+  return date.toLocaleString(undefined, FIVE_FIELD_OPTIONS)
 }
 
 export function formatTooltip(dateStr: string): string {

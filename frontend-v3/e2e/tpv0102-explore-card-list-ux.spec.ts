@@ -44,7 +44,6 @@ const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 /** 形态判据（BDD-01/02/03/26 共用，不绑具体时区） */
 const GMT_OFFSET = /GMT[+-]\d/
 const FULL_OFFSET = /GMT[+-]\d{2}:\d{2}/
-const FOUR_DIGIT_YEAR = /\d{4}/
 const RELATIVE_SHAPE = /just now|\d+(m|h|d|w|mo|y) ago|in \d+(m|h|d|w|mo|y)/
 const ANY_FILE_COUNT = /\d+ files?/
 
@@ -246,26 +245,28 @@ async function gotoExplore(page: Page): Promise<void> {
 // ============================================================
 
 test.describe('TPV0102 时间显示基础形态（BDD-01/02）', () => {
-  test('bdd01_card_and_list_show_absolute_time_with_offset', async ({ page }) => {
+  test('bdd01_card_and_list_show_absolute_time_without_offset', async ({ page }) => {
     await login(page)
     await gotoExplore(page)
+
+    // 主显：绝对时间、不含时区偏移、不含秒（TPV0103 反转 TPV0102 的「必须含 GMT±N」）
+    const assertMainline = (text: string) => {
+      expect(text).not.toMatch(GMT_OFFSET)
+      expect(text).not.toMatch(/\d{2}:\d{2}:\d{2}/)
+      expect(text).toMatch(/\d{2}:\d{2}/)
+      expect(text).not.toMatch(/ago|just now/)
+    }
 
     // 卡片模式（断言限定在主显节点，不含内部 tooltip —— 见 SEL.timeDisplayMain 注释）
     const cardTime = page.locator(`.entry-card ${SEL.timeDisplayMain}`).first()
     await expect(cardTime).toBeVisible({ timeout: 20000 })
-    const cardText = (await cardTime.textContent())?.trim() ?? ''
-    expect(cardText).toMatch(GMT_OFFSET)
-    expect(cardText).toMatch(FOUR_DIGIT_YEAR)
-    expect(cardText).not.toMatch(/ago|just now/)
+    assertMainline((await cardTime.textContent())?.trim() ?? '')
 
     // 列表模式
     await switchToListView(page)
     const rowTime = page.locator(`.entry-list-row ${SEL.timeDisplayMain}`).first()
     await expect(rowTime).toBeVisible({ timeout: 15000 })
-    const rowText = (await rowTime.textContent())?.trim() ?? ''
-    expect(rowText).toMatch(GMT_OFFSET)
-    expect(rowText).toMatch(FOUR_DIGIT_YEAR)
-    expect(rowText).not.toMatch(/ago|just now/)
+    assertMainline((await rowTime.textContent())?.trim() ?? '')
   })
 
   test('bdd02_hover_tooltip_shows_relative_absolute_and_iana', async ({ page }) => {
@@ -376,26 +377,26 @@ test.describe('TPV0102 时区固定（BDD-04）', () => {
     const time = card.locator(SEL.timeDisplay).first()
     await expect(time).toBeVisible({ timeout: 20000 })
 
-    // 主显必须是 GMT+8（Asia/Shanghai 无夏令时）且墙上时间 = 该 entry 的 UTC 时刻 + 8h
+    // 主显：无时区偏移、无秒；墙上时间 = 该 entry 的 UTC 时刻 + 8h（Asia/Shanghai 无夏令时）
     const mainText = (await time.locator('.time-display__main').textContent())?.trim() ?? ''
-    expect(mainText).toContain('GMT+8')
+    expect(mainText).not.toContain('GMT+8')
+    expect(mainText).not.toMatch(/\d{2}:\d{2}:\d{2}/)
 
     const entryJson = await getEntryJson(request, token, slug)
     const iso = entryJson.created_at as string | undefined
     expect(iso, '该 entry 未返回 created_at').toBeTruthy()
 
     const expected = await page.evaluate((raw: string) => {
-      // 在浏览器内（context 已固定为 Asia/Shanghai）求 UTC 时刻的 +8h 墙上时间 HH:MM:SS
+      // 在浏览器内（context 已固定为 Asia/Shanghai）求 UTC 时刻的 +8h 墙上时间 HH:MM
       const date = new Date(raw.replace(' ', 'T').replace(/Z?$/, 'Z'))
       const parts = new Intl.DateTimeFormat('zh-CN', {
         timeZone: 'Asia/Shanghai',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hour12: false,
       }).formatToParts(date)
       const pick = (type: string) => parts.find(p => p.type === type)?.value ?? ''
-      return `${pick('hour')}:${pick('minute')}:${pick('second')}`
+      return `${pick('hour')}:${pick('minute')}`
     }, iso)
 
     expect(mainText).toContain(expected)
@@ -421,9 +422,10 @@ test.describe('TPV0102 详情页（BDD-03/23/25）', () => {
     const scope = isMobile ? page.locator(SEL.metaTagsBar) : page.locator('.meta-row')
     const detailTime = scope.locator(SEL.timeDisplay).first()
     await expect(detailTime).toBeVisible({ timeout: 15000 })
-    const text = (await detailTime.textContent())?.trim() ?? ''
-    expect(text).toMatch(GMT_OFFSET)
-    expect(text).toMatch(FOUR_DIGIT_YEAR)
+    // 主显断言必须限定在 .time-display__main：根节点 textContent 含内部 tooltip，而 tooltip 本就含 GMT+08:00
+    const mainText = (await detailTime.locator(SEL.timeDisplayMain).textContent())?.trim() ?? ''
+    expect(mainText).not.toMatch(GMT_OFFSET)
+    expect(mainText).not.toMatch(/\d{2}:\d{2}:\d{2}/)
 
     // 悬停提示同时含相对时间与绝对时间
     await detailTime.hover()
@@ -431,11 +433,13 @@ test.describe('TPV0102 详情页（BDD-03/23/25）', () => {
     expect(tooltipText).toMatch(RELATIVE_SHAPE)
     expect(tooltipText).toMatch(FULL_OFFSET)
 
-    // 三处规则一致：Explore 列表侧的主显形态相同
+    // 三处规则一致：Explore 列表侧的主显形态相同（无偏移、无秒）
     await gotoExplore(page)
-    const listTime = page.locator(SEL.timeDisplay).first()
+    const listTime = page.locator(SEL.timeDisplayMain).first()
     await expect(listTime).toBeVisible({ timeout: 20000 })
-    expect((await listTime.textContent()) ?? '').toMatch(GMT_OFFSET)
+    const listText = (await listTime.textContent())?.trim() ?? ''
+    expect(listText).not.toMatch(GMT_OFFSET)
+    expect(listText).not.toMatch(/\d{2}:\d{2}:\d{2}/)
   })
 
   test('bdd23_detail_page_exposes_visibility_entry', async ({ page, request, isMobile }) => {
@@ -907,12 +911,14 @@ test.describe('TPV0102 seed 数据体验路径（BDD-26）', () => {
     const cards = page.locator('.entry-card')
     expect(await cards.count()).toBeGreaterThan(1)
 
-    // 每张卡片的主显时间都不含 ago 且含 GMT±N
+    // 每张卡片的主显时间：绝对时间、不含 ago、不含时区偏移、不含秒（TPV0103）
     // （断言限定在主显节点：根节点 textContent 含 tooltip，而 tooltip 本就含 `just now`）
     const timeTexts = await page.locator(`.entry-card ${SEL.timeDisplayMain}`).allTextContents()
     expect(timeTexts.length).toBeGreaterThan(1)
     for (const text of timeTexts) {
-      expect(text).toMatch(GMT_OFFSET)
+      expect(text).not.toMatch(GMT_OFFSET)
+      expect(text).not.toMatch(/\d{2}:\d{2}:\d{2}/)
+      expect(text).toMatch(/\d{2}:\d{2}/)
       expect(text).not.toMatch(/ago|just now/)
     }
 
