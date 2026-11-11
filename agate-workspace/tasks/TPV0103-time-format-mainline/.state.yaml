@@ -1,8 +1,8 @@
-phase: P0
+phase: P1
 task_id: TPV0103
 task_name: time-format-mainline
 created: 2026-11-11
-updated: '2026-11-11T08:10:00Z'
+updated: '2026-11-11T10:30:00Z'
 judge:
   enabled: true
 history:
@@ -24,3 +24,15 @@ history:
   action: pending-start
   ts: '2026-11-11T08:10:00Z'
   note: P0 完成，等用户「开工」指令进 P1
+- phase: P1
+  action: completed
+  ts: '2026-11-11T10:30:00Z'
+  note: 'P1 需求基线完成（retry 3/3，四轮评审）：12 条 BDD（01-12 两位零填充）/ 0 NEED_CONFIRM / 2 SUGGEST。risk=low /
+    ceremony=standard / phases 全 8 阶段 / packages=[frontend-v3, docs] / domains=[frontend] / ui_render_shape=layout /
+    design_trivial / follows_existing_pattern。**核心是反转判据**：主显从「必须含 GMT±N」改为「不得含时区偏移且无秒」，
+    tooltip 三段保留。**判据经四轮实测演进**：正则查 GMT/UTC/±N（4/32 locale 假 FAIL）→ 段数==5 且无 GMT/UTC（long/
+    shortGeneric/longGeneric 假 PASS）→ 与参考输出逐字符相等（判别力够但写法假 FAIL，Node vs 浏览器 locale 不同源）→
+    +locale 轴同源（仍漏 timezone 轴）→ **两侧都不 pin locale/timeZone（三宿主 UTC/New_York/Shanghai 全绿）**。
+    check-gate P1 exit 2。**本阶段主 Agent 三次判断错误均由 analyst/评审纠正**：正则判据、long 三变体（实测过却忘）、
+    hour12 方向（测了 true 却去纠正 false 的正确报告）。**关键交付**：BDD-01 用「与参考格式化输出逐字符相等」+ 两侧
+    显式同源；BDD-04 是 hour12 错误的唯一守护点（BDD-01 抓不全，已如实声明）；验收口径写入「TZ=UTC 下 vitest+e2e 全绿」'
