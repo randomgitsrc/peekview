@@ -2,7 +2,7 @@ phase: P0
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-24T14:00:00Z'
+updated: '2026-11-24T16:20:00Z'
 judge:
   enabled: true
 history:
@@ -14,3 +14,11 @@ history:
   action: pending-start
   ts: '2026-11-24T14:00:00Z'
   note: P0 完成，等用户「开工」指令进 P1
+- phase: P0
+  action: scope-expanded
+  ts: 2026-11-24 16:10:00+00:00
+  note: 'P0 范围扩展：合并 docs/notes/issues-20261124-1553.md（多文件默认入口与全屏文件定位完整设计），V-01 从一句话描述升级为决策 7 完整闭环——默认入口三级优先级 + ?file= 深链 + 全屏文件定位 + URL 状态同步。BDD 从 19 条增至 40 条。**四处与现状冲突已实测并记入 7.5 表**：①参数名现状 firstFileId vs 文档 file ②详情页无全屏按钮（仅 f 键，文档 4.1 假设的"现有入口"不存在）③清 query 一锅端会误删 file/share ④卡片/列表无条件传 files[0].id 会绕过默认入口 resolver。选项数 7→8，均待 P1 定夺参数名与全屏入口形态。'
+- phase: P0
+  action: scope-expanded-2
+  ts: 2026-11-24 16:20:00+00:00
+  note: '再合并 docs/notes/issues-20261124-1612.md（增加全屏阅读入口）。两份文档互补：1553 定义 URL 语义与默认入口、1612 补上普通页→全屏的操作入口（1553 §4.1 假设的"现有全屏入口"实测不存在）。决策 7.3 从"待 P1 定是否加按钮"改为"确定新增按钮"，并写入位置优先序与五条禁止项。BDD 40→44 条（新增 4 条可发现性/遮挡断言）。P1 待定项收敛为一：参数名 file vs firstFileId。'

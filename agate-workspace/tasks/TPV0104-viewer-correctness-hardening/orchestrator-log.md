@@ -10,3 +10,7 @@
 - CORRECTION: 主 Agent 初判 V-04"已修复"是错的——把 `TableView.vue:60` 的 `v-if="!parsed.truncated"`（控制底部 table-controls）误当成表头控件已隐藏。用户指出后复核确认：`.th-sort-btn`(25-31) 与 `.th-filter`(32-37) 无 v-if，截断态 tbody 走 `parsed.rows` 而非 `pageRows`(=table.getRowModel().rows)，排序过滤与显示数据脱钩。已写 docs/reviews/v04-truncated-header-controls-20261124.md
 - EVIDENCE: 8 项复验基准 `9a47df77`（main, 2026-11-24），逐条源码比对见 P0-brief"需求来源与复验结论"表
 - NEXT: 等用户「开工」指令后进 P1（写 P1-dispatch-context-analyst.md + 注入 AGATE_CARD）
+- DECISION（2026-11-24 16:10）: P0 范围扩展——合并 `docs/notes/issues-20261124-1553.md`。该文档把 V-01 从"默认入口优先级"扩展为「默认入口 + `?file=` 深链 + 全屏文件定位 + URL 状态同步」完整闭环，**取代**原 V-01 的一句话描述。BDD 19→40 条。
+- EVIDENCE（实测 `9a47df77`）: 文档与现状有**四处冲突**，已写入 P0-brief §7.5：①参数名现状 `firstFileId`（EntryDetailView:234 / EntryCard:150 / EntryListRow:153），文档要求 `file` ②**详情页没有全屏按钮**（zen 仅靠 `f` keydown，EntryDetailView:239；唯一"全屏"是 DiagramBlock:177 的图表全屏）→ 文档 §4.1"复用现有全屏入口"前提不成立 ③`EntryDetailView:238` 的 `router.replace({query:{}})` 会**清空全部 query**，正是文档 §5.100 警告的误删坑 ④`EntryCard:150` / `EntryListRow:153` **无条件**传 `files[0].id` 作为 firstFileId，会绕过默认入口 resolver（文档 §3.49 警告）
+- DECISION（2026-11-24 16:20）: 再合并 `docs/notes/issues-20261124-1612.md`。它与 1553 是**互补**关系：1553 定义 URL 语义与默认入口规则，1612 补上"普通详情页 → 全屏"的操作入口——恰好解决 1553 §4.1 假设但实测不存在的环节。决策 7.3 从"待 P1 定"改为**确定新增按钮**，含位置优先序（Header 工具区优先）与五条禁止项（不得只放文件树/不得每文件一个按钮/不得加选择器/不遮挡内容/不得假定 files[0]）。BDD 40→44。
+- NEXT: 等用户「开工」指令进 P1。待定项已收敛为**一个**：参数名用 `file`（文档方案，语义通用但属 URL 契约变更）还是保留 `firstFileId`（零迁移但语义专）。全屏按钮形态已定（新增），P1 只定**具体位置**。
