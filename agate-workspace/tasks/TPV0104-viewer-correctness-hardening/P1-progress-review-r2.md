@@ -1,0 +1,62 @@
+---
+phase: P1
+task_id: TPV0104
+type: progress
+trace_id: TPV0104-P1-20261124
+prod_touched: false
+---
+# P1-review-r2 progress (19:57:47)
+- start: 读 dispatch-context + 第1轮 review + 当前 P1-requirements(817行/54BDD) 完成
+- [19:59:22] 将跑: 源码级核查 (_MAX_INJECT_IDS/_BINARY_SIZE_LIMIT/useCsvParser/TableView/actions-area)，预期 <30s
+- [19:59:31] 将跑: 读 TableView.vue 1-70 与 useCsvParser 全文，核 BDD-32/33/34/35/36 区分力，预期 <20s
+- [19:59:54] 将跑: DiagramBlock 按钮 + EntryDetailHeader actions + files.py 注入路径核查，预期 <20s
+- [20:00:03] 将跑: 交叉引用上下文审计（重排 55→54 是否错位），预期 <20s
+- [20:01:16] 将跑: 读 useEntryDetailComputed.ts / EntryDetailView 模板 / TocNav，核 BDD-02/06/23/31 与 v-if-vs-v-show，预期 <25s
+- [20:01:33] 将跑: 核 BDD-23/24/31 的全页计数风险（桌面视口下 mobile bar 是否共存），预期 <20s
+- [20:02:37] 将跑: 读 EntryDetailView 225-275 / entryDetail.ts 40-60 / useZenMode / main.py create_app / PeekLimits，核 BDD-14/16/17/30 与 BDD-38 造件路径，预期 <25s
+- [20:04:04] 将跑: W8/W10 计数复核 + firstFileId 口径 + exit/返回 文案扫描 + PeekConfig.limits + TocNav 文本渲染，预期 <25s
+- [20:05:10] 将跑: 抽验「12 条 PASS」中的 BDD-33(TanStack 过滤是否真生效)/BDD-43(spec 边界用例)/BDD-46(CSP 断言)，预期 <25s
+- [20:07:02] 将跑: 交叉引用语义核对结果(4 处 stale 已定位) + PeekConfig/PeekLimits 覆写可构造性实测，预期 <40s
+- [20:08:34] 将跑: 核 BDD-31/23 的 mermaid 干扰（seed 多文件 entry 是否含图）+ BDD-41 注入形态，预期 <30s
+- [20:09:21] 将跑: EntryDetailContent 结构（BDD-28 的 DOM 计数口径）+ README h1/h2 计数，预期 <20s
+- [20:11:02] 将跑: BDD-45 落点/dsh-architecture seed/handleNavigateFile/HtmlViewer props，预期 <20s
+- [20:12:33] 将跑: 逐字复核 3 处可疑 stale 交叉引用（L95/L541/L648），预期 <10s
+- [20:12:43] 将跑: 系统性核对每条交叉引用的语义匹配（BDD 标题 vs 引用语境），预期 <20s
+- [20:14:26] 将跑: 核 12 条 PASS 基线 (BDD-06/29/33) — TocNav 接线 / overflowItems 文案 / zen-shortcut 守卫，预期 <25s
+- [20:16:31] 将跑: 实测 seed 基线 + dsh-architecture 单文件 + k8s-deployment 文件序/id，预期 <20s
+- [20:18:29] 将跑: 核 BDD-23/31 现状无 fullscreen 命名元素 + 详情页 退出/关闭 文案（BDD-29 回归守护核查），预期 <20s
+- [20:18:29] 将跑: check-gate.py P1（第1轮 review 仍在，预期 exit 1/2），预期 <60s
+- [20:19:38] 将跑: english-notes 内容 + router zen meta + test_html_render client fixture 模板，预期 <25s
+- [20:21:30] 将跑: B8 造件路径实测（create_app(config=PeekConfig(limits=PeekLimits(max_entry_files=N+1))) + 51 sibling 注入是否静默截断），预期 60-120s
+- [20:22:11] 将跑: 陈旧引用扫描（8 处/55 条/BDD-4x 错位）+ useMarkdown render 返回 headings 核实，预期 <20s
+- [20:22:12] 将跑: check-gate reviewed_bdds 校验逻辑 + agate-md-field-set 白名单，预期 <20s
+- [20:23:50] 将跑: 造 6 组 §3.2 素材 entry 验 BDD-08~13 区分力（构造序 vs 返回序），预期 40-60s
+- [20:25:12] 将跑: Playwright 实测 /k8s-deployment/f 桌面+移动 DOM 计数（验 BDD-28/53 区分力与 viewport 依赖），预期 60-90s
+- [20:28:43] 将跑: 残留「点开 TOC」+ useMarkdown return headings 主路径 + render 输出结构，预期 <20s
+- [20:30:00] 将跑: 造 BDD-05 探针 markdown（粗体+链接标题），预期 <20s
+- [20:31:52] 将跑: 核 FileCreate 模型（path/filename 语义），确认 BDD-01~04 造件路径是否需显式 filename，预期 <15s
+- [20:32:36] 将跑: 实测 path-only vs path+filename 造件的 language 检测差异（BDD-01~04 造件可行性），预期 <30s
+- [20:33:12] 将跑: 造 BDD-01/03/04 正确形态探针（含 filename），实测 id 重复/Setext h1/TOC 层级，预期 40-60s
+- [20:34:19] 将跑: 重造 BDD-05 探针（带 filename 使 language=markdown），验 TOC 可见文本是否含 markdown 标记，预期 <30s
+- [20:34:53] 将跑: 核 BDD-05 的 When「render() 返回的 html」是否真存在（实测 html:''），预期 <15s
+- [20:36:12] 将跑: BDD-42 造件实测（中文 HTML bytes≥2MB ∧ chars<2MB），预期 30-60s
+- [20:36:52] 将跑: 核实 useMarkdown.render 返回的 html 字段是否恒为空（影响 BDD-05 When 可执行性），预期 <15s
+- [20:38:31] 将跑: useMarkdown 所有 return 路径 + BDD-35 observable 现状含义核查，预期 <15s
+- [20:38:59] 将跑: 抽验 12 条 PASS 中的 BDD-33/36/37/43（跑 vitest 定向 spec），预期 60-120s
+- [20:40:59] 将跑: BDD-35 假 PASS 复核（现状 parseCsv 的既有字段 rows.length 是否已 ≤ maxRows），预期 <40s
+- [20:41:48] 将跑: TreeView props(size)/handleNavigateFile 实现，核 BDD-44/54 区分力，预期 <20s
+- [20:45:01] 将跑: 口径B(88行)复核 + 主观词/行首PASS扫描 + 类别后缀统计，预期 <20s
+- [20:46:53] 将跑: pytest test_html_render（BDD-41/46 回归基线），预期 60-120s
+- [20:48:40] 将跑: playwright 默认 viewport + known-failures 是否存在 + BDD-53/28 视口声明差异，预期 <15s
+- [20:50:21] 将跑: 核 BDD-37 throw 现状 + BDD-33 控件 no v-if（第1轮结论继承复核）+ field-set 用法，预期 <20s
+- [20:52:01] 将跑: 清理本轮 14 个探针 entry（debug HTTP DELETE），预期 <30s
+- [20:53:53] 核查完成：B1-B11 逐条 + 14 WARNING + 交叉引用 + §11 抽查。探针已全删（anon 15 / alice 22 恢复）。将写 P1-review.md 覆盖版，预期 <60s
+- [20:55:04] 将跑: MarkdownViewer props 核实（P1 §2.2 事实）+ BDD-35 假 PASS 定论，预期 <15s
+- [20:55:54] 将跑: 收尾核查（files.py 常量/§6.1 extractHeadings 计数/BDD-53 ① 事实），预期 <20s
+- [20:56:59] 将跑: agate-md-field-set.py --list（先看字段白名单），预期 <20s
+- [20:57:24] 将跑: 测试 field-set 对 agent/status 的可写性（确定协议缺口面），预期 <20s
+- [21:03:12] 核查: P1-review.md 写入后状态（父 agent 报告为旧状态，需确认）+ gate 复跑，预期 <40s
+- [21:03:25] 将跑: check-gate.py P1（reviewed_bdds=54 已对齐；预期因 status=needs-revision exit 1，属协议预期），预期 <60s
+- [21:03:44] 将跑: 临时置 approved 验 reviewed_bdds 机械对齐（确认仅 status 拦路），随后恢复 needs-revision，预期 <60s
+- [21:04:21] 收尾: 最终 gate + 探针零残留复核 + 行首 PASS/FAIL 检查
+- [21:04:49] DONE: P1-review.md 已覆盖为第2轮复审（43783B, 54 条 reviewed_bdds）。gate: status=approved 时 exit 2（已实测验证）；status=needs-revision 时 exit 1（协议预期）。探针 14 个全删，anon=15/alice=22 归位。临时文件已清理。

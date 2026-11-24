@@ -1,8 +1,8 @@
-phase: P0
+phase: P1
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-24T16:35:00Z'
+updated: '2026-11-24T13:55:00Z'
 judge:
   enabled: true
 history:
@@ -26,3 +26,7 @@ history:
   action: correction
   ts: 2026-11-24 16:35:00+00:00
   note: '修正一处概念错误（用户指出）：此前把 firstFileId 与 file 当成同一参数的两种拼写并让 P1 二选一——错。实测二者机制不同：firstFileId 是一次性种子（EntryDetailView:238 加载完即清、页内切换从不更新、刷新即丢），file 要求持续态（刷新保留/切换同步/切回默认才移除）。不是改名是机制替换。已写 §7.4.1 专节，改冲突表第 1 行，修 5 处表述，新增 1 条 BDD（?file= 加载后必须仍在 URL）。BDD 44→45。参数名争议已消除：必须是 file。'
+- phase: P1
+  action: completed
+  ts: 2026-11-24 13:55:00+00:00
+  note: 'P1 需求基线通过（三轮评审收敛，retries[P1]=2/3）。产出 54 条 BDD（817→845 行），11 处经三轮评审纠正的假 PASS/不可执行判据全部修好。第 1 轮打回 11 BLOCKER + 14 WARNING（判据区分力族：/f 文件树隐藏集只查 scoped 漏全局 layout.css:650-657、桌面 TOC 默认已展开致「点开 TOC」反向操作、BDD-09 的 aaa.txt 排不到 README 前、BDD-17/18/19 现状 ?file= 不被读、BDD-36 现状即通过、BDD-05 真缺陷漏断言、BDD-38 造件 413 且 50==50 休眠、BDD-39 前提机制不存在（_BINARY_SIZE_LIMIT 死常量）、BDD-51 三 spec 基线已红（TPV0095 遗留）、BDD-40 判定形态留 P2）。第 2 轮打回 2 BLOCKER（我独立发现的 BDD-05 消费 render().html 常量空串不可执行；B6 修法派生的 BDD-35 用 rows.length 假 PASS）。第 3 轮终审 approved（8 处全闭环，残留 2 项文字级 WARNING 列入建议）。**用户定夺两项**：A. /f 为只读分享态不加退出按钮（DESIGN.md:210-212 既有设计意图）；B. Setext h1 也生成 id 并纳入 TOC（h1-h4）。P0 四项待定全收敛。gate: check-gate P1 exit 2 + check-pruning exit 0。'

@@ -244,6 +244,14 @@ parent: 无
 | 3 | 页面加载后清 query | 现状 `EntryDetailView.vue:238`：`if (firstFileId || shareToken) router.replace({ path, query: {} })` **清空所有 query** | 正是文档 §5.100 警告的坑：会误删 `file`。必须改为**只删已消费的临时参数** |
 | 4 | 卡片/列表不应绕过默认入口 | 现状 `EntryCard.vue:150` / `EntryListRow.vue:153` **无条件**传 `files[0].id` 作为 `firstFileId` | 正是文档 §3.49 警告的坑：会让 README 优先规则失效。**必须移除该传递** |
 
+> **§7.5 冲突表第 4 行的更正（2026-11-24 17:10，P1 期间实测推翻）**：上表第 4 行的"现状"表述**不准确**，`files[0].id` 的传递在**当前代码路径下从不生效**。实测证据三条：
+> ① 列表接口 `GET /api/v1/entries` 的 `EntryListItem` 响应**无 `files` 字段**（实测响应体只有 `file_count`，无 `files` 数组）；
+> ② `frontend-v3/src/api/client.ts:91-99` 的 `transformListItem` **硬编码 `files: []`**；
+> ③ `EntryCard`/`EntryListRow` 唯一挂载点是 `EntryListView.vue:169/184`，其 `entries` 全部来自 `listEntries` → `transformListItem`。
+> 浏览器实测印证：点击多文件 entry `multi-format-demo`（4 文件）的卡片后 URL 为 `http://127.0.0.1:8888/multi-format-demo`，**不含 `firstFileId`**。
+>
+> **结论修正**：`EntryCard.vue:150-156` / `EntryListRow.vue:153-159` 的 `files?.[0]?.id` 分支是**死代码**（`files` 恒为空数组 → 恒走 `else` 分支）。因此「移除卡片/列表的该传递」这一改动**实际是删除死代码**，而非修复一个正在生效的 bug。**这不降低任务要求**——那段代码仍是「假定 `files[0]`」的错误范式，留着会在未来某次把 `files` 补进列表响应时突然生效并绕过 resolver。BDD 判据相应调整：不能靠"点卡片看 URL 有没有 firstFileId"来验证（现状本来就通过），须改为**代码级断言**（该分支不存在 / `files[0]` 不再出现在这两个组件的导航路径上）。
+
 #### 7.6 明确不做（沿用文档 §8）
 
 不新增 `main_file` 字段、不新增 Manifest/文件身份协议、不新增全屏文件树/选择器、不要求用户手输 File ID、不做跨实例稳定文件身份、不做文件版本管理。

@@ -1,0 +1,90 @@
+---
+phase: P1
+task_id: TPV0104
+type: progress
+trace_id: TPV0104-P1-20261124
+prod_touched: false
+---
+# P1-progress-review（requirements-review 执行记录）
+
+- 17:52:30 读 orchestrator-template.md + assets/review-roles/requirements-review.md（角色定义）→ 完成
+- 17:52:30 读 P1-dispatch-context-requirements-review.md（含 P1 阶段卡片 + objective_info）→ 完成
+- 17:52:35 准备读 P1-requirements.md（57KB，评审对象，预计 read 分 3 段，~1min）
+- 17:52:41 读 P1-requirements.md 前 400 行（frontmatter + §1-§3.10）→ 完成；准备读 401-680 行（~30s）
+- 17:52:55 读 P1-requirements.md 401-680 行（§3.10-§11）→ 完成；准备读 P0-brief.md §7.5 更正段 + 两份 issues note + P1-progress.md（预计 ~1min）
+- 17:53:17 读 P1-progress.md（analyst 实测记录）+ P0-brief §7.5/验收基线 → 完成；准备读 docs/notes/issues-20261124-1553.md（189 行）与 1612.md（172 行）（预计 ~40s）
+- 17:54:21 读 docs/notes/issues-20261124-1553.md + 1612.md（共 360 行）→ 完成；准备跑 5 组 grep 核实 P1 的事实断言（max_entry_files / mobile-bar-height / TableView maxRows+totalRows / parseCsv 签名 / firstFileId 计数），全部 timeout 60s，预计 ~30s
+- 17:55:25 已核实：_MAX_INJECT_IDS=50、max_entry_files=50（config.py:46）、--mobile-bar-height:64px、seed multi-format-demo 4 文件排序 fixture 正确。下一步核实 max_content_length 是否强制 + FileRead 是否含 size（timeout 60s，~20s）
+- 17:56:05 核实 markdown 内部文件链接切换路径（data-peekview-file-id）+ 文件树全屏按钮 + HtmlViewer.spec 边界用例行号（timeout 60s，~25s）
+- 17:56:57 核实 useCsvParser 现状（BDD-36 是否假 PASS）+ zen-mode class + f 键 + TableView 截断文案（timeout 60s，~25s）
+- 17:57:41 关键核查：BDD-25/26/27/28 是否假 PASS——仓库是否已有全屏/zen 切换按钮（useZenMode 返回 zenAriaText 暗示存在）。（timeout 60s，~20s）
+- 17:58:54 实测核查假 PASS 风险：① 查 :8888 multi-format-demo / k8s-deployment 的 files 实际顺序；② 读 EntryDetailView 现状 query 逻辑。（timeout 60s，~20s）
+- 17:59:13 核查 BDD-14 是否假 PASS：现造 entry（构造顺序 zzz 在前、字典序 aaa 在前）看后端返回顺序是否 = 构造顺序（即当前无 order_by 契约）。timeout 60s
+- 18:00:58 实测：现造 entry 返回顺序 = 构造顺序（zzz47/aaa48/mmm49），证明无 order_by 契约 → BDD-14 非假 PASS。下一步查 zenAriaText 渲染位置（可能命中 BDD-25 的「fullscreen」判据 → 假 PASS 风险）。timeout 60s
+- 18:01:44 核查 P1 事实类断言：① e2e firstFileId 命中数（P1 称 8 处，我数表列 3+4+2=9）② seed dsh-architecture ③ README 含「K8s 部署清单」④ firstFileId 全仓总数 ⑤ select(File) 数。（timeout 90s，~30s）
+- 18:01:54 精查 e2e firstFileId 行号（P1 §6.6 列 65,99,101/10,12,95,321/21,214 = 9 处但正文写「共 8 处」）+ 核实 dsh-architecture 单文件。timeout 60s
+- 18:02:50 核查 BDD 编号连续性 + 缺口（文件链接切换/逐文件全屏按钮/entry 不存在）+ git 暂存区证据。timeout 90s，~25s
+- 18:02:59 异常：grep 得 55 个 BDD 锚点（P1 正文自述 54 条）→ 定位 BDD-55。timeout 60s
+- 18:03:06 发现 P1-requirements.md 在我评审期间被修改（mtime 18:00:05，54→55 条 BDD）。检查是否有并发写入 → 读 P1-progress.md 尾部 + orchestrator-log 尾部。timeout 60s
+- 18:03:19 P1-requirements.md 在评审期间被 analyst 更新（54→55 条）。以当前 55 条版本为评审对象，重新提取全部 BDD 标题。timeout 60s
+- 18:04:51 关键核查批：① _validate_limits（BDD-38 的 N=51 是否可行，max_entry_files=50）② playwright storageState（BDD-51 基线）③ unicode-filenames 内容/id（BDD-55）④ ARCHITECTURE.md 标题（BDD-49）。timeout 90s，~30s
+- 18:05:07 实测 BDD-38 可行性：POST 一个 51 文件 entry 看是否被 max_entry_files=50 拒绝。timeout 60s，~15s
+- 18:05:51 实测 BDD-38 不可行：51 文件 entry 被 413 拒绝（max_entry_files=50）→ N=51 无法造件。下一步 grep 全仓 fullscreen 文案（BDD-25 假 PASS 风险）+ 浏览器实测 TOC 是否默认展开（BDD-01~04 的「点开 TOC」是否会把已展开的 TOC 关掉）。timeout 120s
+- 18:07:00 【发现】桌面视口 TOC 默认已展开（aria-expanded=true），点「Table of Contents」反而关闭 → BDD-01~04/06/53 的 When「点开 TOC」在桌面会得到相反状态。下一步：实测 mermaid-charts 是否含 Fullscreen 按钮（BDD-25 假 PASS 风险）。timeout 60s
+- 18:07:40 核查 BDD-25 假 PASS：DiagramBlock.vue:177 的 title="Fullscreen" 按钮落在正文内，若某 entry 正文含图，则「存在名称含 fullscreen 的可点击元素」现状即通过。找公开且含 mermaid/图的 seed entry。timeout 60s
+- 18:09:07 关键发现核查：① P1 内「54 条」残留 ② gate 脚本对 reviewed_bdds 的机械判据 ③ BDD-55 的 unicode-filenames seed 断言 ④ BDD-36 是否现状即通过（parseCsv 现已返回 rows.length==5）。timeout 90s
+- 18:10:18 核查 BDD-38 可执行性：create_app 是否支持测试内覆写 limits（决定 N=51 能否在 pytest 造件）。timeout 60s
+- 18:10:48 关键核查 BDD-51 基线：viewer.spec 的 openMarkdownFile 依赖 /api/v1/entries/markdown-test（匿名 404），playwright 无 storageState → 基线可能已红。实跑一个 case 确认。timeout 180s，预计 60-120s
+- 18:11:25 后台实跑 E2E_SPEC=viewer.spec.ts 确认 BDD-51 基线（若匿名 404 导致已红，则 BDD-51「3 spec 全绿」不可达）。预计 120-240s
+- 18:16:28 【BLOCKER 级证据】viewer.spec.ts 基线实跑：18 failed / 20 passed。BDD-51 要求「3 spec 全部通过（0 failed）」在改动前即不可达。查失败根因。timeout 60s
+- 18:16:53 TC-010 根因确认：Cannot read properties of undefined (reading find) → markdown-test 匿名 404 → entry.files undefined。后台跑 t091 + tpv0099 确认另两个 spec 基线。预计 ~300s
+- 18:23:11 t091 基线：12 failed / 12 passed（同样因 markdown-test 匿名 404）。等 tpv0099 结果。同时核查 BDD-31 与既有 zen 行为冲突（f 键在普通页切换 manualZen）。timeout 60s
+- 18:24:41 三个 spec 基线已测：viewer 18F/20P、t091 12F/12P、tpv0099 6P/0F。确认 viewer/t091 失败根因 = markdown-test 匿名 404（非本任务引入）。再确认一次具体断言失败点。timeout 120s
+- 18:29:27 【假 PASS 实测】BDD-25 判据「可点击元素名称含 fullscreen」vs DiagramBlock.vue:177 title="Fullscreen"。现造一个公开 entry 含 mermaid 图，看该按钮是否出现在普通详情页。timeout 60s
+- 18:30:42 【疑点】实测 /k8s-deployment/f 的 .file-sidebar display:none，与 P1 §2.2/BDD-30 「现状仍渲染文件树（E-2）」矛盾。查 CSS 来源。timeout 60s
+- 18:31:39 【BLOCKER 证据】layout.css:650-657 已有 .zen-mode .file-sidebar / .toc-sidebar { display:none } → BDD-30/BDD-54 现状即通过（假 PASS）。下一步实测 BDD-42/43/45 造件可行性（2MB HTML 经 API）timeout 90s
+- 18:34:43 实测 BDD-13 假 PASS：造两个 entry 对比 files=[readme.md,AAA.txt]（P1 写法）与 [AAA.txt,readme.md]（有区分力写法）。timeout 90s
+- 18:35:00 精查 BDD-09 区分力：['aaa.txt','README.md'] 的 ASCII 字典序实际是什么？（'R'=82 < 'a'=97 → README 排前 → 与「回落排序首个」不可区分 = 假 PASS）timeout 30s
+- 18:37:13 【BLOCKER 证据】BDD-09 的 Given 前提在码点序下为假：'README.md' < 'aaa.txt'（R=82 < a=97）→ 与「回落排序首个」不可区分。核查 BDD-46 文档是否已存在（假 PASS）+ 每文件全屏按钮禁令是否成 BDD。timeout 60s
+- 18:37:32 BDD-46 关键核查：两档定义已存在于 docs/notes/issus-20261124-1429.md:553-554（报告文档），但 BDD-46 要求的是 docs/architecture/ 或 DESIGN.md 的正式文档节 → 需确认 P1 是否明确新增位置。同时核实 BDD-34 数字断言是否可满足。timeout 60s
+- 18:38:16 核查：docs/architecture 是否存在（BDD-46 地说）+ files[0] 命中数复核 + EntryDetailView:244 文件树自动展开。timeout 60s
+- 18:41:08 核查 BDD-04 的 toc-level-{N} 类是否存在 + BDD-07 的 scroll-margin-top:80px + BDD-54 的 content-area 宽度（实测 1280/1280=1.0 已满足 0.95 阈值 → 部分假 PASS）。timeout 60s
+- 18:41:23 核查 BDD-04 的 h1 无 toc-level-1 样式（仅 2/3/4）→ 决策 B 扩到 h1 后 toc-level-1 无 padding 规则（视觉可，判据只查 class 存在，OK）。核查 P1 ui_render_shape: layout 与 BDD 声称的「渲染组件型」是否冲突（角色清单要求形态适配）。timeout 30s
+- 18:41:31 实测 BDD-15/21/22 的现状基线：?file= 现状完全无效（仍读 firstFileId）→ 这几条非假 PASS 确认。核查 BDD-52 现状：?firstFileId=15 打开会展示什么。timeout 60s
+- 18:41:56 确认 BDD-09 排序 collation：P1 自述「R=82 < 小写字母」= 码点序。核实 Python sorted 与落库顺序。timeout 30s
+- 18:43:01 核查 agate-md-field-set 用法 + P1 的 BDD 编号字符串形态（gate 需 reviewed_bdds 逐条相等）。timeout 60s
+- 18:43:25 查 agate-md-field-set.py --list 的可用字段名（需先有文件）。timeout 60s
+- 18:44:30 收尾核查：① f 键 URL 同步是否收敛（P0 已知风险）② 逐文件全屏按钮禁令 ③ entry 不存在回退 ④ check-pruning 自跑。timeout 90s
+- 18:44:51 【BLOCKER 待确认】BDD-30/54 是否假 PASS：核查 layout.css 是否被全局引入 + git 历史（该 zen .file-sidebar 规则何时加的）。timeout 60s
+- 18:45:19 核查 BDD-46 是否文档已存在（DESIGN.md / docs/architecture CSP 表述）+ docs/architecture 内容。timeout 60s
+- 18:45:26 证据收集完成（约 60 项实测）。开始写 P1-review.md。timeout 60s
+- 18:45:39 先创建 P1-review.md 骨架（无 frontmatter），再用 agate-md-field-set 逐字段写入。frontmatter 字段：status / agent / reviewed_bdds / phase / task_id。timeout 60s
+- 18:48:04 核实 3 项：① BDD-36 是否现状即通过（parseCsv 已 slice）② BDD-17/18/19 现状是否假 PASS（?file= 未读）③ resolvePath 是否 basename 匹配（BDD-55 前提）。timeout 90s
+- 18:49:50 核实 BDD-05 是否假 PASS：造 entry 含 '## **粗体**与[链接](other.md)'，比对 TOC href 与正文 h2 id。timeout 60s
+- 18:50:53 核实 playwright.config 是否有 setup/storageState 项目（决定 BDD-51 基线红是否「预期」）。timeout 60s
+- 18:52:19 核实 isDesktop 定义 + TOC 自动展开条件（决定 BDD-01~04/06/53 的「点开 TOC」是否会把已展开的 TOC 关掉）。timeout 60s
+- 18:53:21 收尾数据：① 主观词扫描 ② firstFileId 全仓总数 ③ f 键 URL 同步是否被决定。timeout 60s
+- 18:54:34 证据齐备（10 项 BLOCKER + 11 项 WARNING，全部实测复现）。开始写 P1-review.md 正文（无 frontmatter，随后 field-set 写入）。timeout 60s
+- 18:57:06 核实 html_render_service._BINARY_SIZE_LIMIT 是否死定义（P1 §6.5 称其为活跃单文件上限）。timeout 60s
+- 18:57:28 【BLOCKER 级】html_render_service.py 的 _BINARY_SIZE_LIMIT 仅定义 1 次（无消费）= 死常量，但 P1 §6.5 称其为活跃单文件上限并要求「纳入统一预算」。核实注入路径是否真有单文件文本上限。timeout 60s
+- 19:01:13 P1-review.md 正文已写（~390 行）。现用 agate-md-field-set.py 写 frontmatter：status=needs-revision / agent=requirements-review / reviewed_bdds=01..55。timeout 60s
+- 19:01:29 测试 field-set 能否对无 frontmatter 的文件创建块：先设 status。timeout 60s
+- 19:01:39 status 被拒：需先有 agent 字段（当前 agent=None 不在角色清单）。先写 agent=requirements-review，再重试 status。timeout 60s
+- 19:01:46 agent 已写入。现写 status=needs-revision + phase/task_id/type/parent/reviewed_bdds。timeout 90s
+- 19:02:01 写 reviewed_bdds（gate 硬要求，不在 --list 但属结构化字段）。试单值/JSON。timeout 60s
+- 19:02:12 field-set 拒绝 reviewed_bdds（非法 key）。查工具是否支持 append/upsert 子命令写入非 schema 字段。timeout 60s
+- 19:02:20 查前例 TPV0103 的 reviewed_bdds 是怎么写入的（谁写的）。timeout 30s
+- 19:02:47 试 field-set append 子命令写 reviewed_bdds。timeout 60s
+- 19:02:57 field-set 无法写 reviewed_bdds（不在契约字段）。查是否有其它脚本/机制负责该字段。timeout 60s
+- 19:02:57 查 TPV0102/TPV0103 的 P1-review 是如何产生的（谁写 reviewed_bdds）。timeout 60s
+- 19:03:15 结论：agate-md-field-set.py 白名单不含 reviewed_bdds（P1-review.md 无对应 SCHEMAS 条目）→ 工具级缺口。前例 TPV0102/0103 亦为手工写入。对工具产出的 frontmatter 做最小定向插入（仅加该字段，不动工具写的其余字段）。timeout 60s
+- 19:03:44 frontmatter 完成（agent/status/phase/task_id/type/parent/trace_id/prod_touched/reviewed_bdds 01-55）。现自检：YAML 合法性 + gate 模拟 + 禁用格式检查。timeout 90s
+- 19:03:53 模拟 gate 判据：reviewed_bdds 与 P1 BDD 集合是否严格相等。timeout 60s
+- 19:04:01 跑真实 check-gate.py P1 确认机械判据（预期 exit 1 因 status≠approved，但前面的 reviewed_bdds/T2/锚点检查应通过）。timeout 90s
+- 19:04:11 gate 在 status 先红（符合 needs-revision 预期）。为验证 reviewed_bdds/T2/锚点 三项机械判据确实通过，用 .agate-tmp 下的临时探针副本把 status 改 approved 跑一次，事后删除。timeout 90s
+- 19:04:23 probe exit=1，需看具体报错（可能是缺 .state.yaml / judge 声明等环境因素，非我的产出问题）。timeout 60s
+- 19:04:31 probe 已过 reviewed_bdds/T2/BDD锚点三项，仅缺 .state.yaml（probe 目录无该文件，非我产出问题）。补拷 .state.yaml 再验。timeout 90s
+- 19:04:40 机械门禁全通（reviewed_bdds 严格相等 / T2 格式 / BDD 锚点）。清理 probe 目录。timeout 60s
+- 19:04:54 最终自检：① BDD 锚点覆盖 55/55 ② 禁用格式 ③ 文件行数 ④ progress 完整性。timeout 90s
+- 19:05:02 自检全通过：55/55 BDD 锚点、0 行首 PASS/FAIL、397 行。评审完成。
+- 19:05:02 状态标记：[PROD_NOT_TOUCHED] 全程未接触 :8080，未触碰 ~/.peekview/；实测均在 debug :8888。
