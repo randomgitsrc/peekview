@@ -150,4 +150,11 @@
   | L541 | `补 order_by（BDD-14）` | **BDD-13** | BDD-13 = 「后端文件列表顺序具有确定性契约」；**BDD-14 实为「`?file=` 打开指定文件且参数加载后保留」** |
   | L648（P0_STALE 第 2 条） | `代码级断言（BDD-48）` | **BDD-47** | BDD-47 = 「卡片与列表的导航不再引用 files[0]（代码级断言）」；**BDD-48 实为「单文件 entry 的详情页行为不变」** |
   → 全部属实，已并入 r3 修订清单。这类错位不影响 P6 判 PASS/FAIL（BDD 正文自身正确），但会误导 P4/P7 实施者按错条目去改代码。
-- NEXT: 等 analyst 第 3 轮修订（只修 2 BLOCKER + 6 WARNING，retries[P1] 计 2 / 上限 3）。
+- GATE PASS（P1 收口，主 Agent 亲跑）：`check-gate.py P1` → **exit 2**（`P1-review.md approved + agent≠main + 含 BDD 锚点`；仅 3 条 SUGGEST WARNING 不阻塞）；`check-pruning.py` → **exit 0**（`0 mismatches across 2 fields`）。**第 3 轮终审 approved**：第 2 轮仅剩的 2 BLOCKER + 6 WARNING **全部 8 处闭环**（评审逐项实测，非文字承诺），另新增 2 项纯文字级 WARNING 列入建议（BDD-35 观测面定义双重否定措辞绕 / BDD-53 ① 的 DOM 归宿并列事实有 3 项不准），**均不影响 P6 判 PASS/FAIL**，按派发尺度判 approved。`retries[P1]` 最终 **2/3**（未耗尽）。
+- SUBAGENT FAIL（工具层，已修复）：`git commit` 三次被 gate 拦，逐层修复——
+  1. **`P1-requirements.md` 缺 `prod_touched`**（非 legacy 必填）→ 用 `agate-md-field-set.py set prod_touched false` 写入（exit 0）。
+  2. **`P1-progress-review.md` 缺 frontmatter 块** → gate 要求声明文件带 `---` 块。给 4 个 progress 文件（`P1-progress.md` / `-review` / `-review-r2` / `-review-r3`）统一补 frontmatter（`phase/task_id/type/trace_id/prod_touched`）。
+  3. 提交成功：**`4e09219e`**，17 files changed / +3985 行。
+  - **附一条工具缺口（评审者实测发现，建议报上游）**：`agate-md-field-set.py` 对**列表值只写入第一段**（`phases: [P1, P2, ..., P8]` 被写成 `- '[P1,'`），评审者已直接修正为合法 YAML 并用 `yaml.safe_load` 校验。我复核确认 `P1-requirements.md` 的 `phases/packages/domains` 与 `P1-review.md` 的同名字段**均为合法列表**。
+- DECISION（**P1 阶段收口，进 P2**）：`.state.yaml` 已写 `phase: P1` + history 追加 `completed` 条目（含三轮评审收敛过程、两项用户决策、P0 四项待定收敛、gate 结果）。按 P1 卡流程，`phase` 随 P1 产出 commit 写入；**P2 的 phase 不预写**，随 P2 产出 commit 一起。
+- NEXT: 进 P2 方案设计。按 C8 机械映射：`domains: [frontend, backend]` + `risk_level: medium` → **P2 须派 plan-eng-review（backend 域）+ plan-design-review（frontend 域）双评审**。`ui_affected: true`（V-01/V-04/V-08 均用户可见）→ P2-design.md 必须含 `## UI 设计` 节（渲染形态 + 维度 + 按形态 checklist），且与 P1 的 `ui_render_shape: layout` 一致。
