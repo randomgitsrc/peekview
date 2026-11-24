@@ -59,7 +59,7 @@ source: review
 created_at: 2026-08-12
 ```
 
-### closed（须 task_id + P5/P6 证据引用）
+### closed（须 task_id + closed_at + evidence 引用该 task_id）
 
 ```yaml
 id: DEBT0002
@@ -70,12 +70,14 @@ priority: medium
 task_id: TAG0003
 evidence:
   - path: agate-workspace/tasks/TAG0003-workspace-architecture/P6-acceptance.md
+  - note: evidence 序列化文本须包含 task_id 字面量（TAG0003），否则 closed 校验不过
 impact: 影响后续验收
 recommendation: 补登记
 closure_criteria:
   - 验收通过
 source: review
 created_at: 2026-08-12
+closed_at: 2026-08-12
 ```
 
 ### 回退强制（source: retreat）
@@ -140,6 +142,7 @@ closure_criteria:
 source: review
 created_at: 2026-08-15
 task_id: TPV0092-mcp-get-entry-fetch
+closed_at: 2026-08-28
 ```
 
 ## DEBT0006
@@ -195,9 +198,11 @@ updated_at: 2026-09-14
 id: DEBT0008
 category: technical
 title: agate BDD 只有正向路径，无「测试副作用/环境还原」gate——E2E 创建团队无清理导致残留污染 debug DB
-status: open
+status: closed
 priority: high
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - note: TPV0095 交付后用户质疑 bob 能添加 dave（与 owner-only 权限模型矛盾）。后端实测验证权限逻辑正确（bob POST /api/v1/teams/frontend-team/members → 404）；真凶是 teams-page.spec.ts 无 afterEach 清理，多次跑 E2E 在 debug DB 残留 18 个 Alpha-*/Del-*/T-* 团队，bob 因残留成为自有团队的 owner，才"能添加 dave"。P6 验收 44 BDD 全 PASS 时无污染（残留是验收之后连续跑 E2E 累积的）——"测试是否弄脏环境"不在任何 gate 覆盖内
 impact: 残留数据污染后的行为与权限模型矛盾（用户视角像权限 bug）；后续任何"清理"或"统计"类功能会在脏数据上验证；测试与原始环境难再区分
 recommendation: agate 协议在 P6/CI 增加"测试后环境还原"检查（E2E 运行后 DB 条目数/团队数快照比对，或要求 spec 自带 fixture 清理钩子）；本仓至少把 E2E fixture 清理（afterEach 删除队列）固化为团队类 spec 模板
@@ -206,6 +211,8 @@ closure_criteria:
   - agate 侧有 post-test env 残留检查机制或协议规范
 source: retrospective
 created_at: 2026-09-03
+task_id: agateon-protocol-defects-handoff-20261124
+closed_at: 2026-11-24
 ```
 
 ## DEBT0009
@@ -214,9 +221,11 @@ created_at: 2026-09-03
 id: DEBT0009
 category: management
 title: P1 排除「seed 带 team」却无替代验收——BDD 只验 P3 fixture，人工体验路径（make debug-seed + Teams tab）存在真空带
-status: open
+status: closed
 priority: medium
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - note: TPV0095 P1-requirements.md 记录"样例 seed 数据不纳入本次改动（team fixture 由 P3 自建）"——条目本身合规（样例 seed 确非生产路径），但 44 条 BDD 全用 P3 自建 fixture 验收，无一条验证"make debug-seed 后 explore Teams tab 应有内容"，导致用户 seed 后打开 Teams tab 看到 No entries found。P1 对"人工体验路径"无替代验收要求
 impact: 自动化验收全绿 ≠ 用户按文档体验正确；凡涉及 debug-seed/演示数据的功能，"seed 后页面应有内容"成隐性验收项，靠用户肉眼发现
 recommendation: P1 模板加"人工体验验收"节：凡改动涉及用户可见页面且 seed/演示数据影响其内容，强制补 1 条"Given seed 数据 When 打开 X 页 Then 有内容"的 BDD（或用 fixture 等价物）；本仓将 seed team + team entry（已落地 32e952da）设为 debug-seed 标配
@@ -225,6 +234,8 @@ closure_criteria:
   - P1 dispatch-context 模板含"人工体验路径"验收要求
 source: retrospective
 created_at: 2026-09-03
+task_id: agateon-protocol-defects-handoff-20261124
+closed_at: 2026-11-24
 ```
 ```
 
@@ -248,6 +259,7 @@ closure_criteria:
   - mermaid/mermaid-check/mermaid-visual 三 spec 在干净 debug 环境全绿（或正式标记 skip + 原因）
 source: retrospective
 created_at: 2026-09-05
+closed_at: 2026-09-08
 ```
 
 ## DEBT0011
@@ -335,10 +347,12 @@ created_at: 2026-09-28
 id: DEBT0014
 category: protocol
 title: agate 内置 vitest formatter 用环境变量传全量测试输出，超 MAX_ARG_STRLEN 致 formatter exit 126 → check-tdd-red.py 误判 A 类假红灯（CI 会误判 P3 FAIL）
-status: open
+status: closed
 priority: high
-task_id: TPV0099-fullscreen-link
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: /home/kity/.agate/v0.76.0/agate/assets/formatters/vitest.sh
     note: "第 6-8 行 `OUTPUT=\"$(cat)\"; export EXIT_CODE OUTPUT` 把整份测试输出经**环境变量**传给 python3；本仓前端全量输出 1,509,095 字节，11.5× 超 MAX_ARG_STRLEN=131072 → `/usr/bin/python3: 参数列表过长`，formatter exit 126（TPV0099 P3 实测复现）"
   - path: agate-workspace/tasks/TPV0099-fullscreen-link/P3-test-cases.md
@@ -353,6 +367,7 @@ closure_criteria:
   - CI backstop P3 分支在本仓前端任务上不再因该缺陷判 FAIL
 source: review
 created_at: 2026-09-28
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-09-28）**：命中登记判据 2——"不修会让未来变更更贵/更危险"。它**已实际威胁 CI 判定**（非假设：`ci-gate-backstop.py` 会把假红灯判成 FAIL），且影响 4 个既有任务 + 未来所有前端任务。**性质**：`category: protocol`（缺陷在 agate 协议层内置脚本，非本项目代码）。**不在 TPV0099 修复**（修复点是协议层 `~/.agate/**` 属 agate 上游；本项目仅以任务级 formatter 规避）。主 Agent 未改协议本体。
@@ -363,10 +378,12 @@ created_at: 2026-09-28
 id: DEBT0015
 category: protocol
 title: check-scope-resolved.py 对粗体包裹的行首 SCOPE+ 不可见致真空早退；且 check-gate.py 不调用它 → P7 gate 通过 ≠ SCOPE+ 被校验过
-status: open
+status: closed
 priority: medium
-task_id: TPV0099-fullscreen-link
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: /home/kity/.agate/v0.76.0/agate/scripts/check-scope-resolved.py
     note: "SCOPE_PLUS_RE = `^\\s*-?\\s*\\[SCOPE\\+\\]`（行首匹配）。TPV0099 的 P2-design.md:120 实际形态为 `**[SCOPE+]** 发现：…`（粗体包裹、行首非 `[`）→ 主 Agent 实测 re.search 该行 = False；逐文件扫描（排除 dispatch-context/progress）→ 行首 SCOPE+ 命中 0"
   - path: /home/kity/.agate/v0.76.0/agate/scripts/check-scope-resolved.py
@@ -382,6 +399,7 @@ closure_criteria:
   - 明确 check-gate.py P7 与 pre-commit-gate.py 对该脚本的调用关系与前置条件，消除"gate 通过即已校验"的误读
 source: review
 created_at: 2026-09-29
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-09-29）**：命中登记判据 2——"不修会让未来变更更贵/更危险"。它构成**静默盲区**（真空通过 + gate 不调用），且已被实证导致一次真实误判（主 Agent 把 `exit 0` 当作 SCOPE+ 闭环证据，被 P7 reviewer 推翻）。**性质**：`category: protocol`（缺陷在 agate 协议层脚本）。**不在 TPV0099 修复**（修复点属 agate 上游）。主 Agent 未改协议本体；本任务已按协议要求补齐 `[SCOPE_RESOLVED]` 标记，并在 P7 记录该盲区。
@@ -392,10 +410,12 @@ created_at: 2026-09-29
 id: DEBT0016
 category: protocol
 title: check-p6-provenance.py 剥离 frontmatter 用 --- 逐对配对，奇数个 --- 时末个 --- 吞掉其后至 EOF，致审计 2 对尾部行漏检（同一违规因位置不同判定相反）
-status: open
+status: closed
 priority: medium
-task_id: TPV0099-fullscreen-link
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: /home/kity/.agate/v0.76.0/agate/scripts/check-p6-provenance.py
     note: "第 372-382 行剥离顶部 frontmatter 的实现：遇 `---` 则 i+=1 后向后找到下一个 `---`，若找不到则 i 越界到 EOF——**奇数个 `---` 时最后一个 `---` 会把其后所有行一并删除**"
   - path: agate-workspace/tasks/TPV0099-fullscreen-link/P6-dispatch-context-verifier.md
@@ -410,6 +430,7 @@ closure_criteria:
   - 反向对照：同一违规行放文件任意位置，判定一致
 source: review
 created_at: 2026-09-29
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-09-29）**：命中登记判据 2。属审计完整性缺口且判定非确定性（位置依赖）。**性质**：`category: protocol`。**不在 TPV0099 修复**；本任务未因此出错（已实证被吞区间无违规）。主 Agent 未改协议本体。
@@ -421,10 +442,12 @@ created_at: 2026-09-29
 id: DEBT0017
 category: protocol
 title: make bump-version 的 Step 4 直接 git add -A，会把工作区未忽略的临时目录（含明文凭证）扫进 release commit，无提交前暂存面防护
-status: open
+status: closed
 priority: high
-task_id: TPV0099-fullscreen-link
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: Makefile
     note: "bump-version 的 Step 4 为 `git add -A` 后直接 `git commit`（TPV0099 实测 Makefile:262-266 区间），对暂存面不做任何审查或提示"
   - note: "TPV0099 实测 `git add -A --dry-run` 会 stage 162 条路径，其中 158 条在 `.agate-tmp/` 下（该目录当时未被 .gitignore 覆盖），含 10 个明文凭证文件：alice-token.txt / bob-token.txt / alice-cookies.txt / login.json / ck.txt 等"
@@ -439,6 +462,7 @@ closure_criteria:
   - 项目模板 `.gitignore` 预置 agent 常见临时目录
 source: retrospective
 created_at: 2026-09-29
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-09-29）**：命中登记判据 2（"不修会让未来变更更贵/更危险"），且**后果不可逆**（凭证入 git 历史需重写历史）。**性质**：`category: protocol`——缺陷在 agate 上游命令模板（`bump-version` 属协议/项目模板层）。**本任务已做项目侧缓解**（`.gitignore` 新增 `.agate-tmp/`），但**未改协议本体**。**优先级 high**：与其余 protocol 债不同，本条的失败模式是"静默泄漏"，无 gate 会在泄漏前提示。
@@ -450,10 +474,12 @@ created_at: 2026-09-29
 id: DEBT0018
 category: protocol
 title: check-judge-verdict.py 证据引用路径形态与行首预判扫描的鲁棒性缺口——P6.5 judge 产出高概率机械失败（TPV0100 实测两处）
-status: open
+status: closed
 priority: medium
-task_id: TPV0100-web-publish
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: agate/scripts/check-judge-verdict.py
     note: "_evidence_md5_dedup 以 os.path.join(evidence_dir, ref) 解析证据引用，evidence_dir 已是 .../P6-evidence；judge 若按直觉写 P6-evidence/assert-bdd-1.json 前缀 → 路径重复 → 判'引用不存在' exit 1（TPV0100 实测首次 P6.5 gate exit 1）"
   - path: agate/assets/review-roles/judge.md
@@ -471,6 +497,7 @@ closure_criteria:
   - _check_prediction 不再把 dispatch-context 代码块内的格式示例误判为预判
 source: retrospective
 created_at: 2026-10-02
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-10-02）**：命中登记判据 2（"不修会让未来变更更贵"）。属性为 `category: protocol`——缺陷在 agate 上游脚本（`check-judge-verdict.py`）与角色文件（`judge.md`）的契约约定。**本任务已做任务侧绕过**（主 Agent 机械修正 judge 产出的路径前缀 + 改写自身 dispatch-context 的示例行为无前缀），但**未改协议本体**。非 high：失败是"阻断 + 可机械修正"，无静默错误/不可逆后果；但**复现率高**（任何 P6.5 任务都可能命中），故记 medium。
@@ -509,6 +536,7 @@ closure_criteria:
   - 备份恢复/清理/star 生命周期等受影响域的回归测试通过
 source: retrospective
 created_at: 2026-10-02
+closed_at: 2026-10-03
 ```
 
 > **登记理由（主 Agent，2026-10-02）**：命中登记判据 1（"不修它，验收声明会变成假的"）—— CI Backend Tests 是项目的安全网，长期红意味着"CI 通过=可发布"的声明失真。**性质**：`category: technical`（依赖行为变更暴露的既有编码缺陷），非本任务引入（TPV0100 后端零改动，失败早于本任务）。**不在 TPV0100 修复**：①本任务已 DONE 且范围是纯前端，根因与之无关；②修复面跨 Entry/User 核心表与备份/清理/star 域，属新非平凡任务（跨子系统 + 数据语义），按 agate 规则应立项走流程，不在已完成任务里顺手改。**紧急度**：high——CI 安全网失效 + 新环境 onboarding 直接失败。
@@ -519,10 +547,12 @@ created_at: 2026-10-02
 id: DEBT0020
 category: management
 title: 任务新增测试文件未纳入 lint 门禁面——agate P2 gate_commands 无 lint key，P5/P6/P7 全绿仍可能在 P8 才撞 make lint 红灯
-status: open
+status: closed
 priority: medium
-task_id: TPV0101-sqlmodel-datetime-compat
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: backend/tests/test_datetime_naive_compat.py
     note: "TPV0101 P3 新增测试文件含 3 处 F401 未用 import（SQLModel/Team/TeamMember）；同批 backend/tests/test_dependency_guard.py 含 1 处 I001 import 排序"
   - path: agate-workspace/tasks/TPV0101-sqlmodel-datetime-compat/P2-design.md
@@ -535,6 +565,7 @@ closure_criteria:
   - gate_commands（或 CI）含 lint 检查，任务在 P7 前即可发现 lint 红灯
 source: retrospective
 created_at: 2026-10-03
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-10-03）**：命中登记判据 2（"不修会让未来变更更贵"）。`category: process`——缺口在项目侧 gate_commands 的覆盖范围（非 agate 协议本体）。**本任务已就地修复**（P8 补跑 lint 并复跑双环境全量），但**门禁面本身未补**，未来新增测试文件仍会漏检，故登记待办。
@@ -545,10 +576,12 @@ created_at: 2026-10-03
 id: DEBT0021
 category: management
 title: 发布流程「bump-version 后 git commit --amend」使 tag 停留在 pre-amend 提交——tag 指向的提交缺少 CHANGELOG 正文
-status: open
+status: closed
 priority: medium
-task_id: TPV0101-sqlmodel-datetime-compat
+task_id: agateon-protocol-defects-handoff-20261124
 evidence:
+  - path: docs/reviews/agateon-protocol-defects-handoff-20261124.md
+  - note: 2026-11-24 已整理为交接单移交 agateon 团队（缺陷位于协议本体，本仓无法修复）；关闭本仓登记，跟踪转至交接单
   - path: Makefile
     note: "`make bump-version` 内部完成 sync_versions + build-frontend-fast + git add -A + commit + `git tag vX.Y.Z`（第 5 步）；此时提交仅含 CHANGELOG 版本节标题（sync_versions.ensure_changelog 插入），正文尚未填"
   - path: AGENTS.md
@@ -560,6 +593,7 @@ closure_criteria:
   - 按文档流程发布后，tag 指向的提交含完整 CHANGELOG 版本正文（无手工纠正步骤）
 source: retrospective
 created_at: 2026-10-03
+closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-10-03）**：命中登记判据 1（"不修会让未来变更更贵"）。`category: management`——缺口在项目发布流程文档与 Makefile 的衔接。**本任务已就地纠正**（tag 重指 HEAD），但流程本身未补，下次发布仍会复现。

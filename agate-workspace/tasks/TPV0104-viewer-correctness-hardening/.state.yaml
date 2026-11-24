@@ -1,0 +1,16 @@
+phase: P0
+task_id: TPV0104
+task_name: viewer-correctness-hardening
+created: 2026-11-24
+updated: '2026-11-24T14:00:00Z'
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: 2026-11-24 14:00:00+00:00
+  note: '立项：Viewer 正确性与资源边界加固 7 项（来源 docs/notes/issus-20261124-1429.md 的 8 项 V-01~V-08，经本仓在 9a47df77 逐条复验：7 项成立、V-04 报告判断正确而主 Agent 初判错误已更正）。三批交付：①正确性 V-02 Markdown 目录与正文 ID 单一来源 + V-01 默认入口轻量策略 + V-04 截断态隐藏表头控件 ②性能资源边界 V-03 CSV 提前终止解析 + V-06 注入总预算 + V-07 超限显式反馈 + V-08 字节数判断 ③安全边界 V-05 只记录策略不改默认 CSP。明确排除：is_primary schema 字段（roadmap #57）、Web Worker/虚拟滚动、HTML CSP 默认收紧。risk=medium（跨前后端 + 安全边界）。'
+- phase: P0
+  action: pending-start
+  ts: '2026-11-24T14:00:00Z'
+  note: P0 完成，等用户「开工」指令进 P1
