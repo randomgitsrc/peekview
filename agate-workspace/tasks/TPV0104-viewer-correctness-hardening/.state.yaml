@@ -1,8 +1,8 @@
-phase: P1
+phase: P2
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-24T13:55:00Z'
+updated: '2026-11-24T21:36:00Z'
 judge:
   enabled: true
 history:
@@ -30,3 +30,8 @@ history:
   action: completed
   ts: 2026-11-24 13:55:00+00:00
   note: 'P1 需求基线通过（三轮评审收敛，retries[P1]=2/3）。产出 54 条 BDD（817→845 行），11 处经三轮评审纠正的假 PASS/不可执行判据全部修好。第 1 轮打回 11 BLOCKER + 14 WARNING（判据区分力族：/f 文件树隐藏集只查 scoped 漏全局 layout.css:650-657、桌面 TOC 默认已展开致「点开 TOC」反向操作、BDD-09 的 aaa.txt 排不到 README 前、BDD-17/18/19 现状 ?file= 不被读、BDD-36 现状即通过、BDD-05 真缺陷漏断言、BDD-38 造件 413 且 50==50 休眠、BDD-39 前提机制不存在（_BINARY_SIZE_LIMIT 死常量）、BDD-51 三 spec 基线已红（TPV0095 遗留）、BDD-40 判定形态留 P2）。第 2 轮打回 2 BLOCKER（我独立发现的 BDD-05 消费 render().html 常量空串不可执行；B6 修法派生的 BDD-35 用 rows.length 假 PASS）。第 3 轮终审 approved（8 处全闭环，残留 2 项文字级 WARNING 列入建议）。**用户定夺两项**：A. /f 为只读分享态不加退出按钮（DESIGN.md:210-212 既有设计意图）；B. Setext h1 也生成 id 并纳入 TOC（h1-h4）。P0 四项待定全收敛。gate: check-gate P1 exit 2 + check-pruning exit 0。'
+
+- phase: P2
+  action: completed
+  ts: 2026-11-24 21:36:00+00:00
+  note: 'P2 方案设计通过（三轮评审收敛，retries[P2]=3/3 用满）。产出 P2-design.md 1070 行：3 架构候选 + 3 布局层候选（candidate_count=6）、4 批 static-batch、23 个 gate_commands key、minimal_validation 17 项。**评审链发现 12 处真实缺陷**：第 1 轮 5 BLOCKER + 7 MAJOR（eng: R1 order_by 归因错（_create_entry 读 POST 不读 GET）、inject_resources 改签名打断 13 处调用、跳过清单 <script> XSS；design: UI 布局层零候选、.toc-level-1 padding-left:0 是 no-op）+ 第 2 轮新发现的 B4（reason 闭集漏「非 css/js sibling 被静默丢弃」，因前端 siblingFileIds 不过滤 kind + _detect_kind 只认 css/js + if not kind: continue 静默跳过）+ R2-1/R2-2（h1 新规则吃 active 强调色；activeFile/fullscreen 在 Header 作用域不存在会 typecheck 红）+ 第 3 轮 W1-W6。**关键：minimal_validation 选材缺口两次**（V9 只用中文文件名、V8 六个素材全绕开 kind 维度）。**评审链自我纠错 3 次**：eng 承认 used_text_keys 处方被证伪、承认「同文件两函数」说错；design 承认 D-3 定级口径不一致。**主 Agent 错误 3 处**：照抄 P1 的「files.py:272 属 serving 路径」（实测唯一消费点就在注入路径上，已批准 4 处 [BASELINE_CHANGE] 勘误）、order_by 影响面只核字典序不追数据来源、把 design 未提的观察错归给它。P2 gate exit 2 + structure-consistency 全 OK。'

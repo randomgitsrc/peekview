@@ -158,3 +158,76 @@
   - **附一条工具缺口（评审者实测发现，建议报上游）**：`agate-md-field-set.py` 对**列表值只写入第一段**（`phases: [P1, P2, ..., P8]` 被写成 `- '[P1,'`），评审者已直接修正为合法 YAML 并用 `yaml.safe_load` 校验。我复核确认 `P1-requirements.md` 的 `phases/packages/domains` 与 `P1-review.md` 的同名字段**均为合法列表**。
 - DECISION（**P1 阶段收口，进 P2**）：`.state.yaml` 已写 `phase: P1` + history 追加 `completed` 条目（含三轮评审收敛过程、两项用户决策、P0 四项待定收敛、gate 结果）。按 P1 卡流程，`phase` 随 P1 产出 commit 写入；**P2 的 phase 不预写**，随 P2 产出 commit 一起。
 - NEXT: 进 P2 方案设计。按 C8 机械映射：`domains: [frontend, backend]` + `risk_level: medium` → **P2 须派 plan-eng-review（backend 域）+ plan-design-review（frontend 域）双评审**。`ui_affected: true`（V-01/V-04/V-08 均用户可见）→ P2-design.md 必须含 `## UI 设计` 节（渲染形态 + 维度 + 按形态 checklist），且与 P1 的 `ui_render_shape: layout` 一致。
+- DECISION（进 P2，**不引入 goal**）：用户要求按 agateon 执行完任务。已确认 goal 属 DSH 平台能力对照表条目（`platform-notes.md:147`「跨轮续跑 | 手动重开会话 | goal」）与 skill 的"食谱 3"，**非协议要求**——`orchestrator-template.md` 全文零命中。且 skill 明说 goal「与 Agateon 自身的状态落盘**正交**」，引入它会与 `.state.yaml` 形成第二个协调基质。改用会话内连续推进 + 每阶段 commit + `.state.yaml` 落盘（中断重开会话读状态即可）。
+- NEXT: 派 P2 architect（`P2-dispatch-context-architect.md` 已写 + AGATE_CARD 已注入）。产出后按 C8 派**双评审**（plan-eng-review → `P2-review-eng.md`、plan-design-review → `P2-review-design.md`），再派组长汇总出 `P2-review.md`。
+- SUBAGENT FAIL（环境层，已自行恢复，P2 期间）：承担 debug 服务的后台 job（`sleep 14400`）**到期结束** → `:8888` 停止（探活 000），此时 architect 正在做最小验证（Playwright/DOM 探针）。按平台约束「长驻服务存活跟随发起它的调用」**不靠加长 sleep**，直接新起后台 job `( make debug-start && make debug-seed && make debug-seed; sleep 21600 )` 托底 → 恢复 200、`alice 22 / anon 15`（基线一致）。
+  - **注意**：本次在后台 job 内**连跑两遍 seed**（第一遍只到 19，幂等第二遍补齐 22），因为 `make debug-seed` 首次可能因服务刚起未就绪而少建几条。以后恢复流程固定为「探活 → seed ×2 → 复核 alice==22 && anon==15」。
+- EVIDENCE（P2 产出，主 Agent 亲验）：`P2-design.md` **80033B / 683 行**；frontmatter `candidate_count: 3` / `packages: [peekview, frontend-v3, docs]` / `domains: [frontend, backend]` / `ui_affected: true` / `ui_design_section: true` / `dispatch_plan.mode: static-batch`，全部合规；`## UI 设计` 节形态声明 `layout` 与 P1 的 `ui_render_shape: layout` **一致**、维度 `布局结构/交互行为/视觉呈现` 与 P1 一致；`gate_commands` **21 个 key**、全部复用 Makefile target、每个 key 都有 `{key}_timeout_seconds`、`P5_e2e` 钉死新建 spec、3 个 legacy spec 独立 key。`check-gate P2` 预跑唯一红灯是 `P2-review.md 不存在`（符合预期）、`RECONCILE 0 mismatches`。
+- EVIDENCE（**architect 两条关键实测，我已独立复核**）：
+  1. **`judge_result` 对 exit 124 是 fail-open（=P3 通过）**：`check-tdd-red.py:102-104` 实测源码为 `if exit_code == 124: print("测试命令超时，视为红灯可推进"); return 0`。结合 `agate_common.py:752` 的 `AGATE_TDD_TIMEOUT` 默认 **120s** 包住**整条**命令 → architect 实测 frontend 22-25s + backend 31-34s，**复合 107s，距上限仅 13s**。→ **我给的方案 A（复合命令）被正确否决**：它的失败模式是"P3 gate 永久空转（假绿）"，比我说的"失去 A/B 区分度"严重得多。**archieve 比我看得准，采纳其'方案 B + 规定动作'。**
+  2. **V13 硬约束（P3 必须遵守）我已亲手复现**：造一个 `import` 不存在模块的探针 spec → vitest 输出 `Test Files 1 failed / Tests no tests`、formatter 得 `{exit_code:1, failed:0, **errors:1**, import_errors:[], syntax_errors:[]}` → `judge_result:154-156` 的 `if errors > 0` 分支判 **A 类错误 → return 1 = gate FAIL**。而经典断言红灯（`failed>0`）走 `:161-165` 判 `classic red-light → return 0` **通过**。→ **P3 写红灯必须用断言形态**（引用已存在模块 + 断言新行为），不能 import 尚未存在的模块。探针已删（`git status` 确认无残留）。
+  - **一处未复现（保留但降级）**：architect 称 `make test-quick` 的预存失败计数不稳定（2F/1F/1F，xdist 竞态）。我**连续 3 次实测均为 `1 failed, 1205 passed, 3 skipped`**（31.50/31.66/31.86s），**未复现不稳定**。其核心结论（`make test-quick` 从不全绿 → 并入 P3 会让"有红"恒真）**仍成立**，但"xdist 竞态导致计数漂移"这个归因我未能证实——P5 按"失败集不劣于基线"判时以**失败集合**（而非计数）为准更稳妥。
+- NEXT: 派 P2 双评审（`plan-eng-review` → `P2-review-eng.md`、`plan-design-review` → `P2-review-design.md`，dispatch-context 均已写 + 卡片已注入），**并行派发**，返回后派组长汇总出 `P2-review.md`。
+- CORRECTION（**P2 eng-review 推翻了我与 architect 共同的错误结论，我复核确认它对**）：关于「补 `order_by` 后哪些测试会红」——
+  - 我与 architect 都断言：`test_render_inject_js` 的构造序 `[index.html, app.js]` 会被 `order_by` 改成 `[app.js, index.html]` → `files[0]` 语义改变 → 该用例会红（architect 记为 R1，我还"独立验证"了字典序并宣布"归因准确"）。
+  - **eng-review 实测跑全量后零新增失败**，并指出根因：`_create_entry`（`test_html_render.py:44-55`）返回的是 **POST 响应**的 `entry["files"]`，而 **`order_by` 只作用于 GET 查询**，POST 返回的是构造顺序 → `files[0]` 仍是 `index.html`，**用例不受影响**。我复核源码确认无误。
+  - **我的错误性质**：只核了「字典序会变」这个**局部事实**，没有追 `files` 这个变量的**数据来源**（POST 响应 vs GET 查询）。这正是我在 P1 反复犯的同一类错误（只看局部、不追消费点）在 P2 的重演。
+  - **附带**：eng-review 还发现 POST 与 GET 的响应序**不一致**（POST 构造序、GET 字典序）——这本身是个值得注意的行为差异，但本任务不加断言（P1 未要求 POST 也排序）。
+- EVIDENCE（**eng-review 另两个高价值发现，待其正式产出后核**）：① **既有静默丢弃点被方案漏登记**——`_build_sibling_data` 对 >768KB 的 binary sibling 直接 `return None`，响应无任何跳过记录，这是**已存在的静默丢弃**，P2 的 skipped 记账只覆盖了新加的三个上限；② **`inject_resources` 若改为返回 `(html, skipped)` 元组，会连带 13 处直接调用它的测试**（`test_html_render.py` 里 `result = inject_resources(...)` 后对 `result` 做 `in` 断言 → 变成对 tuple 做 `in` → TypeError 或假绿），方案未登记该连带面、未给兼容包装。
+- EVIDENCE（**P2 eng-review 3 项阻塞，我全部独立复现确认，其中 B3 是方案新引入的安全漏洞**）：
+  - **B1（我已承认判断错误）**：见上一条 CORRECTION——R1 归因不成立，`_create_entry` 返回 POST 响应而非 GET 查询。
+  - **B2（实测确认）**：① `grep -c "= inject_resources(" tests/test_html_render.py` = **13** 处，方案要改返回 `(html, skipped)` 元组 → 这 13 处会全红；② **既有静默丢弃点**——`api/files.py:270-273` 的 `_build_sibling_data` docstring 自己写着 "None if skipped (oversized binary)"，对 `>768KB` 二进制直接 `return None` 且**无任何记录**；实测 900KB png → 请求 2 / 内联 1 / 静默丢 1 / 无清单。BDD-40② 要求「每个未内联的都必须可查」→ **方案的三级预算没覆盖这条既有路径，P6 造件即 FAIL**。方案 §0.2 还把 P1 对 `files.py:272`（**二进制 serving 路径**）的判定**错误扩展到注入路径的同名行号**上——这是对 P1 结论的误读。
+  - **B3（我自己复现，最严重）**：方案用 `<script type="application/json" id="peekview-inject-report">` 嵌跳过清单，而 `json.dumps` **不转义 `<`**；同时 `path` 字段**完全未过滤**（我实测 `POST /api/v1/entries` 带 `path: "</script><img src=x onerror=alert(1)>.css"` → **201 接受**）。我按方案形态构造后实测：首个 `</script>` 出现在**位置 71**（JSON 字符串内部）→ 其后 `<img src=x onerror=alert(1)>` 成为**活跃 DOM**，而 `RENDER_CSP` 有 `unsafe-inline`/`unsafe-eval` → **`onerror` 会执行**。→ 这不是"取证通道不便"，而是**方案自己新引入了 XSS 面**；且同一形态让方案规定的 BS4 取证失效（`.string` 取到半截 → `json.loads` 失败）。
+    探针 entry（`mjcfg7` / `xprla2`）已 DELETE、anon 复位 15。
+  - **B3 的教训**：P2 的 minimal_validation V9 只用**中文文件名**验证了 `<script type="application/json">` 在 CSP 下不执行，**从未覆盖 HTML 敏感字符** → 结论被**过度外推**成"实测可行"。这正是"验证了 A 就宣称 A∪B 可行"的典型。
+- NEXT: 等 plan-design-review 产出，然后派组长汇总（`P2-review.md`）。eng 给了 `rejected` + 3 阻塞，预计需回 P2 修订一轮。
+- EVIDENCE（**P2 design-review 完成：rejected，2 BLOCKER + 2 MAJOR。其中一条更正了我与它自己的读数，我已实测确认**）：
+  - **D-1（BLOCKER）布局层零候选**：角色定义 `plan-design-review.md:27-29` 括号注明要求「架构级 candidate_count **下沉** UI 布局层」；而 P2 的 3 候选全在架构层（锚点生成点 / 超限反馈承载），且 `:171` **自认**「其余实现三方案一致，不制造假分叉」→ UI 设计节 `:432-457` grep「候选/备选/权衡」= **NONE**。→ `candidate_count: 3` 只满足 P2 gate 机器校验，不满足该角色的 UI 层要求。
+  - **D-2（BLOCKER）`.toc-level-1 { padding-left: 0 }` 是 no-op**：`.toc-item` 只有 margin 无 padding，该属性默认已 0 → h1 与 h2 在 TOC 内 `paddingLeft/marginLeft/fontSize/fontWeight/x` **逐项相同** → 决策 B 扩 h1 后**层级视觉不可区分**。且 **BDD-04 只验「h1–h4 计数==4」，不验层级可区分** → P6 会 PASS，缺陷无 BDD 捕获（属 P1 判据的盲区，但**不回 P1**，P2 补样式即可）。
+  - **D-3（MAJOR）移动端最小支持宽度未声明**：实测 **360px 视口底栏溢出 10px**（`overflow-menu-trigger` 右缘 370 > 360）、375 恰好用尽、390 有余量；栏高四档恒 64px。方案只测 390（BDD-24 的 Given 也是 390）→ 360 缺陷无 BDD 捕获。**修法**：把移动入口移入 `OverflowMenu` 可一并解 D-3。
+  - **MAJOR-4（它发现、我未提）桌面全屏按钮缺 `v-if` 守卫**：404 页 `.actions-area` 仍渲染但 `activeFile` 为 null → 点击走 `activeFile.id` 会 **TypeError**。移动端安全（整栏 `v-if="isMobile && currentEntry"`），桌面端 `v-if="isDesktop"` 与 entry 状态无关。
+  - **CORRECTION（它自我更正，我实测确认）**：「桌面 `.actions-area` 插入按钮溢出 40px」是**误读**。我实测 1280×800：`clientW 423 == scrollW 423`、`gap: 4px`、`bodyScrollW 1280 == innerW 1280`、`.actions-area` 右缘 1256 → **不溢出、无横向裁切**，那 4px 是 flex 尾槽 gap。**正面结论**：弹性布局结构安全，但"标题让出 36px"方案零交代，已列为补一条「标题未被截断」度量点。
+  - **正面结论（供 P4 保留）**：截断态表头换成 `span.th-label` 后**不塌陷**（thead −28px、tbody 首行同步 −28px、标签居中偏差 −0.25px、7 列列名全留）→ 方案 R12 缓解措施成立；对比度全过 AA（亮 5.25/5.19/5.25、暗 7.26/5.57）；`focus-visible` 2-3px solid 既有于 `.icon-btn`。
+  - **七维评分**：交互状态覆盖 8 / AI Slop 9 / **移动端 5** / 可访问性 8 / 组件完整性 7 / 视觉设计 7（布局 2 对比度 3 **字体间距 1** **组件一致性 1**）/ 交互设计细节 6（输入态 3 键盘 3 **过渡禁用态 0**）。
+  - **一条与 B3 不重复的设计观察**：方案 `:446` ② 声明跳过清单「**不新增视觉横幅**」→ 清单对用户**完全不可见**，与 P0 决策 4「消除用户看到的假象」有语义落差（用户仍见"渲染成功但资源不全"）。需 architect 说明"P1 未要求可见横幅"是否足够。
+- NEXT: 派组长汇总出 `P2-review.md`（规则：任一专家 BLOCKER → rejected），然后回 P2 修订（retries[P2] 计 1，上限 3）。
+- CORRECTION（**组长汇总指出我 dispatch-context 里的一处归因错误，我已核实它对**）：我在给组长的派发里写「eng 的 B3（跳过清单 XSS）与 design 的观察（跳过清单对用户不可见、与 P0 决策 4 有语义落差）是同一机制的两个角度，可合并陈述」——**这个归因错了**。实测：`P2-review-design.md` 全文 grep「决策 4」「用户不可见」「不可查」「显式反馈」= **0 命中**；design 评审提及「跳过清单/注入超限反馈」共 3 处，**全部中性或正面**（作为"候选全在架构层"的论据 / 交互状态覆盖率的**正面得分项**）。而「不新增视觉横幅——P1 未要求可见横幅，避免超出基线」这句实际在 **`P2-design.md:446`**（方案自述，非评审意见）。→ 真实状态是「design **看见并接受**了不给可见横幅；eng **单方**就同一载体的 XSS 提阻塞」，二者不冲突但**不能表述为两位专家的合并陈述**。组长已正确记为 eng 单方 BLOCKER，并另行记录「P0 决策 4 与'仅机读 JSON'确有语义落差，但本轮无专家单独就此提阻塞」供我判断。
+  - **我的错误性质**：把我自己读 `P2-design.md` 得到的信息，错误归到了 `P2-review-design.md` 名下。属**来源混淆**——与 P1 期间那次"凭空归因"同源（引用他人意见前必须核实来源文档）。
+- NEXT: P2 修订（`retries[P2]` 计 1，上限 3）。5 项 BLOCKER（B1/B2/B3/D-1/D-2）+ 7 项 MAJOR（M1–M7）+ 13 项非阻塞，按 `P2-review.md §6` 的修订清单派 architect 修订。
+- DECISION（**批准 P1 基线的一处实现层勘误，标注 [BASELINE_CHANGE]，Then 语义未动**）：P2 修订者独立复核发现 `P1-requirements.md:589` 判「`api/files.py:272` 属**二进制 serving** 路径、不在注入路径上」**失实**。我亲自验证：全仓 `_BINARY_SIZE_LIMIT` **只有 1 个消费点**（`files.py:48` 定义 / `:272` 消费）；`:272` 在 `def _build_sibling_data`（`:270`）体内，**唯一调用方是 `render_html_file`（`:336`）→ 注入路径**；`download_file`/`get_file_content`（`:185-268`）内零 size 判断 → **全仓不存在"按大小挡二进制的 serving 逻辑"**。
+  - **这条错误我也有份**：我在 P1 期间照抄了这个判断，并在 P2 派发时把它当既定事实转述（"`files.py:272` 在二进制 serving 路径"）。eng-review 的 B2 也沿用了"同文件两个不同函数"的说法（实际是**同一行**）。→ 三方都错了，修订者独立复核才对。
+  - **处理**：按 P1 基线保护规则（P1 卡片「P1 基线保护」：主 Agent 显式批准 + 标 `[BASELINE_CHANGE: 理由]` + **不改 Given/When/Then 语义**），我批准并更正 3 处：① §6.5 表格该行判定改写；② §6.5 结论句「只有 1 个真实生效常量」→「2 个」（数量上限 50 休眠 + `_BINARY_SIZE_LIMIT` 在注入路径上）；③ BDD-39 的 Given 括号内附注。共 4 处 `[BASELINE_CHANGE]` 标记。**BDD-39/40 的 Then 语义完全未动**（超限文本仍不内联+仍记录；未内联的仍须可查），54 条 BDD 编号连续无改动。
+  - **影响**：结论方向不变（`_BINARY_SIZE_LIMIT` 本来就要处理），只是理由从「漏了另一条路径」变成「它就是唯一那条路径」。P2 的 §0.2 已据此整条重写为「必须改」。
+- NEXT: P2 第 2 轮评审（`retries[P2]` 仍计 1 次——修订不算新重试轮，评审重跑才计）。派双评审复核 5 BLOCKER + 7 MAJOR 是否闭环。
+- EVIDENCE（**P2 eng-review 第 2 轮：rejected，但 3 项原 BLOCKER 全部已闭环；新增 1 项 B4。我已逐条独立验证，全部成立**）：
+  - **B1/B2a/B2b/B3 全部「已闭环」**：eng 自跑补丁验证 B1（73 passed / 0 failed，POST≠GET 序成立）；B2a `skipped_out` 可选出参（13 处零改动）；B2b `binary_too_large` 已入记账；B3 转义后 `stray <img>=False` / `json.loads` 通过 / `path` roundtrip 一致，并确认修订者重做的 V9「可信、四关键面覆盖齐全」。
+  - **B4（新增阻塞，我已逐条实证）**：`reason` 五元闭集（`not_found`/`count_limit`/`file_too_large`/`total_budget`/`binary_too_large`）**全部是 `inject_resources()` 之前的判定点**；而函数内部还有一条成规模的静默丢弃路径：
+    ① `_detect_kind`（`html_render_service.py:77-90`）实测**只认 `.css`/`.js`**（含 `language ∈ {css, javascript, js}`），`.md`/`.json`/`.csv`/`.yaml`/`.txt` 一律返回 `None`；
+    ② `html_render_service.py:258-260` 的 `if not kind: continue` **直接静默跳过、无任何记录**；
+    ③ **决定性证据**：前端 `useEntryDetailComputed.ts:42-46` 的 `siblingFileIds` **只排除主文件本身、完全不过滤 kind** → HTML entry 带一个 `README.md` 就会被请求，然后被静默丢弃。
+    ④ P2 全文 grep「未引用/unreferenced/不可注入/not_injectable」= **0 命中** → 零覆盖。
+  - **为何是 BLOCKER 而非 WARNING**：`reason` 闭集是 **P2 冻结项**（P4 无权扩集）；且 D7 从未定义 `inlined` 是「预算放行数」还是「实际进入响应体数」——后者让 BDD-40②「未被内联的每一个都必须可查」不可满足，前者直接违反它。**两条路都得改设计。**
+  - **连带发现（minimal_validation 选材缺口）**：V8 的素材（bootstrap/vue/d3/app.css/chart.js/logo.svg）**六个全是资源文件，恰好绕开 kind 这一维**——与第 1 轮指 V9「只用中文文件名」同类：**验证了 A 就宣称 A∪B 可行**。
+  - **eng 自我更正两处**：①「同文件两个不同函数」说错了，`files.py:272` 就在 `_build_sibling_data:270` 体内、唯一消费点（**与我和修订者一致**）；② `P2-review.md §6.1-3` 括号旁证以它 §1.3 为准（不改动作）。
+  - **4 项非阻塞（我已核实 3 项）**：**N5** 双名并存——`:710` 的 P3 取证命令指向 `test_entry_order.py`，但设计另有 5 处用 `test_entry_file_order.py`；且 `:710` 命令带 `| tail -30`，**按字面跑会 exit 0 = 假绿**（实测裸跑 exit 4 才可归因）；**N7** 设计称「119P/0F/0E 基线」，**实测两文件 = 73 passed**（我用 `-v` 覆盖 `addopts=-q` 才拿到汇总行），数字错；**N8** `backend-render-budget` 批的 `output` 未含新建的排序测试文件；N6 `files_to_read` 的 useCsvParser spec 路径写成 `components/__tests__/`（实际在 `composables/__tests__/`）。
+  - `retries[P2]` 已用 **2/3**。
+- NEXT: 等 design-review 第 2 轮结果，然后决定是否需第 3 轮修订（预算只剩 1 次）。
+- EVIDENCE（**P2 design-review 第 2 轮：approved（七维全部 9 或 8），但发现 2 项 MAJOR 新问题。我已逐条验证成立**）：
+  - 七维评分（本轮→第 1 轮）：交互状态 9(8) / AI Slop 9(9) / **移动端 9(5)** / 可访问性 9(8) / 组件完整性 8(7) / 视觉设计 9(7) / 交互设计细节 9(6)。**移动端从 5→9 是该维度最大进步**。
+  - **D-1/D-2/D-3 全闭环**：D-1 三组**布局层**候选（L/V/I 各 3 个，否决理由基于 BDD 判据而非偏好，且都经它独立核实源码）；D-2 实测 `fw 600 / #e9eef4 / marginTop 12px`、对比度 **15.26:1**（它手算吻合）；D-3 逐位复现 V14（含 5.39/20.39/35.39 三个小数），落点唯一性独立确认。
+  - **D-3 最终定级 = MAJOR（不计入 BLOCKER）**：它承认第 1 轮 §0/§5 口径不一致是自己的问题，本轮统一。理由：不影响任何 BDD 可执行性（BDD-24 钉 390）、危害是 360 档功能损失、单点可闭环。
+  - **R2-1（MAJOR，我已验证）**：h1 新规则会**吃掉 `.active` 强调色**。`.toc-item.active a`（`TocNav.vue:41`）与设计新增的 `.toc-item.toc-level-1 a` **特异性同为 (0,2,1)**，新规则源码在后 → 顺序胜出。实测 h1 `.active` 色变 `rgb(233,238,244)`，h2 仍 `rgb(77,141,255)`。**更关键**：现状校验点⑦ 只断 `fontWeight`/`marginTop`/`x`，**R2-1 存在时三项全真 = 判据漏检** → 须补反向断言「h1 active 时 color == `--c-accent`」。处方：加 `:not(.active)`。
+  - **R2-2（MAJOR，我已验证）**：`activeFile` 与 `'fullscreen'` 在 `EntryDetailHeader.vue` 作用域内**均不存在**——我实测 `grep -c activeFile` = **0**、`defineEmits`（`:146-155`）**无 `'fullscreen'`**、props 无 `activeFile`、view 未传 `:active-file`。按设计字面直写 → `vue-tsc --noEmit` 报 **TS2339 + TS2345** → `make typecheck` 必红（`P5_typecheck` 会抓，非静默）。处方：加 `activeFile: File|null` prop + 传 `:active-file` + emits 加 `'fullscreen': []` + `@fullscreen`。
+  - **它为何判 approved**：dispatch 尺度「仅判据不可执行 / P4 会真出事才 rejected」——R2-1 判据实测全真（是**漏检**不是不可执行）、R2-2 被 typecheck 兜住（非静默），且两条都有**它已实测有效的一行级处方**；判 rejected 会耗掉 `retries[P2]` 最后 1 次。**我认同这个判断**（理由充分且不让步于问题）。
+- DECISION（**P2 整体仍 rejected，须第 3 轮修订**）：按组长规则「任一专家标 BLOCKER → rejected」，eng 的 B4 是 BLOCKER → P2 整体 `rejected`。第 3 轮修订清单 = **B4（阻塞）+ R2-1 + R2-2（MAJOR，避免 P4 返工）+ N5–N8（非阻塞）**。`retries[P2]` 将用满 **3/3**——这是最后一轮，必须一次改对。
+- GATE PASS（**P2 收口，两位专家均 approved、阻塞 0**）：`P2-review-eng.md` **approved**（320 行，B4 已闭环、阻塞 0）+ `P2-review-design.md` **approved**（348 行，七维全 9/8）。按组长规则「全票无 BLOCKER → approved」，P2 可收口。
+  - **eng 第 3 轮的验证方式值得记**：它**不读设计的探针代码，只按 D7 文字从零重写原型**，跑设计 V17 的 7 形态（数字逐项吻合）+ **自造 9 个设计未覆盖形态**（srcset/preload/manifest/`<a href>`/`<object data>`/`<video poster>`/`<embed src>`/同名 basename×2/CSS `url()`）+ 3 组递归边界，并采用**比设计更强的双向对账**（报告 inlined ⇒ 内容真在响应里；报告 skipped ⇒ 内容真不在）→ **19 组无一撒谎**。
+  - **eng 明确承认自己的处方被证伪**：它第 2 轮建议的 `used_text_keys` 钩子经复核确只有 3 个写入点（`:231`/`:249`/`:298`），不含 `@import`/`url()`/favicon → **修订者的反驳成立**，它把这条记进自己文件的 §9。**评审链的自我纠错再次运转。**
+  - eng 还自报一处自己的探针坑（`@import` 整段被替换导致 marker 消失，误判为埋点漏洞）——如实记录，未掩盖。
+- EVIDENCE（**eng 的 W4/W5 我已验证成立，影响 `skipped[]` schema，须 P4 前定死**）：
+  - **W4**：`SiblingFileData`（`html_render_service.py:26-32`）只有 **6 字段、无 `size`** → `skipped[].size` 无可靠来源（文本 `len()` 是字符数、二进制 base64 需 ×3/4）。
+  - **W5**：`get_files_by_ids`（`entry_service.py:1431-1441`）只返回**命中行** → `not_found` / `count_limit` 项**拿不到 `filename`/`path`**（溢出 id 从未查询；跨 entry id 查不到）。
+  - 而设计 D7 的 schema（`:396-400`）声明了 `filename`/`path`/`reason`/`size` 四字段。→ 需二选一：补轻量查询 / schema 加 `file_id` 并允许 filename 为空。
+  - **其余 WARNING 不阻断**：W1（D7 样例 `45/40/5` 机制上不自洽——limit 40 下 count_limit 应 5 项、inlined 应 36）、W2（`<a href>` 记 inlined 但 href 悬空，属既有行为）、W3（BDD-40③ 在 D10 无落点）、W6（`_process_css_refs` 实测 **8 处**调用，设计称 5 处、所引 `:372-410` 漏后 4 处）。
+  - eng 另提两条测试缺口建议：**G11 双向对账断言**（势断言在"报表撒谎"时仍会绿——正是驳倒最小钩子的形态）、**G12 两跳 `@import` 用例**（V17 的 S3 只测单层）。
+- NEXT: 派组长汇总 `P2-review.md`（全票 approved → approved），并让 architect 补 W4/W5 的 schema 定死（eng 说"补一句即可，不必重开评审"）。

@@ -373,7 +373,7 @@ prod_touched: false
 - Then ① 响应中存在**可机器解析**的「被跳过文件」清单（结构化字段/JSON/可解析的响应头或注释块，脚本可读出文件名列表）② 清单**非空**，且清单条目数 == N − 响应中实际内联的 sibling 数 ③ 清单中每一项可对应到具体文件名 ④ **仓库默认配置下的代码级关系断言**（独立于上面的覆写，读源码常量而非测试配置）：`_MAX_INJECT_IDS`（`html_render_service.py:17`）< `PeekLimits.max_entry_files` 默认值（`config.py:46`）− 1；现状 `50 < 49` 不成立 → FAIL（该关系不成立时，真实配置下 `if len(result) >= _MAX_INJECT_IDS: break` 永不触发、①~③ 在真实请求中也无法被触发）
 
 #### BDD-39: 资源边界：新增「单文件文本注入上限」，超限的文本 sibling 被跳过并记录
-- Given 一个 HTML entry，其中某个 sibling **文本**文件的真实字节数超过**本任务新增的单文件文本注入上限**（该上限是**新增需求**：现有代码对文本 sibling **没有任何大小检查**——`html_render_service.py:18` 的 `_BINARY_SIZE_LIMIT` 是**死常量、零消费**，`inject_resources()`（`:177`）对 `text_siblings` 不做大小判断；`api/files.py:272` 的 `file_record.size > _BINARY_SIZE_LIMIT` 属**二进制内容 serving** 路径，不在注入路径上）
+- Given 一个 HTML entry，其中某个 sibling **文本**文件的真实字节数超过**本任务新增的单文件文本注入上限**（该上限是**新增需求**：现有代码对**文本** sibling 没有任何大小检查——`html_render_service.py:18` 的 `_BINARY_SIZE_LIMIT` 在该文件内从未被读取，`inject_resources()`（`:177`）对 `text_siblings` 不做大小判断。**[BASELINE_CHANGE: P2 第 2 轮实测更正]** `api/files.py:272` 的 `file_record.size > _BINARY_SIZE_LIMIT` **不是** serving 路径——它在 `_build_sibling_data` 体内、唯一调用方为 `render_html_file`，即**注入路径上的二进制** sibling 检查；它管的是「二进制」，与本条要新增的「**文本**上限」仍是两件事，故本条结论不变）
 - When 请求 render 路由携带该 id（与一个未超限的文本 sibling 的 id）
 - Then 该超限文件的文本内容**不出现**在响应中（未内联），且其文件名出现在跳过清单中；**对照**：同 entry 内未超限的那个文本 sibling **仍被正常内联**（正反双向）
 
@@ -586,10 +586,10 @@ P0 遗留 4 项，**全部在本阶段收敛**（补充文件已把「全屏按�
 |---|---|---|
 | `services/html_render_service.py:17,72` | `_MAX_INJECT_IDS = 50` + `if len(result) >= _MAX_INJECT_IDS: break` | **本次处理**：调低上限使超限分支可达 + 超限显式反馈（BDD-38）。**实测该 break 在真实配置下永不触发**：`_MAX_INJECT_IDS(50) == max_entry_files(50)`，主文件占 1 名额 → 最多 49 个 sibling。`parse_inject_ids` 现只回 `list[int]`、丢失「截掉多少」→ 一并扩展签名 |
 | `services/html_render_service.py:18` | `_BINARY_SIZE_LIMIT = 768 * 1024` | **本次处理（更正为：死常量、零消费；注入路径无单文件上限 → 本任务新增）**。实测 `grep -c _BINARY_SIZE_LIMIT` 在该文件 == **1**（仅定义行），`inject_resources()`（`:177`）对 `text_siblings` **无任何大小检查** → 该常量在本文件内从未被读取。→ BDD-39 声明「**新增**单文件文本注入上限」为新需求 |
-| `api/files.py:48` + `:272` | `_BINARY_SIZE_LIMIT = 768 * 1024` **重复定义**同一常量 | **本次处理**：收敛为单点。判定补充：`:272` 的 `file_record.size > _BINARY_SIZE_LIMIT` 在**二进制内容 serving** 路径（`is_binary` 前置），**不在注入路径上** → 它既不是本任务要统一的预算，也不该被当成既有文本上限 |
+| `api/files.py:48` + `:272` | `_BINARY_SIZE_LIMIT = 768 * 1024` **重复定义**同一常量 | **本次处理**：收敛为单点。判定补充（**[BASELINE_CHANGE: P2 第 2 轮实测更正——原判「属 serving 路径、不在注入路径上」失实，仅更正实现层附注，BDD-40 的 Then 语义不变]**）：`:272` 的 `file_record.size > _BINARY_SIZE_LIMIT` **就在注入路径上**——该行位于 `def _build_sibling_data`（`:270`）体内，唯一调用方是 `render_html_file`（`:336`）；`_BINARY_SIZE_LIMIT` 在全仓**只有这一个消费点**（`files.py:48` 定义 / `:272` 消费），`download_file`/`get_file_content`（`:185-268`）内 `grep -c size` 均为 **0** → 全仓**不存在**「按大小挡二进制的 serving 逻辑」。→ 它是**既有的、静默丢弃 oversized 二进制 sibling 的唯一路径**（docstring 自述 "None if skipped (oversized binary)"），本任务必须把它并入 `skipped` 记账（对应 BDD-40「每个未内联的都必须可查」），不能当作"serving 侧豁免" |
 | `services/html_render_service.py:19,140` | `_CSS_RECURSION_LIMIT = 3` | **不处理**：CSS `@import` 递归深度限制，与字节/数量预算不同维度，且已有测试覆盖 |
 
-**结论（更正后）**：注入侧**只有 1 个真实生效的常量**（数量上限 50，且因 `50 == max_entry_files` 而休眠）；单文件**文本**上限、总字节预算、最终 HTML 上限**三者都不存在**，属本任务**新增能力**（P0 决策 4）。`_BINARY_SIZE_LIMIT` 是两处重复的**死常量**，收敛它只是清理，不是「把现有上限纳入预算」。`_CSS_RECURSION_LIMIT` 保持独立。
+**结论（更正后）**：注入侧**只有 2 个真实生效的常量**——数量上限 50（因 `50 == max_entry_files` 而休眠）与 `_BINARY_SIZE_LIMIT=768KB`（**在注入路径上**，静默丢弃 oversized 二进制 sibling）；单文件**文本**上限、总字节预算、最终 HTML 上限**三者都不存在**，属本任务**新增能力**（P0 决策 4）。`_BINARY_SIZE_LIMIT` 在两文件重复定义，收敛为单点；它**不是死常量**，而是既有静默丢弃路径，须纳入 `skipped` 记账（[BASELINE_CHANGE: 同上]）。`_CSS_RECURSION_LIMIT` 保持独立。
 
 ### 6.6 `firstFileId` —— 27 行命中 / 8 文件（口径已声明；三个 e2e spec 内 9 处）
 
