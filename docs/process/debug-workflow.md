@@ -250,6 +250,13 @@ curl -s http://127.0.0.1:8080/health | jq '.version'
 2. spec 依赖的 entry 必须存在于 seed-data/ 或测试内自建且带 afterEach 清理队列（创建成功才入队；清理失败必须显式 FAIL，404 视为已删除）。确定性 slug 加 `e2e-` 前缀，避免与 seed-data 条目冲突。
 3. 直写 DB 的 spec（POST/DELETE `/api/v1/entries`）必须加 BASE_URL 防生产护栏（beforeAll fail-fast）：BASE_URL 含 `:8080`/`prod` 即 throw，另加 `/health` 探活。
 4. fixture 的创建与删除必须同认证上下文（debug 匿名建配匿名删；登录用户建配同一用户删——混用即残留）。清理队列只存 slug，结构上杜绝「匿名建 + 带 token 删」。
+5. **时间/日期格式断言**（TPV0102/TPV0103 实测，4 轮评审换来）：
+   - **不要用文本特征反推实现参数**。`Intl.DateTimeFormat` 的 `timeZoneName` 有 6 种取值，其中 `long`/`shortGeneric`/`longGeneric` 的输出既无数字偏移也不含 GMT/UTC，段数与正确形态完全相同 ⇒ 用「段数==5 且无 GMT/UTC」这类判据会**假 PASS**（把错误的 `long` 当成正确的 `shortOffset`）
+   - **判据用「与参考格式化输出逐字符相等」**，绕开形态猜测；不要用正则匹配形态（`/GMT|UTC|[+-]\d/` 会误命中日期分隔符 `-`，实测造成 4/32 locale 假 FAIL）
+   - **参考值与被测实现必须显式同源**：Playwright 的 `test.use({ locale })` 只改浏览器上下文、不改 Node 进程 locale；两侧都 pin 或都不 pin，混用即假 FAIL
+   - **时区轴必须单独验证**（不能只做 locale 轴）：宿主 `TZ=Asia/Shanghai` 时区错配不显形，必须 `TZ=UTC` 另跑一次。`ci.yml` **不跑 vitest** ⇒ 这是「本地绿、他机红」的隐性陷阱
+   - **`hour12` 的错误只有 `en-US` 抓得住**：`hour12:false` 在 `zh-CN`/`ja-JP`/`de-DE`/`sv-SE` 输出与正确形态完全相同 ⇒ 守护点放固定 `en-US` 用例
+   - **双向断言优于单向**：去掉一个特征时只断言「不含 X」不够，还要断言「含 Y」（例：去秒 ⇒ ①不含 `17:43:00` ②含 `17:43`）；单向断言会放过「整段被删掉」的实现
 
 ## 常见问题
 
