@@ -215,11 +215,31 @@ parent: 无
 7. URL 更新用 `router.replace()`（不制造历史记录）
 8. **`file` 与 `share` 等参数各自生效**，清理某个临时参数时不得误删其他
 
+#### 7.4.1 ⚠️ `firstFileId` 与 `file` 不是同一个东西（机制替换，非改名）
+
+这是本任务最易误解的一点，必须写清：
+
+| 维度 | `firstFileId`（现状） | `file`（文档要求） |
+|---|---|---|
+| **语义** | 初次加载时先展示哪个文件 | **当前**正在看哪个文件 |
+| **性质** | 命令式**一次性种子** | 声明式**持续状态** |
+| **生命周期** | 加载完即清（`EntryDetailView.vue:238`） | 保留，仅切回默认文件时移除 |
+| **来源** | 列表页（`EntryCard`/`EntryListRow`）塞进 URL | 详情页内用户切换文件产生 |
+| **谁是真相** | URL 是输入，store 是真相 | URL 与 store **双向同步** |
+| **刷新后** | **丢失**（回落 `files[0]`） | **保留**（文档 V-04 明确要求） |
+| **页内切换** | **从不更新** | **必须同步** |
+
+**结论**：不能靠「保留 `firstFileId` 但改名叫 `file`」满足文档要求。必须把机制从一次性种子改为持续状态同步。
+
+**可复用部分**：`EntryDetailView.vue:234` 的「读 query → 传 loadEntry」思路可保留，但**清除时机与更新时机完全不同**。
+
+**迁移影响**：现有 `?firstFileId=` 链接（卡片/列表自动生成）会失效。但本任务同时要**移除卡片/列表的该传递**（冲突 4），自动来源本就被替换 → 剩余风险仅为用户手动收藏的链接，P1 评估是否加重定向。
+
 #### 7.5 ⚠️ 与现状的关键冲突（已实测，P1 必须解决）
 
 | # | 文档假设 | 实测现状（`9a47df77`） | 影响 |
 |---|---|---|---|
-| 1 | 参数名为 `?file=` | 现状是 **`?firstFileId=`**（`EntryDetailView.vue:234`、`EntryCard.vue:150`、`EntryListRow.vue:153`） | **需决定**：改名 `file`（文档方案，语义更通用）还是保留 `firstFileId`（零迁移）。改名属 URL 契约变更，旧链接会失效 |
+| 1 | `?file=` 是**持续态**参数 | 现状 `?firstFileId=` 是**一次性种子**：`EntryDetailView.vue:238` 加载完即 `router.replace({query:{}})` 清除，页内切文件也从不更新 | **不是改名，是机制替换**（见 §7.4.1）。`firstFileId` 无法满足「刷新保留 / 切换同步」要求，必须换掉 |
 | 2 | 4.1 "复用现有全屏入口" | **详情页根本没有全屏按钮**——zen 只能靠 `f` 键（`EntryDetailView.vue:239` 的 keydown）；唯一的"全屏"按钮是 `DiagramBlock.vue:177` 的**图表**全屏 | ✅ **已解决**：由 `issues-20261124-1612.md` 明确要求**新增按钮**（见 §7.3 修订） |
 | 3 | 页面加载后清 query | 现状 `EntryDetailView.vue:238`：`if (firstFileId || shareToken) router.replace({ path, query: {} })` **清空所有 query** | 正是文档 §5.100 警告的坑：会误删 `file`。必须改为**只删已消费的临时参数** |
 | 4 | 卡片/列表不应绕过默认入口 | 现状 `EntryCard.vue:150` / `EntryListRow.vue:153` **无条件**传 `files[0].id` 作为 `firstFileId` | 正是文档 §3.49 警告的坑：会让 README 优先规则失效。**必须移除该传递** |
@@ -234,7 +254,7 @@ parent: 无
 
 - **V-02**：`useMarkdown.ts` 导出 headings（已是现成数组）；`useEntryDetailComputed.ts` 的 `extractHeadings` 改为消费它；正文侧补重复 ID 去重
 - **V-01（决策 7）**：抽 `resolveDefaultFile(files)` resolver（根 `README.md` > 根 `index.md` > 稳定排序首个）；`entryDetail.ts:50-52` 的 `entry.files[0]` 接入该 resolver；**移除** `EntryCard.vue:150` / `EntryListRow.vue:153` 的 `files[0].id` 传递（否则绕过 resolver）；后端 `get_entry` 补**确定性 `order_by`**（path + id tie-breaker）
-- **`?file=` 参数**：`EntryDetailView.vue:234` 的 `firstFileId` 改为读 `file`（**或**保留 `firstFileId` 作为别名，P1 定）；`:238` 的清 query 改为**只删已消费参数**（保留 `file`/`share`）；文件切换后 `router.replace` 同步 URL
+- **`?file=` 参数（机制替换）**：`EntryDetailView.vue:234` 改读 `file` 并接入持续态同步（§7.4.1）；`:238` 的清 query **改为只删 `share` 等一次性凭证、保留 `file`**；页内切换时 `router.replace` 更新 `file`；切回默认文件时移除 `file`
 - **全屏入口**：现状无按钮（仅 `f` 键）→ P1 决定是「新增按钮」还是「仅靠 `f` 键 + URL 同步」；若加按钮，需同时处理「默认文件→`/f`」与「非默认文件→`/f?file=`」两种跳转
 - **V-03**：`useCsvParser.ts` 的 `parseRows` 增加提前终止
 - **V-06/V-07**：`html_render_service.py` 的注入循环加预算累计 + 前端展示注入统计
@@ -247,7 +267,7 @@ parent: 无
 - **不改 HTML CSP 默认策略**（见决策 6）
 - **不引入 Web Worker / 虚拟滚动**（见决策 2）
 - 现有测试契约不得擅改：`test_html_render.py` 的 `assert "https:" in csp` 是明确契约
-- **`?file=` 参数名需 P1 定**：现状是 `firstFileId`，文档方案是 `file`。改名属 URL 契约变更（旧链接失效），保留则零迁移但语义较专。P1 必须给出取舍与迁移策略
+- **`?file=` 必须实现为持续态，不得复用 `firstFileId` 的清除逻辑**（见 §7.4.1）——`firstFileId` 是「加载完即清」的种子，无法满足「刷新保留 / 切换同步」
 - **全屏入口确定新增按钮**（`issues-20261124-1612.md` 明确要求）：现状无按钮，仅 `f` 键不构成可发现入口。P1 需定**放置位置**（Header 工具区 vs 新增轻量入口），但"是否加"已定
 - **默认入口 resolver 必须单点**：卡片/列表/直接访问三条路径都必须走同一个 `resolveDefaultFile`，禁止任一处自行取 `files[0]`
 - **URL 清理逻辑必须逐个参数处理**：禁止 `query: {}` 一锅端（会误删 `file`/`share`）
@@ -301,37 +321,38 @@ parent: 无
 29. Given URL 同时含 `file` 与 `share` When 加载完成 Then **两者各自生效**，清理时互不误删
 30. Given 已指定 `?file=123` When **刷新页面** Then 仍打开该文件（不被清理逻辑抹掉）
 31. Given 切换文件 When 观察浏览器历史 Then **不新增**历史记录（用 `router.replace`）
+32. Given 通过 `?file=123` 打开 Then 该参数在加载后**仍保留在 URL**（不得像 `firstFileId` 那样被清除，见 §7.4.1）
 
 ### V-05b 回归兼容（决策 7）
 
-32. Given 单文件 entry When 打开 Then 行为不变
-33. Given 普通详情页 When 打开 Then 行为不变
-34. Given Share 链接 When 访问 Then 权限验证行为不变
+33. Given 单文件 entry When 打开 Then 行为不变
+34. Given 普通详情页 When 打开 Then 行为不变
+35. Given Share 链接 When 访问 Then 权限验证行为不变
 
 ### V-04（截断态控件）
 
-35. Given CSV 超 maxRows When 渲染 Then 表头**无**排序按钮与过滤输入框
-36. Given CSV 超 maxRows When 渲染 Then 截断提示 banner 可见且给出实际行数
-37. Given CSV 未超限 When 渲染 Then 排序/过滤控件**正常存在且生效**（回归）
+36. Given CSV 超 maxRows When 渲染 Then 表头**无**排序按钮与过滤输入框
+37. Given CSV 超 maxRows When 渲染 Then 截断提示 banner 可见且给出实际行数
+38. Given CSV 未超限 When 渲染 Then 排序/过滤控件**正常存在且生效**（回归）
 
 ### V-03（CSV 解析成本）
 
-38. Given 远超 maxRows 的 CSV When 解析 Then 不构造超限行数的完整数组（可用性能断言或 spy 验证）
-39. Given 超限 CSV When 解析完成 Then `totalRows` **仍准确**（截断提示需要）
+39. Given 远超 maxRows 的 CSV When 解析 Then 不构造超限行数的完整数组（可用性能断言或 spy 验证）
+40. Given 超限 CSV When 解析完成 Then `totalRows` **仍准确**（截断提示需要）
 
 ### V-06/V-07（注入预算）
 
-40. Given sibling 总大小超预算 When 渲染 HTML Then 返回明确错误或降级提示，**非静默丢弃**
-41. Given sibling 数量超 50 When 渲染 Then 明确告知被跳过数量
-42. Given 单文件 text 超上限 When 注入 Then 该文件被跳过且有提示
+41. Given sibling 总大小超预算 When 渲染 HTML Then 返回明确错误或降级提示，**非静默丢弃**
+42. Given sibling 数量超 50 When 渲染 Then 明确告知被跳过数量
+43. Given 单文件 text 超上限 When 注入 Then 该文件被跳过且有提示
 
 ### V-08（字节数判断）
 
-43. Given 中文 HTML 内容（`length` 小但字节大）When 渲染 Then 按**真实字节数**判定是否进入手动渲染
+44. Given 中文 HTML 内容（`length` 小但字节大）When 渲染 Then 按**真实字节数**判定是否进入手动渲染
 
 ### V-05（安全边界记录）
 
-44. Given 私有 entry 含不可信 HTML When 打开 Then 行为符合已记录策略（沙箱隔离生效、外传通道存在但被文档化）
+45. Given 私有 entry 含不可信 HTML When 打开 Then 行为符合已记录策略（沙箱隔离生效、外传通道存在但被文档化）
 
 ## 已知风险
 
@@ -341,7 +362,7 @@ parent: 无
 - **V-05 仅记录不改策略**：可能被误读为"已修复安全风险"——P8 文档须显式说明"当前仍允许外传，收紧属独立决策"
 - 报告明确声明"未 clone、未运行测试、未浏览器实测"——本仓复验为**静态源码比对**，P5 需实跑验证
 - **决策 7 与现状有四处冲突**（见 7.5 表）：参数名、全屏入口不存在、清 query 一锅端、卡片/列表绕过 resolver。若 P1 未逐一解决，验收看似通过但实际行为与文档不符
-- **`?file=` 与 `firstFileId` 若并存**（作别名）会引入两套参数语义，P1 应明确择一或给出兼容期
+- **旧 `?firstFileId=` 链接会失效**：本任务同时移除卡片/列表的该传递，自动来源被替换；剩余风险为用户手动收藏的链接，P1 评估是否加重定向
 - **全屏按钮的移动端遮挡风险**：1612 要求「不遮挡主要内容」，移动端空间紧张，P1 需给出具体位置方案
 - **全屏 `f` 键的 URL 同步**：`f` 是键盘事件，触发时若不改 URL，则与 `/{slug}/f` 路由不同源——P1 需决定「按键是否也跳转路由」（会改变现有"纯前端 zen 切换"行为）
 - 本次 BDD 从 19 条增至 **40 条**，P6 实跑成本显著上升；若 P1 决定缩减决策 7 范围，需同步删 BDD

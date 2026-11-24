@@ -2,7 +2,7 @@ phase: P0
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-24T16:20:00Z'
+updated: '2026-11-24T16:35:00Z'
 judge:
   enabled: true
 history:
@@ -22,3 +22,7 @@ history:
   action: scope-expanded-2
   ts: 2026-11-24 16:20:00+00:00
   note: '再合并 docs/notes/issues-20261124-1612.md（增加全屏阅读入口）。两份文档互补：1553 定义 URL 语义与默认入口、1612 补上普通页→全屏的操作入口（1553 §4.1 假设的"现有全屏入口"实测不存在）。决策 7.3 从"待 P1 定是否加按钮"改为"确定新增按钮"，并写入位置优先序与五条禁止项。BDD 40→44 条（新增 4 条可发现性/遮挡断言）。P1 待定项收敛为一：参数名 file vs firstFileId。'
+- phase: P0
+  action: correction
+  ts: 2026-11-24 16:35:00+00:00
+  note: '修正一处概念错误（用户指出）：此前把 firstFileId 与 file 当成同一参数的两种拼写并让 P1 二选一——错。实测二者机制不同：firstFileId 是一次性种子（EntryDetailView:238 加载完即清、页内切换从不更新、刷新即丢），file 要求持续态（刷新保留/切换同步/切回默认才移除）。不是改名是机制替换。已写 §7.4.1 专节，改冲突表第 1 行，修 5 处表述，新增 1 条 BDD（?file= 加载后必须仍在 URL）。BDD 44→45。参数名争议已消除：必须是 file。'
