@@ -231,3 +231,14 @@
   - **其余 WARNING 不阻断**：W1（D7 样例 `45/40/5` 机制上不自洽——limit 40 下 count_limit 应 5 项、inlined 应 36）、W2（`<a href>` 记 inlined 但 href 悬空，属既有行为）、W3（BDD-40③ 在 D10 无落点）、W6（`_process_css_refs` 实测 **8 处**调用，设计称 5 处、所引 `:372-410` 漏后 4 处）。
   - eng 另提两条测试缺口建议：**G11 双向对账断言**（势断言在"报表撒谎"时仍会绿——正是驳倒最小钩子的形态）、**G12 两跳 `@import` 用例**（V17 的 S3 只测单层）。
 - NEXT: 派组长汇总 `P2-review.md`（全票 approved → approved），并让 architect 补 W4/W5 的 schema 定死（eng 说"补一句即可，不必重开评审"）。
+- GATE PASS（**P2 收口已提交 `519321ab`**）：`check-gate.py P2` exit 2（通过码，`gate_pass_exit=2`）+ `check-structure-consistency` S0-S6 全 OK。`.state.yaml` 已写 `phase: P2` + history 追加 `completed`（含三轮评审全过程、12 处真实缺陷、主 Agent 3 处错误）。commit 时先被 gate 拦两次：① `P2-design.md` 缺 `prod_touched` → 用 `agate-md-field-set.py` 补 `false`；② 首次 commit 有 "暂存了 P1 产出但 phase=P2" 的 WARNING（非阻塞）。
+- EVIDENCE（**我亲手补定了 eng 的 W4/W5（影响 `skipped[]` schema，P4 实现前必须定死）**）：
+  - **W4 已核实**：`SiblingFileData`（`html_render_service.py:26-32`）**6 字段中无 `size`** → `skipped[].size` 无可靠来源（文本 `len()` 是字符数、二进制 base64 需 ×3/4）。→ 定死为「**已知时的近似值，取不到就 `null`**」，且**不得**为此给 `SiblingFileData` 加字段（会破坏 B2a 的「13 处既有调用零改动」）；判据不断言 `size` 数值。
+  - **W5 已核实**：`get_files_by_ids`（`entry_service.py:1431-1441`）**只返回命中行** → `not_found`/`count_limit` 项拿不到 `filename`/`path`。→ 定死为「schema **必须含 `file_id`**（必填），`filename`/`path` 允许 `null`」，且**不为这两类补额外查询**（避免新增 DB 往返与穿透风险）。
+  - **连带修正**：不变式的「不重复计数」断言从「按 `filename`」改为「**按 `file_id`**」——否则多个 `null` 会误判为重复而假红。
+  - **W1 已修正**：D7 样例原写 `requested 45 / inlined 40`（limit 40 下机制上不自洽）→ 改为完整自洽 `45 / 36 / 9`（5 项 `count_limit` + 4 项其余），并明确「P3 造件**不得照抄本节数值**，须按实际 limits 与素材重算」。
+- NEXT: P3 TDD。已跑 `agate-capture-env-baseline.py`（exit 0，stderr 的 no-formatter 提示按 P3 卡可忽略）。派发 test-designer（`P3-dispatch-context-test-designer.md` 已写 + AGATE_CARD 已注入）。
+- SUBAGENT FAIL（环境层，P3 期间，已自行恢复）：承担 debug 服务的后台 job（`sleep 21600`）**到期结束** → `:8888` 停（探活 000）。P3 test-designer 正在工作（可能要跑 E2E），故立即新起后台 job `( make debug-start && make debug-seed; sleep 28800 )` 托底 → 恢复 200。
+  - **数据恢复流程再次验证必要**：服务重启后 `/tmp` 数据全丢，第一遍 seed 只到 **19**（alice），补跑第二遍幂等补齐到 **22** → 现 `alice 22 / anon 15` 与基线一致。
+  - **风险提示**：本次重启会冲掉 test-designer 可能已造的探针 entry。P3 的用例设计**不依赖持久数据**（造件在测试内部自建自清），故影响可控；但若它正跑到一半会看到连接失败——需在它返回时核对 `[PROD_NOT_TOUCHED]` 与自跑结果。
+- NEXT: 等 P3 test-designer 产出（54 条 BDD 全映射 + 红灯）。

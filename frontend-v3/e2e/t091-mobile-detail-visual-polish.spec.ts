@@ -7,9 +7,9 @@ const EVIDENCE_DIR = 'docs/tasks/T091-mobile-detail-visual-polish/evidences'
 // P2-design.md §4. Not created here; this file only reads existing entries.
 const MARKDOWN_ENTRY = 'markdown-test'
 // markdown-test has 2 files (architecture.svg id=17, rich-markdown.md id=18); the
-// entry's files[0] is the SVG, so the default page load (no ?firstFileId=) renders
+// entry's files[0] is the SVG, so the default page load (no ?file=) renders
 // ImageViewer, not MarkdownViewer. BDD-3/BDD-12 need the markdown file specifically,
-// so they navigate with ?firstFileId= (a route.query mechanism EntryDetailView.vue
+// so they navigate with ?file= (a route.query mechanism EntryDetailView.vue
 // already reads at L203, not a workaround).
 const MARKDOWN_FILE_ID = 18
 const CODE_ENTRY = 'python-entry-service' // canWrap:true, non-markdown/non-html (BDD-7/8)
@@ -92,7 +92,7 @@ test.describe('T091 Mobile Detail Visual Polish', () => {
     })
 
     test('test_bdd_3_markdown_body_16px_padding_24px_total_inset', async ({ page }) => {
-      await page.goto(`${BASE_URL}/${MARKDOWN_ENTRY}?firstFileId=${MARKDOWN_FILE_ID}`)
+      await page.goto(`${BASE_URL}/${MARKDOWN_ENTRY}?file=${MARKDOWN_FILE_ID}`)
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(500)
 
@@ -318,7 +318,7 @@ test.describe('T091 Mobile Detail Visual Polish', () => {
     test.use({ viewport: { width: 1280, height: 800 } })
 
     test('test_bdd_12_desktop_markdown_padding_unchanged', async ({ page }) => {
-      await page.goto(`${BASE_URL}/${MARKDOWN_ENTRY}?firstFileId=${MARKDOWN_FILE_ID}`)
+      await page.goto(`${BASE_URL}/${MARKDOWN_ENTRY}?file=${MARKDOWN_FILE_ID}`)
       await page.waitForLoadState('networkidle')
       await page.waitForTimeout(500)
 

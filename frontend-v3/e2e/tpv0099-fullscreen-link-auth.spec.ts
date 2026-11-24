@@ -62,7 +62,7 @@ async function setAuthCookie(page: Page, token: string): Promise<void> {
   }])
 }
 
-/** 动态解析 seed 内某文件的 fileId（P2 §8 硬约束：勿硬编码 `?firstFileId=43`）。 */
+/** 动态解析 seed 内某文件的 fileId（P2 §8 硬约束：勿硬编码 `?file=43`）。 */
 async function resolveFileId(request: APIRequestContext, slug: string, filename: string, token?: string): Promise<number> {
   const res = await request.get(`${BASE_URL}/api/v1/entries/${slug}/raw`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -96,9 +96,9 @@ test.describe('TPV0099 Auth 1280x800', () => {
     await setAuthCookie(page, token)
 
     // Given 通过 /{slug}/f 打开含标题层级与正文内标题锚点链接的 markdown entry
-    //   （须带 ?firstFileId；fileId 动态解析）
+    //   （须带 ?file；fileId 动态解析）
     const fileId = await resolveFileId(request, SLUG_MD, MD_FILE, token)
-    await page.goto(`${BASE_URL}/${SLUG_MD}/f?firstFileId=${fileId}`)
+    await page.goto(`${BASE_URL}/${SLUG_MD}/f?file=${fileId}`)
     await page.waitForSelector('#app > *', { timeout: 20000 })
     await page.waitForSelector(`${CONTENT_AREA}, .not-found, .error-state`, { timeout: 20000 }).catch(() => {})
     await page.waitForTimeout(1500)

@@ -1,8 +1,8 @@
-phase: P2
+phase: P3
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-24T21:36:00Z'
+updated: '2026-11-25T06:20:00Z'
 judge:
   enabled: true
 history:
@@ -35,3 +35,8 @@ history:
   action: completed
   ts: 2026-11-24 21:36:00+00:00
   note: 'P2 方案设计通过（三轮评审收敛，retries[P2]=3/3 用满）。产出 P2-design.md 1070 行：3 架构候选 + 3 布局层候选（candidate_count=6）、4 批 static-batch、23 个 gate_commands key、minimal_validation 17 项。**评审链发现 12 处真实缺陷**：第 1 轮 5 BLOCKER + 7 MAJOR（eng: R1 order_by 归因错（_create_entry 读 POST 不读 GET）、inject_resources 改签名打断 13 处调用、跳过清单 <script> XSS；design: UI 布局层零候选、.toc-level-1 padding-left:0 是 no-op）+ 第 2 轮新发现的 B4（reason 闭集漏「非 css/js sibling 被静默丢弃」，因前端 siblingFileIds 不过滤 kind + _detect_kind 只认 css/js + if not kind: continue 静默跳过）+ R2-1/R2-2（h1 新规则吃 active 强调色；activeFile/fullscreen 在 Header 作用域不存在会 typecheck 红）+ 第 3 轮 W1-W6。**关键：minimal_validation 选材缺口两次**（V9 只用中文文件名、V8 六个素材全绕开 kind 维度）。**评审链自我纠错 3 次**：eng 承认 used_text_keys 处方被证伪、承认「同文件两函数」说错；design 承认 D-3 定级口径不一致。**主 Agent 错误 3 处**：照抄 P1 的「files.py:272 属 serving 路径」（实测唯一消费点就在注入路径上，已批准 4 处 [BASELINE_CHANGE] 勘误）、order_by 影响面只核字典序不追数据来源、把 design 未提的观察错归给它。P2 gate exit 2 + structure-consistency 全 OK。'
+
+- phase: P3
+  action: completed
+  ts: 2026-11-25 06:20:00+00:00
+  note: 'P3 TDD 测试设计通过。**54 条 BDD 全部 1:1 映射**（脚本核对 missing=none / extra=none），共 118 个用例，全部红灯。`check-tdd-red.py` = **classic red-light（assertion failures only）exit 0**（V13 硬约束已遵守：引用已存在模块 + 断言尚无行为，未 import 不存在模块）。前端 `make test-frontend` **7 failed files / 31 failed / 1475 passed / 4 skipped**，失败文件**全部**为本任务新增 spec、**零既有回归**；后端 `pytest test_html_render.py + test_entry_file_order.py` **13 failed / 49 passed**，全为 assertion failure（零 collection error）。`make typecheck` exit 0；`check-platform-assumptions.py` 0 命中。**冻结项零改动**：13 处 `= inject_resources(`、8 处 `_process_css_refs(`、9 处 legacy `firstFileId` 全部归零（viewer 2 / t091 4 / tpv0099 3）。产出 9 个新测试文件（vitest 7 + e2e 2）+ 新建 test_entry_file_order.py + test_html_render.py 追加 402 行（TPV0104 段，含 G11 双向对账 / G12 两跳 @import）。**两处关键处置**：① `constructedRows` 未声明为类型成员会让 vue-tsc 报 TS2339 → 被误判成 A 类错误，故用 `constructedRowsOf()` 局部类型放宽 + 新增代码级断言锁死「必须是必填成员」；② P2 §0.1A 与 §5.1 取证命令不一致（预算用例归属），按冻结命令收敛到 test_html_render.py。'

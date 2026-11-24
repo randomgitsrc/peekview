@@ -18,7 +18,7 @@ async function openMarkdownFile(page) {
   const res = await page.request.get('/api/v1/entries/markdown-test')
   const entry = await res.json()
   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
-  await page.goto(`/markdown-test?firstFileId=${md.id}`)
+  await page.goto(`/markdown-test?file=${md.id}`)
 }
 
 // ========================================
@@ -211,7 +211,7 @@ test.describe('Responsive Layout', () => {
   test('TC-023: Mobile TOC drawer', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     // Default active file is architecture.svg (non-markdown), so the TOC button only
-    // renders after selecting the markdown file via ?firstFileId=
+    // renders after selecting the markdown file via ?file=
     await openMarkdownFile(page)
 
     // Click TOC button in mobile bottom bar
