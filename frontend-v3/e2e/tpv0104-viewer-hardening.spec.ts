@@ -15,9 +15,16 @@
 // ⚠️ 双 viewport（P3 卡强制）：desktop_1280x800.png / mobile_390x844.png 存 evidences/。
 
 import { test, expect, request as pwRequest, type Page, type APIRequestContext } from '@playwright/test'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
-const EVIDENCE_DIR = 'agate-workspace/tasks/TPV0104-viewer-correctness-hardening/evidences'
+// 必须用相对 __dirname 的绝对路径：`make debug-test` 的 cwd 是 frontend-v3/，
+// 写相对 cwd 的路径会把证据落到 frontend-v3/agate-workspace/...（P5/P6 各踩一次）。
+const EVIDENCE_DIR = path.resolve(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '../../agate-workspace/tasks/TPV0104-viewer-correctness-hardening/evidences',
+)
 
 const K8S_SLUG = 'k8s-deployment'
 const UNICODE_SLUG = 'unicode-filenames'

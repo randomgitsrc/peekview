@@ -392,3 +392,16 @@
   - **这印证了 implementer 的判断**：它早前就报「`:8888` 跑的是改动前代码」并改用 `debug-extra PORT=8892` 验证——它的做法是对的，我不该先在 8888/8890 上浪费两轮。
 - DECISION（**P2 的 `:410` 判断需留痕更正**）：implementer 建议我在 P2 追加一句更正。P2 已 frozen（`approved` 后不重开评审），但**这是对一项被证伪的技术判断的记录**，与 P1 的 `[BASELINE_CHANGE]` 同源纪律。→ 我在 `P2-design.md` 的 `:410` 处追加一行 `[DESIGN_GAP_REVIEWED]` 标记的更正说明（不改设计正文），并在 P7 配对。
 - NEXT: 提交 P4 修复 → 重跑 P5 后端验证 → 重验 P6 的 BDD-38（用 :8893 新代码）→ 重新 P6.5 judge。
+- GATE PASS（**P7 一致性检查通过：BLOCKER 0 / CRITICAL 0，`check-gate.py P7` exit 0「成对声明聚合判据通过」**）：
+  - **6 条 `DESIGN_GAP` 全部配对**（6/6 accepted，零退回），每条都有独立核查依据而非"已复核"三字。
+  - **2 条 `[SCOPE+]` 均闭环**：SP1（`:512`，`router.replace({query:{}})` 的 firstFileId 消费职责迁移）**已实现**（实测 4 个出口全覆盖）；SP2（`:737`，存储层同名覆盖）**确属范围外 → 已登记 DEBT0022**。
+  - **跨文件一致性全过**：BDD **54 == 54 == 54**（P1 / P6 `results[].bdd` / P6.5 `criteria[].bdd` **三集合求差为空**，排除了"数量对但某条错映射"）；P4 实现路径 vs P2 `batches.output` **22/24 精确命中**（未命中 2 个均有据：`MarkdownViewer`=DG1 no-op、`test_entry_file_order.py` 属 P3）。
+  - 未决项清零（P1 行首三种标记均 0）、CODE-MAP 与 decisions 目录不存在（记 WARNING 跳过，改用替代 import 方向核对，4 个新增文件依赖方向全对）。
+- EVIDENCE（**P7 推翻 P4 的一处因果表述，我已独立验证成立**）：P4 的 DG4 说「不加 `targetFile.id === fileId` 守卫，`?file=` 指向 A 会错显 B」。P7 穷举 7 种 id 形态实测**全部 424/422**，`content` 恒 null ⇒ **该失效形态当前不可达**。我复核：`file=999999 → 404`、`file=0 → 404`、`file=-1 → 404`、`file=abc → 422`。→ **守卫本身正确**（零成本 fail-closed、为将来 `files` 裁剪兜底），但 P4 的"错显 B"是**推演而非实测复现**，P7 已改正措辞。**这避免了后人误以为缺陷曾被实测，进而对不存在的风险做推理。**
+- EVIDENCE（**P7 补出 P4 未记录的渲染污染后果**）：SP2 的存储层同名覆盖，P4 只记录"磁盘仅 1 个文件、报表准确"。P7 读真实 render 响应发现 **`<style>` 标签内装的是被覆盖后的 PNG 二进制**（`<style>/* injected from: app.css */\n<PNG 内容></style>`），文本 CSS 根本没进响应。→ 这改变了技术债的论证基础：不只是"文件名重复"，而是**静默产出语义错误的 HTML**；且报表越"准确"越说明问题在存储层而非记账层。我已据此写进 DEBT0022 的 `impact` 与 `closure_criteria`。
+- DECISION（**P7 提的 3 个决策，我的处置**）：
+  1. **SP2 登记债 → 已落**：`agate-workspace/debt/tech-debt.md` 新增 **DEBT0022**（`category: technical`、`priority: medium`、`source: task`），`impact`/`closure_criteria` 已含渲染污染证据与三条修复路径（拒绝 409 / 按 id 分目录 / 覆盖且 DB 同步）。登记簿现 **19 条**。
+  2. **2 条跨任务架构决策的落点 → 判定不写入 `decisions/`**。理由：`docs/decisions/` 的既有 3 条都是**面向人的设计理由文档**（"为什么 MCP 不暴露 updateEntry"这类），而 P7 指的 2 条（机读 JSON vs 可见 UI 的取舍、势不变式 vs skipped 逐项上限不可兼得）是**任务内的技术取舍**，已在 P6.5 verdict 与 orchestrator-log 留痕。写入会让该目录的定位漂移。
+  3. **P8 显式声明不 bump `mcp_server` → 采纳**，P8 派发时会引用 `P1:528`（P2 的 `packages` 已明列 `mcp_server` 范围外且实测零改动）。
+- NOTE（P7 的 5 条 WARNING，我判定全部不阻断、不返工）：F1 SP2 登记债（已做）｜F2 P4「报表准确」需补内容层失真措辞（已由 DEBT0022 的 impact 覆盖）｜F3 P4 第 3 批缺「新增文件核对表」（实际新建 3 文件，属 P4 完备性缺口，不影响交付正确性）｜F4 P2 `:133` 声明的 `file-bytes.spec.ts` 不存在（**判据无缺口**——`resolveFileSize` 已被 `tpv0104-real-file-bytes.spec.ts` 覆盖，仅"声明与产物不齐"）｜F5 decisions 落点（见上决策 2）。
+- NEXT: 提交 P7（含我修的 e2e spec 证据路径绝对化）→ P8 发布准备。

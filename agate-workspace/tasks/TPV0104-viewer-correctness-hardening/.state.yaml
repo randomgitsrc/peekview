@@ -1,8 +1,8 @@
-phase: P6
+phase: P7
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-26T02:30:00Z'
+updated: '2026-11-26T03:20:00Z'
 judge:
   enabled: true
 history:
@@ -91,3 +91,15 @@ history:
     judge 独立实跑：后端 1226 tests / 1222 passed / 1 failed（预存豁免）/ 3 skipped；前端 1514 passed / 0 failed → 本次引入失败 = 0。
     judge 另指出：:8888/:8890 是修复前进程（实测仍返回 filename: null），只有 :8893 含修复 —— 后续取证须用 :8893。
     [PROD_NOT_TOUCHED] :8080 不可达、~/.peekview/ mtime 仍 2026-11-12。
+- phase: P7
+  action: completed
+  ts: 2026-11-26 03:20:00+00:00
+  note: |
+    P7 一致性检查通过：check-gate.py P7 exit 0「成对声明聚合判据通过」，BLOCKER 0 / CRITICAL 0。
+    6 条 DESIGN_GAP 全部配对（6/6 accepted，零退回，每条附独立核查依据）；2 条 SCOPE+ 均闭环（SP1 已实现，实测 4 个出口全覆盖；SP2 确属范围外 → 登记 DEBT0022）。
+    跨文件一致性：BDD 54==54==54 且做了三集合逐项求差（P1 / P6 results[].bdd / P6.5 criteria[].bdd）为空，排除「数量对但某条错映射」；P4 实现路径 vs P2 batches.output 22/24 精确命中（未命中 2 个均有据）；未决项清零。
+    P7 推翻 P4 一处因果表述：DG4 称「不加 targetFile 守卫会错显 B」，但穷举 7 种 id 形态实测全部 404/422、content 恒 null ⇒ 该失效形态当前不可达（我复核 file=999999/0/-1 → 404、abc → 422）。守卫本身正确（零成本 fail-closed），但 P4 是推演非实测，已改正措辞。
+    P7 补出 P4 未记录的后果：SP2 存储层同名覆盖会让 render 产出 <style> 内装 PNG 二进制（文本 CSS 未进响应），不只是「文件名重复」，而是静默产出语义错误 HTML —— 已写进 DEBT0022 的 impact 与 closure_criteria。
+    我处置了 P7 提的 3 个决策：① SP2 已登记 DEBT0022（登记簿 19 条）② 2 条跨任务决策不写入 docs/decisions/（那里是面向人的设计理由文档，这 2 条是任务内技术取舍，已在 P6.5 与 orchestrator-log 留痕）③ P8 将显式声明不 bump mcp_server（引用 P1:528）。
+    5 条 WARNING 全部判定不阻断不返工（F4 的 file-bytes.spec.ts 声明不齐但判据无缺口——resolveFileSize 已被 tpv0104-real-file-bytes.spec.ts 覆盖）。
+    本轮同时提交我修的一个源码改动：e2e spec 的 EVIDENCE_DIR 从相对 cwd 改为基于 import.meta.url 的绝对路径（P5/P6 各踩一次证据误落到 frontend-v3/agate-workspace/）。

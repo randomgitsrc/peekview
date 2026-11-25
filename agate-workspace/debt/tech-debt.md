@@ -597,3 +597,32 @@ closed_at: 2026-11-24
 ```
 
 > **登记理由（主 Agent，2026-10-03）**：命中登记判据 1（"不修会让未来变更更贵"）。`category: management`——缺口在项目发布流程文档与 Makefile 的衔接。**本任务已就地纠正**（tag 重指 HEAD），但流程本身未补，下次发布仍会复现。
+
+---
+
+## DEBT0022
+
+```yaml
+id: DEBT0022
+category: technical
+title: 同一 entry 内同名文件在存储层互相覆盖——DB 保留多行但磁盘仅 1 个文件，HTML 资源注入会把二进制内容填进 <style>/<script>
+status: open
+priority: medium
+task_id: TPV0104
+evidence:
+  - path: backend/peekview/storage.py
+    note: "`store_content` 的目标路径 `rel_path = file_path or filename`（约 :236）**与 `File.id` 无关** → 同 entry 内 `path`+`filename` 相同的两条记录映射到同一磁盘路径，后写覆盖先写"
+  - note: "TPV0104 P7 实测（独立探针，非复用实现者脚本）：POST 两份 `app.css`（一 text 一 binary）→ 201、DB 保留 2 行（id 各异）；但 `GET .../files/<id>/content` 两条记录读回**同一份 PNG**（前 24 字节均为 `iVBORw0KGgo...`），磁盘实际只有 1 个文件（48B）"
+  - note: "**渲染后果（P4 未点出）**：`/render` 注入该 sibling 时产出 `<style>/* injected from: app.css */\n<PNG 二进制内容></style>` —— 文本 CSS 的位置被二进制填充，静默产出语义错误的 HTML"
+  - note: "**报表仍自洽**：`skipped` 计入 `not_injectable`、`requested - inlined == len(skipped)` 成立 ⇒ 记账层无缺陷，问题纯在存储层（这也是为什么不构成 BDD 假绿）"
+impact: 任何在同一 entry 内上传同名文件（同名或同 path）的场景，都会造成内容静默替换；对 HTML 渲染类用途，会把二进制/错误内容注入 `<style>`/`<script>` 标签，产出「看起来成功、实际错误」的页面。当前无任何校验或告警阻止该形态（POST 201 接受）
+recommendation: 三选一：①写入层拒绝同 entry 内重复 `(path, filename)`（返回 409/422）；②改为按 `File.id` 分目录存储（`<entry>/<file_id>/<filename>`），彻底消除冲突；③若有意支持「覆盖」，则 DB 层同步删除旧行，避免 DB 与磁盘不一致
+closure_criteria:
+  - 同 entry 上传两份同名文件时，行为明确且一致（拒绝 / 覆盖且 DB 同步 / 按 id 隔离），且磁盘文件数与 DB 行数一致
+  - 存在用例锁定该行为（拒绝时断言状态码；覆盖或隔离时断言两条内容可分别读回不同内容）
+  - HTML 渲染路径不再可能把二进制内容注入 `<style>`/`<script>`（有用例覆盖）
+source: review
+created_at: 2026-11-26
+```
+
+> **登记理由（主 Agent，2026-11-26）**：命中登记判据 2（"范围外但确有缺陷"）。TPV0104 的 P4 在核实评审 M2 时发现，P7 consistency-reviewer 独立复现并补出**渲染污染**这一 P4 未记录的后果。不修不影响 TPV0104 的 54 条 BDD（记账层自洽），但属存储层真实缺陷且后果含语义错误渲染，故登记而非放任。修复需改 entry 写入命名策略，超出 TPV0104 的 P1 范围。
