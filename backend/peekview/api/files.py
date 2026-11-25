@@ -22,9 +22,13 @@ from peekview.exceptions import NotFoundError
 from peekview.language import detect_language
 from peekview.models import Entry, EntryRawResponse, File, RawFileItem, Team, TeamRef, User
 from peekview.services.html_render_service import (
+    _BINARY_SIZE_LIMIT,
+    _MAX_INJECT_FILE_BYTES,
+    _MAX_INJECT_TOTAL_BYTES,
     SiblingFileData,
+    build_skip_report_html,
     inject_resources,
-    parse_inject_ids,
+    select_inject_ids,
 )
 from peekview.storage import StorageManager
 
@@ -44,8 +48,6 @@ RENDER_CSP = (
     "frame-ancestors 'self'; "
     "form-action 'none';"
 )
-
-_BINARY_SIZE_LIMIT = 768 * 1024
 
 _LANGUAGE_TO_MIME = {
     "css": "text/css",
@@ -305,7 +307,7 @@ async def render_html_file(
     slug: str,
     file_id: int,
     request: Request,
-    inject: str | None = Query(None),
+    inject: str | None = Query(None, max_length=4096),
     current_user: User | None = Depends(get_current_user),
 ):
     """Render an HTML file with optional sibling resource injection.
@@ -327,21 +329,95 @@ async def render_html_file(
     if detected != "html":
         raise NotFoundError("Render endpoint only available for HTML files")
 
-    inject_ids = parse_inject_ids(inject, file_id)
+    inject_ids = select_inject_ids(inject, file_id)
+
+    skipped: list[dict] = []
+    for overflow_id in inject_ids.overflow:
+        skipped.append(
+            {
+                "file_id": overflow_id,
+                "reason": "count_limit",
+                "filename": None,
+                "path": None,
+                "size": None,
+            }
+        )
 
     siblings: list[SiblingFileData] = []
-    if inject_ids:
-        sibling_records = service.get_files_by_ids(entry_id, inject_ids)
-        for f in sibling_records:
-            data = _build_sibling_data(f, storage)
-            if data is not None:
-                siblings.append(data)
+    sibling_file_ids: dict[int, int] = {}
+    if inject_ids.selected:
+        sibling_records = {
+            f.id: f for f in service.get_files_by_ids(entry_id, inject_ids.selected)
+        }
+        total_bytes = 0
+        for requested_id in inject_ids.selected:
+            record = sibling_records.get(requested_id)
+            if record is None:
+                skipped.append(
+                    {
+                        "file_id": requested_id,
+                        "reason": "not_found",
+                        "filename": None,
+                        "path": None,
+                        "size": None,
+                    }
+                )
+                continue
+            if not record.is_binary and (record.size or 0) > _MAX_INJECT_FILE_BYTES:
+                skipped.append(
+                    {
+                        "file_id": record.id,
+                        "reason": "file_too_large",
+                        "filename": record.filename,
+                        "path": record.path,
+                        "size": record.size,
+                    }
+                )
+                continue
+            data = _build_sibling_data(record, storage)
+            if data is None:
+                skipped.append(
+                    {
+                        "file_id": record.id,
+                        "reason": "binary_too_large",
+                        "filename": record.filename,
+                        "path": record.path,
+                        "size": record.size,
+                    }
+                )
+                continue
+            cost = len(data.content.encode("utf-8"))
+            if total_bytes + cost > _MAX_INJECT_TOTAL_BYTES:
+                skipped.append(
+                    {
+                        "file_id": record.id,
+                        "reason": "total_budget",
+                        "filename": record.filename,
+                        "path": record.path,
+                        "size": record.size,
+                    }
+                )
+                continue
+            total_bytes += cost
+            siblings.append(data)
+            sibling_file_ids[id(data)] = record.id
 
     html_bytes = storage.read_file(entry_id, file_record.filename, file_record.path)
     html = html_bytes.decode("utf-8", errors="replace")
 
+    requested = len(inject_ids.selected) + len(inject_ids.overflow)
+    inlined = len(siblings)
     if siblings:
-        html = inject_resources(html, siblings)
+        before = len(skipped)
+        html = inject_resources(
+            html, siblings, skipped_out=skipped, file_ids=sibling_file_ids
+        )
+        inlined -= len(skipped) - before
+
+    html = _append_inject_report(
+        html,
+        build_skip_report_html(requested=requested, inlined=inlined, skipped=skipped),
+    )
 
     return Response(
         content=html.encode("utf-8"),
@@ -352,6 +428,21 @@ async def render_html_file(
             "Referrer-Policy": "no-referrer",
         },
     )
+
+
+def _append_inject_report(html: str, block: str) -> str:
+    """Append the inject report block at the end of `<body>` (or of the document).
+
+    The match is case-insensitive but runs on the *original* string: `str.lower()`
+    is not length-preserving (U+0130 lowercases to two code points), so deriving
+    the index from a lowercased copy shifts it and splits the tag in half (R-1).
+    The last match is used to keep the pre-existing "end of body" semantics.
+    """
+    matches = list(re.finditer(r"</body\s*>", html, re.IGNORECASE))
+    if not matches:
+        return html + block
+    idx = matches[-1].start()
+    return html[:idx] + block + html[idx:]
 
 
 async def resolve_entry_raw(

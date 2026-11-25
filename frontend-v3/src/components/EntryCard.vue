@@ -147,12 +147,7 @@ const emit = defineEmits<{
 const router = useRouter()
 
 function navigateToEntry() {
-  const firstFileId = props.entry.files?.[0]?.id
-  if (firstFileId) {
-    router.push({ path: `/${props.entry.slug}`, query: { firstFileId: String(firstFileId) } })
-  } else {
-    router.push(`/${props.entry.slug}`)
-  }
+  router.push(`/${props.entry.slug}`)
 }
 
 function navigateToUser() {

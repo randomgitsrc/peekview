@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
+import { resolveDefaultFile } from '@/utils/default-file'
 import type { Entry, File, TeamRef } from '@/types'
 
 export const useEntryDetailStore = defineStore('entryDetail', () => {
@@ -47,15 +48,12 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
       fileContent.value = ''
 
       if (entry.files.length > 0) {
-        const targetFile = fileId != null
-          ? entry.files.find(f => f.id === fileId) ?? entry.files[0]
-          : entry.files[0]
-        activeFile.value = targetFile
-        if (content != null) {
-          fileContent.value = content
-        } else if (!targetFile.isBinary) {
-          const actualContent = await api.getFileContent(slug, targetFile.id)
-          fileContent.value = actualContent
+        const targetFile = (fileId != null ? entry.files.find(f => f.id === fileId) : null)
+          ?? resolveDefaultFile(entry.files)
+        if (targetFile) {
+          activeFile.value = targetFile
+          if (content != null && targetFile.id === fileId) fileContent.value = content
+          else if (!targetFile.isBinary) fileContent.value = await api.getFileContent(slug, targetFile.id)
         }
       }
     } catch (err: any) {

@@ -24,15 +24,15 @@
       :variant="isMobile ? 'sheet' : 'inline'"
       :visibility-disabled="visibilityDisabled"
       :source-view-mode="sourceViewMode"
-      :is-rich-renderable="isRichRenderable"
+      :is-rich-renderable="isRichRenderable" :active-file="activeFile"
       @toggle-file-tree="isFileTreeOpen = !isFileTreeOpen"
-      @toggle-toc="isTocOpen = !isTocOpen"
+      @toggle-toc="toggleToc"
       @toggle-source-view="sourceViewMode = !sourceViewMode"
       @copy-content="copyContent"
       @toggle-share-dialog="shareDialogOpen = $event"
       @open-login="showLogin = true"
-      @star-changed="handleStarChanged"
-      @select-visibility="handleVisibilitySelect"
+      @star-changed="handleStarChanged" @select-visibility="handleVisibilitySelect"
+      @fullscreen="handleFullscreen"
     />
 
     <EntryDetailBanners
@@ -77,8 +77,8 @@
       :variant="isMobile ? 'sheet' : 'inline'"
       :visibility-disabled="visibilityDisabled"
       :download-file="downloadFile"
-      @select-file="entryDetailStore.selectFile"
-      @navigate-file="handleNavigateFile"
+      @select-file="entryDetailStore.selectFile" @navigate-file="handleNavigateFile"
+      @toc-headings="setTocHeadings"
       @scroll-to-heading="scrollToHeading"
       @toggle-wrap="entryDetailStore.toggleWrap()"
       @close-file-drawer="showFileDrawer = false"
@@ -100,14 +100,14 @@
       :current-entry="currentEntry"
       :source-view-mode="sourceViewMode"
       :is-rich-renderable="isRichRenderable"
-      :auth-state="authState"
+      :auth-state="authState" :active-file="activeFile"
       @toggle-file-drawer="showFileDrawer = !showFileDrawer"
-      @toggle-toc-drawer="showTocDrawer = !showTocDrawer"
+      @toggle-toc-drawer="toggleTocDrawer"
       @toggle-source-view="sourceViewMode = !sourceViewMode"
       @toggle-wrap="entryDetailStore.toggleWrap()"
       @copy-content="copyContent"
-      @open-login="showLogin = true"
-      @star-changed="handleStarChanged"
+      @open-login="showLogin = true" @star-changed="handleStarChanged"
+      @fullscreen="handleFullscreen"
     />
 
     <EntryDetailDialogs
@@ -138,6 +138,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
 import { useTeamStore } from '@/stores/team'
 import { isExpired } from '@/utils/expires'
+import { useEntryDetailUrlSync, useTocAutoExpand, parseFileId } from '@/composables/useEntryDetailUrlSync'
 import { useZenMode } from '@/composables/useZenMode'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { useEntryDetailComputed } from '@/composables/useEntryDetailComputed'
@@ -173,7 +174,7 @@ provide(ZenAriaTextKey, zenAriaText)
 const {
   isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isSvg, isRichRenderable,
   isImage, isBinary, pathMap, siblingFileIds,
-  entryTitle, tocHeadings, copyContent, downloadFile, downloadPack,
+  entryTitle, tocHeadings, setTocHeadings, copyContent, downloadFile, downloadPack,
   scrollToHeading, handleNavigateFile,
 } = useEntryDetailComputed(slug, currentEntry, activeFile)
 
@@ -229,21 +230,27 @@ function handleStarChanged(data: { starCount: number; isStarred: boolean }): voi
   entryDetailStore.syncStar(data)
 }
 
+const { suppressUrlSync, syncUrl, handleFullscreen } = useEntryDetailUrlSync(
+  slug, route, router, currentEntry, activeFile,
+)
+const { toggleToc, toggleTocDrawer, resetUserToggledToc } = useTocAutoExpand(
+  tocHeadings, isMarkdown, isDesktop, isTocOpen, showTocDrawer,
+)
+
 onMounted(async () => {
   const shareToken = route.query.share as string | undefined
-  const firstFileId = route.query.firstFileId ? Number(route.query.firstFileId) : undefined
+  const fileId = parseFileId(route.query.file)
   shareErrorState.value = false
-  await entryDetailStore.loadEntry(props.slug, firstFileId, shareToken)
+  suppressUrlSync.value = true
+  await entryDetailStore.loadEntry(props.slug, fileId, shareToken)
   if (shareToken && !currentEntry.value && entryDetailStore.error) shareErrorState.value = true
-  if (firstFileId || shareToken) router.replace({ path: route.path, query: {} })
+  syncUrl()
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
   ensureMyTeamsLoaded()
   await nextTick()
-  if (isDesktop.value) {
-    if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true
-    if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
-  }
+  suppressUrlSync.value = false
+  if (isDesktop.value && entryDetailStore.isMultiFile) isFileTreeOpen.value = true
 })
 
 onUnmounted(() => {
@@ -254,7 +261,9 @@ onUnmounted(() => {
 watch(() => props.slug, async (newSlug) => {
   isFileTreeOpen.value = false
   isTocOpen.value = false
+  resetUserToggledToc()
   await entryDetailStore.loadEntry(newSlug)
+  syncUrl()
 })
 watch(() => showShareButton.value, (show) => {
   if (show && props.slug) shareStore.fetchShares(props.slug)
@@ -269,10 +278,7 @@ watch(() => entryDetailStore.currentEntry, (entry) => {
     link.setAttribute('data-peekview-raw', '1')
     document.head.appendChild(link)
   }
-  if (isDesktop.value) {
-    if (entryDetailStore.isMultiFile) isFileTreeOpen.value = true
-    if (isMarkdown.value && tocHeadings.value.length > 0) isTocOpen.value = true
-  }
+  if (isDesktop.value && entryDetailStore.isMultiFile) isFileTreeOpen.value = true
 }, { immediate: true })
 </script>
 

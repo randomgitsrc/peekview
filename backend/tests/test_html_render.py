@@ -62,6 +62,11 @@ async def _create_entry(client, files, summary="html render test"):
 def _render_url(slug, file_id, inject=None):
     url = f"/api/v1/entries/{slug}/files/{file_id}/render"
     if inject is not None:
+        # 前端约定（HtmlViewer.vue:152 `props.siblingFileIds.join(',')`）：逗号分隔。
+        # 传 list 时按同一约定序列化——直接 f-string 插值会得到 `?inject=[1, 2]`，
+        # 服务端按逗号切出的 token 无法转 int（实测只在部分用例上偶然命中个别 id）。
+        if isinstance(inject, (list, tuple, set)):
+            inject = ",".join(str(i) for i in inject)
         url += f"?inject={inject}"
     return url
 
@@ -760,7 +765,7 @@ class TestCountLimitSkipReport:
         读 `model_fields[...].default` 而非实例化（实例化会受 env 漂移）。
         """
         declared = PeekLimits.model_fields["max_entry_files"].default
-        assert _MAX_INJECT_IDS < declared - 1, (
+        assert declared - 1 > _MAX_INJECT_IDS, (
             f"_MAX_INJECT_IDS({_MAX_INJECT_IDS}) 必须严格小于 max_entry_files-1({declared - 1})，"
             "否则真实配置下超限分支永不触发"
         )

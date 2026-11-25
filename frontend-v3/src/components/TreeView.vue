@@ -57,6 +57,7 @@ import DataTreeNode from '@/components/DataTreeNode.vue'
 import TruncationBanner from '@/components/TruncationBanner.vue'
 import { jsonToTreeData, xmlToTreeData } from '@/composables/useTreeData'
 import { TreeExpandKey } from '@/composables/treeExpandKey'
+import { resolveFileSize } from '@/utils/file-bytes'
 import type { TreeDataNode, NodeType } from '@/types/structured-data'
 
 const props = defineProps<{
@@ -64,6 +65,7 @@ const props = defineProps<{
   format: 'json' | 'yaml' | 'xml'
   filename: string
   downloadFn: () => void
+  size?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -72,7 +74,7 @@ const emit = defineEmits<{
 
 const MAX_SIZE = 2 * 1024 * 1024
 
-const truncated = computed(() => props.content.length > MAX_SIZE)
+const truncated = computed(() => resolveFileSize({ size: props.size }, props.content) > MAX_SIZE)
 
 const treeData = ref<TreeDataNode[]>([])
 const emptyMessage = ref('无数据')
@@ -178,7 +180,7 @@ function resetExpansion() {
 }
 
 watch(
-  () => [props.content, props.format],
+  () => [props.content, props.format, props.size],
   () => {
     treeData.value = []
     expandedPaths.value = new Set()

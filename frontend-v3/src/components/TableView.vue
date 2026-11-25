@@ -2,7 +2,7 @@
   <div class="table-view">
     <TruncationBanner
       v-if="parsed.truncated"
-      :message="`数据量过大，已显示前 ${props.maxRows.toLocaleString()} 行`"
+      :message="`数据量过大，已显示前 ${parsed.constructedRows.toLocaleString()} 行，共 ${parsed.totalRows.toLocaleString()} 行`"
       :download-fn="downloadFn"
     />
 
@@ -21,6 +21,7 @@
                 :aria-sort="sortAttr(header.column.getIsSorted())"
               >
                 <button
+                  v-if="!parsed.truncated"
                   type="button"
                   class="th-sort-btn"
                   @click="header.column.toggleSorting()"
@@ -30,7 +31,9 @@
                     {{ header.column.getIsSorted() === 'asc' ? '↑' : '↓' }}
                   </span>
                 </button>
+                <span v-else class="th-label">{{ header.column.columnDef.header }}</span>
                 <input
+                  v-if="!parsed.truncated"
                   class="th-filter"
                   :aria-label="`Filter ${header.column.id}`"
                   :value="(header.column.getFilterValue() as string) ?? ''"
@@ -133,7 +136,7 @@ const emit = defineEmits<{
 
 type CsvRow = string[]
 
-const parsed = shallowRef<CsvParseResult>({ headers: [], rows: [], totalRows: 0, truncated: false })
+const parsed = shallowRef<CsvParseResult>({ headers: [], rows: [], totalRows: 0, truncated: false, constructedRows: 0 })
 
 const columns = computed<ColumnDef<CsvRow>[]>(() =>
   parsed.value.headers.map((headerName, index) => ({
@@ -180,7 +183,7 @@ const pageRows = computed<Row<CsvRow>[]>(() => table.getRowModel().rows)
 watch(
   () => props.content,
   () => {
-    parsed.value = { headers: [], rows: [], totalRows: 0, truncated: false }
+    parsed.value = { headers: [], rows: [], totalRows: 0, truncated: false, constructedRows: 0 }
     page.value = 1
     try {
       parsed.value = parseCsv(props.content, props.delimiter, props.maxRows)

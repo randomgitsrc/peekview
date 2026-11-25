@@ -33,6 +33,14 @@
       @open-login="$emit('open-login')"
       @changed="$emit('star-changed', $event)"
     />
+    <button
+      v-if="activeFile"
+      class="icon-btn"
+      @click="$emit('fullscreen')"
+      aria-label="全屏阅读"
+      data-testid="mobile-bar-fullscreen-btn">
+      <MaximizeIcon :size="16" />
+    </button>
     <div class="flex-spacer"></div>
     <template v-if="!isBinary">
       <button v-if="canWrap"
@@ -56,7 +64,7 @@ import { inject } from 'vue'
 import OverflowMenu from '@/components/OverflowMenu.vue'
 import type { OverflowMenuItem } from '@/components/OverflowMenu.vue'
 import StarToggle from '@/components/StarToggle.vue'
-import type { Entry, TocHeading, AuthState } from '@/types'
+import type { Entry, File, TocHeading, AuthState } from '@/types'
 import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import {
   Folder as FolderIcon,
@@ -65,6 +73,7 @@ import {
   Code as CodeIcon,
   Eye as EyeIcon,
   WrapText as WrapTextIcon,
+  Maximize as MaximizeIcon,
 } from 'lucide-vue-next'
 
 defineProps<{
@@ -82,6 +91,7 @@ defineProps<{
   sourceViewMode: boolean
   isRichRenderable: boolean
   authState: AuthState
+  activeFile?: File | null
 }>()
 
 defineEmits<{
@@ -92,6 +102,7 @@ defineEmits<{
   'copy-content': []
   'open-login': []
   'star-changed': [data: { starCount: number; isStarred: boolean }]
+  'fullscreen': []
 }>()
 
 const zenMode = inject(ZenModeKey)!
@@ -102,7 +113,7 @@ const isMobile = inject(IsMobileKey)!
 .mobile-bottom-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
   padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
   background: var(--c-surface);

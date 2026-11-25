@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import { useEntryDetailStore } from '@/stores/entryDetail'
 import { useToast } from '@/composables/useToast'
@@ -48,34 +48,21 @@ export function useEntryDetailComputed(
 
   const entryTitle: ComputedRef<string> = computed(() => currentEntry.value?.summary || slug.value)
 
-  function extractHeadings(content: string): TocHeading[] {
-    const headings: TocHeading[] = []
-    const usedIds = new Set<string>()
-    for (const line of content.split('\n')) {
-      const match = line.match(/^(#{1,6})\s+(.+)$/)
-      if (match) {
-        const level = match[1].length
-        if (level < 2 || level > 4) continue
-        const text = match[2].trim()
-        let id = text.toLowerCase()
-          .replace(/[^\w\s一-龥぀-ゟ゠-ヿ-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .substring(0, 50) || 'heading'
-        let uniqueId = id
-        let counter = 1
-        while (usedIds.has(uniqueId)) { uniqueId = `${id}-${counter}`; counter++ }
-        usedIds.add(uniqueId)
-        headings.push({ level, text, id: uniqueId })
-      }
-    }
-    return headings
+  // TOC data has a single source: the `headings` returned by `useMarkdown().render()`
+  // (written by the `heading_open` renderer in the same pass that sets body anchor ids).
+  // This container only receives that list — there is no second heading scan here.
+  const tocHeadings: Ref<TocHeading[]> = ref<TocHeading[]>([])
+
+  function setTocHeadings(list: TocHeading[]): void {
+    tocHeadings.value = list
   }
 
-  const tocHeadings: ComputedRef<TocHeading[]> = computed(() => {
-    if (!isMarkdown.value || !entryDetailStore.fileContent) return []
-    return extractHeadings(entryDetailStore.fileContent)
-  })
+  watch(
+    () => activeFile.value?.id ?? null,
+    () => {
+      tocHeadings.value = []
+    },
+  )
 
   function copyContent() {
     if (entryDetailStore.fileContent) {
@@ -129,7 +116,7 @@ export function useEntryDetailComputed(
   return {
     isMarkdown, isHtml, isCsv, isTsv, isJson, isYaml, isXml, isSvg, isRichRenderable,
     isImage, isBinary, pathMap, siblingFileIds,
-    entryTitle, tocHeadings, extractHeadings,
+    entryTitle, tocHeadings, setTocHeadings,
     copyContent, downloadFile, downloadPack, scrollToHeading, handleNavigateFile,
   }
 }

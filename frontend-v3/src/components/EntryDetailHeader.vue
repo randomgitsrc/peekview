@@ -39,6 +39,9 @@
           @open-login="$emit('open-login')"
           @changed="$emit('star-changed', $event)"
         />
+        <button v-if="currentEntry && activeFile" class="icon-btn" aria-label="全屏阅读" data-testid="detail-fullscreen-btn" @click="$emit('fullscreen')">
+          <MaximizeIcon :size="16" /><span class="tooltip">全屏阅读</span>
+        </button>
         <span class="action-sep"></span>
         <button v-if="canCopy" class="icon-btn" @click="$emit('copy-content')" aria-label="Copy">
           <CopyIcon :size="16" /><span class="tooltip">Copy</span>
@@ -98,7 +101,7 @@ import BaseTag from '@/components/BaseTag.vue'
 import StarToggle from '@/components/StarToggle.vue'
 import TimeDisplay from '@/components/TimeDisplay.vue'
 import VisibilityMenu from '@/components/VisibilityMenu.vue'
-import type { Entry, TocHeading, AuthState, Team } from '@/types'
+import type { Entry, File, TocHeading, AuthState, Team } from '@/types'
 import type { VisibilityTarget } from '@/utils/visibility-options'
 import { ZenModeKey, IsMobileKey } from '@/composables/entryDetailKeys'
 import {
@@ -108,6 +111,7 @@ import {
   Share2 as Share2Icon,
   Code as CodeIcon,
   Eye as EyeIcon,
+  Maximize as MaximizeIcon,
 } from 'lucide-vue-next'
 
 const props = withDefaults(defineProps<{
@@ -133,6 +137,7 @@ const props = withDefaults(defineProps<{
   sourceViewMode?: boolean
   isRichRenderable?: boolean
   visibilityDisabled?: boolean
+  activeFile?: File | null
 }>(), {
   teams: () => [],
   teamsFailed: false,
@@ -141,6 +146,7 @@ const props = withDefaults(defineProps<{
   sourceViewMode: false,
   isRichRenderable: false,
   visibilityDisabled: false,
+  activeFile: null,
 })
 
 const emit = defineEmits<{
@@ -152,6 +158,7 @@ const emit = defineEmits<{
   'open-login': []
   'star-changed': [data: { starCount: number; isStarred: boolean }]
   'select-visibility': [target: VisibilityTarget]
+  'fullscreen': []
 }>()
 
 const zenMode = inject(ZenModeKey)!

@@ -1,8 +1,8 @@
-phase: P3
+phase: P4
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-25T06:20:00Z'
+updated: '2026-11-25T00:50:00Z'
 judge:
   enabled: true
 history:
@@ -40,3 +40,8 @@ history:
   action: completed
   ts: 2026-11-25 06:20:00+00:00
   note: 'P3 TDD 测试设计通过。**54 条 BDD 全部 1:1 映射**（脚本核对 missing=none / extra=none），共 118 个用例，全部红灯。`check-tdd-red.py` = **classic red-light（assertion failures only）exit 0**（V13 硬约束已遵守：引用已存在模块 + 断言尚无行为，未 import 不存在模块）。前端 `make test-frontend` **7 failed files / 31 failed / 1475 passed / 4 skipped**，失败文件**全部**为本任务新增 spec、**零既有回归**；后端 `pytest test_html_render.py + test_entry_file_order.py` **13 failed / 49 passed**，全为 assertion failure（零 collection error）。`make typecheck` exit 0；`check-platform-assumptions.py` 0 命中。**冻结项零改动**：13 处 `= inject_resources(`、8 处 `_process_css_refs(`、9 处 legacy `firstFileId` 全部归零（viewer 2 / t091 4 / tpv0099 3）。产出 9 个新测试文件（vitest 7 + e2e 2）+ 新建 test_entry_file_order.py + test_html_render.py 追加 402 行（TPV0104 段，含 G11 双向对账 / G12 两跳 @import）。**两处关键处置**：① `constructedRows` 未声明为类型成员会让 vue-tsc 报 TS2339 → 被误判成 A 类错误，故用 `constructedRowsOf()` 局部类型放宽 + 新增代码级断言锁死「必须是必填成员」；② P2 §0.1A 与 §5.1 取证命令不一致（预算用例归属），按冻结命令收敛到 test_html_render.py。'
+
+- phase: P4
+  action: completed
+  ts: 2026-11-25 00:50:00+00:00
+  note: 'P4 代码实现通过（4 批并行/串行 + 1 轮修复，retries[P4]=1/3）。**双评审 approved**（review + design-review）。**前端 1514P/4S/0F、后端 1221P/1F/3S（唯一失败为预存 test_cli_remote 沙箱只读）→ 零回归**；typecheck/lint/build-frontend 全 exit 0。冻结计数保持：= inject_resources( 13 / _process_css_refs( 8；P3 测试零改动（10 份归档副本逐字节 diff 10/10 SAME）。**评审在「全绿」之下找出 3 条 CRITICAL，是本任务最有价值的发现**：① C1 总预算记账单位错配——`cost = len(data.content)` 是字符数、单文件检查用 record.size 是字节数，实测 12 个中文/emoji CSS 全部放行（报表 skipped=[] 自称合规），响应 23.0–23.8 MiB = 8 MiB 预算的 2.88–2.98 倍，且这正是本任务核心诉求 BDD-38~41 的落点 ② C2 `_append_inject_report` 在 `html.lower()` 上取下标却切原串——`İ`(U+0130) 小写化变长 2 码点（全 Unicode 仅此一字符），把 `</body>` 劈成两半 ③ C3 `not_injectable` 缺 `file_id` 违反 P2 冻结 schema，两类 reason 共存时 P3 的 BDD-38③ 会 KeyError。三条各自的「为何测试绿」都是**素材取值域缺口**（ASCII 字符==字节 / ASCII evil path 保长 / 无非 css-js sibling），三个正交维度。修复后我独立验证：C1 → inlined=4/skipped=8/{total_budget:8}/响应 7.67 MiB；C2 → İ 三形态 `</body>` 均完整；C3 → 每条 skipped 都有 file_id。**修复者 3 处偏离评审建议均经我裁决为正确**（M1 选 C 而非 B，因 B 必然破坏 P2 冻结势不变式；C2 用 finditer[-1] 保 rfind 语义；同名 sibling 根因在存储层非 owners）。另 2 MAJOR（overflow 无界 / owners 单命名空间）已修。**关键环境事实**：:8888 跑的是 P4 前旧代码且无 --reload（实测 render 无报表块）→ **P5/P6 验报表块前必须先重启服务**。'

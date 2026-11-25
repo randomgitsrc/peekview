@@ -101,6 +101,20 @@ def can_read_entry(entry, user_id, is_admin, is_team_member, is_team_owner=False
     return entry.owner_id == user_id or is_team_member or is_team_owner
 
 
+def _files_of_entry_query(entry_id: int):
+    """Single source of the file-order contract (BDD-13).
+
+    Order key = `coalesce(path, filename)` (a nested file sorts by its full
+    path, not its basename), with `id` as tie-breaker so two identical paths
+    still come back deterministically.
+    """
+    return (
+        select(File)
+        .where(File.entry_id == entry_id)
+        .order_by(func.coalesce(File.path, File.filename), File.id)
+    )
+
+
 class EntryService:
     """Business logic for entry operations."""
 
@@ -429,7 +443,7 @@ class EntryService:
                     ):
                         raise NotFoundError(f"Entry not found: {slug}")
 
-            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            files = session.exec(_files_of_entry_query(entry.id)).all()
 
             # Resolve username for owner
             username = self._resolve_username(session, entry.owner_id)
@@ -947,7 +961,7 @@ class EntryService:
             self._update_fts_content(entry_id)
 
             # Get all remaining files
-            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            files = session.exec(_files_of_entry_query(entry.id)).all()
 
             team = self._resolve_team_ref(session, entry.team_id)
             response = self._build_response(entry, list(files), team=team)
@@ -1080,7 +1094,7 @@ class EntryService:
             entry = session.exec(select(Entry).where(Entry.idempotency_key == key)).first()
             if not entry:
                 return None
-            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            files = session.exec(_files_of_entry_query(entry.id)).all()
             file_responses = [
                 FileResponse(
                     id=f.id,
@@ -1371,7 +1385,7 @@ class EntryService:
             if not entry_share:
                 return None
 
-            files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            files = session.exec(_files_of_entry_query(entry.id)).all()
 
             username = self._resolve_username(session, entry.owner_id)
             shared_by = self._resolve_username(session, entry_share.created_by)
@@ -1420,13 +1434,13 @@ class EntryService:
             if not entry:
                 raise NotFoundError(f"Entry not found: {slug}")
             # Refresh file relationship for the caller (download iterates files).
-            entry.files = session.exec(select(File).where(File.entry_id == entry.id)).all()
+            entry.files = session.exec(_files_of_entry_query(entry.id)).all()
             return entry
 
     def get_entry_files(self, entry_id: int) -> list[File]:
-        """Query all files for an entry."""
+        """Query all files for an entry, in the contract order (BDD-13)."""
         with Session(self.engine) as session:
-            return list(session.exec(select(File).where(File.entry_id == entry_id)).all())
+            return list(session.exec(_files_of_entry_query(entry_id)).all())
 
     def get_files_by_ids(self, entry_id: int, file_ids: list[int]) -> list[File]:
         """Query files by IDs within an entry."""

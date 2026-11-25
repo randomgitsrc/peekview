@@ -242,3 +242,75 @@
   - **数据恢复流程再次验证必要**：服务重启后 `/tmp` 数据全丢，第一遍 seed 只到 **19**（alice），补跑第二遍幂等补齐到 **22** → 现 `alice 22 / anon 15` 与基线一致。
   - **风险提示**：本次重启会冲掉 test-designer 可能已造的探针 entry。P3 的用例设计**不依赖持久数据**（造件在测试内部自建自清），故影响可控；但若它正跑到一半会看到连接失败——需在它返回时核对 `[PROD_NOT_TOUCHED]` 与自跑结果。
 - NEXT: 等 P3 test-designer 产出（54 条 BDD 全映射 + 红灯）。
+- GATE PASS（**P3 收口已提交 `de03b466`**）：`check-gate.py P3` exit 2 + `check-tdd-red.py` **exit 0（classic red-light）**（我亲自复跑，与 subagent 一致）。`.state.yaml` 已写 `phase: P3`。commit 时被 gate 拦一次：`P3-test-cases.md` 缺 `prod_touched` → 补 `false`。
+- EVIDENCE（**P3 产出，主 Agent 逐项亲验**）：
+  - **54/54 BDD 全映射**（我从 `§1.1` 表格首列提取编号，与 P1 的 54 条做 `comm` 对差：**missing=none / extra=none**）。注意：最初 grep `BDD-\d+` 只得 27 个是**误判**——该表首列是纯数字 `| 01 |` 而非 `BDD-01`，换正则后 54/54。
+  - **零既有回归**（关键）：前端 31 failed 的 **7 个失败文件全是本任务新增 spec**（`tpv0104-*`）；后端 13 failed **全为本任务的 `_bdd_`/`_g11_`/`_g12_` 用例**。→ 用 `grep -c` 双向核过。
+  - **冻结项零改动**：`= inject_resources(` **13**、`_process_css_refs(` **8**、legacy `firstFileId` **9 处全归零**（viewer 2 / t091 4 / tpv0099 3）。`make typecheck` exit 0。
+  - **test-designer 的两处关键处置（我认可）**：① `constructedRows` 未声明为类型成员会让 `vue-tsc` 报 TS2339 → 把「行为未实现」（B 类）误判成「测试写错」（A 类）；它用 `constructedRowsOf()` 局部类型放宽 + **新增代码级断言锁死「必须是必填成员」**（放宽不放水）。② P2 §0.1A 与 §5.1 的取证命令不一致（预算用例归属）→ 按**冻结命令**收敛，把预算测试合并进 `test_html_render.py`（追加 402 行），确保 `tests_filter` 真能跑到；期间曾把 `= inject_resources(` 推到 14，已修回 13。
+  - **一处它的回报笔误**：它报「`test_tpv0104_inject_budget.py` 写完自跑 10F/3P」，但该文件**已删**（合并进 `test_html_render.py`）——我按 `.pyc` 残留 + `find` 确认，非缺陷。
+- DECISION（**P4 并行编排**）：P2 的 4 批 output **两两零重叠**（我用脚本核过）。故：
+  - **并行跑**：`backend-render-budget`（只改 `backend/`）+ `data-viewers`（只改 `frontend-v3/src/`，且与 detail 批文件不重叠）
+  - **串行**：`detail-navigation` **逻辑依赖** `detail-outline`（前者要调后者提供的 `setTocHeadings()`）→ 等 `detail-outline` 完成后再启动
+  - 已写 `P4-dispatch-context-implementer-{backend-render-budget,data-viewers}.md` + 注入卡片。
+- NEXT: 等这两批返回；同时准备 `detail-outline` 的派发上下文。
+- CORRECTION（**P4 派发时我自己制造的批间范围越界，已发现并纠正**）：我给 `detail-outline` 写的 dispatch-context 把 P2 的 **D5「全屏入口」+ zen 侧栏**（涉及 `EntryDetailView.vue` / `EntryDetailContent.vue` / `EntryDetailHeader.vue` / `EntryDetailMobileBar.vue`）也列进了该批，但 P2 的 `dispatch_plan` 把这 4 个文件**全部划给 `detail-navigation` 批**。
+  - **发现过程**：我在给 `detail-navigation` 写上下文时凭印象写下"与 detail-outline 有 3 个文件重叠"→ 回头用脚本核 design 的 `output` 集合，**交集为空**（说明 design 的划分是对的）→ 真正的问题在我的派发，不在 design。
+  - **处理**：① 在 `detail-outline` 的上下文里加「⛔ B/C 组范围更正」段，明确本批**只做 A 组 4 个文件**（`useMarkdown`/`useEntryDetailComputed`/`MarkdownViewer`/`TocNav`），已做的 BC 组须 `git checkout --` 还原；② 给 `detail-navigation` 上下文**补写 C 段**（D5 全屏入口 + zen 侧栏，11 条实现要点），并更新目标段说明「范围含 D5」；③ 给正在运行的 `detail-outline` subagent 发消息说明是我的错、请收窄。
+  - **教训**：批间边界要**从 design 的 `output` 集合脚本核对**，不能凭印象；我这次是"先写派发、后核边界"，顺序反了。
+- NEXT: 等 `backend-render-budget`（改 backend 中）+ `detail-outline`（收窄后跑 A 组）。`detail-navigation` 待 `detail-outline` 完成后再派（它需要 `useEntryDetailComputed` 的改动就绪）。
+- GATE PASS（**P4 前 3 批已落地**，主 Agent 亲验）：`make typecheck` exit 0、`make lint` **exit 0**（我修了 P3 留的 SIM300 Yoda 条件：`_MAX_INJECT_IDS < declared - 1` → `declared - 1 > _MAX_INJECT_IDS`，语义等价、该断言仍通过）。前端红灯 **31F → 12F**（`BDD-47×4 + tpv0104-default-file×8`，全属 navigation 批）。
+  - **第 1 批 `backend-render-budget`**：13 条红灯全转绿，`tests_filter` **89P/0F**；全量 backend **仅 1 预存失败**（`test_cli_remote` 沙箱只读）→ 零回归。冻结计数 `= inject_resources(` **13** / `_process_css_refs(` **8** 保持。新建 `docs/architecture/html-preview-security-modes.md`。
+  - **第 4 批 `data-viewers`**：3 个红灯 spec 全绿（22P），`tests_filter` **70P/0F**，31F→21F，零新增失败。既有契约（`:51-57` 空输入、`:68` throw、`HtmlViewer.spec:338-365` 左闭右开）全保。
+  - **第 2 批 `detail-outline`**（收窄后只做 A 组 3 文件）：`tests_filter` **241P/1S/0F**，`tpv0104-markdown-headings` 4F/2P→**6P/0F**，BDD-07 逐行正则归零。21F→12F。
+- CORRECTION（**第 1 批发现 P3 的一个真实夹具缺陷，我已复现确认**）：`test_html_render.py:62` 的 `_render_url` 是 **P3 之前的既有 helper**，却对传入的 list 做 f-string 插值 → 生成 `?inject=[10, 11]` → 服务端按逗号切出 `"[10"` 与 `"11]"`，`int()` 双失败 → **实际请求到 0 个 sibling**（实测 `[123,124,125]` 只偶然命中 `[124]`）。**P3 期间被「报表块不存在」这个更早的失败掩盖，故未暴露**。第 1 批按前端既有契约（`HtmlViewer.vue:152` 的 `join(',')`）修 helper，**未动任何断言**。→ 这是"红灯阶段的上游失败遮蔽下游缺陷"的实例。
+- CORRECTION（**`detail-outline` 报出一处我的派发疏漏，已补**）：我给它写的上下文误把 **D5 全屏入口 + zen 侧栏**（4 个文件）划进该批，而 P2 的 `dispatch_plan` 把它们全划给 `detail-navigation`。它按我的更正消息收窄为 A 组 3 文件（`MarkdownViewer.vue` 经核**无需改**——`emit('headings')` 早已存在，设计 `:107` 提到的 `select-heading` emit 在现仓**从不存在**，已记 `[DESIGN_GAP]`）。
+  - **它还发现一处真实跨批缺口**：`tocHeadings` 已改 `ref` + `setTocHeadings()`，但**全仓无一处调用 `setTocHeadings`** → 真实页面 TOC 恒空 → E2E 的 BDD-01/02/03/04/05/06/52 全红，而 **vitest 看不出来**（`t031`/`t067` 整体 mock 掉了）。P2 `:191` 其实写了这条数据流，**是我漏进 navigation 的 dispatch-context**。已补 **C0 段**（三段接线 + grep 自查）。
+  - **连带发现时序问题**（我复核确认）：`EntryDetailView.vue:242-246` 用 `await nextTick()` 判 `tocHeadings.value.length > 0`，但 headings 现在**异步到达** → 该时点恒为 0 → 桌面默认展开永不触发。已在 C0 里补 `watch(tocHeadings, ..., {flush:'post'})` + `userToggledToc` 守卫的确切形态。
+- NEXT: 等 `detail-navigation`（最后一批）。完成后按 C8 派 P4 评审（`domains: [frontend, backend]` → `review` + `design-review` 双评审 + 组长汇总）。
+- GATE PASS（**P4 四批全部完成，主 Agent 亲验全绿**）：
+  - **前端** `make test-frontend`：**127 files / 1514P / 4S / 0F**（基线 1456P → +58 新用例；**零失败**）
+  - **后端** `make test-quick`：**1221P / 1F / 3S**（基线 1205P → +16 新用例；**唯一失败仍是预存 `test_cli_remote`** 沙箱只读）→ **零回归**
+  - `make typecheck` **exit 0**；`make lint` **exit 0**；`make build-frontend` **exit 0**（dist 7 文件，已同步到 `backend/peekview/static/`——满足 P4 卡「须实际产出并确认构建产物」）
+  - `check-platform-assumptions.py` 0 命中；`= inject_resources(` **13** / `_process_css_refs(` **8** 保持
+  - 前端红灯 **31F → 0F** 全清
+- EVIDENCE（**P4 期间发现并修复的真实缺陷，含我自己的两处疏漏**）：
+  1. **P3 夹具缺陷**（第 1 批发现，我已复现）：`test_html_render.py:62` 的 `_render_url` 对 list 做 f-string 插值 → `?inject=[10, 11]` → 服务端切出 `"[10"`/`"11]"` 双 `int()` 失败 → **实际请求到 0 个 sibling**（`[123,124,125]` 只偶然命中 `[124]`）。P3 期间被「报表块不存在」这个更早的失败掩盖。按前端 `join(',')` 契约修 helper，**未动断言**。
+  2. **我的派发疏漏 1**：给 `detail-outline` 的上下文误含 D5 全屏入口 4 文件（P2 划给 navigation）→ 已发消息更正、它收窄为 A 组 3 文件。
+  3. **我的派发疏漏 2**：**漏了 `setTocHeadings` 接线**（P2 `:191` 写了数据流，我没进 navigation 的上下文）→ `detail-outline` 报出后我补了 **C0 段**（三段接线 + grep 自查）。若不补，真实页面 TOC 恒空 → E2E 的 7 条 TOC 类 BDD 全红，而 vitest 因整体 mock 看不出来。
+  4. **连带时序缺陷**（我复核确认）：headings 改异步到达后，`EntryDetailView` 的 `await nextTick()` 判 `tocHeadings.length > 0` 恒为 0 → 桌面默认展开永不触发。补 `watch(...,{flush:'post'})` + `userToggledToc` 守卫。
+  5. **`detail-navigation` 的两处高质量自主决策**：① `loadEntry` 加 `targetFile.id === fileId` 守卫（否则 `?file=A` 会展示 B 的正文——P2 D3 字面没覆盖）；② **不放宽既有 t082 行数契约**（`EntryDetailView<300` / `entryDetail.ts<150`），把 URL 同步抽到 `useEntryDetailUrlSync.ts`，最终 295/145 行。
+- EVIDENCE（**P4 的标记统计，我按行首格式核**）：`[DESIGN_GAP:` **5 条**（`:334`/`:336` 来自 outline 批 2 条 + `:507`/`:508`/`:509` 来自 navigation 批 3 条）+ `[SCOPE+]` **1 条**（`:511`，注意它是 `### [SCOPE+]` 的节标题格式，用 `^\[SCOPE+:` grep 会漏）。**P7 须逐条转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`**。
+- NEXT: 按 C8 派 P4 双评审（`domains: [frontend, backend]` → `review` + `design-review`）+ 组长汇总出 `P4-review.md`。
+- EVIDENCE（**P4 design-review 判 `approved`，8 条 UI 判据全实测通过**）：
+  - **TOC h1 两向**：非 active 时 `fw 600` + `--c-text`（与 h2 的 `fw 400` + 次要色可区分）；**active 时仍保强调色**（暗 `rgb(77,141,255)` / 亮 `rgb(9,105,218)`）**且仍保 fw 600** → P2 的「颜色/字重拆两条规则」生效、**R16 未复发**。对比度暗 15.26:1 / 亮 15.8:1。
+  - **360px 档**：5 素材 × 3 档 = 15 组全部 `scrollWidth == clientWidth`（overflow 0）、`height == 64`、spacer 余 **5.39px**（与 P2 预测逐位一致）；最坏形态（含 wrap 共 7 按钮）仍 0 溢出。
+  - **`/f` 下两侧栏 DOM 均 0**（用**多文件** entry 实测；普通态各 1，排除了单文件误导样本）。
+  - **全屏按钮可访问名称仅靠 `aria-label`**（`title=null`）→ 在含 **13 个 `DiagramBlock`**（各带 `title="Fullscreen"`）的页面上全页计数**仍 == 1**（强于 BDD-31 的 Given）。图标 16px、无 `disabled`、过渡继承。
+  - 截断态表头 `thead 37.5px` **不塌陷**、4 个 `.th-label` 文字可见、sort/filter 均 0、垂直居中偏差 −0.25px；banner 含 `5` 与 `11`；AI Slop 暗+亮双主题扫描渐变 0 / 紫 0。
+  - 4 项发现均**不要求改代码**：F1 表头行高跃迁（P2 R12 已接受的既定代价）、F2 既有 `overflow-trigger` 38px 热区（`layout.css` 不在 diff，改 44px 会破 @360 的 5.39px 余量）、F3 `TocNav.vue:45` no-op 声明（既有行）、F4 见下。
+- **⇒ 必须转抄到 P6 dispatch-context 的一条**（design-review 发现，我已核实）：`EntryDetailContent.vue:90/120` 的 **`:activeId="null"` 是硬编码**，全仓**无任何 scroll-spy / IntersectionObserver**（我 grep 确认）→ **TOC 的 active 态永远不会自然出现**。因此 **P2 UI 校验点 ⑦ 括注的「等价于滚到文章开头让 scroll-spy 点亮它」不成立**——P6 若照字面滚动会读到非 active 值，把 R2-1 误判为回归（**假 FAIL**）。
+  - **正确验法**：`h1.classList.add('active')` → `waitForTimeout(400)`（**必须 > `--transition-fast` 150ms**，否则读到过渡中间值——design-review 首测即踩此坑）→ 读 `getComputedStyle` → `remove('active')`。
+  - **范围纪律**：**不要**在 P4 为此扩范围去接真实 scroll-spy——那是 P1 未声明的需求。
+  - 环境：`[PROD_NOT_TOUCHED]`，3 个临时 entry（含一个 **50001 行真实触发 maxRows=50000**）全部经 API 建/删，复查 404、全库 16 条无残留。
+- NEXT: 等 P4 `review`（后端侧代码评审）返回，然后派组长汇总 `P4-review.md`。
+- GATE FAIL（**P4 评审 `review` 判 `rejected`：3 CRITICAL + 2 MAJOR。我逐条独立复现，全部成立**）：这是本任务**最有价值的一次评审**——在全绿（1514P/1221P/typecheck/lint/build 全过）的情况下找出了**任务核心诉求失效**的真缺陷。
+  - **C1（api/files.py:389）总预算记账单位错配**：`cost = len(data.content)` 是**字符数**，而单文件检查 `record.size` 是**字节数**。我实测：`len('中'*670000)=670000`（字符）vs `len(encode)=2010000`（字节，**3 倍**）；12 个中文 CSS 按字符数累计 8,040,000（< 8MiB → **全放行**），按字节数实际 24,120,000（**3.0 倍超限 → 应拦截**）。评审实测 emoji 达 **2.98×**、报表 `skipped=[]` **自称合规**。→ **本任务的存在理由（BDD-38~41 资源边界）在该形态下完全失效，且报表说谎，比不设预算更危险**。
+  - **C2（api/files.py:430-436）`lower()` 变长致下标错位**：`idx = html.lower().rfind("</body>")` 在**变形后**串上取下标，`html[:idx]` 却切**原串**。我实测 `İ`（U+0130）`lower()` 后从 1 码点变 2（`i`+U+0307），使 `html.lower()` 长 1 → 下标**偏移 1** → 把 `</body>` **劈成两半**（`<` + 报表块 + `/body>`）。全 Unicode **仅此一个码点变长**，但一定触发。
+  - **C3（html_render_service.py:449-456）`not_injectable` 缺 `file_id`**：违反 P2 `:411` 冻结 schema（`file_id` 必填）。预算层五类都填了，只有第六类漏。我核代码确认。→ 两类 reason 共存时 P3 的 BDD-38③ `assert isinstance(item["file_id"], int)` 会 **KeyError**。
+  - **MAJOR 3-1**：`select_inject_ids` 删掉唯一的 `break` → `overflow` 无界，`?inject=` 500 个假 id → 响应放大 **13×**（`Query(None)` 无 `max_length`，未认证可传）。
+  - **MAJOR 3-2**：`owners` 单命名空间，text/binary 同名键互相覆盖 → 「已注入」被登记为「未注入」。评审还找到**一个 HTTP 可达的近亲**：同 entry 两份同名 `app.css`（一 text 一 binary，POST 201 接受）→ 报表 `inlined=1` 但**两份都没进响应**（谎报）。
+  - **三条各自的「为何测试绿」都是素材取值域缺口**：BDD-40 用 `"y"`（ASCII ⇒ 字符==字节）、BDD-40③ 的 evil 素材纯 ASCII（`lower()` 保长）、BDD-38 素材无非 css/js sibling（`not_injectable` 恒 0 项）。**不是同一处，是三个正交维度**。
+  - **评审同时确认**：P3 测试**一字未改**（10 份归档副本 `diff -q` 全 SAME；`test_html_render.py` 段级 diff 仅我改的 SIM300 一行）；5 条 `[DESIGN_GAP]` + 1 条 `[SCOPE+]` **全部合理**；前端专项全过；`make lint` 的 SIM300 修是**必要**（评审用 `ruff --isolated --select SIM300` 跑 `de03b466` 原始文件确认当时确实红）。design-review 已判 `approved`。
+- NEXT: P4 重试 #1（`retries[P4]` 计 1，上限 3）——派 implementer 修 3 CRITICAL + 2 MAJOR + MINOR。
+- EVIDENCE（**P4 重试 #1 完成，三条 CRITICAL 的修复我已独立验证**）：
+  - **C1 我亲跑进程内 app**：12 个中文 CSS → `requested 12 / inlined 4 / skipped 8`、`reasons={'total_budget':8}`、响应 **7.67 MiB ≤ 8 MiB**、势成立、**每条 skipped 都有 `file_id`**。修复前是 23.0 MiB / 2.88× / `skipped=[]`。→ **核心缺陷已修**。
+  - **C2 我亲验**：`İ`（U+0130）三种形态（`<p>İstanbul</p>` / `İİİ` / 大写 `<BODY>`）下 `</body>` **均完整保留**、报表插入位置正确。
+  - **C3 代码确认**：`file_ids[id(f)]` 旁路 map 已在 `:479` 落地。
+- **DECISION（裁决修复者申报的 4 点）**：
+  1. **M1 接受方案 C**（`inject: Query(None, max_length=4096)`）。理由：修复者实测证明评审推荐的 B **必然破坏 P2 冻结的势不变式**（K=100/500 个 id 时两种落法 `100 vs 500`、`101 vs 500` 均不成立），且汇总项无 `file_id` 违反必填 → **A/B 都需回 P2 授权改契约**，成本高于收益。C 的诚实边界我已核算：4KB inject ≈ 585–1365 个 id → 响应 53–123 KB（6.6–15.3×），**确实不是压到 1×**，但把原本无界（5000 id → 460 KB）压到了有界可控。→ **这是可接受的契约级取舍，记入 P7**。
+  2. **确认 C2 不照抄评审的 `re.search` 是对的**：原实现 `rfind` 语义是「**最后**一个 `</body>`」，评审建议的 `re.search` 取**首个** —— 照抄会静默改变行为（把已登记的 MINOR「正文含字面 `</body>`」从"插错位"变成"插到首个 `</body>` 后"）。修复者的 `matches[-1].start()` 只消除根因（`lower()` 非保长），语义保持。**我复核代码确认 `:441` 用的正是 `matches[-1]`。**
+  3. **确认评审 §3-2 的「HTTP 可达近亲」根因判断有误，修复者是对的**（我实测证实）：POST 两份同名 `dup.css`（一 text 一 binary）→ **DB 保留 2 行**（id 47 text / id 48 binary），但 **两行读到的内容都是 PNG**（后者覆盖前者，磁盘实际只有 1 个文件）。→ `inlined=1` **不是谎报**（记录 48 的内容确实进了响应），评审的「owners 互相覆盖致谎报」归因错了，根因是**存储层同名覆盖**。→ **不修**（会动 entry 写入命名策略，超 P1 范围），**登记为 `[SCOPE+]` 待 P7 判定**。探针 entry（`fngefq` + 残留 `gizqeg`）已全 DELETE、anon 复位 15。
+  4. **接受「势不变式 vs skipped 逐项上限 不可兼得」为契约级取舍**，P7 登记。
+- CORRECTION（**重要环境事实，影响 P5/P6**）：`:8888` **跑的是 P4 之前的代码且无 `--reload`**——我实测 `render` 响应**完全无报表块**（grep `peekview-inject-report` = 0），`files.py` 的 mtime（08:30）远晚于服务启动时间（06:20）。→ **P5/P6 在做任何依赖报表块的验证前必须先重启 debug 服务**，否则验的是旧代码（修复者正是识别到这点才改用进程内 app 自测，判断正确）。
+- NEXT: 修复已完，回派 `review` 复审（3 CRITICAL + 2 MAJOR 是否闭环）。

@@ -74,6 +74,24 @@ export function useMarkdown() {
       .substring(0, 50) || 'heading' // Fallback if empty
   }
 
+  interface InlineTokenLike {
+    type: string
+    content: string
+    children: InlineTokenLike[] | null
+  }
+
+  // Heading display text must be the rendered plain text (no markdown markup),
+  // so the TOC and the body heading read the same string.
+  function inlinePlainText(children: InlineTokenLike[]): string {
+    let out = ''
+    for (const child of children) {
+      if (child.type === 'text' || child.type === 'code_inline') out += child.content
+      else if (child.type === 'image') out += inlinePlainText(child.children ?? [])
+      else if (child.type === 'softbreak' || child.type === 'hardbreak') out += ' '
+    }
+    return out.trim()
+  }
+
   function escapeHtmlAttribute(text: string): string {
     return text
       .replace(/&/g, '&amp;')
@@ -140,6 +158,7 @@ export function useMarkdown() {
     slug: string = '',
   ): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
+    const usedHeadingIds = new Map<string, number>()
     const codeBlocks: CodeBlock[] = []
     let frontMatterHtml = ''
     let processedContent = content
@@ -325,18 +344,21 @@ export function useMarkdown() {
       return `<!--CODE_BLOCK_${index}-->`
     }
 
-    // Set up heading renderer
+    // Set up heading renderer — single source of truth for body anchors and TOC entries
     const originalHeading = md.renderer.rules.heading_open
     md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
       const token = tokens[idx]
       const level = parseInt(token.tag.substring(1))
-      if (level >= 2 && level <= 4) {
+      if (level >= 1 && level <= 4) {
         const nextToken = tokens[idx + 1]
         if (nextToken?.type === 'inline') {
-          const text = nextToken.content
-          const id = slugify(text)
+          const plain = inlinePlainText((nextToken.children ?? []) as InlineTokenLike[]) || nextToken.content
+          const baseId = slugify(plain)
+          const seen = usedHeadingIds.get(baseId) ?? 0
+          usedHeadingIds.set(baseId, seen + 1)
+          const id = seen === 0 ? baseId : `${baseId}-${seen}`
           token.attrSet('id', id)
-          headings.push({ level, text, id })
+          headings.push({ level, text: plain, id })
         }
       }
       return originalHeading ? originalHeading(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options)

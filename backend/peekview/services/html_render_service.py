@@ -6,17 +6,33 @@ BeautifulSoup with the stdlib html.parser backend.
 
 from __future__ import annotations
 
+import json
 import posixpath
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from bs4 import BeautifulSoup
 
 _BYPASS_PREFIXES = ("http://", "https://", "data:", "blob:", "mailto:", "tel:", "//", "#", "/")
 
-_MAX_INJECT_IDS = 50
-_BINARY_SIZE_LIMIT = 768 * 1024
+_MAX_INJECT_IDS = 40
+_MAX_INJECT_FILE_BYTES = 2 * 1024 * 1024
+_MAX_INJECT_TOTAL_BYTES = 8 * 1024 * 1024
+_BINARY_SIZE_LIMIT = 768 * 1024  # single source; consumed by api/files.py
 _CSS_RECURSION_LIMIT = 3
+
+REPORT_ID = "peekview-inject-report"
+
+REASONS = frozenset(
+    {
+        "count_limit",
+        "file_too_large",
+        "binary_too_large",
+        "total_budget",
+        "not_found",
+        "not_injectable",
+    }
+)
 
 _IMPORT_RE = re.compile(r'@import\s+(?:url\(\s*[\'"]?|[\'"])([^\'")\s]+)[\'"]?\s*\)?\s*;')
 _URL_RE = re.compile(r'url\(\s*[\'"]?([^\'")\s]+)[\'"]?\s*\)')
@@ -30,6 +46,46 @@ class SiblingFileData:
     language: str | None
     is_binary: bool
     mime_type: str | None
+
+
+@dataclass
+class InjectSelection:
+    """Result of parsing `?inject=`: accepted ids plus the ones over the cap."""
+
+    selected: list[int] = field(default_factory=list)
+    overflow: list[int] = field(default_factory=list)
+
+
+def build_skip_report_html(
+    *,
+    requested: int,
+    inlined: int,
+    skipped: list[dict],
+) -> str:
+    """Serialize the inject report as a machine-readable JSON script block.
+
+    `<` is escaped so a user-controlled `path` cannot close the script element
+    early (P2-design R15).
+
+    Every `reason` is validated against `REASONS` here, at the single
+    serialization exit, so a producer cannot silently emit a seventh reason.
+    """
+    unknown = {item["reason"] for item in skipped} - REASONS
+    if unknown:
+        raise ValueError(f"unknown skip reason(s): {sorted(unknown)}")
+    report = {
+        "version": 1,
+        "limits": {
+            "maxInjectIds": _MAX_INJECT_IDS,
+            "maxFileBytes": _MAX_INJECT_FILE_BYTES,
+            "maxTotalBytes": _MAX_INJECT_TOTAL_BYTES,
+        },
+        "requested": requested,
+        "inlined": inlined,
+        "skipped": skipped,
+    }
+    payload = json.dumps(report, ensure_ascii=False).replace("<", "\\u003c")
+    return f'<script type="application/json" id="{REPORT_ID}">{payload}</script>'
 
 
 def normalize_ref(ref: str) -> str | None:
@@ -51,12 +107,18 @@ def normalize_ref(ref: str) -> str | None:
     return ref if ref else None
 
 
-def parse_inject_ids(inject: str | None, main_file_id: int) -> list[int]:
-    """Parse comma-separated inject IDs, drop the main file_id, dedupe, cap at 50."""
+def select_inject_ids(
+    inject: str | None, main_file_id: int, limit: int = _MAX_INJECT_IDS
+) -> InjectSelection:
+    """Parse comma-separated inject IDs, dropping the main id and duplicates.
+
+    The first `limit` unique sibling ids land in `selected`; the remainder land
+    in `overflow` so the caller can account for them (BDD-38).
+    """
+    selection = InjectSelection()
     if not inject:
-        return []
+        return selection
     seen: set[int] = set()
-    result: list[int] = []
     for token in inject.split(","):
         token = token.strip()
         if not token:
@@ -68,10 +130,11 @@ def parse_inject_ids(inject: str | None, main_file_id: int) -> list[int]:
         if fid == main_file_id or fid in seen:
             continue
         seen.add(fid)
-        result.append(fid)
-        if len(result) >= _MAX_INJECT_IDS:
-            break
-    return result
+        if len(selection.selected) < limit:
+            selection.selected.append(fid)
+        else:
+            selection.overflow.append(fid)
+    return selection
 
 
 def _detect_kind(f: SiblingFileData) -> str | None:
@@ -131,6 +194,10 @@ def _process_css_refs(
     svg_keys: set[str] | None = None,
     depth: int = 0,
     visited: set[str] | None = None,
+    *,
+    text_owners: dict[str, SiblingFileData] | None = None,
+    binary_owners: dict[str, SiblingFileData] | None = None,
+    consumed_out: set[int] | None = None,
 ) -> str:
     if visited is None:
         visited = set()
@@ -140,6 +207,20 @@ def _process_css_refs(
     if depth >= _CSS_RECURSION_LIMIT:
         return css_content
 
+    def _mark_text(key: str) -> None:
+        if text_owners is None or consumed_out is None:
+            return
+        owner = text_owners.get(key)
+        if owner is not None:
+            consumed_out.add(id(owner))
+
+    def _mark_binary(key: str) -> None:
+        if binary_owners is None or consumed_out is None:
+            return
+        owner = binary_owners.get(key)
+        if owner is not None:
+            consumed_out.add(id(owner))
+
     def _replace_import(m: re.Match) -> str:
         ref = m.group(1)
         key = _lookup_key(ref, text_map)
@@ -148,8 +229,17 @@ def _process_css_refs(
         if key in visited:
             return m.group(0)
         visited.add(key)
+        _mark_text(key)
         resolved = _process_css_refs(
-            text_map[key], text_map, binary_map, svg_keys, depth + 1, visited
+            text_map[key],
+            text_map,
+            binary_map,
+            svg_keys,
+            depth + 1,
+            visited,
+            text_owners=text_owners,
+            binary_owners=binary_owners,
+            consumed_out=consumed_out,
         )
         return resolved
 
@@ -162,10 +252,12 @@ def _process_css_refs(
         bkey = _lookup_key(ref, binary_map)
         if bkey is not None:
             f = binary_map[bkey]
+            _mark_binary(bkey)
             return f"url(data:{f.mime_type or 'application/octet-stream'};base64,{f.content})"
         tkey = _lookup_key(ref, text_map)
         if tkey is not None and tkey in svg_keys:
             svg = text_map[tkey]
+            _mark_text(tkey)
             return f"url(data:image/svg+xml;charset=utf-8,{svg})"
         return m.group(0)
 
@@ -174,7 +266,13 @@ def _process_css_refs(
     return css_content
 
 
-def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
+def inject_resources(
+    html: str,
+    siblings: list[SiblingFileData],
+    *,
+    skipped_out: list[dict] | None = None,
+    file_ids: dict[int, int] | None = None,
+) -> str:
     """Inject sibling files into HTML.
 
     CSS: <link rel="stylesheet" href> → inline <style>
@@ -185,19 +283,37 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
 
     Siblings not referenced in the HTML but explicitly requested are appended
     to <head> (CSS) or <body> end (JS).
+
+    When `skipped_out` is given, every sibling that no consumption path reached
+    is appended to it with `reason="not_injectable"` (P2-design D7/R17).
+    `file_ids` maps `id(sibling)` → `File.id` so those entries carry the
+    `file_id` the frozen `skipped[]` schema requires (P2-design D7); it is
+    mandatory whenever `skipped_out` is used.
     """
     if not siblings:
         return html
+
+    if skipped_out is not None and file_ids is None:
+        raise ValueError("file_ids is required when skipped_out is provided")
 
     soup = BeautifulSoup(html, "html.parser")
 
     text_siblings = [f for f in siblings if not f.is_binary]
     binary_siblings = [f for f in siblings if f.is_binary]
 
+    consumed: set[int] = set()
+
+    # Text and binary siblings live in separate key namespaces: the same key can
+    # legitimately exist in both (e.g. a text `styles/a.css` and a binary `a.css`
+    # both match key `a.css`). A single map would let the binary entry overwrite
+    # the text one, so `consumed` would record the wrong object and the report
+    # would claim an inlined sibling was skipped (P2-design R17).
+    text_owners: dict[str, SiblingFileData] = {}
     text_map: dict[str, str] = {}
     for f in text_siblings:
         for k in _sibling_keys(f):
             text_map[k] = f.content
+            text_owners[k] = f
 
     svg_keys: set[str] = set()
     for f in text_siblings:
@@ -205,18 +321,22 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
             for k in _sibling_keys(f):
                 svg_keys.add(k)
 
+    binary_owners: dict[str, SiblingFileData] = {}
     binary_map: dict[str, SiblingFileData] = {}
     for f in binary_siblings:
         by_name = normalize_ref(f.filename)
         if by_name:
             binary_map[by_name] = f
+            binary_owners[by_name] = f
         if f.path:
             by_path = normalize_ref(f.path)
             if by_path and by_path != by_name:
                 binary_map[by_path] = f
+                binary_owners[by_path] = f
                 basename = posixpath.basename(by_path)
                 if basename and basename != by_path and basename != by_name:
                     binary_map[basename] = f
+                    binary_owners[basename] = f
 
     used_text_keys: set[str] = set()
 
@@ -229,8 +349,17 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
         if resolved is None:
             continue
         used_text_keys.add(resolved)
+        consumed.add(id(text_owners[resolved]))
         style = soup.new_tag("style")
-        processed = _process_css_refs(text_map[resolved], text_map, binary_map, svg_keys)
+        processed = _process_css_refs(
+            text_map[resolved],
+            text_map,
+            binary_map,
+            svg_keys,
+            text_owners=text_owners,
+            binary_owners=binary_owners,
+            consumed_out=consumed,
+        )
         style.string = f"/* injected from: {resolved} */\n{processed}"
         link.replace_with(style)
 
@@ -247,6 +376,7 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
         if type_attr and type_attr not in ("text/javascript", "module"):
             continue
         used_text_keys.add(resolved)
+        consumed.add(id(text_owners[resolved]))
         inline = soup.new_tag("script")
         if type_attr:
             inline["type"] = type_attr
@@ -272,13 +402,23 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
             else:
                 head = soup.head
             style = soup.new_tag("style")
-            processed = _process_css_refs(f.content, text_map, binary_map, svg_keys)
+            processed = _process_css_refs(
+                f.content,
+                text_map,
+                binary_map,
+                svg_keys,
+                text_owners=text_owners,
+                binary_owners=binary_owners,
+                consumed_out=consumed,
+            )
             style.string = f"/* injected from: {f.filename} */\n{processed}"
             head.append(style)
+            consumed.add(id(f))
         elif kind == "js":
             inline = soup.new_tag("script")
             inline.string = f"/* injected from: {f.filename} */\n{f.content}"
             inline_scripts_to_append.append(inline)
+            consumed.add(id(f))
 
     safe_src_tags = ("img", "video", "audio", "source", "track")
     for tag_name in safe_src_tags:
@@ -291,11 +431,13 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
             if bkey is not None:
                 f = binary_map[bkey]
                 el["src"] = f"data:{f.mime_type or 'application/octet-stream'};base64,{f.content}"
+                consumed.add(id(f))
                 continue
             tkey = _lookup_key(key, text_map)
             if tkey is not None and tkey in svg_keys:
                 el["src"] = f"data:image/svg+xml;charset=utf-8,{text_map[tkey]}"
                 used_text_keys.add(tkey)
+                consumed.add(id(text_owners[tkey]))
 
     for link in soup.find_all("link"):
         rel = link.get("rel")
@@ -314,6 +456,7 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
             continue
         f = binary_map[bkey]
         link["href"] = f"data:{f.mime_type or 'application/octet-stream'};base64,{f.content}"
+        consumed.add(id(f))
 
     if inline_scripts_to_append:
         if soup.body is None:
@@ -326,5 +469,19 @@ def inject_resources(html: str, siblings: list[SiblingFileData]) -> str:
                 soup.html.append(body)
         for s in inline_scripts_to_append:
             soup.body.append(s)
+
+    if skipped_out is not None:
+        for f in siblings:
+            if id(f) in consumed:
+                continue
+            skipped_out.append(
+                {
+                    "file_id": file_ids[id(f)],
+                    "filename": f.filename,
+                    "path": f.path,
+                    "reason": "not_injectable",
+                    "size": None,
+                }
+            )
 
     return str(soup)

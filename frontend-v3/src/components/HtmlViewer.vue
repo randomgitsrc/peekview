@@ -74,6 +74,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, inject } from 'vue'
 import { HTML_VIEWER_TEST_SIZE_KEY } from './HtmlViewerTestKeys'
+import { resolveFileSize } from '@/utils/file-bytes'
 
 const props = defineProps<{
   content: string
@@ -81,6 +82,7 @@ const props = defineProps<{
   slug: string
   siblingFileIds?: number[]
   loadingSiblings?: boolean
+  file?: { size: number } | null
 }>()
 
 // ── 文件大小阈值 ──────────────────────────────────────────────────────────
@@ -91,7 +93,7 @@ const testContentSize = inject<number | null>(HTML_VIEWER_TEST_SIZE_KEY, null)
 
 const contentSize = computed(() => {
   if (testContentSize !== null && testContentSize !== undefined) return testContentSize
-  return props.content.length
+  return resolveFileSize(props.file, props.content)
 })
 
 const fileSizeLabel = computed(() => {

@@ -140,7 +140,7 @@ vi.mock('@/composables/useEntryDetailComputed', () => ({
     siblingFileIds: ref([]),
     entryTitle: ref('Test Entry'),
     tocHeadings: ref([]),
-    extractHeadings: vi.fn(),
+    setTocHeadings: vi.fn(),
     copyContent: vi.fn(),
     downloadFile: vi.fn(),
     downloadPack: vi.fn(),

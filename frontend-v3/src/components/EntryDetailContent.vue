@@ -1,7 +1,7 @@
 <template>
   <div class="detail-content">
     <!-- File Sidebar (desktop) -->
-    <aside v-if="isFileTreeOpen && isMultiFile" class="file-sidebar">
+    <aside v-if="isFileTreeOpen && isMultiFile && !zenMode" class="file-sidebar">
       <FileTree
         :files="currentEntry?.files || []"
         :activeFileId="activeFile?.id ?? null"
@@ -51,15 +51,15 @@
 
       <template v-else-if="activeFile">
         <div v-if="parseError" class="parse-error-banner" role="alert"><AlertCircleIcon :size="16" /><span>{{ parseError }}</span></div>
-        <HtmlViewer v-if="isHtml" :slug="slug" :file-id="activeFile.id" :content="fileContent" :sibling-file-ids="siblingFileIds" />
+        <HtmlViewer v-if="isHtml" :slug="slug" :file-id="activeFile.id" :file="activeFile" :content="fileContent" :sibling-file-ids="siblingFileIds" />
         <template v-else-if="isMarkdown">
-          <MarkdownViewer v-if="!sourceViewMode" :content="fileContent" :path-map="pathMap" :slug="slug" :headings="tocHeadings" @select-heading="$emit('scroll-to-heading', $event)" @navigate-file="$emit('navigate-file', $event)" />
+          <MarkdownViewer v-if="!sourceViewMode" :content="fileContent" :path-map="pathMap" :slug="slug" @headings="$emit('toc-headings', $event)" @navigate-file="$emit('navigate-file', $event)" />
           <CodeViewer v-else :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
         </template>
         <template v-else-if="isCsv || isTsv || isJson || isYaml || (isXml && !isSvg)">
           <CodeViewer v-if="showSourceView" :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
           <TableView v-else-if="isCsv || isTsv" :content="fileContent" :delimiter="isTsv ? '\t' : ','" :filename="activeFile.filename" :download-fn="downloadFile" @parse-error="onParseError" />
-          <TreeView v-else :content="fileContent" :format="treeFormat" :filename="activeFile.filename" :download-fn="downloadFile" @parse-error="onParseError" />
+          <TreeView v-else :content="fileContent" :format="treeFormat" :filename="activeFile.filename" :size="activeFile.size" :download-fn="downloadFile" @parse-error="onParseError" />
         </template>
         <ImageViewer v-else-if="isImage" :filename="activeFile.filename" :slug="slug" :file-id="activeFile.id" />
         <CodeViewer v-else :content="fileContent" :filename="activeFile.filename" :language="activeFile.language" :wrap="wrapEnabled" :can-wrap="canWrap" :loading="fileLoading" @toggle-wrap="$emit('toggle-wrap')" />
@@ -75,7 +75,7 @@
     </main>
 
     <!-- TOC Sidebar (desktop) -->
-    <aside v-if="isTocOpen && isMarkdown && !sourceViewMode && tocHeadings.length > 0" class="toc-sidebar">
+    <aside v-if="isTocOpen && isMarkdown && !sourceViewMode && tocHeadings.length > 0 && !zenMode" class="toc-sidebar">
       <div
         class="resize-handle resize-handle-left"
         role="separator"
@@ -139,7 +139,7 @@ import type { Entry, File, Team, TocHeading } from '@/types'
 import type { PathMap } from '@/utils/path-map'
 import type { VisibilityTarget } from '@/utils/visibility-options'
 import { useSidebarResize } from '@/composables/useSidebarResize'
-import { IsMobileKey } from '@/composables/entryDetailKeys'
+import { IsMobileKey, ZenModeKey } from '@/composables/entryDetailKeys'
 
 const props = defineProps<{
   isFileTreeOpen: boolean
@@ -179,10 +179,12 @@ const props = defineProps<{
 }>()
 
 const isMobile = inject(IsMobileKey)!
+const zenMode = inject(ZenModeKey)!
 
 defineEmits<{
   'select-file': [file: File]
   'navigate-file': [fileId: number]
+  'toc-headings': [headings: TocHeading[]]
   'scroll-to-heading': [heading: TocHeading]
   'toggle-wrap': []
   'close-file-drawer': []
