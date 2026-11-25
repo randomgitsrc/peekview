@@ -2,7 +2,7 @@ phase: P8
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-26T04:10:00Z'
+updated: '2026-11-26T04:25:00Z'
 judge:
   enabled: true
 history:
@@ -117,3 +117,13 @@ history:
     check-changelog.py 的 exit 1 是协议侧假红（正则右边界不含全角 ）），我独立验证：原正则 False、加全角后 True，且 TPV0102/TPV0095 历史同样 False。不改 CHANGELOG 凑正则（沿用 TPV0102 判例），对 gate 无阻断。
     经用户批准删除 .agate-tmp/（46M/180 项），删前核实已被 gitignore、后端 testpaths=["tests"] 扫不到、无真实凭证；删除后 P8 gate WARNING 消失。
     残留 entry 零命中（:8893 total=15 = anon 基线）。[PROD_NOT_TOUCHED] :8080 = 000、~/.peekview/ mtime 仍 2026-11-12。
+- phase: P8
+  action: ready
+  ts: 2026-11-26 04:25:00+00:00
+  note: |
+    READY 收尾检查通过，任务交付就绪（未 bump version、未 tag，发布由人工授权触发）。
+    13 项阶段交付物齐备（P0-brief / P1-requirements / P2-design / P2-review / P3-test-cases / P4-implementation / P4-review / P5-test-results / P6-acceptance / P6.5-judge-verdict / P7-consistency / P8-release / known-failures）。
+    五项前置全满足：CHANGELOG 含 TPV0104 ×15、bump_type: minor、debt_check: reviewed、judge status: passed、实现代码零未提交改动。
+    验收链闭合：54/54 BDD PASS（P6）→ judge 独立复核 passed 54/54（P6.5）→ BLOCKER 0 / CRITICAL 0（P7）→ minor + 无 Breaking Change（P8）。
+    临时资源：.agate-tmp/ 已按用户批准删除；debug 残留 entry 零命中；生产环境全程零接触（:8080 = 000、~/.peekview/ mtime 仍 2026-11-12）。
+    后续待办（非阻断）：① check-changelog.py 的全角括号正则缺陷建议报上游协议仓 ② DEBT0022（存储层同名覆盖）待立项修复。
