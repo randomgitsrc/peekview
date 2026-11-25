@@ -43,3 +43,19 @@ prod_touched: false
 - 全量后端: 1199 passed / 3 skipped / 0 failed（+ test_cli_remote 22 = 1221，与基线同）；前端 1514P/4S/0F；make lint exit 0；make typecheck exit 0
 - CSP/响应头零改；_MAX_INJECT_TOTAL_BYTES=8MiB / _MAX_INJECT_IDS=40 / REASONS 六元 未变；SiblingFileData 未加字段；P3 断言零改；未 commit
 - P4-implementation.md 已追加「重试 #1」章节（含 M1 决策理由、C2 偏离说明、M2 更正、2 条偏差申报）
+
+## 重试 #2（P6.5 judge 退回 BDD-38 Then③）— 2026-11-25
+- 已读 dispatch-context-fix2-bdd38 + P1 BDD-38 原文(:370-373) + P6.5-judge-verdict §1 + P6-evidence/logs/bdd38-41-live-http.log(:19 证据 ③=False)
+- 已读源码 api/files.py:332-344（count_limit 硬编码 filename=None）、tests/test_html_render.py:718-772、html_render_service REASONS 六元 / select_inject_ids
+- FIX-1 DONE: api/files.py:334-362 count_limit 项补一次 get_files_by_ids(entry_id, inject_ids.overflow) 批量 IN 查（只加 1 次查询，非 N+1）；命中项填 filename/path/size 且 reason=count_limit；未命中项 reason=not_found、filename 保持 null [PROD_NOT_TOUCHED]
+- FIX-2 DONE: test_bdd_38_exceeding_count_limit_produces_skip_report 判据收紧回 P1 Then③ 原文——去掉「filename 可为 null」，改为对每条断言 filename 是非空 str 且 reason != not_found；count_limit 项额外断言 filename ∈ 真实创建文件名集合、size 为正整数 [PROD_NOT_TOUCHED]
+- FIX-3 DONE: 新增 test_bdd_38_overflow_splits_count_limit_from_not_found —— 41 真实 id + 1 瞎编 id = 9000001 混合；断言 overflow 里存在的 id → count_limit 且 filename=='res40.css'，瞎编 id → not_found 且三字段全 null；同时核势 requested(42)-inlined==len(skipped) [PROD_NOT_TOUCHED]
+- 自测三条（.agate-tmp/selftest_bdd38_fix2.py，in-process ASGI 真实 HTTP 栈，N=41 sibling / _MAX_INJECT_IDS=40）：① PASS count_limit 项 filename='s40.css' size=15（修复前为 null）② PASS 存在的 overflow id=42→count_limit+有文件名；瞎编 id=9000001→not_found+三字段全 null ③ PASS requested(41)-inlined(40)==len(skipped)(1)；混合请求 requested=42 时 42-40==2 亦成立；SELFTEST_RESULT = PASS [PROD_NOT_TOUCHED]
+- 批级 pytest（test_html_render + test_entry_service + test_entry_file_order）= 90 passed / 0 failed（原 89 + 新增 1 条 BDD-38 语义区分用例）；make lint exit 0（ruff All checks passed）
+- 计数核对：'= inject_resources(' 测试文件 13（未变）/ '_process_css_refs(' 测试文件 8（未变）
+- 全量后端 pytest tests/ = 1 failed（预存 test_cli_remote::test_config_set_remote_api_key，沙箱 ~/.peekview 只读）/ 1222 passed / 3 skipped（基线 1221P → +1 = 本轮新增用例，失败集不变）
+- ⚠️ 阻塞发现：现网 :8888 进程跑的是**改动前**代码（实测 count_limit filename 仍为 null、瞎编 id 仍归 count_limit）；进程在我沙箱 PID/tmp namespace 之外（/tmp/peekview-debug.pid 不可见）→ 我无法重启它。改用 8892 隔离实例（新代码）做真 HTTP 验证；:8888 需主 Agent 重启后 P6 才能重跑 BDD-38 现场证据
+- 真 HTTP 自测（新代码独立实例 :8892，DATA_DIR=.agate-tmp/debug-8892，经 HTTP API 造 42 文件 entry、按 slug 删除并复核 404）：三条自测全 PASS，且实测 CSP 含 connect-src blob: data: https: / Cache-Control: no-store / Referrer-Policy 一致、reasons=['count_limit','not_found'] ⊆ 六元、五字段齐全、file_id 全 int 且无重复、limits.maxInjectIds=40 未变；LIVE_SELFTEST_RESULT = PASS
+- make test-quick = 1 failed / 1222 passed / 3 skipped（失败集不变：仅预存 test_cli_remote）；make lint exit 0
+- P1-requirements.md 零改动（git status P1_CLEAN）；前端零改动；未 commit；8892 实例已 stop 并清掉数据目录；全程未触碰 :8080 / ~/.peekview/
+- P4-implementation.md 已追加「重试 #2（P6.5 judge 退回）」章节（含 not_found 边界说明、三条自测、红线表、:8888 需重启的环境事实）

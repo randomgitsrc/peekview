@@ -21,3 +21,4 @@
 {"cmd":"check-gate.py P6","event":"gate_run","exit":2,"phase":"P6","prev_hash":"32d42fba42437ce3992dbcd4ced251e4c0e8c3ac6de8bc8caa8e3a2d2ccd2c7b","runner":"pre-commit","ts":"2026-11-25T16:53:23.188372Z"}
 {"event":"state_transition","from":"P5","phase":"P6","prev_hash":"922c0ae7aab6acb98a73c9c3d65dc0ec0bd553557efe22c61711603e49730323","to":"P6","ts":"2026-11-25T16:55:10.398149Z"}
 {"cmd":"check-gate.py P6","event":"gate_run","exit":2,"phase":"P6","prev_hash":"0b84bb42c5057fd386902201308d7f8e33c232ae3f182ca0290b16fbad1b4eb5","runner":"pre-commit","ts":"2026-11-25T16:55:11.902070Z"}
+{"criteria_passed":53,"criteria_total":54,"event":"judge_verdict","partial":false,"phase":"P6.5","prev_hash":"0305e19d81e2b13434a6c8b8283da5b3b574e5ad496b07d6153131db4871287b","ts":"2026-11-25T17:30:50.585001Z","verdict":"needs-revision","verdict_hash":"7b755c031342c0afc097656927b2b4b64831ea9ce81b88fe43ccd34ed4a938a8"}

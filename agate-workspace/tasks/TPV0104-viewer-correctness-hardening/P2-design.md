@@ -408,6 +408,7 @@ def test_inject_id_limit_below_entry_file_limit():
 > **`skipped[]` 字段来源定死（[eng W4/W5]）** —— 本节为 P4 实现前的权威口径：
 > - **`size` 是「已知时的近似值」，可为 `null`**：`SiblingFileData`（`html_render_service.py:26-32`）**6 字段中无 `size`**；文本项的 `len(content)` 是**字符数**（非字节），二进制项若由 base64 反解需 `×3/4` 折算。→ 实现要求：**取不到就不写**（`null`），**不得**为此给 `SiblingFileData` 加字段（那会破坏 B2a 的「13 处既有 `inject_resources` 调用零改动」）。判据**不断言 `size` 数值**（P1 BDD-38~40 均未要求），只断言其存在性或为 `null`。
 > - **`not_found` / `count_limit` 项的 `filename` / `path` 可为 `null`**：`get_files_by_ids`（`entry_service.py:1431-1441`）**只返回命中行**——溢出 id（`count_limit`）从未被查询、跨 entry / 不存在的 id（`not_found`）查不到行，故二者拿不到文件名。→ schema 因此**必须含 `file_id`**（后两类 `reason` 才有可定位标识），且 `filename`/`path` 允许 `null`。**不为这两类补额外查询**（避免为报告引入新的 DB 往返与穿透风险）。
+>   > **[DESIGN_GAP_REVIEWED: P6.5 judge 退回后更正，2026-11-26]** 上面这条对 `count_limit` 的判断**已被实测证伪**：`overflow` 的 id 只是「超过 `_MAX_INJECT_IDS` 上限、未被选中」，**文件本身在 DB 中存在**（`get_files_by_ids` 传 `inject_ids.overflow` 即可查到）。原判断把「**未发起查询**」当成了「**查不到**」，据此允许 `filename: null`，实质上削弱了 P1 BDD-38 Then③「清单中每一项可对应到具体文件名」而**未走 `[BASELINE_CHANGE]` 程序**。→ **现行为**：`count_limit` 项**必须**带真实 `filename`/`path`/`size`（补一次批量 IN 查询，非 N+1）；只有 `not_found`（DB 中确实无此 id）才允许 `null`。P1 无改动。
 > - **据此，`skipped[]` 每项字段为**：`file_id: int`（必填）+ `reason: str`（必填，六元闭集）+ `filename: str|null` + `path: str|null` + `size: int|null`。
 > - **不变式同步**：`requested - inlined == len(skipped)`（势）与 `{s["reason"]} ⊆ REASONS`（值）**不变**；但**「不重复计数」断言须按 `file_id` 而非 `filename`**（后者可为 `null`，多个 `null` 会误判重复）。
 

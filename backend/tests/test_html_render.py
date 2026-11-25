@@ -673,7 +673,8 @@ class TestPathNormalization:
 #   - inlined = 实际进入响应体的 sibling 个数（不得由 requested - 预算层 skipped 反推）
 #   - requested - inlined == len(skipped)（势）
 #   - {s["reason"]} <= REASONS（六元闭集，不得增删）
-#   - skipped 按 file_id 去重（filename 可为 null）
+#   - skipped 按 file_id 去重
+#   - filename 为 null 仅限 `not_found`（DB 无此 id）；`count_limit` 必须带出文件名（BDD-38 Then③）
 #
 # 造件须覆写 max_entry_files（BDD-38 的 Given）：默认 50 时 POST 51 文件会被 413 拒绝。
 # ══════════════════════════════════════════════════════════════════════════════
@@ -748,14 +749,74 @@ class TestCountLimitSkipReport:
                 assert len(report["skipped"]) > 0
                 # ② 势：每一项没进去的都必须可查
                 assert report["requested"] - report["inlined"] == len(report["skipped"])
-                # ③ 清单每项可按 file_id 定位（filename 可为 null）
+                # ③ 清单每项可对应到具体文件名（P1 BDD-38 Then③ 原文）
+                #    这些 id 都由本用例真实创建，故一律可查到文件名——
+                #    只有 `not_found`（客户端传了 DB 中不存在的 id）才允许 filename 为 null。
                 for item in report["skipped"]:
                     assert isinstance(item["file_id"], int)
                     assert item["reason"] in REASONS
+                    assert item["reason"] != "not_found", item
+                    assert isinstance(item["filename"], str) and item["filename"], item
                 ids = [item["file_id"] for item in report["skipped"]]
                 assert len(set(ids)) == len(ids)
-                # ④ count_limit 类必须出现（数量上限是本次的触发点）
-                assert "count_limit" in {item["reason"] for item in report["skipped"]}
+                # ④ count_limit 类必须出现，且其 filename 与真实创建的文件名一致
+                limited = [i for i in report["skipped"] if i["reason"] == "count_limit"]
+                assert limited, "数量上限是本次的触发点，必须出现 count_limit 项"
+                expected_names = {f"res{i}.css" for i in range(n)}
+                assert {i["filename"] for i in limited} <= expected_names
+                for item in limited:
+                    assert isinstance(item["size"], int) and item["size"] > 0, item
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    @pytest.mark.asyncio
+    async def test_bdd_38_overflow_splits_count_limit_from_not_found(self):
+        """语义区分：超上限但**存在**的 id → count_limit（带文件名）；瞎编的 id → not_found。
+
+        `count_limit` = 文件存在但超了数量上限；`not_found` = DB 里没有这个 id。
+        """
+        n = _MAX_INJECT_IDS + 1
+        bogus_id = 9_000_001
+        tmp_dir, client = _make_app_client(max_entry_files=n + 1)
+        try:
+            async with client:
+                files = [{"filename": "index.html", "content": HTML_MAIN}]
+                for i in range(n):
+                    files.append(
+                        {"filename": f"res{i}.css", "content": f".r{i} {{ color: red; }}"}
+                    )
+                slug, created = await _create_entry(client, files)
+                main_id = created[0]["id"]
+                sibling_ids = [f["id"] for f in created[1:]]
+
+                resp = await client.get(
+                    _render_url(slug, main_id, [*sibling_ids, bogus_id])
+                )
+                assert resp.status_code == 200, resp.text
+                report = _parse_report(resp.text)
+
+                # 势不变式：requested 含瞎编 id，故 == 41 个选中的 + 2 个 overflow
+                assert report["requested"] == _MAX_INJECT_IDS + 2
+                assert report["requested"] - report["inlined"] == len(report["skipped"])
+
+                by_id = {item["file_id"]: item for item in report["skipped"]}
+
+                # 超上限但真实存在的那 1 个 → count_limit，且带得出文件名/大小
+                overflow_real = sibling_ids[_MAX_INJECT_IDS]
+                item = by_id[overflow_real]
+                assert item["reason"] == "count_limit", item
+                assert isinstance(item["filename"], str) and item["filename"], item
+                assert item["filename"] == f"res{_MAX_INJECT_IDS}.css"
+                assert isinstance(item["size"], int) and item["size"] > 0
+
+                # 瞎编的 id → not_found（DB 无此 id，filename 真不可知）
+                bogus = by_id[bogus_id]
+                assert bogus["reason"] == "not_found", bogus
+                assert bogus["filename"] is None
+                assert bogus["path"] is None
+                assert bogus["size"] is None
+
+                assert {item["reason"] for item in report["skipped"]} <= REASONS
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 

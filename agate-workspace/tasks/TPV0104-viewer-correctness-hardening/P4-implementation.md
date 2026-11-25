@@ -737,3 +737,175 @@ lint:     make lint → ruff check peekview/ tests/ → All checks passed!（exi
 [SCOPE+] M2 复现中发现的「同 entry 两份同名 sibling」形态：根因是**存储层同名覆盖**（磁盘仅 1 个文件），非 `owners` 缺陷；报表 `inlined` 与事实一致。修复需改 entry 写入命名策略，超出 P1 范围，未在 P4 处置]
 
 [CLARIFY: M1 选中方案 C 后，评审 §3-1 建议的 B 经实测确认会破坏 P2 冻结势不变式与 `file_id` 必填约束（见 §5）。若主 Agent 希望把放大从 12–45× 压到接近 1×，需先由 P2 裁决是否放宽 `requested - inlined == len(skipped)` 或允许 `overflow` 汇总项无 `file_id`]
+
+---
+
+## 重试 #2（P6.5 judge 退回）—— BDD-38 Then③ 补齐实现
+
+> 触发：`P6.5-judge-verdict.md` `status: needs-revision`，53/54 PASS，唯一 FAIL = **BDD-38 Then③**。
+> [PROD_NOT_TOUCHED] 全程只用 `:8888`（只读探测）与 `:8892`（新代码独立 debug 实例，
+> `DATA_DIR=.agate-tmp/debug-8892`）；未触碰 `:8080`、未读写 `~/.peekview/`、未用 CLI 造删 entry、未 commit。
+
+### 1. 缺陷与根因
+
+P1 `:373` 的 BDD-38 Then③ 原文：**「清单中每一项可对应到具体文件名」**。
+
+judge 从 `P6-evidence/logs/bdd38-41-live-http.log:19` 的证据判 FAIL：该日志自报 `③ 每项可对应到具体文件名 = False`，
+`skipped[0] = {"file_id":143,"reason":"count_limit","filename":null,...}`。
+
+根因在 `api/files.py`（改动前 `:334-343`）：`count_limit` 项把 `filename`/`path`/`size` **硬编码成 `None`**。
+这些 id 来自 `select_inject_ids()` 的 `overflow`，即**超过 40 上限而未被选中的 id —— 文件本身在 DB 里存在**。
+所以这是「选择不查」，不是「查不到」。
+
+P2-design `:410` 当初的判断「`get_files_by_ids` 只返回命中行 → 溢出 id 从未被查询 → 拿不到文件名」
+**前半对、后半错**：没查 ≠ 查不到。该判断把「未查询」当成「不可知」，
+并据此允许 `filename: null` —— 这等于用实现层的 schema 决策反向削弱了 P1 的 **Then 语义**，
+且没走 `[BASELINE_CHANGE]` 程序。judge 判 FAIL 成立。
+
+### 2. 修复（代码 2 处）
+
+| # | 文件 | 改动 |
+|---|---|---|
+| 1 | `backend/peekview/api/files.py:334-362` | `overflow` 分支补**一次**批量 `get_files_by_ids(entry_id, inject_ids.overflow)`，按 id 建 map 后填 `filename`/`path`/`size`；DB 中确实不存在的 overflow id 改归 `not_found` |
+| 2 | `backend/tests/test_html_render.py:752-771` | `test_bdd_38_exceeding_count_limit_produces_skip_report` 判据**收紧回 P1 Then③ 原文**；另新增 `:772-827` 一条语义区分用例 |
+
+**查询次数**：只在 `if inject_ids.overflow:` 内加 1 次 `get_files_by_ids(...)`（**一次 `IN` 查询，非 N+1**）；
+`overflow` 为空时**零新增查询**（`else` 给 `{}`，不进 DB）。原先 `selected` 的那次查询未动。
+
+**语义修正（本轮的核心判断）**：
+
+| reason | 语义 | `filename` |
+|---|---|---|
+| `count_limit` | 文件**存在**，但超出 `_MAX_INJECT_IDS` 上限未被选中 | **必须**非空（本轮后由 DB 记录填入） |
+| `not_found` | 客户端传的 id 在 DB 中**不存在** | `null`（真不可知） |
+
+改动前，一个排在 40 之后的瞎编 id 也会被归入 `count_limit` —— 那是错的：
+它不属于「超过上限」，而属于「DB 无此 id」。本轮把这两类拆开；`REASONS` **仍是六元**，未新增 reason。
+
+### 3. `not_found` 类允许 `filename: null` 的边界（显式说明）
+
+BDD-38 Then③ 的语境是**「被跳过的 sibling 能对应到文件名」**，隐含前提是**该文件真实存在**。
+客户端可以用 `?inject=` 传任意整数，包括本 entry 里根本不存在的 id ——
+此时没有文件名可言，`filename: null` 是**事实的忠实表达，不是判据的削弱**。
+
+因此本轮的边界是：
+
+- **`count_limit` 类：一律必须能对应到文件名**（本轮修复点，判据按 P1 原文收紧）
+- **`not_found` 类：允许 `filename`/`path`/`size` 全为 `null`**，但 `file_id` 仍必填（可定位到「是哪个请求的 id 没命中」）
+
+关键区别：`not_found` 项**查询后依然无行**，所以 null 是**查询的结果**，而不是**放弃查询**。
+这与改动前 `count_limit` 的 `null` 有本质不同——后者从未发起查询。
+
+### 4. 判据收紧（恢复基线，非新增需求）
+
+`test_bdd_38_exceeding_count_limit_produces_skip_report` 的 ③ 由
+
+```python
+# 改动前（judge 判为「未经批准的判据替换」）
+# ③ 清单每项可按 file_id 定位（filename 可为 null）
+assert isinstance(item["file_id"], int)
+```
+
+改为 P1 原文语义：
+
+```python
+# ③ 清单每项可对应到具体文件名（P1 BDD-38 Then③ 原文）
+assert item["reason"] != "not_found", item          # 本用例的 id 全部真实存在
+assert isinstance(item["filename"], str) and item["filename"], item
+```
+
+并给 ④ 补正向覆盖：`count_limit` 项必须出现，其 `filename` 必须落在用例真实创建的文件名集合内、
+`size` 必须为正整数——否则「有文件名」可能只是空串/占位名，判据仍可被假绿钻过。
+
+**这不是新增需求**——改的是测试判据回到 P1 `:373` 的文字；`P1-requirements.md` 一字未动（见 §6）。
+
+### 5. 三条自测（独立于既有用例）
+
+脚本：`.agate-tmp/selftest_bdd38_fix2.py`（in-process ASGI，真实 FastAPI 栈 + 真实 DB，
+与 BDD-38 Given 同形态覆写 `max_entry_files=N+1`，N=41 sibling）与
+`.agate-tmp/selftest_bdd38_fix2_live8888.py`（真 HTTP，独立新代码实例 `:8892`，
+经 HTTP API 造件、按 **slug** 删除）。
+
+```text
+N siblings=41  _MAX_INJECT_IDS=40  期望 overflow=1
+
+[①] count_limit 项数=1  [{'file_id': 42, 'reason': 'count_limit', 'filename': 's40.css', 'path': 's40.css', 'size': 15}]
+[①] count_limit 项有非空 filename = True
+[③] requested=41 inlined=40 len(skipped)=1  requested-inlined==len(skipped) = True
+
+[②] 存在的 overflow id=42 -> {'reason': 'count_limit', 'filename': 's40.css', ...} => count_limit+有文件名 = True
+[②] 瞎编 id=9000001 -> {'reason': 'not_found', 'filename': None, 'path': None, 'size': None} => not_found+filename null = True
+[③] 混合请求 requested=42（期望 42） inlined=40 len(skipped)=2 势成立=True
+
+清理 DELETE -> 200（复核 GET -> 404）
+SELFTEST_RESULT = PASS
+```
+
+| 自测 | 内容 | 结果 |
+|---|---|---|
+| ① | `count_limit` 项有非空 `filename` | **PASS** — `filename='s40.css'`、`size=15`（修复前 `null`/`null`） |
+| ② | 存在的 id 归 `count_limit`、瞎编 id 归 `not_found` | **PASS** — 同一响应内两类并存且语义正确（修复前瞎编 id 也被归 `count_limit`） |
+| ③ | 势不变式 `requested - inlined == len(skipped)` | **PASS** — 41-40==1；混合请求 42-40==2 亦成立 |
+
+真 HTTP（`:8892` 新代码）复现同样三条，并额外核红线：
+
+```text
+HTTP 200
+CSP 含 connect-src blob: data: https: = True
+Cache-Control: no-store / Referrer-Policy: strict-origin-when-cross-origin
+reasons: ['count_limit', 'not_found']   ⊆ 六元闭集 = True
+势: 3 == 3 = True
+五字段齐全 = True / file_id 全为 int = True / file_id 无重复 = True
+not_found 项 filename 全 null = True / count_limit 项 filename 全非空 = True
+limits: {'maxInjectIds': 40, 'maxFileBytes': 2097152, 'maxTotalBytes': 8388608}
+```
+
+### 6. 红线逐项确认
+
+| 红线 | 状态 |
+|---|---|
+| `P1-requirements.md` | **零改动**（`git status` 中无该文件） |
+| `_MAX_INJECT_IDS` = 40 | 未变（实测报表 `limits.maxInjectIds: 40`） |
+| 单文件 2 MiB / 总预算 8 MiB | 未变（实测 `2097152` / `8388608`） |
+| `REASONS` 六元 | 未变，**未新增 reason**（`not_found` 本就在闭集内，此前只用于 `selected` 分支） |
+| `skipped[]` 五字段 schema | 未变（实测每条恰好 5 键） |
+| `file_id` 必填 | 未变（`not_found` 类同样必填） |
+| CSP 与响应头 | **一字未改**（diff 未触及 `RENDER_CSP`、`headers=`；实测响应头一致） |
+| 前端 | **未动**（本轮只改 `backend/`） |
+| 查询次数 | 新增**恰好 1 次**批量 `get_files_by_ids`；`overflow` 空时 0 次 |
+| commit | 未 commit |
+
+### 7. 自查结果
+
+```text
+批级 pytest  cd backend && .venv/bin/python -m pytest
+             tests/test_html_render.py tests/test_entry_service.py tests/test_entry_file_order.py
+             → 90 passed / 0 failed（原 89 + 本轮新增 1 条）
+
+计数核对     '= inject_resources('   测试文件 13（未变）
+             '_process_css_refs('    测试文件  8（未变）
+
+lint         make lint → ruff check peekview/ tests/ → All checks passed!（exit 0）
+
+全量后端     make test-quick → 1 failed / 1222 passed / 3 skipped
+             失败集不变：仅预存 test_cli_remote::test_config_set_remote_api_key
+             （沙箱 ~/.peekview/ 只读，与本次改动无关）；基线 1221P → 1222P = 本轮 +1 用例
+```
+
+### 8. 一条需主 Agent 处置的环境事实（不阻断本次实现，但阻断 P6 重跑）
+
+现网 **`:8888` 进程运行的是改动前的代码**：向其发 `?inject=` 实测仍返回
+`{"reason":"count_limit","filename":null,...}`，且瞎编 id 仍被归入 `count_limit`。
+该进程位于我沙箱的 PID / `/tmp` namespace 之外（`/tmp/peekview-debug.pid` 不可见、`/proc` 内无 uvicorn 进程），
+**我无法重启它**。故改用独立新实例 `:8892`（`DATA_DIR=.agate-tmp/debug-8892`，非 `/tmp`）完成全部真 HTTP 验证。
+
+→ **P6 重跑 BDD-38 现场证据前，须先重启 `:8888`**，否则新证据仍会读到旧代码、Then③ 仍为 `False`。
+这是本轮唯一未闭环项，且不是代码问题。
+
+### 9. 偏差申报
+
+本轮无新增 `[DESIGN_GAP]` / `[SCOPE+]`。
+唯一「偏离 P2 文字」之处是把 P2-design `:410` 的「`count_limit` 的 `filename` 可为 `null`」**作废**——
+但该判断正是 judge 判定为「未经批准削弱 P1 判据」的那一条，本轮处置是**回到 P1 原文**，
+属恢复基线而非实现层自主决策，故不按 `[DESIGN_GAP]` 记。
+按 `[BASELINE_CHANGE]` 语境，应由主 Agent 在 P2 追加一句更正说明（P2 已冻结，我不改）。

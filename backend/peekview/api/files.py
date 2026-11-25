@@ -332,14 +332,32 @@ async def render_html_file(
     inject_ids = select_inject_ids(inject, file_id)
 
     skipped: list[dict] = []
+    if inject_ids.overflow:
+        overflow_records = {
+            f.id: f for f in service.get_files_by_ids(entry_id, inject_ids.overflow)
+        }
+    else:
+        overflow_records = {}
     for overflow_id in inject_ids.overflow:
+        record = overflow_records.get(overflow_id)
+        if record is None:
+            skipped.append(
+                {
+                    "file_id": overflow_id,
+                    "reason": "not_found",
+                    "filename": None,
+                    "path": None,
+                    "size": None,
+                }
+            )
+            continue
         skipped.append(
             {
                 "file_id": overflow_id,
                 "reason": "count_limit",
-                "filename": None,
-                "path": None,
-                "size": None,
+                "filename": record.filename,
+                "path": record.path,
+                "size": record.size,
             }
         )
 
