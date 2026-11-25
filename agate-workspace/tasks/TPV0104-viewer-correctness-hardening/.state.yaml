@@ -2,7 +2,7 @@ phase: P6
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-25T16:30:00Z'
+updated: '2026-11-26T02:30:00Z'
 judge:
   enabled: true
 history:
@@ -80,3 +80,14 @@ history:
     我修了一个会复发的缺陷：spec 的 EVIDENCE_DIR 是相对 cwd 路径，make debug-test 的 cwd 是 frontend-v3/ → 证据误落到 frontend-v3/agate-workspace/（P5/P6 各踩一次），已改为基于 import.meta.url 的绝对路径并实测无误落。
     E2E 的 1 failed 经我串行单跑确认为 flaky（BDD-27 并发下 waitForSelector 超时，单跑 4 passed），非功能缺陷。
     [PROD_NOT_TOUCHED] :8080 全程 000、~/.peekview/ mtime 仍 2026-11-12。
+- phase: P6.5
+  action: completed
+  ts: 2026-11-26 02:30:00+00:00
+  note: |
+    P6.5 judge 复核通过：第 2 轮 status=passed、criteria 54/54、partial=false。check-gate P6.5 exit 0（check-judge-verdict 校验通过 + check-events 账本审计通过：25 行、哈希链完整、ts 单调、judge 轮次×2）。
+    第 1 轮 judge 判 needs-revision（53/54），BDD-38 Then③ FAIL —— 它从证据目录自报的「③=False」切入，判定链四环独立核过（P1 文字自 4e09219e 未改、4 处 BASELINE_CHANGE 无一涉及 BDD-38、pytest 把判据替换成「可按 file_id 定位」、files.py 主动写死 None）。我复核确认它正确，并揪出更深根因：P2 :410 把「未查询」当成「查不到」，而 overflow 的 id 对应的文件在 DB 中存在（我实测 42 文件 entry 的 ids[40]=87 在 /raw 查到 s39.css）→ 补一次批量查询即可满足 Then③。
+    P4 重试 #2 修复后，第 2 轮 judge 在全新实例 :8893 上独立复现（非采信派发单）：skipped=[{file_id:82,reason:count_limit,filename:s40.css,size:6}]、每项非空 filename=True、势成立、与证据文件逐字段一致；并核了实现（一次批量非 N+1、WHERE entry_id 防跨 entry 泄露）、pytest 断言已收回 P1 原文。
+    judge 四点裁定：①闭环 ②not_found 允许 null 是合理边界（DB 无行，物理不可知；严格 Given 下覆盖 100%）③其余 53 条未受影响（git diff 仅 api/files.py 一个文件，新分支只在 >40 id 时触发）④BDD-50 的 WARNING 维持不升级（P1 的 FAIL 触发器是「缺失该文件」，且它已按 case 名重算证明全部同源 404）。
+    judge 独立实跑：后端 1226 tests / 1222 passed / 1 failed（预存豁免）/ 3 skipped；前端 1514 passed / 0 failed → 本次引入失败 = 0。
+    judge 另指出：:8888/:8890 是修复前进程（实测仍返回 filename: null），只有 :8893 含修复 —— 后续取证须用 :8893。
+    [PROD_NOT_TOUCHED] :8080 不可达、~/.peekview/ mtime 仍 2026-11-12。
