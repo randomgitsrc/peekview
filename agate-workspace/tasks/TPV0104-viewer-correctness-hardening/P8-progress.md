@@ -1,0 +1,6 @@
+- [03:40] P8 releaser 启动：读完 dispatch-context（5 件事）+ P2 packages=['peekview','frontend-v3','docs'] gate_commands 23 key（无 P8* 键 → 按 dispatch 跑 5 条默认命令）+ CHANGELOG 现状（[Unreleased] 空）+ tech-debt DEBT0022 status:open 已核实 + P1:528 mcp_server 范围外已核实 + .agate-tmp 已被 .gitignore:105 忽略（174 项）
+- [03:41] 发布检查：make test-quick EXIT=2（1222P/1F/3S，唯一失败=known-failures #1 test_cli_remote 预存只读）；make test-frontend EXIT=0（127 files/1514P/4S/0F）；typecheck/lint/check-docs 已后台启动
+- [03:50] CHANGELOG [Unreleased] 已写入（新增3/变更6/修复4，全条带 TPV0104）；未动历史条目；未改 VERSIONS.json
+- [03:50] 发布检查补齐：typecheck EXIT=0（vue-tsc passed）/ lint EXIT=0（ruff All checks passed）/ check-docs EXIT=0（文档一致）
+- [03:55] P8-release.md 已产出（bump_type: minor 逐包理由 / delivery 结构化 / debt_check: reviewed / mcp_server 不 bump 引 P1:528 + git diff 实测零改动 / Breaking Change 判定无 §4 / 临时资源清单 §8 / [PROD_NOT_TOUCHED] §9 / Lessons 4 条）
+- [03:55] 自检：check-gate P8 exit 2（=通过码，非 0）；CHANGELOG [Unreleased] 14 条全含 TPV0104 且历史条目零改动；check-changelog.py TPV0104 exit 1 判为协议正则缺陷（右边界不含全角「）」，TPV0102 active-tasks.md:251 已记录同款，不改 CHANGELOG 凑绿灯）；VERSIONS.json 未改、无新 tag、无 commit、实现/测试/P1 零改动；残留 entry NONE（:8893 total=15=anon 基线）；:8080=000 / ~/.peekview mtime 未变 [PROD_NOT_TOUCHED]

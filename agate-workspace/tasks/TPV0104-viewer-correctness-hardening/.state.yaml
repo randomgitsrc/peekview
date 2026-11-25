@@ -1,8 +1,8 @@
-phase: P7
+phase: P8
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-26T03:20:00Z'
+updated: '2026-11-26T04:10:00Z'
 judge:
   enabled: true
 history:
@@ -103,3 +103,17 @@ history:
     我处置了 P7 提的 3 个决策：① SP2 已登记 DEBT0022（登记簿 19 条）② 2 条跨任务决策不写入 docs/decisions/（那里是面向人的设计理由文档，这 2 条是任务内技术取舍，已在 P6.5 与 orchestrator-log 留痕）③ P8 将显式声明不 bump mcp_server（引用 P1:528）。
     5 条 WARNING 全部判定不阻断不返工（F4 的 file-bytes.spec.ts 声明不齐但判据无缺口——resolveFileSize 已被 tpv0104-real-file-bytes.spec.ts 覆盖）。
     本轮同时提交我修的一个源码改动：e2e spec 的 EVIDENCE_DIR 从相对 cwd 改为基于 import.meta.url 的绝对路径（P5/P6 各踩一次证据误落到 frontend-v3/agate-workspace/）。
+- phase: P8
+  action: completed
+  ts: 2026-11-26 04:10:00+00:00
+  note: |
+    P8 交付收尾通过（check-gate.py P8 exit 2 = 通过码，且清理 .agate-tmp/ 后为干净通过无 WARNING）。
+    bump_type: minor（peekview / frontend-v3 / docs）；无 Breaking Change —— 两处行为收紧（_MAX_INJECT_IDS 50→40、?inject= 超 4096→422）都不改 API 签名与响应结构，被跳过项在 skipped[] 里带 reason 可归因；判据是「消费方代码是否需改」而非「行为是否变了」。
+    mcp_server 显式不 bump（保持 0.12.0），依据 P1:528 + 实测零改动。
+    CHANGELOG [Unreleased] 15 条（新增 3 / 变更 8 / 修复 4，全含 TPV0104）。我补了 releaser 遗漏的一条：?firstFileId= 不再生效（P1 决策「不加重定向、安全回退」，非破坏性，但用户手动收藏的旧链接行为确实变了）。
+    debt_check: reviewed（tech-debt 19 条，本任务新增 DEBT0022 status=open）。
+    5 条发布检查：test-quick 1222P/1F（预存）/3S 与基线逐位相同、test-frontend 1514P/0F、typecheck/lint/check-docs 全 exit 0。
+    两个 gate 通过码的坑（releaser 自报并纠正）：check-gate 的通过码因阶段而异（P0-P3/P5/P6/P8 → exit 2；P4/P7/P6.5 → exit 0）；gate 判据不能靠 | tail 读（会吞非零 exit）。
+    check-changelog.py 的 exit 1 是协议侧假红（正则右边界不含全角 ）），我独立验证：原正则 False、加全角后 True，且 TPV0102/TPV0095 历史同样 False。不改 CHANGELOG 凑正则（沿用 TPV0102 判例），对 gate 无阻断。
+    经用户批准删除 .agate-tmp/（46M/180 项），删前核实已被 gitignore、后端 testpaths=["tests"] 扫不到、无真实凭证；删除后 P8 gate WARNING 消失。
+    残留 entry 零命中（:8893 total=15 = anon 基线）。[PROD_NOT_TOUCHED] :8080 = 000、~/.peekview/ mtime 仍 2026-11-12。

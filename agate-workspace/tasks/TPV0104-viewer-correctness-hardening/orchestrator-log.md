@@ -405,3 +405,18 @@
   3. **P8 显式声明不 bump `mcp_server` → 采纳**，P8 派发时会引用 `P1:528`（P2 的 `packages` 已明列 `mcp_server` 范围外且实测零改动）。
 - NOTE（P7 的 5 条 WARNING，我判定全部不阻断、不返工）：F1 SP2 登记债（已做）｜F2 P4「报表准确」需补内容层失真措辞（已由 DEBT0022 的 impact 覆盖）｜F3 P4 第 3 批缺「新增文件核对表」（实际新建 3 文件，属 P4 完备性缺口，不影响交付正确性）｜F4 P2 `:133` 声明的 `file-bytes.spec.ts` 不存在（**判据无缺口**——`resolveFileSize` 已被 `tpv0104-real-file-bytes.spec.ts` 覆盖，仅"声明与产物不齐"）｜F5 decisions 落点（见上决策 2）。
 - NEXT: 提交 P7（含我修的 e2e spec 证据路径绝对化）→ P8 发布准备。
+- GATE PASS（**P8 交付收尾通过，`check-gate.py P8` exit 2 = 通过码**）：
+  - `bump_type: minor`（peekview / frontend-v3 / docs 三包），**无 Breaking Change**。releaser 的论证我认可：`_MAX_INJECT_IDS` 50→40 与 `?inject=` 超 4096 → 422 两项收紧**都不改 API 签名与响应结构**，被跳过项在 `skipped[]` 里带 `reason` **可归因**；判据是「消费方代码是否需要改」而非「行为是否变了」（对照 `0.27.0` 的 datetime 补 `Z`——13 个字段形态变化才是真破坏）。
+  - **`mcp_server` 显式不 bump**（保持 `0.12.0`），依据 `P1:528`（P2 的 `packages` 明列不含它）+ 实测零改动。
+  - CHANGELOG `[Unreleased]` 写入 **15 条**（新增 3 / 变更 8 / 修复 4，全含 TPV0104）。
+  - `debt_check: reviewed`（19 条，本任务新增 DEBT0022 `open` 已核实）。
+  - 5 条发布检查：`test-quick` 1222P/**1F（预存）**/3S 与基线逐位相同、`test-frontend` 1514P/0F、`typecheck`/`lint`/`check-docs` 全 exit 0。
+- CORRECTION（**两个 gate 通过码的坑，releaser 自己踩到并纠正**）：
+  - `check-gate.py` 的**通过码因阶段而异**：P0–P3/P5/P6/P8 → **exit 2**；P4/P7/P6.5 → exit 0。releaser 首次用 `| tail` 读到 0 后误写「gate exit 0」，裸跑纠正为 2。
+  - 同一个坑它本轮踩了两次（`check-changelog` 误读成 0、实为 1）。**教训：gate 判据不能靠管道读**（`| tail` 会把左侧非零 exit 吞成 0）——这与我在 P3 记录的 `check-tdd-red` 教训同源。
+- EVIDENCE（**`check-changelog.py` 的 exit 1 是协议侧假红，我已独立验证**）：`check-changelog.py:73` 的正则右边界 `( |:|$|,|-)` **不含全角 `）`**，而本仓约定写法是 `（TPV0104）` ⇒ 必然不匹配。我实测：原正则 False、加上全角 `）` 后 True；且历史任务 `TPV0102`/`TPV0095` **同样 False**（`active-tasks.md:251` 已记录「全仓 12/12 历史 task_id 皆 exit 1」）。
+  - **处置：不改 CHANGELOG 去凑正则**（沿用 TPV0102 判例）。对 gate **无阻断**：`check-gate.py P8` 不调它，`pre-commit-gate.py:1086-1088` 仅 WARNING。**彻底修法是改协议脚本的字符类（协议仓改动，建议报上游）。**
+- CORRECTION（**我补了 P8 的一处实质遗漏**）：releaser 的 CHANGELOG 未提 **`?firstFileId=` 不再生效**。P1 的决策是「不加重定向、参数忽略并安全回退默认入口」（P1 `:494` + SUGGEST-2），这不是破坏性变更，**但用户手动收藏的旧链接行为确实变了**，属用户可感知面 ⇒ 我已补一条到「变更」节，说明「站内入口本不产生该参数，只影响手动收藏的历史链接，需定位具体文件请改用 `?file=<id>`」。
+- CLEANUP（**经用户批准删除 `.agate-tmp/`**）：46M / 180 项的临时产物（探针脚本、日志、临时 app 数据），含 78 个匹配测试收集模式的文件名（前序阶段遗留）。删前我核实：① 已被 `.gitignore:105` 忽略 ② 后端 `testpaths=["tests"]`、前端收集根在 `frontend-v3/`，**实测扫不到** ③ 无真实凭证。**删除后 P8 gate 的 WARNING 消失**，重跑 exit 2 干净通过。
+  - 残留复查：`:8893` 遍历 `total=15` = anon 基线，`tpv0104`/`e2e-`/`p8-`/`bdd`/`probe`/`tmp` **零命中**。
+- NEXT: 提交 P8（`.state.yaml` 写 `phase: P8`）→ 再做 READY 收尾检查并**单独一次 commit** 写 READY。
