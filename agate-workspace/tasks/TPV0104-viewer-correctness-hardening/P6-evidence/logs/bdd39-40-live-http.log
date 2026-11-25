@@ -1,0 +1,25 @@
+=== BDD-39 单文件文本注入上限（正反双向，现场 HTTP，debug :8888）===
+big.css 真实 size=2098180（> 2 MiB = True）；ok.js size=36（远小于上限）
+render -> HTTP 200
+报表 requested/inlined = 2 / 1
+skipped = [{"file_id": 103, "reason": "file_too_large", "filename": "big.css", "path": null, "size": 2098180}]
+① 超限文件文本未出现在响应中（未内联）  = True
+② 超限文件名出现在跳过清单中           = True
+③ 对照：未超限 sibling 仍被正常内联     = True
+④ reason 值 = ['file_too_large']
+
+=== BDD-40 累计超总预算（合取判据，现场 HTTP）===
+6 个 CSS，单个 ~1.86 MiB（均 < 2 MiB 单文件上限）；累计 ≈ 11.13 MiB > 8 MiB 总预算
+render -> HTTP 200
+  requested = 6  inlined = 4  skipped 条数 = 2
+  skipped reasons = ['total_budget']
+  skipped file_ids = [110, 111]
+① 可机器解析的跳过清单存在（或 HTTP≥400 且 error.message 非空） = True
+② 不存在「2xx 但静默缺 sibling 且无记录」                      = True
+③ 无半截资源（无「有注释头但正文缺失」的 CSS）                  = True （半截项： [] ）
+   响应体大小 = 7.42 MiB（≤ 8 MiB 总预算）
+
+--- 清理 ---
+DELETE qcyjg7 -> 200；复核 GET -> 404（期望 404）
+DELETE cbp353 -> 200；复核 GET -> 404（期望 404）
+EXIT_CODE: 0

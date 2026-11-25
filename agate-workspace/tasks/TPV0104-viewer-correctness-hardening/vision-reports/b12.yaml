@@ -1,0 +1,14 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS
+    model: "volcengine/doubao-seed-2-0-lite-260428"
+    role: "comprehensive"
+    screenshot: "screenshots/b12-readme-case-insensitive.png"
+  bdd: "BDD-12"
+  prompt: "这是一张网页截图。请只做「渲染缺陷检测」，不要评价设计美观、不要判断功能是否符合需求。\n判定标准（只有下列情况才算缺陷）：\nA. 主内容区完全空白、或本应有内容却只有空白占位\nB. 文字或元素互相重叠、明显错位、被容器裁切掉一半\nC. 页面出现错误提示（404/加载失败/请求失败/无权限）\nD. 图片或图标加载失败（破图占位）\nE. 乱码、或未渲染而直接显示的原始标记字符（如字面的星号方括号）\n注意：文档本身较短时正文下方出现空白属正常，不算缺陷；侧边栏/工具栏留白也正常。\n请先逐项回答 A–E「有/无」，再单独输出一行：缺陷总数: <数字>。\n最后用一句话描述图中实际可见的主要内容。\n本图补充关注点（仅作定位提示）：该 entry 有两个文件，左侧有文件树"
+  observations: "A: 无\nB: 无\nC: 无\nD: 无\nE: 无\n缺陷总数: 0\n该截图是PeekView服务的网页界面，顶部显示站点标识、条目名p6 bdd12 probe、有效到期时间2026/11/25 23:23 Expires in 15d及右上角功能按钮组，左侧为共2个文件的文件树，当前高亮选中的是readme.md，主内容区正常渲染该文档的两行文本内容，右侧为页面内导航栏。"
+  anomalies: []
+  usage:
+    input_tokens: 2188
+    output_tokens: 418

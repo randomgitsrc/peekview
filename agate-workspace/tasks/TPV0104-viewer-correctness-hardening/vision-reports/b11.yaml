@@ -1,0 +1,14 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS
+    model: "volcengine/doubao-seed-2-0-lite-260428"
+    role: "comprehensive"
+    screenshot: "screenshots/b11-subdir-readme-not-selected.png"
+  bdd: "BDD-11"
+  prompt: "这是一张网页截图。请只做「渲染缺陷检测」，不要评价设计美观、不要判断功能是否符合需求。\n判定标准（只有下列情况才算缺陷）：\nA. 主内容区完全空白、或本应有内容却只有空白占位\nB. 文字或元素互相重叠、明显错位、被容器裁切掉一半\nC. 页面出现错误提示（404/加载失败/请求失败/无权限）\nD. 图片或图标加载失败（破图占位）\nE. 乱码、或未渲染而直接显示的原始标记字符（如字面的星号方括号）\n注意：文档本身较短时正文下方出现空白属正常，不算缺陷；侧边栏/工具栏留白也正常。\n请先逐项回答 A–E「有/无」，再单独输出一行：缺陷总数: <数字>。\n最后用一句话描述图中实际可见的主要内容。\n本图补充关注点（仅作定位提示）：该 entry 含子目录文件与根目录文件，左侧有文件树"
+  observations: "A. 无\nB. 无\nC. 无\nD. 无\nE. 无\n缺陷总数: 0\n这是PeekView的文件预览网页截图，顶部显示项目标识为p6 bdd11 probe，标注访问资源到期时间为2026/11/25 23:23，剩余有效期15天，左侧文件树共列出2个文件，当前选中根目录下的aaa.md文件，主内容区正常渲染文本「AAA MD FALLBACK MARKER」，顶部右侧排布功能图标、登录按钮与深色模式切换按钮，所有元素显示正常。"
+  anomalies: []
+  usage:
+    input_tokens: 2193
+    output_tokens: 407

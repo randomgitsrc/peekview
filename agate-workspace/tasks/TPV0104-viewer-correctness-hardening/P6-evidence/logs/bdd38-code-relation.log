@@ -1,0 +1,30 @@
+=== BDD-38 ④ 代码级关系断言（读源码常量，非测试配置）===
+-- _MAX_INJECT_IDS（backend/peekview/services/html_render_service.py）:
+18:_MAX_INJECT_IDS = 40
+-- PeekLimits.max_entry_files 默认值（backend/peekview/config.py:46）:
+        description="Maximum content length for inline uploads (bytes)",
+    )
+    max_entry_files: int = Field(
+        default=50,
+        description="Maximum number of files per entry",
+    )
+    max_entry_size: int = Field(
+        default=104_857_600,  # 100MB
+        description="Maximum total size per entry (bytes)",
+    )
+    max_slug_length: int = Field(
+        default=64,
+        description="Maximum length for custom slugs",
+-- 关系断言 _MAX_INJECT_IDS < max_entry_files - 1:
+_MAX_INJECT_IDS=40
+max_entry_files default=50
+relation (_MAX_INJECT_IDS < default - 1) = True
+slack = 9 个空余名额（超限分支可达）
+REPORT_ID = peekview-inject-report
+REASONS = ['binary_too_large', 'count_limit', 'file_too_large', 'not_found', 'not_injectable', 'total_budget'] len = 6
+
+=== 报表块 JSON 与 < 转义实现位置 ===
+24:REPORT_ID = "peekview-inject-report"
+87:    payload = json.dumps(report, ensure_ascii=False).replace("<", "\\u003c")
+88:    return f'<script type="application/json" id="{REPORT_ID}">{payload}</script>'
+EXIT_CODE: 0

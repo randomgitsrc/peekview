@@ -1,0 +1,39 @@
+=== BDD-38 / BDD-40 现场 HTTP 实证（debug :8888，真实默认配置 max_entry_files=50、_MAX_INJECT_IDS=40）===
+inject 参数契约：逗号分隔的裸 file id（html_render_service.select_inject_ids:122）
+
+POST /api/v1/entries -> 201；slug=dykhnk；文件数=42（1 主 + 41 sibling）
+main id=102；sibling 数=41 > _MAX_INJECT_IDS(40) → 预期 1 个进 count_limit
+
+GET render（inject=41 个裸 id）-> HTTP 200
+报表块存在: True
+  limits       = {'maxInjectIds': 40, 'maxFileBytes': 2097152, 'maxTotalBytes': 8388608}
+  requested    = 41
+  inlined      = 0
+  skipped 条数 = 41
+  skipped      = [{"file_id": 143, "reason": "count_limit", "filename": null, "path": null, "size": null}, {"file_id": 103, "filename": "sib00.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 104, "filename": "sib01.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 105, "filename": "sib02.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 106, "filename": "sib03.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 107, "filename": "sib04.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 108, "filename": "sib05.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 109, "filename": "sib06.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 110, "filename": "sib07.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 111, "filename": "sib08.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 112, "filename": "sib09.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 113, "filename": "sib10.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 114, "filename": "sib11.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 115, "filename": "sib12.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 116, "filename": "sib13.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 117, "filename": "sib14.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 118, "filename": "sib15.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 119, "filename": "sib16.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 120, "filename": "sib17.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 121, "filename": "sib18.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 122, "filename": "sib19.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 123, "filename": "sib20.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 124, "filename": "sib21.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 125, "filename": "sib22.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 126, "filename": "sib23.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 127, "filename": "sib24.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 128, "filename": "sib25.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 129, "filename": "sib26.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 130, "filename": "sib27.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 131, "filename": "sib28.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 132, "filename": "sib29.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 133, "filename": "sib30.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 134, "filename": "sib31.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 135, "filename": "sib32.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 136, "filename": "sib33.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 137, "filename": "sib34.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 138, "filename": "sib35.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 139, "filename": "sib36.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 140, "filename": "sib37.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 141, "filename": "sib38.txt", "path": null, "reason": "not_injectable", "size": null}, {"file_id": 142, "filename": "sib39.txt", "path": null, "reason": "not_injectable", "size": null}]
+
+--- BDD-38 判据逐项 ---
+① 存在可机器解析的跳过清单                     = True
+② 清单非空                                     = True
+   条目数 == N − 实际内联 sibling 数            = 41 == 41-0 -> True
+③ 每项可对应到具体文件名                       = False
+   reason 值 ⊆ 六元闭集                        = True（实际 ['count_limit', 'not_injectable']）
+   file_id 无重复                              = True
+④ 代码级关系 _MAX_INJECT_IDS < max_entry_files−1 = True（见 logs/bdd38-code-relation.log：40 < 49）
+
+--- BDD-40 合取判据 ---
+① 可机器解析跳过清单存在（或 HTTP≥400 且 error.message 非空） = True
+② 不存在「2xx 但静默缺 sibling 且无记录」      = True
+③ 未内联的每一个都在清单中可查                 = True（清单 id 数 41 = 未内联数 41）
+
+--- BDD-41 回归：未超任何预算时 CSS/JS 正常内联、skipped 为空 ---
+POST -> 201；GET render -> HTTP 200
+报表: {"version": 1, "limits": {"maxInjectIds": 40, "maxFileBytes": 2097152, "maxTotalBytes": 8388608}, "requested": 2, "inlined": 2, "skipped": []}
+CSS 内联为 <style>  = True
+JS 内联为 <script>   = True
+skipped 为空         = True
+
+--- 清理（按 slug DELETE，禁 CLI）---
+DELETE /api/v1/entries/dykhnk -> 200；复核 GET -> 404（期望 404）
+DELETE /api/v1/entries/vfucw1 -> 200；复核 GET -> 404（期望 404）
+EXIT_CODE: 0

@@ -1,0 +1,71 @@
+=== BDD-07 代码级：目录数据源单点 ===
+-- /^(#{1,6})\s+/ 逐行正则 in useEntryDetailComputed.ts:
+0
+-- extractHeadings 定义/消费点:
+-- 单一数据通路（render 返回值 headings → tocHeadings）:
+51:  // TOC data has a single source: the `headings` returned by `useMarkdown().render()`
+
+=== BDD-47 代码级：EntryCard / EntryListRow 不再引用 files[0] ===
+-- EntryCard.vue files[0] / files?.[0] 命中数:
+0
+0
+-- EntryListRow.vue files[0] / files?.[0] 命中数:
+0
+0
+-- 导航目标（应裸 slug，无文件参数）:
+3:    <div v-if="isOwner" class="card-actions" @click.stop.prevent>
+17:        @click="$emit('delete', entry)"
+23:      <a class="card-title" :href="'/' + entry.slug" @click.prevent="navigateToEntry">
+31:            @click.prevent="navigateToUser"
+67:                @click.stop="showExemptHelp = !showExemptHelp"
+76:                @click.stop="showForceConfirm = true"
+85:                    @click.stop="confirmForceDelete"
+90:                    @click.stop="showForceConfirm = false"
+150:  router.push(`/${props.entry.slug}`)
+155:    router.push(`/users/${props.entry.username}`)
+----
+7:      <a class="entry-title" :href="'/' + entry.slug" @click.prevent="navigateToEntry">
+16:            @click.prevent="navigateToUser"
+53:              @click.stop="showExemptHelp = !showExemptHelp"
+61:            @click.stop="showForceConfirm = true"
+70:                @click.stop="confirmForceDelete"
+75:                @click.stop="showForceConfirm = false"
+92:      <div v-if="isOwner" class="entry-actions" @click.stop.prevent>
+106:          @click="$emit('delete', entry)"
+153:  router.push(`/${props.entry.slug}`)
+158:    router.push(`/users/${props.entry.username}`)
+
+=== BDD-45 文档落点唯一 ===
+-rw------- 1 kity kity 3486 11月 25 06:36 docs/architecture/html-preview-security-modes.md
+-- 三要素 grep 计数:
+安全预览: 3
+交互式 Demo: 5
+当前默认: 4
+connect-src https 外传: 4
+独立决策: 1
+
+=== BDD-50 代码级：三个 legacy spec firstFileId 字面量 ===
+viewer: firstFileId=0
+   file= 用法=2
+t091-mobile-detail-visual-polish: firstFileId=0
+   file= 用法=4
+tpv0099-fullscreen-link-auth: firstFileId=0
+   file= 用法=2
+
+=== 冻结常量（P4 交付的关键数值，供 BDD-38 ④ 关系断言）===
+18:_MAX_INJECT_IDS = 40
+19:_MAX_INJECT_FILE_BYTES = 2 * 1024 * 1024
+20:_MAX_INJECT_TOTAL_BYTES = 8 * 1024 * 1024
+46:    max_entry_files: int = Field(
+97:    @field_validator("max_entry_files", "max_slug_length", "max_summary_length")
+REASONS 六元闭集: REASONS = frozenset(
+    {
+        "count_limit",
+        "file_too_large",
+        "binary_too_large",
+        "total_budget",
+        "not_found",
+        "not_injectable",
+    }
+)
+EXIT_CODE: 0

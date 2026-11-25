@@ -1,0 +1,21 @@
+=== make test-quick (backend full suite) ===
+TESTQUICK_EXIT: 2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+1 failed, 1221 passed, 3 skipped, 25 warnings in 31.72s
+make: *** [Makefile:165：test-quick] 错误 1
+FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+
+=== make test-frontend (full suite) ===
+FRONTEND_EXIT: 0
+ ✓ src/components/__tests__/t031-landing-view.spec.ts  (1 test) 246ms
+ ✓ src/components/__tests__/MarkdownViewer.blocks.spec.ts  (3 tests) 248ms
+
+ Test Files  127 passed (127)
+      Tests  1514 passed | 4 skipped (1518)
+   Start at  23:28:37
+   Duration  18.93s (transform 9.90s, setup 27ms, collect 40.16s, tests 30.77s, environment 139.19s, prepare 19.65s)
+
+EXIT_CODE: 0

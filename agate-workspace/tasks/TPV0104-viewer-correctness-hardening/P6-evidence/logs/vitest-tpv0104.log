@@ -1,0 +1,60 @@
+
+ RUN  v1.6.1 /home/kity/oclab/peekview/frontend-v3
+
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 构造行数观测面（BDD-35） > test_bdd_35_constructed_rows_bounded_by_max_rows
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 构造行数观测面（BDD-35） > test_bdd_35_constructed_rows_equals_data_rows_when_under_limit
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 构造行数观测面（BDD-35） > test_bdd_35_constructed_rows_equals_max_rows_when_truncated
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 截断态计数（BDD-36 回归兼容） > test_bdd_36_total_rows_exact_when_truncated
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 截断态计数（BDD-36 回归兼容） > test_bdd_36_total_rows_exact_when_not_truncated
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 截断态计数（BDD-36 回归兼容） > test_bdd_36_empty_input_total_rows_zero
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 超限且引号未闭合仍抛错（BDD-37 回归兼容） > test_bdd_37_unclosed_quote_throws_even_when_far_over_max_rows
+ ✓ src/composables/__tests__/tpv0104-csv-constructed-rows.spec.ts > TPV0104 CSV 超限且引号未闭合仍抛错（BDD-37 回归兼容） > test_bdd_37_short_unclosed_quote_still_throws
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-07 目录数据源单点（代码级） > test_bdd_07_no_per_line_heading_regex_in_entry_detail_computed
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-07 目录数据源单点（代码级） > test_bdd_07_no_second_heading_scan_in_detail_view
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-35 观测面已声明为必填类型成员（代码级） > test_bdd_35_constructed_rows_declared_in_type
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-47 卡片与列表不再引用 files[0]（代码级） > test_bdd_47_entry_card_no_files_index_access
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-47 卡片与列表不再引用 files[0]（代码级） > test_bdd_47_entry_list_row_no_files_index_access
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-47 卡片与列表不再引用 files[0]（代码级） > test_bdd_47_entry_card_navigates_to_bare_slug
+ ✓ src/__tests__/tpv0104-source-scan.test.ts > TPV0104 BDD-47 卡片与列表不再引用 files[0]（代码级） > test_bdd_47_entry_list_row_navigates_to_bare_slug
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-50 legacy spec 不再依赖 firstFileId（代码级） > test_bdd_50_no_first_file_id_literal_in_legacy_specs
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-50 legacy spec 不再依赖 firstFileId（代码级） > test_bdd_50_legacy_specs_use_file_query_instead
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-45 安全边界文档三要素（落点唯一） > test_bdd_45_security_modes_doc_exists_at_unique_location
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-45 安全边界文档三要素（落点唯一） > test_bdd_45_doc_defines_both_modes
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-45 安全边界文档三要素（落点唯一） > test_bdd_45_doc_declares_current_default_is_interactive_demo
+ ✓ src/__tests__/tpv0104-migration-and-docs.test.ts > TPV0104 BDD-45 安全边界文档三要素（落点唯一） > test_bdd_45_doc_declares_connect_src_still_allows_https
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_08_root_readme_wins_over_lexicographically_first
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_09_root_index_when_no_readme
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_10_falls_back_to_stably_sorted_first_not_construction_first
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_11_only_root_level_readme_matches
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_11_nested_readme_path_is_never_selected
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 默认入口 resolver（BDD-08 ~ BDD-12） > test_bdd_12_readme_match_is_case_insensitive
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 无效 file id 回退默认入口（BDD-16/17/18/51 的机理层） > test_bdd_16_unknown_file_id_falls_back_to_default_entry
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 无效 file id 回退默认入口（BDD-16/17/18/51 的机理层） > test_bdd_17_cross_entry_file_id_falls_back_to_default_entry
+ ✓ src/utils/__tests__/tpv0104-default-file.spec.ts > TPV0104 无效 file id 回退默认入口（BDD-16/17/18/51 的机理层） > test_bdd_18_valid_file_id_still_selects_that_file
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 截断态表头控件（BDD-32） > test_bdd_32_no_sort_buttons_when_truncated
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 截断态表头控件（BDD-32） > test_bdd_32_no_filter_inputs_when_truncated
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 截断态表头控件（BDD-32） > test_bdd_32_header_text_still_visible_when_truncated
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 未截断态控件仍生效（BDD-33 回归兼容） > test_bdd_33_sort_and_filter_controls_present_when_not_truncated
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 HtmlViewer 按真实字节判定（BDD-42） > test_bdd_42_bytes_over_2mb_but_chars_under_blocks_auto_render
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 HtmlViewer 按真实字节判定（BDD-42） > test_bdd_42_bytes_under_2mb_auto_renders
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 HtmlViewer 左闭右开边界（BDD-43 回归兼容） > test_bdd_43_exactly_512kb_warns_but_still_renders
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 HtmlViewer 左闭右开边界（BDD-43 回归兼容） > test_bdd_43_exactly_2mb_blocks_auto_render
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 HtmlViewer 左闭右开边界（BDD-43 回归兼容） > test_bdd_43_just_under_2mb_does_not_block
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 未截断态控件仍生效（BDD-33 回归兼容） > test_bdd_33_sorting_changes_first_row_order
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 未截断态控件仍生效（BDD-33 回归兼容） > test_bdd_33_filtering_reduces_visible_rows
+ ✓ src/components/__tests__/tpv0104-table-truncation-controls.spec.ts > TPV0104 截断提示文案含已显示行数与总行数（BDD-34） > test_bdd_34_banner_text_has_shown_and_total_rows
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 TreeView 按真实字节判定（BDD-44 正反两向） > test_bdd_44_bytes_over_2mb_truncates_even_when_chars_under
+ ✓ src/components/__tests__/tpv0104-real-file-bytes.spec.ts > TPV0104 TreeView 按真实字节判定（BDD-44 正反两向） > test_bdd_44_bytes_under_2mb_does_not_truncate
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-01 重复同名标题在数据源侧去重 > test_bdd_01_three_identical_headings_produce_distinct_ids
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-02 围栏内标题不进目录 > test_bdd_02_fenced_heading_excluded_real_heading_kept
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-03 Setext 标题两侧都生成锚点 > test_bdd_03_setext_h1_has_non_empty_id
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-04 目录层级覆盖 h1–h4 且排除 h5 > test_bdd_04_levels_1_to_4_kept_and_h5_excluded
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-05 标题含内联强调与链接时文本已剥离标记 > test_bdd_05_inline_markup_stripped_from_heading_text
+ ✓ src/composables/__tests__/tpv0104-markdown-headings.spec.ts > TPV0104 BDD-05 标题含内联强调与链接时文本已剥离标记 > test_bdd_05_heading_id_matches_stripped_text_slug
+
+ Test Files  7 passed (7)
+      Tests  50 passed (50)
+   Start at  22:42:10
+   Duration  2.74s (transform 856ms, setup 0ms, collect 2.25s, tests 573ms, environment 9.07s, prepare 1.27s)
+
+EXIT_CODE: 0

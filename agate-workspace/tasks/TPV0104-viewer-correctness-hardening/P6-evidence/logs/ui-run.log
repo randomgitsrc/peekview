@@ -1,0 +1,40 @@
+[PASS] BDD-01 :: h2 ids=["中文标题","中文标题-1","中文标题-2"] unique=3; toc hrefs=["中文标题","中文标题-1","中文标题-2"] hits=[1,1,1]
+[PASS] BDD-02 :: toc="真实标题" items=1 bodyH2=["真实标题"]
+[PASS] BDD-03 :: h1 id="setext-标题" text="Setext 标题" tocLink=true hits=1
+[PASS] BDD-04 :: toc items=[{"level":1,"text":"一级"},{"level":2,"text":"二级"},{"level":3,"text":"三级"},{"level":4,"text":"四级"}]
+[PASS] BDD-05 :: tocText="粗体与链接" h2Text="粗体与链接" id=粗体与链接/粗体与链接
+[PASS] BDD-06 :: scrollH=2055 clientH=701 targetTop=178.59（判据 [0,200]）
+[PASS] BDD-08 :: 正文含 README MARKER=true，含 AAA CONTENT=false（构造序 AAA 在前，字典序 A(65)<R(82)）
+[PASS] BDD-09 :: 含 INDEX MARKER=true，含 AAA MD MARKER=false
+[PASS] BDD-10 :: 构造序 bbb 在前；正文含 AAA MARKER=true，含 BBB MARKER=false
+[PASS] BDD-11 :: 含 aaa.md 标记=true，含 sub/README 标记=false
+[PASS] BDD-12 :: 含 readme.md 标记=true，含 AAA.txt 标记=false
+[PASS] BDD-14 :: deployment.yaml id=14；正文含 Deployment=true；search="?file=14"
+[PASS] BDD-15 :: zen=true；正文含 Service=true；search="?file=15"
+[PASS] BDD-16 :: ①有效 id → 含 Deployment=true；②无效 id → 含默认入口标记=true，error-state=0，banner=0；③两侧不同=true
+[PASS] BDD-17 :: ①A 自己的非默认 id → 含 A-EXTRA=true；②B 的 id → 回退 A 默认=true，泄露 B 内容=false，error-state=0
+[PASS] BDD-18 :: ①有效数字 id → 含 Deployment=true；②file=abc → 含默认入口标记=true，error-state=0
+[PASS] BDD-19 :: 切换后 search="?file=14"（期望含 file=14）；正文含 Deployment=true；history 20→20
+[PASS] BDD-20 :: 切回 README.md 后 search=""（判据：不含 file=）
+[PASS] BDD-21 :: reload 后 search="?file=14"；正文含 Deployment=true
+[PASS] BDD-22 :: error=false；正文含 SHARE-FILE-MARKER=true；search 含 share=true 含 file=true
+[PASS] BDD-23 :: actions-area 内匹配元素数=1（名称"全屏阅读"），offsetParent 非 null=true，可见=true，与视口相交=true，落在 actions-area 内=true
+[PASS] BDD-24 :: 底栏数=1；①热区落在栏内=true；②barHeight=64（≤64）；③正文末元素 bottom=779.89 ≤ barTop=780.00+1
+[PASS] BDD-25 :: pathname="/k8s-deployment/f"（期望 /k8s-deployment/f），search=""（不含 file=）
+[PASS] BDD-26 :: pathname="/k8s-deployment/f" search="?file=14"（期望含 file=14）；正文含 Deployment=true
+[PASS] BDD-27 :: zen-mode=true；正文含 README 标记「K8s 部署清单」=true
+[PASS] BDD-28 :: .file-sidebar DOM 计数=0（期望 0）；文件选择控件计数=0；.toc-sidebar=0
+[PASS] BDD-29 :: ①退出类可点击元素=0（期望 0）；②按 f/Escape 后 zen-mode=true，pathname /k8s-deployment/f→/k8s-deployment/f
+[PASS] BDD-30 :: 按 f 前 zen=false → 后 zen=true；pathname "/k8s-deployment"→"/k8s-deployment"；search ""→""
+[PASS] BDD-31 :: ①文件树内匹配 fullscreen|全屏 的可点击元素=0（期望 0）；②全页计数=1（期望 1）；正文图表块数=0
+[PASS] BDD-42 :: API size=2100219（≥2MiB=true），content.length=700095（<2MiB=true）；iframe 数=0（期望 0），手动渲染按钮=1（期望 1）
+[PASS] BDD-44 :: API size=2100011（≥2MiB=true），json.length=700011（<2MiB=true）；截断提示数=1（期望 1）
+[PASS] BDD-48 :: 文件树 DOM=0，文件选择控件=0，正文非空（4728 字符），search=""（不含 file=），TOC 可展开=true
+[PASS] BDD-49 :: share token 访问正文含私密标记=true；无 token 匿名 GET 状态=404（期望 404）
+[PASS] BDD-51 :: 正文含默认入口标记=true；含 service.yaml 独有键 apiVersion=false；error-state=false；pathname="/k8s-deployment"（未重写）
+[PASS] BDD-52 :: 正文含「K8s 部署清单」=true；TOC 条目数=4（期望 4 = 1×h1 + 3×h2）
+[PASS] BDD-53 :: ①可视计数 header=0/mobileSticky=0/mobileBar=0/metaTags=0（均期望 0）；②内容区宽/视口=1.000（≥0.95）；③侧栏 DOM 计数 file=0/toc=0（期望 0）
+[PASS] BDD-54 :: 链接命中数=1；切换后正文含独有串=true；search="?file=34"（期望含 file=34）；zen-mode 仍生效=true
+RESIDUE {"created":17,"cleanup":[{"slug":"amkerh","status":200},{"slug":"fxeggt","status":200},{"slug":"caf9z1","status":200},{"slug":"ri8npk","status":200},{"slug":"aogm8k","status":200},{"slug":"wd6rok","status":200},{"slug":"ihywl2","status":200},{"slug":"4v16a2","status":200},{"slug":"39yqqo","status":200},{"slug":"z4xusk","status":200},{"slug":"y20tms","status":200},{"slug":"gdppsq","status":200},{"slug":"csqchd","status":200},{"slug":"1eytrb","status":200},{"slug":"dvnggt","status":200},{"slug":"6bjjrk","status":200},{"slug":"c1wjdj","status":200}],"leaked":[],"createdStillPresent":[]}
+SUMMARY pass=37 fail=0 total=37
+EXIT_CODE: 0

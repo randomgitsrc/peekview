@@ -1,0 +1,14 @@
+vision_analysis:
+  summary:
+    blocker_count: 0
+    verdict: PASS
+    model: "volcengine/doubao-seed-2-0-lite-260428"
+    role: "comprehensive"
+    screenshot: "screenshots/b54-fullscreen-link-switch.png"
+  bdd: "BDD-54"
+  prompt: "这是一张网页截图。请只做「渲染缺陷检测」，不要评价设计美观、不要判断功能是否符合需求。\n判定标准（只有下列情况才算缺陷）：\nA. 主内容区完全空白、或本应有内容却只有空白占位\nB. 文字或元素互相重叠、明显错位、被容器裁切掉一半\nC. 页面出现错误提示（404/加载失败/请求失败/无权限）\nD. 图片或图标加载失败（破图占位）\nE. 乱码、或未渲染而直接显示的原始标记字符（如字面的星号方括号）\n注意：文档本身较短时正文下方出现空白属正常，不算缺陷；侧边栏/工具栏留白也正常。\n请先逐项回答 A–E「有/无」，再单独输出一行：缺陷总数: <数字>。\n最后用一句话描述图中实际可见的主要内容。\n本图补充关注点（仅作定位提示）：这是全屏阅读态，刚点击正文里的跨文件链接"
+  observations: "A: 无\nB: 无\nC: 无\nD: 无\nE: 无\n缺陷总数: 0\n当前处于全屏阅读状态，页面顶部左侧显示行号1，紧邻行号右侧展示单行文本内容“English attachment placeholder for TPV0089 no-regression check (BDD-13).”，页面其余大部分区域为浅底色空白，属于短单行文档的正常渲染效果。"
+  anomalies: []
+  usage:
+    input_tokens: 2191
+    output_tokens: 581

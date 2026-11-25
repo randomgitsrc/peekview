@@ -1,0 +1,3224 @@
+=== SPEC: viewer ===
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+ℹ  生产数据库条目数: 244
+→ Check 6: 验证静态产物新鲜度...
+✓ 静态产物新鲜 (src 未比 static/index.html 新)
+
+=== ✓ 安全检查通过，可以运行 E2E 测试 ===
+
+→ 非交互模式，自动继续...
+
+→ Step 2: 启动 E2E 测试 (带数据隔离保护)...
+=== PeekView E2E 测试 ===
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+→ 检查服务状态...
+✓ 服务运行中: http://127.0.0.1:8888
+
+→ 运行 E2E 测试 (e2e/viewer.spec.ts)...
+✓ 使用 CDP Chrome: http://127.0.0.1:18800
+→ E2E 超时上限: 600s（可用 E2E_TIMEOUT 覆盖）
+
+Running 38 tests using 8 workers
+
+[1A[2K(node:65) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:60) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:86) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:61) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:68) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:85) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:74) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:65) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:60) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:86) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:61) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:68) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:85) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:74) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/38] [chromium] › e2e/viewer.spec.ts:62:3 › Code Viewer › TC-003: Wrap mode toggle
+[1A[2K[2/38] [chromium] › e2e/viewer.spec.ts:29:3 › Code Viewer › TC-001: Python code syntax highlighting
+[1A[2K[3/38] [chromium] › e2e/viewer.spec.ts:53:3 › Code Viewer › TC-002: Line numbers displayed
+[1A[2K[4/38] [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed
+[1A[2K(node:104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[5/38] [chromium] › e2e/viewer.spec.ts:81:3 › Code Viewer › TC-004: Copy button copies code
+[1A[2K[6/38] [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering
+[1A[2K[7/38] [chromium] › e2e/viewer.spec.ts:96:3 › Code Viewer › TC-005: File tree shows filename and copy button
+[1A[2K[8/38] [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works
+[1A[2K(node:728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:734) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:734) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[9/38] (retries) [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed (retry #1)
+[1A[2K[10/38] (retries) [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering (retry #1)
+[1A[2K(node:744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[11/38] (retries) [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works (retry #1)
+[1A[2K  1) [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering ────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:117:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:117:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  2) [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ───────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:132:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:132:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  3) [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:142:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:142:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[12/38] [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer
+[1A[2K[13/38] [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer
+[1A[2K[14/38] [chromium] › e2e/viewer.spec.ts:230:3 › Theme Switching › TC-030: Dark/light theme toggle
+[1A[2K(node:1005) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1005) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1029) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[15/38] [chromium] › e2e/viewer.spec.ts:254:3 › Theme Switching › TC-031: Theme persistence after reload
+[1A[2K[16/38] [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering
+[1A[2K[17/38] [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout
+[1A[2K[18/38] [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection
+[1A[2K(node:1029) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[19/38] [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+[1A[2K(node:1082) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1082) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[20/38] (retries) [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer (retry #1)
+[1A[2K[21/38] [chromium] › e2e/viewer.spec.ts:292:3 › File Operations › TC-041: Single file hides file tree
+[1A[2K(node:1350) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[22/38] [chromium] › e2e/viewer.spec.ts:302:3 › File Operations › TC-042: Download button downloads file
+[1A[2K  4) [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ─────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:1350) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[23/38] (retries) [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout (retry #1)
+[1A[2K(node:1465) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  5) [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout ───
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:1465) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[24/38] [chromium] › e2e/viewer.spec.ts:324:3 › Entry List › TC-050: Entry list displays correctly
+[1A[2K(node:1550) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1565) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1550) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1565) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[25/38] [Mobile Chrome] › e2e/viewer.spec.ts:29:3 › Code Viewer › TC-001: Python code syntax highlighting
+[1A[2K[26/38] [Mobile Chrome] › e2e/viewer.spec.ts:53:3 › Code Viewer › TC-002: Line numbers displayed
+[1A[2K(node:1653) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1653) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[27/38] [Mobile Chrome] › e2e/viewer.spec.ts:62:3 › Code Viewer › TC-003: Wrap mode toggle
+[1A[2K[28/38] [Mobile Chrome] › e2e/viewer.spec.ts:96:3 › Code Viewer › TC-005: File tree shows filename and copy button
+[1A[2K[29/38] [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering
+[1A[2K(node:1918) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1922) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1918) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1922) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[30/38] (retries) [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout (retry #1)
+[1A[2K[31/38] [Mobile Chrome] › e2e/viewer.spec.ts:81:3 › Code Viewer › TC-004: Copy button copies code
+[1A[2K(node:1963) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:1963) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[32/38] [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed
+[1A[2K[33/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering (retry #1)
+[1A[2K[34/38] [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works
+[1A[2K(node:2229) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[35/38] [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering
+[1A[2K(node:2229) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[36/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed (retry #1)
+[1A[2K(node:2240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[37/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering (retry #2)
+[1A[2K(node:2265) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  6) [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering 
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:117:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:117:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:117:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-010-Markdown-basic-rendering-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:2265) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[38/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works (retry #1)
+[1A[2K(node:2432) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2432) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[39/38] [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout
+[1A[2K(node:2444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  7) [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      189 |
+      190 |     // Mobile bottom bar should be visible
+    > 191 |     await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                     ^
+      192 |
+      193 |     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
+      194 |   })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:191:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      189 |
+      190 |     // Mobile bottom bar should be visible
+    > 191 |     await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                     ^
+      192 |
+      193 |     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
+      194 |   })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:191:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[40/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed (retry #2)
+[1A[2K(node:2539) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2527) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2539) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  8) [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ──
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:132:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:132:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:132:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-011-TOC-sidebar-displayed-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:2527) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[41/38] [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+[1A[2K[42/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works (retry #2)
+[1A[2K(node:2684) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2696) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2684) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  9) [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ───
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:142:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:142:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:142:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-012-TOC-navigation-works-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K[43/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout (retry #1)
+[1A[2K(node:2696) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[44/38] [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer
+[1A[2K(node:2853) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2862) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2853) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:2862) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[45/38] [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer
+[1A[2K[46/38] (retries) [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering (retry #1)
+[1A[2K(node:3013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[47/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout (retry #2)
+[1A[2K(node:3175) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3175) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K  10) [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout 
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-020-Desktop-3-column-layout-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K[48/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer (retry #1)
+[1A[2K(node:3256) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3256) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[49/38] [Mobile Chrome] › e2e/viewer.spec.ts:230:3 › Theme Switching › TC-030: Dark/light theme toggle
+[1A[2K(node:3342) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3342) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[50/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer (retry #2)
+[1A[2K  11) [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ───
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      18 |   const res = await page.request.get('/api/v1/entries/markdown-test')
+      19 |   const entry = await res.json()
+    > 20 |   const md = entry.files.find((f: any) => f.filename === 'rich-markdown.md')
+         |                          ^
+      21 |   await page.goto(`/markdown-test?file=${md.id}`)
+      22 | }
+      23 |
+        at openMarkdownFile (/home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:20:26)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:215:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-023-Mobile-TOC-drawer-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:3497) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3497) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[51/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout (retry #1)
+[1A[2K(node:3507) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3507) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[52/38] [Mobile Chrome] › e2e/viewer.spec.ts:254:3 › Theme Switching › TC-031: Theme persistence after reload
+[1A[2K[53/38] [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection
+[1A[2K[54/38] [Mobile Chrome] › e2e/viewer.spec.ts:292:3 › File Operations › TC-041: Single file hides file tree
+[1A[2K[55/38] [Mobile Chrome] › e2e/viewer.spec.ts:302:3 › File Operations › TC-042: Download button downloads file
+[1A[2K[56/38] [Mobile Chrome] › e2e/viewer.spec.ts:324:3 › Entry List › TC-050: Entry list displays correctly
+[1A[2K(node:3769) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3769) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[57/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering (retry #1)
+[1A[2K(node:3857) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3857) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[58/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout (retry #2)
+[1A[2K(node:3947) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:3947) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[59/38] (retries) [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer (retry #1)
+[1A[2K(node:4039) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4039) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[60/38] (retries) [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection (retry #1)
+[1A[2K  12) [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      189 |
+      190 |     // Mobile bottom bar should be visible
+    > 191 |     await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                     ^
+      192 |
+      193 |     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
+      194 |   })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:191:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      189 |
+      190 |     // Mobile bottom bar should be visible
+    > 191 |     await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                     ^
+      192 |
+      193 |     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
+      194 |   })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:191:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      189 |
+      190 |     // Mobile bottom bar should be visible
+    > 191 |     await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                     ^
+      192 |
+      193 |     await page.screenshot({ path: 'test-results/tc-021-mobile-layout.png' })
+      194 |   })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:191:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-021-Mobile-single-column-layout-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  13) [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering ──
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.diagram-viewer svg').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.diagram-viewer svg').first()[22m
+
+
+      158 |
+      159 |     // Mermaid diagram container should render an SVG
+    > 160 |     await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
+          |                                                               ^
+      161 |   })
+      162 | })
+      163 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:160:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.diagram-viewer svg').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.diagram-viewer svg').first()[22m
+
+
+      158 |
+      159 |     // Mermaid diagram container should render an SVG
+    > 160 |     await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
+          |                                                               ^
+      161 |   })
+      162 | })
+      163 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:160:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:4131) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4131) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[61/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering (retry #2)
+[1A[2K  14) [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.diagram-viewer svg').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.diagram-viewer svg').first()[22m
+
+
+      158 |
+      159 |     // Mermaid diagram container should render an SVG
+    > 160 |     await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
+          |                                                               ^
+      161 |   })
+      162 | })
+      163 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:160:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.diagram-viewer svg').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.diagram-viewer svg').first()[22m
+
+
+      158 |
+      159 |     // Mermaid diagram container should render an SVG
+    > 160 |     await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
+          |                                                               ^
+      161 |   })
+      162 | })
+      163 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:160:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.diagram-viewer svg').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.diagram-viewer svg').first()[22m
+
+
+      158 |
+      159 |     // Mermaid diagram container should render an SVG
+    > 160 |     await expect(page.locator('.diagram-viewer svg').first()).toBeVisible({ timeout: 15000 })
+          |                                                               ^
+      161 |   })
+      162 | })
+      163 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:160:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Markdown-Viewer-TC-013-Mermaid-diagram-rendering-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  15) [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ───────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="mobile-bar-filetree-btn"]')[22m
+
+
+      199 |
+      200 |     // Click file tree button in mobile bottom bar
+    > 201 |     await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+          |                                                                   ^
+      202 |
+      203 |     // Drawer should appear
+      204 |     await expect(page.locator('.drawer-left')).toBeVisible()
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:201:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="mobile-bar-filetree-btn"]')[22m
+
+
+      199 |
+      200 |     // Click file tree button in mobile bottom bar
+    > 201 |     await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+          |                                                                   ^
+      202 |
+      203 |     // Drawer should appear
+      204 |     await expect(page.locator('.drawer-left')).toBeVisible()
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:201:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  16) [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ─────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.file-item').nth(1)[22m
+
+
+      284 |     // Click second file in tree
+      285 |     const files = page.locator('.file-item')
+    > 286 |     await files.nth(1).click()
+          |                        ^
+      287 |
+      288 |     // Check active class
+      289 |     await expect(files.nth(1)).toHaveClass(/active/)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:286:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-File-Operations-TC-040-File-selection-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.file-item').nth(1)[22m
+
+
+      284 |     // Click second file in tree
+      285 |     const files = page.locator('.file-item')
+    > 286 |     await files.nth(1).click()
+          |                        ^
+      287 |
+      288 |     // Check active class
+      289 |     await expect(files.nth(1)).toHaveClass(/active/)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:286:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-File-Operations-TC-040-File-selection-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-File-Operations-TC-040-File-selection-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:4254) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4254) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[62/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer (retry #1)
+[1A[2K(node:4342) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4342) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[63/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection (retry #1)
+[1A[2K(node:4442) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4442) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[64/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer (retry #2)
+[1A[2K(node:4533) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4533) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[65/38] (retries) [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection (retry #2)
+[1A[2K  17) [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ──
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="mobile-bar-filetree-btn"]')[22m
+
+
+      199 |
+      200 |     // Click file tree button in mobile bottom bar
+    > 201 |     await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+          |                                                                   ^
+      202 |
+      203 |     // Drawer should appear
+      204 |     await expect(page.locator('.drawer-left')).toBeVisible()
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:201:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="mobile-bar-filetree-btn"]')[22m
+
+
+      199 |
+      200 |     // Click file tree button in mobile bottom bar
+    > 201 |     await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+          |                                                                   ^
+      202 |
+      203 |     // Drawer should appear
+      204 |     await expect(page.locator('.drawer-left')).toBeVisible()
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:201:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="mobile-bar-filetree-btn"]')[22m
+
+
+      199 |
+      200 |     // Click file tree button in mobile bottom bar
+    > 201 |     await page.locator('[data-testid="mobile-bar-filetree-btn"]').click()
+          |                                                                   ^
+      202 |
+      203 |     // Drawer should appear
+      204 |     await expect(page.locator('.drawer-left')).toBeVisible()
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:201:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-Responsive-Layout-TC-022-Mobile-file-drawer-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  18) [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ────────
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.file-item').nth(1)[22m
+
+
+      284 |     // Click second file in tree
+      285 |     const files = page.locator('.file-item')
+    > 286 |     await files.nth(1).click()
+          |                        ^
+      287 |
+      288 |     // Check active class
+      289 |     await expect(files.nth(1)).toHaveClass(/active/)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:286:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.file-item').nth(1)[22m
+
+
+      284 |     // Click second file in tree
+      285 |     const files = page.locator('.file-item')
+    > 286 |     await files.nth(1).click()
+          |                        ^
+      287 |
+      288 |     // Check active class
+      289 |     await expect(files.nth(1)).toHaveClass(/active/)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:286:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.click: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.file-item').nth(1)[22m
+
+
+      284 |     // Click second file in tree
+      285 |     const files = page.locator('.file-item')
+    > 286 |     await files.nth(1).click()
+          |                        ^
+      287 |
+      288 |     // Check active class
+      289 |     await expect(files.nth(1)).toHaveClass(/active/)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/viewer.spec.ts:286:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/viewer-File-Operations-TC-040-File-selection-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  18 failed
+    [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering ─────
+    [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ────────
+    [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ─────────
+    [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering ────
+    [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout ────
+    [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout 
+    [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ─────────
+    [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ──────────
+    [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ───────────────
+    [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering 
+    [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ───
+    [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ────
+    [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering 
+    [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout 
+    [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout 
+    [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ────
+    [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ─────
+    [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ──────────
+  20 passed (2.7m)
+make: *** [Makefile:666：debug-test] 错误 1
+SPEC_EXIT_CODE: 2
+=== SPEC: t091-mobile-detail-visual-polish ===
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+ℹ  生产数据库条目数: 244
+→ Check 6: 验证静态产物新鲜度...
+✓ 静态产物新鲜 (src 未比 static/index.html 新)
+
+=== ✓ 安全检查通过，可以运行 E2E 测试 ===
+
+→ 非交互模式，自动继续...
+
+→ Step 2: 启动 E2E 测试 (带数据隔离保护)...
+=== PeekView E2E 测试 ===
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+→ 检查服务状态...
+✓ 服务运行中: http://127.0.0.1:8888
+
+→ 运行 E2E 测试 (e2e/t091-mobile-detail-visual-polish.spec.ts)...
+✓ 使用 CDP Chrome: http://127.0.0.1:18800
+→ E2E 超时上限: 600s（可用 E2E_TIMEOUT 覆盖）
+
+Running 26 tests using 8 workers
+
+[1A[2K(node:4695) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4713) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4701) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4703) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4727) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4696) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4713) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4695) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4701) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4727) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4703) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:4722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:203:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_8_wrap_button_44px_hit_area
+[1A[2K(node:4696) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll
+[1A[2K[3/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room
+[1A[2K[4/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:166:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_6_copy_button_44px_hit_area
+[1A[2K[5/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset
+[1A[2K[6/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:178:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_7_wrap_button_toggle_states_distinguishable
+[1A[2K[7/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric
+[1A[2K[8/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:139:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_5_copy_button_icon_only_no_accent_fill
+[1A[2K[9/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency
+[1A[2K[10/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:244:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_10_image_viewer_exception_no_occlusion
+[1A[2K[11/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:280:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_11_html_viewer_exception_no_occlusion
+[1A[2K[12/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged
+[1A[2K[13/26] [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components
+[1A[2K(node:5523) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5523) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[14/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll
+[1A[2K(node:5612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5621) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5622) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[15/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset (retry #1)
+[1A[2K(node:5621) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5622) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[16/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll (retry #1)
+[1A[2K[17/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric (retry #1)
+[1A[2K(node:5873) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5873) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[18/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency (retry #1)
+[1A[2K(node:5959) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:5959) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[19/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components (retry #1)
+[1A[2K(node:6048) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6048) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[20/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll (retry #1)
+[1A[2K  1) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      122 |
+      123 |       const bar = page.locator('[data-testid="mobile-bottom-bar"]')
+    > 124 |       await expect(bar).toBeVisible()
+          |                         ^
+      125 |
+      126 |       const { paddingTop, paddingBottom } = await bar.evaluate((el) => {
+      127 |         const cs = getComputedStyle(el)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:124:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      122 |
+      123 |       const bar = page.locator('[data-testid="mobile-bottom-bar"]')
+    > 124 |       await expect(bar).toBeVisible()
+          |                         ^
+      125 |
+      126 |       const { paddingTop, paddingBottom } = await bar.evaluate((el) => {
+      127 |         const cs = getComputedStyle(el)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:124:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  2) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      62 |
+      63 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 64 |       await expect(metaBar).toBeVisible()
+         |                             ^
+      65 |
+      66 |       const { scrollWidth, clientWidth } = await metaBar.evaluate((el) => ({
+      67 |         scrollWidth: (el as HTMLElement).scrollWidth,
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:64:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      62 |
+      63 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 64 |       await expect(metaBar).toBeVisible()
+         |                             ^
+      65 |
+      66 |       const { scrollWidth, clientWidth } = await metaBar.evaluate((el) => ({
+      67 |         scrollWidth: (el as HTMLElement).scrollWidth,
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:64:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  3) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="markdown-body"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+       98 |
+       99 |       const md = page.locator('[data-testid="markdown-body"]')
+    > 100 |       await expect(md).toBeVisible()
+          |                        ^
+      101 |
+      102 |       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
+      103 |       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:100:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="markdown-body"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+       98 |
+       99 |       const md = page.locator('[data-testid="markdown-body"]')
+    > 100 |       await expect(md).toBeVisible()
+          |                        ^
+      101 |
+      102 |       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
+      103 |       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:100:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:6154) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6153) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6154) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6153) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[21/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric
+[1A[2K[22/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset
+[1A[2K[23/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room
+[1A[2K  4) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      220 |
+      221 |         const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 222 |         await expect(metaBar).toBeVisible()
+          |                               ^
+      223 |         await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+      224 |
+      225 |         // DOM-assist checks tying BDD-9 to BDD-1 (no horizontal scroll) and BDD-5
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:222:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      220 |
+      221 |         const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 222 |         await expect(metaBar).toBeVisible()
+          |                               ^
+      223 |         await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+      224 |
+      225 |         // DOM-assist checks tying BDD-9 to BDD-1 (no horizontal scroll) and BDD-5
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:222:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:6412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[24/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:139:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_5_copy_button_icon_only_no_accent_fill
+[1A[2K  5) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      340 |       await page.waitForLoadState('networkidle')
+      341 |       await page.waitForTimeout(500)
+    > 342 |       await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                       ^
+      343 |       await expect(page.locator('[data-testid="meta-tags-bar"]')).toBeVisible()
+      344 |
+      345 |       await page.setViewportSize({ width: 1280, height: 800 })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:342:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      340 |       await page.waitForLoadState('networkidle')
+      341 |       await page.waitForTimeout(500)
+    > 342 |       await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                       ^
+      343 |       await expect(page.locator('[data-testid="meta-tags-bar"]')).toBeVisible()
+      344 |
+      345 |       await page.setViewportSize({ width: 1280, height: 800 })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:342:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:6507) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6507) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[25/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:166:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_6_copy_button_44px_hit_area
+[1A[2K[26/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:178:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_7_wrap_button_toggle_states_distinguishable
+[1A[2K(node:6616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[27/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll (retry #2)
+[1A[2K[28/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:203:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_8_wrap_button_44px_hit_area
+[1A[2K[29/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency
+[1A[2K[30/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:244:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_10_image_viewer_exception_no_occlusion
+[1A[2K(node:6769) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6770) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6769) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6770) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[31/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset (retry #1)
+[1A[2K[32/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric (retry #1)
+[1A[2K[33/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:280:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_11_html_viewer_exception_no_occlusion
+[1A[2K[34/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged
+[1A[2K  6) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      62 |
+      63 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 64 |       await expect(metaBar).toBeVisible()
+         |                             ^
+      65 |
+      66 |       const { scrollWidth, clientWidth } = await metaBar.evaluate((el) => ({
+      67 |         scrollWidth: (el as HTMLElement).scrollWidth,
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:64:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      62 |
+      63 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 64 |       await expect(metaBar).toBeVisible()
+         |                             ^
+      65 |
+      66 |       const { scrollWidth, clientWidth } = await metaBar.evaluate((el) => ({
+      67 |         scrollWidth: (el as HTMLElement).scrollWidth,
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:64:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      62 |
+      63 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 64 |       await expect(metaBar).toBeVisible()
+         |                             ^
+      65 |
+      66 |       const { scrollWidth, clientWidth } = await metaBar.evaluate((el) => ({
+      67 |         scrollWidth: (el as HTMLElement).scrollWidth,
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:64:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--6e3e4--wraps-no-horizontal-scroll-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:6989) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:6989) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[35/26] [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components
+[1A[2K(node:7078) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7078) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[36/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency (retry #1)
+[1A[2K(node:7172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7171) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7171) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[37/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric (retry #2)
+[1A[2K[38/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset (retry #2)
+[1A[2K(node:7353) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7353) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[39/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room (retry #1)
+[1A[2K(node:7363) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7363) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[40/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components (retry #1)
+[1A[2K(node:7532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[41/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency (retry #2)
+[1A[2K(node:7613) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7613) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[42/26] (retries) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged (retry #1)
+[1A[2K  7) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="markdown-body"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+       98 |
+       99 |       const md = page.locator('[data-testid="markdown-body"]')
+    > 100 |       await expect(md).toBeVisible()
+          |                        ^
+      101 |
+      102 |       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
+      103 |       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:100:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="markdown-body"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+       98 |
+       99 |       const md = page.locator('[data-testid="markdown-body"]')
+    > 100 |       await expect(md).toBeVisible()
+          |                        ^
+      101 |
+      102 |       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
+      103 |       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:100:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="markdown-body"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+       98 |
+       99 |       const md = page.locator('[data-testid="markdown-body"]')
+    > 100 |       await expect(md).toBeVisible()
+          |                        ^
+      101 |
+      102 |       const padding = await md.evaluate((el) => getComputedStyle(el).padding)
+      103 |       expect(padding).toBe(`${MARKDOWN_BODY_PADDING_PX}px`)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:100:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--b1066-px-padding-24px-total-inset-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  8) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      122 |
+      123 |       const bar = page.locator('[data-testid="mobile-bottom-bar"]')
+    > 124 |       await expect(bar).toBeVisible()
+          |                         ^
+      125 |
+      126 |       const { paddingTop, paddingBottom } = await bar.evaluate((el) => {
+      127 |         const cs = getComputedStyle(el)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:124:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      122 |
+      123 |       const bar = page.locator('[data-testid="mobile-bottom-bar"]')
+    > 124 |       await expect(bar).toBeVisible()
+          |                         ^
+      125 |
+      126 |       const { paddingTop, paddingBottom } = await bar.evaluate((el) => {
+      127 |         const cs = getComputedStyle(el)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:124:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      122 |
+      123 |       const bar = page.locator('[data-testid="mobile-bottom-bar"]')
+    > 124 |       await expect(bar).toBeVisible()
+          |                         ^
+      125 |
+      126 |       const { paddingTop, paddingBottom } = await bar.evaluate((el) => {
+      127 |         const cs = getComputedStyle(el)
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:124:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--f790f-adding-top-bottom-symmetric-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:7715) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7715) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[43/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components (retry #2)
+[1A[2K  9) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      220 |
+      221 |         const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 222 |         await expect(metaBar).toBeVisible()
+          |                               ^
+      223 |         await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+      224 |
+      225 |         // DOM-assist checks tying BDD-9 to BDD-1 (no horizontal scroll) and BDD-5
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:222:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      220 |
+      221 |         const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 222 |         await expect(metaBar).toBeVisible()
+          |                               ^
+      223 |         await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+      224 |
+      225 |         // DOM-assist checks tying BDD-9 to BDD-1 (no horizontal scroll) and BDD-5
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:222:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="meta-tags-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      220 |
+      221 |         const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 222 |         await expect(metaBar).toBeVisible()
+          |                               ^
+      223 |         await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+      224 |
+      225 |         // DOM-assist checks tying BDD-9 to BDD-1 (no horizontal scroll) and BDD-5
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:222:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1376a--viewers-visual-consistency-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  10) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      340 |       await page.waitForLoadState('networkidle')
+      341 |       await page.waitForTimeout(500)
+    > 342 |       await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                       ^
+      343 |       await expect(page.locator('[data-testid="meta-tags-bar"]')).toBeVisible()
+      344 |
+      345 |       await page.setViewportSize({ width: 1280, height: 800 })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:342:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      340 |       await page.waitForLoadState('networkidle')
+      341 |       await page.waitForTimeout(500)
+    > 342 |       await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                       ^
+      343 |       await expect(page.locator('[data-testid="meta-tags-bar"]')).toBeVisible()
+      344 |
+      345 |       await page.setViewportSize({ width: 1280, height: 800 })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:342:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="mobile-bottom-bar"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="mobile-bottom-bar"]')[22m
+
+
+      340 |       await page.waitForLoadState('networkidle')
+      341 |       await page.waitForTimeout(500)
+    > 342 |       await expect(page.locator('[data-testid="mobile-bottom-bar"]')).toBeVisible()
+          |                                                                       ^
+      343 |       await expect(page.locator('[data-testid="meta-tags-bar"]')).toBeVisible()
+      344 |
+      345 |       await page.setViewportSize({ width: 1280, height: 800 })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:342:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--dfde4-esktop-no-mobile-components-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K(node:7816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[44/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room (retry #1)
+[1A[2K  11) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room 
+
+    TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      81 |
+      82 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 83 |       const height = await metaBar.evaluate((el) => (el as HTMLElement).offsetHeight)
+         |                                    ^
+      84 |       // DOM-assist half of BDD-2 (a). Applies to markdown-test only — see constant comment.
+      85 |       expect(height).toBeGreaterThanOrEqual(META_BAR_MIN_HEIGHT_PX_MARKDOWN_TEST)
+      86 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:83:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      81 |
+      82 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 83 |       const height = await metaBar.evaluate((el) => (el as HTMLElement).offsetHeight)
+         |                                    ^
+      84 |       // DOM-assist half of BDD-2 (a). Applies to markdown-test only — see constant comment.
+      85 |       expect(height).toBeGreaterThanOrEqual(META_BAR_MIN_HEIGHT_PX_MARKDOWN_TEST)
+      86 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:83:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  12) [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged 
+
+    TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+      325 |       const padding = await page
+      326 |         .locator('[data-testid="markdown-body"]')
+    > 327 |         .evaluate((el) => getComputedStyle(el).padding)
+          |          ^
+      328 |       expect(padding).toBe(`${DESKTOP_MARKDOWN_PADDING_PX}px`)
+      329 |
+      330 |       await page.screenshot({ path: `${EVIDENCE_DIR}/desktop_1280x800_bdd12.png` })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:327:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+      325 |       const padding = await page
+      326 |         .locator('[data-testid="markdown-body"]')
+    > 327 |         .evaluate((el) => getComputedStyle(el).padding)
+          |          ^
+      328 |       expect(padding).toBe(`${DESKTOP_MARKDOWN_PADDING_PX}px`)
+      329 |
+      330 |       await page.screenshot({ path: `${EVIDENCE_DIR}/desktop_1280x800_bdd12.png` })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:327:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K(node:7913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:7913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[45/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged (retry #1)
+[1A[2K(node:8014) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8014) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[46/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room (retry #2)
+[1A[2K(node:8100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[47/26] (retries) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged (retry #2)
+[1A[2K  13) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room 
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      81 |
+      82 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 83 |       const height = await metaBar.evaluate((el) => (el as HTMLElement).offsetHeight)
+         |                                    ^
+      84 |       // DOM-assist half of BDD-2 (a). Applies to markdown-test only — see constant comment.
+      85 |       expect(height).toBeGreaterThanOrEqual(META_BAR_MIN_HEIGHT_PX_MARKDOWN_TEST)
+      86 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:83:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      81 |
+      82 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 83 |       const height = await metaBar.evaluate((el) => (el as HTMLElement).offsetHeight)
+         |                                    ^
+      84 |       // DOM-assist half of BDD-2 (a). Applies to markdown-test only — see constant comment.
+      85 |       expect(height).toBeGreaterThanOrEqual(META_BAR_MIN_HEIGHT_PX_MARKDOWN_TEST)
+      86 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:83:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="meta-tags-bar"]')[22m
+
+
+      81 |
+      82 |       const metaBar = page.locator('[data-testid="meta-tags-bar"]')
+    > 83 |       const height = await metaBar.evaluate((el) => (el as HTMLElement).offsetHeight)
+         |                                    ^
+      84 |       // DOM-assist half of BDD-2 (a). Applies to markdown-test only — see constant comment.
+      85 |       expect(height).toBeGreaterThanOrEqual(META_BAR_MIN_HEIGHT_PX_MARKDOWN_TEST)
+      86 |
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:83:36
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--1a8ba-eta-tags-bar-breathing-room-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  14) [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged 
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+      325 |       const padding = await page
+      326 |         .locator('[data-testid="markdown-body"]')
+    > 327 |         .evaluate((el) => getComputedStyle(el).padding)
+          |          ^
+      328 |       expect(padding).toBe(`${DESKTOP_MARKDOWN_PADDING_PX}px`)
+      329 |
+      330 |       await page.screenshot({ path: `${EVIDENCE_DIR}/desktop_1280x800_bdd12.png` })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:327:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+      325 |       const padding = await page
+      326 |         .locator('[data-testid="markdown-body"]')
+    > 327 |         .evaluate((el) => getComputedStyle(el).padding)
+          |          ^
+      328 |       expect(padding).toBe(`${DESKTOP_MARKDOWN_PADDING_PX}px`)
+      329 |
+      330 |       await page.screenshot({ path: `${EVIDENCE_DIR}/desktop_1280x800_bdd12.png` })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:327:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TimeoutError: locator.evaluate: Timeout 45000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="markdown-body"]')[22m
+
+
+      325 |       const padding = await page
+      326 |         .locator('[data-testid="markdown-body"]')
+    > 327 |         .evaluate((el) => getComputedStyle(el).padding)
+          |          ^
+      328 |       expect(padding).toBe(`${DESKTOP_MARKDOWN_PADDING_PX}px`)
+      329 |
+      330 |       await page.screenshot({ path: `${EVIDENCE_DIR}/desktop_1280x800_bdd12.png` })
+        at /home/kity/oclab/peekview/frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts:327:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/t091-mobile-detail-visual--52a4b--markdown-padding-unchanged-Mobile-Chrome-retry2/error-context.md
+
+
+[1A[2K  14 failed
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged 
+    [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged 
+    [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components 
+  12 passed (2.8m)
+make: *** [Makefile:666：debug-test] 错误 1
+SPEC_EXIT_CODE: 2
+=== SPEC: tpv0099-fullscreen-link-auth ===
+=== E2E 测试安全启动 ===
+→ Step 1: 运行前置安全检查...
+=== E2E 测试前置安全检查 ===
+→ Check 1: 验证运行方式...
+✓ 运行方式正确
+✓ 调试服务运行中
+ℹ  生产数据库条目数: 244
+→ Check 6: 验证静态产物新鲜度...
+✓ 静态产物新鲜 (src 未比 static/index.html 新)
+
+=== ✓ 安全检查通过，可以运行 E2E 测试 ===
+
+→ 非交互模式，自动继续...
+
+→ Step 2: 启动 E2E 测试 (带数据隔离保护)...
+=== PeekView E2E 测试 ===
+✓ 安全守卫已启用 (E2E_GUARD_ENABLED)
+→ Safety Check: Verifying target is not production...
+→ 检查服务状态...
+✓ 服务运行中: http://127.0.0.1:8888
+
+→ 运行 E2E 测试 (e2e/tpv0099-fullscreen-link-auth.spec.ts)...
+✓ 使用 CDP Chrome: http://127.0.0.1:18800
+→ E2E 超时上限: 600s（可用 E2E_TIMEOUT 覆盖）
+
+Running 6 tests using 6 workers
+
+[1A[2K(node:8262) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8275) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8261) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8281) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8268) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8269) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8262) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8275) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8261) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8281) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:8268) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/6] [Mobile Chrome] › e2e/tpv0099-fullscreen-link-auth.spec.ts:94:3 › TPV0099 Auth 1280x800 › test_bdd_9_toc_hidden_and_anchor_scroll_works
+[1A[2K(node:8269) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[2/6] [chromium] › e2e/tpv0099-fullscreen-link-auth.spec.ts:253:5 › TPV0099 Auth 1280x800 › BDD-10 私有 entry + share token › test_bdd_10_private_entry_share_token_fullscreen
+[1A[2K[3/6] [chromium] › e2e/tpv0099-fullscreen-link-auth.spec.ts:94:3 › TPV0099 Auth 1280x800 › test_bdd_9_toc_hidden_and_anchor_scroll_works
+[1A[2K[4/6] [chromium] › e2e/tpv0099-fullscreen-link-auth.spec.ts:161:3 › TPV0099 Auth 1280x800 › test_bdd_15_mermaid_renders_and_builtin_viewer_works
+[1A[2K[5/6] [Mobile Chrome] › e2e/tpv0099-fullscreen-link-auth.spec.ts:253:5 › TPV0099 Auth 1280x800 › BDD-10 私有 entry + share token › test_bdd_10_private_entry_share_token_fullscreen
+[1A[2K[6/6] [Mobile Chrome] › e2e/tpv0099-fullscreen-link-auth.spec.ts:161:3 › TPV0099 Auth 1280x800 › test_bdd_15_mermaid_renders_and_builtin_viewer_works
+[1A[2K  6 passed (8.2s)
+
+=== ✓ 所有 E2E 测试通过 ===
+截图保存位置: /tmp/e2e-results/
+
+请访问 http://127.0.0.1:8888 进行人工验证
+确认无误后运行: make debug-stop
+
+测试截图:
+SPEC_EXIT_CODE: 0
+EXIT_CODE: 0

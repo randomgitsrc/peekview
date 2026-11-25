@@ -1,0 +1,26 @@
+=== BDD-46 render 响应 CSP 与 sandbox 实测（debug :8888）===
+-- 响应头（curl -sI render 路由）:
+HTTP/1.1 200 OK
+date: Wed, 25 Nov 2026 15:34:34 GMT
+server: uvicorn
+content-security-policy: default-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; script-src 'unsafe-inline' 'unsafe-eval' blob: data: https:; style-src 'unsafe-inline' blob: data: https:; img-src blob: data: https:; media-src blob: data: https:; font-src blob: data: https:; connect-src blob: data: https:; worker-src blob:; frame-src 'none'; frame-ancestors 'self'; form-action 'none';
+cache-control: no-store
+referrer-policy: strict-origin-when-cross-origin
+content-length: 1755
+content-type: text/html; charset=utf-8
+x-content-type-options: nosniff
+
+
+-- 响应体中的 iframe sandbox 属性与报表块:
+(响应体本身不是 iframe 容器；sandbox 由前端 iframe 标签设置)
+id="peekview-inject-report"
+-- 报表块内容:
+{'version': 1, 'limits': {'maxInjectIds': 40, 'maxFileBytes': 2097152, 'maxTotalBytes': 8388608}, 'requested': 0, 'inlined': 0, 'skipped': []}
+
+-- 前端 iframe sandbox 声明（HtmlViewer.vue）:
+64:        sandbox="allow-scripts allow-forms"
+
+-- 既有 CSP 契约用例仍在且通过（test_html_render.py）:
+180:        assert "https:" in csp
+206:        assert "https:" in csp
+EXIT_CODE: 0

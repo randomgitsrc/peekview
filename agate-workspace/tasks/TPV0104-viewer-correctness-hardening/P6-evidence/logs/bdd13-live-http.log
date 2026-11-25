@@ -1,0 +1,22 @@
+=== BDD-13 后端文件列表确定性契约（现场 HTTP，debug :8888）===
+契约：key = path 非空取 path、否则取 filename；按 key 字典升序、同键按 id 升序
+
+--- 用例 A：构造序 [zzz.txt, aaa.txt, mmm.txt] ≠ 字典序 ---
+POST 构造序            = ['zzz.txt', 'aaa.txt', 'mmm.txt']
+GET #1 key 顺序        = ['aaa.txt', 'mmm.txt', 'zzz.txt']
+GET #2 key 顺序        = ['aaa.txt', 'mmm.txt', 'zzz.txt']
+① 两次逐元素相同        = True
+② 等于字典升序          = True
+③ 构造序 != GET 序      = True
+
+--- 用例 B：同键（path 相同）按 id 升序 ---
+POST 构造序            = [('docs', 'z-last.md', 105), ('docs', 'a-first.md', 106), ('root.md', 'root.md', 107)]
+GET key/id 顺序        = [('docs', 105), ('docs', 106), ('root.md', 107)]
+按 key 字典升序         = True
+同键 docs 的 id 序列     = [105, 106]  升序 = True
+排序键函数复算一致       = True
+
+--- 清理 ---
+DELETE 15debr -> 200；复核 GET -> 404（期望 404）
+DELETE onocvf -> 200；复核 GET -> 404（期望 404）
+EXIT_CODE: 0

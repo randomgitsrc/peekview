@@ -1,8 +1,8 @@
-phase: P5
+phase: P6
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
-updated: '2026-11-25T11:30:00Z'
+updated: '2026-11-25T16:30:00Z'
 judge:
   enabled: true
 history:
@@ -67,4 +67,16 @@ history:
     t091 +2 疑 P1 基线漏计（spec 实为 13×2=26 项而基线记 24），P5 判据改用「失败集 ⊆ 基线 且 根因同源」双条件。
     两个环境缺口已记录：agate-run.py 因 .gitignore 的 *.log 命中 runs/*.log 而恒 return 1（假红）；
     debug seed 首轮可能未建全 team entry（需重跑，实测 22→25）。
+    [PROD_NOT_TOUCHED] :8080 全程 000、~/.peekview/ mtime 仍 2026-11-12。
+- phase: P6
+  action: completed
+  ts: 2026-11-25 16:30:00+00:00
+  note: |
+    P6 验收通过：54/54 BDD PASS、0 FAIL。四个 gate 全绿（check-p6-format exit 0 / check-p6-evidence exit 0 / check-gate P6 exit 2=通过码 D1-D10 / check-p6-provenance 无 P6 级错误，exit 2 全是历史 progress 缺 agent 字段的协作告警）。
+    证据真实性我已独立核：27 张截图 md5 全唯一（最小 11936B）、13 个日志、22 个 vision YAML 的 blocker_count 全 0 且无 -1（真解析模型自报数，非写死）、frontmatter pass 54/fail 0/results 每条带 evidence+vision。抽查 BDD-38 的 live HTTP 日志含完整报表数据（maxInjectIds 40 / requested 41 / skipped 41）。
+    verifier 声明 p5_evidence_reuse: false，独立实跑全部 54 条（vitest 50/50、pytest 62 passed、E2E 主 spec exit 0、后端全量 1221P/1F 预存、前端 1514P/0F、自建 Playwright 37/37）。
+    预存失败豁免按 RM-AG0106 逐条相等复现，本次引入失败 = 0；3 条见 known-failures.md。
+    verifier 两处主动推翻自己的产出（vision 脚本曾写死 blocker_count=0 且 prompt 自造要求 → 废弃重做并改 fail-closed；残留检查曾用非法 per_page=200 静默失败 → 改分页重做），质量高于一般自述。
+    我修了一个会复发的缺陷：spec 的 EVIDENCE_DIR 是相对 cwd 路径，make debug-test 的 cwd 是 frontend-v3/ → 证据误落到 frontend-v3/agate-workspace/（P5/P6 各踩一次），已改为基于 import.meta.url 的绝对路径并实测无误落。
+    E2E 的 1 failed 经我串行单跑确认为 flaky（BDD-27 并发下 waitForSelector 超时，单跑 4 passed），非功能缺陷。
     [PROD_NOT_TOUCHED] :8080 全程 000、~/.peekview/ mtime 仍 2026-11-12。

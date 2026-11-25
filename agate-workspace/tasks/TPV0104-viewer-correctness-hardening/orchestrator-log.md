@@ -349,3 +349,15 @@
   - **结果**：串行 `78 passed / 0 failed`（exit 0）；**官方 `make debug-test`（多 worker）实测 `✓ 所有 E2E 测试通过`、exit 0、70 passed**。
 - EVIDENCE（**t091 14F vs 基线 12F 的归因**）：spec 实为 **13 test × 2 project = 26 项**，而 P1 记的 `12F/12P = 24 项` **比可执行项少 2** → **疑 P1 基线漏计 2 个**。14 个失败**全部**指向 `markdown-test` 匿名 404（TPV0095 遗留，与 viewer 18F 同源）；P4 对该 spec 仅 4 处 `firstFileId→file`，`git diff 4ec6b1b6~1 4ec6b1b6 -- frontend-v3/e2e/` 为空 → **非本任务引入**。→ 判为**既有失败 + 基线计数瑕疵**，登记 known-failures，不阻断。
 - NEXT: 登记 known-failures、让 verifier 产出最终 P5-test-results、跑 check-gate P5、提交 P5。
+- GATE PASS（**P6 验收通过：54/54 BDD PASS，0 FAIL。主 Agent 亲验全部 gate**）：
+  - `check-p6-format.py --fix` **exit 0**
+  - `check-p6-evidence.py <TASK_DIR>` **exit 0**（`54 条 BDD，证据目录非空`）
+  - `check-gate.py P6 <TASK_DIR>` **exit 2（通过码）**（`结构化 results 判据 D1–D10 通过`）
+  - `check-p6-provenance.py` **exit 2，但全部是历史 progress 文件的 `缺 agent 字段`（协作规范，不阻塞）**，无 P6 级错误
+  - **我独立核的证据真实性**：`P6-evidence/screenshots/` **27 张 PNG，md5 全部唯一**（最小 11936B，非空壳）；`P6-evidence/logs/` 13 个；`vision-reports/` **22 个 YAML，`blocker_count` 全为 0 且无 -1**（说明真解析到模型自报数，非写死）；`P6-acceptance.md` frontmatter `pass: 54 / fail: 0 / ui_affected: true`，`results` 每条带 evidence 数组 + vision 引用。
+  - **抽查 BDD-38 的 live HTTP 证据**：日志含完整请求/响应与报表数据（`maxInjectIds: 40`、`requested=41 / inlined=0 / skipped=41`、`limits` 三值），是真实跑出来的。
+- EVIDENCE（**verifier 两处主动推翻自己的产出，值得记**）：① 第一版 vision 脚本把 `blocker_count` 写死 0 且 prompt 问的是自造要求 → **整个废弃重做**，改为只问渲染缺陷 A–E、`blocker_count` 取模型自报数、解析不到则 **-1（fail-closed）**；② 第一轮残留检查用了非法 `per_page=200` 静默拿到错误响应 → 改分页拉全量重做。**这两条都是"看起来通过了但其实没验到"的典型，它自己发现并纠正，质量高于一般自述。**
+- CORRECTION（**我修了一个会复发的证据落点缺陷**）：verifier 指出 `frontend-v3/e2e/tpv0104-viewer-hardening.spec.ts:20` 的 `EVIDENCE_DIR` 是**相对 cwd** 路径，而 `make debug-test` 的 cwd 是 `frontend-v3/` → 证据被写到 `frontend-v3/agate-workspace/...`（**P5 与 P6 各踩一次**）。**根因在 spec 不在执行方式。** 我已改为基于 `fileURLToPath(new URL('.', import.meta.url))` 的绝对路径（`../../agate-workspace/tasks/TPV0104-.../evidences`），并实测验证：路径解析正确、E2E 重跑**无误落**。
+- EVIDENCE（**E2E 的 flaky 定性与我的独立确认**）：修路径后重跑 `1 failed / 71 passed / 6 flaky`。唯一 failed 是 **BDD-27**、失败上下文是 BDD-30 的 `waitForSelector` 20s 超时 → **并发资源竞争**。我**串行单跑 `bdd_27|bdd_30` → 4 passed**，确认是 flaky 而非功能缺陷。P6 验收的取证用的是串行方式，结论正确。
+- DECISION（**接受 verifier 的 `p5_evidence_reuse: false`**）：它声明未复用 P5 结论、独立实跑全部 54 条（vitest 50/50、pytest 62 passed、E2E 主 spec exit 0、后端全量 1221P/1F、前端 1514P/0F、自建 Playwright 37/37）。这比复用 P5 证据更强，符合 P6「功能验证和格式都必须满足」的要求。
+- NEXT: 提交 P6（`.state.yaml` 写 phase: P6）→ 派 P6.5 judge（fresh context 独立复核）→ 过 gate → 写 phase: P7。
