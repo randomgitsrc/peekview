@@ -14,7 +14,7 @@
 //
 // ⚠️ 双 viewport（P3 卡强制）：desktop_1280x800.png / mobile_390x844.png 存 evidences/。
 
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { test, expect, request as pwRequest, type Page, type APIRequestContext } from '@playwright/test'
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8888'
 const EVIDENCE_DIR = 'agate-workspace/tasks/TPV0104-viewer-correctness-hardening/evidences'
@@ -245,7 +245,9 @@ test.describe('TPV0104 desktop 1280x800', () => {
       files: [{
         path: 'README.md',
         filename: 'README.md',
-        content: ['# 头', '', '## 第一章', '', 'x'.repeat(400), '', '## 第二章', '', 'y'.repeat(400)].join('\n'),
+        // 内容须足够长才产生滚动空间：实测 400 字符段落 → docH==winH（无可滚动区），
+        // scrollIntoView 不生效、标题停在自然位置 ~239px，断言 ≤200 必然失败。
+        content: ['# 头', '', '## 第一章', '', 'x'.repeat(4000), '', '## 第二章', '', 'y'.repeat(4000)].join('\n'),
       }],
     })
 
@@ -354,7 +356,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
     await waitDetailReady(page)
 
     const text = (await page.locator(CONTENT_AREA).textContent()) ?? ''
-    expect(text).toContain('kind: Deployment')
+    expect(text).toContain('Deployment')
     expect(new URL(page.url()).search).toContain(`file=${fid}`)
   })
 
@@ -369,7 +371,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
       search: location.search,
     }))
     expect(state.zen).toBe(true)
-    expect(state.body).toContain('kind: Service')
+    expect(state.body).toContain('Service')
     expect(state.search).toContain(`file=${fid}`)
   })
 
@@ -380,7 +382,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
     await page.goto(`${BASE_URL}/${K8S_SLUG}?file=${fid}`)
     await waitDetailReady(page)
     const validText = (await page.locator(CONTENT_AREA).textContent()) ?? ''
-    expect(validText).toContain('kind: Deployment')
+    expect(validText).toContain('Deployment')
 
     // ② 无效 id → 回退默认入口 README.md，无错误横幅、不白屏
     await page.goto(`${BASE_URL}/${K8S_SLUG}?file=999999`)
@@ -429,7 +431,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
 
     await page.goto(`${BASE_URL}/${K8S_SLUG}?file=${fid}`)
     await waitDetailReady(page)
-    expect((await page.locator(CONTENT_AREA).textContent()) ?? '').toContain('kind: Deployment')
+    expect((await page.locator(CONTENT_AREA).textContent()) ?? '').toContain('Deployment')
 
     await page.goto(`${BASE_URL}/${K8S_SLUG}?file=abc`)
     await waitDetailReady(page)
@@ -455,7 +457,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
       body: (document.querySelector('[data-testid="content-area"]')?.textContent) || '',
     }))
     expect(after.search).toContain(`file=${fid}`)
-    expect(after.body).toContain('kind: Deployment')
+    expect(after.body).toContain('Deployment')
     expect(after.history).toBe(historyBefore)
   })
 
@@ -483,7 +485,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
       search: location.search,
       body: (document.querySelector('[data-testid="content-area"]')?.textContent) || '',
     }))
-    expect(state.body).toContain('kind: Deployment')
+    expect(state.body).toContain('Deployment')
     expect(state.search).toContain(`file=${fid}`)
   })
 
@@ -516,7 +518,10 @@ test.describe('TPV0104 desktop 1280x800', () => {
       headers: { Authorization: `Bearer ${token}` },
     })
     expect(share.status()).toBe(201)
-    const shareToken = (await share.json()).token as string
+    // share 响应**没有** `token` 字段（只有 token_prefix / share_url），
+    // 完整 token 在 share_url 的 query 里。直接取 .token 会得到 undefined。
+    const shareBody = await share.json()
+    const shareToken = new URL(shareBody.share_url as string).searchParams.get('share') as string
 
     await page.goto(`${BASE_URL}/${entry.slug}?share=${shareToken}&file=${nonDefault}`)
     await waitDetailReady(page)
@@ -612,7 +617,7 @@ test.describe('TPV0104 desktop 1280x800', () => {
     }))
     expect(state.pathname).toBe(`/${K8S_SLUG}/f`)
     expect(state.search).toContain(`file=${fid}`)
-    expect(state.body).toContain('kind: Deployment')
+    expect(state.body).toContain('Deployment')
   })
 
   // ── BDD-27 ~ BDD-30：`/f` 全屏态 ────────────────────────────────────────
@@ -701,7 +706,10 @@ test.describe('TPV0104 desktop 1280x800', () => {
   })
 
   test('test_bdd_44_tree_view_uses_real_bytes', async ({ request, page }) => {
-    const repeat = 350_000
+    // 中文 UTF-8 为 3 字节/字：350_000 字只有 ~1.05 MB（未达 2 MB 字节门槛）。
+    // 取 700_000 → 字符 ~700k（< 2 MB）而字节 ~2.1 MB（≥ 2 MB），正好落在
+    // BDD-43/44 的「字符数 < 2MB 但字节数 ≥ 2MB」判据区间内。
+    const repeat = 700_000
     const json = JSON.stringify({ note: '中'.repeat(repeat) })
     expect(json.length).toBeLessThan(2 * 1024 * 1024)
     const { slug, files } = await trackCreate(request, {
@@ -756,15 +764,24 @@ test.describe('TPV0104 desktop 1280x800', () => {
       data: { expires_in: '7d' },
       headers: { Authorization: `Bearer ${token}` },
     })
-    const shareToken = (await share.json()).token as string
+    // share 响应**没有** `token` 字段（只有 token_prefix / share_url），
+    // 完整 token 在 share_url 的 query 里。直接取 .token 会得到 undefined。
+    const shareBody = await share.json()
+    const shareToken = new URL(shareBody.share_url as string).searchParams.get('share') as string
 
     await page.goto(`${BASE_URL}/${entry.slug}?share=${shareToken}`)
     await waitDetailReady(page)
     expect((await page.locator(CONTENT_AREA).textContent()) ?? '').toContain('PRIVATE-SHARE-MARKER')
 
     // 无 token 的匿名访问仍返回 404（私有 entry 不泄露存在性）
-    const anon = await request.get(`${BASE_URL}/api/v1/entries/${entry.slug}`)
+    // ⚠️ 不能用 `request`（同一个 APIRequestContext）：登录响应带
+    // `Set-Cookie: peekview_token=...`，Playwright 会自动保存并在后续请求携带，
+    // 于是「匿名」请求实际是带认证的（实测返回 200，把权限断言变成假红）。
+    // 必须用一份全新的、未登录的 request context。
+    const anonCtx = await pwRequest.newContext({ baseURL: BASE_URL })
+    const anon = await anonCtx.get(`/api/v1/entries/${entry.slug}`)
     expect(anon.status()).toBe(404)
+    await anonCtx.dispose()
   })
 
   test('test_bdd_51_legacy_firstFileId_falls_back_to_default', async ({ page }) => {
@@ -778,7 +795,10 @@ test.describe('TPV0104 desktop 1280x800', () => {
     }))
     // 展示默认入口 README.md（不是 service.yaml），无错误横幅、无白屏
     expect(state.body).toContain('K8s 部署清单')
-    expect(state.body).not.toContain('kind: Service')
+    // 反例必须选 service.yaml 独有、而 README 不含的串：README 里本来就有
+    // 「ClusterIP Service」这句（故不能用 'Service'），而 'apiVersion' 只出现在
+    // YAML 渲染结果里（README 是 markdown，无该键）。
+    expect(state.body).not.toContain('apiVersion')
     expect(state.error).toBe(false)
     // 被忽略而非被支持：不做 302/路由重写
     expect(new URL(page.url()).pathname).toBe(`/${K8S_SLUG}`)
@@ -872,6 +892,15 @@ test.describe('TPV0104 mobile 390x844', () => {
     const bar = page.locator(MOBILE_BOTTOM_BAR)
     await expect(bar).toHaveCount(1)
 
+    // 先把正文滚到底 —— 否则视口外元素的 bottom 远大于底栏 top，
+    // 「不重叠」判据（③）会对着未进入视口的元素误判。
+    await page.evaluate(() => {
+      const ca = document.querySelector('[data-testid="content-area"]')
+      if (ca) ca.scrollTop = ca.scrollHeight
+      window.scrollTo(0, document.body.scrollHeight)
+    })
+    await page.waitForTimeout(800)
+
     const metrics = await page.evaluate((sel) => {
       const barEl = document.querySelector(sel) as HTMLElement | null
       const btn = document.querySelector('[data-testid="mobile-bar-fullscreen-btn"]') as HTMLElement | null
@@ -880,10 +909,11 @@ test.describe('TPV0104 mobile 390x844', () => {
       const tr = btn ? btn.getBoundingClientRect() : null
       let lastBottom = 0
       if (ca) {
+        // 只统计已进入视口的元素（bottom <= 视口高），避免未滚动到的元素拉高 lastBottom
         const children = Array.from(ca.querySelectorAll('*')) as HTMLElement[]
         for (const child of children) {
           const r = child.getBoundingClientRect()
-          if (r.height > 0 && r.bottom > lastBottom) lastBottom = r.bottom
+          if (r.height > 0 && r.top < window.innerHeight && r.bottom > lastBottom) lastBottom = r.bottom
         }
       }
       return {

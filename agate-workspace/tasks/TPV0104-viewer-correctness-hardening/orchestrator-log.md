@@ -314,3 +314,38 @@
   4. **接受「势不变式 vs skipped 逐项上限 不可兼得」为契约级取舍**，P7 登记。
 - CORRECTION（**重要环境事实，影响 P5/P6**）：`:8888` **跑的是 P4 之前的代码且无 `--reload`**——我实测 `render` 响应**完全无报表块**（grep `peekview-inject-report` = 0），`files.py` 的 mtime（08:30）远晚于服务启动时间（06:20）。→ **P5/P6 在做任何依赖报表块的验证前必须先重启 debug 服务**，否则验的是旧代码（修复者正是识别到这点才改用进程内 app 自测，判断正确）。
 - NEXT: 修复已完，回派 `review` 复审（3 CRITICAL + 2 MAJOR 是否闭环）。
+- CORRECTION（**重要环境事实 + 我的一次诊断弯路，必须记入 P5/P6 的 dispatch-context**）：
+  - **`:8888` 无法重启到新代码**：我在 P4 提交后 `make debug-stop` + `make debug-start`，但服务响应始终是**旧代码**。根因诊断过程：① 用 `cache-control` 判断（源码 `no-store, no-cache, must-revalidate` vs 响应 `no-store`）→ 误以为服务旧；② 查 pyc 时间一致、源码常量正确（`_MAX_INJECT_IDS=40`）→ 排除缓存；③ 最终用**报表块是否存在 + `maxInjectIds: 40`** 判断才可靠。
+  - **真正根因有两条**：**(a)** `scripts/dev-server.sh:118-135` 启动后**只探 `/health` 是否可达**——若旧进程仍占着 8888，新进程绑定失败但 `/health` 立刻返回 200 → **脚本误报"✓ 服务已启动"**，而实际仍是旧进程在服务。**(b)** 旧进程由**宿主侧持有**，我这边 `make debug-stop` 报告"✓ 服务已停止"、`pkill` 也杀不到（进程在沙箱外），→ **`:8888` 上的旧代码不可替换**。
+    - **`cache-control` 不能作为判据**：`main.py:265-269` 的中间件对所有 `/api` 路由统一覆写 `Cache-Control: no-store`，覆盖了 `files.py:427` 的值 → 新旧代码响应头相同。**这是既有行为，非 P4 缺陷。**
+  - **绕过方案（已验证可行，P5/P6 用这个）**：`make debug-extra PORT=8890` + `make debug-seed PORT=8890`，**挂在后台 job 托底**（`( make debug-extra PORT=8890 && make debug-seed PORT=8890; sleep 28800 )`）。我实测 8890 跑**新代码**：报表块存在、`maxInjectIds: 40`、`maxFileBytes: 2097152`、`maxTotalBytes: 8388608`、`notes.md` 正确归 `not_injectable` 且 **`file_id` 齐全**。
+  - **教训**：本环境"服务存活"是三层易失（端口被旧进程占 / 新进程静默失败 / 脚本误报成功）。判断"跑没跑新代码"要用**行为特征**（报表块、常量值），不能用响应头（会被中间件覆写）。
+- NEXT: P5 用 **8890**（新代码）做技术验证；`:8888` 只能用于不依赖新行为的场景或明确标注"旧代码"。
+- EVIDENCE（**P5 第 1 条已完成 + 一个协议/工具链缺口**）：
+  - `P5`（`make test-quick`）：exit 1，**1 failed / 1221 passed / 3 skipped**（34.41s）。唯一失败 `test_cli_remote::TestCLIRemoteConfig::test_config_set_remote_api_key`（`OSError: [Errno 30] Read-only file system: '/home/kity/.peekview/config.yaml'`）= **预存失败**。passed 1221 与 P4 后基线**逐项吻合** → 零回归。
+  - **工具链缺口（verifier 发现，我裁决不在本任务修）**：`agate-run.py --task`（P5 卡推荐的执行入口）把输出写 `<TASK_DIR>/runs/<k>.log`，而仓库 `.gitignore:87` 的 `*.log` 命中它（`:94` 只给 `P6-evidence/logs/*` 开例外、**没给 `runs/**`**）→ `agate-run.py` 打印「任务内日志被 .gitignore 覆盖（证据须入库）」并 **return 1** ⇒ **无论命令真结果如何都返回 1（假红）**。
+    - **裁决：不加取反规则**。理由：① P5 卡明确「直接 bash 执行也能跑」；② 改 `.gitignore` 属工具链改进，会让 P5 commit 混入非产出改动（违反 P5 卡 R9「P5 commit 不得混入非产出文件改动」）；③ 应单独立项。
+    - **处置（verifier 已执行）**：改用 `timeout` + 直接 bash，完整输出落 `P5-test-results/` + 逐条 exit code 记录。`runs/1.log` 由 agate-run 落盘但不 commit。
+    - **建议报上游**：`runs/**` 应与 `P6-evidence/logs/*` 同等豁免（两者都是「证据须入库」的 agate 产出）。
+- NEXT: verifier 继续跑剩余 10 条（2 个新 e2e spec + 3 个 legacy e2e + frontend/typecheck/lint/docs）。
+- EVIDENCE（**P5 前 10 条结果 + 两类失败归因，均已我亲自诊断**）：
+  - **通过**：`P5`（1221P/1F 预存/3S）、`P5_frontend`（127 files/1514P/4S/0F）、`P5_typecheck` exit 0、`P5_lint` exit 0、`P5_docs` exit 0、**`P5_e2e_mobile_widths` 18 passed / 0 failed**（本任务新 spec，三档全绿）。
+  - **`P5_e2e`（本任务主 spec）：47 passed / 24 failed / 7 flaky** → **根因是 P3 测试断言写错，不是 P4 实现 bug**。我实测确认：YAML 文件走 **TreeView 树渲染**（`EntryDetailContent.vue:59-62`），`textContent` 是 `apiVersionv1stringkindServicestringmetadata...`（**键值间无冒号空格**）→ `toContain('kind: Service')` **永远失败**。受影响 8 处断言（spec `:357/372/383/432/458/486/615/781`）。**可用修法我已验证**：改为 `toContain('Service')` / `toContain('Deployment')`（只留值），两文件互为反例（service 文件 hasDeployment=false）。**TreeView 是 T075 既有实现、非本任务改动** → 这 8 条在 P3 设计时就该红。
+  - **`P5_e2e_legacy_viewer`：18 failed / 20 passed = 与基线完全一致** ✓（根因 TPV0095 遗留的 `markdown-test` 匿名 404）。
+  - **`P5_e2e_legacy_t091`：14 failed / 12 passed（基线记 12F/12P）** → 多 2 条，待精确定性。
+  - **`P5_e2e_legacy_tpv0099`：4 failed / 2 passed（基线 6P/0F）** → 我诊断出**根因是 seed 数据缺失，不是代码回归**：`markdown-test`/`mermaid-charts`/`csv-employees` 三个 team entry **未在 DB 中**（alice 22 条里没有），而基线是在它们存在时测的。**重跑 `make debug-seed` 后 `Total entries: 25`，三者均 200、`markdown-test/raw` 200 → 重跑 `tpv0099` 全绿（"✓ 所有 E2E 测试通过"）**。
+  - `image-gallery` 仍 404 = **真实 0 文件**（seed `:184` `SKIP no content files`），与既有记录一致。
+- DECISION（**P5 判定**）：① `tpv0099` 的 4 failed = **环境问题（seed 数据缺失）**，已修复并验证全绿，**不计为本任务失败**；② `P5_e2e` 的 24 failed = **P3 测试断言缺陷**（YAML 树渲染形态），需修测试 → 属 P3 产出缺陷，按 P5 卡「真 bug → 回 P4」的同类处理（修正测试后重跑）；③ `t091` 的 14F 需与基线 12F 精确对比。
+- NEXT: 修正 `P5_e2e` 的 8 处 YAML 断言 → 重跑；同时让 verifier 补齐 `t091` 的 2 条增量归因 + 产出 `P5-test-results/`。
+- EVIDENCE（**P5 收口：我亲自修完 5 类测试缺陷，主 spec 从 24F → 0F**）：
+  verifier 的 11 条全跑完，7 条 PASS、2 条 FAIL 均为**测试产物缺陷**（不是实现 bug）。我逐条独立诊断并修复：
+  1. **yaml 断言形态**（8 处）：YAML 走 TreeView 树渲染，`textContent` 无 `": "` 分隔 → `toContain('kind: Deployment')` 恒假。改为只留值（`Deployment`/`Service`）。**24F → 16F**。
+  2. **BDD-06 素材撑不出滚动**：我实测 `docH == winH == 800`（400 字符段落太短），`scrollIntoView` 无效、标题停自然位置 239.59px → 断言 ≤200 恒假。改为 4000 字符。
+  3. **BDD-44 字节数算错**：`'中'.repeat(350000)` UTF-8 = **1,050,011 B < 2 MiB**，断言 `>= 2MiB` 恒假。中文 3 B/字，改 `repeat = 700_000`（字符 700k < 2MB 而字节 2.1MB ≥ 2MB，正好落在 BDD-43/44 判据区间）。
+  4. **BDD-22/49 的 `share.token` 字段不存在**：API 实返 `token_prefix` / `share_url`（完整 token 在 url query），`.token` 恒 `undefined` → `share=undefined`。改为从 `share_url` 解析。（**verifier 独立诊断出同一结论**）
+  5. **BDD-49「匿名 404」是假假设**：登录接口返回 `Set-Cookie: peekview_token=...`，Playwright 的 `APIRequestContext` **自动保存并携带** → 「匿名」请求实际带认证，返回 200。**后端权限本身是对的**（我用 curl 无认证访问私有 entry 实测 **404**）。改用 `pwRequest.newContext()` 独立未登录 context。
+  6. **BDD-51 反例选错**：我把 `not.toContain('kind: Service')` 改成 `not.toContain('Service')` 后，撞上 README 里本就有的「ClusterIP Service」。改为 `apiVersion`（README 是 markdown 无该键，YAML 渲染才有）。
+  7. **BDD-24 未滚到底**：`lastBottom` 统计了视口外元素 → 恒大于底栏 top。加「先滚到底」+ 只统计已进入视口（`r.top < innerHeight`）的元素。
+  - **结果**：串行 `78 passed / 0 failed`（exit 0）；**官方 `make debug-test`（多 worker）实测 `✓ 所有 E2E 测试通过`、exit 0、70 passed**。
+- EVIDENCE（**t091 14F vs 基线 12F 的归因**）：spec 实为 **13 test × 2 project = 26 项**，而 P1 记的 `12F/12P = 24 项` **比可执行项少 2** → **疑 P1 基线漏计 2 个**。14 个失败**全部**指向 `markdown-test` 匿名 404（TPV0095 遗留，与 viewer 18F 同源）；P4 对该 spec 仅 4 处 `firstFileId→file`，`git diff 4ec6b1b6~1 4ec6b1b6 -- frontend-v3/e2e/` 为空 → **非本任务引入**。→ 判为**既有失败 + 基线计数瑕疵**，登记 known-failures，不阻断。
+- NEXT: 登记 known-failures、让 verifier 产出最终 P5-test-results、跑 check-gate P5、提交 P5。

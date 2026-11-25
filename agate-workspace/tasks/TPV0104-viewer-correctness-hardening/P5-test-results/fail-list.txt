@@ -1,0 +1,45 @@
+FAILED tests/test_cli_remote.py::TestCLIRemoteConfig::test_config_set_remote_api_key
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room
+FAILED [Mobile Chrome] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:242:3 › TPV0104 desktop 1280x800 › test_bdd_06_click_toc_item_scrolls_target_into_viewport
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:490:3 › TPV0104 desktop 1280x800 › test_bdd_22_file_and_share_coexist_and_survive_cleanup
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:703:3 › TPV0104 desktop 1280x800 › test_bdd_44_tree_view_uses_real_bytes
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:738:3 › TPV0104 desktop 1280x800 › test_bdd_49_share_link_permissions_unchanged
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:770:3 › TPV0104 desktop 1280x800 › test_bdd_51_legacy_firstFileId_falls_back_to_default
+FAILED [Mobile Chrome] › e2e/tpv0104-viewer-hardening.spec.ts:868:3 › TPV0104 mobile 390x844 › test_bdd_24_mobile_entry_in_bottom_bar_without_obscuring_content
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ───
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ────
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ────
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ─────
+FAILED [Mobile Chrome] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ──────────
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:118:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_4_bottom_bar_padding_top_bottom_symmetric
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:215:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_9_ten_viewers_visual_consistency
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:320:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_12_desktop_markdown_padding_unchanged
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:333:5 › T091 Mobile Detail Visual Polish › Desktop viewport (1280x800) › test_bdd_13_desktop_no_mobile_components
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:58:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_1_meta_tags_bar_wraps_no_horizontal_scroll
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:77:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_2_meta_tags_bar_breathing_room
+FAILED [chromium] › e2e/t091-mobile-detail-visual-polish.spec.ts:94:5 › T091 Mobile Detail Visual Polish › Mobile viewport (390x844) › test_bdd_3_markdown_body_16px_padding_24px_total_inset
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:242:3 › TPV0104 desktop 1280x800 › test_bdd_06_click_toc_item_scrolls_target_into_viewport
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:490:3 › TPV0104 desktop 1280x800 › test_bdd_22_file_and_share_coexist_and_survive_cleanup
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:703:3 › TPV0104 desktop 1280x800 › test_bdd_44_tree_view_uses_real_bytes
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:738:3 › TPV0104 desktop 1280x800 › test_bdd_49_share_link_permissions_unchanged
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:770:3 › TPV0104 desktop 1280x800 › test_bdd_51_legacy_firstFileId_falls_back_to_default
+FAILED [chromium] › e2e/tpv0104-viewer-hardening.spec.ts:868:3 › TPV0104 mobile 390x844 › test_bdd_24_mobile_entry_in_bottom_bar_without_obscuring_content
+FAILED [chromium] › e2e/viewer.spec.ts:115:3 › Markdown Viewer › TC-010: Markdown basic rendering ─────
+FAILED [chromium] › e2e/viewer.spec.ts:129:3 › Markdown Viewer › TC-011: TOC sidebar displayed ────────
+FAILED [chromium] › e2e/viewer.spec.ts:140:3 › Markdown Viewer › TC-012: TOC navigation works ─────────
+FAILED [chromium] › e2e/viewer.spec.ts:155:3 › Markdown Viewer › TC-013: Mermaid diagram rendering ────
+FAILED [chromium] › e2e/viewer.spec.ts:169:3 › Responsive Layout › TC-020: Desktop 3-column layout ────
+FAILED [chromium] › e2e/viewer.spec.ts:182:3 › Responsive Layout › TC-021: Mobile single column layout
+FAILED [chromium] › e2e/viewer.spec.ts:196:3 › Responsive Layout › TC-022: Mobile file drawer ─────────
+FAILED [chromium] › e2e/viewer.spec.ts:211:3 › Responsive Layout › TC-023: Mobile TOC drawer ──────────
+FAILED [chromium] › e2e/viewer.spec.ts:279:3 › File Operations › TC-040: File selection ───────────────
