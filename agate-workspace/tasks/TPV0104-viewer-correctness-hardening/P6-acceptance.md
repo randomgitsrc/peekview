@@ -52,7 +52,7 @@ results:
   - {bdd: '35', verdict: PASS, evidence: ['logs/vitest-tpv0104.log']}
   - {bdd: '36', verdict: PASS, evidence: ['logs/vitest-tpv0104.log']}
   - {bdd: '37', verdict: PASS, evidence: ['logs/vitest-tpv0104.log']}
-  - {bdd: '38', verdict: PASS, evidence: ['logs/pytest-tpv0104.log', 'logs/bdd38-41-live-http.log', 'logs/bdd38-code-relation.log']}
+  - {bdd: '38', verdict: PASS, evidence: ['logs/pytest-tpv0104.log', 'logs/bdd38-41-live-http-fix2.log', 'logs/bdd38-code-relation.log']}
   - {bdd: '39', verdict: PASS, evidence: ['logs/pytest-tpv0104.log', 'logs/bdd39-40-live-http.log']}
   - {bdd: '40', verdict: PASS, evidence: ['logs/pytest-tpv0104.log', 'logs/bdd39-40-live-http.log']}
   - {bdd: '41', verdict: PASS, evidence: ['logs/pytest-tpv0104.log', 'logs/bdd38-41-live-http.log', 'logs/full-suites.log']}
@@ -180,7 +180,7 @@ results:
 
 ### 3.7 V-06/V-07 注入预算与显式反馈
 
-- PASS BDD-38: 超过数量上限的文件进入「被跳过清单」而非静默丢弃（含代码级关系断言） (logs/pytest-tpv0104.log, logs/bdd38-41-live-http.log, logs/bdd38-code-relation.log)
+- PASS BDD-38: 超过数量上限的文件进入「被跳过清单」而非静默丢弃（含代码级关系断言；**Then③「每项可对应到具体文件名」经 P6.5 judge 退回后于 P4 重试 #2 修复并重验**） (logs/pytest-tpv0104.log, logs/bdd38-41-live-http-fix2.log, logs/bdd38-code-relation.log)
 - PASS BDD-39: 新增单文件文本注入上限，超限文本 sibling 被跳过并记录（正反双向） (logs/pytest-tpv0104.log, logs/bdd39-40-live-http.log)
 - PASS BDD-40: sibling 累计大小超总预算时必须有可机器解析的反馈（合取断言） (logs/pytest-tpv0104.log, logs/bdd39-40-live-http.log)
 - PASS BDD-41: 回归兼容：未超任何预算时注入行为与现状等价（test_html_render.py 注入类用例全绿） (logs/pytest-tpv0104.log, logs/bdd38-41-live-http.log, logs/full-suites.log)
@@ -271,6 +271,7 @@ BDD-38~41、46 除 pytest 外，另在运行时 debug backend 上以**真实默�
 
 | 项 | 现场实测 | 证据 |
 |---|---|---|
+| **BDD-38 Then③ 修复重验** | **`count_limit` 项现带真实文件名**：`{"file_id":82,"reason":"count_limit","filename":"s40.css","size":6}`（修复前 `null`）；41 真实 + 1 瞎编 id → 两类正确分离 | `logs/bdd38-41-live-http-fix2.log` |
 | 代码级关系（BDD-38 ④） | `_MAX_INJECT_IDS=40`、`max_entry_files` 默认 `50` → `40 < 49` 成立，空余 9 个名额（超限分支在真实配置下**可达**） | `logs/bdd38-code-relation.log` |
 | 数量上限（BDD-38） | 造 42 文件 entry（1 主 + 41 sibling）→ `render?inject=<41 个 id>`：`requested=41 / inlined=0 / skipped=41`，含 `count_limit` 与 `not_injectable`，`file_id` 无重复、reason ⊆ 六元闭集 | `logs/bdd38-41-live-http.log` |
 | 单文件文本上限（BDD-39） | `big.css` 真实 `size=2098180`（>2MiB）→ 不进响应体、文件名进 `skipped`（`reason=file_too_large`）；同 entry 未超限 `ok.js` **仍被内联**（正反双向） | `logs/bdd39-40-live-http.log` |

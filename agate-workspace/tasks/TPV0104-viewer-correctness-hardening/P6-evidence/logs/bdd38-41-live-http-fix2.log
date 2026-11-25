@@ -1,0 +1,26 @@
+=== BDD-38 现场 HTTP 实证（**P4 重试 #2 修复后**，全新实例 :8893，真实默认配置 _MAX_INJECT_IDS=40）===
+
+POST /api/v1/entries -> 201；slug=nmurvx；文件数=42（1 主 + 41 sibling）
+main id=41；sibling 数=41 > _MAX_INJECT_IDS(40) → 预期 1 个进 count_limit
+
+GET render（inject=41 个裸 id）-> HTTP 200
+报表块存在: True
+  limits       = {'maxInjectIds': 40, 'maxFileBytes': 2097152, 'maxTotalBytes': 8388608}
+  requested    = 41
+  inlined      = 40
+  skipped 条数 = 1
+
+--- BDD-38 判据逐项 ---
+① 存在可机器解析的跳过清单                     = True
+② 清单非空                                     = True
+   条目数 == N − 实际内联 sibling 数            = 1 == 41-40 -> True
+③ 每项可对应到具体文件名（count_limit 类）      = True
+   count_limit 首项 = {"file_id": 82, "reason": "count_limit", "filename": "s40.css", "path": null, "size": 6}
+   reason 值 ⊆ 六元闭集                        = True（实际 ['count_limit']）
+   file_id 无重复                              = True
+
+--- 语义区分（41 真实 id + 1 个不存在的 id）---
+  skipped = [{"file_id": 82, "reason": "count_limit", "filename": "s40.css", "path": null, "size": 6}, {"file_id": 999999, "reason": "not_found", "filename": null, "path": null, "size": null}]
+  count_limit 项均带文件名 = True
+  瞎编 id 归 not_found      = True
+  势不变式 requested-inlined==len(skipped) = True
