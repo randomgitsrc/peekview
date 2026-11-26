@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 import type { LocationQuery, Router } from 'vue-router'
 import { resolveDefaultFile, normalizeFileQuery } from '@/utils/default-file'
 import type { Entry, File, TocHeading } from '@/types'
+import { createLoadGuard } from '@/composables/useLoadGuard'
 
 type Query = LocationQuery
 
@@ -108,7 +109,15 @@ export function useRouteDrivenLoad(
   shareErrorState: Ref<boolean>,
   nextTickFn: () => Promise<void>,
 ) {
+  // Route 层独立序号：Store 序号只保护「Entry 数据 / activeFile / fileContent」，
+  // 不覆盖 URL / shareErrorState / suppressUrlSync。旧请求即使被 Store 丢弃，
+  // 仍会走 finally —— 若无此保护，它会用旧路由的中间态规范化**新路由**的 URL
+  // （把 B 的 ?file= 删掉），并提前解除 B 持有的 suppressUrlSync。
+  const routeGuard = createLoadGuard()
+
   async function loadFromRoute(targetSlug: string): Promise<void> {
+    const seq = routeGuard.next()
+    const isStale = () => !routeGuard.isCurrent(seq)
     const shareToken = route.query.share as string | undefined
     const fileId = parseFileId(route.query.file)
 
@@ -116,12 +125,21 @@ export function useRouteDrivenLoad(
     suppressUrlSync.value = true
     try {
       await store.loadEntry(targetSlug, fileId, shareToken)
+      // 过期请求不得修改 shareErrorState
+      if (isStale()) return
       shareErrorState.value = !!(shareToken && !currentEntry.value && store.error)
     } finally {
-      // 状态建立完成后才规范化 URL（此时 activeFile 已是路由指定的那个文件）
-      syncUrl()
-      await nextTickFn()
-      suppressUrlSync.value = false
+      // ⚠️ 保护要覆盖 finally 中的**每一处**状态修改，不能只在 await 之后判：
+      //    · 过期请求不得 syncUrl()（否则会把新路由的 file 参数规范化掉）
+      //    · 过期请求不得释放 suppressUrlSync（那会解除新请求持有的抑制）
+      // 注意：此处不用 `return`（会吞掉 try 中抛出的异常），改为 if 包裹。
+      if (!isStale()) {
+        // 状态建立完成后才规范化 URL（此时 activeFile 已是路由指定的那个文件）
+        syncUrl()
+        await nextTickFn()
+        // nextTick 之后可能又有更新的请求发起，需再判一次才释放抑制
+        if (!isStale()) suppressUrlSync.value = false
+      }
     }
   }
 

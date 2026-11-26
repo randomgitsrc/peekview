@@ -37,13 +37,36 @@ const ENTRIES: Record<string, EntryRec> = {
 
 const getEntryCalls: Array<{ slug: string; shareToken?: string }> = []
 const getContentCalls: Array<{ slug: string; fileId: number }> = []
-// slug → 人为延迟（ms），用于竞态测试
+// slug → 人为延迟（ms），用于粗略的竞态模拟
 const delays: Record<string, number> = {}
+
+/**
+ * Promise 门控（用于 B9/B10 等需要**精确控制返回顺序**的场景）：
+ * `gates[slug]` 存在时，该 slug 的 getEntry 会挂起，直到测试显式 release。
+ * 比固定 sleep 稳定——测试可以精确决定"A 先回、B 后回"。
+ */
+interface Gate { promise: Promise<void>; release: () => void }
+const gates: Record<string, Gate> = {}
+function makeGate(): Gate {
+  let release!: () => void
+  const promise = new Promise<void>(r => { release = r })
+  return { promise, release }
+}
+function openGate(slug: string): Gate {
+  const g = makeGate()
+  gates[slug] = g
+  return g
+}
+function clearGates() {
+  for (const k of Object.keys(gates)) delete gates[k]
+}
 
 vi.mock('@/api/client', () => ({
   api: {
     getEntry: vi.fn(async (slug: string, shareToken?: string) => {
       getEntryCalls.push({ slug, shareToken })
+      const gate = gates[slug]
+      if (gate) await gate.promise
       const d = delays[slug]
       if (d) await new Promise(r => setTimeout(r, d))
       const rec = ENTRIES[slug]
@@ -101,6 +124,7 @@ describe('补充修复 B：SPA 路由状态同步（真实 store + 真实路由�
     getEntryCalls.length = 0
     getContentCalls.length = 0
     for (const k of Object.keys(delays)) delete delays[k]
+    clearGates()
   })
 
   it('test_b1_slug_change_honours_new_route_file_and_share', async () => {
@@ -251,6 +275,107 @@ describe('补充修复 B：SPA 路由状态同步（真实 store + 真实路由�
     expect(store.activeFile?.id).toBe(13)
     expect(router.currentRoute.value.query.share).toBe('tok-abc')
     expect(router.currentRoute.value.query.file).toBe('13')
+
+    wrapper.unmount()
+  })
+})
+
+/**
+ * 补充修复 B（Route 层竞态）— 旧 Route 加载不得污染当前路由状态
+ *
+ * 背景：Store 层的请求序号只保护「Entry 数据 / activeFile / fileContent」。
+ * 旧请求即使被 Store 丢弃，其 `loadFromRoute()` 仍会走 `finally`：
+ * 无条件 `syncUrl()` + `suppressUrlSync.value = false`。
+ * → 旧请求可能在 B 的状态尚未建立时规范化 URL，把 B 的 `?file=` 删掉；
+ * 也可能提前解除 B 正在使用的 `suppressUrlSync`，导致中间态被写进 URL。
+ */
+describe('补充修复 B：Route 层竞态（旧请求不得污染当前路由）', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    getEntryCalls.length = 0
+    getContentCalls.length = 0
+    for (const k of Object.keys(delays)) delete delays[k]
+    clearGates()
+  })
+
+  it('test_b9_stale_route_load_must_not_rewrite_current_url', async () => {
+    const router = makeRouter()
+    // 先正常挂载到 A，确保组件就绪
+    const wrapper = await mountAt(router, '/entry-a')
+    const store = useEntryDetailStore()
+    expect(store.currentEntry?.slug).toBe('entry-a')
+
+    // 打开两道门：A 与 B 的请求都挂起，由测试决定返回顺序
+    const gateA = openGate('entry-a')
+    const gateB = openGate('entry-b')
+
+    // ① 发起 A 的路由加载（旧请求），它会挂起
+    await router.push('/entry-a?file=2')
+    await flushPromises()
+
+    // ② 立刻导航到 B（新请求），它也挂起
+    await router.push('/entry-b?file=12')
+    await flushPromises()
+
+    // ③ 让 **A（旧请求）先返回**，B 仍未完成
+    gateA.release()
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 30))
+    await flushPromises()
+
+    // 旧请求不得改写当前（B 的）URL：file=12 必须还在
+    expect(router.currentRoute.value.path).toBe('/entry-b')
+    expect(router.currentRoute.value.query.file).toBe('12')
+
+    // ④ 让 B 返回
+    gateB.release()
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 30))
+    await flushPromises()
+
+    // 最终状态必须是 B 的 file 12
+    expect(store.currentEntry?.slug).toBe('entry-b')
+    expect(store.activeFile?.id).toBe(12)
+    expect(router.currentRoute.value.query.file).toBe('12')
+
+    // 且旧请求不得引发「丢失 file 后又重新加载」的额外 entry 请求。
+    // 基线取「导航到 B 之前」的调用数——之后 B 应恰好只被加载一次；
+    // 若旧请求污染了 URL（删掉 file），会触发额外的 route 变化重载 → 次数 > 1。
+    const bCallsTotal = getEntryCalls.filter(c => c.slug === 'entry-b').length
+    expect(bCallsTotal).toBe(1)
+
+    wrapper.unmount()
+  })
+
+  it('test_b10_stale_route_load_must_not_release_suppress_url_sync', async () => {
+    const router = makeRouter()
+    const wrapper = await mountAt(router, '/entry-a')
+
+    const gateA = openGate('entry-a')
+    const gateB = openGate('entry-b')
+
+    await router.push('/entry-a?file=2')
+    await flushPromises()
+    await router.push('/entry-b?file=12')
+    await flushPromises()
+
+    // A 先返回：此时 B 仍在加载中，suppressUrlSync 应仍为 true（由 B 持有）
+    gateA.release()
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 20))
+    await flushPromises()
+
+    // 间接验证：若 A 提前释放了 suppressUrlSync，则此刻「Store→URL」会立即
+    // 把当前（可能仍是 A 的中间态 activeFile）写进 B 的 URL，导致 file 被改。
+    expect(router.currentRoute.value.query.file).toBe('12')
+
+    gateB.release()
+    await flushPromises()
+    await new Promise(r => setTimeout(r, 30))
+    await flushPromises()
+
+    expect(useEntryDetailStore().activeFile?.id).toBe(12)
+    expect(router.currentRoute.value.query.file).toBe('12')
 
     wrapper.unmount()
   })
