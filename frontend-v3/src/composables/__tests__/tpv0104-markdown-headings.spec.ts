@@ -87,3 +87,84 @@ describe('TPV0104 BDD-05 标题含内联强调与链接时文本已剥离标记'
     expect(id).not.toContain('[')
   })
 })
+
+/**
+ * 补充修复 A — 标题 ID 全局唯一性
+ *
+ * 独立缺陷（非 BDD-01 的重复同名场景）：原实现按**基础 slug 的出现次数**派生 ID，
+ * 无法避免与**自然**标题相撞。例：
+ *   `## foo / ## foo / ## foo-1` → `foo` / `foo-1` / `foo-1`（第二与第三碰撞）
+ * 修复为「逐个候选检查最终 ID 是否已用过」（全局 usedIds Set，每次 render 新建）。
+ */
+describe('补充修复 A：标题 ID 全局唯一', () => {
+  const idsOf = (hs: { id: string }[]) => hs.map(h => h.id)
+  const isUnique = (ids: string[]) => new Set(ids).size === ids.length
+
+  it('test_a1_duplicate_heading_collides_with_natural_suffix', async () => {
+    const md = '## foo\n\n## foo\n\n## foo-1\n'
+    const headings = await headingsOf(md)
+    expect(headings).toHaveLength(3)
+    const ids = idsOf(headings)
+    ids.forEach(id => expect(id.length).toBeGreaterThan(0))
+    // 三者全局唯一——第三个自然标题 `foo-1` 不得被第二个重复标题占用
+    expect(new Set(ids).size).toBe(3)
+    expect(ids).toEqual(['foo', 'foo-1', 'foo-1-1'])
+  })
+
+  it('test_a2_natural_suffix_appears_before_duplicates', async () => {
+    const md = '## foo-1\n\n## foo\n\n## foo\n'
+    const headings = await headingsOf(md)
+    const ids = idsOf(headings)
+    expect(isUnique(ids)).toBe(true)
+    expect(ids).toEqual(['foo-1', 'foo', 'foo-2'])
+  })
+
+  it('test_a3_multiple_suffix_collisions_are_stable', async () => {
+    const md = '## foo\n\n## foo\n\n## foo-1\n\n## foo-2\n\n## foo\n'
+    const headings = await headingsOf(md)
+    const ids = idsOf(headings)
+    expect(isUnique(ids)).toBe(true)
+    // 稳定性：同一输入重复渲染得到同一结果
+    const again = idsOf(await headingsOf(md))
+    expect(again).toEqual(ids)
+  })
+
+  it('test_a4_distinct_base_slugs_that_normalize_to_same', async () => {
+    // `A B` 与 `A-B` 经 slugify 都成为 `a-b`
+    const md = '## A B\n\n## A-B\n\n## A B\n'
+    const headings = await headingsOf(md)
+    const ids = idsOf(headings)
+    expect(isUnique(ids)).toBe(true)
+    expect(ids).toEqual(['a-b', 'a-b-1', 'a-b-2'])
+  })
+
+  it('test_a5_id_state_is_per_document_and_stable', async () => {
+    const { render } = useMarkdown()
+    const docA = await render('## foo\n\n## foo\n', THEME)
+    const idsA = docA.headings.map(h => h.id)
+    expect(idsA).toEqual(['foo', 'foo-1'])
+
+    // 另一篇文档不继承上一篇的分配状态
+    const docB = await render('## foo\n', THEME)
+    expect(docB.headings.map(h => h.id)).toEqual(['foo'])
+
+    // 同一文档重复渲染结果稳定
+    const docA2 = await render('## foo\n\n## foo\n', THEME)
+    expect(docA2.headings.map(h => h.id)).toEqual(idsA)
+  })
+
+  it('test_a6_empty_heading_gets_stable_non_empty_id', async () => {
+    const headings = await headingsOf('##\n\n##\n')
+    const ids = idsOf(headings)
+    expect(ids.every(id => id.length > 0)).toBe(true)
+    expect(isUnique(ids)).toBe(true)
+  })
+
+  it('test_a7_atx_and_setext_levels_still_supported', async () => {
+    // h1-h4 支持不退化：ATX + Setext
+    const md = 'Setext 一级\n===\n\n## ATX 二级\n\nSetext 二级\n---\n\n### ATX 三级\n\n#### ATX 四级\n\n##### ATX 五级（应排除）\n'
+    const headings = await headingsOf(md)
+    expect(headings.map(h => h.level)).toEqual([1, 2, 2, 3, 4])
+    expect(isUnique(idsOf(headings))).toBe(true)
+  })
+})

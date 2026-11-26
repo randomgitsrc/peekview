@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
-import { resolveDefaultFile } from '@/utils/default-file'
+import { createLoadGuard, resolveLoadTarget } from '@/composables/useLoadGuard'
 import type { Entry, File, TeamRef } from '@/types'
 
 export const useEntryDetailStore = defineStore('entryDetail', () => {
@@ -11,6 +11,8 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
   const wrapEnabled = ref(false)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  // 请求序号守卫（TPV0104 补充修复 B/D）：只有最后发起的那次加载可以提交状态。
+  const loadGuard = createLoadGuard()
 
   const isMultiFile = computed(() => {
     return (currentEntry.value?.files.length ?? 0) > 1
@@ -35,58 +37,61 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
   const canPack = computed(() => (currentEntry.value?.files.length ?? 0) > 1)
 
   async function loadEntry(slug: string, fileId?: number, shareToken?: string): Promise<void> {
+    // 竞态守卫：只有最后发起的那次加载可以提交状态（详见 useLoadGuard.ts）
+    const seq = loadGuard.next()
+    const isStale = () => !loadGuard.isCurrent(seq)
+
     loading.value = true
     error.value = null
 
     try {
-      const entryPromise = api.getEntry(slug, shareToken)
-      const contentPromise = api.getFileContent(slug, fileId ?? 0).catch(() => null)
+      const [entry, prefetched] = await Promise.all([
+        api.getEntry(slug, shareToken),
+        api.getFileContent(slug, fileId ?? 0).catch(() => null),
+      ])
+      if (isStale()) return
 
-      const [entry, content] = await Promise.all([entryPromise, contentPromise])
+      const { targetFile, content, needFetchTarget } = resolveLoadTarget(entry, fileId, prefetched)
       currentEntry.value = entry
-      activeFile.value = null
-      fileContent.value = ''
+      activeFile.value = targetFile
+      fileContent.value = content ?? ''
 
-      if (entry.files.length > 0) {
-        const targetFile = (fileId != null ? entry.files.find(f => f.id === fileId) : null)
-          ?? resolveDefaultFile(entry.files)
-        if (targetFile) {
-          activeFile.value = targetFile
-          if (content != null && targetFile.id === fileId) fileContent.value = content
-          else if (!targetFile.isBinary) fileContent.value = await api.getFileContent(slug, targetFile.id)
-        }
+      if (targetFile && needFetchTarget) {
+        const body = await api.getFileContent(slug, targetFile.id)
+        if (isStale()) return
+        fileContent.value = body
       }
     } catch (err: any) {
-      if (shareToken) {
-        error.value = 'This share link is no longer valid.'
-      } else {
-        error.value = err instanceof Error ? err.message : 'Failed to load entry'
-      }
+      if (isStale()) return
+      error.value = shareToken
+        ? 'This share link is no longer valid.'
+        : (err instanceof Error ? err.message : 'Failed to load entry')
       currentEntry.value = null
     } finally {
-      loading.value = false
+      if (!isStale()) loading.value = false
     }
   }
 
   async function selectFile(file: File): Promise<void> {
     if (activeFile.value?.id === file.id) return
 
+    // 与 loadEntry 共用序号：快速连续切文件时只有最后一次内容请求可落地（修复 B/D）
+    const seq = loadGuard.next()
     activeFile.value = file
     fileContent.value = ''
-
-    if (!file.isBinary && currentEntry.value) {
-      try {
-        const content = await api.getFileContent(currentEntry.value.slug, file.id)
-        fileContent.value = content
-      } catch (err) {
+    if (file.isBinary || !currentEntry.value) return
+    const slug = currentEntry.value.slug
+    try {
+      const content = await api.getFileContent(slug, file.id)
+      if (loadGuard.isCurrent(seq)) fileContent.value = content
+    } catch (err) {
+      if (loadGuard.isCurrent(seq)) {
         error.value = err instanceof Error ? err.message : 'Failed to load file content'
       }
     }
   }
 
-  function toggleWrap(): void {
-    wrapEnabled.value = !wrapEnabled.value
-  }
+  const toggleWrap = (): void => { wrapEnabled.value = !wrapEnabled.value }
 
   function clearEntry(): void {
     currentEntry.value = null
@@ -111,15 +116,12 @@ export const useEntryDetailStore = defineStore('entryDetail', () => {
   }
 
   function syncStar(data: { starCount: number; isStarred: boolean }): void {
-    if (currentEntry.value) {
-      currentEntry.value = { ...currentEntry.value, starCount: data.starCount, isStarred: data.isStarred }
-    }
+    if (!currentEntry.value) return
+    currentEntry.value = { ...currentEntry.value, starCount: data.starCount, isStarred: data.isStarred }
   }
 
-  function clearIfSlug(slug: string): void {
-    if (currentEntry.value?.slug === slug) {
-      clearEntry()
-    }
+  const clearIfSlug = (slug: string): void => {
+    if (currentEntry.value?.slug === slug) clearEntry()
   }
 
   return {

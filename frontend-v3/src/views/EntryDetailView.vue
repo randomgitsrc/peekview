@@ -138,7 +138,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useShareStore } from '@/stores/share'
 import { useTeamStore } from '@/stores/team'
 import { isExpired } from '@/utils/expires'
-import { useEntryDetailUrlSync, useTocAutoExpand, parseFileId } from '@/composables/useEntryDetailUrlSync'
+import { useEntryDetailUrlSync, useTocAutoExpand, useRouteDrivenLoad } from '@/composables/useEntryDetailUrlSync'
 import { useZenMode } from '@/composables/useZenMode'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { useEntryDetailComputed } from '@/composables/useEntryDetailComputed'
@@ -237,19 +237,16 @@ const { toggleToc, toggleTocDrawer, resetUserToggledToc } = useTocAutoExpand(
   tocHeadings, isMarkdown, isDesktop, isTocOpen, showTocDrawer,
 )
 
+// URL → Store 的唯一入口（TPV0104 补充修复 B）：onMounted 与所有后续路由变化共用。
+const { loadFromRoute } = useRouteDrivenLoad(
+  route, entryDetailStore, currentEntry, suppressUrlSync, syncUrl, shareErrorState, nextTick,
+)
+
 onMounted(async () => {
-  const shareToken = route.query.share as string | undefined
-  const fileId = parseFileId(route.query.file)
-  shareErrorState.value = false
-  suppressUrlSync.value = true
-  await entryDetailStore.loadEntry(props.slug, fileId, shareToken)
-  if (shareToken && !currentEntry.value && entryDetailStore.error) shareErrorState.value = true
-  syncUrl()
+  await loadFromRoute(props.slug)
   document.addEventListener('keydown', handleZenKeydown)
   window.addEventListener('resize', handleResize)
   ensureMyTeamsLoaded()
-  await nextTick()
-  suppressUrlSync.value = false
   if (isDesktop.value && entryDetailStore.isMultiFile) isFileTreeOpen.value = true
 })
 
@@ -258,13 +255,19 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-watch(() => props.slug, async (newSlug) => {
-  isFileTreeOpen.value = false
-  isTocOpen.value = false
-  resetUserToggledToc()
-  await entryDetailStore.loadEntry(newSlug)
-  syncUrl()
-})
+// 路由变化统一处理：slug 变化时重置 UI 状态；slug 不变但 query 变化（file/share）
+// 也重新加载——保证组件被 Vue Router 复用时 URL 与 Store 始终一致。
+watch(
+  () => [props.slug, route.query.file, route.query.share] as const,
+  async ([newSlug], old) => {
+    if (!old || old[0] !== newSlug) {
+      isFileTreeOpen.value = false
+      isTocOpen.value = false
+      resetUserToggledToc()
+    }
+    await loadFromRoute(newSlug)
+  },
+)
 watch(() => showShareButton.value, (show) => {
   if (show && props.slug) shareStore.fetchShares(props.slug)
 }, { immediate: true })

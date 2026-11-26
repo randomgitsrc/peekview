@@ -85,3 +85,45 @@ export function useTocAutoExpand(
 
   return { toggleToc, toggleTocDrawer, resetUserToggledToc }
 }
+
+
+/**
+ * TPV0104 补充修复 B — URL → Store 的加载编排（供 onMounted 与路由变化共用）
+ *
+ * 修复前：slug watcher 只调 `loadEntry(newSlug)`，丢失 `route.query.file` / `share`，
+ * 且随后的 `syncUrl()` 会把有效 file 参数清掉（Vue Router 复用同一组件时必然触发）。
+ *
+ * 本函数保证：用**当前路由**的 file + share 加载对应 slug；等状态建立完成后才规范化 URL。
+ * 抽成独立模块是为了守住 t082 的既有行数契约（`EntryDetailView.vue < 300` 行）。
+ */
+export function useRouteDrivenLoad(
+  route: { query: Query },
+  store: {
+    loadEntry: (slug: string, fileId?: number, shareToken?: string) => Promise<void>
+    error: string | null
+  },
+  currentEntry: Ref<Entry | null>,
+  suppressUrlSync: Ref<boolean>,
+  syncUrl: () => void,
+  shareErrorState: Ref<boolean>,
+  nextTickFn: () => Promise<void>,
+) {
+  async function loadFromRoute(targetSlug: string): Promise<void> {
+    const shareToken = route.query.share as string | undefined
+    const fileId = parseFileId(route.query.file)
+
+    // 加载期间禁止 Store→URL 同步，避免用中间态（默认文件）覆写 URL
+    suppressUrlSync.value = true
+    try {
+      await store.loadEntry(targetSlug, fileId, shareToken)
+      shareErrorState.value = !!(shareToken && !currentEntry.value && store.error)
+    } finally {
+      // 状态建立完成后才规范化 URL（此时 activeFile 已是路由指定的那个文件）
+      syncUrl()
+      await nextTickFn()
+      suppressUrlSync.value = false
+    }
+  }
+
+  return { loadFromRoute }
+}

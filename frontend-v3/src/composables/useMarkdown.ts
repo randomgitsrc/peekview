@@ -158,7 +158,11 @@ export function useMarkdown() {
     slug: string = '',
   ): Promise<MarkdownRenderResult> {
     const headings: TocHeading[] = []
-    const usedHeadingIds = new Map<string, number>()
+    // 全局唯一 ID 分配：记录**最终 ID**而非基础 slug 的次数。
+    // 只数基础 slug 会出现「## foo / ## foo / ## foo-1」→ foo / foo-1 / foo-1 的碰撞，
+    // 因为自然标题 `foo-1` 的基础 slug 与重复标题的派生产物相同。
+    // 每次 renderMarkdown 调用都新建本 Set，故不同文档之间互不影响。
+    const usedHeadingIds = new Set<string>()
     const codeBlocks: CodeBlock[] = []
     let frontMatterHtml = ''
     let processedContent = content
@@ -344,6 +348,21 @@ export function useMarkdown() {
       return `<!--CODE_BLOCK_${index}-->`
     }
 
+    // 分配一个在整个文档内唯一的最终 ID。
+    // 逐个候选检查（base / base-1 / base-2 …）直到找到未使用过的，
+    // 而不是按基础 slug 计数——后者无法避免与**自然**标题（如 `foo-1`）相撞。
+    function allocateHeadingId(baseSlug: string): string {
+      const base = baseSlug || 'heading'
+      let candidate = base
+      let suffix = 1
+      while (usedHeadingIds.has(candidate)) {
+        candidate = `${base}-${suffix}`
+        suffix += 1
+      }
+      usedHeadingIds.add(candidate)
+      return candidate
+    }
+
     // Set up heading renderer — single source of truth for body anchors and TOC entries
     const originalHeading = md.renderer.rules.heading_open
     md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
@@ -354,9 +373,7 @@ export function useMarkdown() {
         if (nextToken?.type === 'inline') {
           const plain = inlinePlainText((nextToken.children ?? []) as InlineTokenLike[]) || nextToken.content
           const baseId = slugify(plain)
-          const seen = usedHeadingIds.get(baseId) ?? 0
-          usedHeadingIds.set(baseId, seen + 1)
-          const id = seen === 0 ? baseId : `${baseId}-${seen}`
+          const id = allocateHeadingId(baseId)
           token.attrSet('id', id)
           headings.push({ level, text: plain, id })
         }
