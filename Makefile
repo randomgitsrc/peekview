@@ -39,13 +39,19 @@ help:
 	@echo "  make debug-test     - Run E2E tests"
 	@echo "  make debug-status   - Check dev server status"
 	@echo ""
-	@echo "RELEASE:"
-	@echo "  1. make bump-version NEW_VERSION=x.y.z  - Bump version + auto-sync all docs"
-	@echo "  2. make debug       - Debug and E2E test"
-	@echo "  3. make pre-publish-quick - Quick check (no rebuild)"
-	@echo "  4. make pre-publish - Full check (clean build + test)"
-	@echo "  5. make publish     - Build + upload to PyPI"
-	@echo "  6. git tag + push   - Create and push version tag"
+	@echo "RELEASE（推荐：一个入口 make ship）:"
+	@echo "  1. make ship DRY=1  - 看哪个产品有改动、会发哪个渠道（不执行）"
+	@echo "  2. make ship        - 自动 bump 有改动的产品，并打印后续步骤"
+	@echo "  3. 填 CHANGELOG.md，然后："
+	@echo "       git add CHANGELOG.md && git commit --amend --no-edit"
+	@echo "       git tag -f vx.y.z HEAD      # amend 后必须重指（DEBT0021）"
+	@echo "  4. git push && git push --tags   - CI 自动发布到 PyPI / npm"
+	@echo ""
+	@echo "  两个产品：peekview → PyPI（tag v*）；@peekview/mcp-server → npm（tag mcp-v*）"
+	@echo ""
+	@echo "  兜底（仅 CI 不可用时，正常不要用）:"
+	@echo "    make publish      - 本地 build + twine 上传 PyPI"
+	@echo "    make publish-npm  - 本地 npm publish"
 	@echo ""
 	@echo "DOCUMENTATION:"
 	@echo "  make doc-checklist      - 查看当前变更需要更新哪些文档"
@@ -348,9 +354,9 @@ ship:
 	@set -e; \
 	LAST_PV=$$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo ''); \
 	LAST_MCP=$$(git describe --tags --abbrev=0 --match 'mcp-v*' 2>/dev/null || echo ''); \
-	# ⚠️ 历史上有 mcp-v0.11.0 / mcp-v0.12.0 两个**悬空 tag**（不在 HEAD 祖先链上，\
-	#    应为 rebase 遗留），describe 找不到它们。若最近可达 mcp tag 的版本低于\
-	#    package.json 当前版本，说明有悬空 tag，改用「package.json 版本的 bump 提交」作基线。\
+	# 兜底：若最近可达 mcp tag 的版本低于 package.json 当前版本（例如 tag 被 rebase\
+	# 掉成悬空），改用「package.json 版本的 bump 提交」作基线，避免把已发布改动误算成未发布。\
+	# （2026-11-26 已把 mcp-v0.11.0/0.12.0 重指回链上的 bump 提交，此分支现为防御性保留）\
 	PKG_VER=$$(node -p "require('./packages/mcp-server/package.json').version" 2>/dev/null || echo ''); \
 	if [ -n "$$PKG_VER" ] && [ -n "$$LAST_MCP" ]; then \
 		TAG_VER=$${LAST_MCP#mcp-v}; \
@@ -495,6 +501,12 @@ pre-publish: clean build dev check-version check-changelog test verify-wheel
 
 # Publish pipeline: 每次重建 static+wheel（build-fast）→ 校验版本一致 → 只上传该版本 wheel
 publish:
+	@echo ""
+	@echo "⚠️  你正在走【本地发布】路径（跳过 CI）。"
+	@echo "    正常流程请用：make ship  →  填 CHANGELOG  →  git tag -f  →  git push --tags"
+	@echo "    CI 会自动上传；本命令仅用于 CI 不可用时的兜底。"
+	@echo "    继续本地发布会在 push tag 时导致 CI 重复发布失败（PyPI 不接受重名版本）。"
+	@echo ""
 	@echo "→ Step 1/4: 检查静态文件是否已构建..."
 	@if [ ! -f "backend/peekview/static/index.html" ]; then \
 		echo ""; \
@@ -821,6 +833,11 @@ publish-npm-dry:
 	@echo "✓ Dry-run complete"
 
 publish-npm:
+	@echo ""
+	@echo "⚠️  你正在走【本地发布】路径（跳过 CI）。"
+	@echo "    正常流程请用：make ship（涉及 mcp-server 改动时会自动 bump）→ git push --tags"
+	@echo "    CI 的 publish-npm.yml 会自动上传；本命令仅用于兜底。"
+	@echo ""
 	@echo "→ Publishing MCP Server to npm..."
 	cd packages/mcp-server && npm publish --access public
 	@echo "✓ Published @peekview/mcp-server"

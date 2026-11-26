@@ -84,7 +84,7 @@ make ship           # 交互式：只对有改动的产品询问新版本号
 
 判定基线：peekview 用最近的 `v*` tag；mcp 用最近的 `mcp-v*` tag（若该 tag 悬空则回退到 `package.json` 当前版本的 bump 提交）。
 
-> ⚠️ **历史遗留**：`mcp-v0.11.0` / `mcp-v0.12.0` 两个 tag **不在 main 祖先链上**（rebase 遗留的悬空 tag），`git describe` 找不到它们。`make ship` 已处理该情况并在输出中提示。
+> **悬空 tag 的防御**：若某产品的 tag 被 rebase 掉（不在 main 祖先链上），`git describe` 找不到它，`ship` 会回退到「该版本 `package.json` 对应的 bump 提交」作基线，避免把已发布改动误算成未发布。（`mcp-v0.11.0`/`0.12.0` 曾如此，已于 2026-11-26 重指回链上。）
 
 ## 发布路径：两条，别都走
 
