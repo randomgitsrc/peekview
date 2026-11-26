@@ -1,4 +1,4 @@
-phase: P8
+phase: DONE
 task_id: TPV0104
 task_name: viewer-correctness-hardening
 created: 2026-11-24
@@ -9,7 +9,11 @@ history:
 - phase: P0
   action: created
   ts: 2026-11-24 14:00:00+00:00
-  note: '立项：Viewer 正确性与资源边界加固 7 项（来源 docs/notes/issus-20261124-1429.md 的 8 项 V-01~V-08，经本仓在 9a47df77 逐条复验：7 项成立、V-04 报告判断正确而主 Agent 初判错误已更正）。三批交付：①正确性 V-02 Markdown 目录与正文 ID 单一来源 + V-01 默认入口轻量策略 + V-04 截断态隐藏表头控件 ②性能资源边界 V-03 CSV 提前终止解析 + V-06 注入总预算 + V-07 超限显式反馈 + V-08 字节数判断 ③安全边界 V-05 只记录策略不改默认 CSP。明确排除：is_primary schema 字段（roadmap #57）、Web Worker/虚拟滚动、HTML CSP 默认收紧。risk=medium（跨前后端 + 安全边界）。'
+  note: '立项：Viewer 正确性与资源边界加固 7 项（来源 docs/notes/issus-20261124-1429.md 的 8 项 V-01~V-08，经本仓在
+    9a47df77 逐条复验：7 项成立、V-04 报告判断正确而主 Agent 初判错误已更正）。三批交付：①正确性 V-02 Markdown 目录与正文
+    ID 单一来源 + V-01 默认入口轻量策略 + V-04 截断态隐藏表头控件 ②性能资源边界 V-03 CSV 提前终止解析 + V-06 注入总预算
+    + V-07 超限显式反馈 + V-08 字节数判断 ③安全边界 V-05 只记录策略不改默认 CSP。明确排除：is_primary schema 字段（roadmap
+    #57）、Web Worker/虚拟滚动、HTML CSP 默认收紧。risk=medium（跨前后端 + 安全边界）。'
 - phase: P0
   action: pending-start
   ts: '2026-11-24T14:00:00Z'
@@ -17,113 +21,264 @@ history:
 - phase: P0
   action: scope-expanded
   ts: 2026-11-24 16:10:00+00:00
-  note: 'P0 范围扩展：合并 docs/notes/issues-20261124-1553.md（多文件默认入口与全屏文件定位完整设计），V-01 从一句话描述升级为决策 7 完整闭环——默认入口三级优先级 + ?file= 深链 + 全屏文件定位 + URL 状态同步。BDD 从 19 条增至 40 条。**四处与现状冲突已实测并记入 7.5 表**：①参数名现状 firstFileId vs 文档 file ②详情页无全屏按钮（仅 f 键，文档 4.1 假设的"现有入口"不存在）③清 query 一锅端会误删 file/share ④卡片/列表无条件传 files[0].id 会绕过默认入口 resolver。选项数 7→8，均待 P1 定夺参数名与全屏入口形态。'
+  note: P0 范围扩展：合并 docs/notes/issues-20261124-1553.md（多文件默认入口与全屏文件定位完整设计），V-01 从一句话描述升级为决策
+    7 完整闭环——默认入口三级优先级 + ?file= 深链 + 全屏文件定位 + URL 状态同步。BDD 从 19 条增至 40 条。**四处与现状冲突已实测并记入
+    7.5 表**：①参数名现状 firstFileId vs 文档 file ②详情页无全屏按钮（仅 f 键，文档 4.1 假设的"现有入口"不存在）③清 query
+    一锅端会误删 file/share ④卡片/列表无条件传 files[0].id 会绕过默认入口 resolver。选项数 7→8，均待 P1 定夺参数名与全屏入口形态。
 - phase: P0
   action: scope-expanded-2
   ts: 2026-11-24 16:20:00+00:00
-  note: '再合并 docs/notes/issues-20261124-1612.md（增加全屏阅读入口）。两份文档互补：1553 定义 URL 语义与默认入口、1612 补上普通页→全屏的操作入口（1553 §4.1 假设的"现有全屏入口"实测不存在）。决策 7.3 从"待 P1 定是否加按钮"改为"确定新增按钮"，并写入位置优先序与五条禁止项。BDD 40→44 条（新增 4 条可发现性/遮挡断言）。P1 待定项收敛为一：参数名 file vs firstFileId。'
+  note: 再合并 docs/notes/issues-20261124-1612.md（增加全屏阅读入口）。两份文档互补：1553 定义 URL 语义与默认入口、1612
+    补上普通页→全屏的操作入口（1553 §4.1 假设的"现有全屏入口"实测不存在）。决策 7.3 从"待 P1 定是否加按钮"改为"确定新增按钮"，并写入位置优先序与五条禁止项。BDD
+    40→44 条（新增 4 条可发现性/遮挡断言）。P1 待定项收敛为一：参数名 file vs firstFileId。
 - phase: P0
   action: correction
   ts: 2026-11-24 16:35:00+00:00
-  note: '修正一处概念错误（用户指出）：此前把 firstFileId 与 file 当成同一参数的两种拼写并让 P1 二选一——错。实测二者机制不同：firstFileId 是一次性种子（EntryDetailView:238 加载完即清、页内切换从不更新、刷新即丢），file 要求持续态（刷新保留/切换同步/切回默认才移除）。不是改名是机制替换。已写 §7.4.1 专节，改冲突表第 1 行，修 5 处表述，新增 1 条 BDD（?file= 加载后必须仍在 URL）。BDD 44→45。参数名争议已消除：必须是 file。'
+  note: 修正一处概念错误（用户指出）：此前把 firstFileId 与 file 当成同一参数的两种拼写并让 P1 二选一——错。实测二者机制不同：firstFileId
+    是一次性种子（EntryDetailView:238 加载完即清、页内切换从不更新、刷新即丢），file 要求持续态（刷新保留/切换同步/切回默认才移除）。不是改名是机制替换。已写
+    §7.4.1 专节，改冲突表第 1 行，修 5 处表述，新增 1 条 BDD（?file= 加载后必须仍在 URL）。BDD 44→45。参数名争议已消除：必须是
+    file。
 - phase: P1
   action: completed
   ts: 2026-11-24 13:55:00+00:00
-  note: 'P1 需求基线通过（三轮评审收敛，retries[P1]=2/3）。产出 54 条 BDD（817→845 行），11 处经三轮评审纠正的假 PASS/不可执行判据全部修好。第 1 轮打回 11 BLOCKER + 14 WARNING（判据区分力族：/f 文件树隐藏集只查 scoped 漏全局 layout.css:650-657、桌面 TOC 默认已展开致「点开 TOC」反向操作、BDD-09 的 aaa.txt 排不到 README 前、BDD-17/18/19 现状 ?file= 不被读、BDD-36 现状即通过、BDD-05 真缺陷漏断言、BDD-38 造件 413 且 50==50 休眠、BDD-39 前提机制不存在（_BINARY_SIZE_LIMIT 死常量）、BDD-51 三 spec 基线已红（TPV0095 遗留）、BDD-40 判定形态留 P2）。第 2 轮打回 2 BLOCKER（我独立发现的 BDD-05 消费 render().html 常量空串不可执行；B6 修法派生的 BDD-35 用 rows.length 假 PASS）。第 3 轮终审 approved（8 处全闭环，残留 2 项文字级 WARNING 列入建议）。**用户定夺两项**：A. /f 为只读分享态不加退出按钮（DESIGN.md:210-212 既有设计意图）；B. Setext h1 也生成 id 并纳入 TOC（h1-h4）。P0 四项待定全收敛。gate: check-gate P1 exit 2 + check-pruning exit 0。'
-
+  note: 'P1 需求基线通过（三轮评审收敛，retries[P1]=2/3）。产出 54 条 BDD（817→845 行），11 处经三轮评审纠正的假 PASS/不可执行判据全部修好。第
+    1 轮打回 11 BLOCKER + 14 WARNING（判据区分力族：/f 文件树隐藏集只查 scoped 漏全局 layout.css:650-657、桌面
+    TOC 默认已展开致「点开 TOC」反向操作、BDD-09 的 aaa.txt 排不到 README 前、BDD-17/18/19 现状 ?file= 不被读、BDD-36
+    现状即通过、BDD-05 真缺陷漏断言、BDD-38 造件 413 且 50==50 休眠、BDD-39 前提机制不存在（_BINARY_SIZE_LIMIT
+    死常量）、BDD-51 三 spec 基线已红（TPV0095 遗留）、BDD-40 判定形态留 P2）。第 2 轮打回 2 BLOCKER（我独立发现的
+    BDD-05 消费 render().html 常量空串不可执行；B6 修法派生的 BDD-35 用 rows.length 假 PASS）。第 3 轮终审
+    approved（8 处全闭环，残留 2 项文字级 WARNING 列入建议）。**用户定夺两项**：A. /f 为只读分享态不加退出按钮（DESIGN.md:210-212
+    既有设计意图）；B. Setext h1 也生成 id 并纳入 TOC（h1-h4）。P0 四项待定全收敛。gate: check-gate P1 exit
+    2 + check-pruning exit 0。'
 - phase: P2
   action: completed
   ts: 2026-11-24 21:36:00+00:00
-  note: 'P2 方案设计通过（三轮评审收敛，retries[P2]=3/3 用满）。产出 P2-design.md 1070 行：3 架构候选 + 3 布局层候选（candidate_count=6）、4 批 static-batch、23 个 gate_commands key、minimal_validation 17 项。**评审链发现 12 处真实缺陷**：第 1 轮 5 BLOCKER + 7 MAJOR（eng: R1 order_by 归因错（_create_entry 读 POST 不读 GET）、inject_resources 改签名打断 13 处调用、跳过清单 <script> XSS；design: UI 布局层零候选、.toc-level-1 padding-left:0 是 no-op）+ 第 2 轮新发现的 B4（reason 闭集漏「非 css/js sibling 被静默丢弃」，因前端 siblingFileIds 不过滤 kind + _detect_kind 只认 css/js + if not kind: continue 静默跳过）+ R2-1/R2-2（h1 新规则吃 active 强调色；activeFile/fullscreen 在 Header 作用域不存在会 typecheck 红）+ 第 3 轮 W1-W6。**关键：minimal_validation 选材缺口两次**（V9 只用中文文件名、V8 六个素材全绕开 kind 维度）。**评审链自我纠错 3 次**：eng 承认 used_text_keys 处方被证伪、承认「同文件两函数」说错；design 承认 D-3 定级口径不一致。**主 Agent 错误 3 处**：照抄 P1 的「files.py:272 属 serving 路径」（实测唯一消费点就在注入路径上，已批准 4 处 [BASELINE_CHANGE] 勘误）、order_by 影响面只核字典序不追数据来源、把 design 未提的观察错归给它。P2 gate exit 2 + structure-consistency 全 OK。'
-
+  note: 'P2 方案设计通过（三轮评审收敛，retries[P2]=3/3 用满）。产出 P2-design.md 1070 行：3 架构候选 + 3 布局层候选（candidate_count=6）、4
+    批 static-batch、23 个 gate_commands key、minimal_validation 17 项。**评审链发现 12 处真实缺陷**：第
+    1 轮 5 BLOCKER + 7 MAJOR（eng: R1 order_by 归因错（_create_entry 读 POST 不读 GET）、inject_resources
+    改签名打断 13 处调用、跳过清单 <script> XSS；design: UI 布局层零候选、.toc-level-1 padding-left:0 是
+    no-op）+ 第 2 轮新发现的 B4（reason 闭集漏「非 css/js sibling 被静默丢弃」，因前端 siblingFileIds 不过滤
+    kind + _detect_kind 只认 css/js + if not kind: continue 静默跳过）+ R2-1/R2-2（h1 新规则吃
+    active 强调色；activeFile/fullscreen 在 Header 作用域不存在会 typecheck 红）+ 第 3 轮 W1-W6。**关键：minimal_validation
+    选材缺口两次**（V9 只用中文文件名、V8 六个素材全绕开 kind 维度）。**评审链自我纠错 3 次**：eng 承认 used_text_keys
+    处方被证伪、承认「同文件两函数」说错；design 承认 D-3 定级口径不一致。**主 Agent 错误 3 处**：照抄 P1 的「files.py:272
+    属 serving 路径」（实测唯一消费点就在注入路径上，已批准 4 处 [BASELINE_CHANGE] 勘误）、order_by 影响面只核字典序不追数据来源、把
+    design 未提的观察错归给它。P2 gate exit 2 + structure-consistency 全 OK。'
 - phase: P3
   action: completed
   ts: 2026-11-25 06:20:00+00:00
-  note: 'P3 TDD 测试设计通过。**54 条 BDD 全部 1:1 映射**（脚本核对 missing=none / extra=none），共 118 个用例，全部红灯。`check-tdd-red.py` = **classic red-light（assertion failures only）exit 0**（V13 硬约束已遵守：引用已存在模块 + 断言尚无行为，未 import 不存在模块）。前端 `make test-frontend` **7 failed files / 31 failed / 1475 passed / 4 skipped**，失败文件**全部**为本任务新增 spec、**零既有回归**；后端 `pytest test_html_render.py + test_entry_file_order.py` **13 failed / 49 passed**，全为 assertion failure（零 collection error）。`make typecheck` exit 0；`check-platform-assumptions.py` 0 命中。**冻结项零改动**：13 处 `= inject_resources(`、8 处 `_process_css_refs(`、9 处 legacy `firstFileId` 全部归零（viewer 2 / t091 4 / tpv0099 3）。产出 9 个新测试文件（vitest 7 + e2e 2）+ 新建 test_entry_file_order.py + test_html_render.py 追加 402 行（TPV0104 段，含 G11 双向对账 / G12 两跳 @import）。**两处关键处置**：① `constructedRows` 未声明为类型成员会让 vue-tsc 报 TS2339 → 被误判成 A 类错误，故用 `constructedRowsOf()` 局部类型放宽 + 新增代码级断言锁死「必须是必填成员」；② P2 §0.1A 与 §5.1 取证命令不一致（预算用例归属），按冻结命令收敛到 test_html_render.py。'
-
+  note: P3 TDD 测试设计通过。**54 条 BDD 全部 1:1 映射**（脚本核对 missing=none / extra=none），共 118
+    个用例，全部红灯。`check-tdd-red.py` = **classic red-light（assertion failures only）exit
+    0**（V13 硬约束已遵守：引用已存在模块 + 断言尚无行为，未 import 不存在模块）。前端 `make test-frontend` **7 failed
+    files / 31 failed / 1475 passed / 4 skipped**，失败文件**全部**为本任务新增 spec、**零既有回归**；后端
+    `pytest test_html_render.py + test_entry_file_order.py` **13 failed / 49 passed**，全为
+    assertion failure（零 collection error）。`make typecheck` exit 0；`check-platform-assumptions.py`
+    0 命中。**冻结项零改动**：13 处 `= inject_resources(`、8 处 `_process_css_refs(`、9 处 legacy
+    `firstFileId` 全部归零（viewer 2 / t091 4 / tpv0099 3）。产出 9 个新测试文件（vitest 7 + e2e 2）+
+    新建 test_entry_file_order.py + test_html_render.py 追加 402 行（TPV0104 段，含 G11 双向对账
+    / G12 两跳 @import）。**两处关键处置**：① `constructedRows` 未声明为类型成员会让 vue-tsc 报 TS2339 →
+    被误判成 A 类错误，故用 `constructedRowsOf()` 局部类型放宽 + 新增代码级断言锁死「必须是必填成员」；② P2 §0.1A 与 §5.1
+    取证命令不一致（预算用例归属），按冻结命令收敛到 test_html_render.py。
 - phase: P4
   action: completed
   ts: 2026-11-25 00:50:00+00:00
-  note: 'P4 代码实现通过（4 批并行/串行 + 1 轮修复，retries[P4]=1/3）。**双评审 approved**（review + design-review）。**前端 1514P/4S/0F、后端 1221P/1F/3S（唯一失败为预存 test_cli_remote 沙箱只读）→ 零回归**；typecheck/lint/build-frontend 全 exit 0。冻结计数保持：= inject_resources( 13 / _process_css_refs( 8；P3 测试零改动（10 份归档副本逐字节 diff 10/10 SAME）。**评审在「全绿」之下找出 3 条 CRITICAL，是本任务最有价值的发现**：① C1 总预算记账单位错配——`cost = len(data.content)` 是字符数、单文件检查用 record.size 是字节数，实测 12 个中文/emoji CSS 全部放行（报表 skipped=[] 自称合规），响应 23.0–23.8 MiB = 8 MiB 预算的 2.88–2.98 倍，且这正是本任务核心诉求 BDD-38~41 的落点 ② C2 `_append_inject_report` 在 `html.lower()` 上取下标却切原串——`İ`(U+0130) 小写化变长 2 码点（全 Unicode 仅此一字符），把 `</body>` 劈成两半 ③ C3 `not_injectable` 缺 `file_id` 违反 P2 冻结 schema，两类 reason 共存时 P3 的 BDD-38③ 会 KeyError。三条各自的「为何测试绿」都是**素材取值域缺口**（ASCII 字符==字节 / ASCII evil path 保长 / 无非 css-js sibling），三个正交维度。修复后我独立验证：C1 → inlined=4/skipped=8/{total_budget:8}/响应 7.67 MiB；C2 → İ 三形态 `</body>` 均完整；C3 → 每条 skipped 都有 file_id。**修复者 3 处偏离评审建议均经我裁决为正确**（M1 选 C 而非 B，因 B 必然破坏 P2 冻结势不变式；C2 用 finditer[-1] 保 rfind 语义；同名 sibling 根因在存储层非 owners）。另 2 MAJOR（overflow 无界 / owners 单命名空间）已修。**关键环境事实**：:8888 跑的是 P4 前旧代码且无 --reload（实测 render 无报表块）→ **P5/P6 验报表块前必须先重启服务**。'
-
+  note: P4 代码实现通过（4 批并行/串行 + 1 轮修复，retries[P4]=1/3）。**双评审 approved**（review + design-review）。**前端
+    1514P/4S/0F、后端 1221P/1F/3S（唯一失败为预存 test_cli_remote 沙箱只读）→ 零回归**；typecheck/lint/build-frontend
+    全 exit 0。冻结计数保持：= inject_resources( 13 / _process_css_refs( 8；P3 测试零改动（10 份归档副本逐字节
+    diff 10/10 SAME）。**评审在「全绿」之下找出 3 条 CRITICAL，是本任务最有价值的发现**：① C1 总预算记账单位错配——`cost
+    = len(data.content)` 是字符数、单文件检查用 record.size 是字节数，实测 12 个中文/emoji CSS 全部放行（报表
+    skipped=[] 自称合规），响应 23.0–23.8 MiB = 8 MiB 预算的 2.88–2.98 倍，且这正是本任务核心诉求 BDD-38~41
+    的落点 ② C2 `_append_inject_report` 在 `html.lower()` 上取下标却切原串——`İ`(U+0130) 小写化变长
+    2 码点（全 Unicode 仅此一字符），把 `</body>` 劈成两半 ③ C3 `not_injectable` 缺 `file_id` 违反 P2
+    冻结 schema，两类 reason 共存时 P3 的 BDD-38③ 会 KeyError。三条各自的「为何测试绿」都是**素材取值域缺口**（ASCII
+    字符==字节 / ASCII evil path 保长 / 无非 css-js sibling），三个正交维度。修复后我独立验证：C1 → inlined=4/skipped=8/{total_budget:8}/响应
+    7.67 MiB；C2 → İ 三形态 `</body>` 均完整；C3 → 每条 skipped 都有 file_id。**修复者 3 处偏离评审建议均经我裁决为正确**（M1
+    选 C 而非 B，因 B 必然破坏 P2 冻结势不变式；C2 用 finditer[-1] 保 rfind 语义；同名 sibling 根因在存储层非 owners）。另
+    2 MAJOR（overflow 无界 / owners 单命名空间）已修。**关键环境事实**：:8888 跑的是 P4 前旧代码且无 --reload（实测
+    render 无报表块）→ **P5/P6 验报表块前必须先重启服务**。
 - phase: P5
   action: completed
   ts: 2026-11-25 11:30:00+00:00
-  note: |
-    P5 技术验证通过（gate_commands.P5* 全部 11 条执行，非子集）。7 条一次通过：
-    P5（1221P/1F 预存/3S）、P5_frontend（127 files/1514P/4S/0F）、typecheck、lint、docs 全 exit 0、
+  note: 'P5 技术验证通过（gate_commands.P5* 全部 11 条执行，非子集）。7 条一次通过：
+
+    P5（1221P/1F 预存/3S）、P5_frontend（127 files/1514P/4S/0F）、typecheck、lint、docs 全 exit
+    0、
+
     P5_e2e_mobile_widths 18/18 全绿（P4 的 gap 8px→4px 在 360/375/390 三档实测有效）。
+
     2 条首轮 FAIL 经我逐条诊断为 5 类测试产物缺陷、修后重跑全绿：
+
     ① YAML 走 TreeView 树渲染无冒号分隔 → 8 处 toContain(kind: X) 恒假；
+
     ② BDD-06 素材撑不出滚动（docH==winH==800）；
+
     ③ BDD-44 字节数算错（中文 350k 字 = 1.05MB < 2MiB）；
+
     ④ share.token 字段不存在（实返 token_prefix/share_url → 从 share_url 解析）；
+
     ⑤ BDD-49「匿名 404」是假假设（登录 Set-Cookie 被 Playwright request context 自动携带 → 用独立 newContext）；
+
     ⑥ BDD-51 反例撞上 README 里的「ClusterIP Service」→ 改 apiVersion；
+
     ⑦ BDD-24 未滚到底。
+
     最终 P5_e2e 串行 78P/0F、官方 make debug-test exit 0「所有 E2E 测试通过」70P。
+
     本任务引入的实现 bug = 0（verifier 独立复核同一结论）。
-    预存失败 3 条已登记 known-failures.md（test_cli_remote 沙箱只读 / viewer 18F / t091 14F，后两者同源 TPV0095 遗留的 markdown-test 匿名 404）。
+
+    预存失败 3 条已登记 known-failures.md（test_cli_remote 沙箱只读 / viewer 18F / t091 14F，后两者同源
+    TPV0095 遗留的 markdown-test 匿名 404）。
+
     t091 +2 疑 P1 基线漏计（spec 实为 13×2=26 项而基线记 24），P5 判据改用「失败集 ⊆ 基线 且 根因同源」双条件。
+
     两个环境缺口已记录：agate-run.py 因 .gitignore 的 *.log 命中 runs/*.log 而恒 return 1（假红）；
+
     debug seed 首轮可能未建全 team entry（需重跑，实测 22→25）。
+
     [PROD_NOT_TOUCHED] :8080 全程 000、~/.peekview/ mtime 仍 2026-11-12。
+
+    '
 - phase: P6
   action: completed
   ts: 2026-11-25 16:30:00+00:00
-  note: |
-    P6 验收通过：54/54 BDD PASS、0 FAIL。四个 gate 全绿（check-p6-format exit 0 / check-p6-evidence exit 0 / check-gate P6 exit 2=通过码 D1-D10 / check-p6-provenance 无 P6 级错误，exit 2 全是历史 progress 缺 agent 字段的协作告警）。
-    证据真实性我已独立核：27 张截图 md5 全唯一（最小 11936B）、13 个日志、22 个 vision YAML 的 blocker_count 全 0 且无 -1（真解析模型自报数，非写死）、frontmatter pass 54/fail 0/results 每条带 evidence+vision。抽查 BDD-38 的 live HTTP 日志含完整报表数据（maxInjectIds 40 / requested 41 / skipped 41）。
-    verifier 声明 p5_evidence_reuse: false，独立实跑全部 54 条（vitest 50/50、pytest 62 passed、E2E 主 spec exit 0、后端全量 1221P/1F 预存、前端 1514P/0F、自建 Playwright 37/37）。
+  note: 'P6 验收通过：54/54 BDD PASS、0 FAIL。四个 gate 全绿（check-p6-format exit 0 / check-p6-evidence
+    exit 0 / check-gate P6 exit 2=通过码 D1-D10 / check-p6-provenance 无 P6 级错误，exit 2
+    全是历史 progress 缺 agent 字段的协作告警）。
+
+    证据真实性我已独立核：27 张截图 md5 全唯一（最小 11936B）、13 个日志、22 个 vision YAML 的 blocker_count 全
+    0 且无 -1（真解析模型自报数，非写死）、frontmatter pass 54/fail 0/results 每条带 evidence+vision。抽查
+    BDD-38 的 live HTTP 日志含完整报表数据（maxInjectIds 40 / requested 41 / skipped 41）。
+
+    verifier 声明 p5_evidence_reuse: false，独立实跑全部 54 条（vitest 50/50、pytest 62 passed、E2E
+    主 spec exit 0、后端全量 1221P/1F 预存、前端 1514P/0F、自建 Playwright 37/37）。
+
     预存失败豁免按 RM-AG0106 逐条相等复现，本次引入失败 = 0；3 条见 known-failures.md。
-    verifier 两处主动推翻自己的产出（vision 脚本曾写死 blocker_count=0 且 prompt 自造要求 → 废弃重做并改 fail-closed；残留检查曾用非法 per_page=200 静默失败 → 改分页重做），质量高于一般自述。
-    我修了一个会复发的缺陷：spec 的 EVIDENCE_DIR 是相对 cwd 路径，make debug-test 的 cwd 是 frontend-v3/ → 证据误落到 frontend-v3/agate-workspace/（P5/P6 各踩一次），已改为基于 import.meta.url 的绝对路径并实测无误落。
+
+    verifier 两处主动推翻自己的产出（vision 脚本曾写死 blocker_count=0 且 prompt 自造要求 → 废弃重做并改 fail-closed；残留检查曾用非法
+    per_page=200 静默失败 → 改分页重做），质量高于一般自述。
+
+    我修了一个会复发的缺陷：spec 的 EVIDENCE_DIR 是相对 cwd 路径，make debug-test 的 cwd 是 frontend-v3/
+    → 证据误落到 frontend-v3/agate-workspace/（P5/P6 各踩一次），已改为基于 import.meta.url 的绝对路径并实测无误落。
+
     E2E 的 1 failed 经我串行单跑确认为 flaky（BDD-27 并发下 waitForSelector 超时，单跑 4 passed），非功能缺陷。
+
     [PROD_NOT_TOUCHED] :8080 全程 000、~/.peekview/ mtime 仍 2026-11-12。
+
+    '
 - phase: P6.5
   action: completed
   ts: 2026-11-26 02:30:00+00:00
-  note: |
-    P6.5 judge 复核通过：第 2 轮 status=passed、criteria 54/54、partial=false。check-gate P6.5 exit 0（check-judge-verdict 校验通过 + check-events 账本审计通过：25 行、哈希链完整、ts 单调、judge 轮次×2）。
-    第 1 轮 judge 判 needs-revision（53/54），BDD-38 Then③ FAIL —— 它从证据目录自报的「③=False」切入，判定链四环独立核过（P1 文字自 4e09219e 未改、4 处 BASELINE_CHANGE 无一涉及 BDD-38、pytest 把判据替换成「可按 file_id 定位」、files.py 主动写死 None）。我复核确认它正确，并揪出更深根因：P2 :410 把「未查询」当成「查不到」，而 overflow 的 id 对应的文件在 DB 中存在（我实测 42 文件 entry 的 ids[40]=87 在 /raw 查到 s39.css）→ 补一次批量查询即可满足 Then③。
-    P4 重试 #2 修复后，第 2 轮 judge 在全新实例 :8893 上独立复现（非采信派发单）：skipped=[{file_id:82,reason:count_limit,filename:s40.css,size:6}]、每项非空 filename=True、势成立、与证据文件逐字段一致；并核了实现（一次批量非 N+1、WHERE entry_id 防跨 entry 泄露）、pytest 断言已收回 P1 原文。
-    judge 四点裁定：①闭环 ②not_found 允许 null 是合理边界（DB 无行，物理不可知；严格 Given 下覆盖 100%）③其余 53 条未受影响（git diff 仅 api/files.py 一个文件，新分支只在 >40 id 时触发）④BDD-50 的 WARNING 维持不升级（P1 的 FAIL 触发器是「缺失该文件」，且它已按 case 名重算证明全部同源 404）。
-    judge 独立实跑：后端 1226 tests / 1222 passed / 1 failed（预存豁免）/ 3 skipped；前端 1514 passed / 0 failed → 本次引入失败 = 0。
+  note: 'P6.5 judge 复核通过：第 2 轮 status=passed、criteria 54/54、partial=false。check-gate
+    P6.5 exit 0（check-judge-verdict 校验通过 + check-events 账本审计通过：25 行、哈希链完整、ts 单调、judge
+    轮次×2）。
+
+    第 1 轮 judge 判 needs-revision（53/54），BDD-38 Then③ FAIL —— 它从证据目录自报的「③=False」切入，判定链四环独立核过（P1
+    文字自 4e09219e 未改、4 处 BASELINE_CHANGE 无一涉及 BDD-38、pytest 把判据替换成「可按 file_id 定位」、files.py
+    主动写死 None）。我复核确认它正确，并揪出更深根因：P2 :410 把「未查询」当成「查不到」，而 overflow 的 id 对应的文件在 DB 中存在（我实测
+    42 文件 entry 的 ids[40]=87 在 /raw 查到 s39.css）→ 补一次批量查询即可满足 Then③。
+
+    P4 重试 #2 修复后，第 2 轮 judge 在全新实例 :8893 上独立复现（非采信派发单）：skipped=[{file_id:82,reason:count_limit,filename:s40.css,size:6}]、每项非空
+    filename=True、势成立、与证据文件逐字段一致；并核了实现（一次批量非 N+1、WHERE entry_id 防跨 entry 泄露）、pytest
+    断言已收回 P1 原文。
+
+    judge 四点裁定：①闭环 ②not_found 允许 null 是合理边界（DB 无行，物理不可知；严格 Given 下覆盖 100%）③其余 53 条未受影响（git
+    diff 仅 api/files.py 一个文件，新分支只在 >40 id 时触发）④BDD-50 的 WARNING 维持不升级（P1 的 FAIL 触发器是「缺失该文件」，且它已按
+    case 名重算证明全部同源 404）。
+
+    judge 独立实跑：后端 1226 tests / 1222 passed / 1 failed（预存豁免）/ 3 skipped；前端 1514 passed
+    / 0 failed → 本次引入失败 = 0。
+
     judge 另指出：:8888/:8890 是修复前进程（实测仍返回 filename: null），只有 :8893 含修复 —— 后续取证须用 :8893。
+
     [PROD_NOT_TOUCHED] :8080 不可达、~/.peekview/ mtime 仍 2026-11-12。
+
+    '
 - phase: P7
   action: completed
   ts: 2026-11-26 03:20:00+00:00
-  note: |
-    P7 一致性检查通过：check-gate.py P7 exit 0「成对声明聚合判据通过」，BLOCKER 0 / CRITICAL 0。
-    6 条 DESIGN_GAP 全部配对（6/6 accepted，零退回，每条附独立核查依据）；2 条 SCOPE+ 均闭环（SP1 已实现，实测 4 个出口全覆盖；SP2 确属范围外 → 登记 DEBT0022）。
-    跨文件一致性：BDD 54==54==54 且做了三集合逐项求差（P1 / P6 results[].bdd / P6.5 criteria[].bdd）为空，排除「数量对但某条错映射」；P4 实现路径 vs P2 batches.output 22/24 精确命中（未命中 2 个均有据）；未决项清零。
-    P7 推翻 P4 一处因果表述：DG4 称「不加 targetFile 守卫会错显 B」，但穷举 7 种 id 形态实测全部 404/422、content 恒 null ⇒ 该失效形态当前不可达（我复核 file=999999/0/-1 → 404、abc → 422）。守卫本身正确（零成本 fail-closed），但 P4 是推演非实测，已改正措辞。
-    P7 补出 P4 未记录的后果：SP2 存储层同名覆盖会让 render 产出 <style> 内装 PNG 二进制（文本 CSS 未进响应），不只是「文件名重复」，而是静默产出语义错误 HTML —— 已写进 DEBT0022 的 impact 与 closure_criteria。
-    我处置了 P7 提的 3 个决策：① SP2 已登记 DEBT0022（登记簿 19 条）② 2 条跨任务决策不写入 docs/decisions/（那里是面向人的设计理由文档，这 2 条是任务内技术取舍，已在 P6.5 与 orchestrator-log 留痕）③ P8 将显式声明不 bump mcp_server（引用 P1:528）。
-    5 条 WARNING 全部判定不阻断不返工（F4 的 file-bytes.spec.ts 声明不齐但判据无缺口——resolveFileSize 已被 tpv0104-real-file-bytes.spec.ts 覆盖）。
-    本轮同时提交我修的一个源码改动：e2e spec 的 EVIDENCE_DIR 从相对 cwd 改为基于 import.meta.url 的绝对路径（P5/P6 各踩一次证据误落到 frontend-v3/agate-workspace/）。
+  note: 'P7 一致性检查通过：check-gate.py P7 exit 0「成对声明聚合判据通过」，BLOCKER 0 / CRITICAL 0。
+
+    6 条 DESIGN_GAP 全部配对（6/6 accepted，零退回，每条附独立核查依据）；2 条 SCOPE+ 均闭环（SP1 已实现，实测 4 个出口全覆盖；SP2
+    确属范围外 → 登记 DEBT0022）。
+
+    跨文件一致性：BDD 54==54==54 且做了三集合逐项求差（P1 / P6 results[].bdd / P6.5 criteria[].bdd）为空，排除「数量对但某条错映射」；P4
+    实现路径 vs P2 batches.output 22/24 精确命中（未命中 2 个均有据）；未决项清零。
+
+    P7 推翻 P4 一处因果表述：DG4 称「不加 targetFile 守卫会错显 B」，但穷举 7 种 id 形态实测全部 404/422、content
+    恒 null ⇒ 该失效形态当前不可达（我复核 file=999999/0/-1 → 404、abc → 422）。守卫本身正确（零成本 fail-closed），但
+    P4 是推演非实测，已改正措辞。
+
+    P7 补出 P4 未记录的后果：SP2 存储层同名覆盖会让 render 产出 <style> 内装 PNG 二进制（文本 CSS 未进响应），不只是「文件名重复」，而是静默产出语义错误
+    HTML —— 已写进 DEBT0022 的 impact 与 closure_criteria。
+
+    我处置了 P7 提的 3 个决策：① SP2 已登记 DEBT0022（登记簿 19 条）② 2 条跨任务决策不写入 docs/decisions/（那里是面向人的设计理由文档，这
+    2 条是任务内技术取舍，已在 P6.5 与 orchestrator-log 留痕）③ P8 将显式声明不 bump mcp_server（引用 P1:528）。
+
+    5 条 WARNING 全部判定不阻断不返工（F4 的 file-bytes.spec.ts 声明不齐但判据无缺口——resolveFileSize 已被
+    tpv0104-real-file-bytes.spec.ts 覆盖）。
+
+    本轮同时提交我修的一个源码改动：e2e spec 的 EVIDENCE_DIR 从相对 cwd 改为基于 import.meta.url 的绝对路径（P5/P6
+    各踩一次证据误落到 frontend-v3/agate-workspace/）。
+
+    '
 - phase: P8
   action: completed
   ts: 2026-11-26 04:10:00+00:00
-  note: |
-    P8 交付收尾通过（check-gate.py P8 exit 2 = 通过码，且清理 .agate-tmp/ 后为干净通过无 WARNING）。
-    bump_type: minor（peekview / frontend-v3 / docs）；无 Breaking Change —— 两处行为收紧（_MAX_INJECT_IDS 50→40、?inject= 超 4096→422）都不改 API 签名与响应结构，被跳过项在 skipped[] 里带 reason 可归因；判据是「消费方代码是否需改」而非「行为是否变了」。
+  note: 'P8 交付收尾通过（check-gate.py P8 exit 2 = 通过码，且清理 .agate-tmp/ 后为干净通过无 WARNING）。
+
+    bump_type: minor（peekview / frontend-v3 / docs）；无 Breaking Change —— 两处行为收紧（_MAX_INJECT_IDS
+    50→40、?inject= 超 4096→422）都不改 API 签名与响应结构，被跳过项在 skipped[] 里带 reason 可归因；判据是「消费方代码是否需改」而非「行为是否变了」。
+
     mcp_server 显式不 bump（保持 0.12.0），依据 P1:528 + 实测零改动。
-    CHANGELOG [Unreleased] 15 条（新增 3 / 变更 8 / 修复 4，全含 TPV0104）。我补了 releaser 遗漏的一条：?firstFileId= 不再生效（P1 决策「不加重定向、安全回退」，非破坏性，但用户手动收藏的旧链接行为确实变了）。
+
+    CHANGELOG [Unreleased] 15 条（新增 3 / 变更 8 / 修复 4，全含 TPV0104）。我补了 releaser 遗漏的一条：?firstFileId=
+    不再生效（P1 决策「不加重定向、安全回退」，非破坏性，但用户手动收藏的旧链接行为确实变了）。
+
     debt_check: reviewed（tech-debt 19 条，本任务新增 DEBT0022 status=open）。
-    5 条发布检查：test-quick 1222P/1F（预存）/3S 与基线逐位相同、test-frontend 1514P/0F、typecheck/lint/check-docs 全 exit 0。
-    两个 gate 通过码的坑（releaser 自报并纠正）：check-gate 的通过码因阶段而异（P0-P3/P5/P6/P8 → exit 2；P4/P7/P6.5 → exit 0）；gate 判据不能靠 | tail 读（会吞非零 exit）。
-    check-changelog.py 的 exit 1 是协议侧假红（正则右边界不含全角 ）），我独立验证：原正则 False、加全角后 True，且 TPV0102/TPV0095 历史同样 False。不改 CHANGELOG 凑正则（沿用 TPV0102 判例），对 gate 无阻断。
-    经用户批准删除 .agate-tmp/（46M/180 项），删前核实已被 gitignore、后端 testpaths=["tests"] 扫不到、无真实凭证；删除后 P8 gate WARNING 消失。
-    残留 entry 零命中（:8893 total=15 = anon 基线）。[PROD_NOT_TOUCHED] :8080 = 000、~/.peekview/ mtime 仍 2026-11-12。
+
+    5 条发布检查：test-quick 1222P/1F（预存）/3S 与基线逐位相同、test-frontend 1514P/0F、typecheck/lint/check-docs
+    全 exit 0。
+
+    两个 gate 通过码的坑（releaser 自报并纠正）：check-gate 的通过码因阶段而异（P0-P3/P5/P6/P8 → exit 2；P4/P7/P6.5
+    → exit 0）；gate 判据不能靠 | tail 读（会吞非零 exit）。
+
+    check-changelog.py 的 exit 1 是协议侧假红（正则右边界不含全角 ）），我独立验证：原正则 False、加全角后 True，且 TPV0102/TPV0095
+    历史同样 False。不改 CHANGELOG 凑正则（沿用 TPV0102 判例），对 gate 无阻断。
+
+    经用户批准删除 .agate-tmp/（46M/180 项），删前核实已被 gitignore、后端 testpaths=["tests"] 扫不到、无真实凭证；删除后
+    P8 gate WARNING 消失。
+
+    残留 entry 零命中（:8893 total=15 = anon 基线）。[PROD_NOT_TOUCHED] :8080 = 000、~/.peekview/
+    mtime 仍 2026-11-12。
+
+    '
 - phase: P8
   action: ready
   ts: 2026-11-26 04:25:00+00:00
-  note: |
-    READY 收尾检查通过，任务交付就绪（未 bump version、未 tag，发布由人工授权触发）。
-    13 项阶段交付物齐备（P0-brief / P1-requirements / P2-design / P2-review / P3-test-cases / P4-implementation / P4-review / P5-test-results / P6-acceptance / P6.5-judge-verdict / P7-consistency / P8-release / known-failures）。
-    五项前置全满足：CHANGELOG 含 TPV0104 ×15、bump_type: minor、debt_check: reviewed、judge status: passed、实现代码零未提交改动。
-    验收链闭合：54/54 BDD PASS（P6）→ judge 独立复核 passed 54/54（P6.5）→ BLOCKER 0 / CRITICAL 0（P7）→ minor + 无 Breaking Change（P8）。
-    临时资源：.agate-tmp/ 已按用户批准删除；debug 残留 entry 零命中；生产环境全程零接触（:8080 = 000、~/.peekview/ mtime 仍 2026-11-12）。
+  note: 'READY 收尾检查通过，任务交付就绪（未 bump version、未 tag，发布由人工授权触发）。
+
+    13 项阶段交付物齐备（P0-brief / P1-requirements / P2-design / P2-review / P3-test-cases
+    / P4-implementation / P4-review / P5-test-results / P6-acceptance / P6.5-judge-verdict
+    / P7-consistency / P8-release / known-failures）。
+
+    五项前置全满足：CHANGELOG 含 TPV0104 ×15、bump_type: minor、debt_check: reviewed、judge status:
+    passed、实现代码零未提交改动。
+
+    验收链闭合：54/54 BDD PASS（P6）→ judge 独立复核 passed 54/54（P6.5）→ BLOCKER 0 / CRITICAL
+    0（P7）→ minor + 无 Breaking Change（P8）。
+
+    临时资源：.agate-tmp/ 已按用户批准删除；debug 残留 entry 零命中；生产环境全程零接触（:8080 = 000、~/.peekview/
+    mtime 仍 2026-11-12）。
+
     后续待办（非阻断）：① check-changelog.py 的全角括号正则缺陷建议报上游协议仓 ② DEBT0022（存储层同名覆盖）待立项修复。
+
+    '
+- phase: DONE
+  action: completed
+  ts: '2026-11-26 22:50:00+00:00'
+  note: 终态 DONE：已发布 v0.28.0（peekview minor 0.27.1→0.28.0，tag v0.28.0 在位，PyPI 0.28.0
+    已发）。54 条 BDD 全 PASS、P6.5 judge 54/54、14 条 CHANGELOG 条目（新增 3 / 变更 7 / 修复 4）。P4/P5
+    期间额外发现并修复 7 个深度缺陷（注入预算字节/字符记账错配致 23MiB 超支、İ(U+0130) 劈裂 </body>、跳过清单字段不一致、标题锚点冲突、切
+    entry 时 ?file= 被忽略、快切竞态、5 条读路径文件顺序不确定）。新增文件：default-file.ts / file-bytes.ts /
+    useEntryDetailUrlSync.ts / html-preview-security-modes.md。此前任务板文案停在「READY，未 bump/未
+    tag」，与实际不符，已随本次修正。
