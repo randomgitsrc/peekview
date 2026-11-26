@@ -37,7 +37,7 @@
 | TPV0101 | sqlmodel-datetime-compat | ✅已完成 | DONE | 🔴 | 无（来源 DEBT0019） | 2026-10-02 | 2026-10-03 |
 | TPV0102 | explore-card-list-ux | ✅已完成 | DONE | 🟠 | 无 | 2026-11-10 | 2026-11-11 |
 | TPV0103 | time-format-mainline | ✅已交付（hotfix，流程中止） | PAUSED | 🟠 | TPV0102（推翻其 P0 决策 1.3） | 2026-11-11 | 2026-11-11 |
-| TPV0104 | viewer-correctness-hardening | ⬜ 待开始 | P0✅ | 🟠 | 无 | 2026-11-24 | 2026-11-24 |
+| TPV0104 | viewer-correctness-hardening | ✅已交付（READY，未 bump/未 tag） | READY | 🟠 | 无 | 2026-11-24 | 2026-11-26 |
 
 ### TPV0099: 全屏模式链接（`/{slug}/f`）
 
