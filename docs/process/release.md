@@ -66,6 +66,19 @@ make bump-version NEW_VERSION=x.y.z && make release
 
 ---
 
+## 发布路径：两条，别都走
+
+本项目有**两条**都能把同一版本发到 PyPI 的路径：
+
+| 路径 | 触发 | 认证 | 地位 |
+|---|---|---|---|
+| **CI trusted publishing** | `git push origin vX.Y.Z`（tag） | GitHub OIDC（`id-token: write`），无需 token | **✅ 推荐**（`.github/workflows/publish.yml` 注释原文即「推荐方式」）|
+| 本地 `make publish` | 手动 | `PYPI_API_TOKEN` | 应急 / 网络受限时的替代 |
+
+> ⚠️ **两条路会发同一个版本，PyPI 不允许重复上传**。选一条走到底，不要先本地 `make publish` 再 `git push --tags`（后者会让 CI 重试同一版本并失败）。当前 CI 已发出过的版本，本地再发会报 `File already exists`。
+
+下文「标准发布流程」描述的是**本地**路径（步骤更细，也适用于 CI 触发前的自查）；若只用 CI，走到「1. 自动更新版本号」+「2/3/4 检查」后直接 `git push origin vX.Y.Z` 即可，跳过「5. 发布到 PyPI」。
+
 ## 标准发布流程（推荐）
 
 ### 1. 自动更新版本号
@@ -76,7 +89,13 @@ make bump-version NEW_VERSION=0.1.22
 
 # 将 [Unreleased] 内容归集到新版本号下（CHANGELOG.md）
 # 然后提交
+git add CHANGELOG.md && git commit --amend --no-edit
+git tag -f vX.Y.Z HEAD      # ⚠️ 必须！见下方说明
 ```
+
+> **⚠️ `git tag -f` 是必需步骤，不是可选清理。**
+> `make bump-version` 的第 5 步在**你写 CHANGELOG 之前**就建好了 tag。等你 `--amend` 补完正文，`HEAD` 已经变了，而 tag 仍指向 amend 前的提交 —— 直接 `git push --tags` 会让远端 tag **永久缺少正文**，之后只能 force-push 纠正。
+> 校验两者一致：`git rev-parse vX.Y.Z` 与 `git rev-parse HEAD` 应输出同一 SHA。
 
 ### 2. 本地快速验证
 
@@ -145,7 +164,7 @@ make pre-publish-quick
 make pre-publish
 ```
 
-### 5. 发布到 PyPI
+### 5. 发布到 PyPI（本地路径；CI 路径见上文对比表）
 
 **⚠️ 前提：需要 PyPI API Token**
 
@@ -172,6 +191,34 @@ make publish
 ```
 
 > **注意**：Makefile 的 `publish` target 会自动从 `~/.bash_env` 或 `~/.peekview/.release-env` 读取 token 作为 fallback，无需每次手动 export。推荐使用方式 B。
+
+### 5.4 发布工具链（twine / metadata 版本 / 受限环境）
+
+`make publish` 的上传步骤是 `pipx run twine upload`。理解这条链路能省掉三类常见困惑。
+
+**twine 是什么**：PyPI 官方上传客户端。`pipx run` 会在隔离环境里装**最新版**执行，因此**全局 `twine` 的版本不参与发布**（本机全局可能是旧的 6.x，不影响 `make publish`）。只有你手动跑 `python3 -m twine` 时才会用到全局版本。
+
+**metadata 版本不匹配（`InvalidDistribution: '2.5' is not a valid metadata version`）**
+
+本项目用 hatchling 构建（`backend/pyproject.toml` 的 `build-system`），新版 hatchling 产出 `Metadata-Version: 2.5`。
+
+> ⚠️ 根因是 **twine 6.x 主动 monkeypatch 删掉了 2.5**（`twine/package.py` 里覆盖 `metadata._VALID_METADATA_VERSIONS`），**不是** `packaging` 落后 —— 所以**升级 `packaging` 没用**，必须让 twine ≥ 7。
+>
+> `make publish` 走 `pipx run`，天然取最新版（当前 7.x），**正常情况下不会遇到**。遇到说明 pipx 路径被绕过了。
+
+**受限环境：pipx 启动即崩（`OSError: [Errno 30] Read-only file system: ~/.local/state/pipx/log/...`）**
+
+pipx 启动时会清理旧日志，若它的 state 根不可写就崩。**这只在 `workspace-write` 沙箱会话下发生**；`danger-full-access` 会话不受影响（可写范围见 `~/.dsh/env.md` 的「沙箱可写范围」）。
+
+解法是单命令前置 `PIPX_HOME` 指向可写目录：
+
+```bash
+PIPX_HOME="$(mktemp -d)" make publish
+```
+
+> ⚠️ **必须单命令前置，不要 `export`**：`PIPX_HOME` 换的是**整个 pipx home**，不只是日志目录 —— 一旦 export，同一 shell 内 `pipx list` / `pipx upgrade peekview` 会认不到已装包（实测输出 `nothing has been installed with pipx`）。
+>
+> ⚠️ 首次使用会在该目录重建 venv 并下载 twine（约 60 MB），属正常开销。
 
 ### 5.5 升级并重启生产服务
 

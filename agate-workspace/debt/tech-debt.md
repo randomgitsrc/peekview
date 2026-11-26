@@ -576,7 +576,7 @@ closed_at: 2026-11-24
 id: DEBT0021
 category: management
 title: 发布流程「bump-version 后 git commit --amend」使 tag 停留在 pre-amend 提交——tag 指向的提交缺少 CHANGELOG 正文
-status: closed
+status: open
 priority: medium
 task_id: agateon-protocol-defects-handoff-20261124
 evidence:
@@ -593,8 +593,9 @@ closure_criteria:
   - 按文档流程发布后，tag 指向的提交含完整 CHANGELOG 版本正文（无手工纠正步骤）
 source: retrospective
 created_at: 2026-10-03
-closed_at: 2026-11-24
 ```
+> **2026-11-26 重开并修复（TPV0104 收尾整改）**：按 recommendation ② 落地 —— `Makefile` 的 `bump-version` 完成提示中把 `git tag -f vX.Y.Z HEAD` 列为**必需步骤**并写明理由；`docs/process/release.md` §1 同步补入该步骤与校验命令。closure_criteria 现在可满足：按文档流程发布后 tag 即含完整正文，无需额外手工纠正。
+
 
 > **登记理由（主 Agent，2026-10-03）**：命中登记判据 1（"不修会让未来变更更贵"）。`category: management`——缺口在项目发布流程文档与 Makefile 的衔接。**本任务已就地纠正**（tag 重指 HEAD），但流程本身未补，下次发布仍会复现。
 

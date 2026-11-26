@@ -118,12 +118,7 @@ E2E_SPEC=e2e/search.spec.ts make debug-test   # 只跑一个 spec
 make debug-verify-isolation   # 验证数据隔离（依赖 :8080 在线）
 ```
 
-**跨调用起服务的正确姿势（DSH 沙箱）**：服务存活取决于**起它的那条调用是否仍在运行**——前台调用一结束，其进程树（含 `setsid`/`nohup` detach 的）即被回收。要让 :8888 在后续调用里可用，把它挂在**持续 running 的后台 job** 下托底，后续调用即可正常 seed/跑 E2E：
-```
-# 后台 job：起服务后 sleep 托底，job 活多久服务活多久
-( make debug-start; sleep 3600 )      # 用 run_in_background 提交
-```
-反过来，若把 `make debug-start` 当普通前台命令跑完就返回，下一条调用必然连不上：seed 报 `ConnectTimeout`、`make debug-test` 报 `✗ FATAL: 调试服务未运行`。查证：`/tmp/peekview-debug.pid` 有值但 `ss -ltn` 无 8888 监听。机制见 `~/.dsh/env.md`「已知环境限制」。
+**跨调用起服务的正确姿势（DSH 沙箱）**：服务存活取决于**起它的那条调用是否仍在运行**——前台调用一结束，其进程树（含 `setsid`/`nohup` detach 的）即被回收。要跨调用复用，把它挂在**持续 running 的后台 job** 下托底：`( make debug-start; sleep 3600 )`（`run_in_background` 提交）。否则下一条调用必然连不上（seed `ConnectTimeout` / `debug-test` `✗ FATAL: 调试服务未运行`）；查证：PID 文件有值但 `ss -ltn` 无监听。机制见 `~/.dsh/env.md`。
 
 改了前端后必须 `make build-frontend` 重建 static（或用 `make debug-quick` 一步到位）。
 
@@ -151,6 +146,8 @@ make publish                           # PyPI（token 从 ~/.bash_env 读）
 git push && git push origin vx.y.z     # 推送代码 + tag
 # 升级生产（⚠️ 必须人工）：pipx upgrade peekview && sudo systemctl restart peekview
 ```
+
+> **上传链路与两条发布路径**（`make publish` 走 `pipx run twine`、metadata 版本要求、受限沙箱的 `PIPX_HOME`、CI trusted publishing 对比）见 `docs/process/release.md`「发布工具链」。**写 CHANGELOG 后必须 `git tag -f`** 重指（amend 会让 tag 停在旧提交，DEBT0021）。
 
 MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGELOG → `make pre-publish-npm` → `make publish-npm`
 
@@ -218,6 +215,7 @@ MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGEL
 - **P4/P7 交叉核对**：P4 的 `[DESIGN_GAP:]` 必须在 P7 被转抄 + 配对 `[DESIGN_GAP_REVIEWED:]`
 - **裁剪风险**：涉及 schema 变更/安全/多端 → P6 不可跳；「任务简单」不是合法裁剪理由
 - **机制交叉**：≥2 个子系统交互/时序依赖/跨层影响的改动必须走完整 agate，不可裁剪
+- **dispatch-context 必含 `## 未验证断言` 节**：列出派发时**非源码直读、非实测**的推断（含待验证命令）；无则写「无」。把「先证后说」从自觉变成产出面一次点名（TPV0104 教训：把推演当事实一路传到 P6.5 才被 judge 拦下）
 - **orchestrator-log 必写**：派发前写 NEXT、gate 失败写 GATE FAIL + DIAGNOSIS、subagent 失败写 SUBAGENT FAIL、流程决策写 DECISION——缺任一条视为不合规
 
 ## 详细参考

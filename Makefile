@@ -277,15 +277,21 @@ bump-version:
 	@echo "  1. 编辑 CHANGELOG.md，填写 [$(NEW_VERSION)] 具体变更内容"
 	@echo "     (参考: git log v$$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "上一个tag")..HEAD --oneline)"
 	@echo ""
-	@echo "  2. 更新 CHANGELOG 后执行："
+	@echo "  2. 更新 CHANGELOG 后执行（⚠️ amend 后 tag 必须重指，见下）："
 	@echo "     git add CHANGELOG.md && git commit --amend --no-edit"
+	@echo "     git tag -f v$(NEW_VERSION) HEAD    # ← 必须！amend 会让 tag 停在旧提交"
 	@echo ""
-	@echo "  3. 运行测试并发布："
+	@echo "     理由：Step 5 的 tag 指向 amend **之前**的提交；amend 后 HEAD 变了而 tag 没变，"
+	@echo "           直接 push 会让远端 tag 永久缺少 amend 补入的内容（DEBT0021）。"
+	@echo "     校验：git rev-parse v$(NEW_VERSION) == git rev-parse HEAD"
+	@echo ""
+	@echo "  3. 运行测试并发布（二选一，勿重复发同名版本）："
+	@echo "     a) CI trusted publishing（推荐）：git push && git push origin v$(NEW_VERSION)"
+	@echo "     b) 本地：make publish && git push"
 	@echo "     make pre-publish-quick  # 快速检查"
 	@echo "     make publish            # 发布到 PyPI"
 	@echo ""
-	@echo "  4. 推送到远程："
-	@echo "     git push && git push origin v$(NEW_VERSION)"
+	@echo "  4. 查看整体流程：docs/process/release.md（含两条发布路径对比、工具链说明）"
 	@echo ""
 	@echo "⚠️  MCP Server 版本独立管理，如需更新请单独执行："
 	@echo "     make bump-mcp-version NEW_MCP_VERSION=x.y.z"
@@ -466,9 +472,18 @@ publish:
 	fi; \
 	# 注意：以下仅适用于 publish 的 twine upload（用 \r 覆盖同一行做进度条）。 \
 	# sed 删 ANSI 码并将 \r 转 \n，让进度数字可见。不适用于其他命令。 \
-	cd backend && pipx run twine upload "$$WHEEL" \
+	cd backend && { pipx run twine upload "$$WHEEL" \
 		-u __token__ -p "$$TOKEN" --non-interactive 2>&1 \
-		| sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r/\n/g'
+		| sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\r/\n/g' ; } \
+		|| { \
+			echo ""; \
+			echo "✗ 上传失败。常见原因与解法（详见 docs/process/release.md 「5.4 发布工具链」）："; \
+			echo "  1. pipx 启动即 OSError errno 30（~/.local/state 只读，仅 workspace-write 沙箱会发生）"; \
+			echo "     → 用可写 state 根重跑：PIPX_HOME=\"\$$(mktemp -d)\" make publish"; \
+			echo "  2. InvalidDistribution: '2.x' is not a valid metadata version → twine 需 ≥7（pipx run 会自动取最新）"; \
+			echo "  3. File already exists → 该版本已发布（CI 或上一次本地发布已成功），PyPI 不允许重传"; \
+			exit 1; \
+		}
 	@echo ""
 	@echo "✅ Published to PyPI"
 	@echo "   URL: https://pypi.org/project/peekview/$$(cd backend && python3 -c 'from peekview import __version__; print(__version__)')/"
