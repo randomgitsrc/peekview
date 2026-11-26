@@ -66,6 +66,26 @@ make bump-version NEW_VERSION=x.y.z && make release
 
 ---
 
+## 发布哪个产品：`make ship`（统一入口）
+
+两个产品**版本独立、渠道不同、tag 前缀不同**：
+
+| 产品 | 渠道 | 包名 | tag 格式 | 对应 workflow |
+|---|---|---|---|---|
+| PeekView | PyPI | `peekview` | `v0.28.0` | `publish.yml` |
+| MCP Server | npm | `@peekview/mcp-server` | `mcp-v0.12.0` | `publish-npm.yml` |
+
+`make ship` 会**自上一个基线以来各自的产品目录是否有改动**，自动决定发哪个（或都发、都不发）：
+
+```bash
+make ship DRY=1     # 只打印计划，不动手（建议先跑）
+make ship           # 交互式：只对有改动的产品询问新版本号
+```
+
+判定基线：peekview 用最近的 `v*` tag；mcp 用最近的 `mcp-v*` tag（若该 tag 悬空则回退到 `package.json` 当前版本的 bump 提交）。
+
+> ⚠️ **历史遗留**：`mcp-v0.11.0` / `mcp-v0.12.0` 两个 tag **不在 main 祖先链上**（rebase 遗留的悬空 tag），`git describe` 找不到它们。`make ship` 已处理该情况并在输出中提示。
+
 ## 发布路径：两条，别都走
 
 本项目有**两条**都能把同一版本发到 PyPI 的路径：

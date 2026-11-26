@@ -139,17 +139,19 @@ make debug-extra-stop PORT=8889     # 停止 + 清理该实例数据（⚠️ PO
 ## 发布流程
 
 ```
-make bump-version NEW_VERSION=x.y.z    # 更新 VERSIONS.json + 同步所有文件 + commit + tag
-# 填 CHANGELOG（bump 后必须做）：将 [Unreleased] 移到 [x.y.z] 下，git add CHANGELOG.md && git commit --amend --no-edit
-make pre-publish-quick                 # 快速检查（不 rebuild）
-make publish                           # PyPI（token 从 ~/.bash_env 读）
-git push && git push origin vx.y.z     # 推送代码 + tag
+make ship DRY=1                        # 先看会发哪个产品（按各自产品目录的改动判定）
+make ship                              # bump + 提示后续步骤；CI 负责实际上传
+# 填 CHANGELOG（bump 后必须做）：git add CHANGELOG.md && git commit --amend --no-edit
+#                                 git tag -f vx.y.z HEAD   ← amend 后必须重指（DEBT0021）
+git push && git push --tags            # 推 tag → CI 自动发对应渠道（PyPI / npm）
 # 升级生产（⚠️ 必须人工）：pipx upgrade peekview && sudo systemctl restart peekview
 ```
 
-> **上传链路与两条发布路径**（`make publish` 走 `pipx run twine`、metadata 版本要求、受限沙箱的 `PIPX_HOME`、CI trusted publishing 对比）见 `docs/process/release.md`「发布工具链」。**写 CHANGELOG 后必须 `git tag -f`** 重指（amend 会让 tag 停在旧提交，DEBT0021）。
+> 两个产品版本独立、渠道不同：PeekView → PyPI（tag `v*`，`publish.yml`）；MCP Server → npm（tag `mcp-v*`，`publish-npm.yml`）。**不要再手动 `make publish` / `make publish-npm`**——CI 会做，重复会因版本已存在而失败。
 
-MCP 独立发布：`make bump-mcp-version NEW_MCP_VERSION=x.y.z` → 填 CHANGELOG → `make pre-publish-npm` → `make publish-npm`
+> 上传链路细节（twine / metadata 版本 / 受限沙箱 `PIPX_HOME` / 发布路径对比）见 `docs/process/release.md`「发布工具链」与「`make ship`」。
+
+MCP 手工兜底（CI 不可用时）：`make pre-publish-npm` → `make publish-npm`（正常走 `make ship` + push tag）
 
 ## 技术要点
 

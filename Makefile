@@ -12,7 +12,7 @@ SHELL := /bin/bash
 LOG_DIR ?= /tmp/peekview-bg
 $(shell mkdir -p $(LOG_DIR))
 
-.PHONY: help build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-quick debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry bg-clean
+.PHONY: help ship build build-frontend build-backend build-fast test test-quick test-failed test-frontend test-backend lint lint-fix typecheck guard-venv publish clean install dev debug debug-quick debug-build debug-start debug-stop debug-seed debug-restart debug-test debug-verify-isolation debug-test-mcp debug-status verify-local pre-publish pre-publish-quick bump-version bump-mcp-version sync-version-docs doc-checklist check-docs check-env-vars doc-audit setup-hooks build-mcp test-mcp-unit test-mcp pre-publish-npm publish-npm publish-npm-dry bg-clean
 
 # Default target
 help:
@@ -334,6 +334,80 @@ bump-mcp-version:
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 一键发布（包含完整流程，需设置 CHANGELOG）
+# ══════════════════════════════════════════════════════════════════════════
+# ship — 统一发布入口：按"改动了哪个产品"决定发哪个渠道（CI 负责实际上传）
+#
+#   make ship              # 自动检测：只动 peekview → PyPI；只动 mcp → npm；两者都动 → 都发
+#   make ship BUMP=minor   # 指定 bump 类型（默认 patch；也可 major/minor）
+#   make ship DRY=1        # 只检测并打印计划，不执行
+#
+# 判定方式：自上一个 v* tag（peekview）与上一个 mcp-v* tag（mcp）以来，
+#   各自的产品目录是否有改动。两个产品版本独立，故各自判断。
+# ══════════════════════════════════════════════════════════════════════════
+ship:
+	@set -e; \
+	LAST_PV=$$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo ''); \
+	LAST_MCP=$$(git describe --tags --abbrev=0 --match 'mcp-v*' 2>/dev/null || echo ''); \
+	# ⚠️ 历史上有 mcp-v0.11.0 / mcp-v0.12.0 两个**悬空 tag**（不在 HEAD 祖先链上，\
+	#    应为 rebase 遗留），describe 找不到它们。若最近可达 mcp tag 的版本低于\
+	#    package.json 当前版本，说明有悬空 tag，改用「package.json 版本的 bump 提交」作基线。\
+	PKG_VER=$$(node -p "require('./packages/mcp-server/package.json').version" 2>/dev/null || echo ''); \
+	if [ -n "$$PKG_VER" ] && [ -n "$$LAST_MCP" ]; then \
+		TAG_VER=$${LAST_MCP#mcp-v}; \
+		if [ "$$TAG_VER" != "$$PKG_VER" ]; then \
+			BASE=$$(git log --format='%H' -1 --grep="^chore(mcp): bump to v$$PKG_VER$$" 2>/dev/null || echo ''); \
+			if [ -n "$$BASE" ] && git merge-base --is-ancestor $$BASE HEAD 2>/dev/null; then \
+				LAST_MCP=$$BASE; \
+				echo "  ℹ️  mcp-v$$TAG_VER 为悬空 tag，改用 v$$PKG_VER 的 bump 提交 $$(echo $$BASE | cut -c1-8) 作基线"; \
+			fi; \
+		fi; \
+	fi; \
+	PV_CHANGED=0; MCP_CHANGED=0; \
+	if [ -n "$$LAST_PV" ]; then \
+		git diff --quiet $$LAST_PV..HEAD -- backend/ frontend-v3/ scripts/seed-data/ VERSIONS.json 2>/dev/null || PV_CHANGED=1; \
+	else PV_CHANGED=1; fi; \
+	if [ -n "$$LAST_MCP" ]; then \
+		git diff --quiet $$LAST_MCP..HEAD -- packages/mcp-server/ 2>/dev/null || MCP_CHANGED=1; \
+	else MCP_CHANGED=1; fi; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	echo "🚀 ship — 按改动自动选择发布渠道"; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	echo "  peekview  上一个 tag: $${LAST_PV:-（无）}  → $$([ $$PV_CHANGED = 1 ] && echo '有改动，需发布' || echo '无改动，跳过')"; \
+	echo "  mcp-server 上一个 tag: $${LAST_MCP:-（无）} → $$([ $$MCP_CHANGED = 1 ] && echo '有改动，需发布' || echo '无改动，跳过')"; \
+	echo ""; \
+	if [ $$PV_CHANGED = 0 ] && [ $$MCP_CHANGED = 0 ]; then \
+		echo "两个产品自上次 tag 以来均无改动，无需发布。"; exit 0; \
+	fi; \
+	if [ -n "$(DRY)" ]; then \
+		echo "[DRY] 将执行："; \
+		[ $$PV_CHANGED = 1 ] && echo "  · bump-version → push v 格式 tag → CI publish.yml → PyPI"; \
+		[ $$MCP_CHANGED = 1 ] && echo "  · bump-mcp-version → push mcp-v 格式 tag → CI publish-npm.yml → npm"; \
+		exit 0; \
+	fi; \
+	if [ $$PV_CHANGED = 1 ]; then \
+		echo "→ [peekview] 当前版本 $$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['peekview'])")，请给出新版本："; \
+		printf "  NEW_VERSION: "; read PV_NEW; \
+		[ -n "$$PV_NEW" ] || { echo "  ✗ 未提供版本号，中止"; exit 1; }; \
+		make bump-version NEW_VERSION=$$PV_NEW; \
+	fi; \
+	if [ $$MCP_CHANGED = 1 ]; then \
+		echo "→ [mcp-server] 当前版本 $$(python3 -c "import json;print(json.load(open('VERSIONS.json'))['mcp_server'])")，请给出新版本："; \
+		printf "  NEW_MCP_VERSION: "; read MCP_NEW; \
+		[ -n "$$MCP_NEW" ] || { echo "  ✗ 未提供版本号，中止"; exit 1; }; \
+		make bump-mcp-version NEW_MCP_VERSION=$$MCP_NEW; \
+	fi; \
+	echo ""; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	echo "✅ 版本已 bump。后续步骤（人工）："; \
+	echo "  1. 填写 CHANGELOG.md 各自的版本节"; \
+	echo "  2. git add CHANGELOG.md && git commit --amend --no-edit"; \
+	[ $$PV_CHANGED = 1 ] && echo "  3. git tag -f v$$PV_NEW HEAD      # amend 后必须重指（DEBT0021）"; \
+	[ $$MCP_CHANGED = 1 ] && echo "  4. git tag -f mcp-v$$MCP_NEW HEAD"; \
+	echo "  5. git push && git push --tags    # CI 自动发布到对应渠道"; \
+	echo ""; \
+	echo "  ⚠️ 不要再跑 make publish / make publish-npm——CI 会做，重复会因版本已存在而失败。"; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 release:
 	@if [ -z "$(NEW_VERSION)" ]; then \
 		echo "Usage: make release NEW_VERSION=x.y.z"; \
