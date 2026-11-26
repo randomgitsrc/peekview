@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-11-26
+
 ### 新增
 
 - HTML 预览的资源注入预算与跳过清单：同源 sibling 资源（CSS/JS/图片/字体）内联现在有明确上限——最多 **40 个资源**、单个文本文件 **2 MiB**、总计 **8 MiB**；超出上限的资源会被跳过，并在渲染结果尾部写一个可机器解析的 `<script type="application/json" id="peekview-inject-report">` 块（`requested` / `inlined` / `skipped[]`，每项含 `file_id` / `filename` / `path` / `reason` / `size`，`reason` 取值 `count_limit` / `file_too_large` / `binary_too_large` / `total_budget` / `not_found` / `not_injectable`）。此前超限是静默丢弃，资源没生效时无从判断原因；该块面向工具与 Agent 读取，普通浏览者不会在页面上看到它（TPV0104）

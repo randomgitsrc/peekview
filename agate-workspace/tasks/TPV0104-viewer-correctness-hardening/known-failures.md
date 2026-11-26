@@ -15,6 +15,14 @@ generated_by: 主 Agent（P5 阶段）
 | 2 | `frontend-v3/e2e/viewer.spec.ts` | 18 | `markdown-test` 归 `frontend-team` → `team_id` 强制 `is_public=false`（`entry_service.py:200`）→ 匿名 `GET` 404 → `entry.files` 为 `undefined` → `TypeError: Cannot read properties of undefined (reading 'find')` | 否（**TPV0095 / `59182590`（2026-09-03）引入**） | `make debug-start && make debug-seed && E2E_SPEC=e2e/viewer.spec.ts make debug-test` → `18 failed / 20 passed`；失败信息见 `test-results/viewer-*/error-context.md` | `grep -rln "markdown-test\|mermaid-charts" frontend-v3/e2e/` → `viewer.spec.ts` / `t091-*.spec.ts` / `tpv0099-*.spec.ts` 三处；**`tpv0099` 已带认证故不红**，前两者无登录态 → 同源 | 推迟。BDD-50 判据已按「失败集不劣于基线」写，非要求全绿。根治需给这两个 spec 加认证配对（属 TPV0095 遗留债，单独立项） |
 | 3 | `frontend-v3/e2e/t091-mobile-detail-visual-polish.spec.ts` | 14 | 同 #2（`markdown-test` 匿名 404 → `toBeVisible()` 找不到 `meta-tags-bar` / `mobile-bottom-bar` / `markdown-body`） | 否（同 TPV0095 遗留） | `E2E_SPEC=e2e/t091-mobile-detail-visual-polish.spec.ts make debug-test` → `14 failed / 12 passed` | 同上 | 推迟（同 #2） |
 
+## 并发 flaky（非本任务引入，串行可过）
+
+| # | 测试文件 | 失败数 | 根因 | 复现证据 | 处理 |
+|---|---------|--------|------|---------|------|
+| F1 | `backend/tests/test_admin_backup.py` | 0–2（视并发度） | `pytest-xdist -n auto` 下备份/恢复用例涉及文件系统时序，并发执行时偶发失败（`TestBdd01ConsistentBackup::test_backup_db_is_consistent_snapshot` / `TestBdd10BasicRestore::test_restore_into_empty_target`） | 串行全量 `pytest tests/ -q -p no:randomly` → **仅 `test_cli_remote` 1 项失败**（`test_admin_backup` 40 passed）；`-n auto` 三次实测分别 3F / 2F / 1F，**失败集不稳定**即 flaky 指纹 | 不修（属测试并发隔离问题，与本任务无关）；发布验证以串行全量结果为准 |
+
+> **发布时的判据**：`make test-quick`（xdist）允许 `test_admin_backup` 偶发失败；判定标准为「串行全量仅预存 `test_cli_remote` 失败」。
+
 ## 基线计数瑕疵（非失败，但影响判据可复现性）
 
 | # | 现象 | 说明 | 处理 |

@@ -126,7 +126,7 @@ remote:
 ### Health
 
 ```
-GET /health → { "status": "ok", "version": "0.27.1" }
+GET /health → { "status": "ok", "version": "0.28.0" }
 ```
 
 ### Entries
