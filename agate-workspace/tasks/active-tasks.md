@@ -38,6 +38,11 @@
 | TPV0102 | explore-card-list-ux | ✅已完成 | DONE | 🟠 | 无 | 2026-11-10 | 2026-11-11 |
 | TPV0103 | time-format-mainline | ✅已交付（hotfix，流程中止） | PAUSED | 🟠 | TPV0102（推翻其 P0 决策 1.3） | 2026-11-11 | 2026-11-11 |
 | TPV0104 | viewer-correctness-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-11-24 | 2026-11-26 |
+| TPV0105 | mcp-oauth-remote | ⬜ 待开始 | P0✅ | 🟡 | 无（前置：公网入口需人工开通） | 2026-11-28 | 2026-11-28 |
+
+### TPV0105: 远程 MCP 接入与 OAuth 2.1 认证
+
+来源：用户提供提案 `https://s4.vide.cc:19093/kffgaj`。目标——Gemini / Claude / ChatGPT 等消费级平台**无需手填 `Authorization: Bearer pv_xxx`** 即可直连 PeekView MCP。P0 实测推翻提案两处前提：①**`:13003` 公网完全不可达**，`:19093` 是 PeekView SPA 且 `/.well-known/*` 被 catch-all 返回 HTML——公网可达性是**前置硬阻塞**，不是 Phase 1 子项；②提案 Phase 1「粘 `pv_` key 换 JWE」与其自称痛点（消除复制粘贴 key）**自相矛盾**，P0 建议跳过 JWE、把 AS 直接落在有登录态的 PeekView 后端。SDK 能力已实证：`mcpAuthRouter` 在 express 4.22.2 下 `tsc` 通过，元数据 / AS 元数据 / DCR 三端点实测 `200/200/201`；裸 `/.well-known/oauth-protected-resource` **不被注册**（需补兜底路由）。范围：RS 双模式鉴权 + AS 最小实现（`/authorize` `/token` `/register`，PKCE S256）+ scope 两级 + 授权页 + `pv_` 静态 key 向后兼容。排除：撤销管理页、refresh_token、生态复用、改 DSH 配置、改生产反代。**risk=high**（首次对外签发凭证）。P1 首要裁决：是否跳过 JWE 快速路径。
 
 ### TPV0099: 全屏模式链接（`/{slug}/f`）
 
@@ -242,6 +247,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-11-28 | 立项 TPV0105 | mcp-oauth-remote（来源用户提案 `https://s4.vide.cc:19093/kffgaj`）。目标：Gemini/Claude/ChatGPT 免手填静态 Header 直连 PeekView MCP。**P0 实测推翻提案两处前提**：①`:13003` 公网完全不可达（`curl` 返回 000），`:19093` 是 PeekView SPA 且 `/.well-known/*` 被 catch-all 吞成 `text/html`（HTTP 200 而非 404，更容易误判为"通了"）——公网可达性是**前置硬阻塞**，提案却把它当 Phase 1 的自然结果；②提案 Phase 1「授权页粘 `pv_` key 换 JWE」与其列的头号痛点（「手动创建、复制、粘贴 API Key，移动端体验极差」）**自相矛盾**——只是把粘贴从配置框挪到授权页。P0 立场：跳过 JWE，AS 直接落在**有登录态**的 PeekView 后端（原 Phase 2），MCP Server 退化为纯 RS；同 origin 才能复用 `peekview_token` Cookie，跨 origin 则被迫重新登录或再粘 key。**SDK 可行性已实证非推断**：`mcpAuthRouter` + `OAuthServerProvider` 在 express 4.22.2 下 `tsc --noEmit` 通过，实跑三端点 `required-resource/mcp` 200、`authorization-server` 200、`POST /register` 201；**裸 `/.well-known/oauth-protected-resource` 不被注册**（SDK 按 resource path 生成），需补兜底路由。范围：RS 双模式 + AS 最小（authorize/token/register + PKCE S256）+ scope 两级 + 授权页 + `pv_` 静态 key 向后兼容。排除：撤销管理页、refresh_token、生态复用、改 DSH 配置、改生产反代。**risk=high**。5 条未验证断言已登记 |
 | 2026-11-26 | 完成 TPV0104 | viewer-correctness-hardening → **v0.28.0**（peekview minor 0.27.1→0.28.0，tag `v0.28.0` 在位、PyPI 已发）。P0–P8 全走 + P6.5 judge **54/54**；**54 条 BDD 全 PASS**；14 条 CHANGELOG 条目（新增 3 / 变更 7 / 修复 4）。实际交付 8 项规划内 + **7 个 P4/P5 期间新发现的深度缺陷**：注入预算字节/字符记账错配（实测 12 个中文 CSS 产出 **23 MiB**，预算 8 MiB 的近 3 倍且自报无跳过）、`İ`(U+0130) 劈裂 `</body>` 致跳过清单落到 body 外、`not_injectable` 项缺 `file_id`、标题锚点冲突（`## foo`/`## foo`/`## foo-1` 前者同时得 `foo-1`）、切 entry 时 `?file=` 被忽略（Router 复用组件）、快切竞态（慢请求覆盖新页面）、5 条读路径文件顺序不确定。新增 `default-file.ts` / `file-bytes.ts` / `useEntryDetailUrlSync.ts` / `docs/architecture/html-preview-security-modes.md`。**状态修正**：任务板此前停在「READY，未 bump/未 tag」与实际不符，已转 DONE 并补 history |
 | 2026-11-24 | 修正 TPV0104 概念错误 | 用户指出：`firstFileId` 与 `file` **不是一回事**。此前误当同一参数的两种拼写并让 P1「二选一」——实测二者机制不同：`firstFileId` 是**一次性种子**（`EntryDetailView:238` 加载完即 `router.replace({query:{}})` 清除、页内切文件从不更新、刷新即丢），`file` 要求**持续态**（刷新保留 / 切换同步 / 切回默认才移除）。**不是改名是机制替换**。另补充实测：`share` 能「消费即清」是因 `isShareActive` 读服务端返回的 `shareContext`，有上下文兜底；`file` 无此兜底，照抄即丢。已写 §7.4.1 专节 + 改写冲突表第 1 行 + 修 5 处表述 + 新增 1 条 BDD（`?file=` 加载后必须仍在 URL）。BDD 44→45 |
 | 2026-11-24 | 再扩展 TPV0104 | 合并 `docs/notes/issues-20261124-1612.md`（增加全屏阅读入口）——与 1553 **互补**：1553 定 URL 语义与默认入口，1612 补上「普通页 → 全屏」的操作入口（1553 §4.1 假设的现有入口实测不存在）。决策 7.3 改为**确定新增按钮**：位置优先 Header 工具区、图标 `Maximize` + 文字「全屏阅读」、桌面移动端均可发现；五条禁止项（不得只放文件树 / 不得每文件一个按钮 / 不得加选择器 / 不遮挡内容 / 不得假定 `files[0]`）。BDD **40→44 条**。**P1 待定项收敛为一个**：参数名 `file`（文档方案，URL 契约变更）vs 保留 `firstFileId`（零迁移） |

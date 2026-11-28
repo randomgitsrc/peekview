@@ -1,0 +1,26 @@
+task_id: TPV0105
+phase: P0
+retries: {}
+meta:
+  priority: medium
+  title: 远程 MCP 接入与 OAuth 2.1 认证
+task_name: mcp-oauth-remote
+created: '2026-11-28'
+updated: '2026-11-28T14:55:00Z'
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: '2026-11-28 14:48:18+00:00'
+  note: 立项：远程 MCP 接入与 OAuth 2.1 认证（来源 PeekView 提案 entry kffgaj）。目标：让 Gemini/Claude/ChatGPT
+    等消费级平台无需手填静态 Header 即可直连 PeekView MCP。P0 实测推翻提案两处前提：①:13003 公网完全不可达，:19093 是 SPA
+    且 .well-known/* 被 catch-all 吞成 HTML，故「公网可达性」是前置硬阻塞而非 Phase 1 子项；②提案 Phase 1 的「粘
+    pv_ key 换 JWE」与其自称痛点（消除复制粘贴 key）自相矛盾，建议跳过 JWE 直接把 AS 落在有登录态的 PeekView 后端。SDK 能力已实证：mcpAuthRouter
+    在 express 4.22.2 下 tsc 通过，元数据/AS 元数据/DCR 三端点实测 200/201，裸 /.well-known/oauth-protected-resource
+    不被注册（需补兜底路由）。范围：RS 双模式 + AS 最小实现（authorize/token/register，PKCE S256）+ scope 两级
+    + 授权页 + pv_ 静态 key 向后兼容。排除：撤销管理页、refresh_token、生态复用、改 DSH 配置、改生产反代。risk=high（首次对外签发凭证）。
+- phase: P0
+  action: pending-start
+  ts: '2026-11-28T14:55:00Z'
+  note: P0 完成，等用户「开工」指令进 P1。P1 首要裁决三条分歧，尤其分歧 2（是否跳过 JWE 快速路径）——它决定架构形态。
