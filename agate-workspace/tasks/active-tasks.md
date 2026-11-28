@@ -58,7 +58,27 @@
 
 **规模基线**：API **58** 个 path+method（openapi 实测：entries 16 / admin 9 / teams 8 / auth 7 / root 6 / apikeys 4 / config 3 / captcha 3 / stars 2）；生产 DB 16 张表无 OAuth 表；OAuth 概念在 backend/frontend/mcp src **全量 grep 计数 0**；加密依赖只有 `python-jose[cryptography]`，无 authlib；前端 11 条路由**无 `/login`**，`/admin` 指向 `NotFoundView`。
 
-**结构**：六大工作领域 W1–W6 / 非目标 11 条 / 可验证完成条件 **C1–C32** / 阶段 **S0–S5**（S0 现状确认强制先于 S1 设计）/ 待决策 **D1–D12** 全部留 S1 / 风险 R1–R8 / 未验证断言 U1–U11。**risk=high**。
+**结构**：六大工作领域 W1–W6 / 非目标 11 条 / 可验证完成条件 **C1–C32** / 阶段 **S0–S5**（S0 现状确认强制先于 S1 设计）/ 风险 R1–R8 / 未验证断言 **U1–U14**。**risk=high**。
+
+**架构决策（2026-11-29 用户裁定 D1/D4，brief 第八节）**：
+
+| 决策 | 内容 |
+|---|---|
+| **D1 AS 形态** | **逻辑独立、部署内置**——第一阶段作为 Peekview 后端**内部独立模块**，不引独立进程、不部署 Keycloak/Ory/authentik；协议实现优先复用成熟库；保留未来独立部署可能但**不得提前引入基础设施** |
+| **D4 Scope** | Grant 保留**最小 Scope**，只做**粗粒度**（如读写）；粒度**须先由「58 API × 6 MCP 工具 × 实际风险」对照表推出**，不预设细粒度；API Key 保留兼容，**不强制**引入 Key Scope，**不要求**改造成 Grant |
+| **共同约束** | User 权限 / 凭证或 Grant 限制 / 资源规则**三者同时满足**（交集非并集），固化为不变量 **I1**（Scope 不能提权）/ **I2**（缺省拒绝，无 scope ≠ 无限 scope）/ **I3**（L4 不被 L2 短路） |
+
+**D1 补充了三条可判定含义**（用户只给方向，没钉判据会导致 S1 演变成「独立 service 包 + 独立端口」，反而违反「不得提前引入基础设施」）：代码边界独立（AS 不在 `auth.py` 内）/ 不新增进程端口容器 / 状态设计上可分离。
+
+**D4 把顺序绑死了**：「Scope 粒度由 API×工具×风险表推出」与 S0 输出物是同一件事。旧方案 TPV0105 直接定 `docs:read`/`docs:write` 时并没有这张表——这次要求先出表再定粒度。
+
+**I2 直指 3.4 的实证根因**：现有 `pv_` 之所以能删用户，本质就是「无 scope 被当作无限 scope」。OAuth 路径若照抄这个默认值，等于把同一缺陷复制到新凭证上。
+
+**D1 依赖侧核实（本轮实测，供 S1/D8）**：项目**无 authlib**（venv `ModuleNotFoundError`，`pyproject.toml:25-43` 无）；`pip download authlib==1.9.10` 解包后查 `authlib/integrations/` = base_client / django_client / django_oauth1 / **django_oauth2** / flask_client / flask_oauth1 / **flask_oauth2** / httpx_client / requests_client / sqla_oauth2 / starlette_client——**AS 侧只有 Flask 与 Django，无 `starlette_oauth2`/`fastapi_oauth2`**，官方文档 AS 章亦只列这两种。但 `rfc6749/authorization_server.py` 中 `flask`/`django`/`request.args`/`request.form` 各 **0** 次命中，且 `flask_oauth2/authorization_server.py` 仅 **165 行** ⇒ **协议逻辑可复用、框架适配须自写**。这与「不自研协议」不冲突，但**工作量不能按零算**，已记 U13 交 S1 评估。
+
+**D5 被 D4 收窄**：D4 定了「本次不强制 API Key Scope」，故 D5 只能在「保留现状显式记风险」与「提供可选限权 Key」间选，**不得**推出「全面改造 API Key 为 Grant」。已写进 8.4 该行，防止 S1 越界。
+
+**变更门槛**（用户原话）：「如果代码审计发现存在足以推翻这些选择的实际技术约束，应提供具体证据、影响和替代方案，再提出变更，而不是自行扩大建设范围。」已固化为 brief 8.5：推翻须走「证据 + 影响 + 替代方案」三件套并经用户确认。**本轮核实的 authlib 事实不构成推翻 D1 的理由**——D1 选的是部署形态，框架适配自写不改变该形态选择。
 
 **与 TPV0105 的关系**：保留其全部文件不改，5 项不继承（架构 / 组件选型 / Token 设计 / MCP 部署假设 / Scope 划分），4 类可复用须复核，6 条教训已吸收。
 
@@ -309,6 +329,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-11-29 | **TPV0107 架构决策定案** | 用户裁定 **D1/D4** 及三类权限隔离原则，写入 brief 第八节（8.1/8.2/8.3 已定，8.4 余 D2–D3、D5–D12 留 S1，8.5 固化不重开原则）。**D1**：AS **逻辑独立、部署内置**——第一阶段为 Peekview 后端内部独立模块，不引独立进程、不部署 Keycloak/Ory/authentik，协议优先复用成熟库，保留未来独立部署可能但不得提前引入基础设施。**为免 S1 各自理解，补三条可判定含义**：代码边界独立（AS 不在 `auth.py` 内）/ 不新增进程端口容器 / 状态设计上可分离。**D4**：Grant 保留最小 Scope、只做粗粒度（读写），**粒度须先由「58 API × 6 MCP 工具 × 实际风险」表推出，不预设细粒度**——该表即 S0 输出物，顺序不可颠倒；API Key 保留兼容、不强制 Key Scope、不要求改造成 Grant。**8.3 共同约束**：User 权限 / 凭证或 Grant 限制 / 资源规则**三者同时满足**，固化为 I1（Scope 不能提权）/ I2（缺省拒绝，无 scope ≠ 无限 scope）/ I3（L4 不被 L2 短路）——**I2 直指 3.4 实证根因**：`pv_` 能删用户本质就是「无 scope 当无限 scope」，OAuth 路径照抄即复制缺陷。**D5 被 D4 收窄**：只能在「保留现状显式记风险」与「提供可选限权 Key」间选，不得全面改造 API Key。**依赖侧核实（实测）**：项目无 authlib（venv `ModuleNotFoundError`）；authlib 1.9.10 wheel 解包查 `integrations/`，**AS 侧只有 flask_oauth2 与 django_oauth2，无 starlette_oauth2/fastapi_oauth2**，官方 AS 文档亦只列 Flask/Django；但 `rfc6749/authorization_server.py` 中 `flask`/`django`/`request.args`/`request.form` 各 0 次命中、`flask_oauth2/authorization_server.py` 仅 165 行 ⇒ **协议可复用、框架适配须自写**，不构成推翻 D1（D1 选的是部署形态），但工作量不能按零算，记 U13 交 S1。新增 U12–U14 |
 | 2026-11-29 | **立项 TPV0107** | unified-auth-mcp-authorization（🔴 high）：**Peekview 统一访问认证与 MCP 授权体系建设**，仅创建 Task 与任务定义，**未实施开发**。核心命题不是统一 Token 格式，而是建立身份与权限关系——四层 L1 认证 / L2 凭证授权 / L3 用户权限 / L4 资源决策，现状 **L2 基本空白**（`pv_` 无 scope、无 OAuth grant），是本任务要补的断层。**本轮最重发现（实跑复现）**：管理员用**自己的** `pv_` Key 可调 `GET /admin/stats`(200)、`GET /admin/users`(200)、**`DELETE /admin/users/{id}`(204，用户实际被删)**——脚本钥匙等价管理员密码，进 D5 待 S1 比较两个方向。**两处修正 TPV0105 绝对化表述**：①`.well-known` 非「永远 200 HTML」，实为按 `Accept` 头分裂——`*/*` → `200 text/html`，`application/json` → `404` 且文案 `Entry not found: .we...`（`main.py:611` catch-all 转 `resolve_entry_raw` 当 slug 查），OAuth 客户端通常见后者；②静默降级后果**窄于**旧述——`require_auth` 端点无效凭证仍返 401，只有允许匿名端点不可区分，私有资源 404 是**有意防枚举**（`entry_service.py` 注释 N8），**这条直接决定 C8 正确写法**，照旧表述会推出"所有端点一律报错"进而破坏匿名访问。**编号不复用 0106**：目录已随 revert 移除、看板引用为 0、`git diff 16c5aabc` 为空，但 `.gate-history.jsonl:88` 仍留其 `task_created` 事件（哈希链），按指令「不得擅自占用或复用」新分配 0107（`git log --all` 确认从未出现）。规模基线 openapi 实测 **58** 个 path+method（此前记录 52，因统计口径含 root 6 项）；生产 DB 16 表无 OAuth 表；OAuth 概念三处 src **grep 计数 0**；无 authlib；前端 11 路由无 `/login`，`/admin` → `NotFoundView`。结构：W1–W6 / 非目标 11 条 / **C1–C32** / **S0–S5**（S0 强制先于 S1）/ **D1–D12** 留 S1 / R1–R8 / U1–U11。与 TPV0105：文件全留不改，5 项不继承 + 4 类可复用须复核 + 6 条教训已吸收 |
 | 2026-11-29 | **作废 TPV0105** | 用户决定作废。P0 完成且经两轮独立审查，**未进 P1、无任何代码产出**（`backend/`/`frontend-v3/`/`packages/mcp-server/` 零改动）。作废原因属产品决策，不作技术评判。**调研结论保留**（见任务说明段）：①现有 MCP 对新版规范构成 passthrough anti-pattern——6 个工具经 `client.ts:39` 原样转发客户端凭证，此形状与是否做 OAuth 无关，将来接入遵循新版规范的下游需改 token exchange；②`.well-known` 被 `main.py:598` 的 SPA catch-all 吞成 `200 text/html`（比 404 更危险），任何新 `.well-known` 路径都须排在 `_setup_static_files` 之前；③认证体系 11 项实测事实（HS256 共用密钥 / 无 aud-iss 校验 / `pv_` 等同完整用户含 admin / cookie 分支无类型判别 / 无 scope 概念 / `/login` 死路由 / API 共 52 条）行号可直接查；④规范侧结论（DCR 于 2026-07-28 已 Deprecated 且 SHOULD NOT adopt、CIMD 为 SHOULD、Gemini 可手填替代 DCR、RFC 9068 是 JWT AT 标准 profile、jose 的 `access_token=True` 不校验 typ、`to_dict()` 不产 kid/use）。P0-brief（1290 行 18 节）保留在库未删，若重启须先核对其事实是否仍成立 |
 | 2026-11-29 | 修订 TPV0105 P0 | brief 第 3 版，**两轮独立审查**（首轮 FAIL / 二轮 PASS WITH ISSUES，阻断项全修）。**首轮最严重发现不在 OAuth 流程而在下游调用**：规范明文 "The MCP server **MUST NOT** pass through the token it received from the MCP client"，而 MCP 的 6 个工具全部经 `client.ts:39` 把客户端 token 原样转给 API；上版 brief 还自相矛盾地同时要求「MCP token 调 API 必须 401」与「6 个工具都调 API」——两条成立会让所有工具失效。已新增第六节 + **D11**（RFC 8693 token exchange）+ 6.5（交换端点必须认证调用方，否则 exchange 自身成漏洞，引 RFC 8693 §2.1 原文）+ E1b–E1g。其余阻断：B2 `/auth/me` 曾被允许做 OAuth 身份解析（等于重开跨资源洞）改为一律不调用、MCP 本地验签取 claim；B3 多 `resource`→多 audience（RFC 8707 §3）新增 3.2.1；B4 TTL 1h 与「无 refresh」自相矛盾（1h≠每天一次）改 12h 并显式记录泄露窗口；B5 路由 45→**52**（openapi 实测，11 纳入+41 排除，逐模块对账）；B6 JWK `to_dict()` 不产出 `kid`/`use`（上版误记）修正 V8 + 新增 7.5（RFC 7638 指纹轮换）。**自我纠正两处过度断言**：Gemini 非「DCR 实质强制」（官方给 Play Console 手填替代）；「规范对 token 格式无规定」应为「不强制但以 RFC 9068 为推荐」。采用 **RFC 9068**（`typ: at+jwt` + iss/exp/aud/sub/client_id/iat/jti），不自造 `token_use`；新增 9.1.1 记录 Gemini「不轮换 refresh」与 MCP「公共客户端 MUST 轮换」的真实规范冲突。清理 8 处残留矛盾（D8 利弊、U10、D2 路由数、「TTL 短」、死引用×4、E0 计数）。**risk=high**（已知风险 5→7 项，首项为 passthrough） |

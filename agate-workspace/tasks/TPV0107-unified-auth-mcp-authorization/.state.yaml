@@ -21,5 +21,18 @@ history:
 - phase: P0
   action: pending-start
   ts: '2026-11-29T03:15:00+00:00'
-  note: 'P0 完成，等用户「开工」进 P1。P1 首要动作是 S0 现状确认而非设计。若用户想先定方向，建议聚焦 D1（AS 落点）与 D4（scope
-    是否必要）——这两项决定体系形态。'
+  note: 'P0 完成，等用户「开工」进 P1。P1 首要动作是 S0 现状确认而非设计。'
+- phase: P0
+  action: decision-recorded
+  ts: '2026-11-29T03:40:00+00:00'
+  note: '用户裁定 D1/D4 与三类权限隔离原则，写入 brief 第八节（8.1 D1 已定 / 8.2 D4 已定 / 8.3 共同约束 / 8.5 不重开原则），D2–D3、D5–D12
+    仍留 S1。D1：AS 逻辑独立、部署内置——第一阶段作为 Peekview 后端内部独立模块，不引独立进程、不部署 Keycloak/Ory 等完整 IAM；协议实现优先复用成熟库；保留未来独立部署可能但不得提前引入基础设施。为免 S1
+    各自理解，钉死「逻辑独立、部署内置」三条可判定含义：代码边界独立（AS 不在 auth.py 内）、不新增进程/端口/容器、状态设计上可分离。D4：Grant 保留最小 Scope，只做粗粒度（如读写），**粒度须先由「58
+    API × 6 MCP 工具 × 实际风险」对照表推出，不预设细粒度**——该表正是 S0 输出物，顺序不可颠倒（旧方案定 docs:read/docs:write 时未做此表）；API Key 保留兼容，不强制引入 Key
+    Scope，不要求改造成 Grant。8.3：User 权限 / 凭证或 Grant 限制 / 资源访问规则三者须**同时满足**（交集非并集），写为三条不变量 I1（Scope 不能提权）/ I2（缺省拒绝，无 scope
+    ≠ 无限 scope）/ I3（L4 不被 L2 短路）；其中 I2 直指 3.4 的实证根因——现有 pv_ 危险正因「无 scope 被当作无限 scope」，OAuth 路径若照抄该默认值等于复制缺陷。另核实 D1
+    依赖侧事实（供 S1/D8 用）：项目无 authlib（venv ModuleNotFoundError，pyproject 依赖清单无）；authlib 1.9.10 wheel 解包实测其 integrations 中
+    AS 侧只有 flask_oauth2 / django_oauth2，**无 starlette_oauth2 / fastapi_oauth2**，官方文档 AS 章亦只列 Flask/Django；但 rfc6749 核心与框架无关（import
+    中 flask/django 各 0 次），flask 集成层仅 165 行 ⇒ **协议可复用、框架适配须自写**，与「不自研协议」不冲突，S1 须把该工作量显式计入而不能按「装个库就有 AS」估算。D5 因 D4
+    已定而不强制 Key Scope 故收窄为「保留现状显式记风险」或「提供可选限权 Key」，不得推出全面改造。新增 U12–U14（authlib 未来 Starlette 集成 / 适配层工作量 / I1–I3
+    与现有代码兼容性）。'
