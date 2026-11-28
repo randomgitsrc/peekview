@@ -38,23 +38,51 @@
 | TPV0102 | explore-card-list-ux | ✅已完成 | DONE | 🟠 | 无 | 2026-11-10 | 2026-11-11 |
 | TPV0103 | time-format-mainline | ✅已交付（hotfix，流程中止） | PAUSED | 🟠 | TPV0102（推翻其 P0 决策 1.3） | 2026-11-11 | 2026-11-11 |
 | TPV0104 | viewer-correctness-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-11-24 | 2026-11-26 |
-| TPV0105 | mcp-oauth-remote（PeekView 全项目 OAuth 2.1 身份层） | ⬜ 待开始 | P0✅（第 3 版，两轮审查通过） | 🟡 | 无 | 2026-11-28 | 2026-11-29 |
+| TPV0105 | mcp-oauth-remote（PeekView 全项目 OAuth 2.1 身份层） | 🚫已作废（用户决定） | CANCELLED | — | 无 | 2026-11-28 | 2026-11-29 |
 
-### TPV0105: PeekView 全项目 OAuth 2.1 身份层
+### TPV0105: PeekView 全项目 OAuth 2.1 身份层（🚫 已作废）
 
-给 PeekView 与 peekview-mcp 建立统一 OAuth 2.1 授权体系，使**消费级平台**（Gemini / Claude.ai / ChatGPT）可凭标准流程接入远程 MCP，**本地 IDE 的 `pv_` 静态 key 行为完全不变**。AS 落在 PeekView 后端（账号/JWT/登录态/captcha 所在，且同 origin 才能复用 Cookie），MCP 为纯 RS。**推论：Node 的 `mcpAuthRouter` 用不上**（express 中间件），AS 端点手写 FastAPI。
+**2026-11-29 用户决定作废。** P0 立项完成并经营两轮独立审查，未进入 P1，**无任何代码产出**（工作树未因本任务改动 `backend/`、`frontend-v3/`、`packages/mcp-server/` 任何一行）。
 
-**brief 已修订 3 版，经两轮独立审查（FAIL → PASS WITH ISSUES，阻断项全修）。首轮抓出的最严重问题不在 OAuth 流程，而在下游调用：**
+作废不代表调研白做——P0 期间实测出的**既有缺陷与规范约束**对将来任何涉及 MCP 认证的改动能直接复用，保留在此供查阅：
 
-> 规范明文 "The MCP server **MUST NOT** pass through the token it received from the MCP client"（security-considerations），而 peekview-mcp 的 **6 个工具全部**经 `client.ts:39` 把客户端 token 原样转给 PeekView API（`V21`）。上版 brief 还自相矛盾地同时要求「MCP token 调 API 必须 401」与「6 个工具都调 API」——**两条成立会让所有工具失效**。已新增第六节 + 决策 **D11**（RFC 8693 token exchange），并补 6.5（交换端点必须认证调用方，否则 exchange 自己成漏洞）+ E1b–E1g 六条验收。
+**① 最值得记的一条：现有 MCP 对新版规范而言是 passthrough anti-pattern**
 
-**其余阻断项**：B2 `/auth/me` 曾被错误允许做 OAuth 身份解析（等于重开跨资源洞）→ 改为 OAuth 路径完全不调用、MCP 本地验签取 claim；B3 多 `resource` → 多 audience（RFC 8707 §3 警告）→ 新增 3.2.1；B4 TTL 1h 与「无 refresh」自相矛盾 → 改 12h 并显式记录泄露窗口；B5 路由清点 45→**52**（openapi 实测，11 纳入 + 41 排除，逐模块对账）；B6 JWK `to_dict()` 不产出 `kid`/`use`（上版误记）→ 修正 V8，新增 7.5（RFC 7638 指纹轮换）。
+> "The MCP server **MUST NOT** pass through the token it received from the MCP client." — MCP 2026-07-28 security-considerations
 
-**自我纠正两处过度断言**：Gemini 并非「DCR 实质强制」（官方给了 Play Console 手填替代路径）；「规范对 token 格式无规定」应为「不强制但以 RFC 9068 为推荐」。**采用 RFC 9068**（`typ: at+jwt` + 标准 claims），不自造 `token_use`。
+peekview-mcp 的 6 个工具全部经 `client.ts:39` 把客户端 token 原样转给 PeekView API，`server.ts:104` 只查 `pv_` 前缀、从不验证该凭证是否"签发给 MCP"。`pv_` key 本来就是 PeekView API 的钥匙，所以长期没人察觉。**做与不做 OAuth，这个形状都存在**；若将来接入任何遵循新版规范的下游，需改为 token exchange（RFC 8693）并认证交换端点（RFC 8693 §2.1 明文警告不认证的后果）。
 
-**brief 结构**：18 节 / 8 条实测缺口 / 27 条已验证事实 / 17 条未验证断言 / 33+ 验收场景 / D1–D11 决策 / 9.1.1 记录 Gemini 与 MCP 的 refresh 轮换规范冲突。
+**② `.well-known` 被 SPA catch-all 吞掉（真实现存缺陷）**
 
-**risk=high**。P1 需收敛 D1–D11：4 项规范强制不可重开、5 项实现选择、3 项需用户/部署输入。最关键是 **D11 下游凭证分离**——它决定 MCP 的整个调用拓扑。
+`main.py:598` 的 `serve_spa_catchall` 注册在所有 router 之后，只对 `api/`、`health` 前缀 404。`/.well-known/*` 会落到 `index.html`，返回 **`200 text/html` 而非 404**——比 404 更危险，客户端会当成"端点存在"然后解析失败。将来注册任何 `.well-known` 路径（jwks、内容凭据等）都必须排在 `_setup_static_files` 之前。
+
+**③ 认证体系现状（实测，行号可直接查）**
+
+| 事实 | 位置 |
+|---|---|
+| HS256，密钥 `~/.peekview/.secret_key`，与会话 JWT 共用 | `auth.py:26-28` |
+| `decode_access_token` 只验签名与 `exp`，**无 `aud`/`iss`** | `auth.py:121-135` |
+| `get_current_user` 优先级：header JWT > cookie JWT > `pv_` | `auth.py:146-189` |
+| `pv_` key 验证后返回 `User`，权限等同登录**含 admin** | `auth.py:181-189` |
+| cookie 分支无类型判别，OAuth token 塞进 cookie 会静默降级匿名 | `auth.py:158-161` |
+| `_looks_like_jwt` 只判"3 段" | `api/_shared.py:85-87` |
+| 全局 master key 有独立的裸 `Authorization` 分支 | `api/_shared.py:111-118` |
+| 无任何 OAuth 表（生产 DB 16 张表实查） | `~/.peekview/peekview.db` |
+| **`scope` 概念完全不存在**（`grep -c scope` 在 `auth.py`/`api/_shared.py` 均为 0） | — |
+| `/login` 在 `FRONTEND_ROUTES` 但前端**无此路由**，登录实为 `LoginDialog.vue` 弹窗 | `main.py:25` vs `router.ts` |
+| API 共 **52 条** path+method（openapi 实测：entries 16 / admin 9 / teams 8 / auth 7 / apikeys 4 / captcha 3 / config 3 / stars 2） | — |
+
+**④ 规范侧的关键结论（若重启此议题可直接用）**
+
+- DCR 在 MCP **2026-07-28 已 Deprecated**，官方 registry 写 "new implementations **SHOULD NOT** adopt"；CIMD 是 SHOULD（推荐路径）
+- 但 **Gemini Connected Apps 需要 `registration_endpoint` 或 Play Console 手填 client id/secret**（官方二选一），不做 DCR 则 Gemini 走人工配置
+- Gemini 要求 `response_types_supported` 含 `"code"`；Claude 要求 metadata 同时 advertise `"none"` 才走 CIMD
+- RFC 9068 是 JWT access token 的标准 profile（`typ: at+jwt` + iss/exp/aud/sub/client_id/iat/jti）；`python-jose` 的 `access_token=True` **不校验 `typ`**，需手写
+- `python-jose` 的 `jwk.construct(pub).to_dict()` **只产出 `alg/e/kty/n`**，`kid`/`use` 必须手工注入
+
+**⑤ brief 本体**
+
+`agate-workspace/tasks/TPV0105-mcp-oauth-remote/P0-brief.md`（1290 行，18 节，含 D1–D11 决策、33+ 验收场景、17 条未验证断言）保留在库，未删除。若将来重启，它是可用的起点；但**须先核对其中的"已验证事实"是否仍成立**（本任务作废时 PeekView 为 v0.28.0 / MCP 为 v0.12.0）。
 
 ### TPV0099: 全屏模式链接（`/{slug}/f`）
 
@@ -259,6 +287,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-11-29 | **作废 TPV0105** | 用户决定作废。P0 完成且经两轮独立审查，**未进 P1、无任何代码产出**（`backend/`/`frontend-v3/`/`packages/mcp-server/` 零改动）。作废原因属产品决策，不作技术评判。**调研结论保留**（见任务说明段）：①现有 MCP 对新版规范构成 passthrough anti-pattern——6 个工具经 `client.ts:39` 原样转发客户端凭证，此形状与是否做 OAuth 无关，将来接入遵循新版规范的下游需改 token exchange；②`.well-known` 被 `main.py:598` 的 SPA catch-all 吞成 `200 text/html`（比 404 更危险），任何新 `.well-known` 路径都须排在 `_setup_static_files` 之前；③认证体系 11 项实测事实（HS256 共用密钥 / 无 aud-iss 校验 / `pv_` 等同完整用户含 admin / cookie 分支无类型判别 / 无 scope 概念 / `/login` 死路由 / API 共 52 条）行号可直接查；④规范侧结论（DCR 于 2026-07-28 已 Deprecated 且 SHOULD NOT adopt、CIMD 为 SHOULD、Gemini 可手填替代 DCR、RFC 9068 是 JWT AT 标准 profile、jose 的 `access_token=True` 不校验 typ、`to_dict()` 不产 kid/use）。P0-brief（1290 行 18 节）保留在库未删，若重启须先核对其事实是否仍成立 |
 | 2026-11-29 | 修订 TPV0105 P0 | brief 第 3 版，**两轮独立审查**（首轮 FAIL / 二轮 PASS WITH ISSUES，阻断项全修）。**首轮最严重发现不在 OAuth 流程而在下游调用**：规范明文 "The MCP server **MUST NOT** pass through the token it received from the MCP client"，而 MCP 的 6 个工具全部经 `client.ts:39` 把客户端 token 原样转给 API；上版 brief 还自相矛盾地同时要求「MCP token 调 API 必须 401」与「6 个工具都调 API」——两条成立会让所有工具失效。已新增第六节 + **D11**（RFC 8693 token exchange）+ 6.5（交换端点必须认证调用方，否则 exchange 自身成漏洞，引 RFC 8693 §2.1 原文）+ E1b–E1g。其余阻断：B2 `/auth/me` 曾被允许做 OAuth 身份解析（等于重开跨资源洞）改为一律不调用、MCP 本地验签取 claim；B3 多 `resource`→多 audience（RFC 8707 §3）新增 3.2.1；B4 TTL 1h 与「无 refresh」自相矛盾（1h≠每天一次）改 12h 并显式记录泄露窗口；B5 路由 45→**52**（openapi 实测，11 纳入+41 排除，逐模块对账）；B6 JWK `to_dict()` 不产出 `kid`/`use`（上版误记）修正 V8 + 新增 7.5（RFC 7638 指纹轮换）。**自我纠正两处过度断言**：Gemini 非「DCR 实质强制」（官方给 Play Console 手填替代）；「规范对 token 格式无规定」应为「不强制但以 RFC 9068 为推荐」。采用 **RFC 9068**（`typ: at+jwt` + iss/exp/aud/sub/client_id/iat/jti），不自造 `token_use`；新增 9.1.1 记录 Gemini「不轮换 refresh」与 MCP「公共客户端 MUST 轮换」的真实规范冲突。清理 8 处残留矛盾（D8 利弊、U10、D2 路由数、「TTL 短」、死引用×4、E0 计数）。**risk=high**（已知风险 5→7 项，首项为 passthrough） |
 | 2026-11-28 | 立项 TPV0105 | mcp-oauth-remote——**PeekView 全项目 OAuth 2.1 身份层**（PeekView 后端 AS + PeekView API RS + peekview-mcp RS；用户澄清 OAuth 覆盖两产品，非常规单产品特性）。**9 条现状缺口全部现测**：MCP 的 401 无 `WWW-Authenticate`（发现流程第一步即断）、MCP 无 PRM、PeekView 无 AS 元数据、**`.well-known/*` 被 SPA catch-all 吞成 `200 text/html`**（`main.py:598` catch-all 在全部 router 之后；返回 200 HTML 比 404 更危险）、无 OAuth 表、**无 scope 概念**（`grep -c scope` 在 `auth.py`/`api/_shared.py` 均为 0）、`decode_access_token` 不验 `aud`（`auth.py:121`）、**`/login` 在 `FRONTEND_ROUTES` 但 `router.ts` 无此路由**（登录实为 `LoginDialog.vue` 弹窗）、`express-rate-limit` 非直接依赖。**架构裁决**：AS 必须在 PeekView 后端（账号/JWT/登录态/captcha 所在 + 同 origin 复用 Cookie），故 Node 的 `mcpAuthRouter` **在本项目用不上**——它是 express 中间件，AS 端点需手写 FastAPI，加密复用已在 `pyproject.toml:36` 的 `python-jose[cryptography]`（venv 实测 3.5.0 + `jose.jwe` 可用）。**最有价值复用**：`mcp-server/src/client.ts:131` 的 `validateToken` 本就反查 `/api/v1/auth/me`，后端 `get_current_user` 接受 OAuth token 后此路径原样可用，MCP 零验签代码。**公网可达性按用户澄清归入部署侧要求**（brief 第八节），不是开发前置——回环可验证（SDK 对 localhost 豁免 HTTPS）。八决策（双模式/pv_ 不变、scope 只在 claim、授权页新建、.well-known 前置、命名空间待裁、token 形态 A|B 待裁、PKCE S256、不发 refresh）；排除 refresh_token/撤销页/反代/改 DSH/scope 落库。**risk=high**，6 条未验证断言已登记 |
 | 2026-11-26 | 完成 TPV0104 | viewer-correctness-hardening → **v0.28.0**（peekview minor 0.27.1→0.28.0，tag `v0.28.0` 在位、PyPI 已发）。P0–P8 全走 + P6.5 judge **54/54**；**54 条 BDD 全 PASS**；14 条 CHANGELOG 条目（新增 3 / 变更 7 / 修复 4）。实际交付 8 项规划内 + **7 个 P4/P5 期间新发现的深度缺陷**：注入预算字节/字符记账错配（实测 12 个中文 CSS 产出 **23 MiB**，预算 8 MiB 的近 3 倍且自报无跳过）、`İ`(U+0130) 劈裂 `</body>` 致跳过清单落到 body 外、`not_injectable` 项缺 `file_id`、标题锚点冲突（`## foo`/`## foo`/`## foo-1` 前者同时得 `foo-1`）、切 entry 时 `?file=` 被忽略（Router 复用组件）、快切竞态（慢请求覆盖新页面）、5 条读路径文件顺序不确定。新增 `default-file.ts` / `file-bytes.ts` / `useEntryDetailUrlSync.ts` / `docs/architecture/html-preview-security-modes.md`。**状态修正**：任务板此前停在「READY，未 bump/未 tag」与实际不符，已转 DONE 并补 history |
