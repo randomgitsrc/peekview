@@ -6,7 +6,7 @@ meta:
   title: PeekView 全项目 OAuth 2.1 身份层
 task_name: mcp-oauth-remote
 created: '2026-11-28'
-updated: '2026-11-28T15:35:00Z'
+updated: '2026-11-29T01:20:00Z'
 judge:
   enabled: true
 history:
@@ -25,8 +25,34 @@ history:
     的 validateToken 走 /api/v1/auth/me 反查 PeekView，只要 get_current_user 接受 OAuth token
     即可原样复用，MCP 侧零验签代码。公网可达性归入部署侧要求（第八节），不作为开发前置——回环可直接验证（SDK 对 localhost 豁免 HTTPS）。范围：AS
     四端点 + PeekView RS + MCP RS + 授权页 + 持久化 + 向后兼容。排除：refresh_token、撤销管理页、公网反代、改 DSH
-    配置、生态复用、scope 落库。risk=high（首次对外签发第三方凭证，aud/scope/过期任一校验有洞即越权）。6 条未验证断言已登记。
+    配置、生态复用、scope 落库。risk=high（首次对外签发第三方凭证，aud/scope/过期任一校验有洞即越权）。6 条未验证断言已登记。 【已被第
+    3 版推翻的部分，保留作记录】：①"validateToken 走 /auth/me 反查即可原样复用、MCP 零验签代码"——错误，OAuth 路径不得调用
+    /auth/me（会让 PeekView 接受他人签发的 token），改为 MCP 本地 JWKS 验签取 claim；②"8 条关键决策"已扩为 D1–D11；③"6
+    条未验证断言"已扩为 17 条；④"9 条缺口"已补至 G1–G10 含 V13/V21–V27。
 - phase: P0
   action: pending-start
   ts: '2026-11-28T14:55:00Z'
   note: P0 完成，等用户「开工」指令进 P1。P1 首要裁决三条分歧，尤其分歧 2（是否跳过 JWE 快速路径）——它决定架构形态。
+- phase: P0
+  action: revised
+  ts: '2026-11-29T01:20:00+00:00'
+  note: 'P0-brief 第 3 版（经两轮独立审查）。用户三点修正：OAuth 覆盖全项目、公网归部署侧不阻塞开发、brief 须自包含。首轮审查 FAIL，6
+    个阻断项：B1 MCP→PeekView API 凭证路径完全未定义——规范 MUST NOT passthrough（"The MCP server MUST
+    NOT pass through the token it received from the MCP client"），而 6 个工具全部经 client.ts:39
+    透传；上版 brief 还自相矛盾地同时要求"MCP token 调 API 必须 401"与"6 个工具都调 API"，两条成立会让所有工具失效。新增第六节
+    + D11（RFC 8693 token exchange）。B2 /auth/me 曾被允许做 OAuth 身份解析，等于重开跨资源洞 → 改为 OAuth
+    路径完全不调用，MCP 本地验签取 claim。B3 多 resource → 多 audience（RFC 8707 §3 警告）→ 新增 3.2.1，只接受单
+    resource / aud 必须字符串 / 无 aud 拒绝。B4 TTL 1h 与"无 refresh"自相矛盾（1h≠每天一次）→ 改 12h 并显式记录泄露窗口，给
+    A/B 两选项。B5 路由清点 45→52（openapi 实测，11 纳入 + 41 排除，逐模块对账）。B6 JWK to_dict() 不产出 kid/use（上版误记）→
+    修正 V8，新增 7.5 JWKS 端点 + RFC 7638 指纹轮换契约。二轮审查 PASS WITH ISSUES，新发现实质缺口：exchange
+    端点未认证调用方（RFC 8693 §2.1 明文警告），新增 6.5 + E1f/E1g。另清理 8 处残留矛盾（D8 利弊、U10、D2 路由数、"TTL
+    短"、死引用 ×4、E0 计数）。自我纠正两处过度断言：Gemini 并非"DCR 实质强制"（官方给了 Play Console 手填替代路径）；"规范对
+    token 格式无规定"应为"不强制但以 RFC 9068 为推荐"。采用 RFC 9068（typ: at+jwt + iss/exp/aud/sub/client_id/iat/jti），不自造
+    token_use。新增 9.1.1 记录 Gemini「不轮换 refresh」与 MCP「公共客户端 MUST 轮换」的规范冲突。风险升级：risk=high（原
+    5 项已知风险扩到 7 项，首项为 passthrough）。产出：18 节 / 8 条缺口 / 27 条已验证事实 / 17 条未验证断言 / 33+ 验收场景
+    / D1–D11 决策。'
+- phase: P0
+  action: pending-start
+  ts: '2026-11-29T01:22:00+00:00'
+  note: P0 第 3 版定稿并经两轮独立审查（FAIL → PASS WITH ISSUES，阻断项全修）。等用户「开工」进 P1。P1 需收敛 D1–D11，其中
+    4 项规范强制不可重开、5 项实现选择、3 项需用户/部署输入；最关键是 D11 下游凭证分离（决定 MCP 调用拓扑）。
