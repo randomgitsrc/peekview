@@ -1,0 +1,29 @@
+task_id: TPV0106
+phase: P0
+retries: {}
+task_name: unified-auth-mcp-authorization
+created: '2026-11-29'
+updated: '2026-11-29T02:50:00Z'
+meta:
+  priority: high
+  title: Peekview 统一访问认证与 MCP 授权体系建设
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: '2026-11-29T02:50:00+00:00'
+  note: 立项：Peekview 统一访问认证与 MCP 授权体系建设（取代已作废的 TPV0105）。性质为「建设统一认证授权体系」，非单一 OAuth 特性——指令明确要求覆盖六大领域：W1
+    现状梳理 / W2 统一认证与权限基础 / W3 OAuth 能力 / W4 MCP 集成 / W5 用户与管理员体验 / W6 安全兼容运维。产品约束 13
+    条（一套产品、API Key 保留、OAuth 可选、不依赖官方中心服务、不改造登录、授权关联真实 User、三类凭证不混为一谈、授权不扩大权限、用户可撤销、管理员可配置、复用成熟实现、不扩展成
+    IAM）。MCP 场景要求四类并列（本机 stdio / 局域网 / 远程 HTTP / 第三方 Client），不得把部署位置等同信任度。权限原则明确：不能只看
+    scope，须同时考虑用户实有权限 + Grant 范围 + 目标资源策略 + Token 有效性约束；失效机制必须可验证，禁止「只改撤销标记就宣称 Token
+    已失效」。完成条件 18 条（C1–C18）全部转成可判定形式。阶段 S0–S5，其中 S0 现状确认强制先于 S1 设计。本轮实测 13 项现状缺陷（A1–A13）全部带行号，关键发现：三类凭证按「形状」分流无类型标识；decode_access_token
+    不验 aud/iss；cookie 分支无类型判别；验证失败静默降级匿名（A3）；pv_ key 等同完整用户含 admin；无 scope 概念；.well-known
+    被 SPA 吞成 200 HTML；MCP 只有 Streamable HTTP，无 stdio 传输（指令要求的本机 stdio 场景当前不存在）。与旧任务关系：取代不继承——8.2
+    显式列出不继承项；8.3 列出可复用但须复核的研究成果（含旧任务两轮审查记录，那是这类设计最易犯错的清单）；8.4 吸收 5 条教训。待决策 D1–D10
+    留给 S1，其中 D8（TTL 与 refresh）明确要求成对裁决。7 条未验证断言已登记。risk=high。本次仅立项，不实施开发。
+- phase: P0
+  action: pending-start
+  ts: '2026-11-29T02:52:00+00:00'
+  note: P0 完成，等用户「开工」进 P1。P1 第一动作是 S0 现状确认（独立复核 A1–A13），不是设计——这是与旧方案的关键区别。
