@@ -3,23 +3,29 @@ phase: P0
 retries: {}
 meta:
   priority: medium
-  title: 远程 MCP 接入与 OAuth 2.1 认证
+  title: PeekView 全项目 OAuth 2.1 身份层
 task_name: mcp-oauth-remote
 created: '2026-11-28'
-updated: '2026-11-28T14:55:00Z'
+updated: '2026-11-28T15:35:00Z'
 judge:
   enabled: true
 history:
 - phase: P0
   action: created
   ts: '2026-11-28 14:48:18+00:00'
-  note: 立项：远程 MCP 接入与 OAuth 2.1 认证（来源 PeekView 提案 entry kffgaj）。目标：让 Gemini/Claude/ChatGPT
-    等消费级平台无需手填静态 Header 即可直连 PeekView MCP。P0 实测推翻提案两处前提：①:13003 公网完全不可达，:19093 是 SPA
-    且 .well-known/* 被 catch-all 吞成 HTML，故「公网可达性」是前置硬阻塞而非 Phase 1 子项；②提案 Phase 1 的「粘
-    pv_ key 换 JWE」与其自称痛点（消除复制粘贴 key）自相矛盾，建议跳过 JWE 直接把 AS 落在有登录态的 PeekView 后端。SDK 能力已实证：mcpAuthRouter
-    在 express 4.22.2 下 tsc 通过，元数据/AS 元数据/DCR 三端点实测 200/201，裸 /.well-known/oauth-protected-resource
-    不被注册（需补兜底路由）。范围：RS 双模式 + AS 最小实现（authorize/token/register，PKCE S256）+ scope 两级
-    + 授权页 + pv_ 静态 key 向后兼容。排除：撤销管理页、refresh_token、生态复用、改 DSH 配置、改生产反代。risk=high（首次对外签发凭证）。
+  note: 立项：PeekView 全项目 OAuth 2.1 身份层（PeekView 后端 AS + PeekView API RS + peekview-mcp
+    RS）。目标：消费级平台（Gemini/Claude.ai/ChatGPT）无需手填静态 Header 即可接入，本地 IDE 的 pv_ 静态 key 行为不变。AS
+    必须落在 PeekView 后端——账号/JWT/登录态/captcha 全在那里，且同 origin 才能复用 peekview_token Cookie；因此
+    Node 的 mcpAuthRouter 用不上（它是 express 中间件），AS 端点需手写 FastAPI。9 条现状缺口全部现测：401 无 WWW-Authenticate
+    / MCP 无 PRM / PeekView 无 AS 元数据 / .well-known 被 SPA catch-all 吞成 200 HTML（比 404
+    更危险）/ 无 OAuth 表 / 无 scope 概念 / decode_access_token 不验 aud / /login 在 FRONTEND_ROUTES
+    但前端根本没有该路由 / express-rate-limit 非直接依赖。八条关键决策：①双模式鉴权 pv_ 不变（但 server.test.ts:113-120
+    契约需重写）②scope 只在 claim 不落库（两级 docs:read/docs:write）③授权页新建路由（G8 决定）④.well-known
+    必须先于 SPA catch-all 注册 ⑤AS 端点命名空间待裁决 ⑥token 形态 A/B 待裁决⑦PKCE 强制 S256 ⑧不发 refresh_token。最有价值的复用：mcp-server
+    的 validateToken 走 /api/v1/auth/me 反查 PeekView，只要 get_current_user 接受 OAuth token
+    即可原样复用，MCP 侧零验签代码。公网可达性归入部署侧要求（第八节），不作为开发前置——回环可直接验证（SDK 对 localhost 豁免 HTTPS）。范围：AS
+    四端点 + PeekView RS + MCP RS + 授权页 + 持久化 + 向后兼容。排除：refresh_token、撤销管理页、公网反代、改 DSH
+    配置、生态复用、scope 落库。risk=high（首次对外签发第三方凭证，aud/scope/过期任一校验有洞即越权）。6 条未验证断言已登记。
 - phase: P0
   action: pending-start
   ts: '2026-11-28T14:55:00Z'
