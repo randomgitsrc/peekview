@@ -1,0 +1,25 @@
+task_id: TPV0107
+phase: P0
+retries: {}
+meta:
+  priority: high
+  title: Peekview 统一访问认证与 MCP 授权体系建设
+task_name: unified-auth-mcp-authorization
+created: '2026-11-29'
+updated: '2026-11-29T03:15:00Z'
+judge:
+  enabled: true
+history:
+- phase: P0
+  action: created
+  ts: '2026-11-29 03:06:02+00:00'
+  note: '立项：Peekview 统一访问认证与 MCP 授权体系建设。取代已作废的 TPV0105，但不继承其架构与技术假设（旧方案跳过现状梳理直接定架构，导致与「OAuth
+    可选、自部署独立」的产品约束错位）。核心命题不是「把不同 Token 统一成一种格式」，而是建立正确的身份与权限关系——四层分离：L1 身份认证（现状部分实现，get_current_user
+    auth.py:138-188）/ L2 凭证与授权关系（基本缺失，pv_ 无 scope、无 OAuth grant）/ L3 用户实际资源权限（is_admin、is_active、owner、team）/
+    L4 资源访问决策（can_read_entry entry_service.py:89-104 + 散落各 service，只看 L3）。六大工作领域 W1–W6、非目标 11 条、可验证完成条件
+    C1–C32、阶段 S0–S5（S0 现状确认强制先于 S1 设计）、待决策 D1–D12 全部留 S1。risk=high。'
+- phase: P0
+  action: pending-start
+  ts: '2026-11-29T03:15:00+00:00'
+  note: 'P0 完成，等用户「开工」进 P1。P1 首要动作是 S0 现状确认而非设计。若用户想先定方向，建议聚焦 D1（AS 落点）与 D4（scope
+    是否必要）——这两项决定体系形态。'

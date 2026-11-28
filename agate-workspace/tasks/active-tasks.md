@@ -39,6 +39,28 @@
 | TPV0103 | time-format-mainline | ✅已交付（hotfix，流程中止） | PAUSED | 🟠 | TPV0102（推翻其 P0 决策 1.3） | 2026-11-11 | 2026-11-11 |
 | TPV0104 | viewer-correctness-hardening | ✅已完成 | DONE | 🟠 | 无 | 2026-11-24 | 2026-11-26 |
 | TPV0105 | mcp-oauth-remote（PeekView 全项目 OAuth 2.1 身份层） | 🚫已作废（用户决定） | CANCELLED | — | 无 | 2026-11-28 | 2026-11-29 |
+| TPV0107 | unified-auth-mcp-authorization（统一访问认证与 MCP 授权体系建设） | ⬜ 待开始 | P0✅ | 🔴 | 无 | 2026-11-29 | 2026-11-29 |
+
+### TPV0107: 统一访问认证与 MCP 授权体系建设（⬜ P0 完成，待开工）
+
+**2026-11-29 立项，仅创建 Task 与任务定义，未实施开发。**
+
+**核心命题**：不是"把不同 Token 统一成一种格式"，而是**建立正确的身份与权限关系**。后续设计必须区分四层——L1 身份认证 / L2 凭证与授权关系 / L3 用户实际资源权限 / L4 资源访问决策。现状是 L1 部分实现、**L2 基本空白**、L3 存在、L4 分散且只看 L3，**这个断层是要解决的根本问题**。
+
+**本轮实测最重的发现**：管理员用**自己的** `pv_` API Key 可调管理端点并**实际删除用户**（`DELETE /api/v1/admin/users/{id}` → `204`）。一把为"脚本调 API"设计的 Key 等价于管理员账号密码，可执行不可逆操作。已进 D5，S1 须比较"继续用户身份映射"与"引入可限权 Key 模型"两个方向。
+
+**两处修正 TPV0105 的绝对化表述**（不是挑旧账——基于错误表述会写出错误的验收判据）：
+
+1. **`.well-known` 不是"永远 200 HTML"，而是按 `Accept` 头分裂**：`Accept: */*` → `200 text/html`（index.html）；`Accept: application/json` → `404 application/json`，文案是 `Entry not found: .we...`。机制在 `main.py:611`——catch-all 判 `_prefers_json` 后转 `resolve_entry_raw`，把 `.well-known/...` 当 slug 查。OAuth 客户端通常发 JSON，看到的是后者。
+2. **静默降级后果窄于旧述**：`require_auth` 端点（`/auth/me`、`/apikeys`）无效凭证仍正确返 401；只有**允许匿名访问的端点**才不可区分。私有资源对无效凭证返 404 是**有意的防枚举设计**（`entry_service.py:89-104` 注释 N8），不能为区分而改 403。**这条直接决定 C8 的正确写法**——旧表述会推出"所有端点无效凭证一律报错"，那会破坏匿名访问。
+
+**编号处置**：不复用 TPV0106。其目录已随 `55afa456` 移除、看板引用为 0、`git diff 16c5aabc` 为空，但本地 `.gate-history.jsonl` 仍留其 `task_created` 事件（哈希链）。按指令「不得擅自占用或复用编号」，新分配 TPV0107。
+
+**规模基线**：API **58** 个 path+method（openapi 实测：entries 16 / admin 9 / teams 8 / auth 7 / root 6 / apikeys 4 / config 3 / captcha 3 / stars 2）；生产 DB 16 张表无 OAuth 表；OAuth 概念在 backend/frontend/mcp src **全量 grep 计数 0**；加密依赖只有 `python-jose[cryptography]`，无 authlib；前端 11 条路由**无 `/login`**，`/admin` 指向 `NotFoundView`。
+
+**结构**：六大工作领域 W1–W6 / 非目标 11 条 / 可验证完成条件 **C1–C32** / 阶段 **S0–S5**（S0 现状确认强制先于 S1 设计）/ 待决策 **D1–D12** 全部留 S1 / 风险 R1–R8 / 未验证断言 U1–U11。**risk=high**。
+
+**与 TPV0105 的关系**：保留其全部文件不改，5 项不继承（架构 / 组件选型 / Token 设计 / MCP 部署假设 / Scope 划分），4 类可复用须复核，6 条教训已吸收。
 
 ### TPV0105: PeekView 全项目 OAuth 2.1 身份层（🚫 已作废）
 
@@ -287,6 +309,7 @@ DESIGN.md §6 定义了规则但代码未遵守。①登录按钮/文案不一�
 
 | 日期 | 操作 | 内容 |
 |------|------|------|
+| 2026-11-29 | **立项 TPV0107** | unified-auth-mcp-authorization（🔴 high）：**Peekview 统一访问认证与 MCP 授权体系建设**，仅创建 Task 与任务定义，**未实施开发**。核心命题不是统一 Token 格式，而是建立身份与权限关系——四层 L1 认证 / L2 凭证授权 / L3 用户权限 / L4 资源决策，现状 **L2 基本空白**（`pv_` 无 scope、无 OAuth grant），是本任务要补的断层。**本轮最重发现（实跑复现）**：管理员用**自己的** `pv_` Key 可调 `GET /admin/stats`(200)、`GET /admin/users`(200)、**`DELETE /admin/users/{id}`(204，用户实际被删)**——脚本钥匙等价管理员密码，进 D5 待 S1 比较两个方向。**两处修正 TPV0105 绝对化表述**：①`.well-known` 非「永远 200 HTML」，实为按 `Accept` 头分裂——`*/*` → `200 text/html`，`application/json` → `404` 且文案 `Entry not found: .we...`（`main.py:611` catch-all 转 `resolve_entry_raw` 当 slug 查），OAuth 客户端通常见后者；②静默降级后果**窄于**旧述——`require_auth` 端点无效凭证仍返 401，只有允许匿名端点不可区分，私有资源 404 是**有意防枚举**（`entry_service.py` 注释 N8），**这条直接决定 C8 正确写法**，照旧表述会推出"所有端点一律报错"进而破坏匿名访问。**编号不复用 0106**：目录已随 revert 移除、看板引用为 0、`git diff 16c5aabc` 为空，但 `.gate-history.jsonl:88` 仍留其 `task_created` 事件（哈希链），按指令「不得擅自占用或复用」新分配 0107（`git log --all` 确认从未出现）。规模基线 openapi 实测 **58** 个 path+method（此前记录 52，因统计口径含 root 6 项）；生产 DB 16 表无 OAuth 表；OAuth 概念三处 src **grep 计数 0**；无 authlib；前端 11 路由无 `/login`，`/admin` → `NotFoundView`。结构：W1–W6 / 非目标 11 条 / **C1–C32** / **S0–S5**（S0 强制先于 S1）/ **D1–D12** 留 S1 / R1–R8 / U1–U11。与 TPV0105：文件全留不改，5 项不继承 + 4 类可复用须复核 + 6 条教训已吸收 |
 | 2026-11-29 | **作废 TPV0105** | 用户决定作废。P0 完成且经两轮独立审查，**未进 P1、无任何代码产出**（`backend/`/`frontend-v3/`/`packages/mcp-server/` 零改动）。作废原因属产品决策，不作技术评判。**调研结论保留**（见任务说明段）：①现有 MCP 对新版规范构成 passthrough anti-pattern——6 个工具经 `client.ts:39` 原样转发客户端凭证，此形状与是否做 OAuth 无关，将来接入遵循新版规范的下游需改 token exchange；②`.well-known` 被 `main.py:598` 的 SPA catch-all 吞成 `200 text/html`（比 404 更危险），任何新 `.well-known` 路径都须排在 `_setup_static_files` 之前；③认证体系 11 项实测事实（HS256 共用密钥 / 无 aud-iss 校验 / `pv_` 等同完整用户含 admin / cookie 分支无类型判别 / 无 scope 概念 / `/login` 死路由 / API 共 52 条）行号可直接查；④规范侧结论（DCR 于 2026-07-28 已 Deprecated 且 SHOULD NOT adopt、CIMD 为 SHOULD、Gemini 可手填替代 DCR、RFC 9068 是 JWT AT 标准 profile、jose 的 `access_token=True` 不校验 typ、`to_dict()` 不产 kid/use）。P0-brief（1290 行 18 节）保留在库未删，若重启须先核对其事实是否仍成立 |
 | 2026-11-29 | 修订 TPV0105 P0 | brief 第 3 版，**两轮独立审查**（首轮 FAIL / 二轮 PASS WITH ISSUES，阻断项全修）。**首轮最严重发现不在 OAuth 流程而在下游调用**：规范明文 "The MCP server **MUST NOT** pass through the token it received from the MCP client"，而 MCP 的 6 个工具全部经 `client.ts:39` 把客户端 token 原样转给 API；上版 brief 还自相矛盾地同时要求「MCP token 调 API 必须 401」与「6 个工具都调 API」——两条成立会让所有工具失效。已新增第六节 + **D11**（RFC 8693 token exchange）+ 6.5（交换端点必须认证调用方，否则 exchange 自身成漏洞，引 RFC 8693 §2.1 原文）+ E1b–E1g。其余阻断：B2 `/auth/me` 曾被允许做 OAuth 身份解析（等于重开跨资源洞）改为一律不调用、MCP 本地验签取 claim；B3 多 `resource`→多 audience（RFC 8707 §3）新增 3.2.1；B4 TTL 1h 与「无 refresh」自相矛盾（1h≠每天一次）改 12h 并显式记录泄露窗口；B5 路由 45→**52**（openapi 实测，11 纳入+41 排除，逐模块对账）；B6 JWK `to_dict()` 不产出 `kid`/`use`（上版误记）修正 V8 + 新增 7.5（RFC 7638 指纹轮换）。**自我纠正两处过度断言**：Gemini 非「DCR 实质强制」（官方给 Play Console 手填替代）；「规范对 token 格式无规定」应为「不强制但以 RFC 9068 为推荐」。采用 **RFC 9068**（`typ: at+jwt` + iss/exp/aud/sub/client_id/iat/jti），不自造 `token_use`；新增 9.1.1 记录 Gemini「不轮换 refresh」与 MCP「公共客户端 MUST 轮换」的真实规范冲突。清理 8 处残留矛盾（D8 利弊、U10、D2 路由数、「TTL 短」、死引用×4、E0 计数）。**risk=high**（已知风险 5→7 项，首项为 passthrough） |
 | 2026-11-28 | 立项 TPV0105 | mcp-oauth-remote——**PeekView 全项目 OAuth 2.1 身份层**（PeekView 后端 AS + PeekView API RS + peekview-mcp RS；用户澄清 OAuth 覆盖两产品，非常规单产品特性）。**9 条现状缺口全部现测**：MCP 的 401 无 `WWW-Authenticate`（发现流程第一步即断）、MCP 无 PRM、PeekView 无 AS 元数据、**`.well-known/*` 被 SPA catch-all 吞成 `200 text/html`**（`main.py:598` catch-all 在全部 router 之后；返回 200 HTML 比 404 更危险）、无 OAuth 表、**无 scope 概念**（`grep -c scope` 在 `auth.py`/`api/_shared.py` 均为 0）、`decode_access_token` 不验 `aud`（`auth.py:121`）、**`/login` 在 `FRONTEND_ROUTES` 但 `router.ts` 无此路由**（登录实为 `LoginDialog.vue` 弹窗）、`express-rate-limit` 非直接依赖。**架构裁决**：AS 必须在 PeekView 后端（账号/JWT/登录态/captcha 所在 + 同 origin 复用 Cookie），故 Node 的 `mcpAuthRouter` **在本项目用不上**——它是 express 中间件，AS 端点需手写 FastAPI，加密复用已在 `pyproject.toml:36` 的 `python-jose[cryptography]`（venv 实测 3.5.0 + `jose.jwe` 可用）。**最有价值复用**：`mcp-server/src/client.ts:131` 的 `validateToken` 本就反查 `/api/v1/auth/me`，后端 `get_current_user` 接受 OAuth token 后此路径原样可用，MCP 零验签代码。**公网可达性按用户澄清归入部署侧要求**（brief 第八节），不是开发前置——回环可验证（SDK 对 localhost 豁免 HTTPS）。八决策（双模式/pv_ 不变、scope 只在 claim、授权页新建、.well-known 前置、命名空间待裁、token 形态 A|B 待裁、PKCE S256、不发 refresh）；排除 refresh_token/撤销页/反代/改 DSH/scope 落库。**risk=high**，6 条未验证断言已登记 |
