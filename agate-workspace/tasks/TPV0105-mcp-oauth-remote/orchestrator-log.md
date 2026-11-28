@@ -31,3 +31,38 @@ NEXT P0 完成，等用户「开工」进 P1。P1 只需收敛两个分叉：决
 ## 前一轮的错误（已纠正）
 
 初版 P0-brief 把「公网可达性」写成前置硬阻塞，并建议跳过提案 Phase 1 的 JWE 路径。用户指出三点：①公网可达性是部署需求而非开发功能前提 ②OAuth 覆盖整个项目（含 peekview 与 peekview-mcp）③不要引用外部链接、直接写正文。三处均已按修正重写——公网要求移入第八节部署侧，架构从「MCP Server 内做 AS」改为「PeekView 后端做 AS、MCP 为纯 RS」，全文不再引用来源链接。
+
+## 2026-11-29 P0 修订（第 3 版）
+
+DECISION 用户指令要求：OAuth 覆盖全项目（非单产品）；公网可达性归部署侧不阻塞开发；brief 必须自包含；必须经独立审查并迭代至通过。前两点已在第 2 版落地，本轮做第 3 版：重构 brief + 独立审查 + 按审查修订。
+
+DECISION 并行派发 spec-researcher 查规范（MCP 2026-07-28 / RFC 9068 / RFC 8707 / 三平台官方文档），同时自行取证仓库。取证结论写进 brief 第十节 V1–V27。
+
+NEXT 等 brief-reviewer-r2 复审结果；若 PASS 则提交，若 FAIL 则继续修订。
+
+## 第 3 版的关键发现（主 Agent 自查 + 审查共同确认）
+
+### 最重大的一个：Token Passthrough 禁令
+规范原文（security-considerations，MUST）：
+> "If the MCP server makes requests to upstream APIs ... The access token used at the upstream API
+>  is a separate token, issued by the upstream authorization server. The MCP server MUST NOT pass
+>  through the token it received from the MCP client."
+
+现状：MCP 全部 6 个工具经 client.ts:33-41 把客户端 token 原样转给 PeekView API。
+我上一版 brief 还写了「MCP token 调 API 必须 401」+「6 个工具都调 API」——两条同时成立会让所有工具失效。
+本版新增第六节 + 决策 D11（RFC 8693 token exchange）解决。
+
+### 其他阻断项（审查 B1–B6，均已修）
+- B2 `/auth/me` 曾被错误允许做 OAuth 身份解析 → 改为 OAuth 路径完全不调用，MCP 本地验签取 claim
+- B3 多 resource → 多 audience 漏洞 → 新增 3.2.1，只接受单 resource / aud 必须字符串 / 无 aud 拒绝
+- B4 TTL 1h 与「无 refresh」自相矛盾 → 改 12h 并显式记录泄露窗口，给 A/B 两选项
+- B5 路由清点 45 → 52（实测 openapi，逐模块对账 11 纳入 + 41 排除）
+- B6 JWK to_dict() 不产出 kid/use（我上版误记）→ 修正 V8，新增 7.5 JWKS 端点与 kid 指纹轮换契约
+
+### 我自己的两处过度断言（已纠正）
+- 「Gemini 必须 DCR」→ Google 原文给了「或 Play Console 手填」的替代路径
+- 「规范对 token 格式完全没有规定」→ 实际是以 RFC 9068 为示例/推荐
+
+### 采纳的规范升级
+- access token 采用 RFC 9068（typ: at+jwt + iss/exp/aud/sub/client_id/iat/jti），不自造 token_use
+- 新增 9.1.1 记录 Gemini「不轮换 refresh」与 MCP「公共客户端 MUST 轮换」的真实冲突
