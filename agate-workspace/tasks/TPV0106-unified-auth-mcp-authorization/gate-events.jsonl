@@ -1,3 +1,0 @@
-{"agate_version":"","contract_level":2,"event":"task_created","prev_hash":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","resolver":"","task_id":"TPV0106","ts":"2026-11-28T18:44:20.301230Z"}
-{"event":"state_transition","from":"","phase":"P0","prev_hash":"ad92830f762576649bf68d9fbbd082c94e257ed150b3715461270f901068cb18","to":"P0","ts":"2026-11-28T18:46:58.437106Z"}
-{"cmd":"check-gate.py P0","event":"gate_run","exit":2,"phase":"P0","prev_hash":"39f7c19b17c88188dae9c25e0279a5a51ba6de7cd3c3ac32210ca6d73a2a878d","runner":"pre-commit","ts":"2026-11-28T18:46:58.584696Z"}
